@@ -1,6 +1,7 @@
 package whetstone_test
 
 import (
+	"flag"
 	"testing"
 
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
@@ -12,9 +13,18 @@ import (
 	"github.com/pivotal-golang/lager/lagertest"
 )
 
-var bbs *Bbs.BBS
+var (
+	bbs         *Bbs.BBS
+	etcdAddress string
+	domain      string
+)
 
 const StackName = "lucid64"
+
+func init() {
+	flag.StringVar(&etcdAddress, "etcdAddress", "", "address of the etcd cluster")
+	flag.StringVar(&domain, "domain", "", "domain to use for deployed apps")
+}
 
 func TestWhetstone(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -22,7 +32,7 @@ func TestWhetstone(t *testing.T) {
 }
 
 var _ = BeforeEach(func() {
-	adapter := etcdstoreadapter.NewETCDStoreAdapter([]string{"http://10.244.16.2:4001"}, workerpool.NewWorkerPool(20))
+	adapter := etcdstoreadapter.NewETCDStoreAdapter([]string{etcdAddress}, workerpool.NewWorkerPool(20))
 
 	err := adapter.Connect()
 	Expect(err).ToNot(HaveOccurred())
