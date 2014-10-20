@@ -30,8 +30,6 @@ func init() {
 
 func TestWhetstone(t *testing.T) {
 	if etcdAddress == "" || domain == "" {
-		fmt.Println(etcdAddress)
-		fmt.Println(domain)
 		fmt.Fprintf(os.Stderr, "To run this test suite, you must set the required flags.\nUsage of %s:\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
