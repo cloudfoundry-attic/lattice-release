@@ -2,6 +2,8 @@ package whetstone_test
 
 import (
 	"flag"
+	"fmt"
+	"os"
 	"testing"
 
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
@@ -22,11 +24,18 @@ var (
 const StackName = "lucid64"
 
 func init() {
-	flag.StringVar(&etcdAddress, "etcdAddress", "", "address of the etcd cluster")
-	flag.StringVar(&domain, "domain", "", "domain to use for deployed apps")
+	flag.StringVar(&etcdAddress, "etcdAddress", "", "Address of the etcd cluster - REQUIRED")
+	flag.StringVar(&domain, "domain", "", "Domain to use for deployed apps - REQUIRED")
 }
 
 func TestWhetstone(t *testing.T) {
+	if etcdAddress == "" || domain == "" {
+		fmt.Println(etcdAddress)
+		fmt.Println(domain)
+		fmt.Fprintf(os.Stderr, "To run this test suite, you must set the required flags.\nUsage of %s:\n", os.Args[0])
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Whetstone Suite")
 }
