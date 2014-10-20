@@ -25,7 +25,7 @@ var _ = Describe("Diego Edge", func() {
 
 		BeforeEach(func() {
 			processGuid = factories.GenerateGuid()
-			appName = factories.GenerateGuid()
+			appName = fmt.Sprintf("whetstone-%s", factories.GenerateGuid())
 			route = fmt.Sprintf("%s.%s", appName, domain)
 		})
 
@@ -71,7 +71,7 @@ func desireLongRunningProcess(processGuid, appName, route string) error {
 		ProcessGuid: processGuid,
 		Instances:   1,
 		Stack:       "lucid64",
-		RootFSPath:  "docker:///onsi/grace-busybox",
+		RootFSPath:  "docker:///dajulia3/diego-edge-docker-app",
 		Routes:      []string{route},
 		MemoryMB:    128,
 		DiskMB:      1024,
@@ -82,11 +82,7 @@ func desireLongRunningProcess(processGuid, appName, route string) error {
 			models.Parallel(
 				models.ExecutorAction{
 					models.RunAction{
-						Path: "/grace",
-						Env: []models.EnvironmentVariable{
-							{Name: "VCAP_APPLICATION", Value: `{"instance_index":0}`},
-							{Name: "PORT", Value: "8080"},
-						},
+						Path: "/dockerapp",
 					},
 				},
 				models.ExecutorAction{
