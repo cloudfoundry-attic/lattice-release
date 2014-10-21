@@ -1,5 +1,6 @@
 #Assumptions
-- Loggregator is deployed and its traffic controller job has the allowAllAccess flag set to true
+- Loggregator is deployed and its traffic controller job has the allowAllAccess flag set to true. 
+  Currently our forked version of loggregator (https://github.com/dajulia3/loggregator) supports this flag.  
 - Diego-release is deployed
     
 #Running The Whetstone Tests
