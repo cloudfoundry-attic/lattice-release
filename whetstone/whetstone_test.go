@@ -46,7 +46,7 @@ var _ = Describe("Diego Edge", func() {
 			err := desireLongRunningProcess(processGuid, appName, route)
 			Expect(err).To(BeNil())
 
-			Eventually(errorCheckForRoute(route), 20, 1).ShouldNot(HaveOccurred())
+			Eventually(errorCheckForRoute(route), 30, 1).ShouldNot(HaveOccurred())
 
 			outBuf := gbytes.NewBuffer()
 			go streamAppLogsIntoGbytes(processGuid, outBuf)
