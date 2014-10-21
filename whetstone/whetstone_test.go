@@ -10,6 +10,12 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/models/factories"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/gorilla/websocket"
+	"github.com/onsi/gomega/gbytes"
+
+	"code.google.com/p/gogoprotobuf/proto"
+	"github.com/cloudfoundry/loggregatorlib/logmessage"
 )
 
 const repUrlRelativeToExecutor string = "http://127.0.0.1:20515"
@@ -41,6 +47,11 @@ var _ = Describe("Diego Edge", func() {
 			Expect(err).To(BeNil())
 
 			Eventually(errorCheckForRoute(route), 20, 1).ShouldNot(HaveOccurred())
+
+			outBuf := gbytes.NewBuffer()
+			go streamAppLogsIntoGbytes(processGuid, outBuf)
+
+			Eventually(outBuf, 2).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
 		})
 	})
 
@@ -65,6 +76,28 @@ func errorCheckForRoute(route string) func() error {
 	}
 }
 
+func streamAppLogsIntoGbytes(logGuid string, outBuf *gbytes.Buffer) {
+	ws, _, err := websocket.DefaultDialer.Dial(
+		fmt.Sprintf("ws://%s/tail/?app=%s", loggregatorAddress, logGuid),
+		http.Header{},
+	)
+	Expect(err).To(BeNil())
+
+	for {
+		_, data, err := ws.ReadMessage()
+		if err != nil {
+			return
+		}
+
+		receivedMessage := &logmessage.LogMessage{}
+		err = proto.Unmarshal(data, receivedMessage)
+		Expect(err).To(BeNil())
+
+		outBuf.Write(receivedMessage.GetMessage())
+	}
+
+}
+
 func desireLongRunningProcess(processGuid, appName, route string) error {
 	return bbs.DesireLRP(models.DesiredLRP{
 		Domain:      "whetstone",
@@ -77,6 +110,10 @@ func desireLongRunningProcess(processGuid, appName, route string) error {
 		DiskMB:      1024,
 		Ports: []models.PortMapping{
 			{ContainerPort: 8080},
+		},
+		Log: models.LogConfig{
+			Guid:       processGuid,
+			SourceName: "APP",
 		},
 		Actions: []models.ExecutorAction{
 			models.Parallel(

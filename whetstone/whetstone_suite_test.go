@@ -19,17 +19,20 @@ var (
 	bbs         *Bbs.BBS
 	etcdAddress string
 	domain      string
+	loggregatorAddress string
 )
+
 
 const StackName = "lucid64"
 
 func init() {
 	flag.StringVar(&etcdAddress, "etcdAddress", "", "Address of the etcd cluster - REQUIRED")
 	flag.StringVar(&domain, "domain", "", "Domain to use for deployed apps - REQUIRED")
+	flag.StringVar(&loggregatorAddress, "loggregatorAddress", "", "Address of the loggregator traffic controller - REQUIRED")
 }
 
 func TestWhetstone(t *testing.T) {
-	if etcdAddress == "" || domain == "" {
+	if etcdAddress == "" || domain == "" || loggregatorAddress == "" {
 		fmt.Fprintf(os.Stderr, "To run this test suite, you must set the required flags.\nUsage of %s:\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
@@ -39,7 +42,8 @@ func TestWhetstone(t *testing.T) {
 }
 
 var _ = BeforeEach(func() {
-	adapter := etcdstoreadapter.NewETCDStoreAdapter([]string{etcdAddress}, workerpool.NewWorkerPool(20))
+	etcdUrl := fmt.Sprintf("http://%s", etcdAddress)
+	adapter := etcdstoreadapter.NewETCDStoreAdapter([]string{etcdUrl}, workerpool.NewWorkerPool(20))
 
 	err := adapter.Connect()
 	Expect(err).ToNot(HaveOccurred())
