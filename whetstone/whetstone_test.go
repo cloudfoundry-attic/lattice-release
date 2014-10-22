@@ -54,6 +54,7 @@ var _ = Describe("Diego Edge", func() {
 			Eventually(outBuf, 2).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
 
 			err = desireLongRunningProcess(processGuid, route, 3)
+			Expect(err).To(BeNil())
 
 			instanceCountChan := make(chan int, numCpu)
 			go countInstances(route, instanceCountChan)
