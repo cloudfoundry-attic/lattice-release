@@ -2,10 +2,10 @@ package whetstone_test
 
 import (
 	"fmt"
-	"strconv"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/cloudfoundry-incubator/runtime-schema/models/factories"
@@ -51,13 +51,12 @@ var _ = Describe("Diego Edge", func() {
 
 			outBuf := gbytes.NewBuffer()
 			go streamAppLogsIntoGbytes(processGuid, outBuf)
-
 			Eventually(outBuf, 2).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
 
 			err = desireLongRunningProcess(processGuid, route, 3)
 
-			instanceCountChan := make(chan int)
-			go countInstances(fmt.Sprintf("%s/instance-index", route), instanceCountChan)
+			instanceCountChan := make(chan int, numCpu)
+			go countInstances(route, instanceCountChan)
 
 			Eventually(instanceCountChan, 20).Should(Receive(Equal(3)))
 		})
@@ -65,17 +64,30 @@ var _ = Describe("Diego Edge", func() {
 
 })
 
-func countInstances(route string, instanceCountChan chan<- int){
+func countInstances(route string, instanceCountChan chan<- int) {
 	defer GinkgoRecover()
+	instanceIndexRoute := fmt.Sprintf("%s/instance-index", route)
+	instancesSeen := make(map[int]bool)
+	instanceIndexChan := make(chan int, numCpu)
 
-	instances := make(map[int]bool)
-	existingCount := 0
+	for i := 0; i < numCpu; i++ {
+		go pollForInstanceIndices(instanceIndexRoute, instanceIndexChan)
+	}
 
+	for {
+		instanceIndex := <-instanceIndexChan
+		instancesSeen[instanceIndex] = true
+		instanceCountChan <- len(instancesSeen)
+	}
+}
+
+func pollForInstanceIndices(route string, instanceIndexChan chan<- int) {
+	defer GinkgoRecover()
 	for {
 		resp, err := makeGetRequestToRoute(route)
 		Expect(err).To(BeNil())
 
-		responseBody, err  := ioutil.ReadAll(resp.Body)
+		responseBody, err := ioutil.ReadAll(resp.Body)
 		defer resp.Body.Close()
 		Expect(err).To(BeNil())
 
@@ -83,13 +95,7 @@ func countInstances(route string, instanceCountChan chan<- int){
 		if err != nil {
 			continue
 		}
-
- 		instances[instanceIndex] = true
-
-		if numberOfInstances := len(instances); numberOfInstances > existingCount {
-			instanceCountChan <- len(instances)
-			existingCount = len(instances)
-		}
+		instanceIndexChan <- instanceIndex
 	}
 }
 

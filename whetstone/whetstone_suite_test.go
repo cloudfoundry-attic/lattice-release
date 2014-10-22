@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
 	"testing"
 
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
@@ -16,16 +17,19 @@ import (
 )
 
 var (
-	bbs         *Bbs.BBS
-	etcdAddress string
-	domain      string
+	bbs                *Bbs.BBS
+	etcdAddress        string
+	domain             string
 	loggregatorAddress string
+	numCpu             int
 )
-
 
 const StackName = "lucid64"
 
 func init() {
+	numCpu = runtime.NumCPU()
+	runtime.GOMAXPROCS(numCpu)
+
 	flag.StringVar(&etcdAddress, "etcdAddress", "", "Address of the etcd cluster - REQUIRED")
 	flag.StringVar(&domain, "domain", "", "Domain to use for deployed apps - REQUIRED")
 	flag.StringVar(&loggregatorAddress, "loggregatorAddress", "", "Address of the loggregator traffic controller - REQUIRED")
