@@ -64,6 +64,48 @@ var _ = Describe("Diego Edge", func() {
 
 })
 
+func errorCheckForRoute(route string) func() error {
+	return func() error {
+		resp, err := makeGetRequestToRoute(route)
+		if err != nil {
+			return err
+		}
+
+		io.Copy(ioutil.Discard, resp.Body)
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			return fmt.Errorf("Status code %d should be 200", resp.StatusCode)
+		}
+
+		return nil
+	}
+}
+
+func streamAppLogsIntoGbytes(logGuid string, outBuf *gbytes.Buffer) {
+	defer GinkgoRecover()
+
+	ws, _, err := websocket.DefaultDialer.Dial(
+		fmt.Sprintf("ws://%s/tail/?app=%s", loggregatorAddress, logGuid),
+		http.Header{},
+	)
+	Expect(err).To(BeNil())
+
+	for {
+		_, data, err := ws.ReadMessage()
+		if err != nil {
+			return
+		}
+
+		receivedMessage := &logmessage.LogMessage{}
+		err = proto.Unmarshal(data, receivedMessage)
+		Expect(err).To(BeNil())
+
+		outBuf.Write(receivedMessage.GetMessage())
+	}
+
+}
+
 func countInstances(route string, instanceCountChan chan<- int) {
 	defer GinkgoRecover()
 	instanceIndexRoute := fmt.Sprintf("%s/instance-index", route)
@@ -107,48 +149,6 @@ func makeGetRequestToRoute(route string) (*http.Response, error) {
 	}
 
 	return resp, nil
-}
-
-func errorCheckForRoute(route string) func() error {
-	return func() error {
-		resp, err := makeGetRequestToRoute(route)
-		if err != nil {
-			return err
-		}
-
-		io.Copy(ioutil.Discard, resp.Body)
-		defer resp.Body.Close()
-
-		if resp.StatusCode != 200 {
-			return fmt.Errorf("Status code %d should be 200", resp.StatusCode)
-		}
-
-		return nil
-	}
-}
-
-func streamAppLogsIntoGbytes(logGuid string, outBuf *gbytes.Buffer) {
-	defer GinkgoRecover()
-
-	ws, _, err := websocket.DefaultDialer.Dial(
-		fmt.Sprintf("ws://%s/tail/?app=%s", loggregatorAddress, logGuid),
-		http.Header{},
-	)
-	Expect(err).To(BeNil())
-
-	for {
-		_, data, err := ws.ReadMessage()
-		if err != nil {
-			return
-		}
-
-		receivedMessage := &logmessage.LogMessage{}
-		err = proto.Unmarshal(data, receivedMessage)
-		Expect(err).To(BeNil())
-
-		outBuf.Write(receivedMessage.GetMessage())
-	}
-
 }
 
 func desireLongRunningProcess(processGuid, route string, instanceCount int) error {
