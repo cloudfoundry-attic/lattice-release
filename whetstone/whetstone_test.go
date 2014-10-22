@@ -2,6 +2,7 @@ package whetstone_test
 
 import (
 	"fmt"
+	"strconv"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -43,7 +44,7 @@ var _ = Describe("Diego Edge", func() {
 		})
 
 		It("eventually runs on an executor", func() {
-			err := desireLongRunningProcess(processGuid, appName, route)
+			err := desireLongRunningProcess(processGuid, route, 1)
 			Expect(err).To(BeNil())
 
 			Eventually(errorCheckForRoute(route), 30, 1).ShouldNot(HaveOccurred())
@@ -52,15 +53,59 @@ var _ = Describe("Diego Edge", func() {
 			go streamAppLogsIntoGbytes(processGuid, outBuf)
 
 			Eventually(outBuf, 2).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
+
+			err = desireLongRunningProcess(processGuid, route, 3)
+
+			instanceCountChan := make(chan int)
+			go countInstances(fmt.Sprintf("%s/instance-index", route), instanceCountChan)
+
+			Eventually(instanceCountChan, 20).Should(Receive(Equal(3)))
 		})
 	})
 
 })
 
-func errorCheckForRoute(route string) func() error {
+func countInstances(route string, instanceCountChan chan<- int){
+	defer GinkgoRecover()
+
+	instances := make(map[int]bool)
+	existingCount := 0
+
+	for {
+		resp, err := makeGetRequestToRoute(route)
+		Expect(err).To(BeNil())
+
+		responseBody, err  := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		Expect(err).To(BeNil())
+
+		instanceIndex, err := strconv.Atoi(string(responseBody))
+		if err != nil {
+			continue
+		}
+
+ 		instances[instanceIndex] = true
+
+		if numberOfInstances := len(instances); numberOfInstances > existingCount {
+			instanceCountChan <- len(instances)
+			existingCount = len(instances)
+		}
+	}
+}
+
+func makeGetRequestToRoute(route string) (*http.Response, error) {
 	routeWithScheme := fmt.Sprintf("http://%s", route)
+	resp, err := http.DefaultClient.Get(routeWithScheme)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func errorCheckForRoute(route string) func() error {
 	return func() error {
-		resp, err := http.DefaultClient.Get(routeWithScheme)
+		resp, err := makeGetRequestToRoute(route)
 		if err != nil {
 			return err
 		}
@@ -77,6 +122,8 @@ func errorCheckForRoute(route string) func() error {
 }
 
 func streamAppLogsIntoGbytes(logGuid string, outBuf *gbytes.Buffer) {
+	defer GinkgoRecover()
+
 	ws, _, err := websocket.DefaultDialer.Dial(
 		fmt.Sprintf("ws://%s/tail/?app=%s", loggregatorAddress, logGuid),
 		http.Header{},
@@ -98,11 +145,11 @@ func streamAppLogsIntoGbytes(logGuid string, outBuf *gbytes.Buffer) {
 
 }
 
-func desireLongRunningProcess(processGuid, appName, route string) error {
+func desireLongRunningProcess(processGuid, route string, instanceCount int) error {
 	return bbs.DesireLRP(models.DesiredLRP{
 		Domain:      "whetstone",
 		ProcessGuid: processGuid,
-		Instances:   1,
+		Instances:   instanceCount,
 		Stack:       "lucid64",
 		RootFSPath:  "docker:///dajulia3/diego-edge-docker-app",
 		Routes:      []string{route},
