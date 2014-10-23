@@ -1,6 +1,6 @@
 #Assumptions
 - Loggregator is deployed and its traffic controller job has the allowAllAccess flag set to true. 
-  Currently our forked version of loggregator (https://github.com/dajulia3/loggregator) supports this flag.  
+  Currently master of Loggregator supports this flag, but the version in cf-release is behind.  
 - Diego-release is deployed
     
 #Running The Whetstone Tests
