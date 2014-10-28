@@ -1,0 +1,15 @@
+#!/bin/sh
+echo "Gonna ls right now for ya"
+ls
+echo "How bout dem files^^^"
+
+CF_RELEASE_S3_OBJECT_ID=`cat CF_RELEASE_S3_KEY`
+echo "CF_RELEASE_S3_OBJECT_ID=$CF_RELEASE_S3_OBJECT_ID"
+
+tar -xzf diego-final-release-created-by-ci.tgz
+tar -xzf dev-release.tgz
+wget "http://go-diego-go.s3.amazonaws.com/${CF_RELEASE_S3_OBJECT_ID}" -O - | tar xzf -
+WORKSPACE_DIR_PATH=`pwd`
+cd diego-lite
+./compile "$WORKSPACE_DIR_PATH/diego-release" "$WORKSPACE_DIR_PATH/cf-release"
+
