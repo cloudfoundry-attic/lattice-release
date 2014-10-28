@@ -1,0 +1,44 @@
+#!/bin/bash
+
+set -e
+
+export GOOS=linux
+export GOARCH=amd64
+
+rm -rf bin/*
+export GOBIN=`pwd`/bin
+export GOPATH=`pwd`/diego-release
+
+pushd diego-release
+    go install github.com/cloudfoundry-incubator/rep/cmd/rep
+    go install github.com/cloudfoundry-incubator/executor/cmd/executor
+    go install github.com/cloudfoundry-incubator/auctioneer/cmd/auctioneer
+    go install github.com/cloudfoundry-incubator/converger/cmd/converger
+    go install github.com/cloudfoundry-incubator/file-server/cmd/file-server
+    go install github.com/cloudfoundry-incubator/route-emitter/cmd/route-emitter
+    go install github.com/cloudfoundry-incubator/garden-linux
+    go install github.com/apcera/gnatsd
+
+    pushd src/github.com/coreos/etcd
+        ./build
+        cp bin/linux_amd64/etcd $GOBIN/linux_amd64
+    popd
+popd
+
+pushd cf-release/src
+    REPO_NAME=github.com/cloudfoundry/gorouter
+    mkdir -p $GOPATH/src/$REPO_NAME
+    cp -fr gorouter $GOPATH/src/$REPO_NAME
+
+    GOPATH=$GOPATH/src/${REPO_NAME}/Godeps/_workspace:$GOPATH
+    go install github.com/cloudfoundry/gorouter
+    rm -rf $GOPATH/src/$REPO_NAME
+    GOPATH=`pwd`/diego-release
+popd
+
+pushd diego-release/loggregator
+    GOPATH=`pwd`
+    go install trafficcontroller
+    go install doppler
+    go install metron
+popd

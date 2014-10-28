@@ -1,0 +1,6 @@
+[submodule "diego-release"]
+	path = diego-release
+	url = https://github.com/cloudfoundry-incubator/diego-release
+[submodule "cf-release"]
+	path = cf-release
+	url = https://github.com/cloudfoundry/cf-release

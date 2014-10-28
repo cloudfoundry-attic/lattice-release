@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -e
+
+cp upstart/* /etc/init
+cp /vagrant/bin/linux_amd64/* /usr/local/bin
+
+mkdir -p /var/diego
+cp -r config /var/diego
+
+cp -r circus /var/diego
+
+mkdir -p /var/diego/garden
+mkdir -p /var/diego/garden/depot
+mkdir -p /var/diego/garden/rootfs
+mkdir -p /var/diego/garden/overlays
+mkdir -p /var/diego/garden/graph
+
+apt-get -y install quota
+apt-get -y install linux-image-extra-$(uname -r) #Might not be necessary??
+
+pushd /tmp
+    SHADOW_TAR_OBJECT_ID="8f17023f-2a94-4d98-a737-ddbf166e7188"
+    wget "http://go-diego-go.s3.amazonaws.com/${SHADOW_TAR_OBJECT_ID}" -O - | tar xzf -
+    pushd shadow-4.2.1
+        ./configure --prefix=/var/diego
+        make
+        sudo make install
+    popd
+
+    wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz  -O - | tar -xzf - -C /usr/local
+    export PATH=$PATH:/usr/local/go/bin
+popd
+
+export GOPATH=`pwd`/diego-release
+pushd diego-release/src/github.com/cloudfoundry-incubator/garden-linux/old
+    make
+
+    cp -a linux_backend/bin /var/diego/garden/garden-bin
+    cp -a linux_backend/skeleton /var/diego/garden/skeleton
+popd
+

@@ -1,0 +1,45 @@
+---
+
+status:
+  port: 8090
+  user: router
+  pass: "router"
+
+
+nats:
+  - host: 127.0.0.1
+    port: 4222
+    user: nats
+    pass: "nats"
+
+
+logging:
+  file: /var/log/gorouter.log
+
+#  syslog: vcap.gorouter
+
+  level: info
+
+  loggregator_enabled: true
+
+
+
+#loggregatorConfig:
+#  url: 127.0.0.1:3456
+#  shared_secret: loggregator-secret
+
+port: 80
+index: 0
+pidfile: /var/diego/gorouter.pid
+go_max_procs: 8
+trace_key: 22
+access_log: /var/log/gorouter-access.log
+
+publish_start_message_interval: 30
+prune_stale_droplets_interval: 30
+droplet_stale_threshold: 120
+publish_active_apps_interval: 0 # 0 means disabled
+
+endpoint_timeout: 300
+
+start_response_delay_interval_in_seconds: 20

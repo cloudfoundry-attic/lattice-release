@@ -1,0 +1,23 @@
+{
+    "EtcdUrls": ["http://127.0.0.1:4001"],
+    "EtcdMaxConcurrentRequests": 10,
+    "WSMessageBufferSize": 100,
+    "LegacyIncomingMessagesPort": 3456,
+    "DropsondeIncomingMessagesPort": 3458,
+    "OutgoingPort": 8081,
+    "Zone": "z1",
+    "SkipCertVerify": true,
+    "JobName": "loggregator_z1",
+    "Index": 0,
+    "MaxRetainedLogMessages": 100,
+    "CollectorRegistrarIntervalMilliseconds": 60000,
+    "SharedSecret": "loggregator-secret",
+
+    "NatsHosts": ["127.0.0.1"],
+    "NatsPort": 4222,
+    "NatsUser": "nats",
+    "NatsPass": "nats",
+    "VarzUser": "",
+    "VarzPass": "",
+    "VarzPort": 0
+}
