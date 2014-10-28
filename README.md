@@ -18,13 +18,13 @@ Clone Diego-Lite and its dependencies cf-release and diego-lite and compile the 
     git clone git@github.com:cloudfoundry/cf-release.git
    
     cd diego-lite
-    ./compile ~/workspace/cf-release ~/workspace/diego-release
+    scripts/compile ~/workspace/cf-release ~/workspace/diego-release
     
 Install Diego
 
     vagrant ssh
     cd /vagrant
-    sudo ./install
+    sudo scripts/install
 
 
 ##Developing
