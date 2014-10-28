@@ -2,14 +2,17 @@
 
 set -e
 
+export DIEGO_RELEASE_PATH=$1
+export CF_RELEASE_PATH=$2
+
 export GOOS=linux
 export GOARCH=amd64
 
 rm -rf bin/*
 export GOBIN=`pwd`/bin
-export GOPATH=`pwd`/diego-release
+export GOPATH=$DIEGO_RELEASE_PATH
 
-pushd diego-release
+pushd $GOPATH
     go install github.com/cloudfoundry-incubator/rep/cmd/rep
     go install github.com/cloudfoundry-incubator/executor/cmd/executor
     go install github.com/cloudfoundry-incubator/auctioneer/cmd/auctioneer
@@ -25,7 +28,7 @@ pushd diego-release
     popd
 popd
 
-pushd cf-release/src
+pushd $CF_RELEASE_PATH/src
     REPO_NAME=github.com/cloudfoundry/gorouter
     mkdir -p $GOPATH/src/$REPO_NAME
     cp -fr gorouter $GOPATH/src/$REPO_NAME
@@ -33,10 +36,10 @@ pushd cf-release/src
     GOPATH=$GOPATH/src/${REPO_NAME}/Godeps/_workspace:$GOPATH
     go install github.com/cloudfoundry/gorouter
     rm -rf $GOPATH/src/$REPO_NAME
-    GOPATH=`pwd`/diego-release
+    GOPATH=$DIEGO_RELEASE_PATH
 popd
 
-pushd diego-release/loggregator
+pushd $DIEGO_RELEASE_PATH/loggregator
     GOPATH=`pwd`
     go install trafficcontroller
     go install doppler

@@ -2,4 +2,4 @@ package.box
 
 .vagrant
 .idea
-.idea
+bin/linux_amd64/*
