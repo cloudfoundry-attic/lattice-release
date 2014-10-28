@@ -10,7 +10,7 @@ import (
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
-	"github.com/cloudfoundry/storeadapter/workerpool"
+	"github.com/cloudfoundry/gunk/workpool"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-golang/lager/lagertest"
@@ -47,7 +47,7 @@ func TestWhetstone(t *testing.T) {
 
 var _ = BeforeEach(func() {
 	etcdUrl := fmt.Sprintf("http://%s", etcdAddress)
-	adapter := etcdstoreadapter.NewETCDStoreAdapter([]string{etcdUrl}, workerpool.NewWorkerPool(20))
+	adapter := etcdstoreadapter.NewETCDStoreAdapter([]string{etcdUrl}, workpool.NewWorkPool(20))
 
 	err := adapter.Connect()
 	Expect(err).ToNot(HaveOccurred())
