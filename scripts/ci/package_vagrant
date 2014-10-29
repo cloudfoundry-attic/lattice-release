@@ -1,10 +1,17 @@
 #!/bin/sh
 set -e
 
+
+VAGRANT_BOX_NAME_OR_PATH=$1
+
+if [ -n "$1" ]; then
+    VAGRANT_BOX_NAME_OR_PATH="ubuntu/trusty64"
+fi
+
 tar -xzf diego-final-release-created-by-ci.tgz
 WORKSPACE_DIR_PATH=`pwd`
 
-vagrant init ubuntu/trusty64
+vagrant init $VAGRANT_BOX_NAME_OR_PATH --minimal
 vagrant up --provider=virtualbox
 vagrant ssh
 
