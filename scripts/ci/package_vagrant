@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
 
+
 tar -xzf diego-final-release-created-by-ci.tgz
 WORKSPACE_DIR_PATH=`pwd`
 
