@@ -2,13 +2,11 @@
 
 set -e
 
-cp upstart/* /etc/init
-cp /vagrant/bin/linux_amd64/* /usr/local/bin
+cp /vagrant/diego-lite/upstart/* /etc/init
+cp /vagrant/bin/* /usr/local/bin
 
 mkdir -p /var/diego
-cp -r config /var/diego
-
-cp -r circus /var/diego
+cp -r /vagrant/diego-lite/config /var/diego
 
 mkdir -p /var/diego/garden
 mkdir -p /var/diego/garden/depot
