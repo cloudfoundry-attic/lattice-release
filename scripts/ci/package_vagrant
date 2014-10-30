@@ -10,20 +10,13 @@ fi
 tar -xzf diego-final-release-created-by-ci.tgz
 WORKSPACE_DIR_PATH=`pwd`
 
-vagrant init $VAGRANT_BOX_NAME_OR_PATH --minimal --force
+rm -f Vagrantfile
+vagrant init $VAGRANT_BOX_NAME_OR_PATH --minimal
 vagrant up --provider=virtualbox
-vagrant ssh
 
-    wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz  -O - | sudo tar -xzf - -C /usr/local
-    export PATH=$PATH:/usr/local/go/bin
-
-    cd /vagrant
-    ./diego-lite/scripts/compile "/vagrant/diego-release" "/vagrant/cf-release"
-
-    sudo ./diego-lite/scripts/install
-
-    sudo rm -rf /usr/local/go
-
-    exit
+vagrant ssh -c "wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz  -O - | sudo tar -xzf - -C /usr/local"
+vagrant ssh -c "PATH=$PATH:/usr/local/go/bin /vagrant/diego-lite/scripts/compile /vagrant/diego-release /vagrant/cf-release"
+vagrant ssh -c "sudo PATH=$PATH:/usr/local/go/bin /vagrant/diego-lite/scripts/install"
+vagrant ssh -c "sudo rm -rf /usr/local/go"
 
 vagrant package --output diego-lite.box

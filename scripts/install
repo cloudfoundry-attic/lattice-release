@@ -30,8 +30,8 @@ pushd /tmp
     export PATH=$PATH:/usr/local/go/bin
 popd
 
-export GOPATH=`pwd`/diego-release
-pushd diego-release/src/github.com/cloudfoundry-incubator/garden-linux/old
+export GOPATH=/vagrant/diego-release
+pushd /vagrant/diego-release/src/github.com/cloudfoundry-incubator/garden-linux/old
     make
 
     cp -a linux_backend/bin /var/diego/garden/garden-bin

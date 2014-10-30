@@ -9,7 +9,7 @@ export GOOS=linux
 export GOARCH=amd64
 
 rm -rf bin/*
-export GOBIN=`pwd`/bin
+export GOBIN=/vagrant/bin
 export GOPATH=$DIEGO_RELEASE_PATH
 
 pushd $GOPATH
@@ -24,7 +24,7 @@ pushd $GOPATH
 
     pushd src/github.com/coreos/etcd
         ./build
-        cp bin/linux_amd64/etcd $GOBIN/linux_amd64
+        cp bin/etcd $GOBIN
     popd
 popd
 
