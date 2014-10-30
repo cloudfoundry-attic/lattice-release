@@ -15,7 +15,7 @@ fi
 tar -xzf diego-final-release-created-by-ci.tgz
 WORKSPACE_DIR_PATH=`pwd`
 
-vagrant init $VAGRANT_BOX_NAME_OR_PATH --minimal
+vagrant init $VAGRANT_BOX_NAME_OR_PATH --minimal --force
 vagrant up --provider=virtualbox
 vagrant ssh
 
