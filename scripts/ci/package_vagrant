@@ -3,11 +3,6 @@ set -e
 
 VAGRANT_BOX_NAME_OR_PATH=$1
 
-pushd cf-release
-    git submodule init -- src/gorouter
-    git submodule update --recursive
-popd
-
 if [ -n "$1" ]; then
     VAGRANT_BOX_NAME_OR_PATH="ubuntu/trusty64"
 fi
