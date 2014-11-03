@@ -1,2 +1,2 @@
 #!/bin/bash
-ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --cover --trace --race
+ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race
