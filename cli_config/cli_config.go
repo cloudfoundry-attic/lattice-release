@@ -6,7 +6,7 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
-	"github.com/cloudfoundry/storeadapter/workerpool"
+	"github.com/cloudfoundry/gunk/workpool"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/app_runner"
 	"github.com/pivotal-golang/lager"
@@ -25,7 +25,7 @@ func NewCliApp() *cli.App {
 		panic("DIEGO_EDGE_ETCD environment variable was not set")
 	}
 
-	adapter := etcdstoreadapter.NewETCDStoreAdapter([]string{etcdUrl}, workerpool.NewWorkerPool(20))
+	adapter := etcdstoreadapter.NewETCDStoreAdapter([]string{etcdUrl}, workpool.NewWorkPool(20))
 	err := adapter.Connect()
 	if err != nil {
 		panic(err)
