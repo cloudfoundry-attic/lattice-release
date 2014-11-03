@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/pivotal-cf-experimental/diego-edge-cli.svg?branch=master)](https://travis-ci.org/pivotal-cf-experimental/diego-edge-cli)
+
 diego-edge-cli
 ==============
 
