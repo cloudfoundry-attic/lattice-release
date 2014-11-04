@@ -3,10 +3,11 @@ set -e
 
 VAGRANT_BOX_NAME_OR_PATH=$1
 
-if [ -n "$1" ]; then
+if [ -z "$1" ]; then
     VAGRANT_BOX_NAME_OR_PATH="ubuntu/trusty64"
 fi
 
+exit 243
 tar -xzf diego-final-release-created-by-ci.tgz
 WORKSPACE_DIR_PATH=`pwd`
 
