@@ -13,7 +13,6 @@ if [ -z "$2" ]; then
     export VAGRANT_HOME=$2/vagrant_home
 fi
 
-tar -xzf diego-final-release-created-by-ci.tgz
 WORKSPACE_DIR_PATH=`pwd`
 
 rm -f Vagrantfile
