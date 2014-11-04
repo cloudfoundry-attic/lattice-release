@@ -7,7 +7,7 @@ if [ -z "$1" ]; then
     VAGRANT_BOX_NAME_OR_PATH="ubuntu/trusty64"
 fi
 
-if [ -z "$2" ]; then
+if [ -n "$2" ]; then
     echo "What was the VirtualBox.xml default machine folder set to: "
     grep /var/vcap/data/virtualbox_vms /root/.config/VirtualBox/VirtualBox.xml
 
