@@ -8,7 +8,14 @@ if [ -z "$1" ]; then
 fi
 
 if [ -z "$2" ]; then
+    echo "What was the VirtualBox.xml default machine folder set to: "
+    grep /var/vcap/data/virtualbox_vms /root/.config/VirtualBox/VirtualBox.xml
+
+    echo "Setting Virtualbox machine folder to $2/virtualbox_vms"
     vboxmanage setproperty machinefolder $2/virtualbox_vms #/var/vcap/data/virtualbox_vms on gocd
+    echo "VirtualBox.xml default machine folder is currently set to: "
+    grep /var/vcap/data/virtualbox_vms /root/.config/VirtualBox/VirtualBox.xml
+
     mkdir -p $2/vagrant_home
     export VAGRANT_HOME=$2/vagrant_home
 fi
