@@ -25,8 +25,18 @@ rm -f Vagrantfile
 vagrant init $VAGRANT_BOX_NAME_OR_PATH --minimal
 vagrant up --provider=virtualbox
 
+set +e
+
 vagrant ssh -c "/vagrant/diego-lite/scripts/ci/install_on_vagrant"
+INSTALL_ON_VAGRANT_EXIT_CODE=$?
 
-rm -f diego-lite.box
+set -e
 
-vagrant package --output diego-lite.box
+if [ "$INSTALL_ON_VAGRANT_EXIT_CODE" -eq "0" ]; then
+    rm -f diego-lite.box
+    vagrant package --output diego-lite.box
+fi
+
+vagrant destroy -f
+
+exit $INSTALL_ON_VAGRANT_EXIT_CODE
