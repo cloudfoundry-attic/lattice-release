@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-./update-diego-release
+pushd diego-release
+   git submodule update --init --recursive
+popd
 
 VAGRANT_BOX_NAME_OR_PATH=$1
 
