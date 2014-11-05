@@ -158,7 +158,7 @@ func desireLongRunningProcess(processGuid, route string, instanceCount int) erro
 		ProcessGuid: processGuid,
 		Instances:   instanceCount,
 		Stack:       "lucid64",
-		RootFSPath:  "docker:///dajulia3/diego-edge-docker-app",
+		RootFSPath:  "docker:///diegoedge/diego-edge-docker-app",
 		Routes:      []string{route},
 		MemoryMB:    128,
 		DiskMB:      1024,
