@@ -5,9 +5,9 @@
     
 #Running The Whetstone Tests
 
-For example, to Run Tests against Bosh Lite deployed Diego Release and Loggregator:
+For example, to Run Tests against Bosh Lite deployed Diego Release and Loggregator with a 30 sec app start timeout:
      
-     ginkgo whetstone -untilItFails -- -etcdAddress="10.244.16.2:4001" -domain="10.244.0.34.xip.io" -loggregatorAddress="loggregator.10.244.0.34.xip.io"
+     ginkgo -- -etcdAddress="10.244.16.2:4001" -domain="10.244.0.34.xip.io" -loggregatorAddress="loggregator.10.244.0.34.xip.io" -timeout=30
 
 
 #Notes on Running against Bosh Lite:

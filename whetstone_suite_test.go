@@ -22,6 +22,7 @@ var (
 	domain             string
 	loggregatorAddress string
 	numCpu             int
+	timeout             int
 )
 
 const StackName = "lucid64"
@@ -33,6 +34,7 @@ func init() {
 	flag.StringVar(&etcdAddress, "etcdAddress", "", "Address of the etcd cluster - REQUIRED")
 	flag.StringVar(&domain, "domain", "", "Domain to use for deployed apps - REQUIRED")
 	flag.StringVar(&loggregatorAddress, "loggregatorAddress", "", "Address of the loggregator traffic controller - REQUIRED")
+	flag.IntVar(&timeout, "timeout", 30, "How long whetstone will wait for docker apps to start")
 }
 
 func TestWhetstone(t *testing.T) {

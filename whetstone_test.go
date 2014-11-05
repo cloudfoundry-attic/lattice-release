@@ -40,18 +40,18 @@ var _ = Describe("Diego Edge", func() {
 			err := bbs.RemoveDesiredLRPByProcessGuid(processGuid)
 			Expect(err).To(BeNil())
 
-			Eventually(errorCheckForRoute(route), 20, 1).Should(HaveOccurred())
+			Eventually(errorCheckForRoute(route), timeout, 1).Should(HaveOccurred())
 		})
 
 		It("eventually runs on an executor", func() {
 			err := desireLongRunningProcess(processGuid, route, 1)
 			Expect(err).To(BeNil())
 
-			Eventually(errorCheckForRoute(route), 30, 1).ShouldNot(HaveOccurred())
+			Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
 			outBuf := gbytes.NewBuffer()
 			go streamAppLogsIntoGbytes(processGuid, outBuf)
-			Eventually(outBuf, 2).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
+			Eventually(outBuf, 4).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
 
 			err = desireLongRunningProcess(processGuid, route, 3)
 			Expect(err).To(BeNil())
@@ -59,7 +59,7 @@ var _ = Describe("Diego Edge", func() {
 			instanceCountChan := make(chan int, numCpu)
 			go countInstances(route, instanceCountChan)
 
-			Eventually(instanceCountChan, 20).Should(Receive(Equal(3)))
+			Eventually(instanceCountChan, timeout).Should(Receive(Equal(3)))
 		})
 	})
 
