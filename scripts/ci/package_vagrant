@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+./update-diego-release
+
 VAGRANT_BOX_NAME_OR_PATH=$1
 
 if [ -z "$1" ]; then
@@ -14,8 +16,6 @@ if [ -n "$2" ]; then
     mkdir -p $2/vagrant_home
     export VAGRANT_HOME=$2/vagrant_home
 fi
-
-WORKSPACE_DIR_PATH=`pwd`
 
 rm -f Vagrantfile
 vagrant init $VAGRANT_BOX_NAME_OR_PATH --minimal

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+pushd diego-release
+   git submodule update --init --recursive
+popd
