@@ -1,9 +1,12 @@
 #!/bin/bash
 set -e
 
-pushd diego-release
+pushd diego-release/loggregator
+   git fetch
+   git checkout origin/master
    git submodule update --init --recursive
 popd
+
 
 VAGRANT_BOX_NAME_OR_PATH=$1
 
