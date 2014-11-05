@@ -1,0 +1,18 @@
+#!/bin/sh
+
+pushd /diego-lite/scripts/ci
+    vagrant up
+popd
+
+export DIEGO_RELEASE_PATH=$1
+
+export GOPATH=$DIEGO_RELEASE_PATH
+
+mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
+
+ln -s `pwd`/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/
+
+go get github.com/onsi/ginkgo/ginkgo
+go get github.com/onsi/gomega
+
+PATH=$PATH:$GOPATH/bin ginkgo github.com/pivotal-cf-experimental/whetstone -- -etcdAddress="192.168.11.11:4001" -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io"
