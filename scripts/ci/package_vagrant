@@ -19,7 +19,6 @@ if [ -n "$2" ]; then
     vboxmanage setproperty machinefolder $2/virtualbox_vms #/var/vcap/data/virtualbox_vms on gocd
 
     mkdir -p $2/vagrant_home
-    export VAGRANT_HOME=$2/vagrant_home
 fi
 
 rm -f Vagrantfile

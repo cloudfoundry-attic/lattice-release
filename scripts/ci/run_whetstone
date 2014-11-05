@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 vboxmanage setproperty machinefolder /var/vcap/data/virtualbox_vms #/var/vcap/data/virtualbox_vms on gocd
 
@@ -17,4 +18,8 @@ ln -sf `pwd`/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
 
-PATH=$PATH:$GOPATH/bin ginkgo github.com/pivotal-cf-experimental/whetstone -- -etcdAddress="192.168.11.11:4001" -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io"
+PATH=$PATH:$GOPATH/bin ginkgo  $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -etcdAddress="192.168.11.11:4001" -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io" -timeout=300
+
+pushd diego-lite/scripts/ci
+    vagrant destroy --force
+popd
