@@ -29,13 +29,15 @@ pushd $GOPATH
 popd
 
 pushd $CF_RELEASE_PATH/src
+    GOPATH=/tmp/go
+    mkdir -p $GOPATH/src/github.com/cloudfoundry
+
     REPO_NAME=github.com/cloudfoundry/gorouter
-    mkdir -p $GOPATH/src/$REPO_NAME
     cp -fr gorouter $GOPATH/src/$REPO_NAME
 
     GOPATH=$GOPATH/src/${REPO_NAME}/Godeps/_workspace:$GOPATH
     go install github.com/cloudfoundry/gorouter
-    rm -rf $GOPATH/src/$REPO_NAME
+    rm -rf $GOPATH
     GOPATH=$DIEGO_RELEASE_PATH
 popd
 
