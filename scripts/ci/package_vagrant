@@ -27,4 +27,6 @@ vagrant up --provider=virtualbox
 
 vagrant ssh -c "/vagrant/diego-lite/scripts/ci/install_on_vagrant"
 
+rm -f diego-lite.box
+
 vagrant package --output diego-lite.box
