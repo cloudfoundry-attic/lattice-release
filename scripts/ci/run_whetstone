@@ -3,6 +3,8 @@ set -e
 
 vboxmanage setproperty machinefolder /var/vcap/data/virtualbox_vms #/var/vcap/data/virtualbox_vms on gocd
 
+wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz  -O - | sudo tar -xzf - -C .
+
 pushd diego-lite/scripts/ci
     vagrant up
 popd
