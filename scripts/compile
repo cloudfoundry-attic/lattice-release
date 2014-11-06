@@ -12,6 +12,8 @@ rm -rf bin/*
 export GOBIN=/vagrant/bin
 export GOPATH=$DIEGO_RELEASE_PATH
 
+rm -rf $GOPATH/pkg/*
+
 pushd $GOPATH
     go install github.com/cloudfoundry-incubator/rep/cmd/rep
     go install github.com/cloudfoundry-incubator/executor/cmd/executor
