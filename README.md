@@ -9,7 +9,7 @@ Loggregator is accessible via loggregator.192.168.11.11.xip.io
 
 ##Testing the Diego Lite Box
  
- Follow the whetstone instructions at https://github.com/pivotal-cf-experimental/diego-edge. 
+ Follow the [whetstone instructions](https://github.com/pivotal-cf-experimental/whetstone) for diego-lite
  
     
 ##To provision a box from scratch:
