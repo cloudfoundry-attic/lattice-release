@@ -7,8 +7,6 @@ cleanup_vagrant() {
     popd
 }
 
-vboxmanage setproperty machinefolder /var/vcap/data/virtualbox_vms #/var/vcap/data/virtualbox_vms on gocd
-
 trap cleanup_vagrant EXIT
 
 pushd diego-lite/diego-lite-pipeline/02_test
