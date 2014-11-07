@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e -x
+
+
+docker pull $DOCKER_IMAGE
+docker run -a stdout -a stderr -w /workspace \
+  -v `pwd`:/workspace \
+  -e VAGRANT_CLOUD_ACCESS_TOKEN \
+  -e AWS_SECRET_KEY \
+  -e AWS_ACCESS_KEY \
+  $DOCKER_IMAGE \
+  /bin/bash -l diego-lite/scripts/ci/promote_and_publish
