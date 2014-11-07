@@ -10,6 +10,11 @@ For example, to Run Tests against Bosh Lite deployed Diego Release and Loggregat
      ginkgo -- -etcdAddress="10.244.16.2:4001" -domain="10.244.0.34.xip.io" -loggregatorAddress="loggregator.10.244.0.34.xip.io" -timeout=30
 
 
+To run against [Diego Lite](https://github.com/pivotal-cf-experimental/diego-lite)
+
+  ginkgo -- -etcdAddress="192.168.11.11:4001" -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io" -timeout=30
+   
+
 #Notes on Running against Bosh Lite:
   Cloudfoundry reccomends using xip.io with Bosh lite for DNS.
   This has been very flaky for us, resulting in no such host errors.
