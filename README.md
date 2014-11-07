@@ -12,7 +12,7 @@ For example, to Run Tests against Bosh Lite deployed Diego Release and Loggregat
 
 To run against [Diego Lite](https://github.com/pivotal-cf-experimental/diego-lite)
 
-  ginkgo -- -etcdAddress="192.168.11.11:4001" -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io" -timeout=30
+    ginkgo -- -etcdAddress="192.168.11.11:4001" -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io" -timeout=30
    
 
 #Notes on Running against Bosh Lite:
