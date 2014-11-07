@@ -1,0 +1,5 @@
+#!/bin/bash
+
+docker pull ubuntu:trusty
+docker build --force-rm --no-cache -t $DOCKER_IMAGE diego-lite/scripts/ci/pipeline_image/
+docker push $DOCKER_IMAGE

@@ -11,7 +11,7 @@ export DIEGO_RELEASE_PATH=$1
 export GOPATH=$DIEGO_RELEASE_PATH
 
 #If package_vagrant ran on this machine, there could be packages compiled with a different version of golang. Clean them
-rm -rf $DIEGO_RELEASE_PATH/pkg/*
+rm -rf $GOPATH/pkg/*
 
 mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
 
