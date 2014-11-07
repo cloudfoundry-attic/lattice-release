@@ -67,7 +67,6 @@ upload_diego_lite_to_s3
 
 create_new_version_on_vagrantcloud
 
-
 for provider in "virtualbox"; do
   create_provider_for_version_on_vagrantcloud $provider $version_id $box_url
 done
@@ -78,7 +77,6 @@ echo ""
 echo "successfully published diego lite version $next_version_number to vagrantcloud"
 echo ""
 
-#git stuff
 pushd diego-lite
     sed -i "" -e "s/config.vm.box_version = '.*'/config.vm.box_version = '$next_version_number'/" Vagrantfile
     git diff
