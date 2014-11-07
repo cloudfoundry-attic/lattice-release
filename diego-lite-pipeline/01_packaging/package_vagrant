@@ -27,7 +27,7 @@ vagrant up --provider=virtualbox
 
 set +e
 
-vagrant ssh -c "/vagrant/diego-lite/scripts/ci/install_on_vagrant"
+vagrant ssh -c "/vagrant/diego-lite/diego-lite-pipeline/01_packaging/install_on_vagrant"
 INSTALL_ON_VAGRANT_EXIT_CODE=$?
 
 set -e

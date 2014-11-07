@@ -3,14 +3,13 @@ set -e
 
 vboxmanage setproperty machinefolder /var/vcap/data/virtualbox_vms #/var/vcap/data/virtualbox_vms on gocd
 
-pushd diego-lite/scripts/ci
+pushd diego-lite/diego-lite-pipeline/02_test
     vagrant up
 popd
 
 export DIEGO_RELEASE_PATH=$1
 export GOPATH=$DIEGO_RELEASE_PATH
 
-#If package_vagrant ran on this machine, there could be packages compiled with a different version of golang. Clean them
 rm -rf $GOPATH/pkg/*
 
 mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
@@ -22,6 +21,6 @@ go get github.com/onsi/gomega
 
 PATH=$PATH:$GOPATH/bin ginkgo -noColor $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -etcdAddress="192.168.11.11:4001" -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io" -timeout=300
 
-pushd diego-lite/scripts/ci
+pushd diego-lite/diego-lite-pipeline/02_test
     vagrant destroy --force
 popd

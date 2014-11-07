@@ -15,7 +15,7 @@ mkdir -p /var/diego/garden/overlays
 mkdir -p /var/diego/garden/graph
 
 apt-get -y install quota
-apt-get -y install linux-image-extra-$(uname -r) #Might not be necessary??
+apt-get -y install linux-image-extra-$(uname -r)
 
 pushd /tmp
     SHADOW_TAR_OBJECT_ID="8f17023f-2a94-4d98-a737-ddbf166e7188"

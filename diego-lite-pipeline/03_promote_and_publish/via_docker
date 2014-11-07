@@ -2,7 +2,6 @@
 
 set -e -x
 
-
 docker pull $DOCKER_IMAGE
 docker run -a stdout -a stderr -w /workspace \
   -v `pwd`:/workspace \
@@ -10,4 +9,4 @@ docker run -a stdout -a stderr -w /workspace \
   -e AWS_SECRET_KEY \
   -e AWS_ACCESS_KEY \
   $DOCKER_IMAGE \
-  /bin/bash -l diego-lite/scripts/ci/promote_and_publish
+  /bin/bash -l diego-lite/diego-lite-pipeline/03_promote_and_publish/promote_and_publish

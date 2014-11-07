@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-
 vagrant box add ubuntu/trusty64 --provider virtualbox --box-version 14.04
 vagrant box repackage ubuntu/trusty64 virtualbox 14.04
 mv package.box ubuntu_trusty64_virtualbox.box
