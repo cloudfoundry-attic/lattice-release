@@ -1,12 +1,16 @@
 #!/bin/bash
 set -e
 
+cleanup_vagrant() {
+    vagrant destroy --force
+    rm -f Vagrantfile
+}
+
 pushd diego-release/loggregator
    git fetch
    git checkout origin/master
    git submodule update --init --recursive
 popd
-
 
 VAGRANT_BOX_NAME_OR_PATH=$1
 
@@ -21,22 +25,14 @@ if [ -n "$2" ]; then
     mkdir -p $2/vagrant_home
 fi
 
+trap cleanup_vagrant EXIT
+
 rm -f Vagrantfile
 vagrant init $VAGRANT_BOX_NAME_OR_PATH --minimal
 vagrant up --provider=virtualbox
 
-set +e
 
 vagrant ssh -c "/vagrant/diego-lite/diego-lite-pipeline/01_packaging/install_on_vagrant"
-INSTALL_ON_VAGRANT_EXIT_CODE=$?
 
-set -e
-
-if [ "$INSTALL_ON_VAGRANT_EXIT_CODE" -eq "0" ]; then
-    rm -f diego-lite.box
-    vagrant package --output diego-lite.box
-fi
-
-vagrant destroy -f
-
-exit $INSTALL_ON_VAGRANT_EXIT_CODE
+rm -f diego-lite.box
+vagrant package --output diego-lite.box

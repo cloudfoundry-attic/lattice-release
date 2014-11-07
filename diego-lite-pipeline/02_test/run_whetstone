@@ -1,7 +1,15 @@
 #!/bin/bash
 set -e
 
+cleanup_vagrant() {
+    pushd diego-lite/diego-lite-pipeline/02_test
+        vagrant destroy --force
+    popd
+}
+
 vboxmanage setproperty machinefolder /var/vcap/data/virtualbox_vms #/var/vcap/data/virtualbox_vms on gocd
+
+trap cleanup_vagrant EXIT
 
 pushd diego-lite/diego-lite-pipeline/02_test
     vagrant up
@@ -21,6 +29,3 @@ go get github.com/onsi/gomega
 
 PATH=$PATH:$GOPATH/bin ginkgo -noColor $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -etcdAddress="192.168.11.11:4001" -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io" -timeout=300
 
-pushd diego-lite/diego-lite-pipeline/02_test
-    vagrant destroy --force
-popd
