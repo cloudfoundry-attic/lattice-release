@@ -24,8 +24,6 @@ set_next_version_number() {
 }
 
 upload_diego_lite_to_s3() {
-    aws configure set aws_access_key_id $AWS_ACCESS_KEY
-    aws configure set aws_secret_access_key $AWS_SECRET_KEY
     aws s3 cp diego-lite.box s3://diego-lite-boxes/diego-lite-${next_version_number}.box
 
     box_url="http://diego-lite-boxes.s3.amazonaws.com/diego-lite-${next_version_number}.box"
