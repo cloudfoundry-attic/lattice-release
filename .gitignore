@@ -1,5 +1,6 @@
 package.box
 
+Vagrantfile-e
 .vagrant
 .idea
 bin/linux_amd64/*

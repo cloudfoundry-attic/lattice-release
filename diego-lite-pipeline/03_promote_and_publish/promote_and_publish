@@ -78,7 +78,7 @@ echo "successfully published diego lite version $next_version_number to vagrantc
 echo ""
 
 pushd diego-lite
-    sed -i "" -e "s/config.vm.box_version = '.*'/config.vm.box_version = '$next_version_number'/" Vagrantfile
+    sed -i -e "s/config.vm.box_version = '.*'/config.vm.box_version = '$next_version_number'/" Vagrantfile
     git diff
     git add Vagrantfile
     git commit -m "Update vagrant box version to ${next_version_number}"
