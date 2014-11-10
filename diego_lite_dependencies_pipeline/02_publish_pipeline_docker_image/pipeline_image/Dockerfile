@@ -20,7 +20,7 @@ RUN \
   bash -l -c "pip install awscli";
 
 RUN \
-    git config --global user.email="cf-diego-edge-eng+gocd@pivotal.io"
+    git config --global user.email "cf-diego-edge-eng+gocd@pivotal.io"
 
 RUN \
-    git config --global user.name="Diego Edge Continuous Deployment"
+    git config --global user.name "Diego Edge Continuous Deployment"
