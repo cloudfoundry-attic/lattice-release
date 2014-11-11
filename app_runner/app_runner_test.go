@@ -38,6 +38,13 @@ var _ = Describe("AppRunner", func() {
 					SourceName: "APP",
 				},
 				Actions: []models.ExecutorAction{
+					{
+						Action: models.DownloadAction{
+							From:     "http://file_server.service.dc1.consul:8080/v1/static/spy.tgz",
+							To:       "/tmp",
+							CacheKey: "",
+						},
+					},
 					models.Parallel(
 						models.ExecutorAction{
 							models.RunAction{
@@ -48,8 +55,8 @@ var _ = Describe("AppRunner", func() {
 							models.MonitorAction{
 								Action: models.ExecutorAction{
 									models.RunAction{
-										Path: "echo",
-										Args: []string{"I'm a healthy little spy"},
+										Path: "/tmp/spy",
+										Args: []string{"-addr", ":8080"},
 									},
 								},
 								HealthyThreshold:   1,

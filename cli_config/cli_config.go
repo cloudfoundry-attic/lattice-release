@@ -5,8 +5,8 @@ import (
 
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry/gunk/timeprovider"
-	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
 	"github.com/cloudfoundry/gunk/workpool"
+	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/app_runner"
 	"github.com/pivotal-golang/lager"

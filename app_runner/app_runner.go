@@ -7,7 +7,10 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
-const repUrlRelativeToExecutor string = "http://127.0.0.1:20515"
+const (
+	spyDownloadUrl           string = "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz"
+	repUrlRelativeToExecutor string = "http://127.0.0.1:20515"
+)
 
 type diegoAppRunner struct {
 	bbs bbs.NsyncBBS
@@ -35,9 +38,16 @@ func (appRunner *diegoAppRunner) StartDockerApp(name string, startCommand string
 			SourceName: "APP",
 		},
 		Actions: []models.ExecutorAction{
+			{
+				Action: models.DownloadAction{
+					From:     spyDownloadUrl,
+					To:       "/tmp",
+					CacheKey: "",
+				},
+			},
 			models.Parallel(
 				models.ExecutorAction{
-					models.RunAction{
+					Action: models.RunAction{
 						Path: startCommand,
 					},
 				},
@@ -45,8 +55,8 @@ func (appRunner *diegoAppRunner) StartDockerApp(name string, startCommand string
 					models.MonitorAction{
 						Action: models.ExecutorAction{
 							models.RunAction{
-								Path: "echo",
-								Args: []string{"I'm a healthy little spy"},
+								Path: "/tmp/spy",
+								Args: []string{"-addr", ":8080"},
 							},
 						},
 						HealthyThreshold:   1,
