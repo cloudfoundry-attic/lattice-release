@@ -10,15 +10,3 @@ docker run -a stdout -a stderr -w /workspace \
   -e AWS_SECRET_ACCESS_KEY \
   $DOCKER_IMAGE \
   /bin/bash -l diego-lite/diego-lite-pipeline/03_promote_and_publish/promote_and_publish
-
-pushd diego-lite
-    sed -i -e "s/config.vm.box_version = '.*'/config.vm.box_version = '$next_version_number'/" Vagrantfile
-    git diff
-    git add Vagrantfile
-    git commit -m "Update vagrant box version to ${next_version_number}"
-    git push origin HEAD:master
-
-    git fetch origin develop
-    git merge origin/develop -m "Merge build ${BOSH_LITE_CANDIDATE_BUILD_NUMBER} to develop"
-    git push origin HEAD:develop
-popd

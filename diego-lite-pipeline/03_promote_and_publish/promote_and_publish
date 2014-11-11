@@ -74,3 +74,19 @@ publish_version_on_vagrantcloud
 echo ""
 echo "successfully published diego lite version $next_version_number to vagrantcloud"
 echo ""
+
+aws s3 cp s3://diego-lite-gocd/credentials/ci_key ci_key
+ssh-add -D
+ssh-add ci_key
+
+pushd diego-lite
+    sed -i -e "s/config.vm.box_version = '.*'/config.vm.box_version = '$next_version_number'/" Vagrantfile
+    git diff
+    git add Vagrantfile
+    git commit -m "Update vagrant box version to ${next_version_number}"
+    git push origin HEAD:master
+
+    git fetch origin develop
+    git merge origin/develop -m "Merge build ${BOSH_LITE_CANDIDATE_BUILD_NUMBER} to develop"
+    git push origin HEAD:develop
+popd
