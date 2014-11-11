@@ -52,7 +52,7 @@ var _ = Describe("Diego Edge", func() {
 
 			outBuf := gbytes.NewBuffer()
 			go streamAppLogsIntoGbytes(processGuid, outBuf)
-			Eventually(outBuf, 4).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
+			Eventually(outBuf, timeout).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
 
 			err = desireLongRunningProcess(processGuid, route, 3)
 			Expect(err).To(BeNil())
@@ -103,6 +103,7 @@ func streamAppLogsIntoGbytes(logGuid string, outBuf *gbytes.Buffer) {
 		err = proto.Unmarshal(data, receivedMessage)
 		Expect(err).To(BeNil())
 
+		fmt.Println(string(receivedMessage.GetMessage()))
 		outBuf.Write(receivedMessage.GetMessage())
 	}
 

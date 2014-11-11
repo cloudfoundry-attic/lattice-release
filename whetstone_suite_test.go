@@ -9,8 +9,8 @@ import (
 
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry/gunk/timeprovider"
-	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
 	"github.com/cloudfoundry/gunk/workpool"
+	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-golang/lager/lagertest"
@@ -22,7 +22,7 @@ var (
 	domain             string
 	loggregatorAddress string
 	numCpu             int
-	timeout             int
+	timeout            int
 )
 
 const StackName = "lucid64"
