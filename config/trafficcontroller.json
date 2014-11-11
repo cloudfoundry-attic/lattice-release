@@ -6,7 +6,7 @@
     "OutgoingDropsondePort": 8082,
     "DopplerPort": 8081,
     "IncomingPort": 3456,
-    "OutgoingPort": 8080,
+    "OutgoingPort": 8070,
     "SkipCertVerify": true,
     "SharedSecret": "loggregator-secret",
     "Zone": "z1",

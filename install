@@ -5,6 +5,12 @@ set -e
 cp /vagrant/diego-lite/upstart/* /etc/init
 cp /vagrant/bin/* /usr/local/bin
 
+mkdir -p /var/diego/static-files
+
+pushd /vagrant/bin
+    tar -czf /var/diego/static-files/spy.tgz spy
+popd
+
 mkdir -p /var/diego
 cp -r /vagrant/diego-lite/config /var/diego
 
@@ -28,6 +34,10 @@ pushd /tmp
 
     wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz  -O - | tar -xzf - -C /usr/local
     export PATH=$PATH:/usr/local/go/bin
+
+    CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
+    wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O /usr/local/bin/consul
+    chmod +x /usr/local/bin/consul
 popd
 
 export GOPATH=/vagrant/diego-release

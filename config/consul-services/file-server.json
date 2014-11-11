@@ -1,0 +1,6 @@
+{
+    "service": {
+        "name": "file_server",
+        "port": 8080
+    }
+}
