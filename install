@@ -5,10 +5,10 @@ set -e
 cp /vagrant/diego-lite/upstart/* /etc/init
 cp /vagrant/bin/* /usr/local/bin
 
-mkdir -p /var/diego/static-files
+mkdir -p /var/diego/static-files/docker-circus
 
 pushd /vagrant/bin
-    tar -czf /var/diego/static-files/spy.tgz spy
+    tar -czf /var/diego/static-files/docker-circus/docker-circus.tgz spy
 popd
 
 mkdir -p /var/diego
