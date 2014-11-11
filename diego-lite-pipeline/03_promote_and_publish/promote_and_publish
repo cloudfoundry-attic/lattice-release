@@ -75,6 +75,8 @@ echo ""
 echo "successfully published diego lite version $next_version_number to vagrantcloud"
 echo ""
 
+eval $(ssh-agent)
+
 aws s3 cp s3://diego-lite-gocd/credentials/ci_key ci_key
 ssh-add -D
 ssh-add ci_key
