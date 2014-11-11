@@ -19,8 +19,10 @@ import (
 	"github.com/cloudfoundry/loggregatorlib/logmessage"
 )
 
-const repUrlRelativeToExecutor string = "http://127.0.0.1:20515"
-const spyDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/spy.tgz"
+const (
+	repUrlRelativeToExecutor string = "http://127.0.0.1:20515"
+	spyDownloadUrl           string = "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz"
+)
 
 var _ = Describe("Diego Edge", func() {
 	Context("when desiring a docker-based LRP", func() {
@@ -38,10 +40,10 @@ var _ = Describe("Diego Edge", func() {
 		})
 
 		AfterEach(func() {
-						err := bbs.RemoveDesiredLRPByProcessGuid(processGuid)
-						Expect(err).To(BeNil())
+			err := bbs.RemoveDesiredLRPByProcessGuid(processGuid)
+			Expect(err).To(BeNil())
 
-						Eventually(errorCheckForRoute(route), timeout, 1).Should(HaveOccurred())
+			Eventually(errorCheckForRoute(route), timeout, 1).Should(HaveOccurred())
 		})
 
 		It("eventually runs on an executor", func() {
