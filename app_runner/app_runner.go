@@ -3,7 +3,7 @@ package app_runner
 import (
 	"fmt"
 
-	"github.com/cloudfoundry-incubator/runtime-schema/bbs"
+	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
@@ -13,27 +13,27 @@ const (
 )
 
 type diegoAppRunner struct {
-	bbs bbs.NsyncBBS
+	receptorClient receptor.Client
 }
 
-func NewDiegoAppRunner(bbs bbs.NsyncBBS) *diegoAppRunner {
-	return &diegoAppRunner{bbs}
+func NewDiegoAppRunner(receptorClient receptor.Client) *diegoAppRunner {
+	return &diegoAppRunner{receptorClient}
 }
 
 func (appRunner *diegoAppRunner) StartDockerApp(name string, startCommand string, dockerImagePath string) error {
-	err := appRunner.bbs.DesireLRP(models.DesiredLRP{
-		Domain:      "diego-edge",
+	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid: name,
+		Domain:      "diego-edge",
+		RootFSPath:  dockerImagePath,
 		Instances:   1,
 		Stack:       "lucid64",
-		RootFSPath:  dockerImagePath,
 		Routes:      []string{fmt.Sprintf("%s.192.168.11.11.xip.io", name)},
 		MemoryMB:    128,
 		DiskMB:      1024,
-		Ports: []models.PortMapping{
+		Ports: []receptor.PortMapping{
 			{ContainerPort: 8080},
 		},
-		Log: models.LogConfig{
+		Log: receptor.LogConfig{
 			Guid:       name,
 			SourceName: "APP",
 		},
