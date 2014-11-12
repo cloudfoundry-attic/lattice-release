@@ -22,6 +22,7 @@ pushd $GOPATH
     go install github.com/cloudfoundry-incubator/route-emitter/cmd/route-emitter
     go install github.com/cloudfoundry-incubator/garden-linux
     go install github.com/apcera/gnatsd
+    go install github.com/cloudfoundry-incubator/receptor/cmd/receptor
     go install github.com/cloudfoundry-incubator/file-server/cmd/file-server
     go install github.com/cloudfoundry-incubator/docker-circus/spy
 
