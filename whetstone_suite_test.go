@@ -7,20 +7,18 @@ import (
 	"runtime"
 	"testing"
 
-	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
-	"github.com/cloudfoundry/gunk/timeprovider"
-	"github.com/cloudfoundry/gunk/workpool"
-	"github.com/cloudfoundry/storeadapter/etcdstoreadapter"
+	"github.com/cloudfoundry-incubator/receptor"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-golang/lager/lagertest"
 )
 
 var (
-	bbs                *Bbs.BBS
-	etcdAddress        string
+	receptorClient     receptor.Client
 	domain             string
 	loggregatorAddress string
+	receptorAddress    string
+	receptorUsername    string
+	receptorPassword    string
 	numCpu             int
 	timeout            int
 )
@@ -31,14 +29,16 @@ func init() {
 	numCpu = runtime.NumCPU()
 	runtime.GOMAXPROCS(numCpu)
 
-	flag.StringVar(&etcdAddress, "etcdAddress", "", "Address of the etcd cluster - REQUIRED")
 	flag.StringVar(&domain, "domain", "", "Domain to use for deployed apps - REQUIRED")
 	flag.StringVar(&loggregatorAddress, "loggregatorAddress", "", "Address of the loggregator traffic controller - REQUIRED")
+	flag.StringVar(&receptorAddress, "receptorAddress", "", "Address of the diego receptor - REQUIRED")
+	flag.StringVar(&receptorUsername, "receptorUsername", "", "Username for the receptor")
+	flag.StringVar(&receptorPassword, "receptorPassword", "", "Password for the receptor")
 	flag.IntVar(&timeout, "timeout", 30, "How long whetstone will wait for docker apps to start")
 }
 
 func TestWhetstone(t *testing.T) {
-	if etcdAddress == "" || domain == "" || loggregatorAddress == "" {
+	if receptorAddress == "" || domain == "" || loggregatorAddress == "" {
 		fmt.Fprintf(os.Stderr, "To run this test suite, you must set the required flags.\nUsage of %s:\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
@@ -48,11 +48,5 @@ func TestWhetstone(t *testing.T) {
 }
 
 var _ = BeforeEach(func() {
-	etcdUrl := fmt.Sprintf("http://%s", etcdAddress)
-	adapter := etcdstoreadapter.NewETCDStoreAdapter([]string{etcdUrl}, workpool.NewWorkPool(20))
-
-	err := adapter.Connect()
-	Expect(err).ToNot(HaveOccurred())
-
-	bbs = Bbs.NewBBS(adapter, timeprovider.NewTimeProvider(), lagertest.NewTestLogger("test"))
+	receptorClient = receptor.NewClient(receptorAddress, receptorUsername, receptorPassword)
 })

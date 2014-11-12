@@ -16,6 +16,7 @@ import (
 	"github.com/onsi/gomega/gbytes"
 
 	"code.google.com/p/gogoprotobuf/proto"
+	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry/loggregatorlib/logmessage"
 )
 
@@ -40,7 +41,7 @@ var _ = Describe("Diego Edge", func() {
 		})
 
 		AfterEach(func() {
-			err := bbs.RemoveDesiredLRPByProcessGuid(processGuid)
+			err := receptorClient.DeleteDesiredLRP(processGuid)
 			Expect(err).To(BeNil())
 
 			Eventually(errorCheckForRoute(route), timeout, 1).Should(HaveOccurred())
@@ -54,7 +55,7 @@ var _ = Describe("Diego Edge", func() {
 
 			outBuf := gbytes.NewBuffer()
 			go streamAppLogsIntoGbytes(processGuid, outBuf)
-			Eventually(outBuf, timeout).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
+			Eventually(outBuf, 4).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
 
 			err = desireLongRunningProcess(processGuid, route, 3)
 			Expect(err).To(BeNil())
@@ -105,7 +106,6 @@ func streamAppLogsIntoGbytes(logGuid string, outBuf *gbytes.Buffer) {
 		err = proto.Unmarshal(data, receivedMessage)
 		Expect(err).To(BeNil())
 
-		fmt.Println(string(receivedMessage.GetMessage()))
 		outBuf.Write(receivedMessage.GetMessage())
 	}
 
@@ -157,19 +157,19 @@ func makeGetRequestToRoute(route string) (*http.Response, error) {
 }
 
 func desireLongRunningProcess(processGuid, route string, instanceCount int) error {
-	return bbs.DesireLRP(models.DesiredLRP{
-		Domain:      "whetstone",
+	return receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid: processGuid,
+		Domain:      "whetstone",
+		RootFSPath:  "docker:///diegoedge/diego-edge-docker-app",
 		Instances:   instanceCount,
 		Stack:       "lucid64",
-		RootFSPath:  "docker:///diegoedge/diego-edge-docker-app",
 		Routes:      []string{route},
 		MemoryMB:    128,
 		DiskMB:      1024,
-		Ports: []models.PortMapping{
+		Ports: []receptor.PortMapping{
 			{ContainerPort: 8080},
 		},
-		Log: models.LogConfig{
+		Log: receptor.LogConfig{
 			Guid:       processGuid,
 			SourceName: "APP",
 		},
@@ -190,7 +190,7 @@ func desireLongRunningProcess(processGuid, route string, instanceCount int) erro
 				models.ExecutorAction{
 					models.MonitorAction{
 						Action: models.ExecutorAction{
-							models.RunAction{ //The spy. Is this container healthy? running on 8080?
+							models.RunAction{
 								Path: "/tmp/spy",
 								Args: []string{"-addr", ":8080"},
 							},
