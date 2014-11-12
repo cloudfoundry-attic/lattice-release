@@ -17,8 +17,8 @@ var (
 	domain             string
 	loggregatorAddress string
 	receptorAddress    string
-	receptorUsername    string
-	receptorPassword    string
+	receptorUsername   string
+	receptorPassword   string
 	numCpu             int
 	timeout            int
 )

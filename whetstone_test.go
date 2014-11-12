@@ -169,10 +169,8 @@ func desireLongRunningProcess(processGuid, route string, instanceCount int) erro
 		Ports: []receptor.PortMapping{
 			{ContainerPort: 8080},
 		},
-		Log: receptor.LogConfig{
-			Guid:       processGuid,
-			SourceName: "APP",
-		},
+		LogGuid:   processGuid,
+		LogSource: "APP",
 		Actions: []models.ExecutorAction{
 			{
 				Action: models.DownloadAction{
