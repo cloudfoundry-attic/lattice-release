@@ -79,6 +79,7 @@ eval $(ssh-agent)
 
 aws s3 cp s3://diego-lite-gocd/credentials/ci_key ci_key
 ssh-add -D
+chmod 700 ci_key
 ssh-add ci_key
 
 pushd diego-lite
