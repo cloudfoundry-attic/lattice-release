@@ -3,14 +3,21 @@ set -e
 
 cleanup_vagrant() {
     pushd diego-lite/diego-lite-pipeline/02_test
+        vagrant ssh -c "pushd /var/log tar -czf /vagrant/vagrant_upstart_logs.tgz upstart"
         vagrant destroy --force
     popd
+
+    mv diego-lite/diego-lite-pipeline/02_test/vagrant_upstart_logs.tgz .
+
+    vagrant box remove --force diego-lite.box
 }
 
 trap cleanup_vagrant EXIT
 
+vagrant box add diego-lite.box
+
 pushd diego-lite/diego-lite-pipeline/02_test
-    vagrant up
+    vagrant up  --provider=virtualbox
 popd
 
 export DIEGO_RELEASE_PATH=$1
