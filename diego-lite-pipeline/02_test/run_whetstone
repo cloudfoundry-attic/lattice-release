@@ -1,18 +1,33 @@
 #!/bin/bash
 set -e
 
-cleanup_vagrant() {
+save_logs() {
+    echo "save logs"
+
     pushd diego-lite/diego-lite-pipeline/02_test
-        vagrant ssh -c "pushd /var/log tar -czf /vagrant/vagrant_upstart_logs.tgz upstart"
-        vagrant destroy --force
+        vagrant ssh -c "sudo tar -czf /vagrant/vagrant_upstart_logs.tgz /var/log/upstart"
     popd
 
     mv diego-lite/diego-lite-pipeline/02_test/vagrant_upstart_logs.tgz .
+}
+
+cleanup_vagrant() {
+    echo "cleaning up vagrant"
+
+    pushd diego-lite/diego-lite-pipeline/02_test
+        vagrant destroy --force
+    popd
 
     vagrant box remove --force diego-lite-in-progress
 }
 
-trap cleanup_vagrant EXIT
+cleanup(){
+    set +e
+    save_logs
+    cleanup_vagrant
+}
+
+trap cleanup EXIT
 
 vagrant box add diego-lite.box --name diego-lite-in-progress
 
@@ -33,4 +48,3 @@ go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
 
 PATH=$PATH:$GOPATH/bin ginkgo -noColor $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io" -receptorAddress="receptor.192.168.11.11.xip.io" -timeout=300
-
