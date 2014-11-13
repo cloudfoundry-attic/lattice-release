@@ -9,12 +9,12 @@ cleanup_vagrant() {
 
     mv diego-lite/diego-lite-pipeline/02_test/vagrant_upstart_logs.tgz .
 
-    vagrant box remove --force diego-lite.box
+    vagrant box remove --force diego-lite-in-progress
 }
 
 trap cleanup_vagrant EXIT
 
-vagrant box add diego-lite.box
+vagrant box add diego-lite.box --name diego-lite-in-progress
 
 pushd diego-lite/diego-lite-pipeline/02_test
     vagrant up  --provider=virtualbox
