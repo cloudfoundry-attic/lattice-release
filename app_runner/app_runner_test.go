@@ -34,10 +34,8 @@ var _ = Describe("AppRunner", func() {
 				Ports: []receptor.PortMapping{
 					{ContainerPort: 8080},
 				},
-				Log: receptor.LogConfig{
-					Guid:       "americano-app",
-					SourceName: "APP",
-				},
+				LogGuid:   "americano-app",
+				LogSource: "APP",
 				Actions: []models.ExecutorAction{
 					{
 						Action: models.DownloadAction{

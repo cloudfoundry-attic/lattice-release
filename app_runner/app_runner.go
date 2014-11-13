@@ -33,10 +33,8 @@ func (appRunner *diegoAppRunner) StartDockerApp(name string, startCommand string
 		Ports: []receptor.PortMapping{
 			{ContainerPort: 8080},
 		},
-		Log: receptor.LogConfig{
-			Guid:       name,
-			SourceName: "APP",
-		},
+		LogGuid:   name,
+		LogSource: "APP",
 		Actions: []models.ExecutorAction{
 			{
 				Action: models.DownloadAction{
