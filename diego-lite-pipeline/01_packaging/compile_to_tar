@@ -1,5 +1,13 @@
 #!/bin/bash
 
+set -e
+
+pushd diego-release/loggregator
+   git fetch
+   git checkout origin/master
+   git submodule update --init --recursive
+popd
+
 diego-lite/diego-lite-pipeline/helpers/run_with_docker \
  diego-lite/compile \
     /workspace/diego-edge \
