@@ -4,21 +4,18 @@ set -e
 save_logs() {
     echo "save logs"
 
-    pushd diego-lite/diego-lite-pipeline/02_test
+    pushd diego-lite
         vagrant ssh -c "sudo tar -czf /vagrant/vagrant_upstart_logs.tgz /var/log/upstart"
     popd
 
-    mv diego-lite/diego-lite-pipeline/02_test/vagrant_upstart_logs.tgz .
+    mv diego-lite/vagrant_upstart_logs.tgz .
 }
 
 cleanup_vagrant() {
     echo "cleaning up vagrant"
-
-    pushd diego-lite/diego-lite-pipeline/02_test
+    pushd diego-lite
         vagrant destroy --force
     popd
-
-    vagrant box remove --force diego-lite-in-progress
 }
 
 cleanup(){
@@ -27,15 +24,18 @@ cleanup(){
     cleanup_vagrant
 }
 
+export DIEGO_RELEASE_PATH=$1
+export DIEGO_EDGE_TAR_PATH=$2
+
+cp $DIEGO_EDGE_TAR_PATH diego-lite
+export VAGRANT_DIEGO_EDGE_TAR_PATH=/vagrant/`basename $DIEGO_EDGE_TAR_PATH`
+
 trap cleanup EXIT
 
-vagrant box add diego-lite.box --name diego-lite-in-progress
-
-pushd diego-lite/diego-lite-pipeline/02_test
-    vagrant up  --provider=virtualbox
+pushd diego-lite
+    vagrant up --provider=virtualbox
 popd
 
-export DIEGO_RELEASE_PATH=$1
 export GOPATH=$DIEGO_RELEASE_PATH
 
 rm -rf $GOPATH/pkg/*

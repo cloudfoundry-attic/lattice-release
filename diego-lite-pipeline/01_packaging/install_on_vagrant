@@ -1,8 +1,0 @@
-#!/bin/sh
-
-set -e
-
-wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz  -O - | sudo tar -xzf - -C /usr/local
-PATH=$PATH:/usr/local/go/bin /vagrant/diego-lite/compile /vagrant/diego-release /vagrant/cf-release
-sudo PATH=$PATH:/usr/local/go/bin /vagrant/diego-lite/install
-sudo rm -rf /usr/local/go

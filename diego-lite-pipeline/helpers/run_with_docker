@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e -x
+
+if [ -z "$1" ]; then
+    echo "Usage: $0 script-to-run-with-docker"
+    exit 1
+fi
+
+if [ -z "$DOCKER_IMAGE" ]; then
+    echo "DOCKER_IMAGE env var must be set"
+    exit 1
+fi
+
+command_with_args="$@"
+echo "Running command with $@"
+docker pull $DOCKER_IMAGE
+docker run -a stdout -a stderr -w /workspace \
+  -v `pwd`:/workspace \
+  -e AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY \
+  $DOCKER_IMAGE \
+  /bin/bash -c "$command_with_args"

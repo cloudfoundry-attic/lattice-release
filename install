@@ -2,23 +2,32 @@
 
 set -e
 
-cp /vagrant/diego-lite/upstart/* /etc/init
-cp /vagrant/bin/* /usr/local/bin
+DIEGO_EDGE_PATH=$1
+
+if [ -z "$DIEGO_EDGE_PATH" ]; then
+    DIEGO_EDGE_PATH='.'
+fi
+
+cp $DIEGO_EDGE_PATH/upstart/* /etc/init
+cp $DIEGO_EDGE_PATH/bin/* /usr/local/bin
 
 mkdir -p /var/diego/static-files/docker-circus
 
-pushd /vagrant/bin
+pushd $DIEGO_EDGE_PATH/bin
     tar -czf /var/diego/static-files/docker-circus/docker-circus.tgz spy
 popd
-
-mkdir -p /var/diego
-cp -r /vagrant/diego-lite/config /var/diego
 
 mkdir -p /var/diego/garden
 mkdir -p /var/diego/garden/depot
 mkdir -p /var/diego/garden/rootfs
 mkdir -p /var/diego/garden/overlays
 mkdir -p /var/diego/garden/graph
+
+cp -a $DIEGO_EDGE_PATH/garden/garden-bin /var/diego/garden/garden-bin
+cp -a $DIEGO_EDGE_PATH/garden/skeleton /var/diego/garden/skeleton
+
+mkdir -p /var/diego/config
+cp -r $DIEGO_EDGE_PATH/config /var/diego
 
 apt-get -y install quota
 apt-get -y install linux-image-extra-$(uname -r)
@@ -29,22 +38,8 @@ pushd /tmp
     pushd shadow-4.2.1
         ./configure --prefix=/var/diego
         make
-        sudo make install
+        make install
     popd
-
-    wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz  -O - | tar -xzf - -C /usr/local
-    export PATH=$PATH:/usr/local/go/bin
-
-    CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
-    wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O /usr/local/bin/consul
-    chmod +x /usr/local/bin/consul
 popd
 
-export GOPATH=/vagrant/diego-release
-pushd /vagrant/diego-release/src/github.com/cloudfoundry-incubator/garden-linux/old
-    make
-
-    cp -a linux_backend/bin /var/diego/garden/garden-bin
-    cp -a linux_backend/skeleton /var/diego/garden/skeleton
-popd
-
+ls $DIEGO_EDGE_PATH/upstart/ | cut -d "." -f 1 | xargs -n1 start

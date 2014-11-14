@@ -2,80 +2,17 @@
 
 set -e
 
-if [ -z "${VAGRANT_CLOUD_ACCESS_TOKEN}" ]; then
-  echo "VAGRANT_CLOUD_ACCESS_TOKEN needs to be set"
-  exit 1
-fi
+diego_edge_tar_path=$1
 
-set_next_version_number() {
-    result=`curl https://vagrantcloud.com/api/v1/box/diego-edge/diego-lite?access_token="$VAGRANT_CLOUD_ACCESS_TOKEN"`
+upload_diego_edge_to_s3() {
+    echo "upload to s3"
+    aws s3 cp $diego_edge_tar_path s3://diego-edge/diego-edge-latest.box
 
-    current_version_number=`echo $result | jq ".current_version.version"`
-
-    if [ "$current_version_number" = "null" ]; then
-      echo "Failed to get current version number"
-      exit 1
-    fi
-
-    current_version_number="${current_version_number%\"}"
-    current_version_number="${current_version_number#\"}"
-
-    next_version_number=$((current_version_number+1))
+    box_url="http://diego-edge.s3.amazonaws.com/diego-edge-latest.box"
+    echo $box_url
 }
 
-upload_diego_lite_to_s3() {
-    aws s3 cp diego-lite.box s3://diego-lite-boxes/diego-lite-${next_version_number}.box
-
-    box_url="http://diego-lite-boxes.s3.amazonaws.com/diego-lite-${next_version_number}.box"
-}
-
-create_new_version_on_vagrantcloud() {
-    result=`curl https://vagrantcloud.com/api/v1/box/diego-edge/diego-lite/versions \
-            -X POST \
-            -d version[version]="$next_version_number" \
-            -d access_token="$VAGRANT_CLOUD_ACCESS_TOKEN"`
-
-    version_id=`echo $result | jq ".number"`
-
-    if [ "$version_id" = "null" ]; then
-      echo "Failed to create version"
-      exit 1
-    fi
-}
-
-create_provider_for_version_on_vagrantcloud() {
-  provider=$1
-  version_id=$2
-  box_url=$3
-
-  curl https://vagrantcloud.com/api/v1/box/diego-edge/diego-lite/version/${version_id}/providers \
-  -X POST \
-  -d provider[name]="$provider" \
-  -d provider[url]="${box_url}" \
-  -d access_token="$VAGRANT_CLOUD_ACCESS_TOKEN"
-}
-
-publish_version_on_vagrantcloud() {
-    curl https://vagrantcloud.com/api/v1/box/diego-edge/diego-lite/version/${version_id}/release -X PUT -d access_token="$VAGRANT_CLOUD_ACCESS_TOKEN"
-}
-
-set_next_version_number
-
-upload_diego_lite_to_s3
-
-create_new_version_on_vagrantcloud
-
-for provider in "virtualbox"; do
-  create_provider_for_version_on_vagrantcloud $provider $version_id $box_url
-done
-
-publish_version_on_vagrantcloud
-
-echo ""
-echo "successfully published diego lite version $next_version_number to vagrantcloud"
-echo ""
-
-eval $(ssh-agent)
+upload_diego_edge_to_s3
 
 aws s3 cp s3://diego-lite-gocd/credentials/ci_key ci_key
 ssh-add -D
@@ -83,13 +20,12 @@ chmod 700 ci_key
 ssh-add ci_key
 
 pushd diego-lite
-    sed -i -e "s/config.vm.box_version = '.*'/config.vm.box_version = '$next_version_number'/" Vagrantfile
-    git diff
-    git add Vagrantfile
-    git commit -m "Update vagrant box version to ${next_version_number}"
-    git push origin HEAD:master
+    git pull origin master
+    git co master
+    echo "merging develop onto master"
+    git merge develop
 
-    git fetch origin develop
-    git merge origin/develop -m "Merge build ${BOSH_LITE_CANDIDATE_BUILD_NUMBER} to develop"
-    git push origin HEAD:develop
+    echo "pushing local master to origin/master"
+    git push origin master
+    echo "Successfully pushed updates to origin/master"
 popd

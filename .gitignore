@@ -4,3 +4,4 @@ Vagrantfile-e
 .vagrant
 .idea
 bin/linux_amd64/*
+diego-edge.tgz

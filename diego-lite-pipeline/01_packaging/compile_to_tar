@@ -1,0 +1,10 @@
+#!/bin/bash
+
+diego-lite/diego-lite-pipeline/helpers/run_with_docker \
+ diego-lite/compile \
+    /workspace/diego-edge \
+    /workspace/diego-release \
+    /workspace/cf-release \
+    /workspace/diego-lite
+
+tar -czf diego-edge.tgz diego-edge

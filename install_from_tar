@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ -z "${1}" ]; then
+  echo "PATH to TAR is Needed. In the future this will be fetched from s3"
+  exit 1
+fi
+
+export PATH_TO_DIEGO_EDGE_TAR=$1
+
+tar -xf $PATH_TO_DIEGO_EDGE_TAR -C /tmp
+
+/tmp/diego-edge/install /tmp/diego-edge/

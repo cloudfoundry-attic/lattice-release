@@ -2,14 +2,23 @@
 
 set -e
 
-export DIEGO_RELEASE_PATH=$1
-export CF_RELEASE_PATH=$2
+export OUTPUT_DIR=$1
+export DIEGO_RELEASE_PATH=$2
+export CF_RELEASE_PATH=$3
+export DIEGO_LITE_PATH=$4
+
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
+    echo "Incorrect Usage. Usage: $0 output-dir diego-release-path cf-release-path diego-lite-path"
+    exit 1
+fi
 
 export GOOS=linux
 export GOARCH=amd64
 
-rm -rf bin/*
-export GOBIN=/vagrant/bin
+rm -rf $OUTPUT_DIR/*
+mkdir -p $OUTPUT_DIR/garden
+
+export GOBIN=$OUTPUT_DIR/bin
 export GOPATH=$DIEGO_RELEASE_PATH
 
 rm -rf $GOPATH/pkg/*
@@ -45,9 +54,25 @@ pushd $CF_RELEASE_PATH/src
     GOPATH=$DIEGO_RELEASE_PATH
 popd
 
+pushd $DIEGO_RELEASE_PATH/src/github.com/cloudfoundry-incubator/garden-linux/old
+    make
+
+    cp -a linux_backend/bin $OUTPUT_DIR/garden/garden-bin
+    cp -a linux_backend/skeleton $OUTPUT_DIR/garden/skeleton
+popd
+
 pushd $DIEGO_RELEASE_PATH/loggregator
     GOPATH=`pwd`
     go install trafficcontroller
     go install doppler
     go install metron
+    GOPATH=$DIEGO_RELEASE_PATH
 popd
+
+CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
+wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul
+chmod +x $GOBIN/consul
+
+cp -a $DIEGO_LITE_PATH/upstart $OUTPUT_DIR
+cp -a $DIEGO_LITE_PATH/config $OUTPUT_DIR
+cp -a $DIEGO_LITE_PATH/install $OUTPUT_DIR/install
