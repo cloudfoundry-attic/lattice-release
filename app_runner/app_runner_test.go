@@ -36,37 +36,23 @@ var _ = Describe("AppRunner", func() {
 				},
 				LogGuid:   "americano-app",
 				LogSource: "APP",
-				Actions: []models.ExecutorAction{
-					{
-						Action: models.DownloadAction{
-							From:     "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz",
-							To:       "/tmp",
-							CacheKey: "",
-						},
+				Setup: &models.ExecutorAction{
+					Action: models.DownloadAction{
+						From:     "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz",
+						To:       "/tmp",
+						CacheKey: "",
 					},
-					models.Parallel(
-						models.ExecutorAction{
-							models.RunAction{
-								Path: "/app-run-statement",
-							},
-						},
-						models.ExecutorAction{
-							models.MonitorAction{
-								Action: models.ExecutorAction{
-									models.RunAction{
-										Path: "/tmp/spy",
-										Args: []string{"-addr", ":8080"},
-									},
-								},
-								HealthyThreshold:   1,
-								UnhealthyThreshold: 1,
-								HealthyHook: models.HealthRequest{
-									Method: "PUT",
-									URL:    "http://127.0.0.1:20515/lrp_running/americano-app/PLACEHOLDER_INSTANCE_INDEX/PLACEHOLDER_INSTANCE_GUID",
-								},
-							},
-						},
-					),
+				},
+				Action: models.ExecutorAction{
+					Action: models.RunAction{
+						Path: "/app-run-statement",
+					},
+				},
+				Monitor: &models.ExecutorAction{
+					Action: models.RunAction{
+						Path: "/tmp/spy",
+						Args: []string{"-addr", ":8080"},
+					},
 				},
 			}))
 		})

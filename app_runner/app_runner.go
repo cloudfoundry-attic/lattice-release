@@ -35,41 +35,23 @@ func (appRunner *diegoAppRunner) StartDockerApp(name string, startCommand string
 		},
 		LogGuid:   name,
 		LogSource: "APP",
-		Actions: []models.ExecutorAction{
-			{
-				Action: models.DownloadAction{
-					From:     spyDownloadUrl,
-					To:       "/tmp",
-					CacheKey: "",
-				},
+		Setup: &models.ExecutorAction{
+			Action: models.DownloadAction{
+				From:     spyDownloadUrl,
+				To:       "/tmp",
+				CacheKey: "",
 			},
-			models.Parallel(
-				models.ExecutorAction{
-					Action: models.RunAction{
-						Path: startCommand,
-					},
-				},
-				models.ExecutorAction{
-					models.MonitorAction{
-						Action: models.ExecutorAction{
-							models.RunAction{
-								Path: "/tmp/spy",
-								Args: []string{"-addr", ":8080"},
-							},
-						},
-						HealthyThreshold:   1,
-						UnhealthyThreshold: 1,
-						HealthyHook: models.HealthRequest{
-							Method: "PUT",
-							URL: fmt.Sprintf(
-								"%s/lrp_running/%s/PLACEHOLDER_INSTANCE_INDEX/PLACEHOLDER_INSTANCE_GUID",
-								repUrlRelativeToExecutor,
-								name,
-							),
-						},
-					},
-				},
-			),
+		},
+		Action: models.ExecutorAction{
+			Action: models.RunAction{
+				Path: startCommand,
+			},
+		},
+		Monitor: &models.ExecutorAction{
+			Action: models.RunAction{
+				Path: "/tmp/spy",
+				Args: []string{"-addr", ":8080"},
+			},
 		},
 	})
 
