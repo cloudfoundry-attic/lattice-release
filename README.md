@@ -18,4 +18,4 @@ To use the CLI set the DIEGO_RECEPTOR_ADDRESS environment variable with the loca
 
 Example Usage:
 
-    DIEGO_RECEPTOR_ADDRESS="http://receptor.192.168.11.11.xip.io" diego-edge-cli start Bingo-app -i "docker:///dajulia3/diego-edge-docker-app" -c "/dockerapp"
+        DIEGO_RECEPTOR_ADDRESS="receptor.192.168.11.11.xip.io" diego-edge-cli start Bingo-app -i "docker:///dajulia3/diego-edge-docker-app" -c "/dockerapp"
