@@ -166,46 +166,29 @@ func desireLongRunningProcess(processGuid, route string, instanceCount int) erro
 		Routes:      []string{route},
 		MemoryMB:    128,
 		DiskMB:      1024,
+		CPUWeight:   1,
 		Ports: []receptor.PortMapping{
 			{ContainerPort: 8080},
 		},
 		LogGuid:   processGuid,
 		LogSource: "APP",
-		Actions: []models.ExecutorAction{
-			{
-				Action: models.DownloadAction{
-					From:     spyDownloadUrl,
-					To:       "/tmp",
-					CacheKey: "",
-				},
+		Setup: &models.ExecutorAction{
+			Action: models.DownloadAction{
+				From:     spyDownloadUrl,
+				To:       "/tmp",
+				CacheKey: "",
 			},
-			models.Parallel(
-				models.ExecutorAction{
-					models.RunAction{
-						Path: "/dockerapp",
-					},
-				},
-				models.ExecutorAction{
-					models.MonitorAction{
-						Action: models.ExecutorAction{
-							models.RunAction{
-								Path: "/tmp/spy",
-								Args: []string{"-addr", ":8080"},
-							},
-						},
-						HealthyThreshold:   1,
-						UnhealthyThreshold: 1,
-						HealthyHook: models.HealthRequest{ //Teel the rep where to call back to on exit 0 of spy
-							Method: "PUT",
-							URL: fmt.Sprintf(
-								"%s/lrp_running/%s/PLACEHOLDER_INSTANCE_INDEX/PLACEHOLDER_INSTANCE_GUID",
-								repUrlRelativeToExecutor,
-								processGuid,
-							),
-						},
-					},
-				},
-			),
+		},
+		Action: models.ExecutorAction{
+			Action: models.RunAction{
+				Path: "/dockerapp",
+			},
+		},
+		Monitor: &models.ExecutorAction{
+			Action: models.RunAction{
+				Path: "/tmp/spy",
+				Args: []string{"-addr", ":8080"},
+			},
 		},
 	})
 }
