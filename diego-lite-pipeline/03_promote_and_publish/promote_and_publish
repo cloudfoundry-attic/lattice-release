@@ -2,6 +2,9 @@
 
 set -e
 
+echo "Running ssh-agent"
+eval `ssh-agent`
+
 diego_edge_tar_path=$1
 
 upload_diego_edge_to_s3() {
