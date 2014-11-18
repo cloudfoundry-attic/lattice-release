@@ -2,12 +2,12 @@ package command_factory_test
 
 import (
 	"errors"
-	"flag"
 
 	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
+	"github.com/pivotal-cf-experimental/diego-edge-cli/test_helpers"
 
 	"github.com/pivotal-cf-experimental/diego-edge-cli/app_runner/command_factory"
 )
@@ -58,9 +58,8 @@ var _ = Describe("CommandFactory", func() {
 				"--start-command=/start-me-please",
 				"cool-web-app",
 			}
-			flagSet := flagsetFromCommandAndArgs(command, args)
 
-			context := cli.NewContext(&cli.App{}, flagSet, flagSet)
+			context := test_helpers.ContextFromArgsAndCommand(args, command)
 
 			command.Action(context)
 
@@ -77,9 +76,7 @@ var _ = Describe("CommandFactory", func() {
 				"--docker-image=docker://fun/app",
 				"--start-command=/start-me-please",
 			}
-			flagSet := flagsetFromCommandAndArgs(command, args)
-
-			context := cli.NewContext(&cli.App{}, flagSet, flagSet)
+			context := test_helpers.ContextFromArgsAndCommand(args, command)
 
 			command.Action(context)
 
@@ -93,9 +90,7 @@ var _ = Describe("CommandFactory", func() {
 				"--start-command=/start-me-please",
 				"cool-web-app",
 			}
-			flagSet := flagsetFromCommandAndArgs(command, args)
-
-			context := cli.NewContext(&cli.App{}, flagSet, flagSet)
+			context := test_helpers.ContextFromArgsAndCommand(args, command)
 
 			command.Action(context)
 
@@ -109,9 +104,7 @@ var _ = Describe("CommandFactory", func() {
 				"--docker-image=docker://fun/app",
 				"cool-web-app",
 			}
-			flagSet := flagsetFromCommandAndArgs(command, args)
-
-			context := cli.NewContext(&cli.App{}, flagSet, flagSet)
+			context := test_helpers.ContextFromArgsAndCommand(args, command)
 
 			command.Action(context)
 
@@ -126,9 +119,7 @@ var _ = Describe("CommandFactory", func() {
 				"--start-command=/start-me-please",
 				"cool-web-app",
 			}
-			flagSet := flagsetFromCommandAndArgs(command, args)
-
-			context := cli.NewContext(&cli.App{}, flagSet, flagSet)
+			context := test_helpers.ContextFromArgsAndCommand(args, command)
 
 			appRunner.SetError(errors.New("Major Fault"))
 
@@ -140,13 +131,3 @@ var _ = Describe("CommandFactory", func() {
 		})
 	})
 })
-
-func flagsetFromCommandAndArgs(command cli.Command, args []string) *flag.FlagSet {
-	flagSet := &flag.FlagSet{}
-
-	for _, flag := range command.Flags {
-		flag.Apply(flagSet)
-	}
-	flagSet.Parse(args)
-	return flagSet
-}
