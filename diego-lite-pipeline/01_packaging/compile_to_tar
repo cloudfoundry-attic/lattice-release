@@ -9,7 +9,7 @@ pushd diego-release/loggregator
 popd
 
 #They updated to a version of docker that won't compile with the current diego-release, so we just check out an old, known good SHA
-pushd diego-release/src/github.com/docker
+pushd diego-release/src/github.com/docker/docker
     git co 248ec5d74e4f33bbcf946609fc5f9081a267fb8b
 popd
 
