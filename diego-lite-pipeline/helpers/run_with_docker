@@ -14,7 +14,7 @@ fi
 
 command_with_args="$@"
 echo "Running command with $@"
-#docker pull $DOCKER_IMAGE
+docker pull $DOCKER_IMAGE
 docker run -a stdout -a stderr -w /workspace \
   -v `pwd`:/workspace \
   -e AWS_ACCESS_KEY_ID \
