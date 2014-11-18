@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/pivotal-cf-experimental/diego-edge-cli/cli_config"
+	"github.com/pivotal-cf-experimental/diego-edge-cli/setup_cli"
 )
 
 func main() {
-	cliApp := cli_config.NewCliApp()
+	cliApp := setup_cli.NewCliApp()
 	cliApp.Run(os.Args)
 }

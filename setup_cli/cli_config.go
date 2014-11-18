@@ -1,4 +1,4 @@
-package cli_config
+package setup_cli
 
 import (
 	"os"
