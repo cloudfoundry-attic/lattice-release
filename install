@@ -42,4 +42,4 @@ pushd /tmp
     popd
 popd
 
-ls $DIEGO_EDGE_PATH/upstart/ | cut -d "." -f 1 | xargs -n1 start
+start diego-edge-bootstrap
