@@ -167,11 +167,9 @@ func desireLongRunningProcess(processGuid, route string, instanceCount int) erro
 		MemoryMB:    128,
 		DiskMB:      1024,
 		CPUWeight:   1,
-		Ports: []receptor.PortMapping{
-			{ContainerPort: 8080},
-		},
-		LogGuid:   processGuid,
-		LogSource: "APP",
+		Ports:       []uint32{8080},
+		LogGuid:     processGuid,
+		LogSource:   "APP",
 		Setup: &models.ExecutorAction{
 			Action: models.DownloadAction{
 				From:     spyDownloadUrl,
