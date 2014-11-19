@@ -34,8 +34,11 @@ pushd diego-lite
     git checkout master
     echo "merging develop onto master"
     git merge develop
-
     echo "pushing local master to origin/master"
     git push origin master
     echo "Successfully pushed updates to origin/master"
+
+    echo "pushing local develop to origin/develop"
+    git push origin develop
+    echo "Successfully pushed updates to origin/develop"
 popd
