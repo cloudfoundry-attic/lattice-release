@@ -46,7 +46,7 @@ var _ = Describe("CommandFactory", func() {
 	BeforeEach(func() {
 		appRunner = fakeAppRunner{startedDockerApps: []startedDockerApps{}}
 		buffer = gbytes.NewBuffer()
-		commandFactory := command_factory.NewStartAppCommandFactory(&appRunner, buffer)
+		commandFactory := command_factory.NewAppRunnerCommandFactory(&appRunner, buffer)
 		command = commandFactory.MakeCommand()
 	})
 

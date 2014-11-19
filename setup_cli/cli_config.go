@@ -10,7 +10,7 @@ import (
 	"github.com/pivotal-cf-experimental/diego-edge-cli/config/config_helpers"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/config/persister"
 
-	start_app_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/app_runner/command_factory"
+	app_runner_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/app_runner/command_factory"
 	config_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/config/command_factory"
 )
 
@@ -26,7 +26,7 @@ func NewCliApp() *cli.App {
 	appRunner := app_runner.NewDiegoAppRunner(receptorClient)
 
 	app.Commands = []cli.Command{
-		start_app_command_factory.NewStartAppCommandFactory(appRunner, os.Stdout).MakeCommand(),
+		app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout).MakeCommand(),
 		config_command_factory.NewConfigCommandFactory(config, os.Stdout).MakeSetTargetCommand(),
 	}
 	return app

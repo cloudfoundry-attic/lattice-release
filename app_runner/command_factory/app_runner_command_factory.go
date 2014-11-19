@@ -11,16 +11,16 @@ type appRunner interface {
 	StartDockerApp(name, startCommand, dockerImagePath string) error
 }
 
-type StartAppCommandFactory struct {
+type AppRunnerCommandFactory struct {
 	appRunner appRunner
 	output    io.Writer
 }
 
-func NewStartAppCommandFactory(appRunner appRunner, output io.Writer) *StartAppCommandFactory {
-	return &StartAppCommandFactory{appRunner, output}
+func NewAppRunnerCommandFactory(appRunner appRunner, output io.Writer) *AppRunnerCommandFactory {
+	return &AppRunnerCommandFactory{appRunner, output}
 }
 
-func (commandFactory *StartAppCommandFactory) MakeCommand() cli.Command {
+func (commandFactory *AppRunnerCommandFactory) MakeCommand() cli.Command {
 
 	var startFlags = []cli.Flag{
 		cli.StringFlag{
@@ -45,7 +45,7 @@ func (commandFactory *StartAppCommandFactory) MakeCommand() cli.Command {
 	return startCommand
 }
 
-func (commandFactory *StartAppCommandFactory) startDiegoApp(c *cli.Context) {
+func (commandFactory *AppRunnerCommandFactory) startDiegoApp(c *cli.Context) {
 	startCommand := c.String("start-command")
 	dockerImage := c.String("docker-image")
 	name := c.Args().First()
