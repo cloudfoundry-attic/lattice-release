@@ -34,12 +34,12 @@ func (commandFactory *StartAppCommandFactory) MakeCommand() cli.Command {
 	}
 
 	var startCommand = cli.Command{
-		Name:      "start",
-		ShortName: "s",
+		Name:        "start",
+		ShortName:   "s",
 		Description: "Start a docker app on diego",
-		Usage:     "diego-edge-cli start APP_NAME [-i DOCKER_IMAGE] [-C START_COMMAND]",
-		Action:    commandFactory.startDiegoApp,
-		Flags:     startFlags,
+		Usage:       "diego-edge-cli start APP_NAME [-i DOCKER_IMAGE] [-C START_COMMAND]",
+		Action:      commandFactory.startDiegoApp,
+		Flags:       startFlags,
 	}
 
 	return startCommand
