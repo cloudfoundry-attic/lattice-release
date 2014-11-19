@@ -12,9 +12,12 @@ if [ -z "$DOCKER_IMAGE" ]; then
     exit 1
 fi
 
+if [ "$PULL_DOCKER_IMAGE" != "false" ]; then
+    docker pull $DOCKER_IMAGE
+fi
+
 command_with_args="$@"
 echo "Running command with $@"
-docker pull $DOCKER_IMAGE
 docker run -a stdout -a stderr -w /workspace \
   -v `pwd`:/workspace \
   -e AWS_ACCESS_KEY_ID \
