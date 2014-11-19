@@ -1,10 +1,8 @@
 #!/bin/bash
 
-set -e
-
+set -e -x
 echo "Running ssh-agent"
 eval `ssh-agent`
-
 diego_edge_tar_path=$1
 
 upload_diego_edge_to_s3() {
@@ -18,13 +16,12 @@ upload_diego_edge_to_s3() {
 upload_diego_edge_to_s3
 
 aws s3 cp s3://diego-lite-gocd/credentials/ci_key ci_key
-ssh-add -D
 chmod 700 ci_key
 ssh-add ci_key
 
 pushd diego-lite
     git pull origin master
-    git co master
+    git checkout master
     echo "merging develop onto master"
     git merge develop
 
