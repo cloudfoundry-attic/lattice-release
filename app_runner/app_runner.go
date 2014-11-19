@@ -9,7 +9,6 @@ import (
 
 const (
 	spyDownloadUrl           string = "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz"
-	repUrlRelativeToExecutor string = "http://127.0.0.1:20515"
 )
 
 type DiegoAppRunner struct {
