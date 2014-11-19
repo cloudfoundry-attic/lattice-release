@@ -31,28 +31,19 @@ var _ = Describe("AppRunner", func() {
 				Routes:      []string{"americano-app.192.168.11.11.xip.io"},
 				MemoryMB:    128,
 				DiskMB:      1024,
-				Ports: []receptor.PortMapping{
-					{ContainerPort: 8080},
+				Ports:       []uint32{8080},
+				LogGuid:     "americano-app",
+				LogSource:   "APP",
+				Setup: &models.DownloadAction{
+					From: "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz",
+					To:   "/tmp",
 				},
-				LogGuid:   "americano-app",
-				LogSource: "APP",
-				Setup: &models.ExecutorAction{
-					Action: models.DownloadAction{
-						From:     "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz",
-						To:       "/tmp",
-						CacheKey: "",
-					},
+				Action: &models.RunAction{
+					Path: "/app-run-statement",
 				},
-				Action: models.ExecutorAction{
-					Action: models.RunAction{
-						Path: "/app-run-statement",
-					},
-				},
-				Monitor: &models.ExecutorAction{
-					Action: models.RunAction{
-						Path: "/tmp/spy",
-						Args: []string{"-addr", ":8080"},
-					},
+				Monitor: &models.RunAction{
+					Path: "/tmp/spy",
+					Args: []string{"-addr", ":8080"},
 				},
 			}))
 		})

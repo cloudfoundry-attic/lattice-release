@@ -30,28 +30,19 @@ func (appRunner *diegoAppRunner) StartDockerApp(name string, startCommand string
 		Routes:      []string{fmt.Sprintf("%s.192.168.11.11.xip.io", name)},
 		MemoryMB:    128,
 		DiskMB:      1024,
-		Ports: []receptor.PortMapping{
-			{ContainerPort: 8080},
+		Ports:       []uint32{8080},
+		LogGuid:     name,
+		LogSource:   "APP",
+		Setup: &models.DownloadAction{
+			From: spyDownloadUrl,
+			To:   "/tmp",
 		},
-		LogGuid:   name,
-		LogSource: "APP",
-		Setup: &models.ExecutorAction{
-			Action: models.DownloadAction{
-				From:     spyDownloadUrl,
-				To:       "/tmp",
-				CacheKey: "",
-			},
+		Action: &models.RunAction{
+			Path: startCommand,
 		},
-		Action: models.ExecutorAction{
-			Action: models.RunAction{
-				Path: startCommand,
-			},
-		},
-		Monitor: &models.ExecutorAction{
-			Action: models.RunAction{
-				Path: "/tmp/spy",
-				Args: []string{"-addr", ":8080"},
-			},
+		Monitor: &models.RunAction{
+			Path: "/tmp/spy",
+			Args: []string{"-addr", ":8080"},
 		},
 	})
 
