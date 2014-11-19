@@ -170,23 +170,16 @@ func desireLongRunningProcess(processGuid, route string, instanceCount int) erro
 		Ports:       []uint32{8080},
 		LogGuid:     processGuid,
 		LogSource:   "APP",
-		Setup: &models.ExecutorAction{
-			Action: models.DownloadAction{
-				From:     spyDownloadUrl,
-				To:       "/tmp",
-				CacheKey: "",
-			},
+		Setup: &models.DownloadAction{
+			From: spyDownloadUrl,
+			To:   "/tmp",
 		},
-		Action: models.ExecutorAction{
-			Action: models.RunAction{
-				Path: "/dockerapp",
-			},
+		Action: &models.RunAction{
+			Path: "/dockerapp",
 		},
-		Monitor: &models.ExecutorAction{
-			Action: models.RunAction{
-				Path: "/tmp/spy",
-				Args: []string{"-addr", ":8080"},
-			},
+		Monitor: &models.RunAction{
+			Path: "/tmp/spy",
+			Args: []string{"-addr", ":8080"},
 		},
 	})
 }
