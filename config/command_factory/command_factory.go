@@ -20,7 +20,8 @@ func (c *commandFactory) MakeSetApiCommand() cli.Command {
 	var startCommand = cli.Command{
 		Name:      "api",
 		ShortName: "a",
-		Usage:     "",
+		Description: "Set a target api location",
+		Usage:     "diego-edge-cli api API_PATH",
 		Action:    c.setApi,
 		Flags:     []cli.Flag{},
 	}
