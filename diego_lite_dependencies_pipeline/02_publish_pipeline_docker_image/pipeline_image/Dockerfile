@@ -30,3 +30,9 @@ RUN \
 
 RUN \
      wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz  -O - | tar -xzf - -C /usr/local
+
+RUN \
+    echo "Host github.com" > /etc/ssh/ssh_config
+
+RUN \
+    echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
