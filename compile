@@ -2,16 +2,53 @@
 
 set -e
 
-export OUTPUT_DIR=$1
-export DIEGO_RELEASE_PATH=$2
-export CF_RELEASE_PATH=$3
-export DIEGO_LITE_PATH=$4
+compile_garden_linux() {
+    GOPATH=$GOPATH/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace:$GOPATH
+    go install github.com/cloudfoundry-incubator/garden-linux
+    GOPATH=$DIEGO_RELEASE_PATH
+
+    pushd $DIEGO_RELEASE_PATH/src/github.com/cloudfoundry-incubator/garden-linux/old
+        make
+
+        cp -a linux_backend/bin $OUTPUT_DIR/garden/garden-bin
+        cp -a linux_backend/skeleton $OUTPUT_DIR/garden/skeleton
+    popd
+}
+
+compile_gorouter() {
+    pushd $CF_RELEASE_PATH/src
+        GOPATH=/tmp/go
+        mkdir -p $GOPATH/src/github.com/cloudfoundry
+
+        REPO_NAME=github.com/cloudfoundry/gorouter
+        cp -fr gorouter $GOPATH/src/$REPO_NAME
+
+        GOPATH=$GOPATH/src/${REPO_NAME}/Godeps/_workspace:$GOPATH
+        go install github.com/cloudfoundry/gorouter
+        rm -rf $GOPATH
+        GOPATH=$DIEGO_RELEASE_PATH
+    popd
+}
+
+compile_loggregator() {
+    pushd $DIEGO_RELEASE_PATH/loggregator
+        GOPATH=`pwd`
+        go install trafficcontroller
+        go install doppler
+        go install metron
+        GOPATH=$DIEGO_RELEASE_PATH
+    popd
+}
 
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
     echo "Incorrect Usage. Usage: $0 output-dir diego-release-path cf-release-path diego-lite-path"
     exit 1
 fi
 
+export OUTPUT_DIR=$1
+export DIEGO_RELEASE_PATH=$2
+export CF_RELEASE_PATH=$3
+export DIEGO_LITE_PATH=$4
 export GOOS=linux
 export GOARCH=amd64
 
@@ -29,7 +66,6 @@ pushd $GOPATH
     go install github.com/cloudfoundry-incubator/auctioneer/cmd/auctioneer
     go install github.com/cloudfoundry-incubator/converger/cmd/converger
     go install github.com/cloudfoundry-incubator/route-emitter/cmd/route-emitter
-    go install github.com/cloudfoundry-incubator/garden-linux
     go install github.com/apcera/gnatsd
     go install github.com/cloudfoundry-incubator/receptor/cmd/receptor
     go install github.com/cloudfoundry-incubator/file-server/cmd/file-server
@@ -41,33 +77,9 @@ pushd $GOPATH
     popd
 popd
 
-pushd $CF_RELEASE_PATH/src
-    GOPATH=/tmp/go
-    mkdir -p $GOPATH/src/github.com/cloudfoundry
-
-    REPO_NAME=github.com/cloudfoundry/gorouter
-    cp -fr gorouter $GOPATH/src/$REPO_NAME
-
-    GOPATH=$GOPATH/src/${REPO_NAME}/Godeps/_workspace:$GOPATH
-    go install github.com/cloudfoundry/gorouter
-    rm -rf $GOPATH
-    GOPATH=$DIEGO_RELEASE_PATH
-popd
-
-pushd $DIEGO_RELEASE_PATH/src/github.com/cloudfoundry-incubator/garden-linux/old
-    make
-
-    cp -a linux_backend/bin $OUTPUT_DIR/garden/garden-bin
-    cp -a linux_backend/skeleton $OUTPUT_DIR/garden/skeleton
-popd
-
-pushd $DIEGO_RELEASE_PATH/loggregator
-    GOPATH=`pwd`
-    go install trafficcontroller
-    go install doppler
-    go install metron
-    GOPATH=$DIEGO_RELEASE_PATH
-popd
+compile_garden_linux
+compile_gorouter
+compile_loggregator
 
 CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
 wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul
