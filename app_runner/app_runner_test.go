@@ -13,10 +13,19 @@ import (
 )
 
 var _ = Describe("AppRunner", func() {
-	fakeReceptorClient := &fake_receptor.FakeClient{}
-	appRunner := app_runner.NewDiegoAppRunner(fakeReceptorClient)
 
 	Describe("StartDockerApp", func() {
+		var (
+			fakeReceptorClient *fake_receptor.FakeClient
+			appRunner          *app_runner.DiegoAppRunner
+		)
+
+		BeforeEach(func() {
+			fakeReceptorClient = &fake_receptor.FakeClient{}
+			appRunner = app_runner.NewDiegoAppRunner(fakeReceptorClient)
+
+		})
+
 		It("Starts a Docker App", func() {
 			err := appRunner.StartDockerApp("americano-app", "/app-run-statement", "docker://runtest/runner")
 			Expect(err).To(BeNil())
@@ -48,12 +57,34 @@ var _ = Describe("AppRunner", func() {
 			}))
 		})
 
-		It("returns errors from the bbs", func() {
-			receptorClientError := errors.New("Something went really wrong")
-			fakeReceptorClient.CreateDesiredLRPReturns(receptorClientError)
+		It("returns errors if the app is already started", func() {
+			existingLRPResponse := receptor.ActualLRPResponse{ProcessGuid: "app-all-ready-running"}
+			fakeReceptorClient.ActualLRPsByProcessGuidReturns([]receptor.ActualLRPResponse{existingLRPResponse}, nil)
 
-			err := appRunner.StartDockerApp("nescafe-app", "/app-bork-statement", "docker://faily/boom")
-			Expect(err).To(Equal(receptorClientError))
+			err := appRunner.StartDockerApp("app-all-ready-running", "/app-bork-statement", "docker://faily/boom")
+
+			Expect(err.Error()).To(Equal("App app-all-ready-running, is already running"))
+			Expect(fakeReceptorClient.ActualLRPsByProcessGuidCallCount()).To(Equal(1))
+			Expect(fakeReceptorClient.ActualLRPsByProcessGuidArgsForCall(0)).To(Equal("app-all-ready-running"))
 		})
+
+		Describe("returning errors from the receptor", func() {
+			It("returns desiring lrp errors", func() {
+				receptorError := errors.New("error - Desiring an LRP")
+				fakeReceptorClient.CreateDesiredLRPReturns(receptorError)
+
+				err := appRunner.StartDockerApp("nescafe-app", "/app-bork-statement", "docker://faily/boom")
+				Expect(err).To(Equal(receptorError))
+			})
+
+			It("returns existing count errors", func() {
+				receptorError := errors.New("error - Existing Count")
+				fakeReceptorClient.ActualLRPsByProcessGuidReturns([]receptor.ActualLRPResponse{}, receptorError)
+
+				err := appRunner.StartDockerApp("nescafe-app", "/app-bork-statement", "docker://faily/boom")
+				Expect(err).To(Equal(receptorError))
+			})
+		})
+
 	})
 })

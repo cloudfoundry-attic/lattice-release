@@ -12,15 +12,21 @@ const (
 	repUrlRelativeToExecutor string = "http://127.0.0.1:20515"
 )
 
-type diegoAppRunner struct {
+type DiegoAppRunner struct {
 	receptorClient receptor.Client
 }
 
-func NewDiegoAppRunner(receptorClient receptor.Client) *diegoAppRunner {
-	return &diegoAppRunner{receptorClient}
+func NewDiegoAppRunner(receptorClient receptor.Client) *DiegoAppRunner {
+	return &DiegoAppRunner{receptorClient}
 }
 
-func (appRunner *diegoAppRunner) StartDockerApp(name string, startCommand string, dockerImagePath string) error {
+func (appRunner *DiegoAppRunner) StartDockerApp(name string, startCommand string, dockerImagePath string) error {
+	if existingLrpCount, err := appRunner.existingLrpsCount(name); err != nil {
+		return err
+	} else if existingLrpCount != 0 {
+		return newExistingAppError(name)
+	}
+
 	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid: name,
 		Domain:      "diego-edge",
@@ -47,4 +53,9 @@ func (appRunner *diegoAppRunner) StartDockerApp(name string, startCommand string
 	})
 
 	return err
+}
+
+func (appRunner *DiegoAppRunner) existingLrpsCount(name string) (int, error) {
+	actualLrps, err := appRunner.receptorClient.ActualLRPsByProcessGuid(name)
+	return len(actualLrps), err
 }
