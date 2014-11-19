@@ -7,11 +7,19 @@ diego_edge_tar_path=$1
 
 upload_diego_edge_to_s3() {
     echo "upload to s3"
-    aws s3 cp $diego_edge_tar_path s3://diego-edge/diego-edge-latest.box
+    aws s3 cp $diego_edge_tar_path "s3://diego-edge/diego-edge-latest.tgz"
+    aws s3 cp $diego_edge_tar_path "s3://diego-edge/diego-edge-$new_diego_edge_version.tgz"
+    aws s3 cp diego-lite/Version "s3://diego-edge/Version"
 
-    box_url="http://diego-edge.s3.amazonaws.com/diego-edge-latest.box"
-    echo $box_url
+    diego_edge_s3_url="http://diego-edge.s3.amazonaws.com/diego-edge-latest.tgz"
+    echo $diego_edge_s3_url
 }
+
+previous_diego_edge_version=`cat diego-lite/Version`
+new_diego_edge_version=$((previous_diego_edge_version+1))
+
+echo "Updating Version file: $previous_diego_edge_version -> $new_diego_edge_version"
+echo $new_diego_edge_version > diego-lite/Version
 
 upload_diego_edge_to_s3
 
@@ -20,6 +28,8 @@ chmod 700 ci_key
 ssh-add ci_key
 
 pushd diego-lite
+    git add Version
+    git commit -m "Bump Version: $previous_diego_edge_version -> $new_diego_edge_version"
     git pull origin master
     git checkout master
     echo "merging develop onto master"
