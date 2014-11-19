@@ -1,6 +1,7 @@
 package persister_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -61,12 +62,13 @@ var _ = Describe("filePersister", func() {
 			Expect(err).ToNot(BeNil())
 		})
 
-		It("Returns errors from loading the file", func() {
-			persister := persister.NewFilePersister("Q:/\file")
+		It("handles nonexistant files silently", func() {
+			nonExistantFile := fmt.Sprintf("%snonexistant/tmp_file", tmpDir)
+			persister := persister.NewFilePersister(nonExistantFile)
 
 			err := persister.Load(&data{})
 
-			Expect(err).ToNot(BeNil())
+			Expect(err).To(BeNil())
 		})
 	})
 
@@ -89,8 +91,17 @@ var _ = Describe("filePersister", func() {
 
 		})
 
+		It("writes to nonexistant directories", func() {
+			nonExistantFile := fmt.Sprintf("%snonexistant/tmp_file", tmpDir)
+			persister := persister.NewFilePersister(nonExistantFile)
+
+			err := persister.Save(&data{"Some Value"})
+
+			Expect(err).To(BeNil())
+		})
+
 		It("Returns errors from writing the file", func() {
-			persister := persister.NewFilePersister("Q:/\file")
+			persister := persister.NewFilePersister(tmpDir)
 			err := persister.Save(&data{})
 
 			Expect(err).ToNot(BeNil())

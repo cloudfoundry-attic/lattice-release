@@ -7,6 +7,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/app_runner"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/config"
+	"github.com/pivotal-cf-experimental/diego-edge-cli/config/config_helpers"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/config/persister"
 
 	start_app_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/app_runner/command_factory"
@@ -18,7 +19,7 @@ func NewCliApp() *cli.App {
 	app.Name = "Diego"
 	app.Usage = "Command line interface for diego."
 
-	config := config.New(persister.NewFilePersister(tempPathToConfig()))
+	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(userHome())))
 	config.Load()
 
 	receptorClient := receptor.NewClient(config.Api(), "", "")
@@ -31,6 +32,6 @@ func NewCliApp() *cli.App {
 	return app
 }
 
-func tempPathToConfig() string {
-	return "/tmp/config"
+func userHome() string {
+	return os.Getenv("HOME")
 }
