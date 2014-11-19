@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	spyDownloadUrl           string = "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz"
+	spyDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz"
 )
 
 type DiegoAppRunner struct {
@@ -26,6 +26,25 @@ func (appRunner *DiegoAppRunner) StartDockerApp(name string, startCommand string
 		return newExistingAppError(name)
 	}
 
+	return appRunner.desireLrp(name, startCommand, dockerImagePath)
+}
+
+func (appRunner *DiegoAppRunner) ScaleDockerApp(name string, instances int) error {
+	if existingLrpCount, err := appRunner.existingLrpsCount(name); err != nil {
+		return err
+	} else if existingLrpCount == 0 {
+		return newAppNotStartedError(name)
+	}
+
+	return appRunner.updateLrp(name, instances)
+}
+
+func (appRunner *DiegoAppRunner) existingLrpsCount(name string) (int, error) {
+	actualLrps, err := appRunner.receptorClient.ActualLRPsByProcessGuid(name)
+	return len(actualLrps), err
+}
+
+func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath string) error {
 	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid: name,
 		Domain:      "diego-edge",
@@ -54,7 +73,13 @@ func (appRunner *DiegoAppRunner) StartDockerApp(name string, startCommand string
 	return err
 }
 
-func (appRunner *DiegoAppRunner) existingLrpsCount(name string) (int, error) {
-	actualLrps, err := appRunner.receptorClient.ActualLRPsByProcessGuid(name)
-	return len(actualLrps), err
+func (appRunner *DiegoAppRunner) updateLrp(name string, instances int) error {
+	err := appRunner.receptorClient.UpdateDesiredLRP(
+		name,
+		receptor.DesiredLRPUpdateRequest{
+			Instances: &instances,
+		},
+	)
+
+	return err
 }
