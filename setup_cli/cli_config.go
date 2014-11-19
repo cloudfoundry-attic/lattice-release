@@ -27,7 +27,7 @@ func NewCliApp() *cli.App {
 
 	app.Commands = []cli.Command{
 		start_app_command_factory.NewStartAppCommandFactory(appRunner, os.Stdout).MakeCommand(),
-		config_command_factory.NewConfigCommandFactory(config, os.Stdout).MakeSetApiCommand(),
+		config_command_factory.NewConfigCommandFactory(config, os.Stdout).MakeSetTargetCommand(),
 	}
 	return app
 }

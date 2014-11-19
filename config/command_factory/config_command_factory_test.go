@@ -23,11 +23,11 @@ var _ = Describe("CommandFactory", func() {
 			output = gbytes.NewBuffer()
 		})
 
-		It("sets the api from the api specified", func() {
+		It("sets the api from the target specified", func() {
 			config := config.New(persister.NewFakePersister())
 			commandFactory := command_factory.NewConfigCommandFactory(config, output)
 
-			command := commandFactory.MakeSetApiCommand()
+			command := commandFactory.MakeSetTargetCommand()
 
 			context := test_helpers.ContextFromArgsAndCommand([]string{"receptor.myapi.com"}, command)
 
@@ -39,11 +39,11 @@ var _ = Describe("CommandFactory", func() {
 			Expect(output).To(gbytes.Say("Api Location Set\n"))
 		})
 
-		It("returns an error if the api is blank", func() {
+		It("returns an error if the target is blank", func() {
 			config := config.New(persister.NewFakePersister())
 			commandFactory := command_factory.NewConfigCommandFactory(config, output)
 
-			command := commandFactory.MakeSetApiCommand()
+			command := commandFactory.MakeSetTargetCommand()
 
 			context := test_helpers.ContextFromArgsAndCommand([]string{""}, command)
 
@@ -52,13 +52,13 @@ var _ = Describe("CommandFactory", func() {
 			Expect(output).To(gbytes.Say("Incorrect Usage\n"))
 		})
 
-		It("outputs errors from setting the api", func() {
+		It("outputs errors from setting the target", func() {
 			fakePersister := persister.NewFakePersisterWithError(errors.New("FAILURE setting api"))
 
 			config := config.New(fakePersister)
 			commandFactory := command_factory.NewConfigCommandFactory(config, output)
 
-			command := commandFactory.MakeSetApiCommand()
+			command := commandFactory.MakeSetTargetCommand()
 
 			context := test_helpers.ContextFromArgsAndCommand([]string{"receptor.myapi.com"}, command)
 

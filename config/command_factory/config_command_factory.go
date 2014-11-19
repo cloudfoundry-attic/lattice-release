@@ -16,20 +16,20 @@ func NewConfigCommandFactory(config *config.Config, output io.Writer) *commandFa
 	return &commandFactory{config, output}
 }
 
-func (c *commandFactory) MakeSetApiCommand() cli.Command {
+func (c *commandFactory) MakeSetTargetCommand() cli.Command {
 	var startCommand = cli.Command{
-		Name:        "api",
-		ShortName:   "a",
+		Name:        "target",
+		ShortName:   "t",
 		Description: "Set a target api location",
-		Usage:       "diego-edge-cli api API_PATH",
-		Action:      c.setApi,
+		Usage:       "diego-edge-cli target API_PATH",
+		Action:      c.setTarget,
 		Flags:       []cli.Flag{},
 	}
 
 	return startCommand
 }
 
-func (c *commandFactory) setApi(context *cli.Context) {
+func (c *commandFactory) setTarget(context *cli.Context) {
 	api := context.Args().First()
 
 	if api == "" {
