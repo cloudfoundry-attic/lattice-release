@@ -39,6 +39,16 @@ func (appRunner *DiegoAppRunner) ScaleDockerApp(name string, instances int) erro
 	return appRunner.updateLrp(name, instances)
 }
 
+func (appRunner *DiegoAppRunner) StopDockerApp(name string) error {
+	if existingLrpCount, err := appRunner.existingLrpsCount(name); err != nil {
+		return err
+	} else if existingLrpCount == 0 {
+		return newAppNotStartedError(name)
+	}
+
+	return appRunner.receptorClient.DeleteDesiredLRP(name)
+}
+
 func (appRunner *DiegoAppRunner) existingLrpsCount(name string) (int, error) {
 	actualLrps, err := appRunner.receptorClient.ActualLRPsByProcessGuid(name)
 	return len(actualLrps), err
