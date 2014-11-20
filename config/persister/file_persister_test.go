@@ -63,7 +63,7 @@ var _ = Describe("filePersister", func() {
 		})
 
 		It("handles nonexistant files silently", func() {
-			nonExistantFile := fmt.Sprintf("%snonexistant/tmp_file", tmpDir)
+			nonExistantFile := fmt.Sprintf("%s/nonexistant/tmp_file", tmpDir)
 			persister := persister.NewFilePersister(nonExistantFile)
 
 			err := persister.Load(&data{})
@@ -92,7 +92,8 @@ var _ = Describe("filePersister", func() {
 		})
 
 		It("writes to nonexistant directories", func() {
-			nonExistantFile := fmt.Sprintf("%snonexistant/tmp_file", tmpDir)
+			nonExistantFile := fmt.Sprintf("%s/nonexistant/tmp_file", tmpDir)
+
 			persister := persister.NewFilePersister(nonExistantFile)
 
 			err := persister.Save(&data{"Some Value"})
