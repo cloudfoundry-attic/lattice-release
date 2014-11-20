@@ -20,7 +20,7 @@ var _ = Describe("CommandFactory", func() {
 	)
 
 	BeforeEach(func() {
-		appRunner = fakeAppRunner{startedDockerApps: []startedDockerApps{}, scaledDockerApps: []scaledDockerApps{}}
+		appRunner = fakeAppRunner{startedDockerApps: []startedDockerApps{}, scaledDockerApps: []scaledDockerApps{}, stoppedDockerApps: []stoppedDockerApps{}}
 		buffer = gbytes.NewBuffer()
 	})
 
@@ -176,6 +176,55 @@ var _ = Describe("CommandFactory", func() {
 			Expect(len(appRunner.scaledDockerApps)).To(Equal(0))
 		})
 	})
+
+	Describe("stopDiegoApp", func() {
+
+		var stopDiegoCommand cli.Command
+		BeforeEach(func() {
+			commandFactory := command_factory.NewAppRunnerCommandFactory(&appRunner, buffer)
+			stopDiegoCommand = commandFactory.MakeStopDiegoAppCommand()
+		})
+
+		It("stops a Docker based Diego app as specified in the command via the AppRunner", func() {
+			args := []string{
+				"cool-web-app",
+			}
+
+			context := test_helpers.ContextFromArgsAndCommand(args, stopDiegoCommand)
+
+			stopDiegoCommand.Action(context)
+
+			Expect(len(appRunner.stoppedDockerApps)).To(Equal(1))
+			Expect(appRunner.stoppedDockerApps[0].name).To(Equal("cool-web-app"))
+
+			Expect(buffer).To(gbytes.Say("App Stopped Successfully"))
+		})
+
+		It("validates that the name is passed in", func() {
+			args := []string{
+				"",
+			}
+			context := test_helpers.ContextFromArgsAndCommand(args, stopDiegoCommand)
+
+			stopDiegoCommand.Action(context)
+
+			Expect(buffer).To(gbytes.Say("Incorrect Usage\n"))
+			Expect(len(appRunner.stoppedDockerApps)).To(Equal(0))
+		})
+
+		It("outputs error messages", func() {
+			args := []string{
+				"cool-web-app",
+			}
+			context := test_helpers.ContextFromArgsAndCommand(args, stopDiegoCommand)
+
+			appRunner.SetError(errors.New("Major Fault"))
+
+			stopDiegoCommand.Action(context)
+
+			Expect(buffer).To(gbytes.Say("Error Stopping App: Major Fault"))
+		})
+	})
 })
 
 type startedDockerApps struct {
@@ -189,10 +238,15 @@ type scaledDockerApps struct {
 	instances int
 }
 
+type stoppedDockerApps struct {
+	name string
+}
+
 type fakeAppRunner struct {
 	err               error
 	startedDockerApps []startedDockerApps
 	scaledDockerApps  []scaledDockerApps
+	stoppedDockerApps []stoppedDockerApps
 }
 
 func (f *fakeAppRunner) StartDockerApp(name, startCommand, dockerImagePath string) error {
@@ -208,6 +262,14 @@ func (f *fakeAppRunner) ScaleDockerApp(name string, instances int) error {
 		return f.err
 	}
 	f.scaledDockerApps = append(f.scaledDockerApps, scaledDockerApps{name, instances})
+	return nil
+}
+
+func (f *fakeAppRunner) StopDockerApp(name string) error {
+	if f.err != nil {
+		return f.err
+	}
+	f.stoppedDockerApps = append(f.stoppedDockerApps, stoppedDockerApps{name})
 	return nil
 }
 

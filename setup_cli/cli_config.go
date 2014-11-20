@@ -25,9 +25,12 @@ func NewCliApp() *cli.App {
 	receptorClient := receptor.NewClient(config.Api(), "", "")
 	appRunner := app_runner.NewDiegoAppRunner(receptorClient)
 
+	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout)
+
 	app.Commands = []cli.Command{
-		app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout).MakeStartDiegoAppCommand(),
-		app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout).MakeScaleDiegoAppCommand(),
+		appRunnerCommandFactory.MakeStartDiegoAppCommand(),
+		appRunnerCommandFactory.MakeScaleDiegoAppCommand(),
+		appRunnerCommandFactory.MakeStopDiegoAppCommand(),
 		config_command_factory.NewConfigCommandFactory(config, os.Stdout).MakeSetTargetCommand(),
 	}
 	return app
