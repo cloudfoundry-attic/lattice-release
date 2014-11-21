@@ -4,7 +4,7 @@ set -e
 
 compile_garden_linux() {
     GOPATH=$GOPATH/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace:$GOPATH
-    go install github.com/cloudfoundry-incubator/garden-linux
+    go install -tags daemon github.com/cloudfoundry-incubator/garden-linux
     GOPATH=$DIEGO_RELEASE_PATH
 
     pushd $DIEGO_RELEASE_PATH/src/github.com/cloudfoundry-incubator/garden-linux/old
