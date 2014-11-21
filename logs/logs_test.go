@@ -43,14 +43,14 @@ var _ = Describe("logs", func() {
 			consumer.addToPendingLogs(&events.LogMessage{Message: []byte("Message 1")})
 			consumer.addToPendingLogs(&events.LogMessage{Message: []byte("Message 2")})
 
-			recievedLogs := []string{}
+			receivedLogs := []string{}
 			responseFunc := func(log string) {
-				recievedLogs = append(recievedLogs, log)
+				receivedLogs = append(receivedLogs, log)
 			}
 
 			logReader.TailLogs("app-guid", responseFunc)
 
-			Expect(recievedLogs).To(Equal([]string{"Message 1", "Message 2"}))
+			Expect(receivedLogs).To(Equal([]string{"Message 1", "Message 2"}))
 		})
 
 		It("uses the logMessage callback", func() {
@@ -60,14 +60,14 @@ var _ = Describe("logs", func() {
 			consumer.addToPendingErrors(errors.New("error 1"))
 			consumer.addToPendingErrors(errors.New("error 2"))
 
-			recievedLogs := []string{}
+			receivedLogs := []string{}
 			responseFunc := func(log string) {
-				recievedLogs = append(recievedLogs, log)
+				receivedLogs = append(receivedLogs, log)
 			}
 
 			logReader.TailLogs("app-guid", responseFunc)
 
-			Expect(recievedLogs).To(Equal([]string{"error 1", "error 2"}))
+			Expect(receivedLogs).To(Equal([]string{"error 1", "error 2"}))
 		})
 	})
 
