@@ -29,19 +29,52 @@ func (c *commandFactory) MakeSetTargetCommand() cli.Command {
 	return startCommand
 }
 
+func (c *commandFactory) MakeSetTargetLoggregatorCommand() cli.Command {
+	var startCommand = cli.Command{
+		Name:        "target-loggregator",
+		Description: "Set a target loggregator api location",
+		Usage:       "diego-edge-cli target-loggregator LOGGREGATOR_PATH",
+		Action:      c.setLoggregatorTarget,
+		Flags:       []cli.Flag{},
+	}
+
+	return startCommand
+}
+
 func (c *commandFactory) setTarget(context *cli.Context) {
 	api := context.Args().First()
 
 	if api == "" {
-		c.output.Write([]byte("Incorrect Usage\n"))
+		c.say("Incorrect Usage\n")
 		return
 	}
 
 	err := c.config.SetApi(api)
 	if err != nil {
-		c.output.Write([]byte(err.Error()))
+		c.say(err.Error())
 		return
 	}
 
-	c.output.Write([]byte("Api Location Set\n"))
+	c.say("Api Location Set\n")
+}
+
+func (c *commandFactory) setLoggregatorTarget(context *cli.Context) {
+	loggregator := context.Args().First()
+
+	if loggregator == "" {
+		c.say("Incorrect Usage\n")
+		return
+	}
+
+	err := c.config.SetLoggregator(loggregator)
+	if err != nil {
+		c.say(err.Error())
+		return
+	}
+
+	c.say("Loggregator Api Location Set\n")
+}
+
+func (c *commandFactory) say(output string) {
+	c.output.Write([]byte(output))
 }

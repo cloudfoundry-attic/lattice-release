@@ -5,7 +5,8 @@ import (
 )
 
 type Data struct {
-	Api string
+	Api         string
+	Loggregator string
 }
 
 type Config struct {
@@ -24,6 +25,15 @@ func (c *Config) Api() string {
 
 func (c *Config) SetApi(api string) error {
 	c.data.Api = api
+	return c.save()
+}
+
+func (c *Config) Loggregator() string {
+	return c.data.Loggregator
+}
+
+func (c *Config) SetLoggregator(loggregatorAddress string) error {
+	c.data.Loggregator = loggregatorAddress
 	return c.save()
 }
 

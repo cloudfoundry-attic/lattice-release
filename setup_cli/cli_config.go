@@ -4,14 +4,18 @@ import (
 	"os"
 
 	"github.com/cloudfoundry-incubator/receptor"
+	"github.com/cloudfoundry/noaa"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/app_runner"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/config"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/config/config_helpers"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/config/persister"
+	"github.com/pivotal-cf-experimental/diego-edge-cli/logs"
+	"github.com/pivotal-cf-experimental/diego-edge-cli/logs/logs_helpers"
 
 	app_runner_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/app_runner/command_factory"
 	config_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/config/command_factory"
+	logs_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/logs/command_factory"
 )
 
 func NewCliApp() *cli.App {
@@ -27,11 +31,18 @@ func NewCliApp() *cli.App {
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout)
 
+	logReader := logs.NewLogReader(noaa.NewConsumer(logs_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
+	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, os.Stdout)
+
+	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, os.Stdout)
+
 	app.Commands = []cli.Command{
 		appRunnerCommandFactory.MakeStartDiegoAppCommand(),
 		appRunnerCommandFactory.MakeScaleDiegoAppCommand(),
 		appRunnerCommandFactory.MakeStopDiegoAppCommand(),
-		config_command_factory.NewConfigCommandFactory(config, os.Stdout).MakeSetTargetCommand(),
+		logsCommandFactory.MakeLogsCommand(),
+		configCommandFactory.MakeSetTargetCommand(),
+		configCommandFactory.MakeSetTargetLoggregatorCommand(),
 	}
 	return app
 }
