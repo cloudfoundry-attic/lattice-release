@@ -26,7 +26,8 @@ var _ = Describe("CommandFactory", func() {
 				"my-app-guid",
 			}
 
-			logReader := &fakeLogReader{}
+			appGuidChan := make(chan string)
+			logReader := &fakeLogReader{appGuidChan: appGuidChan}
 			commandFactory := command_factory.NewLogsCommandFactory(logReader, output)
 			tailLogsCommand := commandFactory.MakeLogsCommand()
 
@@ -36,7 +37,7 @@ var _ = Describe("CommandFactory", func() {
 
 			go tailLogsCommand.Action(context)
 
-			Eventually(logReader.calledAppGuidsBeingTailed).Should(Equal([]string{"my-app-guid"}))
+			Eventually(appGuidChan).Should(Receive(Equal("my-app-guid")))
 			Eventually(output).Should(gbytes.Say("First log\n"))
 		})
 
@@ -60,22 +61,18 @@ var _ = Describe("CommandFactory", func() {
 })
 
 type fakeLogReader struct {
-	calledAppGuids []string
-	logs           []string
+	appGuidChan chan string
+	logs        []string
 }
 
 func (f *fakeLogReader) TailLogs(appGuid string, callback func(string)) {
-	f.calledAppGuids = append(f.calledAppGuids, appGuid)
-
 	for _, log := range f.logs {
 		callback(log)
 	}
+
+	f.appGuidChan <- appGuid
 }
 
 func (f *fakeLogReader) addLog(log string) {
 	f.logs = append(f.logs, log)
-}
-
-func (f *fakeLogReader) calledAppGuidsBeingTailed() []string {
-	return f.calledAppGuids
 }
