@@ -2,12 +2,15 @@
 
 set -e
 
-if [ -z "${1}" ]; then
-  echo "PATH to TAR is Needed. In the future this will be fetched from s3"
-  exit 1
-fi
+PATH_TO_DIEGO_EDGE_TAR=$1
 
-export PATH_TO_DIEGO_EDGE_TAR=$1
+if [ -z "${PATH_TO_DIEGO_EDGE_TAR}" ]; then
+  PATH_TO_DIEGO_EDGE_TAR=/tmp/diego-edge-latest.tgz
+
+  DIEGO_EDGE_LATEST=https://s3-us-west-2.amazonaws.com/diego-edge/diego-edge-latest.tgz
+  wget $DIEGO_EDGE_LATEST -O $PATH_TO_DIEGO_EDGE_TAR
+
+fi
 
 tar -xf $PATH_TO_DIEGO_EDGE_TAR -C /tmp
 
