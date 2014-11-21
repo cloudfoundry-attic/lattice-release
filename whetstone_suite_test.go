@@ -17,8 +17,6 @@ var (
 	domain             string
 	loggregatorAddress string
 	receptorAddress    string
-	receptorUsername   string
-	receptorPassword   string
 	numCpu             int
 	timeout            int
 )
@@ -32,8 +30,6 @@ func init() {
 	flag.StringVar(&domain, "domain", "", "Domain to use for deployed apps - REQUIRED")
 	flag.StringVar(&loggregatorAddress, "loggregatorAddress", "", "Address of the loggregator traffic controller - REQUIRED")
 	flag.StringVar(&receptorAddress, "receptorAddress", "", "Address of the diego receptor - REQUIRED")
-	flag.StringVar(&receptorUsername, "receptorUsername", "", "Username for the receptor")
-	flag.StringVar(&receptorPassword, "receptorPassword", "", "Password for the receptor")
 	flag.IntVar(&timeout, "timeout", 30, "How long whetstone will wait for docker apps to start")
 }
 
@@ -48,5 +44,5 @@ func TestWhetstone(t *testing.T) {
 }
 
 var _ = BeforeEach(func() {
-	receptorClient = receptor.NewClient(receptorAddress, receptorUsername, receptorPassword)
+	receptorClient = receptor.NewClient(receptorAddress)
 })
