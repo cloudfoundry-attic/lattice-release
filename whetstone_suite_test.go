@@ -44,5 +44,6 @@ func TestWhetstone(t *testing.T) {
 }
 
 var _ = BeforeEach(func() {
-	receptorClient = receptor.NewClient(receptorAddress)
+	receptorUrl := fmt.Sprintf("http://%s", receptorAddress)
+	receptorClient = receptor.NewClient(receptorUrl)
 })
