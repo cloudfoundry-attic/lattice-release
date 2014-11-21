@@ -1,12 +1,17 @@
 ##Running the box
-    wget https://s3-us-west-2.amazonaws.com/diego-edge/diego-edge-latest.tgz
-    VAGRANT_DIEGO_EDGE_TAR_PATH=/vagrant/diego-edge-latest.tgz vagrant up --provider=virtualbox
+
+    vagrant up
     
 The box lives at 192.168.11.11
     
 etcd is accessible on port 4001
 Loggregator is accessible via loggregator.192.168.11.11.xip.io
 receptor is accessible via receptor.192.168.11.11.xip.io
+
+####Running Vagrant with a custom diego edge tar
+
+    VAGRANT_DIEGO_EDGE_TAR_PATH=/vagrant/diego-edge.tgz vagrant up
+
 
 ##Testing the Diego Lite Box
  
