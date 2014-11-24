@@ -55,4 +55,4 @@ go install github.com/pivotal-cf-experimental/diego-edge-cli
 PATH=$PATH:$GOPATH/bin diego-edge-cli target http://receptor.192.168.11.11.xip.io
 PATH=$PATH:$GOPATH/bin diego-edge-cli target-loggregator doppler.192.168.11.11.xip.io
 
-PATH=$PATH:$GOPATH/bin ginkgo -noColor $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io" -receptorAddress="receptor.192.168.11.11.xip.io" -timeout=300
+PATH=$PATH:$GOPATH/bin ginkgo -noColor -v $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io" -receptorAddress="receptor.192.168.11.11.xip.io" -timeout=300
