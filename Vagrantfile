@@ -11,5 +11,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider "virtualbox" do |v|
     # dns resolution appears to be very slow in some environments; this fixes it
     v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+
+    # increase memory on provisioned vm to 4gb
+    v.customize ["modifyvm", :id, "--memory", 4096]
   end
 end
