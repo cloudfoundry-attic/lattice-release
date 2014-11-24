@@ -19,7 +19,7 @@ For example, to Run Tests against Bosh Lite deployed Diego Release and Loggregat
      
      ginkgo -- -receptorAddress="receptor.10.244.16.2.xip.io" -domain="10.244.0.34.xip.io" -loggregatorAddress="loggregator.10.244.0.34.xip.io" -timeout=30
 
-To run against [Diego Lite](https://github.com/pivotal-cf-experimental/diego-lite)
+To run against [Diego Edge](https://github.com/pivotal-cf-experimental/diego-edge)
 
     ginkgo -- -receptorAddress="receptor.192.168.11.11.xip.io" -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io" -timeout=30
    
