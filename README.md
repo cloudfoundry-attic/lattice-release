@@ -32,7 +32,7 @@ This installs the diego-edge-cli binary to $GOPATH/bin.
 
     diego-edge-cli logs APP_NAME
 
-Example Usage:
+Example Usage with Diego Edge on Vagrant [Diego Edge](https://github.com/pivotal-cf-experimental/diego-edge):
 
         diego-edge-cli target http://receptor.192.168.11.11.xip.io
         diego-edge-cli target-loggregator doppler.192.168.11.11.xip.io
