@@ -39,7 +39,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartDiegoAppCommand() cli.Co
 		Name:        "start",
 		ShortName:   "s",
 		Description: "Start a docker app on diego",
-		Usage:       "diego-edge-cli start APP_NAME -i DOCKER_IMAGE -C START_COMMAND",
+		Usage:       "diego-edge-cli start APP_NAME -i DOCKER_IMAGE -c START_COMMAND",
 		Action:      commandFactory.startDiegoApp,
 		Flags:       startFlags,
 	}
