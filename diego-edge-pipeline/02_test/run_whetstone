@@ -43,8 +43,8 @@ rm -rf $GOPATH/pkg/*
 
 mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
 
-ln -sf $WORKSPACE_DIR/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/
-ln -sf $WORKSPACE_DIR/diego-edge-cli $GOPATH/src/github.com/pivotal-cf-experimental/
+cp -r $WORKSPACE_DIR/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/
+cp -r $WORKSPACE_DIR/diego-edge-cli $GOPATH/src/github.com/pivotal-cf-experimental/
 
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
