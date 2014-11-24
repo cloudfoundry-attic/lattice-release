@@ -25,7 +25,7 @@ Diego Edge CLI
 
 Example Usage:
 
-        diego-edge-cli target receptor.192.168.11.11.xip.io
+        diego-edge-cli target http://receptor.192.168.11.11.xip.io
         diego-edge-cli target-loggregator doppler.192.168.11.11.xip.io
 
         diego-edge-cli start Bingo-app -i "docker:///dajulia3/diego-edge-docker-app" -c "/dockerapp"
