@@ -50,8 +50,12 @@ func (appRunner *DiegoAppRunner) StopDockerApp(name string) error {
 }
 
 func (appRunner *DiegoAppRunner) existingLrpsCount(name string) (int, error) {
-	actualLrps, err := appRunner.receptorClient.ActualLRPsByProcessGuid(name)
-	return len(actualLrps), err
+	desiredLrpResponse, err := appRunner.receptorClient.GetDesiredLRP(name)
+	// Suppress error and return 0 instances when error body matches below text
+	if err != nil && err.Error() == "LRP not found" {
+		return 0, nil
+	}
+	return desiredLrpResponse.Instances, err
 }
 
 func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath string) error {
