@@ -36,7 +36,7 @@ var _ = Describe("CommandFactory", func() {
 		It("starts a Docker based Diego app as specified in the command via the AppRunner", func() {
 
 			args := []string{
-				"--docker-image=docker://fun/app",
+				"--docker-image=docker:///fun/app",
 				"--start-command=/start-me-please",
 				"cool-web-app",
 			}
@@ -48,14 +48,14 @@ var _ = Describe("CommandFactory", func() {
 			Expect(len(appRunner.startedDockerApps)).To(Equal(1))
 			Expect(appRunner.startedDockerApps[0].name).To(Equal("cool-web-app"))
 			Expect(appRunner.startedDockerApps[0].startCommand).To(Equal("/start-me-please"))
-			Expect(appRunner.startedDockerApps[0].dockerImagePath).To(Equal("docker://fun/app"))
+			Expect(appRunner.startedDockerApps[0].dockerImagePath).To(Equal("docker:///fun/app"))
 
 			Expect(buffer).To(gbytes.Say("App Staged Successfully"))
 		})
 
 		It("validates that the name is passed in", func() {
 			args := []string{
-				"--docker-image=docker://fun/app",
+				"--docker-image=docker:///fun/app",
 				"--start-command=/start-me-please",
 			}
 			context := test_helpers.ContextFromArgsAndCommand(args, startDiegoCommand)
@@ -83,7 +83,7 @@ var _ = Describe("CommandFactory", func() {
 
 		It("validates that the startCommand is passed in", func() {
 			args := []string{
-				"--docker-image=docker://fun/app",
+				"--docker-image=docker:///fun/app",
 				"cool-web-app",
 			}
 			context := test_helpers.ContextFromArgsAndCommand(args, startDiegoCommand)
@@ -95,9 +95,25 @@ var _ = Describe("CommandFactory", func() {
 
 		})
 
+		It("validates that the full docker path is passed in", func() {
+			args := []string{
+				"--docker-image=fun/app",
+				"--start-command=start-me-please",
+				"cool-web-app",
+			}
+			context := test_helpers.ContextFromArgsAndCommand(args, startDiegoCommand)
+
+			startDiegoCommand.Action(context)
+
+			Expect(buffer).To(gbytes.Say("Incorrect Usage\n"))
+			Expect(buffer).To(gbytes.Say("Docker Image should begin with: docker:///"))
+			Expect(len(appRunner.startedDockerApps)).To(Equal(0))
+
+		})
+
 		It("outputs error messages", func() {
 			args := []string{
-				"--docker-image=docker://fun/app",
+				"--docker-image=docker:///fun/app",
 				"--start-command=/start-me-please",
 				"cool-web-app",
 			}

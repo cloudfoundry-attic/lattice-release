@@ -3,6 +3,7 @@ package command_factory
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/codegangsta/cli"
 )
@@ -86,6 +87,10 @@ func (commandFactory *AppRunnerCommandFactory) startDiegoApp(c *cli.Context) {
 
 	if name == "" || dockerImage == "" || startCommand == "" {
 		commandFactory.incorrectUsage()
+		return
+	} else if !strings.HasPrefix(dockerImage, "docker:///") {
+		commandFactory.incorrectUsage()
+		commandFactory.say("Docker Image should begin with: docker:///")
 		return
 	}
 
