@@ -26,7 +26,7 @@ func NewCliApp() *cli.App {
 	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(userHome())))
 	config.Load()
 
-	receptorClient := receptor.NewClient(config.Api(), "", "")
+	receptorClient := receptor.NewClient(config.Api())
 	appRunner := app_runner.NewDiegoAppRunner(receptorClient)
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout)
