@@ -10,10 +10,10 @@ popd
 
 diego-edge/diego-edge-pipeline/helpers/run_with_docker \
  diego-edge/compile \
-    /workspace/diego-edge \
+    /workspace/diego-edge-build \
     /workspace/diego-release \
     /workspace/cf-release \
     /workspace/diego-edge
 
 rm -rf diego-edge.tgz
-tar -czf diego-edge.tgz diego-edge
+tar -czf diego-edge.tgz diego-edge-build

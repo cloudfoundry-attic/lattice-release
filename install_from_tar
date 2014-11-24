@@ -14,4 +14,4 @@ fi
 
 tar -xf $PATH_TO_DIEGO_EDGE_TAR -C /tmp
 
-/tmp/diego-edge/install /tmp/diego-edge/
+/tmp/diego-edge-build/install /tmp/diego-edge-build/
