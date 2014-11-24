@@ -3,6 +3,16 @@
   Currently master of Loggregator supports this flag, but the version in cf-release is behind.  
 - Diego-release is deployed
     
+#Setup
+
+     go get github.com/pivotal-cf-experimental/whetstone
+     go get github.com/pivotal-cf-experimental/diego-edge-cli
+     go get -v -t ./...
+
+     go get github.com/onsi/ginkgo/ginkgo
+     go get github.com/onsi/gomega
+
+
 #Running The Whetstone Tests
 
 For example, to Run Tests against Bosh Lite deployed Diego Release and Loggregator with a 30 sec app start timeout:
