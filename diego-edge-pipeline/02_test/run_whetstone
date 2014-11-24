@@ -48,5 +48,6 @@ ln -sf $WORKSPACE_DIR/diego-edge-cli $GOPATH/src/github.com/pivotal-cf-experimen
 
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
+go get -v -t github.com/pivotal-cf-experimental/...
 
 PATH=$PATH:$GOPATH/bin ginkgo -noColor $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -domain="192.168.11.11.xip.io" -loggregatorAddress="loggregator.192.168.11.11.xip.io" -receptorAddress="receptor.192.168.11.11.xip.io" -timeout=300
