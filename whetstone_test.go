@@ -53,7 +53,7 @@ var _ = Describe("Diego Edge", func() {
 			Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
 			logsStream := streamLogs(appName)
-			Eventually(logsStream.Out).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
+			Eventually(logsStream.Out, timeout).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
 
 			scaleApp(appName)
 
