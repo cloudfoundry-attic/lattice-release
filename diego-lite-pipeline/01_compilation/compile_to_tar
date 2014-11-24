@@ -8,12 +8,12 @@ pushd diego-release/loggregator
    git submodule update --init --recursive
 popd
 
-diego-lite/diego-lite-pipeline/helpers/run_with_docker \
- diego-lite/compile \
+diego-edge/diego-edge-pipeline/helpers/run_with_docker \
+ diego-edge/compile \
     /workspace/diego-edge \
     /workspace/diego-release \
     /workspace/cf-release \
-    /workspace/diego-lite
+    /workspace/diego-edge
 
 rm -rf diego-edge.tgz
 tar -czf diego-edge.tgz diego-edge

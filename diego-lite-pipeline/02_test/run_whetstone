@@ -4,16 +4,16 @@ set -e
 save_logs() {
     echo "save logs"
 
-    pushd $WORKSPACE_DIR/diego-lite
+    pushd $WORKSPACE_DIR/diego-edge
         vagrant ssh -c "sudo tar -czf /vagrant/vagrant_upstart_logs.tgz /var/log/upstart"
     popd
 
-    mv diego-lite/vagrant_upstart_logs.tgz .
+    mv diego-edge/vagrant_upstart_logs.tgz .
 }
 
 cleanup_vagrant() {
     echo "cleaning up vagrant"
-    pushd $WORKSPACE_DIR/diego-lite
+    pushd $WORKSPACE_DIR/diego-edge
         vagrant destroy --force
     popd
 }
@@ -28,12 +28,12 @@ export DIEGO_RELEASE_PATH=$1
 export DIEGO_EDGE_TAR_PATH=$2
 WORKSPACE_DIR=`pwd`
 
-cp $DIEGO_EDGE_TAR_PATH diego-lite
+cp $DIEGO_EDGE_TAR_PATH diego-edge
 export VAGRANT_DIEGO_EDGE_TAR_PATH=/vagrant/`basename $DIEGO_EDGE_TAR_PATH`
 
 trap cleanup EXIT
 
-pushd $WORKSPACE_DIR/diego-lite
+pushd $WORKSPACE_DIR/diego-edge
     vagrant up --provider=virtualbox
 popd
 

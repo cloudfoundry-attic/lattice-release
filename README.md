@@ -13,22 +13,22 @@ receptor is accessible via receptor.192.168.11.11.xip.io
     VAGRANT_DIEGO_EDGE_TAR_PATH=/vagrant/diego-edge.tgz vagrant up
 
 
-##Testing the Diego Lite Box
+##Testing the Diego Edge Box
  
- Follow the [whetstone instructions](https://github.com/pivotal-cf-experimental/whetstone) for diego-lite
+ Follow the [whetstone instructions](https://github.com/pivotal-cf-experimental/whetstone) for diego-edge
  
     
 ##To provision a box from scratch:
     
-Clone Diego-Lite and its dependencies cf-release and diego-lite and compile the necessary binaries (Currently this is run outside of the guest vm)
+Clone Diego-Edge and its dependencies cf-release and diego-edge and compile the necessary binaries (Currently this is run outside of the guest vm)
    
     mkdir -p ~/workspace
     cd workspace
-    git clone git@github.com:pivotal-cf-experimental/diego-lite.git
+    git clone git@github.com:pivotal-cf-experimental/diego-edge.git
     git clone git@github.com:cloudfoundry-incubator/diego-release.git
     git clone git@github.com:cloudfoundry/cf-release.git
    
-    cd diego-lite
+    cd diego-edge
     scripts/compile ~/workspace/cf-release ~/workspace/diego-release
     
 Install Diego
