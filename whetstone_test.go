@@ -45,8 +45,7 @@ var _ = Describe("Diego Edge", func() {
 			appName = fmt.Sprintf("whetstone-%s", factories.GenerateGuid())
 			route = fmt.Sprintf("%s.%s", appName, domain)
 
-			targetApi(receptorUrl)
-			targetLoggregator(loggregatorAddress)
+			targetDiego(domain)
 		})
 
 		AfterEach(func() {
@@ -106,16 +105,8 @@ func stopApp(appName string) {
 	Eventually(session).Should(gexec.Exit(0))
 }
 
-func targetApi(receptorUrl string) {
-	command := command(diegoEdgeCli, "target", receptorUrl)
-	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-
-	Expect(err).ToNot(HaveOccurred())
-	Eventually(session).Should(gexec.Exit(0))
-}
-
-func targetLoggregator(loggregatorAddress string) {
-	command := command(diegoEdgeCli, "target-loggregator", loggregatorAddress)
+func targetDiego(domain string) {
+	command := command(diegoEdgeCli, "target", domain)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
