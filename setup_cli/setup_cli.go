@@ -48,5 +48,9 @@ func NewCliApp() *cli.App {
 }
 
 func userHome() string {
+	if os.Getenv("DIEGO_CLI_HOME") != "" {
+		return os.Getenv("DIEGO_CLI_HOME")
+	}
+
 	return os.Getenv("HOME")
 }
