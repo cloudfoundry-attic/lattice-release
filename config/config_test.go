@@ -20,82 +20,67 @@ var _ = Describe("config", func() {
 		})
 	})
 
-	Describe("Api", func() {
-		It("Loads the API from the persistor", func() {
-			testConfig := config.New(&fakePersister{api: "receptor.mytestapi.com"})
-
-			testConfig.Load()
-
-			Expect(testConfig.Api()).To(Equal("receptor.mytestapi.com"))
-		})
-	})
-
-	Describe("SetApi", func() {
+	Describe("SetTarget", func() {
 		It("saves api to the persistor", func() {
 			fakePersister := &fakePersister{}
 			testConfig := config.New(fakePersister)
 
-			testConfig.SetApi("receptor.mynewapi.com")
-			Expect(testConfig.Api()).To(Equal("receptor.mynewapi.com"))
+			testConfig.SetTarget("mynewapi.com")
 
-			Expect(fakePersister.api).To(Equal("receptor.mynewapi.com"))
-
-		})
-
-		It("returns errors from the persistor", func() {
-			testConfig := config.New(&fakePersister{api: "receptor.mytestapi.com", err: errors.New("Error")})
-
-			err := testConfig.SetApi("receptor.mynewapi.com")
-
-			Expect(err).To(Equal(errors.New("Error")))
-		})
-	})
-
-	Describe("Loggregator", func() {
-		It("Loads the Loggregator from the persistor", func() {
-			testConfig := config.New(&fakePersister{loggregator: "doppler.mytestapi.com"})
-
-			testConfig.Load()
-
-			Expect(testConfig.Loggregator()).To(Equal("doppler.mytestapi.com"))
-		})
-
-	})
-
-	Describe("SetLoggregator", func() {
-		It("saves loggregator to the persistor", func() {
-			fakePersister := &fakePersister{}
-			testConfig := config.New(fakePersister)
-
-			testConfig.SetLoggregator("doppler.mynewapi.com")
-			Expect(testConfig.Loggregator()).To(Equal("doppler.mynewapi.com"))
-
-			Expect(fakePersister.loggregator).To(Equal("doppler.mynewapi.com"))
-
+			Expect(fakePersister.target).To(Equal("mynewapi.com"))
 		})
 
 		It("returns errors from the persistor", func() {
 			testConfig := config.New(&fakePersister{err: errors.New("Error")})
 
-			err := testConfig.SetLoggregator("receptor.mynewapi.com")
+			err := testConfig.SetTarget("mynewapi.com")
 
 			Expect(err).To(Equal(errors.New("Error")))
 		})
 	})
+
+	Describe("Receptor", func() {
+		It("Loads the Receptor from the persistor", func() {
+			testConfig := config.New(&fakePersister{target: "mytestapi.com"})
+
+			testConfig.Load()
+
+			Expect(testConfig.Receptor()).To(Equal("http://receptor.mytestapi.com"))
+		})
+	})
+
+	Describe("Loggregator", func() {
+		It("Loads the Loggregator from the persistor", func() {
+			testConfig := config.New(&fakePersister{target: "mytestapi.com"})
+
+			testConfig.Load()
+
+			Expect(testConfig.Loggregator()).To(Equal("doppler.mytestapi.com"))
+		})
+	})
+
+	Describe("Target", func() {
+		It("Loads the target from the persistor", func() {
+			testConfig := config.New(&fakePersister{target: "mytestapi.com"})
+
+			testConfig.Load()
+
+			Expect(testConfig.Target()).To(Equal("mytestapi.com"))
+		})
+
+	})
 })
 
 type fakePersister struct {
-	api         string
-	loggregator string
-	err         error
+	target string
+	err    error
 }
 
 func (f *fakePersister) Load(dataInterface interface{}) error {
 	data, ok := dataInterface.(*config.Data)
 	Expect(ok).To(BeTrue())
 
-	data.Api = f.api
-	data.Loggregator = f.loggregator
+	data.Target = f.target
 	return f.err
 }
 
@@ -103,7 +88,6 @@ func (f *fakePersister) Save(dataInterface interface{}) error {
 	data, ok := dataInterface.(*config.Data)
 	Expect(ok).To(BeTrue())
 
-	f.api = data.Api
-	f.loggregator = data.Loggregator
+	f.target = data.Target
 	return f.err
 }

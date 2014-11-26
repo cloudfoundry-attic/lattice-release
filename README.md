@@ -16,13 +16,9 @@ This installs the diego-edge-cli binary to $GOPATH/bin.
 
 ##Commands:
 
-###Target a diego api:
+###Target a diego domain:
 
-    diego-edge-cli target API_LOCATION
-
-###Target a diego Loggregator:
-
-    diego-edge-cli target-loggregator DOPPLER_LOCATION
+    diego-edge-cli target DIEGO_DOMAIN
 
 ###Start a docker app on diego:
 
@@ -34,8 +30,7 @@ This installs the diego-edge-cli binary to $GOPATH/bin.
 
 Example Usage with Diego Edge on Vagrant [Diego Edge](https://github.com/pivotal-cf-experimental/diego-edge):
 
-        diego-edge-cli target http://receptor.192.168.11.11.xip.io
-        diego-edge-cli target-loggregator doppler.192.168.11.11.xip.io
+        diego-edge-cli target 192.168.11.11.xip.io
 
         diego-edge-cli start Bingo-app -i "docker:///dajulia3/diego-edge-docker-app" -c "/dockerapp"
         diego-edge-cli logs Bingo-app

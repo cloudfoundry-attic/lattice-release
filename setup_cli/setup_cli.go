@@ -26,7 +26,7 @@ func NewCliApp() *cli.App {
 	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(userHome())))
 	config.Load()
 
-	receptorClient := receptor.NewClient(config.Api())
+	receptorClient := receptor.NewClient(config.Receptor())
 	appRunner := app_runner.NewDiegoAppRunner(receptorClient)
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout)
@@ -42,7 +42,6 @@ func NewCliApp() *cli.App {
 		appRunnerCommandFactory.MakeStopDiegoAppCommand(),
 		logsCommandFactory.MakeLogsCommand(),
 		configCommandFactory.MakeSetTargetCommand(),
-		configCommandFactory.MakeSetTargetLoggregatorCommand(),
 	}
 	return app
 }

@@ -30,13 +30,13 @@ var _ = Describe("CommandFactory", func() {
 
 				command := commandFactory.MakeSetTargetCommand()
 
-				context := test_helpers.ContextFromArgsAndCommand([]string{"receptor.myapi.com"}, command)
+				context := test_helpers.ContextFromArgsAndCommand([]string{"myapi.com"}, command)
 
-				Expect(config.Api()).To(Equal(""))
+				Expect(config.Target()).To(Equal(""))
 
 				command.Action(context)
 
-				Expect(config.Api()).To(Equal("receptor.myapi.com"))
+				Expect(config.Receptor()).To(Equal("http://receptor.myapi.com"))
 				Expect(output).To(gbytes.Say("Api Location Set\n"))
 			})
 
@@ -61,7 +61,7 @@ var _ = Describe("CommandFactory", func() {
 
 				command := commandFactory.MakeSetTargetCommand()
 
-				context := test_helpers.ContextFromArgsAndCommand([]string{"receptor.myapi.com"}, command)
+				context := test_helpers.ContextFromArgsAndCommand([]string{"myapi.com"}, command)
 
 				command.Action(context)
 
@@ -69,49 +69,5 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
-		Describe("targetLoggregatorCommand", func() {
-			It("sets loggregator from the target specified", func() {
-				config := config.New(persister.NewFakePersister())
-				commandFactory := command_factory.NewConfigCommandFactory(config, output)
-
-				Expect(config.Api()).To(Equal(""))
-
-				command := commandFactory.MakeSetTargetLoggregatorCommand()
-				context := test_helpers.ContextFromArgsAndCommand([]string{"doppler.myapi.com"}, command)
-
-				command.Action(context)
-
-				Expect(config.Loggregator()).To(Equal("doppler.myapi.com"))
-				Expect(output).To(gbytes.Say("Loggregator Api Location Set\n"))
-			})
-
-			It("returns an error if the target is blank", func() {
-				config := config.New(persister.NewFakePersister())
-				commandFactory := command_factory.NewConfigCommandFactory(config, output)
-
-				command := commandFactory.MakeSetTargetLoggregatorCommand()
-
-				context := test_helpers.ContextFromArgsAndCommand([]string{""}, command)
-
-				command.Action(context)
-
-				Expect(output).To(gbytes.Say("Incorrect Usage\n"))
-			})
-
-			It("outputs errors from setting the target", func() {
-				fakePersister := persister.NewFakePersisterWithError(errors.New("FAILURE setting target api"))
-
-				config := config.New(fakePersister)
-				commandFactory := command_factory.NewConfigCommandFactory(config, output)
-
-				command := commandFactory.MakeSetTargetLoggregatorCommand()
-
-				context := test_helpers.ContextFromArgsAndCommand([]string{"doppler.myapi.com"}, command)
-
-				command.Action(context)
-
-				Expect(output).To(gbytes.Say("FAILURE setting target api"))
-			})
-		})
 	})
 })

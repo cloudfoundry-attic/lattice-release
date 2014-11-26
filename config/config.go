@@ -5,8 +5,7 @@ import (
 )
 
 type Data struct {
-	Api         string
-	Loggregator string
+	Target string
 }
 
 type Config struct {
@@ -19,26 +18,25 @@ func New(persister persister.Persister) *Config {
 	return config
 }
 
-func (c *Config) Api() string {
-	return c.data.Api
-}
-
-func (c *Config) SetApi(api string) error {
-	c.data.Api = api
+func (c *Config) SetTarget(target string) error {
+	c.data.Target = target
 	return c.save()
 }
 
 func (c *Config) Loggregator() string {
-	return c.data.Loggregator
+	return "doppler." + c.data.Target
 }
 
-func (c *Config) SetLoggregator(loggregatorAddress string) error {
-	c.data.Loggregator = loggregatorAddress
-	return c.save()
+func (c *Config) Receptor() string {
+	return "http://receptor." + c.data.Target
 }
 
 func (c *Config) Load() error {
 	return c.persister.Load(c.data)
+}
+
+func (c *Config) Target() string {
+	return c.data.Target
 }
 
 func (c *Config) save() error {
