@@ -5,115 +5,123 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os/exec"
 	"strconv"
 
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/cloudfoundry-incubator/runtime-schema/models/factories"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"github.com/gorilla/websocket"
 	"github.com/onsi/gomega/gbytes"
-
-	"code.google.com/p/gogoprotobuf/proto"
-	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/cloudfoundry/loggregatorlib/logmessage"
+	"github.com/onsi/gomega/gexec"
 )
 
-const (
-	spyDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz"
+var (
+	diegoEdgeCli string
 )
+
+var _ = BeforeSuite(func() {
+	var err error
+	diegoEdgeCli, err = gexec.Build("github.com/pivotal-cf-experimental/diego-edge-cli")
+	Expect(err).ToNot(HaveOccurred())
+})
+
+var _ = AfterSuite(func() {
+	gexec.CleanupBuildArtifacts()
+})
 
 var _ = Describe("Diego Edge", func() {
 	Context("when desiring a docker-based LRP", func() {
 
 		var (
-			processGuid string
-			appName     string
-			route       string
+			appName string
+			route   string
 		)
 
 		BeforeEach(func() {
-			processGuid = factories.GenerateGuid()
 			appName = fmt.Sprintf("whetstone-%s", factories.GenerateGuid())
 			route = fmt.Sprintf("%s.%s", appName, domain)
 		})
 
 		AfterEach(func() {
-			err := receptorClient.DeleteDesiredLRP(processGuid)
-			Expect(err).To(BeNil())
+			stopApp(appName)
 
 			Eventually(errorCheckForRoute(route), timeout, 1).Should(HaveOccurred())
 		})
 
-		It("eventually runs on an executor", func() {
-			err := desireLongRunningProcess(processGuid, route, 1)
-			Expect(err).To(BeNil())
-
+		It("eventually runs a docker app", func() {
+			startDockerApp(appName)
 			Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
-			outBuf := gbytes.NewBuffer()
-			go streamAppLogsIntoGbytes(processGuid, outBuf)
-			Eventually(outBuf, 4).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
+			logsStream := streamLogs(appName)
+			Eventually(logsStream.Out, timeout).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
 
-			err = desireLongRunningProcess(processGuid, route, 3)
-			Expect(err).To(BeNil())
+			scaleApp(appName)
 
 			instanceCountChan := make(chan int, numCpu)
 			go countInstances(route, instanceCountChan)
-
 			Eventually(instanceCountChan, timeout).Should(Receive(Equal(3)))
+
+			logsStream.Terminate().Wait()
 		})
 	})
 
 })
 
+func startDockerApp(appName string) {
+	command := exec.Command(diegoEdgeCli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "-c", "/dockerapp")
+	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+
+	Expect(err).ToNot(HaveOccurred())
+	Eventually(session).Should(gexec.Exit(0))
+}
+
+func streamLogs(appName string) *gexec.Session {
+	command := exec.Command(diegoEdgeCli, "logs", appName)
+	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+	Expect(err).ToNot(HaveOccurred())
+
+	return session
+}
+
+func scaleApp(appName string) {
+	command := exec.Command(diegoEdgeCli, "scale", appName, "--instances", "3")
+	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+
+	Expect(err).ToNot(HaveOccurred())
+	Eventually(session).Should(gexec.Exit(0))
+}
+
+func stopApp(appName string) {
+	command := exec.Command(diegoEdgeCli, "stop", appName)
+	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+
+	Expect(err).ToNot(HaveOccurred())
+	Eventually(session).Should(gexec.Exit(0))
+}
+
 func errorCheckForRoute(route string) func() error {
 	return func() error {
-		resp, err := makeGetRequestToRoute(route)
+		response, err := makeGetRequestToRoute(route)
 		if err != nil {
 			return err
 		}
 
-		io.Copy(ioutil.Discard, resp.Body)
-		defer resp.Body.Close()
+		io.Copy(ioutil.Discard, response.Body)
+		defer response.Body.Close()
 
-		if resp.StatusCode != 200 {
-			return fmt.Errorf("Status code %d should be 200", resp.StatusCode)
+		if response.StatusCode != 200 {
+			return fmt.Errorf("Status code %d should be 200", response.StatusCode)
 		}
 
 		return nil
 	}
 }
 
-func streamAppLogsIntoGbytes(logGuid string, outBuf *gbytes.Buffer) {
-	defer GinkgoRecover()
-
-	ws, _, err := websocket.DefaultDialer.Dial(
-		fmt.Sprintf("ws://%s/tail/?app=%s", loggregatorAddress, logGuid),
-		http.Header{},
-	)
-	Expect(err).To(BeNil())
-
-	for {
-		_, data, err := ws.ReadMessage()
-		if err != nil {
-			return
-		}
-
-		receivedMessage := &logmessage.LogMessage{}
-		err = proto.Unmarshal(data, receivedMessage)
-		Expect(err).To(BeNil())
-
-		outBuf.Write(receivedMessage.GetMessage())
-	}
-
-}
-
 func countInstances(route string, instanceCountChan chan<- int) {
 	defer GinkgoRecover()
 	instanceIndexRoute := fmt.Sprintf("%s/instance-index", route)
 	instancesSeen := make(map[int]bool)
+
 	instanceIndexChan := make(chan int, numCpu)
 
 	for i := 0; i < numCpu; i++ {
@@ -130,11 +138,11 @@ func countInstances(route string, instanceCountChan chan<- int) {
 func pollForInstanceIndices(route string, instanceIndexChan chan<- int) {
 	defer GinkgoRecover()
 	for {
-		resp, err := makeGetRequestToRoute(route)
+		response, err := makeGetRequestToRoute(route)
 		Expect(err).To(BeNil())
 
-		responseBody, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
+		responseBody, err := ioutil.ReadAll(response.Body)
+		defer response.Body.Close()
 		Expect(err).To(BeNil())
 
 		instanceIndex, err := strconv.Atoi(string(responseBody))
@@ -153,32 +161,4 @@ func makeGetRequestToRoute(route string) (*http.Response, error) {
 	}
 
 	return resp, nil
-}
-
-func desireLongRunningProcess(processGuid, route string, instanceCount int) error {
-	return receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
-		ProcessGuid: processGuid,
-		Domain:      "whetstone",
-		RootFSPath:  "docker:///diegoedge/diego-edge-docker-app",
-		Instances:   instanceCount,
-		Stack:       "lucid64",
-		Routes:      []string{route},
-		MemoryMB:    128,
-		DiskMB:      1024,
-		CPUWeight:   1,
-		Ports:       []uint32{8080},
-		LogGuid:     processGuid,
-		LogSource:   "APP",
-		Setup: &models.DownloadAction{
-			From: spyDownloadUrl,
-			To:   "/tmp",
-		},
-		Action: &models.RunAction{
-			Path: "/dockerapp",
-		},
-		Monitor: &models.RunAction{
-			Path: "/tmp/spy",
-			Args: []string{"-addr", ":8080"},
-		},
-	})
 }
