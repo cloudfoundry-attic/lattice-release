@@ -49,12 +49,20 @@ func (appRunner *DiegoAppRunner) StopDockerApp(name string) error {
 	return appRunner.receptorClient.DeleteDesiredLRP(name)
 }
 
+func (appRunner *DiegoAppRunner) IsDockerAppUp(processGuid string) (bool, error) {
+	actualLrps, err := appRunner.receptorClient.ActualLRPsByProcessGuid(processGuid)
+	status := len(actualLrps) > 0 && actualLrps[0].State == receptor.ActualLRPStateRunning
+
+	return status, err
+}
+
 func (appRunner *DiegoAppRunner) existingLrpsCount(name string) (int, error) {
 	desiredLrpResponse, err := appRunner.receptorClient.GetDesiredLRP(name)
 	// Suppress error and return 0 instances when error body matches below text
 	if err != nil && err.Error() == "LRP not found" {
 		return 0, nil
 	}
+
 	return desiredLrpResponse.Instances, err
 }
 

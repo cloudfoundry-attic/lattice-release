@@ -2,6 +2,8 @@ package command_factory_test
 
 import (
 	"errors"
+	"strings"
+	"time"
 
 	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
@@ -15,12 +17,13 @@ import (
 var _ = Describe("CommandFactory", func() {
 
 	var (
-		appRunner fakeAppRunner
+		appRunner *fakeAppRunner
 		buffer    *gbytes.Buffer
+		timeout   time.Duration = 1 * time.Millisecond
 	)
 
 	BeforeEach(func() {
-		appRunner = fakeAppRunner{startedDockerApps: []startedDockerApps{}, scaledDockerApps: []scaledDockerApps{}, stoppedDockerApps: []stoppedDockerApps{}}
+		appRunner = newFakeAppRunner()
 		buffer = gbytes.NewBuffer()
 	})
 
@@ -29,12 +32,11 @@ var _ = Describe("CommandFactory", func() {
 		var startDiegoCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(&appRunner, buffer)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout)
 			startDiegoCommand = commandFactory.MakeStartDiegoAppCommand()
 		})
 
 		It("starts a Docker based Diego app as specified in the command via the AppRunner", func() {
-
 			args := []string{
 				"--docker-image=docker:///fun/app",
 				"--start-command=/start-me-please",
@@ -43,6 +45,8 @@ var _ = Describe("CommandFactory", func() {
 
 			context := test_helpers.ContextFromArgsAndCommand(args, startDiegoCommand)
 
+			appRunner.upDockerApps["cool-web-app"] = true
+
 			startDiegoCommand.Action(context)
 
 			Expect(len(appRunner.startedDockerApps)).To(Equal(1))
@@ -50,7 +54,24 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.startedDockerApps[0].startCommand).To(Equal("/start-me-please"))
 			Expect(appRunner.startedDockerApps[0].dockerImagePath).To(Equal("docker:///fun/app"))
 
-			Expect(buffer).To(gbytes.Say("App Staged Successfully"))
+			Expect(buffer).To(gbytes.Say("Starting App: cool-web-app"))
+			Expect(buffer).To(gbytes.Say("cool-web-app is now running."))
+		})
+
+		It("alerts the user if the app does not start", func() {
+			args := []string{
+				"--docker-image=docker:///fun/app",
+				"--start-command=/start-me-please",
+				"cool-web-app",
+			}
+
+			context := test_helpers.ContextFromArgsAndCommand(args, startDiegoCommand)
+
+			appRunner.upDockerApps["cool-web-app"] = false
+
+			startDiegoCommand.Action(context)
+
+			Expect(strings.Contains(string(buffer.Contents()), "\x1b[91mcool-web-app took too long to start.")).To(BeTrue())
 		})
 
 		It("validates that the name is passed in", func() {
@@ -131,7 +152,7 @@ var _ = Describe("CommandFactory", func() {
 
 		var scaleDiegoCommand cli.Command
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(&appRunner, buffer)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout)
 			scaleDiegoCommand = commandFactory.MakeScaleDiegoAppCommand()
 		})
 
@@ -197,7 +218,7 @@ var _ = Describe("CommandFactory", func() {
 
 		var stopDiegoCommand cli.Command
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(&appRunner, buffer)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout)
 			stopDiegoCommand = commandFactory.MakeStopDiegoAppCommand()
 		})
 
@@ -243,6 +264,15 @@ var _ = Describe("CommandFactory", func() {
 	})
 })
 
+func newFakeAppRunner() *fakeAppRunner {
+	return &fakeAppRunner{
+		startedDockerApps: []startedDockerApps{},
+		scaledDockerApps:  []scaledDockerApps{},
+		stoppedDockerApps: []stoppedDockerApps{},
+		upDockerApps:      map[string]bool{},
+	}
+}
+
 type startedDockerApps struct {
 	name            string
 	startCommand    string
@@ -263,6 +293,7 @@ type fakeAppRunner struct {
 	startedDockerApps []startedDockerApps
 	scaledDockerApps  []scaledDockerApps
 	stoppedDockerApps []stoppedDockerApps
+	upDockerApps      map[string]bool
 }
 
 func (f *fakeAppRunner) StartDockerApp(name, startCommand, dockerImagePath string) error {
@@ -287,6 +318,10 @@ func (f *fakeAppRunner) StopDockerApp(name string) error {
 	}
 	f.stoppedDockerApps = append(f.stoppedDockerApps, stoppedDockerApps{name})
 	return nil
+}
+
+func (f *fakeAppRunner) IsDockerAppUp(name string) (bool, error) {
+	return f.upDockerApps[name], nil
 }
 
 func (f *fakeAppRunner) SetError(err error) {
