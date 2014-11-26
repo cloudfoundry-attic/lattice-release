@@ -7,21 +7,18 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/cloudfoundry-incubator/receptor"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var (
-	receptorClient     receptor.Client
 	domain             string
 	loggregatorAddress string
+	receptorUrl        string
 	receptorAddress    string
-	numCpu             int
 	timeout            int
+	numCpu             int
 )
-
-const StackName = "lucid64"
 
 func init() {
 	numCpu = runtime.NumCPU()
@@ -39,11 +36,8 @@ func TestWhetstone(t *testing.T) {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
+	receptorUrl = fmt.Sprintf("http://%s", receptorAddress)
+
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Whetstone Suite")
 }
-
-var _ = BeforeEach(func() {
-	receptorUrl := fmt.Sprintf("http://%s", receptorAddress)
-	receptorClient = receptor.NewClient(receptorUrl)
-})

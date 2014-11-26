@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 
@@ -17,9 +18,12 @@ import (
 
 var (
 	diegoEdgeCli string
+	tmpDir       string
 )
 
 var _ = BeforeSuite(func() {
+	tmpDir = os.TempDir()
+
 	var err error
 	diegoEdgeCli, err = gexec.Build("github.com/pivotal-cf-experimental/diego-edge-cli")
 	Expect(err).ToNot(HaveOccurred())
@@ -40,6 +44,9 @@ var _ = Describe("Diego Edge", func() {
 		BeforeEach(func() {
 			appName = fmt.Sprintf("whetstone-%s", factories.GenerateGuid())
 			route = fmt.Sprintf("%s.%s", appName, domain)
+
+			targetApi(receptorUrl)
+			targetLoggregator(loggregatorAddress)
 		})
 
 		AfterEach(func() {
@@ -68,7 +75,7 @@ var _ = Describe("Diego Edge", func() {
 })
 
 func startDockerApp(appName string) {
-	command := exec.Command(diegoEdgeCli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "-c", "/dockerapp")
+	command := command(diegoEdgeCli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "-c", "/dockerapp")
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
@@ -76,7 +83,7 @@ func startDockerApp(appName string) {
 }
 
 func streamLogs(appName string) *gexec.Session {
-	command := exec.Command(diegoEdgeCli, "logs", appName)
+	command := command(diegoEdgeCli, "logs", appName)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -84,7 +91,7 @@ func streamLogs(appName string) *gexec.Session {
 }
 
 func scaleApp(appName string) {
-	command := exec.Command(diegoEdgeCli, "scale", appName, "--instances", "3")
+	command := command(diegoEdgeCli, "scale", appName, "--instances", "3")
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
@@ -92,11 +99,33 @@ func scaleApp(appName string) {
 }
 
 func stopApp(appName string) {
-	command := exec.Command(diegoEdgeCli, "stop", appName)
+	command := command(diegoEdgeCli, "stop", appName)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
 	Eventually(session).Should(gexec.Exit(0))
+}
+
+func targetApi(receptorUrl string) {
+	command := command(diegoEdgeCli, "target", receptorUrl)
+	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+
+	Expect(err).ToNot(HaveOccurred())
+	Eventually(session).Should(gexec.Exit(0))
+}
+
+func targetLoggregator(loggregatorAddress string) {
+	command := command(diegoEdgeCli, "target-loggregator", loggregatorAddress)
+	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+
+	Expect(err).ToNot(HaveOccurred())
+	Eventually(session).Should(gexec.Exit(0))
+}
+
+func command(name string, arg ...string) *exec.Cmd {
+	command := exec.Command(name, arg...)
+	command.Env = []string{fmt.Sprintf("DIEGO_CLI_HOME=%s", tmpDir)}
+	return command
 }
 
 func errorCheckForRoute(route string) func() error {
