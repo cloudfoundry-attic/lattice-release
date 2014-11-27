@@ -9,10 +9,9 @@ Diego Edge CLI
 
 Make sure you have go installed and your $GOPATH is properly set. Then run:
 
-    go get github.com/pivotal-cf-experimental/diego-edge-cli
+    go get -u github.com/pivotal-cf-experimental/diego-edge-cli
 
-This installs the diego-edge-cli binary to $GOPATH/bin.
-
+This installs or updates the diego-edge-cli binary to $GOPATH/bin.
 
 ##Commands:
 
