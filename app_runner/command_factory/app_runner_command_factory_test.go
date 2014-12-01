@@ -39,6 +39,9 @@ var _ = Describe("CommandFactory", func() {
 
 		It("starts a Docker based Diego app as specified in the command via the AppRunner", func() {
 			args := []string{
+				"--memory-mb=12",
+				"--disk-mb=12",
+				"--port=3000",
 				"--docker-image=docker:///fun/app",
 				"--start-command=/start-me-please",
 				"cool-web-app",
@@ -54,6 +57,9 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.startedDockerApps[0].name).To(Equal("cool-web-app"))
 			Expect(appRunner.startedDockerApps[0].startCommand).To(Equal("/start-me-please"))
 			Expect(appRunner.startedDockerApps[0].dockerImagePath).To(Equal("docker:///fun/app"))
+			Expect(appRunner.startedDockerApps[0].memoryMB).To(Equal(12))
+			Expect(appRunner.startedDockerApps[0].diskMB).To(Equal(12))
+			Expect(appRunner.startedDockerApps[0].port).To(Equal(3000))
 
 			Expect(buffer).To(gbytes.Say("Starting App: cool-web-app"))
 			Expect(string(buffer.Contents())).To(ContainSubstring(colors.Green("cool-web-app is now running.")))
@@ -279,6 +285,9 @@ type startedDockerApps struct {
 	name            string
 	startCommand    string
 	dockerImagePath string
+	memoryMB        int
+	diskMB          int
+	port            int
 }
 
 type scaledDockerApps struct {
@@ -298,11 +307,11 @@ type fakeAppRunner struct {
 	upDockerApps      map[string]bool
 }
 
-func (f *fakeAppRunner) StartDockerApp(name, startCommand, dockerImagePath string) error {
+func (f *fakeAppRunner) StartDockerApp(name, startCommand, dockerImagePath string, memoryMB, diskMB, port int) error {
 	if f.err != nil {
 		return f.err
 	}
-	f.startedDockerApps = append(f.startedDockerApps, startedDockerApps{name, startCommand, dockerImagePath})
+	f.startedDockerApps = append(f.startedDockerApps, startedDockerApps{name, startCommand, dockerImagePath, memoryMB, diskMB, port})
 	return nil
 }
 

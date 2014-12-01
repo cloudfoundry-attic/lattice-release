@@ -19,14 +19,14 @@ func NewDiegoAppRunner(receptorClient receptor.Client) *DiegoAppRunner {
 	return &DiegoAppRunner{receptorClient}
 }
 
-func (appRunner *DiegoAppRunner) StartDockerApp(name string, startCommand string, dockerImagePath string) error {
+func (appRunner *DiegoAppRunner) StartDockerApp(name, startCommand, dockerImagePath string, memoryMB, diskMB, port int) error {
 	if existingLrpCount, err := appRunner.existingLrpsCount(name); err != nil {
 		return err
 	} else if existingLrpCount != 0 {
 		return newExistingAppError(name)
 	}
 
-	return appRunner.desireLrp(name, startCommand, dockerImagePath)
+	return appRunner.desireLrp(name, startCommand, dockerImagePath, memoryMB, diskMB, port)
 }
 
 func (appRunner *DiegoAppRunner) ScaleDockerApp(name string, instances int) error {
@@ -66,7 +66,7 @@ func (appRunner *DiegoAppRunner) existingLrpsCount(name string) (int, error) {
 	return desiredLrpResponse.Instances, err
 }
 
-func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath string) error {
+func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath string, memoryMB, diskMB, port int) error {
 	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid: name,
 		Domain:      "diego-edge",
@@ -74,9 +74,9 @@ func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath s
 		Instances:   1,
 		Stack:       "lucid64",
 		Routes:      []string{fmt.Sprintf("%s.192.168.11.11.xip.io", name)},
-		MemoryMB:    128,
-		DiskMB:      1024,
-		Ports:       []uint32{8080},
+		MemoryMB:    memoryMB,
+		DiskMB:      diskMB,
+		Ports:       []uint32{uint32(port)},
 		LogGuid:     name,
 		LogSource:   "APP",
 		Setup: &models.DownloadAction{

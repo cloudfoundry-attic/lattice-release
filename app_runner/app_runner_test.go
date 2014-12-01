@@ -28,7 +28,7 @@ var _ = Describe("AppRunner", func() {
 	Describe("StartDockerApp", func() {
 
 		It("Starts a Docker App", func() {
-			err := appRunner.StartDockerApp("americano-app", "/app-run-statement", "docker://runtest/runner")
+			err := appRunner.StartDockerApp("americano-app", "/app-run-statement", "docker://runtest/runner", 128, 1024, 8080)
 			Expect(err).To(BeNil())
 
 			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
@@ -62,7 +62,7 @@ var _ = Describe("AppRunner", func() {
 			desiredLRPResponse := receptor.DesiredLRPResponse{ProcessGuid: "app-already-desired", Instances: 1}
 			fakeReceptorClient.GetDesiredLRPReturns(desiredLRPResponse, nil)
 
-			err := appRunner.StartDockerApp("app-already-desired", "/app-bork-statement", "docker://faily/boom")
+			err := appRunner.StartDockerApp("app-already-desired", "/app-bork-statement", "docker://faily/boom", 128, 1024, 8080)
 
 			Expect(err).ToNot(BeNil())
 			Expect(err.Error()).To(Equal("App app-already-desired, is already running"))
@@ -75,7 +75,7 @@ var _ = Describe("AppRunner", func() {
 				receptorError := errors.New("error - Desiring an LRP")
 				fakeReceptorClient.CreateDesiredLRPReturns(receptorError)
 
-				err := appRunner.StartDockerApp("nescafe-app", "/app-bork-statement", "docker://faily/boom")
+				err := appRunner.StartDockerApp("nescafe-app", "/app-bork-statement", "docker://faily/boom", 128, 1024, 8080)
 				Expect(err).To(Equal(receptorError))
 			})
 
@@ -83,7 +83,7 @@ var _ = Describe("AppRunner", func() {
 				receptorError := errors.New("error - Existing Count")
 				fakeReceptorClient.GetDesiredLRPReturns(receptor.DesiredLRPResponse{}, receptorError)
 
-				err := appRunner.StartDockerApp("nescafe-app", "/app-bork-statement", "docker://faily/boom")
+				err := appRunner.StartDockerApp("nescafe-app", "/app-bork-statement", "docker://faily/boom", 128, 1024, 8080)
 				Expect(err).To(Equal(receptorError))
 			})
 		})

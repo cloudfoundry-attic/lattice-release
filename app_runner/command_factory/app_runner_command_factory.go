@@ -11,7 +11,7 @@ import (
 )
 
 type appRunner interface {
-	StartDockerApp(name, startCommand, dockerImagePath string) error
+	StartDockerApp(name, startCommand, dockerImagePath string, memoryMB, diskMB, port int) error
 	ScaleDockerApp(name string, instances int) error
 	StopDockerApp(name string) error
 	IsDockerAppUp(name string) (bool, error)
@@ -35,6 +35,21 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartDiegoAppCommand() cli.Co
 		cli.StringFlag{
 			Name:  "start-command, c",
 			Usage: "the command to run in the context of the docker image (ie the start command for the app)",
+		},
+		cli.IntFlag{
+			Name:  "memory-mb, m",
+			Usage: "the amount of memory in MB to provide for the docker app",
+			Value: 128,
+		},
+		cli.IntFlag{
+			Name:  "disk-mb, d",
+			Usage: "the amount of disk memory in MB to provide for the docker app",
+			Value: 1024,
+		},
+		cli.IntFlag{
+			Name:  "port, p",
+			Usage: "the port that the docker app listens on",
+			Value: 8080,
 		},
 	}
 
@@ -92,6 +107,9 @@ type appRunnerCommand struct {
 func (cmd *appRunnerCommand) startDiegoApp(c *cli.Context) {
 	startCommand := c.String("start-command")
 	dockerImage := c.String("docker-image")
+	memoryMB := c.Int("memory-mb")
+	diskMB := c.Int("disk-mb")
+	port := c.Int("port")
 	name := c.Args().First()
 
 	if name == "" || dockerImage == "" || startCommand == "" {
@@ -103,7 +121,7 @@ func (cmd *appRunnerCommand) startDiegoApp(c *cli.Context) {
 		return
 	}
 
-	err := cmd.appRunner.StartDockerApp(name, startCommand, dockerImage)
+	err := cmd.appRunner.StartDockerApp(name, startCommand, dockerImage, memoryMB, diskMB, port)
 
 	if err != nil {
 		cmd.say(fmt.Sprintf("Error Starting App: %s", err))
