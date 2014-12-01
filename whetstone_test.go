@@ -78,7 +78,9 @@ func startDockerApp(appName string) {
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
-	Eventually(session).Should(gexec.Exit(0))
+	Eventually(session, 60).Should(gexec.Exit(0))
+
+	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
 }
 
 func streamLogs(appName string) *gexec.Session {
