@@ -1,9 +1,13 @@
 package command_factory
 
 import (
+	"fmt"
 	"io"
+	"time"
 
+	"github.com/cloudfoundry/noaa/events"
 	"github.com/codegangsta/cli"
+	"github.com/pivotal-cf-experimental/diego-edge-cli/colors"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/logs"
 )
 
@@ -20,8 +24,8 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 	var logsCommand = cli.Command{
 		Name:        "logs",
 		ShortName:   "l",
-		Description: "",
-		Usage:       "",
+		Description: "Stream logs from an app",
+		Usage:       "diego-edge-cli logs APP_NAME",
 		Action:      factory.cmd.tailLogs,
 		Flags:       []cli.Flag{},
 	}
@@ -43,15 +47,21 @@ func (cmd *logsCommand) tailLogs(context *cli.Context) {
 		return
 	}
 
-	go cmd.logReader.TailLogs(appGuid, cmd.logCallback)
+	go cmd.logReader.TailLogs(appGuid, cmd.logCallback, cmd.errorCallback)
 
 	for log := range cmd.outputChan {
 		cmd.say(log + "\n")
 	}
 }
 
-func (cmd *logsCommand) logCallback(log string) {
-	cmd.outputChan <- log
+func (cmd *logsCommand) logCallback(log *events.LogMessage) {
+	timeString := time.Unix(0, log.GetTimestamp()).Format("02 Jan 15:04")
+	logOutput := fmt.Sprintf("%s [%s|%s] %s", colors.Cyan(timeString), colors.Yellow(log.GetSourceType()), colors.Yellow(log.GetSourceInstance()), log.GetMessage())
+	cmd.outputChan <- logOutput
+}
+
+func (cmd *logsCommand) errorCallback(err error) {
+	cmd.outputChan <- err.Error()
 }
 
 func (cmd *logsCommand) say(output string) {

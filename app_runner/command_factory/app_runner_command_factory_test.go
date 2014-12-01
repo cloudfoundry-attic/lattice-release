@@ -8,14 +8,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
+	"github.com/pivotal-cf-experimental/diego-edge-cli/colors"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/test_helpers"
 
 	"github.com/pivotal-cf-experimental/diego-edge-cli/app_runner/command_factory"
-)
-
-const (
-	redCharCode   string = "\x1b[91m"
-	greenCharCode string = "\x1b[32m"
 )
 
 var _ = Describe("CommandFactory", func() {
@@ -60,8 +56,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.startedDockerApps[0].dockerImagePath).To(Equal("docker:///fun/app"))
 
 			Expect(buffer).To(gbytes.Say("Starting App: cool-web-app"))
-			Expect(string(buffer.Contents())).To(ContainSubstring(greenCharCode + "cool-web-app is now running."))
-			Expect(string(buffer.Contents())).To(ContainSubstring(greenCharCode + "http://cool-web-app.192.168.11.11.xip.io"))
+			Expect(string(buffer.Contents())).To(ContainSubstring(colors.Green("cool-web-app is now running.")))
+			Expect(string(buffer.Contents())).To(ContainSubstring(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
 		})
 
 		It("alerts the user if the app does not start", func() {
@@ -77,7 +73,7 @@ var _ = Describe("CommandFactory", func() {
 
 			startDiegoCommand.Action(context)
 
-			Expect(string(buffer.Contents())).To(ContainSubstring(redCharCode + "cool-web-app took too long to start."))
+			Expect(string(buffer.Contents())).To(ContainSubstring(colors.Red("cool-web-app took too long to start.")))
 		})
 
 		It("validates that the name is passed in", func() {

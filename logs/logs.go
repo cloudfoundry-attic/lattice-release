@@ -5,7 +5,7 @@ import (
 )
 
 type LogReader interface {
-	TailLogs(appGuid string, callback func(string))
+	TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error))
 }
 
 type logConsumer interface {
@@ -20,28 +20,28 @@ func NewLogReader(consumer logConsumer) LogReader {
 	return &logReader{consumer: consumer}
 }
 
-func (l *logReader) TailLogs(appGuid string, callback func(string)) {
+func (l *logReader) TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error)) {
 	outputChan := make(chan *events.LogMessage, 10)
 	errorChan := make(chan error, 10)
 
 	go l.consumer.TailingLogs(appGuid, "", outputChan, errorChan, nil)
 
 	go func() {
-		readErrorChannel(errorChan, callback)
+		readErrorChannel(errorChan, errorCallback)
 		close(outputChan)
 	}()
 
-	readOutputChannel(outputChan, callback)
+	readOutputChannel(outputChan, logCallback)
 }
 
-func readOutputChannel(outputChan <-chan *events.LogMessage, callback func(string)) {
+func readOutputChannel(outputChan <-chan *events.LogMessage, callback func(*events.LogMessage)) {
 	for logMessage := range outputChan {
-		callback(string(logMessage.Message))
+		callback(logMessage)
 	}
 }
 
-func readErrorChannel(errorChan <-chan error, callback func(string)) {
+func readErrorChannel(errorChan <-chan error, callback func(error)) {
 	for err := range errorChan {
-		callback(err.Error())
+		callback(err)
 	}
 }

@@ -7,11 +7,7 @@ import (
 	"time"
 
 	"github.com/codegangsta/cli"
-)
-
-const (
-	red   string = "\x1b[91m"
-	green string = "\x1b[32m"
+	"github.com/pivotal-cf-experimental/diego-edge-cli/colors"
 )
 
 type appRunner interface {
@@ -161,8 +157,9 @@ func (cmd *appRunnerCommand) pollAppUntilUp(name string) {
 	for startingTime.Add(cmd.timeout).After(time.Now()) {
 		if status, _ := cmd.appRunner.IsDockerAppUp(name); status {
 			cmd.newLine()
-			cmd.say(cmd.green(name + " is now running. \n"))
-			cmd.say(cmd.green(cmd.urlForApp(name)))
+			cmd.say(colors.Green(name + " is now running."))
+			cmd.newLine()
+			cmd.say(colors.Green(cmd.urlForApp(name)))
 			return
 		} else {
 			cmd.dot()
@@ -170,19 +167,11 @@ func (cmd *appRunnerCommand) pollAppUntilUp(name string) {
 		time.Sleep(time.Second)
 	}
 	cmd.newLine()
-	cmd.say(cmd.red(name + " took too long to start. \n"))
+	cmd.say(colors.Red(name + " took too long to start."))
 }
 
 func (cmd *appRunnerCommand) urlForApp(name string) string {
-	return fmt.Sprintf("http://%s.%s\n", name, cmd.domain)
-}
-
-func (cmd *appRunnerCommand) red(output string) string {
-	return fmt.Sprintf("%s%s", red, output)
-}
-
-func (cmd *appRunnerCommand) green(output string) string {
-	return fmt.Sprintf("%s%s", green, output)
+	return fmt.Sprintf("http://%s.%s", name, cmd.domain)
 }
 
 func (cmd *appRunnerCommand) say(output string) {

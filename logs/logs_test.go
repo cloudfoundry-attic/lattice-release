@@ -40,17 +40,20 @@ var _ = Describe("logs", func() {
 			consumer := &fakeConsumer{pendingLogs: []*events.LogMessage{}, pendingErrors: []error{}}
 			logReader := logs.NewLogReader(consumer)
 
-			consumer.addToPendingLogs(&events.LogMessage{Message: []byte("Message 1")})
-			consumer.addToPendingLogs(&events.LogMessage{Message: []byte("Message 2")})
+			logMessageOne := &events.LogMessage{Message: []byte("Message 1")}
+			consumer.addToPendingLogs(logMessageOne)
 
-			receivedLogs := []string{}
-			responseFunc := func(log string) {
+			logMessageTwo := &events.LogMessage{Message: []byte("Message 2")}
+			consumer.addToPendingLogs(logMessageTwo)
+
+			receivedLogs := []*events.LogMessage{}
+			responseFunc := func(log *events.LogMessage) {
 				receivedLogs = append(receivedLogs, log)
 			}
 
-			logReader.TailLogs("app-guid", responseFunc)
+			logReader.TailLogs("app-guid", responseFunc, nil)
 
-			Expect(receivedLogs).To(Equal([]string{"Message 1", "Message 2"}))
+			Expect(receivedLogs).To(Equal([]*events.LogMessage{logMessageOne, logMessageTwo}))
 		})
 
 		It("uses the logMessage callback", func() {
@@ -60,14 +63,14 @@ var _ = Describe("logs", func() {
 			consumer.addToPendingErrors(errors.New("error 1"))
 			consumer.addToPendingErrors(errors.New("error 2"))
 
-			receivedLogs := []string{}
-			responseFunc := func(log string) {
-				receivedLogs = append(receivedLogs, log)
+			errorsFromCallback := []error{}
+			errorFunc := func(err error) {
+				errorsFromCallback = append(errorsFromCallback, err)
 			}
 
-			logReader.TailLogs("app-guid", responseFunc)
+			logReader.TailLogs("app-guid", nil, errorFunc)
 
-			Expect(receivedLogs).To(Equal([]string{"error 1", "error 2"}))
+			Expect(errorsFromCallback).To(Equal([]error{errors.New("error 1"), errors.New("error 2")}))
 		})
 	})
 
