@@ -8,12 +8,11 @@ import (
 )
 
 type commandFactory struct {
-	config *config.Config
-	output io.Writer
+	cmd *configCommand
 }
 
 func NewConfigCommandFactory(config *config.Config, output io.Writer) *commandFactory {
-	return &commandFactory{config, output}
+	return &commandFactory{&configCommand{config, output}}
 }
 
 func (c *commandFactory) MakeSetTargetCommand() cli.Command {
@@ -22,30 +21,35 @@ func (c *commandFactory) MakeSetTargetCommand() cli.Command {
 		ShortName:   "t",
 		Description: "Set a target diego location",
 		Usage:       "diego-edge-cli target DIEGO_DOMAIN",
-		Action:      c.setTarget,
+		Action:      c.cmd.setTarget,
 		Flags:       []cli.Flag{},
 	}
 
 	return startCommand
 }
 
-func (c *commandFactory) setTarget(context *cli.Context) {
+type configCommand struct {
+	config *config.Config
+	output io.Writer
+}
+
+func (cmd *configCommand) setTarget(context *cli.Context) {
 	target := context.Args().First()
 
 	if target == "" {
-		c.say("Incorrect Usage\n")
+		cmd.say("Incorrect Usage\n")
 		return
 	}
 
-	err := c.config.SetTarget(target)
+	err := cmd.config.SetTarget(target)
 	if err != nil {
-		c.say(err.Error())
+		cmd.say(err.Error())
 		return
 	}
 
-	c.say("Api Location Set\n")
+	cmd.say("Api Location Set\n")
 }
 
-func (c *commandFactory) say(output string) {
-	c.output.Write([]byte(output))
+func (cmd *configCommand) say(output string) {
+	cmd.output.Write([]byte(output))
 }
