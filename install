@@ -8,14 +8,33 @@ if [ -z "$DIEGO_EDGE_BUILD_PATH" ]; then
     DIEGO_EDGE_BUILD_PATH='.'
 fi
 
+
+install_dependencies() {
+echo "Installing Dependencies..."
+    apt-get -y install quota
+    apt-get -y install linux-image-extra-$(uname -r)
+
+    pushd /tmp
+        SHADOW_TAR_OBJECT_ID="8f17023f-2a94-4d98-a737-ddbf166e7188"
+        wget "http://go-diego-go.s3.amazonaws.com/${SHADOW_TAR_OBJECT_ID}" -O - | tar xzf -
+        pushd shadow-4.2.1
+            ./configure --prefix=/var/diego
+            make
+            make install
+        popd
+    popd
+}
+
+
+
 cp $DIEGO_EDGE_BUILD_PATH/upstart/* /etc/init
 cp $DIEGO_EDGE_BUILD_PATH/bin/* /usr/local/bin
 
 mkdir -p /var/diego/static-files/docker-circus
 
-pushd $DIEGO_EDGE_BUILD_PATH/bin
+pushd $DIEGO_EDGE_BUILD_PATH/bin > /dev/null
     tar -czf /var/diego/static-files/docker-circus/docker-circus.tgz spy
-popd
+popd > /dev/null
 
 mkdir -p /var/diego/garden
 mkdir -p /var/diego/garden/depot
@@ -29,17 +48,10 @@ cp -a $DIEGO_EDGE_BUILD_PATH/garden/skeleton /var/diego/garden/skeleton
 mkdir -p /var/diego/config
 cp -r $DIEGO_EDGE_BUILD_PATH/config /var/diego
 
-apt-get -y install quota
-apt-get -y install linux-image-extra-$(uname -r)
+install_dependencies &>/var/log/diego-install.log
 
-pushd /tmp
-    SHADOW_TAR_OBJECT_ID="8f17023f-2a94-4d98-a737-ddbf166e7188"
-    wget "http://go-diego-go.s3.amazonaws.com/${SHADOW_TAR_OBJECT_ID}" -O - | tar xzf -
-    pushd shadow-4.2.1
-        ./configure --prefix=/var/diego
-        make
-        make install
-    popd
-popd
+start diego-edge-bootstrap &>>/var/log/diego-install.log
 
-start diego-edge-bootstrap
+echo "Finished!
+Diego-Edge is now installed and running. You may target it with the Diego-Edge cli via:
+diego-edge-cli target 192.168.11.11.xip.io"

@@ -3,12 +3,12 @@
 set -e
 
 PATH_TO_DIEGO_EDGE_TAR=$1
-
 if [ -z "${PATH_TO_DIEGO_EDGE_TAR}" ]; then
+  echo "Downloading latest Diego Edge Release tar"
   PATH_TO_DIEGO_EDGE_TAR=/tmp/diego-edge-latest.tgz
 
   DIEGO_EDGE_LATEST=https://s3-us-west-2.amazonaws.com/diego-edge/diego-edge-latest.tgz
-  wget $DIEGO_EDGE_LATEST -O $PATH_TO_DIEGO_EDGE_TAR
+  wget --quiet $DIEGO_EDGE_LATEST -O $PATH_TO_DIEGO_EDGE_TAR
 
 fi
 
