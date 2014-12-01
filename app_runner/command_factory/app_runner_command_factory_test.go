@@ -2,7 +2,6 @@ package command_factory_test
 
 import (
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/codegangsta/cli"
@@ -14,12 +13,18 @@ import (
 	"github.com/pivotal-cf-experimental/diego-edge-cli/app_runner/command_factory"
 )
 
+const (
+	redCharCode   string = "\x1b[91m"
+	greenCharCode string = "\x1b[32m"
+)
+
 var _ = Describe("CommandFactory", func() {
 
 	var (
 		appRunner *fakeAppRunner
 		buffer    *gbytes.Buffer
 		timeout   time.Duration = 1 * time.Millisecond
+		domain    string        = "192.168.11.11.xip.io"
 	)
 
 	BeforeEach(func() {
@@ -32,7 +37,7 @@ var _ = Describe("CommandFactory", func() {
 		var startDiegoCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain)
 			startDiegoCommand = commandFactory.MakeStartDiegoAppCommand()
 		})
 
@@ -55,7 +60,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.startedDockerApps[0].dockerImagePath).To(Equal("docker:///fun/app"))
 
 			Expect(buffer).To(gbytes.Say("Starting App: cool-web-app"))
-			Expect(buffer).To(gbytes.Say("cool-web-app is now running."))
+			Expect(string(buffer.Contents())).To(ContainSubstring(greenCharCode + "cool-web-app is now running."))
+			Expect(string(buffer.Contents())).To(ContainSubstring(greenCharCode + "http://cool-web-app.192.168.11.11.xip.io"))
 		})
 
 		It("alerts the user if the app does not start", func() {
@@ -71,7 +77,7 @@ var _ = Describe("CommandFactory", func() {
 
 			startDiegoCommand.Action(context)
 
-			Expect(strings.Contains(string(buffer.Contents()), "\x1b[91mcool-web-app took too long to start.")).To(BeTrue())
+			Expect(string(buffer.Contents())).To(ContainSubstring(redCharCode + "cool-web-app took too long to start."))
 		})
 
 		It("validates that the name is passed in", func() {
@@ -152,7 +158,7 @@ var _ = Describe("CommandFactory", func() {
 
 		var scaleDiegoCommand cli.Command
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain)
 			scaleDiegoCommand = commandFactory.MakeScaleDiegoAppCommand()
 		})
 
@@ -218,7 +224,7 @@ var _ = Describe("CommandFactory", func() {
 
 		var stopDiegoCommand cli.Command
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain)
 			stopDiegoCommand = commandFactory.MakeStopDiegoAppCommand()
 		})
 

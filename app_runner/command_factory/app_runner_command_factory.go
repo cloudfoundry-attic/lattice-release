@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	red string = "\x1b[91m"
+	red   string = "\x1b[91m"
+	green string = "\x1b[32m"
 )
 
 type appRunner interface {
@@ -24,8 +25,8 @@ type AppRunnerCommandFactory struct {
 	appRunnerCommand *appRunnerCommand
 }
 
-func NewAppRunnerCommandFactory(appRunner appRunner, output io.Writer, timeout time.Duration) *AppRunnerCommandFactory {
-	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, output, timeout}}
+func NewAppRunnerCommandFactory(appRunner appRunner, output io.Writer, timeout time.Duration, domain string) *AppRunnerCommandFactory {
+	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, output, timeout, domain}}
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeStartDiegoAppCommand() cli.Command {
@@ -89,6 +90,7 @@ type appRunnerCommand struct {
 	appRunner appRunner
 	output    io.Writer
 	timeout   time.Duration
+	domain    string
 }
 
 func (cmd *appRunnerCommand) startDiegoApp(c *cli.Context) {
@@ -159,7 +161,8 @@ func (cmd *appRunnerCommand) pollAppUntilUp(name string) {
 	for startingTime.Add(cmd.timeout).After(time.Now()) {
 		if status, _ := cmd.appRunner.IsDockerAppUp(name); status {
 			cmd.newLine()
-			cmd.say(name + " is now running. \n")
+			cmd.say(cmd.green(name + " is now running. \n"))
+			cmd.say(cmd.green(cmd.urlForApp(name)))
 			return
 		} else {
 			cmd.dot()
@@ -170,8 +173,16 @@ func (cmd *appRunnerCommand) pollAppUntilUp(name string) {
 	cmd.say(cmd.red(name + " took too long to start. \n"))
 }
 
+func (cmd *appRunnerCommand) urlForApp(name string) string {
+	return fmt.Sprintf("http://%s.%s\n", name, cmd.domain)
+}
+
 func (cmd *appRunnerCommand) red(output string) string {
 	return fmt.Sprintf("%s%s", red, output)
+}
+
+func (cmd *appRunnerCommand) green(output string) string {
+	return fmt.Sprintf("%s%s", green, output)
 }
 
 func (cmd *appRunnerCommand) say(output string) {

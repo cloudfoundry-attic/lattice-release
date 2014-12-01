@@ -30,7 +30,7 @@ func NewCliApp() *cli.App {
 	receptorClient := receptor.NewClient(config.Receptor())
 	appRunner := app_runner.NewDiegoAppRunner(receptorClient)
 
-	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout, time.Minute)
+	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout, time.Minute, config.Target())
 
 	logReader := logs.NewLogReader(noaa.NewConsumer(logs_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, os.Stdout)

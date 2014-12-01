@@ -35,7 +35,6 @@ type logsCommand struct {
 	outputChan chan string
 }
 
-
 func (cmd *logsCommand) tailLogs(context *cli.Context) {
 	appGuid := context.Args().First()
 
