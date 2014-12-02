@@ -24,6 +24,22 @@ cleanup(){
     cleanup_vagrant
 }
 
+assert_that_vtx_is_enabled_if_linux(){
+    if [ -a /proc/cpuinfo ]; then
+        set +e
+        egrep "vmx|svm" /proc/cpuinfo
+
+        if [ "$?" -ne "0" ]; then
+            echo "VT-x is not enabled on this machine."
+            exit 2
+        fi
+        
+        set -e
+    fi
+}
+
+assert_that_vtx_is_enabled_if_linux
+
 export DIEGO_RELEASE_PATH=$1
 export DIEGO_EDGE_TAR_PATH=$2
 WORKSPACE_DIR=`pwd`
