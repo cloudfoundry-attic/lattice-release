@@ -1,0 +1,3 @@
+#!/bin/bash
+
+packer build diego-edge-pipeline/04_packaging/packer_template.json

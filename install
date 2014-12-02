@@ -50,6 +50,12 @@ cp -r $DIEGO_EDGE_BUILD_PATH/config /var/diego
 
 install_dependencies &>/var/log/diego-install.log
 
+apt-get -y update
+apt-get -y install gcc
+apt-get -y install make
+apt-get -y install quota
+apt-get -y install linux-image-extra-$(uname -r)
+
 start diego-edge-bootstrap &>>/var/log/diego-install.log
 
 echo "Finished!

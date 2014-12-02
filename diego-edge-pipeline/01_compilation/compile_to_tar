@@ -15,5 +15,6 @@ diego-edge/diego-edge-pipeline/helpers/run_with_docker \
     /workspace/cf-release \
     /workspace/diego-edge
 
-rm -rf diego-edge.tgz
+rm -f diego-lite/diego-edge.tgz
+
 tar -czf diego-edge.tgz diego-edge-build
