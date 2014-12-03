@@ -13,10 +13,11 @@ const (
 
 type DiegoAppRunner struct {
 	receptorClient receptor.Client
+	domain string
 }
 
-func NewDiegoAppRunner(receptorClient receptor.Client) *DiegoAppRunner {
-	return &DiegoAppRunner{receptorClient}
+func NewDiegoAppRunner(receptorClient receptor.Client, domain string) *DiegoAppRunner {
+	return &DiegoAppRunner{receptorClient, domain}
 }
 
 func (appRunner *DiegoAppRunner) StartDockerApp(name, startCommand, dockerImagePath string, memoryMB, diskMB, port int) error {
@@ -78,7 +79,7 @@ func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath s
 		RootFSPath:  dockerImagePath,
 		Instances:   1,
 		Stack:       "lucid64",
-		Routes:      []string{fmt.Sprintf("%s.192.168.11.11.xip.io", name)},
+		Routes:      []string{fmt.Sprintf("%s.%s", name, appRunner.domain)},
 		MemoryMB:    memoryMB,
 		DiskMB:      diskMB,
 		Ports:       []uint32{uint32(port)},

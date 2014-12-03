@@ -21,7 +21,7 @@ var _ = Describe("AppRunner", func() {
 
 	BeforeEach(func() {
 		fakeReceptorClient = &fake_receptor.FakeClient{}
-		appRunner = app_runner.NewDiegoAppRunner(fakeReceptorClient)
+		appRunner = app_runner.NewDiegoAppRunner(fakeReceptorClient, "myDiegoInstall.com")
 
 	})
 
@@ -39,7 +39,7 @@ var _ = Describe("AppRunner", func() {
 				RootFSPath:  "docker://runtest/runner",
 				Instances:   1,
 				Stack:       "lucid64",
-				Routes:      []string{"americano-app.192.168.11.11.xip.io"},
+				Routes:      []string{"americano-app.myDiegoInstall.com"},
 				MemoryMB:    128,
 				DiskMB:      1024,
 				Ports:       []uint32{8080},

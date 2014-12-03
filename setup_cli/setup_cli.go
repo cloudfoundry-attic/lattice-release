@@ -28,7 +28,7 @@ func NewCliApp() *cli.App {
 	config.Load()
 
 	receptorClient := receptor.NewClient(config.Receptor())
-	appRunner := app_runner.NewDiegoAppRunner(receptorClient)
+	appRunner := app_runner.NewDiegoAppRunner(receptorClient, config.Target())
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout, time.Minute, config.Target())
 
