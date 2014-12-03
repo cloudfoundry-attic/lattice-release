@@ -57,13 +57,18 @@ func (appRunner *DiegoAppRunner) IsDockerAppUp(processGuid string) (bool, error)
 }
 
 func (appRunner *DiegoAppRunner) existingLrpsCount(name string) (int, error) {
-	desiredLrpResponse, err := appRunner.receptorClient.GetDesiredLRP(name)
-	// Suppress error and return 0 instances when error body matches below text
-	if err != nil && err.Error() == "LRP not found" {
-		return 0, nil
+	desiredLRPs, err := appRunner.receptorClient.DesiredLRPs()
+	if err != nil {
+		return 0, err
 	}
 
-	return desiredLrpResponse.Instances, err
+	for _, desiredLRP := range desiredLRPs {
+		if desiredLRP.ProcessGuid == name {
+			return desiredLRP.Instances, nil
+		}
+	}
+
+	return 0, nil
 }
 
 func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath string, memoryMB, diskMB, port int) error {
