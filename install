@@ -2,6 +2,8 @@
 
 set -e
 
+echo "Installing Diego Edge"
+
 DIEGO_EDGE_BUILD_PATH=$1
 
 if [ -z "$DIEGO_EDGE_BUILD_PATH" ]; then
@@ -25,8 +27,6 @@ echo "Installing Dependencies..."
     popd
 }
 
-
-
 cp $DIEGO_EDGE_BUILD_PATH/upstart/* /etc/init
 cp $DIEGO_EDGE_BUILD_PATH/bin/* /usr/local/bin
 
@@ -48,16 +48,15 @@ cp -a $DIEGO_EDGE_BUILD_PATH/garden/skeleton /var/diego/garden/skeleton
 mkdir -p /var/diego/config
 cp -r $DIEGO_EDGE_BUILD_PATH/config /var/diego
 
-install_dependencies &>/var/log/diego-install.log
-
 apt-get -y update
 apt-get -y install gcc
 apt-get -y install make
 apt-get -y install quota
 apt-get -y install linux-image-extra-$(uname -r)
 
+install_dependencies &>/var/log/diego-install.log
+
 start diego-edge-bootstrap &>>/var/log/diego-install.log
 
 echo "Finished!
-Diego-Edge is now installed and running. You may target it with the Diego-Edge cli via:
-diego-edge-cli target 192.168.11.11.xip.io"
+Diego-Edge is now installed and running."
