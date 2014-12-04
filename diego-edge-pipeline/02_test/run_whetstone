@@ -51,6 +51,7 @@ trap cleanup EXIT
 
 pushd $WORKSPACE_DIR/diego-edge
     vagrant up --provider=virtualbox
+    SYSTEM_DOMAIN=`cat .system-domain`
 popd
 
 export GOPATH=$DIEGO_RELEASE_PATH
@@ -66,4 +67,4 @@ go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
 go get -v -t github.com/pivotal-cf-experimental/...
 
-PATH=$PATH:$GOPATH/bin ginkgo -noColor -v $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -domain="192.168.11.11.xip.io" -timeout=300
+PATH=$PATH:$GOPATH/bin ginkgo -noColor -v $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -domain=$SYSTEM_DOMAIN -timeout=300
