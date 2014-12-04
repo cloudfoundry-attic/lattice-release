@@ -13,6 +13,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     s.inline = "cp /var/diego/system-domain /vagrant/.system-domain"
   end
 
+  config.vm.provision "shell" do |s|
+    s.inline = "echo 'Diego-Edge is now installed and running. You may target it with the Diego-Edge cli via:' && cat /vagrant/.system-domain"
+  end
+
   config.vm.provider "virtualbox" do |v, override|
     # dns resolution appears to be very slow in some environments; this fixes it
     v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]

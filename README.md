@@ -1,12 +1,23 @@
 ##Running the box
 
-    vagrant up
-    
-The box lives at 192.168.11.11
-    
-etcd is accessible on port 4001
-Loggregator is accessible via loggregator.192.168.11.11.xip.io
-receptor is accessible via receptor.192.168.11.11.xip.io
+    $ vagrant up
+
+Vagrant up spins up a virtual hardware environment with an ip address assigned through DHCP. The output from vagrant up will provide instructions on how to target Diego. 
+
+Use the [Diego Edge Cli](https://github.com/pivotal-cf-experimental/diego-edge-cli) to target Diego.
+
+####Example Usage
+
+     $ vagrant up
+     
+     Bringing machine 'default' up with 'vmware_fusion' provider...
+     ...
+     ...
+     Diego-Edge is now installed and running. You may target it with the Diego-Edge cli via:
+     192.168.194.130.xip.io
+     
+     $ diego-edge-cli target 192.168.194.130.xip.io 
+     
 
 ####Running Vagrant with a custom diego edge tar
 
