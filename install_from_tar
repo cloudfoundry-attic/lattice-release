@@ -9,7 +9,6 @@ if [ -z "${PATH_TO_DIEGO_EDGE_TAR}" ]; then
 
   DIEGO_EDGE_LATEST=https://s3-us-west-2.amazonaws.com/diego-edge/diego-edge-latest.tgz
   wget --quiet $DIEGO_EDGE_LATEST -O $PATH_TO_DIEGO_EDGE_TAR
-
 fi
 
 tar -xf $PATH_TO_DIEGO_EDGE_TAR -C /tmp

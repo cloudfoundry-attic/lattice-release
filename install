@@ -12,10 +12,7 @@ fi
 
 
 install_dependencies() {
-echo "Installing Dependencies..."
-    apt-get -y install quota
-    apt-get -y install linux-image-extra-$(uname -r)
-
+    echo "Installing Dependencies..."
     pushd /tmp
         SHADOW_TAR_OBJECT_ID="8f17023f-2a94-4d98-a737-ddbf166e7188"
         wget "http://go-diego-go.s3.amazonaws.com/${SHADOW_TAR_OBJECT_ID}" -O - | tar xzf -
@@ -58,5 +55,9 @@ install_dependencies &>/var/log/diego-install.log
 
 start diego-edge-bootstrap &>>/var/log/diego-install.log
 
+SYSTEM_DOMAIN=`cat /var/diego/system-domain`
+
 echo "Finished!
-Diego-Edge is now installed and running."
+Diego-Edge is now installed and running. You may target it with the Diego-Edge cli via:
+diego-edge-cli target $SYSTEM_DOMAIN"
+

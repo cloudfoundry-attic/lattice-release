@@ -1,0 +1,17 @@
+#!/bin/sh
+
+aws_metadata_api_base_url=http://169.254.169.254/2014-02-25
+curl -s --connect-timeout 3 $aws_metadata_api_base_url
+aws_curl_result=$?
+if [ "$aws_curl_result" -eq 0 ]; then
+ echo "Detected AWS"
+ SYSTEM_DOMAIN=`curl --connect-timeout 3 $aws_metadata_api_base_url/meta-data/public-ipv4`.xip.io
+ echo "Setting system domain for publicly accessible routes to $SYSTEM_DOMAIN with the ip retrieved from amazon"
+else
+ echo "Detected Non-AWS"
+ SYSTEM_DOMAIN=`hostname -I | awk '{ print $2 }'`.xip.io
+ echo "Setting System Domain to $SYSTEM_DOMAIN."
+fi
+
+echo $SYSTEM_DOMAIN > /var/diego/system-domain
+sed -i "s/SYSTEMDOMAIN_PLACEHOLDER/$SYSTEM_DOMAIN/" /var/diego/config/trafficcontroller.json
