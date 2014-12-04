@@ -2,6 +2,10 @@
 
 set -e
 
+pushd cf-release/src/loggregator
+   git submodule update --init --recursive
+popd
+
 diego-edge/diego-edge-pipeline/helpers/run_with_docker \
  diego-edge/compile \
     /workspace/diego-edge-build \
