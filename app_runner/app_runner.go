@@ -94,7 +94,7 @@ func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath s
 		},
 		Monitor: &models.RunAction{
 			Path: "/tmp/spy",
-			Args: []string{"-addr", ":8080"},
+			Args: []string{"-addr", fmt.Sprintf(":%d", port)},
 		},
 	})
 

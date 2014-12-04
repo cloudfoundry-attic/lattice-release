@@ -29,7 +29,7 @@ var _ = Describe("AppRunner", func() {
 
 		It("Starts a Docker App", func() {
 			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
-			err := appRunner.StartDockerApp("americano-app", "/app-run-statement", "docker://runtest/runner", 128, 1024, 8080)
+			err := appRunner.StartDockerApp("americano-app", "/app-run-statement", "docker://runtest/runner", 128, 1024, 2000)
 			Expect(err).To(BeNil())
 
 			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
@@ -42,7 +42,7 @@ var _ = Describe("AppRunner", func() {
 				Routes:      []string{"americano-app.myDiegoInstall.com"},
 				MemoryMB:    128,
 				DiskMB:      1024,
-				Ports:       []uint32{8080},
+				Ports:       []uint32{2000},
 				LogGuid:     "americano-app",
 				LogSource:   "APP",
 				Setup: &models.DownloadAction{
@@ -54,7 +54,7 @@ var _ = Describe("AppRunner", func() {
 				},
 				Monitor: &models.RunAction{
 					Path: "/tmp/spy",
-					Args: []string{"-addr", ":8080"},
+					Args: []string{"-addr", ":2000"},
 				},
 			}))
 		})
