@@ -31,7 +31,7 @@ compile_gorouter() {
 }
 
 compile_loggregator() {
-    pushd $DIEGO_RELEASE_PATH/loggregator
+    pushd $CF_RELEASE_PATH/src/loggregator
         GOPATH=`pwd`
         go install trafficcontroller
         go install doppler
