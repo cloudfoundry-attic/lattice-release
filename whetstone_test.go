@@ -78,7 +78,7 @@ func startDockerApp(appName string) {
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
-	Eventually(session, 60).Should(gexec.Exit(0))
+	Eventually(session, timeout).Should(gexec.Exit(0))
 
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
 }
