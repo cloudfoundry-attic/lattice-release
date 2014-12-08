@@ -30,12 +30,10 @@ var _ = Describe("CommandFactory", func() {
 
 				command := commandFactory.MakeSetTargetCommand()
 
-				context := test_helpers.ContextFromArgsAndCommand([]string{"myapi.com"}, command)
+				err := test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com"})
 
-				Expect(config.Target()).To(Equal(""))
-
-				command.Action(context)
-
+				Expect(err).NotTo(HaveOccurred())
+				Expect(config.Target()).To(Equal("myapi.com"))
 				Expect(config.Receptor()).To(Equal("http://receptor.myapi.com"))
 				Expect(output).To(gbytes.Say("Api Location Set\n"))
 			})
@@ -46,10 +44,9 @@ var _ = Describe("CommandFactory", func() {
 
 				command := commandFactory.MakeSetTargetCommand()
 
-				context := test_helpers.ContextFromArgsAndCommand([]string{""}, command)
+				err := test_helpers.ExecuteCommandWithArgs(command, []string{""})
 
-				command.Action(context)
-
+				Expect(err).NotTo(HaveOccurred())
 				Expect(output).To(gbytes.Say("Incorrect Usage\n"))
 			})
 
@@ -61,10 +58,9 @@ var _ = Describe("CommandFactory", func() {
 
 				command := commandFactory.MakeSetTargetCommand()
 
-				context := test_helpers.ContextFromArgsAndCommand([]string{"myapi.com"}, command)
+				err := test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com"})
 
-				command.Action(context)
-
+				Expect(err).NotTo(HaveOccurred())
 				Expect(output).To(gbytes.Say("FAILURE setting api"))
 			})
 		})

@@ -35,8 +35,6 @@ var _ = Describe("CommandFactory", func() {
 			commandFactory := command_factory.NewLogsCommandFactory(logReader, output)
 			tailLogsCommand := commandFactory.MakeLogsCommand()
 
-			context := test_helpers.ContextFromArgsAndCommand(args, tailLogsCommand)
-
 			time := time.Now()
 			sourceType := "RTR"
 			sourceInstance := "1"
@@ -50,7 +48,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 			logReader.addError(errors.New("First Error"))
 
-			go tailLogsCommand.Action(context)
+			go test_helpers.ExecuteCommandWithArgs(tailLogsCommand, args)
 
 			Eventually(appGuidChan).Should(Receive(Equal("my-app-guid")))
 
@@ -67,10 +65,9 @@ var _ = Describe("CommandFactory", func() {
 			commandFactory := command_factory.NewLogsCommandFactory(logReader, output)
 			tailLogsCommand := commandFactory.MakeLogsCommand()
 
-			context := test_helpers.ContextFromArgsAndCommand(args, tailLogsCommand)
+			err := test_helpers.ExecuteCommandWithArgs(tailLogsCommand, args)
 
-			tailLogsCommand.Action(context)
-
+			Expect(err).NotTo(HaveOccurred())
 			Expect(output).To(gbytes.Say("Invalid Usage\n"))
 		})
 

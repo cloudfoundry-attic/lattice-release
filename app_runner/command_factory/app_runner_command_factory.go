@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codegangsta/cli"
+	"github.com/dajulia3/cli"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/colors"
 )
 
 type appRunner interface {
-	StartDockerApp(name, startCommand, dockerImagePath string, memoryMB, diskMB, port int) error
+	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, memoryMB, diskMB, port int) error
 	ScaleDockerApp(name string, instances int) error
 	StopDockerApp(name string) error
 	IsDockerAppUp(name string) (bool, error)
@@ -31,10 +31,6 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartDiegoAppCommand() cli.Co
 		cli.StringFlag{
 			Name:  "docker-image, i",
 			Usage: "the docker image to run",
-		},
-		cli.StringFlag{
-			Name:  "start-command, c",
-			Usage: "the command to run in the context of the docker image (ie the start command for the app)",
 		},
 		cli.IntFlag{
 			Name:  "memory-mb, m",
@@ -57,7 +53,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartDiegoAppCommand() cli.Co
 		Name:        "start",
 		ShortName:   "s",
 		Description: "Start a docker app on diego",
-		Usage:       "diego-edge-cli start APP_NAME -i DOCKER_IMAGE -c START_COMMAND",
+		Usage:       "diego-edge-cli start APP_NAME -i DOCKER_IMAGE -- START_COMMAND [APP_ARG1 APP_ARG2...]",
 		Action:      commandFactory.appRunnerCommand.startDiegoApp,
 		Flags:       startFlags,
 	}
@@ -105,23 +101,33 @@ type appRunnerCommand struct {
 }
 
 func (cmd *appRunnerCommand) startDiegoApp(c *cli.Context) {
-	startCommand := c.String("start-command")
 	dockerImage := c.String("docker-image")
 	memoryMB := c.Int("memory-mb")
 	diskMB := c.Int("disk-mb")
 	port := c.Int("port")
 	name := c.Args().First()
 
-	if name == "" || dockerImage == "" || startCommand == "" {
-		cmd.incorrectUsage()
+	switch {
+	case name == "":
+		cmd.incorrectUsage("App Name required")
 		return
-	} else if !strings.HasPrefix(dockerImage, "docker:///") {
-		cmd.incorrectUsage()
-		cmd.say("Docker Image should begin with: docker:///")
+	case dockerImage == "":
+		cmd.incorrectUsage("Docker Image required")
+		return
+	case !strings.HasPrefix(dockerImage, "docker:///"):
+		cmd.incorrectUsage("Docker Image should begin with: docker:///")
+		return
+	case len(c.Args()) < 3:
+		cmd.incorrectUsage("Start Command required")
+		return
+	case c.Args().Get(1) != "--":
+		cmd.incorrectUsage("'--' Required before start command")
 		return
 	}
+	startCommand := c.Args().Get(2)
+	appArgs := c.Args()[3:]
 
-	err := cmd.appRunner.StartDockerApp(name, startCommand, dockerImage, memoryMB, diskMB, port)
+	err := cmd.appRunner.StartDockerApp(name, startCommand, dockerImage, appArgs, memoryMB, diskMB, port)
 
 	if err != nil {
 		cmd.say(fmt.Sprintf("Error Starting App: %s", err))
@@ -135,7 +141,7 @@ func (cmd *appRunnerCommand) scaleDiegoApp(c *cli.Context) {
 	instances := c.Int("instances")
 	appName := c.Args().First()
 	if appName == "" {
-		cmd.incorrectUsage()
+		cmd.incorrectUsage("App Name required")
 		return
 	} else if instances == 0 {
 		cmd.say(fmt.Sprintf("Error Scaling to 0 instances - Please stop with: diego-edge-cli stop cool-web-app"))
@@ -155,7 +161,7 @@ func (cmd *appRunnerCommand) scaleDiegoApp(c *cli.Context) {
 func (cmd *appRunnerCommand) stopDiegoApp(c *cli.Context) {
 	appName := c.Args().First()
 	if appName == "" {
-		cmd.incorrectUsage()
+		cmd.incorrectUsage("App Name required")
 		return
 	}
 
@@ -196,8 +202,12 @@ func (cmd *appRunnerCommand) say(output string) {
 	cmd.output.Write([]byte(output))
 }
 
-func (cmd *appRunnerCommand) incorrectUsage() {
-	cmd.say("Incorrect Usage\n")
+func (cmd *appRunnerCommand) incorrectUsage(message string) {
+	if len(message) > 0 {
+		cmd.say("Incorrect Usage: " + message + "\n")
+	} else {
+		cmd.say("Incorrect Usage\n")
+	}
 }
 
 func (cmd *appRunnerCommand) dot() {

@@ -3,7 +3,7 @@ package command_factory
 import (
 	"io"
 
-	"github.com/codegangsta/cli"
+	"github.com/dajulia3/cli"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/config"
 )
 

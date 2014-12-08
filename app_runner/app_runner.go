@@ -13,21 +13,20 @@ const (
 
 type DiegoAppRunner struct {
 	receptorClient receptor.Client
-	domain string
+	domain         string
 }
 
 func NewDiegoAppRunner(receptorClient receptor.Client, domain string) *DiegoAppRunner {
 	return &DiegoAppRunner{receptorClient, domain}
 }
 
-func (appRunner *DiegoAppRunner) StartDockerApp(name, startCommand, dockerImagePath string, memoryMB, diskMB, port int) error {
+func (appRunner *DiegoAppRunner) StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, memoryMB, diskMB, port int) error {
 	if existingLrpCount, err := appRunner.existingLrpsCount(name); err != nil {
 		return err
 	} else if existingLrpCount != 0 {
 		return newExistingAppError(name)
 	}
-
-	return appRunner.desireLrp(name, startCommand, dockerImagePath, memoryMB, diskMB, port)
+	return appRunner.desireLrp(name, startCommand, dockerImagePath, appArgs, memoryMB, diskMB, port)
 }
 
 func (appRunner *DiegoAppRunner) ScaleDockerApp(name string, instances int) error {
@@ -72,7 +71,7 @@ func (appRunner *DiegoAppRunner) existingLrpsCount(name string) (int, error) {
 	return 0, nil
 }
 
-func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath string, memoryMB, diskMB, port int) error {
+func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, memoryMB, diskMB, port int) error {
 	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid: name,
 		Domain:      "diego-edge",
@@ -91,6 +90,7 @@ func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath s
 		},
 		Action: &models.RunAction{
 			Path: startCommand,
+			Args: appArgs,
 		},
 		Monitor: &models.RunAction{
 			Path: "/tmp/spy",

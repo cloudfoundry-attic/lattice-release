@@ -21,15 +21,14 @@ This installs or updates the diego-edge-cli binary to $GOPATH/bin.
 
 ###Start a docker app on diego:
 
-    diego-edge-cli start APP_NAME --docker-image DOCKER_IMAGE --start-command START_COMMAND
+    diego-edge-cli start APP_NAME -i DOCKER_IMAGE -- START_COMMAND [APP_ARG1 APP_ARG2...]
 
 ###Tail an app's logs on diego:
 
     diego-edge-cli logs APP_NAME
 
-Example Usage with Diego Edge on Vagrant [Diego Edge](https://github.com/pivotal-cf-experimental/diego-edge):
+###Example Usage with Diego Edge on Vagrant [Diego Edge](https://github.com/pivotal-cf-experimental/diego-edge):
 
-        diego-edge-cli target 192.168.11.11.xip.io
-
-        diego-edge-cli start Bingo-app -i "docker:///dajulia3/diego-edge-docker-app" -c "/dockerapp"
-        diego-edge-cli logs Bingo-app
+    diego-edge-cli target 192.168.11.11.xip.io
+    diego-edge-cli start Bingo-app -i "docker:///mylovelyapp" -- /dockerapp --message="hello"
+    diego-edge-cli logs Bingo-app
