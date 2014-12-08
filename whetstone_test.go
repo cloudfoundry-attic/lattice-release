@@ -74,7 +74,7 @@ var _ = Describe("Diego Edge", func() {
 })
 
 func startDockerApp(appName string) {
-	command := command(diegoEdgeCli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "-c", "/dockerapp")
+	command := command(diegoEdgeCli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "--", "/dockerapp")
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())

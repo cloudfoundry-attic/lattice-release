@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	domain          string
-	timeout         int
-	numCpu          int
+	domain  string
+	timeout int
+	numCpu  int
 )
 
 func init() {
