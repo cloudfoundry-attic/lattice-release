@@ -292,8 +292,8 @@ func newFakeAppRunner() *fakeAppRunner {
 
 type startedDockerApps struct {
 	name            string
-	startCommand    string
 	dockerImagePath string
+	startCommand    string
 	appArgs         []string
 	memoryMB        int
 	diskMB          int
@@ -317,18 +317,19 @@ type fakeAppRunner struct {
 	upDockerApps      map[string]bool
 }
 
-func (f *fakeAppRunner) StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, memoryMB, diskMB, port int) error {
+func (f *fakeAppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, memoryMB, diskMB, port int) error {
 	if f.err != nil {
 		return f.err
 	}
 	f.startedDockerApps = append(f.startedDockerApps,
-		startedDockerApps{name,
-			startCommand,
-			dockerImagePath,
-			appArgs,
-			memoryMB,
-			diskMB,
-			port,
+		startedDockerApps{
+			name: name,
+			dockerImagePath: dockerImagePath,
+			startCommand: startCommand,
+			appArgs: appArgs,
+			memoryMB: memoryMB,
+			diskMB: diskMB,
+			port: port,
 		})
 	return nil
 }

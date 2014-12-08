@@ -20,7 +20,7 @@ func NewDiegoAppRunner(receptorClient receptor.Client, domain string) *DiegoAppR
 	return &DiegoAppRunner{receptorClient, domain}
 }
 
-func (appRunner *DiegoAppRunner) StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, memoryMB, diskMB, port int) error {
+func (appRunner *DiegoAppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, memoryMB, diskMB, port int) error {
 	if existingLrpCount, err := appRunner.existingLrpsCount(name); err != nil {
 		return err
 	} else if existingLrpCount != 0 {

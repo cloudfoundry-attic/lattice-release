@@ -127,7 +127,7 @@ func (cmd *appRunnerCommand) startDiegoApp(c *cli.Context) {
 	startCommand := c.Args().Get(2)
 	appArgs := c.Args()[3:]
 
-	err := cmd.appRunner.StartDockerApp(name, startCommand, dockerImage, appArgs, memoryMB, diskMB, port)
+	err := cmd.appRunner.StartDockerApp(name, dockerImage, startCommand, appArgs, memoryMB, diskMB, port)
 
 	if err != nil {
 		cmd.say(fmt.Sprintf("Error Starting App: %s", err))
