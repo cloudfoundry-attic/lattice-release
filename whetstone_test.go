@@ -59,7 +59,7 @@ var _ = Describe("Diego Edge", func() {
 			Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
 			logsStream := streamLogs(appName)
-			Eventually(logsStream.Out, timeout).Should(gbytes.Say("Diego Edge Docker App. Says Hello"))
+			Eventually(logsStream.Out, timeout).Should(gbytes.Say("Diego Edge Docker App. Says Hello Whetsone"))
 
 			scaleApp(appName)
 
@@ -74,7 +74,7 @@ var _ = Describe("Diego Edge", func() {
 })
 
 func startDockerApp(appName string) {
-	command := command(diegoEdgeCli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "--", "/dockerapp")
+	command := command(diegoEdgeCli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "--", "/dockerapp", "--message", "Hello Whetstone")
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
