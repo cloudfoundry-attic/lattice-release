@@ -21,18 +21,18 @@ func NewDiegoAppRunner(receptorClient receptor.Client, domain string) *DiegoAppR
 }
 
 func (appRunner *DiegoAppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, memoryMB, diskMB, port int) error {
-	if existingLrpCount, err := appRunner.existingLrpsCount(name); err != nil {
+	if desiredLRPsCount, err := appRunner.desiredLRPsCount(name); err != nil {
 		return err
-	} else if existingLrpCount != 0 {
+	} else if desiredLRPsCount != 0 {
 		return newExistingAppError(name)
 	}
 	return appRunner.desireLrp(name, startCommand, dockerImagePath, appArgs, memoryMB, diskMB, port)
 }
 
 func (appRunner *DiegoAppRunner) ScaleDockerApp(name string, instances int) error {
-	if existingLrpCount, err := appRunner.existingLrpsCount(name); err != nil {
+	if desiredLRPsCount, err := appRunner.desiredLRPsCount(name); err != nil {
 		return err
-	} else if existingLrpCount == 0 {
+	} else if desiredLRPsCount == 0 {
 		return newAppNotStartedError(name)
 	}
 
@@ -40,9 +40,9 @@ func (appRunner *DiegoAppRunner) ScaleDockerApp(name string, instances int) erro
 }
 
 func (appRunner *DiegoAppRunner) StopDockerApp(name string) error {
-	if existingLrpCount, err := appRunner.existingLrpsCount(name); err != nil {
+	if desiredLRPsCount, err := appRunner.desiredLRPsCount(name); err != nil {
 		return err
-	} else if existingLrpCount == 0 {
+	} else if desiredLRPsCount == 0 {
 		return newAppNotStartedError(name)
 	}
 
@@ -56,7 +56,7 @@ func (appRunner *DiegoAppRunner) IsDockerAppUp(processGuid string) (bool, error)
 	return status, err
 }
 
-func (appRunner *DiegoAppRunner) existingLrpsCount(name string) (int, error) {
+func (appRunner *DiegoAppRunner) desiredLRPsCount(name string) (int, error) {
 	desiredLRPs, err := appRunner.receptorClient.DesiredLRPs()
 	if err != nil {
 		return 0, err
