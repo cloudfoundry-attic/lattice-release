@@ -11,7 +11,7 @@ import (
 )
 
 type appRunner interface {
-	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, memoryMB, diskMB, port int) error
+	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, privileged bool, memoryMB, diskMB, port int) error
 	ScaleDockerApp(name string, instances int) error
 	StopDockerApp(name string) error
 	IsDockerAppUp(name string) (bool, error)
@@ -30,21 +30,25 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartDiegoAppCommand() cli.Co
 	var startFlags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "docker-image, i",
-			Usage: "the docker image to run",
+			Usage: "docker image to run",
+		},
+		cli.BoolFlag{
+			Name:  "run-as-root, r",
+			Usage: "run app as privileged user",
 		},
 		cli.IntFlag{
 			Name:  "memory-mb, m",
-			Usage: "the amount of memory in MB to provide for the docker app",
+			Usage: "amount of memory in MB to provide for the docker app",
 			Value: 128,
 		},
 		cli.IntFlag{
 			Name:  "disk-mb, d",
-			Usage: "the amount of disk memory in MB to provide for the docker app",
+			Usage: "amount of disk memory in MB to provide for the docker app",
 			Value: 1024,
 		},
 		cli.IntFlag{
 			Name:  "port, p",
-			Usage: "the port that the docker app listens on",
+			Usage: "port that the docker app listens on",
 			Value: 8080,
 		},
 	}
@@ -102,6 +106,7 @@ type appRunnerCommand struct {
 
 func (cmd *appRunnerCommand) startDiegoApp(c *cli.Context) {
 	dockerImage := c.String("docker-image")
+	privileged := c.Bool("run-as-root")
 	memoryMB := c.Int("memory-mb")
 	diskMB := c.Int("disk-mb")
 	port := c.Int("port")
@@ -127,7 +132,7 @@ func (cmd *appRunnerCommand) startDiegoApp(c *cli.Context) {
 	startCommand := c.Args().Get(2)
 	appArgs := c.Args()[3:]
 
-	err := cmd.appRunner.StartDockerApp(name, dockerImage, startCommand, appArgs, memoryMB, diskMB, port)
+	err := cmd.appRunner.StartDockerApp(name, dockerImage, startCommand, appArgs, privileged, memoryMB, diskMB, port)
 
 	if err != nil {
 		cmd.say(fmt.Sprintf("Error Starting App: %s", err))

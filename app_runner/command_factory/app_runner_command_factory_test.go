@@ -43,6 +43,7 @@ var _ = Describe("CommandFactory", func() {
 				"--disk-mb=12",
 				"--port=3000",
 				"--docker-image=docker:///fun/app",
+				"--run-as-root=true",
 				"cool-web-app",
 				"--",
 				"/start-me-please",
@@ -60,6 +61,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.startedDockerApps[0].startCommand).To(Equal("/start-me-please"))
 			Expect(appRunner.startedDockerApps[0].dockerImagePath).To(Equal("docker:///fun/app"))
 			Expect(appRunner.startedDockerApps[0].appArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
+			Expect(appRunner.startedDockerApps[0].privileged).To(Equal(true))
 			Expect(appRunner.startedDockerApps[0].memoryMB).To(Equal(12))
 			Expect(appRunner.startedDockerApps[0].diskMB).To(Equal(12))
 			Expect(appRunner.startedDockerApps[0].port).To(Equal(3000))
@@ -67,6 +69,26 @@ var _ = Describe("CommandFactory", func() {
 			Expect(buffer).To(gbytes.Say("Starting App: cool-web-app"))
 			Expect(string(buffer.Contents())).To(ContainSubstring(colors.Green("cool-web-app is now running.")))
 			Expect(string(buffer.Contents())).To(ContainSubstring(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
+		})
+
+		It("starts a Docker based Diego app with sensible defaults", func() {
+			args := []string{
+				"--docker-image=docker:///fun/app",
+				"cool-web-app",
+				"--",
+				"/start-me-please",
+			}
+
+			appRunner.upDockerApps["cool-web-app"] = true
+			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
+
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(len(appRunner.startedDockerApps)).To(Equal(1))
+			Expect(appRunner.startedDockerApps[0].privileged).To(Equal(false))
+			Expect(appRunner.startedDockerApps[0].memoryMB).To(Equal(128))
+			Expect(appRunner.startedDockerApps[0].diskMB).To(Equal(1024))
+			Expect(appRunner.startedDockerApps[0].port).To(Equal(8080))
 		})
 
 		It("alerts the user if the app does not start", func() {
@@ -295,6 +317,7 @@ type startedDockerApps struct {
 	dockerImagePath string
 	startCommand    string
 	appArgs         []string
+	privileged      bool
 	memoryMB        int
 	diskMB          int
 	port            int
@@ -317,19 +340,20 @@ type fakeAppRunner struct {
 	upDockerApps      map[string]bool
 }
 
-func (f *fakeAppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, memoryMB, diskMB, port int) error {
+func (f *fakeAppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, privileged bool, memoryMB, diskMB, port int) error {
 	if f.err != nil {
 		return f.err
 	}
 	f.startedDockerApps = append(f.startedDockerApps,
 		startedDockerApps{
-			name: name,
+			name:            name,
 			dockerImagePath: dockerImagePath,
-			startCommand: startCommand,
-			appArgs: appArgs,
-			memoryMB: memoryMB,
-			diskMB: diskMB,
-			port: port,
+			startCommand:    startCommand,
+			appArgs:         appArgs,
+			privileged:      privileged,
+			memoryMB:        memoryMB,
+			diskMB:          diskMB,
+			port:            port,
 		})
 	return nil
 }

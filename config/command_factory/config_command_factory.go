@@ -19,7 +19,7 @@ func (c *commandFactory) MakeSetTargetCommand() cli.Command {
 	var startCommand = cli.Command{
 		Name:        "target",
 		ShortName:   "t",
-		Description: "Set a target diego location",
+		Description: "set a target diego location",
 		Usage:       "diego-edge-cli target DIEGO_DOMAIN",
 		Action:      c.cmd.setTarget,
 		Flags:       []cli.Flag{},
