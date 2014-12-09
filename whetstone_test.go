@@ -59,7 +59,7 @@ var _ = Describe("Diego Edge", func() {
 			Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
 			logsStream := streamLogs(appName)
-			Eventually(logsStream.Out, timeout).Should(gbytes.Say("Diego Edge Docker App. Says Hello Whetstone"))
+			Eventually(logsStream.Out, timeout).Should(gbytes.Say("WHETSTONE TEST APP. Says Hello Whetstone"))
 
 			scaleApp(appName)
 
@@ -74,7 +74,7 @@ var _ = Describe("Diego Edge", func() {
 })
 
 func startDockerApp(appName string) {
-	command := command(diegoEdgeCli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "--", "/dockerapp", "--message", "Hello Whetstone")
+	command := command(diegoEdgeCli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "--env", "APP_NAME", "--", "/dockerapp", "--message", "Hello Whetstone")
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
@@ -117,7 +117,7 @@ func targetDiego(domain string) {
 
 func command(name string, arg ...string) *exec.Cmd {
 	command := exec.Command(name, arg...)
-	command.Env = []string{fmt.Sprintf("DIEGO_CLI_HOME=%s", tmpDir)}
+	command.Env = []string{fmt.Sprintf("DIEGO_CLI_HOME=%s", tmpDir), "APP_NAME=WHETSTONE TEST APP"}
 	return command
 }
 
