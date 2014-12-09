@@ -33,7 +33,8 @@ var _ = Describe("CommandFactory", func() {
 		var startDiegoCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain)
+			env := []string{"SHELL=/bin/bash", "COLOR=Blue"}
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain, env)
 			startDiegoCommand = commandFactory.MakeStartDiegoAppCommand()
 		})
 
@@ -44,6 +45,10 @@ var _ = Describe("CommandFactory", func() {
 				"--port=3000",
 				"--docker-image=docker:///fun/app",
 				"--run-as-root=true",
+				"--env=TIMEZONE=CST",
+				"--env=LANG=\"Chicago English\"",
+				"--env=COLOR",
+				"--env=UNSET",
 				"cool-web-app",
 				"--",
 				"/start-me-please",
@@ -61,6 +66,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.startedDockerApps[0].startCommand).To(Equal("/start-me-please"))
 			Expect(appRunner.startedDockerApps[0].dockerImagePath).To(Equal("docker:///fun/app"))
 			Expect(appRunner.startedDockerApps[0].appArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
+			Expect(appRunner.startedDockerApps[0].environmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "COLOR": "Blue", "UNSET": ""}))
 			Expect(appRunner.startedDockerApps[0].privileged).To(Equal(true))
 			Expect(appRunner.startedDockerApps[0].memoryMB).To(Equal(12))
 			Expect(appRunner.startedDockerApps[0].diskMB).To(Equal(12))
@@ -195,7 +201,7 @@ var _ = Describe("CommandFactory", func() {
 
 		var scaleDiegoCommand cli.Command
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain, []string{})
 			scaleDiegoCommand = commandFactory.MakeScaleDiegoAppCommand()
 		})
 
@@ -259,7 +265,7 @@ var _ = Describe("CommandFactory", func() {
 
 		var stopDiegoCommand cli.Command
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain, []string{})
 			stopDiegoCommand = commandFactory.MakeStopDiegoAppCommand()
 		})
 
@@ -313,14 +319,15 @@ func newFakeAppRunner() *fakeAppRunner {
 }
 
 type startedDockerApps struct {
-	name            string
-	dockerImagePath string
-	startCommand    string
-	appArgs         []string
-	privileged      bool
-	memoryMB        int
-	diskMB          int
-	port            int
+	name                 string
+	dockerImagePath      string
+	startCommand         string
+	appArgs              []string
+	environmentVariables map[string]string
+	privileged           bool
+	memoryMB             int
+	diskMB               int
+	port                 int
 }
 
 type scaledDockerApps struct {
@@ -340,20 +347,21 @@ type fakeAppRunner struct {
 	upDockerApps      map[string]bool
 }
 
-func (f *fakeAppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, privileged bool, memoryMB, diskMB, port int) error {
+func (f *fakeAppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
 	if f.err != nil {
 		return f.err
 	}
 	f.startedDockerApps = append(f.startedDockerApps,
 		startedDockerApps{
-			name:            name,
-			dockerImagePath: dockerImagePath,
-			startCommand:    startCommand,
-			appArgs:         appArgs,
-			privileged:      privileged,
-			memoryMB:        memoryMB,
-			diskMB:          diskMB,
-			port:            port,
+			name:                 name,
+			dockerImagePath:      dockerImagePath,
+			startCommand:         startCommand,
+			appArgs:              appArgs,
+			environmentVariables: environmentVariables,
+			privileged:           privileged,
+			memoryMB:             memoryMB,
+			diskMB:               diskMB,
+			port:                 port,
 		})
 	return nil
 }

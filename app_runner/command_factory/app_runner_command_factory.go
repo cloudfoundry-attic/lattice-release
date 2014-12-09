@@ -11,7 +11,7 @@ import (
 )
 
 type appRunner interface {
-	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, privileged bool, memoryMB, diskMB, port int) error
+	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error
 	ScaleDockerApp(name string, instances int) error
 	StopDockerApp(name string) error
 	IsDockerAppUp(name string) (bool, error)
@@ -21,8 +21,8 @@ type AppRunnerCommandFactory struct {
 	appRunnerCommand *appRunnerCommand
 }
 
-func NewAppRunnerCommandFactory(appRunner appRunner, output io.Writer, timeout time.Duration, domain string) *AppRunnerCommandFactory {
-	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, output, timeout, domain}}
+func NewAppRunnerCommandFactory(appRunner appRunner, output io.Writer, timeout time.Duration, domain string, env []string) *AppRunnerCommandFactory {
+	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, output, timeout, domain, env}}
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeStartDiegoAppCommand() cli.Command {
@@ -35,6 +35,11 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartDiegoAppCommand() cli.Co
 		cli.BoolFlag{
 			Name:  "run-as-root, r",
 			Usage: "run app as privileged user",
+		},
+		cli.StringSliceFlag{
+			Name:  "env, e",
+			Usage: "environment variables to set, NAME[=VALUE]",
+			Value: &cli.StringSlice{},
 		},
 		cli.IntFlag{
 			Name:  "memory-mb, m",
@@ -57,7 +62,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartDiegoAppCommand() cli.Co
 		Name:        "start",
 		ShortName:   "s",
 		Description: "Start a docker app on diego",
-		Usage:       "diego-edge-cli start APP_NAME -i DOCKER_IMAGE -- START_COMMAND [APP_ARG1 APP_ARG2...]",
+		Usage:       "diego-edge-cli start APP_NAME -i DOCKER_IMAGE -e NAME[=VALUE] -- START_COMMAND [APP_ARG1 APP_ARG2...]",
 		Action:      commandFactory.appRunnerCommand.startDiegoApp,
 		Flags:       startFlags,
 	}
@@ -102,10 +107,12 @@ type appRunnerCommand struct {
 	output    io.Writer
 	timeout   time.Duration
 	domain    string
+	env       []string
 }
 
 func (cmd *appRunnerCommand) startDiegoApp(c *cli.Context) {
 	dockerImage := c.String("docker-image")
+	envVars := c.StringSlice("env")
 	privileged := c.Bool("run-as-root")
 	memoryMB := c.Int("memory-mb")
 	diskMB := c.Int("disk-mb")
@@ -132,7 +139,7 @@ func (cmd *appRunnerCommand) startDiegoApp(c *cli.Context) {
 	startCommand := c.Args().Get(2)
 	appArgs := c.Args()[3:]
 
-	err := cmd.appRunner.StartDockerApp(name, dockerImage, startCommand, appArgs, privileged, memoryMB, diskMB, port)
+	err := cmd.appRunner.StartDockerApp(name, dockerImage, startCommand, appArgs, cmd.buildEnvironment(envVars), privileged, memoryMB, diskMB, port)
 
 	if err != nil {
 		cmd.say(fmt.Sprintf("Error Starting App: %s", err))
@@ -221,4 +228,38 @@ func (cmd *appRunnerCommand) dot() {
 
 func (cmd *appRunnerCommand) newLine() {
 	cmd.output.Write([]byte("\n"))
+}
+
+func (cmd *appRunnerCommand) buildEnvironment(envVars []string) map[string]string {
+	environment := make(map[string]string)
+
+	for _, envVarPair := range envVars {
+		name, value := parseEnvVarPair(envVarPair)
+
+		if value == "" {
+			value = cmd.grabVarFromEnv(name)
+		}
+
+		environment[name] = value
+	}
+	return environment
+}
+
+func (cmd *appRunnerCommand) grabVarFromEnv(name string) string {
+	for _, envVarPair := range cmd.env {
+		if strings.HasPrefix(envVarPair, name) {
+			_, value := parseEnvVarPair(envVarPair)
+			return value
+		}
+	}
+	return ""
+}
+
+func parseEnvVarPair(envVarPair string) (name, value string) {
+	s := strings.Split(envVarPair, "=")
+	if len(s) > 1 {
+		return s[0], s[1]
+	} else {
+		return s[0], ""
+	}
 }

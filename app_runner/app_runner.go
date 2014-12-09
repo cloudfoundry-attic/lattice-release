@@ -20,13 +20,13 @@ func NewDiegoAppRunner(receptorClient receptor.Client, domain string) *DiegoAppR
 	return &DiegoAppRunner{receptorClient, domain}
 }
 
-func (appRunner *DiegoAppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, privileged bool, memoryMB, diskMB, port int) error {
+func (appRunner *DiegoAppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
 	if desiredLRPsCount, err := appRunner.desiredLRPsCount(name); err != nil {
 		return err
 	} else if desiredLRPsCount != 0 {
 		return newExistingAppError(name)
 	}
-	return appRunner.desireLrp(name, startCommand, dockerImagePath, appArgs, privileged, memoryMB, diskMB, port)
+	return appRunner.desireLrp(name, startCommand, dockerImagePath, appArgs, environmentVariables, privileged, memoryMB, diskMB, port)
 }
 
 func (appRunner *DiegoAppRunner) ScaleDockerApp(name string, instances int) error {
@@ -71,19 +71,20 @@ func (appRunner *DiegoAppRunner) desiredLRPsCount(name string) (int, error) {
 	return 0, nil
 }
 
-func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, privileged bool, memoryMB, diskMB, port int) error {
+func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
 	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
-		ProcessGuid: name,
-		Domain:      "diego-edge",
-		RootFSPath:  dockerImagePath,
-		Instances:   1,
-		Stack:       "lucid64",
-		Routes:      []string{fmt.Sprintf("%s.%s", name, appRunner.domain)},
-		MemoryMB:    memoryMB,
-		DiskMB:      diskMB,
-		Ports:       []uint32{uint32(port)},
-		LogGuid:     name,
-		LogSource:   "APP",
+		ProcessGuid:          name,
+		Domain:               "diego-edge",
+		RootFSPath:           dockerImagePath,
+		Instances:            1,
+		Stack:                "lucid64",
+		Routes:               []string{fmt.Sprintf("%s.%s", name, appRunner.domain)},
+		MemoryMB:             memoryMB,
+		DiskMB:               diskMB,
+		Ports:                []uint32{uint32(port)},
+		LogGuid:              name,
+		LogSource:            "APP",
+		EnvironmentVariables: buildEnvironmentVariables(environmentVariables),
 		Setup: &models.DownloadAction{
 			From: spyDownloadUrl,
 			To:   "/tmp",
@@ -100,6 +101,14 @@ func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath s
 	})
 
 	return err
+}
+
+func buildEnvironmentVariables(environmentVariables map[string]string) []receptor.EnvironmentVariable {
+	appEnvVars := make([]receptor.EnvironmentVariable, 0, len(environmentVariables))
+	for name, value := range environmentVariables {
+		appEnvVars = append(appEnvVars, receptor.EnvironmentVariable{Name: name, Value: value})
+	}
+	return appEnvVars
 }
 
 func (appRunner *DiegoAppRunner) updateLrp(name string, instances int) error {
