@@ -1,32 +1,32 @@
 {
-    "variables": {
-        "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
-        "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}"
-    },
+"variables": {
+"aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+"aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}"
+},
 
-    "builders": [
-        {
-            "type": "amazon-ebs",
-            "access_key": "{{user `aws_access_key`}}",
-            "secret_key": "{{user `aws_secret_key`}}",
-            "region": "us-west-1",
-            "source_ami": "ami-696e652c",
-            "instance_type": "t1.micro",
-            "ssh_username": "ubuntu",
-            "ami_name": "diego-edge {{timestamp}}"
-        }
-    ],
+"builders": [
+{
+"type": "amazon-ebs",
+"access_key": "{{user `aws_access_key`}}",
+"secret_key": "{{user `aws_secret_key`}}",
+"region": "us-west-1",
+"source_ami": "ami-696e652c",
+"instance_type": "t1.micro",
+"ssh_username": "ubuntu",
+"ami_name": "diego-edge {{timestamp}}"
+}
+],
 
-    "provisioners": [
-        {
-            "type": "file",
-            "source": "diego-edge.tgz",
-            "destination": "~/diego-edge.tgz"
-        },
-        {
-            "type": "shell",
-            "script": "install_from_tar",
-            "execute_command": "sudo {{.Path}} ~/diego-edge.tgz"
-        }
-    ]
+"provisioners": [
+{
+"type": "file",
+"source": "diego-edge.tgz",
+"destination": "~/diego-edge.tgz"
+},
+{
+"type": "shell",
+"script": "install_from_tar",
+"execute_command": "sudo {{.Path}} ~/diego-edge.tgz"
+}
+]
 }
