@@ -1,4 +1,4 @@
-package logs_helpers_test
+package setup_cli_helpers_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestLogsHelpers(t *testing.T) {
+func TestSetupCliHelpers(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "LogsHelpers Suite")
+	RunSpecs(t, "SetupCliHelpers Suite")
 }

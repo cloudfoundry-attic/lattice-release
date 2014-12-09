@@ -2,7 +2,6 @@ package setup_cli
 
 import (
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/cloudfoundry-incubator/receptor"
@@ -13,7 +12,7 @@ import (
 	"github.com/pivotal-cf-experimental/diego-edge-cli/config/config_helpers"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/config/persister"
 	"github.com/pivotal-cf-experimental/diego-edge-cli/logs"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/logs/logs_helpers"
+	"github.com/pivotal-cf-experimental/diego-edge-cli/setup_cli/setup_cli_helpers"
 
 	app_runner_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/app_runner/command_factory"
 	config_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/config/command_factory"
@@ -33,7 +32,7 @@ func NewCliApp() *cli.App {
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout, timeout(), config.Target(), os.Environ())
 
-	logReader := logs.NewLogReader(noaa.NewConsumer(logs_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
+	logReader := logs.NewLogReader(noaa.NewConsumer(setup_cli_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, os.Stdout)
 
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, os.Stdout)
@@ -57,9 +56,5 @@ func userHome() string {
 }
 
 func timeout() time.Duration {
-	if timeout, err := strconv.Atoi(os.Getenv("DIEGO_CLI_TIMEOUT")); err == nil {
-		return time.Second * time.Duration(timeout)
-	}
-
-	return time.Minute
+	return setup_cli_helpers.Timeout(os.Getenv("DIEGO_CLI_TIMEOUT"))
 }
