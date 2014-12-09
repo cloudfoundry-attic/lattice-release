@@ -117,7 +117,12 @@ func targetDiego(domain string) {
 
 func command(name string, arg ...string) *exec.Cmd {
 	command := exec.Command(name, arg...)
-	command.Env = []string{fmt.Sprintf("DIEGO_CLI_HOME=%s", tmpDir), "APP_NAME=WHETSTONE TEST APP"}
+
+	appName := "APP_NAME=WHETSTONE TEST APP"
+	diegoCliHome := fmt.Sprintf("DIEGO_CLI_HOME=%s", tmpDir)
+	diegoCliTimeout := fmt.Sprintf("DIEGO_CLI_TIMEOUT=%d", timeout)
+
+	command.Env = []string{diegoCliHome, appName, diegoCliTimeout}
 	return command
 }
 
