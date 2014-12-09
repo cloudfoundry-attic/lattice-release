@@ -50,6 +50,7 @@ apt-get -y install gcc
 apt-get -y install make
 apt-get -y install quota
 apt-get -y install linux-image-extra-$(uname -r)
+apt-get -y install curl
 
 install_dependencies &>/var/log/diego-install.log
 

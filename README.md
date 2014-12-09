@@ -2,7 +2,31 @@
 
     $ vagrant up
 
-Vagrant up spins up a virtual hardware environment with an ip address assigned through DHCP. The output from vagrant up will provide instructions on how to target Diego. 
+Vagrant up spins up a virtual hardware environment that is accessible at 192.168.11.11. You can do this with either VMware Fusion or VirtualBox:. You can specify your preferred provider with the --provider flag.
+
+Virtualbox:
+
+     $ vagrant up --provider virtualbox
+
+VMware Fusion:
+
+     $ vagrant up --provider vmware_fusion
+
+### Networking Conflicts
+If you are trying to run both the Virtual Box and VMWare providers on the same machine, 
+you'll need to run them on different private networks that do not conflict. 
+
+Change the line of the vagrant file that says
+
+      config.vm.network "private_network", ip: "192.168.11.11"
+
+to 
+
+      config.vm.network "private_network", ip: "192.168.80.100"
+
+or a different non-conflicting IP.
+
+The output from vagrant up will provide instructions on how to target Diego. 
 
 Use the [Diego Edge Cli](https://github.com/pivotal-cf-experimental/diego-edge-cli) to target Diego.
 
