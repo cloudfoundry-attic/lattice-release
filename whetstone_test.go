@@ -59,7 +59,7 @@ var _ = Describe("Lattice", func() {
 			Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
 			logsStream := streamLogs(appName)
-			Eventually(logsStream.Out, timeout).Should(gbytes.Say("WHETSTONE TEST APP. Says Hello Whetstone"))
+			Eventually(logsStream.Out, timeout).Should(gbytes.Say("WHETSTONE TEST APP. Says Hello Whetstone."))
 
 			scaleApp(appName)
 
@@ -74,7 +74,7 @@ var _ = Describe("Lattice", func() {
 })
 
 func startDockerApp(appName string) {
-	command := command(cli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "--env", "APP_NAME", "--", "/dockerapp", "--message", "Hello Whetstone")
+	command := command(cli, "start", appName, "-i", "docker:///cloudfoundry/lattice-app", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Whetstone", "--quiet")
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
@@ -146,7 +146,7 @@ func errorCheckForRoute(route string) func() error {
 
 func countInstances(route string, instanceCountChan chan<- int) {
 	defer GinkgoRecover()
-	instanceIndexRoute := fmt.Sprintf("%s/instance-index", route)
+	instanceIndexRoute := fmt.Sprintf("%s/index", route)
 	instancesSeen := make(map[int]bool)
 
 	instanceIndexChan := make(chan int, numCpu)
