@@ -19,6 +19,15 @@ Use the [Diego Edge Cli](https://github.com/pivotal-cf-experimental/diego-edge-c
      $ diego-edge-cli target 192.168.194.130.xip.io 
      
 
+##Updating
+
+Currently, Diego Edge does not support updating via provision.
+So to update, you have to destroy the box and bring it back up as shown below:
+
+  vagrant destroy --force
+  git pull
+  vagrant up
+
 ####Running Vagrant with a custom diego edge tar
 
     VAGRANT_DIEGO_EDGE_TAR_PATH=/vagrant/diego-edge.tgz vagrant up
@@ -31,7 +40,6 @@ Use the [Diego Edge Cli](https://github.com/pivotal-cf-experimental/diego-edge-c
 ##Working with Diego Edge
 
  Use the Diego Edge ClI: [Diego Edge Cli](https://github.com/pivotal-cf-experimental/diego-edge-cli).
-
 
 
 ##Developing
