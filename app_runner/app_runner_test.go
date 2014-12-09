@@ -210,7 +210,7 @@ var _ = Describe("AppRunner", func() {
 		})
 
 		It("returns false if the docker app is running without a status of ActualLRPStateRunning", func() {
-			actualLrpsResponse := []receptor.ActualLRPResponse{receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateStarting}}
+			actualLrpsResponse := []receptor.ActualLRPResponse{receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateClaimed}}
 			fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
 
 			status, _ := appRunner.IsDockerAppUp("americano-app")
