@@ -41,7 +41,7 @@ var _ = Describe("AppRunner", func() {
 				RootFSPath:           "docker://runtest/runner",
 				Instances:            1,
 				Stack:                "lucid64",
-				EnvironmentVariables: []receptor.EnvironmentVariable{receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"}},
+				EnvironmentVariables: []receptor.EnvironmentVariable{receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"}, receptor.EnvironmentVariable{Name: "PORT", Value: "2000"}},
 				Routes:               []string{"americano-app.myDiegoInstall.com"},
 				MemoryMB:             128,
 				DiskMB:               1024,

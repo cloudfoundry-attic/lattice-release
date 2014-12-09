@@ -84,7 +84,7 @@ func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath s
 		Ports:                []uint32{uint32(port)},
 		LogGuid:              name,
 		LogSource:            "APP",
-		EnvironmentVariables: buildEnvironmentVariables(environmentVariables),
+		EnvironmentVariables: buildEnvironmentVariables(environmentVariables, port),
 		Setup: &models.DownloadAction{
 			From: spyDownloadUrl,
 			To:   "/tmp",
@@ -104,12 +104,12 @@ func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath s
 	return err
 }
 
-func buildEnvironmentVariables(environmentVariables map[string]string) []receptor.EnvironmentVariable {
-	appEnvVars := make([]receptor.EnvironmentVariable, 0, len(environmentVariables))
+func buildEnvironmentVariables(environmentVariables map[string]string, port int) []receptor.EnvironmentVariable {
+	appEnvVars := make([]receptor.EnvironmentVariable, 0, len(environmentVariables)+1)
 	for name, value := range environmentVariables {
 		appEnvVars = append(appEnvVars, receptor.EnvironmentVariable{Name: name, Value: value})
 	}
-	return appEnvVars
+	return append(appEnvVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", port)})
 }
 
 func (appRunner *DiegoAppRunner) updateLrp(name string, instances int) error {
