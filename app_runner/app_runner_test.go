@@ -58,8 +58,9 @@ var _ = Describe("AppRunner", func() {
 					Privileged: true,
 				},
 				Monitor: &models.RunAction{
-					Path: "/tmp/spy",
-					Args: []string{"-addr", ":2000"},
+					Path:      "/tmp/spy",
+					Args:      []string{"-addr", ":2000"},
+					LogSource: "HEALTH",
 				},
 			}))
 		})

@@ -95,8 +95,9 @@ func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath s
 			Privileged: privileged,
 		},
 		Monitor: &models.RunAction{
-			Path: "/tmp/spy",
-			Args: []string{"-addr", fmt.Sprintf(":%d", port)},
+			Path:      "/tmp/spy",
+			Args:      []string{"-addr", fmt.Sprintf(":%d", port)},
+			LogSource: "HEALTH",
 		},
 	})
 
