@@ -37,7 +37,7 @@ func (cmd *configCommand) setTarget(context *cli.Context) {
 	target := context.Args().First()
 
 	if target == "" {
-		cmd.say("Incorrect Usage\n")
+		cmd.say("Incorrect Usage")
 		return
 	}
 
@@ -47,7 +47,7 @@ func (cmd *configCommand) setTarget(context *cli.Context) {
 		return
 	}
 
-	cmd.say("Api Location Set\n")
+	cmd.say("Api Location Set")
 }
 
 func (cmd *configCommand) say(output string) {

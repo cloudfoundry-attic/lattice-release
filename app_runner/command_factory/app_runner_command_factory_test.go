@@ -120,7 +120,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: App Name required\n"))
+			Expect(buffer).To(gbytes.Say("Incorrect Usage: App Name required"))
 			Expect(len(appRunner.startedDockerApps)).To(Equal(0))
 		})
 
@@ -134,7 +134,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: Docker Image required\n"))
+			Expect(buffer).To(gbytes.Say("Incorrect Usage: Docker Image required"))
 			Expect(len(appRunner.startedDockerApps)).To(Equal(0))
 
 		})
@@ -148,7 +148,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: Start Command required\n"))
+			Expect(buffer).To(gbytes.Say("Incorrect Usage: Start Command required"))
 			Expect(len(appRunner.startedDockerApps)).To(Equal(0))
 		})
 
@@ -162,7 +162,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: '--' Required before start command\n"))
+			Expect(buffer).To(gbytes.Say("Incorrect Usage: '--' Required before start command"))
 			Expect(len(appRunner.startedDockerApps)).To(Equal(0))
 		})
 
@@ -176,7 +176,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: Docker Image should begin with: docker:///\n"))
+			Expect(buffer).To(gbytes.Say("Incorrect Usage: Docker Image should begin with: docker:///"))
 			Expect(len(appRunner.startedDockerApps)).To(Equal(0))
 		})
 
@@ -230,7 +230,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(scaleDiegoCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("ncorrect Usage: App Name required\n"))
+			Expect(buffer).To(gbytes.Say("Incorrect Usage: App Name required"))
 			Expect(len(appRunner.scaledDockerApps)).To(Equal(0))
 		})
 
@@ -291,7 +291,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(stopDiegoCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("ncorrect Usage: App Name required\n"))
+			Expect(buffer).To(gbytes.Say("Incorrect Usage: App Name required"))
 			Expect(len(appRunner.stoppedDockerApps)).To(Equal(0))
 		})
 

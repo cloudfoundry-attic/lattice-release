@@ -216,9 +216,9 @@ func (cmd *appRunnerCommand) say(output string) {
 
 func (cmd *appRunnerCommand) incorrectUsage(message string) {
 	if len(message) > 0 {
-		cmd.say("Incorrect Usage: " + message + "\n")
+		cmd.say("Incorrect Usage: " + message)
 	} else {
-		cmd.say("Incorrect Usage\n")
+		cmd.say("Incorrect Usage")
 	}
 }
 

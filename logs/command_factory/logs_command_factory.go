@@ -43,7 +43,7 @@ func (cmd *logsCommand) tailLogs(context *cli.Context) {
 	appGuid := context.Args().First()
 
 	if appGuid == "" {
-		cmd.say("Invalid Usage\n")
+		cmd.say("Incorrect Usage")
 		return
 	}
 

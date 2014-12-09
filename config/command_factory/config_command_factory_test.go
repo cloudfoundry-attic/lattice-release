@@ -35,7 +35,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(config.Target()).To(Equal("myapi.com"))
 				Expect(config.Receptor()).To(Equal("http://receptor.myapi.com"))
-				Expect(output).To(gbytes.Say("Api Location Set\n"))
+				Expect(output).To(gbytes.Say("Api Location Set"))
 			})
 
 			It("returns an error if the target is blank", func() {
@@ -47,7 +47,7 @@ var _ = Describe("CommandFactory", func() {
 				err := test_helpers.ExecuteCommandWithArgs(command, []string{""})
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(output).To(gbytes.Say("Incorrect Usage\n"))
+				Expect(output).To(gbytes.Say("Incorrect Usage"))
 			})
 
 			It("outputs errors from setting the target", func() {
