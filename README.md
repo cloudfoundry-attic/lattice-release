@@ -30,5 +30,5 @@ This installs or updates the diego-edge-cli binary to $GOPATH/bin.
 ###Example Usage with Diego Edge on Vagrant [Diego Edge](https://github.com/pivotal-cf-experimental/diego-edge):
 
     diego-edge-cli target 192.168.11.11.xip.io
-    diego-edge-cli start Bingo-app -i "docker:///mylovelyapp" -- /dockerapp --message="hello"
+    diego-edge-cli start Bingo-app -i "docker:///diegoedge/diego-edge-docker-app" -- /dockerapp --message="hello"
     diego-edge-cli logs Bingo-app
