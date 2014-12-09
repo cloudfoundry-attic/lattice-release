@@ -2,6 +2,7 @@ package setup_cli
 
 import (
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/cloudfoundry-incubator/receptor"
@@ -30,7 +31,7 @@ func NewCliApp() *cli.App {
 	receptorClient := receptor.NewClient(config.Receptor())
 	appRunner := app_runner.NewDiegoAppRunner(receptorClient, config.Target())
 
-	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout, time.Minute, config.Target(), os.Environ())
+	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout, timeout(), config.Target(), os.Environ())
 
 	logReader := logs.NewLogReader(noaa.NewConsumer(logs_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, os.Stdout)
@@ -53,4 +54,12 @@ func userHome() string {
 	}
 
 	return os.Getenv("HOME")
+}
+
+func timeout() time.Duration {
+	if timeout, err := strconv.Atoi(os.Getenv("DIEGO_CLI_TIMEOUT")); err == nil {
+		return time.Second * time.Duration(timeout)
+	}
+
+	return time.Minute
 }
