@@ -78,7 +78,7 @@ func startDockerApp(appName string) {
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
-	Eventually(session, timeout).Should(gexec.Exit(0))
+	expectExit(session)
 
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
 }
@@ -96,7 +96,7 @@ func scaleApp(appName string) {
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
-	Eventually(session).Should(gexec.Exit(0))
+	expectExit(session)
 }
 
 func stopApp(appName string) {
@@ -104,7 +104,7 @@ func stopApp(appName string) {
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
-	Eventually(session).Should(gexec.Exit(0))
+	expectExit(session)
 }
 
 func targetDiego(domain string) {
@@ -112,7 +112,7 @@ func targetDiego(domain string) {
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
-	Eventually(session).Should(gexec.Exit(0))
+	expectExit(session)
 }
 
 func command(name string, arg ...string) *exec.Cmd {
@@ -183,4 +183,9 @@ func makeGetRequestToRoute(route string) (*http.Response, error) {
 	}
 
 	return resp, nil
+}
+
+func expectExit(session *gexec.Session) {
+	Eventually(session, timeout).Should(gexec.Exit(0))
+	Expect(string(session.Out.Contents())).To(HaveSuffix("\n"))
 }
