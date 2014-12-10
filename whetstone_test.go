@@ -17,15 +17,15 @@ import (
 )
 
 var (
-	diegoEdgeCli string
-	tmpDir       string
+	cli    string
+	tmpDir string
 )
 
 var _ = BeforeSuite(func() {
 	tmpDir = os.TempDir()
 
 	var err error
-	diegoEdgeCli, err = gexec.Build("github.com/pivotal-cf-experimental/diego-edge-cli")
+	cli, err = gexec.Build("github.com/pivotal-cf-experimental/lattice-cli")
 	Expect(err).ToNot(HaveOccurred())
 })
 
@@ -33,7 +33,7 @@ var _ = AfterSuite(func() {
 	gexec.CleanupBuildArtifacts()
 })
 
-var _ = Describe("Diego Edge", func() {
+var _ = Describe("Lattice", func() {
 	Context("when desiring a docker-based LRP", func() {
 
 		var (
@@ -45,7 +45,7 @@ var _ = Describe("Diego Edge", func() {
 			appName = fmt.Sprintf("whetstone-%s", factories.GenerateGuid())
 			route = fmt.Sprintf("%s.%s", appName, domain)
 
-			targetDiego(domain)
+			targetLattice(domain)
 		})
 
 		AfterEach(func() {
@@ -74,7 +74,7 @@ var _ = Describe("Diego Edge", func() {
 })
 
 func startDockerApp(appName string) {
-	command := command(diegoEdgeCli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "--env", "APP_NAME", "--", "/dockerapp", "--message", "Hello Whetstone")
+	command := command(cli, "start", appName, "-i", "docker:///diegoedge/diego-edge-docker-app", "--env", "APP_NAME", "--", "/dockerapp", "--message", "Hello Whetstone")
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
@@ -84,7 +84,7 @@ func startDockerApp(appName string) {
 }
 
 func streamLogs(appName string) *gexec.Session {
-	command := command(diegoEdgeCli, "logs", appName)
+	command := command(cli, "logs", appName)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -92,7 +92,7 @@ func streamLogs(appName string) *gexec.Session {
 }
 
 func scaleApp(appName string) {
-	command := command(diegoEdgeCli, "scale", appName, "--instances", "3")
+	command := command(cli, "scale", appName, "--instances", "3")
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
@@ -100,15 +100,15 @@ func scaleApp(appName string) {
 }
 
 func stopApp(appName string) {
-	command := command(diegoEdgeCli, "stop", appName)
+	command := command(cli, "stop", appName)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
 	expectExit(session)
 }
 
-func targetDiego(domain string) {
-	command := command(diegoEdgeCli, "target", domain)
+func targetLattice(domain string) {
+	command := command(cli, "target", domain)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
@@ -119,10 +119,10 @@ func command(name string, arg ...string) *exec.Cmd {
 	command := exec.Command(name, arg...)
 
 	appName := "APP_NAME=WHETSTONE TEST APP"
-	diegoCliHome := fmt.Sprintf("DIEGO_CLI_HOME=%s", tmpDir)
-	diegoCliTimeout := fmt.Sprintf("DIEGO_CLI_TIMEOUT=%d", timeout)
+	cliHome := fmt.Sprintf("LATTICE_CLI_HOME=%s", tmpDir)
+	cliTimeout := fmt.Sprintf("LATTICE_CLI_TIMEOUT=%d", timeout)
 
-	command.Env = []string{diegoCliHome, appName, diegoCliTimeout}
+	command.Env = []string{cliHome, appName, cliTimeout}
 	return command
 }
 
