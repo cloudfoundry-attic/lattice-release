@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/pivotal-cf-experimental/diego-edge-cli/config/persister"
+	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
 )
 
 type data struct {

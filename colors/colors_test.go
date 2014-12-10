@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/pivotal-cf-experimental/diego-edge-cli/colors"
+	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 )
 
 var _ = Describe("colors", func() {

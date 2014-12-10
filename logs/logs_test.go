@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry/noaa/events"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/logs"
+	"github.com/pivotal-cf-experimental/lattice-cli/logs"
 )
 
 type fakeConsumer struct {

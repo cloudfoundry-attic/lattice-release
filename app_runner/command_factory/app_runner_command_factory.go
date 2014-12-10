@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/dajulia3/cli"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/colors"
+	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 )
 
 type appRunner interface {
@@ -25,7 +25,7 @@ func NewAppRunnerCommandFactory(appRunner appRunner, output io.Writer, timeout t
 	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, output, timeout, domain, env}}
 }
 
-func (commandFactory *AppRunnerCommandFactory) MakeStartDiegoAppCommand() cli.Command {
+func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command {
 
 	var startFlags = []cli.Flag{
 		cli.StringFlag{
@@ -62,15 +62,15 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartDiegoAppCommand() cli.Co
 		Name:        "start",
 		ShortName:   "s",
 		Description: "Start a docker app on diego",
-		Usage:       "diego-edge-cli start APP_NAME -i DOCKER_IMAGE -e NAME[=VALUE] -- START_COMMAND [APP_ARG1 APP_ARG2...]",
-		Action:      commandFactory.appRunnerCommand.startDiegoApp,
+		Usage:       "ltc start APP_NAME -i DOCKER_IMAGE -e NAME[=VALUE] -- START_COMMAND [APP_ARG1 APP_ARG2...]",
+		Action:      commandFactory.appRunnerCommand.startApp,
 		Flags:       startFlags,
 	}
 
 	return startCommand
 }
 
-func (commandFactory *AppRunnerCommandFactory) MakeScaleDiegoAppCommand() cli.Command {
+func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 
 	var scaleFlags = []cli.Flag{
 		cli.IntFlag{
@@ -82,21 +82,21 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleDiegoAppCommand() cli.Co
 	var scaleCommand = cli.Command{
 		Name:        "scale",
 		Description: "Scale a docker app on diego",
-		Usage:       "diego-edge-cli scale APP_NAME --instances NUM_INSTANCES ",
-		Action:      commandFactory.appRunnerCommand.scaleDiegoApp,
+		Usage:       "ltc scale APP_NAME --instances NUM_INSTANCES ",
+		Action:      commandFactory.appRunnerCommand.scaleApp,
 		Flags:       scaleFlags,
 	}
 
 	return scaleCommand
 }
 
-func (commandFactory *AppRunnerCommandFactory) MakeStopDiegoAppCommand() cli.Command {
+func (commandFactory *AppRunnerCommandFactory) MakeStopAppCommand() cli.Command {
 
 	var stopCommand = cli.Command{
 		Name:        "stop",
 		Description: "Stop a docker app on diego",
-		Usage:       "diego-edge-cli stop APP_NAME",
-		Action:      commandFactory.appRunnerCommand.stopDiegoApp,
+		Usage:       "ltc stop APP_NAME",
+		Action:      commandFactory.appRunnerCommand.stopApp,
 	}
 
 	return stopCommand
@@ -110,7 +110,7 @@ type appRunnerCommand struct {
 	env       []string
 }
 
-func (cmd *appRunnerCommand) startDiegoApp(c *cli.Context) {
+func (cmd *appRunnerCommand) startApp(c *cli.Context) {
 	dockerImage := c.String("docker-image")
 	envVars := c.StringSlice("env")
 	privileged := c.Bool("run-as-root")
@@ -149,14 +149,14 @@ func (cmd *appRunnerCommand) startDiegoApp(c *cli.Context) {
 	cmd.pollAppUntilUp(name)
 }
 
-func (cmd *appRunnerCommand) scaleDiegoApp(c *cli.Context) {
+func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 	instances := c.Int("instances")
 	appName := c.Args().First()
 	if appName == "" {
 		cmd.incorrectUsage("App Name required")
 		return
 	} else if instances == 0 {
-		cmd.say(fmt.Sprintf("Error Scaling to 0 instances - Please stop with: diego-edge-cli stop cool-web-app"))
+		cmd.say(fmt.Sprintf("Error Scaling to 0 instances - Please stop with: lattice-cli stop cool-web-app"))
 		return
 	}
 
@@ -170,7 +170,7 @@ func (cmd *appRunnerCommand) scaleDiegoApp(c *cli.Context) {
 	cmd.say("App Scaled Successfully")
 }
 
-func (cmd *appRunnerCommand) stopDiegoApp(c *cli.Context) {
+func (cmd *appRunnerCommand) stopApp(c *cli.Context) {
 	appName := c.Args().First()
 	if appName == "" {
 		cmd.incorrectUsage("App Name required")

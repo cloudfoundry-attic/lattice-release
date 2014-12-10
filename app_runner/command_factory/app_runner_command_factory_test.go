@@ -8,10 +8,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/colors"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/test_helpers"
+	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 
-	"github.com/pivotal-cf-experimental/diego-edge-cli/app_runner/command_factory"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/command_factory"
 )
 
 var _ = Describe("CommandFactory", func() {
@@ -28,17 +28,17 @@ var _ = Describe("CommandFactory", func() {
 		buffer = gbytes.NewBuffer()
 	})
 
-	Describe("startDiegoApp", func() {
+	Describe("startApp", func() {
 
-		var startDiegoCommand cli.Command
+		var startCommand cli.Command
 
 		BeforeEach(func() {
 			env := []string{"SHELL=/bin/bash", "COLOR=Blue"}
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain, env)
-			startDiegoCommand = commandFactory.MakeStartDiegoAppCommand()
+			startCommand = commandFactory.MakeStartAppCommand()
 		})
 
-		It("starts a Docker based Diego app as specified in the command via the AppRunner", func() {
+		It("starts a Docker based  app as specified in the command via the AppRunner", func() {
 			args := []string{
 				"--memory-mb=12",
 				"--disk-mb=12",
@@ -57,7 +57,7 @@ var _ = Describe("CommandFactory", func() {
 			}
 
 			appRunner.upDockerApps["cool-web-app"] = true
-			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 
@@ -77,7 +77,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(string(buffer.Contents())).To(ContainSubstring(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
 		})
 
-		It("starts a Docker based Diego app with sensible defaults", func() {
+		It("starts a Docker based app with sensible defaults", func() {
 			args := []string{
 				"--docker-image=docker:///fun/app",
 				"cool-web-app",
@@ -86,7 +86,7 @@ var _ = Describe("CommandFactory", func() {
 			}
 
 			appRunner.upDockerApps["cool-web-app"] = true
-			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 
@@ -106,7 +106,7 @@ var _ = Describe("CommandFactory", func() {
 			}
 
 			appRunner.upDockerApps["cool-web-app"] = false
-			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(buffer.Contents())).To(ContainSubstring(colors.Red("cool-web-app took too long to start.")))
@@ -117,7 +117,7 @@ var _ = Describe("CommandFactory", func() {
 				"--docker-image=docker:///fun/app",
 			}
 
-			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Incorrect Usage: App Name required"))
@@ -131,7 +131,7 @@ var _ = Describe("CommandFactory", func() {
 				"/start-me-please",
 			}
 
-			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Incorrect Usage: Docker Image required"))
@@ -145,7 +145,7 @@ var _ = Describe("CommandFactory", func() {
 				"cool-web-app",
 			}
 
-			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Incorrect Usage: Start Command required"))
@@ -159,7 +159,7 @@ var _ = Describe("CommandFactory", func() {
 				"not-the-terminator",
 				"start-me-up",
 			}
-			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Incorrect Usage: '--' Required before start command"))
@@ -173,7 +173,7 @@ var _ = Describe("CommandFactory", func() {
 				"--",
 				"start-me-please",
 			}
-			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Incorrect Usage: Docker Image should begin with: docker:///"))
@@ -190,28 +190,28 @@ var _ = Describe("CommandFactory", func() {
 
 			appRunner.SetError(errors.New("Major Fault"))
 
-			err := test_helpers.ExecuteCommandWithArgs(startDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Error Starting App: Major Fault"))
 		})
 	})
 
-	Describe("scaleDiegoApp", func() {
+	Describe("scaleApp", func() {
 
-		var scaleDiegoCommand cli.Command
+		var scaleCommand cli.Command
 		BeforeEach(func() {
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain, []string{})
-			scaleDiegoCommand = commandFactory.MakeScaleDiegoAppCommand()
+			scaleCommand = commandFactory.MakeScaleAppCommand()
 		})
 
-		It("starts a Docker based Diego app as specified in the command via the AppRunner", func() {
+		It("starts a Docker based  app as specified in the command via the AppRunner", func() {
 			args := []string{
 				"--instances=22",
 				"cool-web-app",
 			}
 
-			err := test_helpers.ExecuteCommandWithArgs(scaleDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(appRunner.scaledDockerApps)).To(Equal(1))
@@ -227,7 +227,7 @@ var _ = Describe("CommandFactory", func() {
 				"",
 			}
 
-			err := test_helpers.ExecuteCommandWithArgs(scaleDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Incorrect Usage: App Name required"))
@@ -241,7 +241,7 @@ var _ = Describe("CommandFactory", func() {
 			}
 
 			appRunner.SetError(errors.New("Major Fault"))
-			err := test_helpers.ExecuteCommandWithArgs(scaleDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Error Scaling App: Major Fault"))
@@ -253,28 +253,28 @@ var _ = Describe("CommandFactory", func() {
 				"cool-web-app",
 			}
 
-			err := test_helpers.ExecuteCommandWithArgs(scaleDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Error Scaling to 0 instances - Please stop with: diego-edge-cli stop cool-web-app"))
+			Expect(buffer).To(gbytes.Say("Error Scaling to 0 instances - Please stop with: lattice-cli stop cool-web-app"))
 			Expect(len(appRunner.scaledDockerApps)).To(Equal(0))
 		})
 	})
 
-	Describe("stopDiegoApp", func() {
+	Describe("stopApp", func() {
 
-		var stopDiegoCommand cli.Command
+		var stopCommand cli.Command
 		BeforeEach(func() {
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain, []string{})
-			stopDiegoCommand = commandFactory.MakeStopDiegoAppCommand()
+			stopCommand = commandFactory.MakeStopAppCommand()
 		})
 
-		It("stops a Docker based Diego app as specified in the command via the AppRunner", func() {
+		It("stops a Docker based  app as specified in the command via the AppRunner", func() {
 			args := []string{
 				"cool-web-app",
 			}
 
-			err := test_helpers.ExecuteCommandWithArgs(stopDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(stopCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(appRunner.stoppedDockerApps)).To(Equal(1))
@@ -288,7 +288,7 @@ var _ = Describe("CommandFactory", func() {
 				"",
 			}
 
-			err := test_helpers.ExecuteCommandWithArgs(stopDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(stopCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Incorrect Usage: App Name required"))
@@ -301,7 +301,7 @@ var _ = Describe("CommandFactory", func() {
 			}
 
 			appRunner.SetError(errors.New("Major Fault"))
-			err := test_helpers.ExecuteCommandWithArgs(stopDiegoCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(stopCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Error Stopping App: Major Fault"))

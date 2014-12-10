@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/pivotal-cf-experimental/diego-edge-cli/setup_cli/setup_cli_helpers"
+	"github.com/pivotal-cf-experimental/lattice-cli/setup_cli/setup_cli_helpers"
 )
 
 var _ = Describe("setup_cli_helpers", func() {

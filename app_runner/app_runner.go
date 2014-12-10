@@ -11,16 +11,16 @@ const (
 	spyDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz"
 )
 
-type DiegoAppRunner struct {
+type AppRunner struct {
 	receptorClient receptor.Client
 	domain         string
 }
 
-func NewDiegoAppRunner(receptorClient receptor.Client, domain string) *DiegoAppRunner {
-	return &DiegoAppRunner{receptorClient, domain}
+func NewAppRunner(receptorClient receptor.Client, domain string) *AppRunner {
+	return &AppRunner{receptorClient, domain}
 }
 
-func (appRunner *DiegoAppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
+func (appRunner *AppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
 	if desiredLRPsCount, err := appRunner.desiredLRPsCount(name); err != nil {
 		return err
 	} else if desiredLRPsCount != 0 {
@@ -29,7 +29,7 @@ func (appRunner *DiegoAppRunner) StartDockerApp(name, dockerImagePath, startComm
 	return appRunner.desireLrp(name, startCommand, dockerImagePath, appArgs, environmentVariables, privileged, memoryMB, diskMB, port)
 }
 
-func (appRunner *DiegoAppRunner) ScaleDockerApp(name string, instances int) error {
+func (appRunner *AppRunner) ScaleDockerApp(name string, instances int) error {
 	if desiredLRPsCount, err := appRunner.desiredLRPsCount(name); err != nil {
 		return err
 	} else if desiredLRPsCount == 0 {
@@ -39,7 +39,7 @@ func (appRunner *DiegoAppRunner) ScaleDockerApp(name string, instances int) erro
 	return appRunner.updateLrp(name, instances)
 }
 
-func (appRunner *DiegoAppRunner) StopDockerApp(name string) error {
+func (appRunner *AppRunner) StopDockerApp(name string) error {
 	if desiredLRPsCount, err := appRunner.desiredLRPsCount(name); err != nil {
 		return err
 	} else if desiredLRPsCount == 0 {
@@ -49,14 +49,14 @@ func (appRunner *DiegoAppRunner) StopDockerApp(name string) error {
 	return appRunner.receptorClient.DeleteDesiredLRP(name)
 }
 
-func (appRunner *DiegoAppRunner) IsDockerAppUp(processGuid string) (bool, error) {
+func (appRunner *AppRunner) IsDockerAppUp(processGuid string) (bool, error) {
 	actualLrps, err := appRunner.receptorClient.ActualLRPsByProcessGuid(processGuid)
 	status := len(actualLrps) > 0 && actualLrps[0].State == receptor.ActualLRPStateRunning
 
 	return status, err
 }
 
-func (appRunner *DiegoAppRunner) desiredLRPsCount(name string) (int, error) {
+func (appRunner *AppRunner) desiredLRPsCount(name string) (int, error) {
 	desiredLRPs, err := appRunner.receptorClient.DesiredLRPs()
 	if err != nil {
 		return 0, err
@@ -71,7 +71,7 @@ func (appRunner *DiegoAppRunner) desiredLRPsCount(name string) (int, error) {
 	return 0, nil
 }
 
-func (appRunner *DiegoAppRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
+func (appRunner *AppRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
 	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          name,
 		Domain:               "diego-edge",
@@ -112,7 +112,7 @@ func buildEnvironmentVariables(environmentVariables map[string]string, port int)
 	return append(appEnvVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", port)})
 }
 
-func (appRunner *DiegoAppRunner) updateLrp(name string, instances int) error {
+func (appRunner *AppRunner) updateLrp(name string, instances int) error {
 	err := appRunner.receptorClient.UpdateDesiredLRP(
 		name,
 		receptor.DesiredLRPUpdateRequest{

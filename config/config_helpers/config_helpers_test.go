@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/pivotal-cf-experimental/diego-edge-cli/config/config_helpers"
+	"github.com/pivotal-cf-experimental/lattice-cli/config/config_helpers"
 )
 
 var _ = Describe("config_helpers", func() {

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/pivotal-cf-experimental/diego-edge-cli/setup_cli"
+	"github.com/pivotal-cf-experimental/lattice-cli/setup_cli"
 )
 
 func main() {

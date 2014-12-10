@@ -7,6 +7,6 @@ import (
 func ExecuteCommandWithArgs(command cli.Command, commandArgs []string) error {
 	cliApp := cli.NewApp()
 	cliApp.Commands = []cli.Command{command}
-	cliAppArgs := append([]string{"diego-edge-cli", command.Name}, commandArgs...)
+	cliAppArgs := append([]string{"lattice-cli", command.Name}, commandArgs...)
 	return cliApp.Run(cliAppArgs)
 }

@@ -7,8 +7,8 @@ import (
 
 	"github.com/cloudfoundry/noaa/events"
 	"github.com/dajulia3/cli"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/colors"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/logs"
+	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/pivotal-cf-experimental/lattice-cli/logs"
 )
 
 type logsCommandFactory struct {
@@ -25,7 +25,7 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 		Name:        "logs",
 		ShortName:   "l",
 		Description: "stream logs from an app",
-		Usage:       "diego-edge-cli logs APP_NAME",
+		Usage:       "ltc logs APP_NAME",
 		Action:      factory.cmd.tailLogs,
 		Flags:       []cli.Flag{},
 	}

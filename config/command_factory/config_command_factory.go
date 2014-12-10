@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/dajulia3/cli"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/config"
+	"github.com/pivotal-cf-experimental/lattice-cli/config"
 )
 
 type commandFactory struct {
@@ -20,7 +20,7 @@ func (c *commandFactory) MakeSetTargetCommand() cli.Command {
 		Name:        "target",
 		ShortName:   "t",
 		Description: "set a target diego location",
-		Usage:       "diego-edge-cli target DIEGO_DOMAIN",
+		Usage:       "ltc target DIEGO_DOMAIN",
 		Action:      c.cmd.setTarget,
 		Flags:       []cli.Flag{},
 	}

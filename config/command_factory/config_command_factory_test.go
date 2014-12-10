@@ -6,11 +6,11 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/config"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/config/persister"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/test_helpers"
+	"github.com/pivotal-cf-experimental/lattice-cli/config"
+	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
+	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 
-	"github.com/pivotal-cf-experimental/diego-edge-cli/config/command_factory"
+	"github.com/pivotal-cf-experimental/lattice-cli/config/command_factory"
 )
 
 var _ = Describe("CommandFactory", func() {

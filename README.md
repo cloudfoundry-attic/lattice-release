@@ -1,34 +1,34 @@
-[![Build Status](https://travis-ci.org/pivotal-cf-experimental/diego-edge-cli.svg?branch=master)](https://travis-ci.org/pivotal-cf-experimental/diego-edge-cli)
+[![Build Status](https://travis-ci.org/pivotal-cf-experimental/lattice-cli.svg?branch=master)](https://travis-ci.org/pivotal-cf-experimental/lattice-cli)
 
-diego-edge-cli
+lattice-cli
 ==============
 
-Diego Edge CLI
+Lattice CLI
 
 ##Setup:
 
 Make sure you have go installed and your $GOPATH is properly set. Then run:
 
-    go get -u github.com/pivotal-cf-experimental/diego-edge-cli
+    go get -u github.com/pivotal-cf-experimental/lattice-cli
 
-This installs or updates the diego-edge-cli binary to $GOPATH/bin.
+This installs or updates the lattice-cli binary to $GOPATH/bin.
 
 ##Commands:
 
-###Target a diego domain:
+###Target a Lattice domain:
 
-    diego-edge-cli target DIEGO_DOMAIN
+    lattice-cli target LATTICE_DOMAIN
 
-###Start a docker app on diego:
+###Start a docker app on Lattice:
 
-    diego-edge-cli start APP_NAME -i DOCKER_IMAGE -- START_COMMAND [APP_ARG1 APP_ARG2...]
+    lattice-cli start APP_NAME -i DOCKER_IMAGE -- START_COMMAND [APP_ARG1 APP_ARG2...]
 
-###Tail an app's logs on diego:
+###Tail an app's logs on Lattice:
 
-    diego-edge-cli logs APP_NAME
+    lattice-cli logs APP_NAME
 
-###Example Usage with Diego Edge on Vagrant [Diego Edge](https://github.com/pivotal-cf-experimental/diego-edge):
+###Example Usage with Lattice Edge on Vagrant [Diego Edge](https://github.com/pivotal-cf-experimental/diego-edge):
 
-    diego-edge-cli target 192.168.11.11.xip.io
-    diego-edge-cli start Bingo-app -i "docker:///diegoedge/diego-edge-docker-app" -- /dockerapp --message="hello"
-    diego-edge-cli logs Bingo-app
+    lattice-cli target 192.168.11.11.xip.io
+    lattice-cli start Bingo-app -i "docker:///diegoedge/diego-edge-docker-app" -- /dockerapp --message="hello"
+    lattice-cli logs Bingo-app

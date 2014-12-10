@@ -9,19 +9,19 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/app_runner"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
 )
 
 var _ = Describe("AppRunner", func() {
 
 	var (
 		fakeReceptorClient *fake_receptor.FakeClient
-		appRunner          *app_runner.DiegoAppRunner
+		appRunner          *app_runner.AppRunner
 	)
 
 	BeforeEach(func() {
 		fakeReceptorClient = &fake_receptor.FakeClient{}
-		appRunner = app_runner.NewDiegoAppRunner(fakeReceptorClient, "myDiegoInstall.com")
+		appRunner = app_runner.NewAppRunner(fakeReceptorClient, "myDiegoInstall.com")
 
 	})
 

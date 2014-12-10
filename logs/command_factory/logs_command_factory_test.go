@@ -9,10 +9,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/colors"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/test_helpers"
+	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 
-	"github.com/pivotal-cf-experimental/diego-edge-cli/logs/command_factory"
+	"github.com/pivotal-cf-experimental/lattice-cli/logs/command_factory"
 )
 
 var _ = Describe("CommandFactory", func() {

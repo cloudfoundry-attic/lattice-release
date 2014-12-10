@@ -7,28 +7,28 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry/noaa"
 	"github.com/dajulia3/cli"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/app_runner"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/config"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/config/config_helpers"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/config/persister"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/logs"
-	"github.com/pivotal-cf-experimental/diego-edge-cli/setup_cli/setup_cli_helpers"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
+	"github.com/pivotal-cf-experimental/lattice-cli/config"
+	"github.com/pivotal-cf-experimental/lattice-cli/config/config_helpers"
+	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
+	"github.com/pivotal-cf-experimental/lattice-cli/logs"
+	"github.com/pivotal-cf-experimental/lattice-cli/setup_cli/setup_cli_helpers"
 
-	app_runner_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/app_runner/command_factory"
-	config_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/config/command_factory"
-	logs_command_factory "github.com/pivotal-cf-experimental/diego-edge-cli/logs/command_factory"
+	app_runner_command_factory "github.com/pivotal-cf-experimental/lattice-cli/app_runner/command_factory"
+	config_command_factory "github.com/pivotal-cf-experimental/lattice-cli/config/command_factory"
+	logs_command_factory "github.com/pivotal-cf-experimental/lattice-cli/logs/command_factory"
 )
 
 func NewCliApp() *cli.App {
 	app := cli.NewApp()
-	app.Name = "Diego"
-	app.Usage = "Command line interface for diego."
+	app.Name = "ltc"
+	app.Usage = "Command line interface for Lattice."
 
 	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(userHome())))
 	config.Load()
 
 	receptorClient := receptor.NewClient(config.Receptor())
-	appRunner := app_runner.NewDiegoAppRunner(receptorClient, config.Target())
+	appRunner := app_runner.NewAppRunner(receptorClient, config.Target())
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, os.Stdout, timeout(), config.Target(), os.Environ())
 
@@ -38,9 +38,9 @@ func NewCliApp() *cli.App {
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, os.Stdout)
 
 	app.Commands = []cli.Command{
-		appRunnerCommandFactory.MakeStartDiegoAppCommand(),
-		appRunnerCommandFactory.MakeScaleDiegoAppCommand(),
-		appRunnerCommandFactory.MakeStopDiegoAppCommand(),
+		appRunnerCommandFactory.MakeStartAppCommand(),
+		appRunnerCommandFactory.MakeScaleAppCommand(),
+		appRunnerCommandFactory.MakeStopAppCommand(),
 		logsCommandFactory.MakeLogsCommand(),
 		configCommandFactory.MakeSetTargetCommand(),
 	}
