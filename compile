@@ -87,4 +87,5 @@ chmod +x $GOBIN/consul
 
 cp -a $DIEGO_EDGE_PATH/upstart $OUTPUT_DIR
 cp -a $DIEGO_EDGE_PATH/config $OUTPUT_DIR
+cp -a $DIEGO_EDGE_PATH/infrastructure-specific-setup $OUTPUT_DIR
 cp -a $DIEGO_EDGE_PATH/install $OUTPUT_DIR/install
