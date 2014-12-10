@@ -2,7 +2,8 @@
     "variables": {
         "ssh_name": "vagrant",
         "ssh_pass": "vagrant",
-        "hostname": "ubuntu-trusty-64"
+        "hostname": "ubuntu-trusty-64",
+        "Version": "4.3.8"
     },
     "builders": [
         {
@@ -113,9 +114,9 @@
             "only": ["virtualbox-iso"],
             "execute_command": "sudo {{.Path}}",
             "inline": [
-                "apt-get -y install virtualbox-guest-utils",
+                "echo 'installing virtualbox guest additions version {{.Version}}'",
+                "sudo apt-get install -y linux-headers-generic dkms virtualbox-guest-utils",
                 "mkdir /tmp/virtualbox",
-                "VER=$(cat /home/vagrant/.vbox_version)",
                 "mount -o loop /home/vagrant/VBoxGuestAdditions.iso /tmp/virtualbox",
                 "sh /tmp/vbox/VBoxLinuxAdditions.run",
                 "umount /tmp/virtualbox",
