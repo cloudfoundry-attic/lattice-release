@@ -82,7 +82,7 @@
             "inline": [
                 "apt-get update",
                 "apt-get -y upgrade",
-                "apt-get -y install linux-headers-$(uname -r)",
+                "apt-get -y install build-essential linux-headers-$(uname -r)",
 
                 "mkdir -p /home/vagrant/.ssh",
                 "wget --no-check-certificate -O authorized_keys 'https://github.com/mitchellh/vagrant/raw/master/keys/vagrant.pub'",
@@ -96,9 +96,7 @@
             "only": ["vmware-iso"],
             "execute_command": "sudo {{.Path}}",
             "inline": [
-                "sudo apt-get -y update",
                 "sudo apt-get -y install open-vm-tools",
-                "sudo apt-get -y install build-essential linux-headers-$(uname -r)",
                 "mkdir /tmp/vmware-tools-disk",
                 "mkdir /tmp/vmware-tools",
                 "mount -o loop /home/vagrant/linux.iso /tmp/vmware-tools-disk",
