@@ -30,5 +30,5 @@ This installs or updates the lattice-cli binary to $GOPATH/bin. Rename the binar
 ###Example Usage with Lattice Edge on Vagrant [Diego Edge](https://github.com/pivotal-cf-experimental/diego-edge):
 
     ltc target 192.168.11.11.xip.io
-    ltc start Bingo-app -i "docker:///diegoedge/diego-edge-docker-app" -- /dockerapp --message="hello"
+    ltc start Bingo-app -i "docker:///cloudfoundry/lattice-app" -- /lattice-app --message="hello"
     ltc logs Bingo-app
