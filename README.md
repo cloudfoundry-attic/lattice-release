@@ -28,7 +28,7 @@ or a different non-conflicting IP.
 
 The output from vagrant up will provide instructions on how to target Diego. 
 
-Use the [Diego Edge Cli](https://github.com/pivotal-cf-experimental/diego-edge-cli) to target Diego.
+Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli) to target Diego.
 
 ####Example Usage
 
@@ -40,7 +40,7 @@ Use the [Diego Edge Cli](https://github.com/pivotal-cf-experimental/diego-edge-c
      Diego-Edge is now installed and running. You may target it with the Diego-Edge cli via:
      192.168.194.130.xip.io
      
-     $ diego-edge-cli target 192.168.194.130.xip.io 
+     $ ltc target 192.168.194.130.xip.io 
      
 
 ####Running Vagrant with a custom diego edge tar
@@ -54,7 +54,7 @@ Use the [Diego Edge Cli](https://github.com/pivotal-cf-experimental/diego-edge-c
 
 ##Working with Diego Edge
 
- Use the Diego Edge ClI: [Diego Edge Cli](https://github.com/pivotal-cf-experimental/diego-edge-cli).
+ Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli).
 
 
 
