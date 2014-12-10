@@ -48,13 +48,13 @@ func NewCliApp() *cli.App {
 }
 
 func userHome() string {
-	if os.Getenv("DIEGO_CLI_HOME") != "" {
-		return os.Getenv("DIEGO_CLI_HOME")
+	if os.Getenv("LATTICE_CLI_HOME") != "" {
+		return os.Getenv("LATTICE_CLI_HOME")
 	}
 
 	return os.Getenv("HOME")
 }
 
 func timeout() time.Duration {
-	return setup_cli_helpers.Timeout(os.Getenv("DIEGO_CLI_TIMEOUT"))
+	return setup_cli_helpers.Timeout(os.Getenv("LATTICE_CLI_TIMEOUT"))
 }
