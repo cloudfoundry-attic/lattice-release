@@ -110,14 +110,14 @@ type appRunnerCommand struct {
 	env       []string
 }
 
-func (cmd *appRunnerCommand) startApp(c *cli.Context) {
-	dockerImage := c.String("docker-image")
-	envVars := c.StringSlice("env")
-	privileged := c.Bool("run-as-root")
-	memoryMB := c.Int("memory-mb")
-	diskMB := c.Int("disk-mb")
-	port := c.Int("port")
-	name := c.Args().First()
+func (cmd *appRunnerCommand) startApp(context *cli.Context) {
+	dockerImage := context.String("docker-image")
+	envVars := context.StringSlice("env")
+	privileged := context.Bool("run-as-root")
+	memoryMB := context.Int("memory-mb")
+	diskMB := context.Int("disk-mb")
+	port := context.Int("port")
+	name := context.Args().First()
 
 	switch {
 	case name == "":
@@ -129,15 +129,15 @@ func (cmd *appRunnerCommand) startApp(c *cli.Context) {
 	case !strings.HasPrefix(dockerImage, "docker:///"):
 		cmd.incorrectUsage("Docker Image should begin with: docker:///")
 		return
-	case len(c.Args()) < 3:
+	case len(context.Args()) < 3:
 		cmd.incorrectUsage("Start Command required")
 		return
-	case c.Args().Get(1) != "--":
+	case context.Args().Get(1) != "--":
 		cmd.incorrectUsage("'--' Required before start command")
 		return
 	}
-	startCommand := c.Args().Get(2)
-	appArgs := c.Args()[3:]
+	startCommand := context.Args().Get(2)
+	appArgs := context.Args()[3:]
 
 	err := cmd.appRunner.StartDockerApp(name, dockerImage, startCommand, appArgs, cmd.buildEnvironment(envVars), privileged, memoryMB, diskMB, port)
 
