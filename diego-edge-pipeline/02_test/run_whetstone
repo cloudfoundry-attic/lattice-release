@@ -42,10 +42,10 @@ assert_that_vtx_is_enabled_if_linux
 
 export DIEGO_RELEASE_PATH=$1
 export DIEGO_EDGE_TAR_PATH=$2
-WORKSPACE_DIR=`pwd`
+WORKSPACE_DIR=$(pwd)
 
 cp $DIEGO_EDGE_TAR_PATH diego-edge
-export VAGRANT_DIEGO_EDGE_TAR_PATH=/vagrant/`basename $DIEGO_EDGE_TAR_PATH`
+export VAGRANT_DIEGO_EDGE_TAR_PATH=/vagrant/$(basename $DIEGO_EDGE_TAR_PATH)
 
 trap cleanup EXIT
 
