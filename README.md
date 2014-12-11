@@ -81,8 +81,8 @@ Open up the instance to incoming tcp traffic
      
 Creates a credentials file containing the username and password that you want to use for the cli
      
-     echo "RECEPTOR_USERNAME=<Your Username>" > lattice-credentials
-     echo "RECEPTOR_PASSWORD=<Your Password>" >> lattice-credentials
+     echo "LATTICE_USERNAME=<Your Username>" > lattice-credentials
+     echo "LATTICE_PASSWORD=<Your Password>" >> lattice-credentials
 
 Launch an instance of lattice with your base64 encoded username and password file
 

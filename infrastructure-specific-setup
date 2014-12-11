@@ -15,7 +15,7 @@ if [ "$aws_curl_result" -eq 0 ]; then
 
     has_user_data=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 $aws_api_base_url/user-data)
     if [ "$has_user_data" -eq "404" ]; then
-        echo "You must set RECEPTOR_USERNAME and RECEPTOR_PASSWORD in AWS user data"
+        echo "You must set LATTICE_USERNAME and LATTICE_PASSWORD in AWS user data"
         exit 4
     fi
     curl -s --connect-timeout 3 $aws_api_base_url/user-data >> $env_file
