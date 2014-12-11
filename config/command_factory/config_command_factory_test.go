@@ -24,7 +24,21 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		Describe("targetCommand", func() {
-			It("sets the api from the target specified", func() {
+			It("sets the api, username, password from the target specified", func() {
+				config := config.New(persister.NewFakePersister())
+				commandFactory := command_factory.NewConfigCommandFactory(config, output)
+
+				command := commandFactory.MakeSetTargetCommand()
+
+				err := test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com", "--username=testusername", "--password=testpassword"})
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(config.Target()).To(Equal("myapi.com"))
+				Expect(config.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
+				Expect(output).To(gbytes.Say("Api Location Set"))
+			})
+
+			It("does not set a username or password if none are passed in", func() {
 				config := config.New(persister.NewFakePersister())
 				commandFactory := command_factory.NewConfigCommandFactory(config, output)
 
@@ -47,7 +61,31 @@ var _ = Describe("CommandFactory", func() {
 				err := test_helpers.ExecuteCommandWithArgs(command, []string{""})
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(output).To(gbytes.Say("Incorrect Usage"))
+				Expect(output).To(gbytes.Say("Incorrect Usage: Target required."))
+			})
+
+			It("returns an error if username is set and password is not", func() {
+				config := config.New(persister.NewFakePersister())
+				commandFactory := command_factory.NewConfigCommandFactory(config, output)
+
+				command := commandFactory.MakeSetTargetCommand()
+
+				err := test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com", "--username=testusername"})
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(output).To(gbytes.Say("Incorrect Usage: Password required with Username."))
+			})
+
+			It("returns an error if password is set and username is not", func() {
+				config := config.New(persister.NewFakePersister())
+				commandFactory := command_factory.NewConfigCommandFactory(config, output)
+
+				command := commandFactory.MakeSetTargetCommand()
+
+				err := test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com", "--password=testpassword"})
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(output).To(gbytes.Say("Incorrect Usage: Username required with Password."))
 			})
 
 			It("outputs errors from setting the target", func() {
@@ -63,6 +101,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(output).To(gbytes.Say("FAILURE setting api"))
 			})
+
 		})
 
 	})

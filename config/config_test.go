@@ -39,8 +39,37 @@ var _ = Describe("config", func() {
 		})
 	})
 
+	Describe("SetLogin", func() {
+		It("saves api to the persistor", func() {
+			fakePersister := &fakePersister{}
+			testConfig := config.New(fakePersister)
+
+			testConfig.SetLogin("testusername", "testpassword")
+
+			Expect(fakePersister.username).To(Equal("testusername"))
+			Expect(fakePersister.password).To(Equal("testpassword"))
+
+		})
+
+		It("returns errors from the persistor", func() {
+			testConfig := config.New(&fakePersister{err: errors.New("Error")})
+
+			err := testConfig.SetLogin("testusername", "testpassword")
+
+			Expect(err).To(Equal(errors.New("Error")))
+		})
+	})
+
 	Describe("Receptor", func() {
-		It("Loads the Receptor from the persistor", func() {
+		It("Loads the Receptor from the persistor with a username and password", func() {
+			testConfig := config.New(&fakePersister{target: "mytestapi.com", username: "testusername", password: "testpassword"})
+
+			testConfig.Load()
+
+			Expect(testConfig.Receptor()).To(Equal("http://testusername:testpassword@receptor.mytestapi.com"))
+		})
+
+		It("Loads the Receptor from the persistor without a username and password", func() {
 			testConfig := config.New(&fakePersister{target: "mytestapi.com"})
 
 			testConfig.Load()
@@ -72,8 +101,10 @@ var _ = Describe("config", func() {
 })
 
 type fakePersister struct {
-	target string
-	err    error
+	target   string
+	username string
+	password string
+	err      error
 }
 
 func (f *fakePersister) Load(dataInterface interface{}) error {
@@ -81,6 +112,8 @@ func (f *fakePersister) Load(dataInterface interface{}) error {
 	Expect(ok).To(BeTrue())
 
 	data.Target = f.target
+	data.Username = f.username
+	data.Password = f.password
 	return f.err
 }
 
@@ -89,5 +122,7 @@ func (f *fakePersister) Save(dataInterface interface{}) error {
 	Expect(ok).To(BeTrue())
 
 	f.target = data.Target
+	f.username = data.Username
+	f.password = data.Password
 	return f.err
 }

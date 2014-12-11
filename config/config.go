@@ -5,7 +5,9 @@ import (
 )
 
 type Data struct {
-	Target string
+	Target   string
+	Username string
+	Password string
 }
 
 type Config struct {
@@ -23,12 +25,22 @@ func (c *Config) SetTarget(target string) error {
 	return c.save()
 }
 
+func (c *Config) SetLogin(username string, password string) error {
+	c.data.Username = username
+	c.data.Password = password
+	return c.save()
+}
+
 func (c *Config) Loggregator() string {
 	return "doppler." + c.data.Target
 }
 
 func (c *Config) Receptor() string {
-	return "http://receptor." + c.data.Target
+	if c.data.Username == "" {
+		return "http://receptor." + c.data.Target
+	}
+
+	return "http://" + c.data.Username + ":" + c.data.Password + "@receptor." + c.data.Target
 }
 
 func (c *Config) Load() error {
