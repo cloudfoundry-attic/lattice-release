@@ -39,7 +39,7 @@ func (appRunner *AppRunner) ScaleDockerApp(name string, instances int) error {
 	return appRunner.updateLrp(name, instances)
 }
 
-func (appRunner *AppRunner) StopDockerApp(name string) error {
+func (appRunner *AppRunner) RemoveDockerApp(name string) error {
 	if desiredLRPsCount, err := appRunner.desiredLRPsCount(name); err != nil {
 		return err
 	} else if desiredLRPsCount == 0 {

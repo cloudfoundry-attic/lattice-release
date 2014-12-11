@@ -147,13 +147,13 @@ var _ = Describe("AppRunner", func() {
 
 	})
 
-	Describe("StopDockerApp", func() {
-		It("Stops a Docker App", func() {
+	Describe("RemoveDockerApp", func() {
+		It("Removes a Docker App", func() {
 			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 			fakeReceptorClient.DeleteDesiredLRPReturns(nil)
 
-			err := appRunner.StopDockerApp("americano-app")
+			err := appRunner.RemoveDockerApp("americano-app")
 			Expect(err).To(BeNil())
 
 			Expect(fakeReceptorClient.DeleteDesiredLRPCallCount()).To(Equal(1))
@@ -164,7 +164,7 @@ var _ = Describe("AppRunner", func() {
 			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 
-			err := appRunner.StopDockerApp("app-not-running")
+			err := appRunner.RemoveDockerApp("app-not-running")
 
 			Expect(err).ToNot(BeNil())
 			Expect(err.Error()).To(Equal("app-not-running, is not started. Please start an app first"))
@@ -180,7 +180,7 @@ var _ = Describe("AppRunner", func() {
 				deletingError := errors.New("deleting failed")
 				fakeReceptorClient.DeleteDesiredLRPReturns(deletingError)
 
-				err := appRunner.StopDockerApp("americano-app")
+				err := appRunner.RemoveDockerApp("americano-app")
 
 				Expect(err).To(Equal(deletingError))
 			})
@@ -189,7 +189,7 @@ var _ = Describe("AppRunner", func() {
 				receptorError := errors.New("error - Existing Count")
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
 
-				err := appRunner.StopDockerApp("nescafe-app")
+				err := appRunner.RemoveDockerApp("nescafe-app")
 				Expect(err).To(Equal(receptorError))
 			})
 		})

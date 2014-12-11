@@ -265,10 +265,10 @@ var _ = Describe("CommandFactory", func() {
 
 	Describe("stopApp", func() {
 
-		var stopCommand cli.Command
+		var removeCommand cli.Command
 		BeforeEach(func() {
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, []string{})
-			stopCommand = commandFactory.MakeStopAppCommand()
+			removeCommand = commandFactory.MakeRemoveAppCommand()
 		})
 
 		It("stops a Docker based  app as specified in the command via the AppRunner", func() {
@@ -276,13 +276,13 @@ var _ = Describe("CommandFactory", func() {
 				"cool-web-app",
 			}
 
-			err := test_helpers.ExecuteCommandWithArgs(stopCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(appRunner.stoppedDockerApps)).To(Equal(1))
-			Expect(appRunner.stoppedDockerApps[0].name).To(Equal("cool-web-app"))
+			Expect(len(appRunner.removedDockerApps)).To(Equal(1))
+			Expect(appRunner.removedDockerApps[0].name).To(Equal("cool-web-app"))
 
-			Expect(buffer).To(gbytes.Say("App Stopped Successfully"))
+			Expect(buffer).To(gbytes.Say("App Removed Successfully"))
 		})
 
 		It("validates that the name is passed in", func() {
@@ -290,11 +290,11 @@ var _ = Describe("CommandFactory", func() {
 				"",
 			}
 
-			err := test_helpers.ExecuteCommandWithArgs(stopCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Incorrect Usage: App Name required"))
-			Expect(len(appRunner.stoppedDockerApps)).To(Equal(0))
+			Expect(len(appRunner.removedDockerApps)).To(Equal(0))
 		})
 
 		It("outputs error messages", func() {
@@ -303,7 +303,7 @@ var _ = Describe("CommandFactory", func() {
 			}
 
 			appRunner.SetError(errors.New("Major Fault"))
-			err := test_helpers.ExecuteCommandWithArgs(stopCommand, args)
+			err := test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Error Stopping App: Major Fault"))
@@ -315,7 +315,7 @@ func newFakeAppRunner() *fakeAppRunner {
 	return &fakeAppRunner{
 		startedDockerApps: []startedDockerApps{},
 		scaledDockerApps:  []scaledDockerApps{},
-		stoppedDockerApps: []stoppedDockerApps{},
+		removedDockerApps: []removedDockerApps{},
 		upDockerApps:      map[string]bool{},
 	}
 }
@@ -337,7 +337,7 @@ type scaledDockerApps struct {
 	instances int
 }
 
-type stoppedDockerApps struct {
+type removedDockerApps struct {
 	name string
 }
 
@@ -345,7 +345,7 @@ type fakeAppRunner struct {
 	err               error
 	startedDockerApps []startedDockerApps
 	scaledDockerApps  []scaledDockerApps
-	stoppedDockerApps []stoppedDockerApps
+	removedDockerApps []removedDockerApps
 	upDockerApps      map[string]bool
 }
 
@@ -376,11 +376,11 @@ func (f *fakeAppRunner) ScaleDockerApp(name string, instances int) error {
 	return nil
 }
 
-func (f *fakeAppRunner) StopDockerApp(name string) error {
+func (f *fakeAppRunner) RemoveDockerApp(name string) error {
 	if f.err != nil {
 		return f.err
 	}
-	f.stoppedDockerApps = append(f.stoppedDockerApps, stoppedDockerApps{name})
+	f.removedDockerApps = append(f.removedDockerApps, removedDockerApps{name})
 	return nil
 }
 

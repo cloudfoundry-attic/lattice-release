@@ -13,7 +13,7 @@ import (
 type appRunner interface {
 	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error
 	ScaleDockerApp(name string, instances int) error
-	StopDockerApp(name string) error
+	RemoveDockerApp(name string) error
 	IsDockerAppUp(name string) (bool, error)
 }
 
@@ -90,16 +90,16 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command
 	return scaleCommand
 }
 
-func (commandFactory *AppRunnerCommandFactory) MakeStopAppCommand() cli.Command {
+func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 
-	var stopCommand = cli.Command{
+	var removeCommand = cli.Command{
 		Name:        "remove",
 		Description: "Remove a docker app from lattice",
 		Usage:       "ltc stop APP_NAME",
-		Action:      commandFactory.appRunnerCommand.stopApp,
+		Action:      commandFactory.appRunnerCommand.removeApp,
 	}
 
-	return stopCommand
+	return removeCommand
 }
 
 type appRunnerCommand struct {
@@ -170,21 +170,21 @@ func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 	cmd.output.Say("App Scaled Successfully")
 }
 
-func (cmd *appRunnerCommand) stopApp(c *cli.Context) {
+func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
 	appName := c.Args().First()
 	if appName == "" {
 		cmd.output.IncorrectUsage("App Name required")
 		return
 	}
 
-	err := cmd.appRunner.StopDockerApp(appName)
+	err := cmd.appRunner.RemoveDockerApp(appName)
 
 	if err != nil {
 		cmd.output.Say(fmt.Sprintf("Error Stopping App: %s", err))
 		return
 	}
 
-	cmd.output.Say("App Stopped Successfully")
+	cmd.output.Say("App Removed Successfully")
 }
 
 func (cmd *appRunnerCommand) pollAppUntilUp(name string) {

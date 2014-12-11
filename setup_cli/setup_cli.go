@@ -43,7 +43,7 @@ func NewCliApp() *cli.App {
 	app.Commands = []cli.Command{
 		appRunnerCommandFactory.MakeStartAppCommand(),
 		appRunnerCommandFactory.MakeScaleAppCommand(),
-		appRunnerCommandFactory.MakeStopAppCommand(),
+		appRunnerCommandFactory.MakeRemoveAppCommand(),
 		logsCommandFactory.MakeLogsCommand(),
 		configCommandFactory.MakeSetTargetCommand(),
 	}
