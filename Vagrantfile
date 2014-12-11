@@ -11,11 +11,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   config.vm.provision "shell" do |s|
-    s.inline = "cp /var/diego/system-domain /vagrant/.system-domain"
+    s.inline = "cp /var/diego/setup/lattice-environment /vagrant/.lattice-environment"
   end
 
   config.vm.provision "shell" do |s|
-    s.inline = "echo 'Diego-Edge is now installed and running. You may target it with the Diego-Edge cli via:' && cat /vagrant/.system-domain"
+    s.inline = "export $(cat /var/diego/setup/lattice-environment) && echo \"Diego-Edge is now installed and running. You may target it with the Diego-Edge cli via: $SYSTEM_DOMAIN\""
   end
 
 end

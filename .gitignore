@@ -6,5 +6,6 @@ Vagrantfile-e
 bin/linux_amd64/*
 diego-edge.tgz
 .system-domain
+.lattice-environment
 *.box
 *.iso
