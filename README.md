@@ -1,3 +1,5 @@
+#Vagrant
+
 ##Running the box
 
     $ vagrant up
@@ -57,15 +59,40 @@ So to update, you have to destroy the box and bring it back up as shown below:
     VAGRANT_DIEGO_EDGE_TAR_PATH=/vagrant/diego-edge.tgz vagrant up
 
 
-##Testing the Diego Edge Box
+#Aws
+
+Follow [Amazon's instructions](http://docs.aws.amazon.com/cli/latest/userguide/installing.html) for setting up the aws cli.
+
+Configure the aws cli with your aws access key, aws secret access key, and the us-west-1 region
+   
+     aws config
+   
+Set up security group
+
+     aws ec2 create-security-group --group-name lattice --description "lattice security group." 
+   
+Open up the instance to incoming tcp traffic
+    
+     aws ec2 authorize-security-group-ingress --group-name lattice --protocol tcp --port 1-65535 --cidr 0.0.0.0/0
+     
+Creates a credentials file containing the username and password that you want to use for the cli
+     
+     echo "RECEPTOR_USERNAME=<Your Username>" > lattice-credentials
+     echo "RECEPTOR_PASSWORD=<Your Password>" >> lattice-credentials
+
+Launch an instance of lattice with your base64 encoded username and password file
+
+    aws ec2 run-instances --image-id ami-67485a22 --security-groups default --key-name ec2-west-1 --user-data `base64 lattice-credentials`
+    
+#Testing the Diego Edge Box
 
  Follow the [whetstone instructions](https://github.com/pivotal-cf-experimental/whetstone) for diego-edge
 
-##Working with Diego Edge
+#Using Diego Edge
 
  Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli).
 
 
-##Developing
+#Developing
   Development work should be done on the develop branch.
   As a general rule, only CI should commit to master.
