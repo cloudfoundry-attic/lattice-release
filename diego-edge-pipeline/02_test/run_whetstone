@@ -51,7 +51,7 @@ trap cleanup EXIT
 
 pushd $WORKSPACE_DIR/diego-edge
     vagrant up --provider=virtualbox
-    SYSTEM_DOMAIN=`cat .system-domain`
+    export $(cat .lattice-environment)
 popd
 
 export GOPATH=$DIEGO_RELEASE_PATH
