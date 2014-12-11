@@ -44,12 +44,9 @@ cp -a $LATTICE_BUILD_PATH/garden/skeleton /var/lattice/garden/skeleton
 
 mkdir -p /var/lattice/config
 cp -r $LATTICE_BUILD_PATH/config /var/lattice
-mkdir -p /var/lattice/setup
-echo "current dir"
-pwd
-echo "$LATTICE_BUILD_PATH/infrastructure-specific-setup"
-cp -a ${LATTICE_BUILD_PATH}infrastructure-specific-setup /var/lattice/setup
 
+mkdir -p /var/lattice/setup
+cp -a ${LATTICE_BUILD_PATH}infrastructure-specific-setup /var/lattice/setup
 
 apt-get -y update
 apt-get -y install gcc
@@ -58,9 +55,11 @@ apt-get -y install quota
 apt-get -y install linux-image-extra-$(uname -r)
 apt-get -y install curl
 
-install_dependencies &>/var/log/lattice-install.log
+mkdir -p /var/lattice/run
 
-start lattice-bootstrap &>>/var/log/lattice-install.log
+mkdir -p /var/lattice/log
+install_dependencies &> /var/lattice/log/lattice-install.log
+start lattice-bootstrap &>> /var/lattice/log/lattice-bootstrap.log
 
 export $(cat /var/lattice/setup/lattice-environment)
 
