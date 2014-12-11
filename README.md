@@ -17,6 +17,6 @@ Integration tests for Lattice
 
 ##Running The Whetstone Tests
 
-To run against [Lattice](https://github.com/pivotal-cf-experimental/diego-edge) with a 30 sec app start timeout
+To run against [Lattice](https://github.com/pivotal-cf-experimental/lattice) with a 30 sec app start timeout
 
     ginkgo -- -domain="192.168.11.11.xip.io" -timeout=30
