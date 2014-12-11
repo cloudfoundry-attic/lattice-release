@@ -41,14 +41,14 @@ compile_loggregator() {
 }
 
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
-    echo "Incorrect Usage. Usage: $0 output-dir diego-release-path cf-release-path diego-edge-path"
+    echo "Incorrect Usage. Usage: $0 output-dir diego-release-path cf-release-path lattice-path"
     exit 1
 fi
 
 export OUTPUT_DIR=$1
 export DIEGO_RELEASE_PATH=$2
 export CF_RELEASE_PATH=$3
-export DIEGO_EDGE_PATH=$4
+export LATTICE_PATH=$4
 export GOOS=linux
 export GOARCH=amd64
 
@@ -85,7 +85,7 @@ CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
 wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul
 chmod +x $GOBIN/consul
 
-cp -a $DIEGO_EDGE_PATH/upstart $OUTPUT_DIR
-cp -a $DIEGO_EDGE_PATH/config $OUTPUT_DIR
-cp -a $DIEGO_EDGE_PATH/infrastructure-specific-setup $OUTPUT_DIR
-cp -a $DIEGO_EDGE_PATH/install $OUTPUT_DIR/install
+cp -a $LATTICE_PATH/upstart $OUTPUT_DIR
+cp -a $LATTICE_PATH/config $OUTPUT_DIR
+cp -a $LATTICE_PATH/infrastructure-specific-setup $OUTPUT_DIR
+cp -a $LATTICE_PATH/install $OUTPUT_DIR/install

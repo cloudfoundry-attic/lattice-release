@@ -4,16 +4,16 @@ set -e
 save_logs() {
     echo "save logs"
 
-    pushd $WORKSPACE_DIR/diego-edge
+    pushd $WORKSPACE_DIR/lattice
         vagrant ssh -c "sudo tar -czf /vagrant/vagrant_upstart_logs.tgz /var/log/upstart"
     popd
 
-    mv diego-edge/vagrant_upstart_logs.tgz .
+    mv lattice/vagrant_upstart_logs.tgz .
 }
 
 cleanup_vagrant() {
     echo "cleaning up vagrant"
-    pushd $WORKSPACE_DIR/diego-edge
+    pushd $WORKSPACE_DIR/lattice
         vagrant destroy --force
     popd
 }
@@ -41,15 +41,15 @@ assert_that_vtx_is_enabled_if_linux(){
 assert_that_vtx_is_enabled_if_linux
 
 export DIEGO_RELEASE_PATH=$1
-export DIEGO_EDGE_TAR_PATH=$2
-WORKSPACE_DIR=$(pwd)
+export LATTICE_TAR_PATH=$2
+WORKSPACE_DIR=`pwd`
 
-cp $DIEGO_EDGE_TAR_PATH diego-edge
-export VAGRANT_DIEGO_EDGE_TAR_PATH=/vagrant/$(basename $DIEGO_EDGE_TAR_PATH)
+cp $LATTICE_TAR_PATH lattice
+export VAGRANT_LATTICE_TAR_PATH=/vagrant/$(basename $LATTICE_TAR_PATH)
 
 trap cleanup EXIT
 
-pushd $WORKSPACE_DIR/diego-edge
+pushd $WORKSPACE_DIR/lattice
     vagrant up --provider=virtualbox
     export $(cat .lattice-environment)
 popd

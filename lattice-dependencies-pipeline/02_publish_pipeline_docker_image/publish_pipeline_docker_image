@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+docker pull ubuntu:trusty
+docker build --force-rm --no-cache -t $DOCKER_IMAGE lattice/lattice-dependencies-pipeline/02_publish_pipeline_docker_image/pipeline_image/
+docker push $DOCKER_IMAGE

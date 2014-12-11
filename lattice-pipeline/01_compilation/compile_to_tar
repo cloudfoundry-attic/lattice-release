@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -e
+
+pushd cf-release/src/loggregator
+   git submodule update --init --recursive
+popd
+
+lattice/lattice-pipeline/helpers/run_with_docker \
+ lattice/compile \
+    /workspace/lattice-build \
+    /workspace/diego-release \
+    /workspace/cf-release \
+    /workspace/lattice
+
+tar -czf lattice.tgz lattice-build

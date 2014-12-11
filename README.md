@@ -39,7 +39,7 @@ Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli) to
      Bringing machine 'default' up with 'vmware_fusion' provider...
      ...
      ...
-     Diego-Edge is now installed and running. You may target it with the Diego-Edge cli via:
+     Lattice is now installed and running. You may target it with the Lattice cli via:
      192.168.194.130.xip.io
      
      $ ltc target 192.168.194.130.xip.io 
@@ -54,9 +54,9 @@ So to update, you have to destroy the box and bring it back up as shown below:
   git pull
   vagrant up
 
-####Running Vagrant with a custom diego edge tar
+####Running Vagrant with a custom lattice tar
 
-    VAGRANT_DIEGO_EDGE_TAR_PATH=/vagrant/diego-edge.tgz vagrant up
+    VAGRANT_LATTICE_TAR_PATH=/vagrant/lattice.tgz vagrant up
 
 
 #Aws
@@ -86,7 +86,7 @@ Launch an instance of lattice with your base64 encoded username and password fil
     
 #Testing the Diego Edge Box
 
- Follow the [whetstone instructions](https://github.com/pivotal-cf-experimental/whetstone) for diego-edge
+ Follow the [whetstone instructions](https://github.com/pivotal-cf-experimental/whetstone) for lattice
 
 #Using Diego Edge
 

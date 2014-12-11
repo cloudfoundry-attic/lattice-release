@@ -2,15 +2,15 @@
 
 set -e
 
-PATH_TO_DIEGO_EDGE_TAR=$1
-if [ -z "${PATH_TO_DIEGO_EDGE_TAR}" ]; then
+PATH_TO_LATTICE_TAR=$1
+if [ -z "${PATH_TO_LATTICE_TAR}" ]; then
   echo "Downloading latest Diego Edge Release tar"
-  PATH_TO_DIEGO_EDGE_TAR=/tmp/diego-edge-latest.tgz
+  PATH_TO_LATTICE_TAR=/tmp/lattice-latest.tgz
 
-  DIEGO_EDGE_LATEST=https://s3-us-west-2.amazonaws.com/diego-edge/diego-edge-latest.tgz
-  wget --quiet $DIEGO_EDGE_LATEST -O $PATH_TO_DIEGO_EDGE_TAR
+  LATTICE_LATEST=https://s3-us-west-2.amazonaws.com/lattice/lattice-latest.tgz
+  wget --quiet $LATTICE_LATEST -O $PATH_TO_LATTICE_TAR
 fi
 
-tar -xf $PATH_TO_DIEGO_EDGE_TAR -C /tmp
+tar -xf $PATH_TO_LATTICE_TAR -C /tmp
 
-/tmp/diego-edge-build/install /tmp/diego-edge-build/
+/tmp/lattice-build/install /tmp/lattice-build/

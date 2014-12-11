@@ -30,7 +30,7 @@ logging:
 
 port: 80
 index: 0
-pidfile: /var/diego/gorouter.pid
+pidfile: /var/lattice/gorouter.pid
 go_max_procs: 8
 trace_key: 22
 access_log: /var/log/gorouter-access.log

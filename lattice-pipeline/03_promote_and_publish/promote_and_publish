@@ -1,0 +1,44 @@
+#!/bin/bash
+
+set -e -x
+echo "Running ssh-agent"
+eval `ssh-agent`
+lattice_tar_path=$1
+
+upload_lattice_to_s3() {
+    echo "upload to s3"
+    aws s3 cp $lattice_tar_path "s3://lattice/lattice-latest.tgz"
+    aws s3 cp $lattice_tar_path "s3://lattice/lattice-${new_lattice_version}.tgz"
+    aws s3 cp lattice/Version "s3://lattice/Version"
+
+    lattice_s3_url="http://lattice.s3.amazonaws.com/lattice-latest.tgz"
+    echo $lattice_s3_url
+}
+
+previous_lattice_version=`cat lattice/Version`
+new_lattice_version=$((previous_lattice_version+1))
+
+echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
+echo $new_lattice_version > lattice/Version
+
+upload_lattice_to_s3
+
+aws s3 cp s3://lattice-gocd/credentials/ci_key ci_key
+chmod 700 ci_key
+ssh-add ci_key
+
+pushd lattice
+    git add Version
+    git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version"
+    git pull origin master
+    git checkout master
+    echo "merging develop onto master"
+    git merge develop
+    echo "pushing local master to origin/master"
+    git push origin master
+    echo "Successfully pushed updates to origin/master"
+
+    echo "pushing local develop to origin/develop"
+    git push origin develop
+    echo "Successfully pushed updates to origin/develop"
+popd

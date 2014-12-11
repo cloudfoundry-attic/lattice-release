@@ -3,7 +3,7 @@
 echo "Detecting infrastructure..."
 
 aws_api_base_url=http://169.254.169.254/2014-02-25
-env_file=/var/diego/setup/lattice-environment
+env_file=/var/lattice/setup/lattice-environment
 
 curl -s --connect-timeout 3 $aws_api_base_url
 aws_curl_result=$?
@@ -29,4 +29,4 @@ fi
 echo "SYSTEM_DOMAIN=$SYSTEM_DOMAIN" >> $env_file
 echo "Setting System Domain to $SYSTEM_DOMAIN."
 
-sed -i "s/SYSTEMDOMAIN_PLACEHOLDER/$SYSTEM_DOMAIN/" /var/diego/config/trafficcontroller.json
+sed -i "s/SYSTEMDOMAIN_PLACEHOLDER/$SYSTEM_DOMAIN/" /var/lattice/config/trafficcontroller.json
