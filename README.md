@@ -14,7 +14,7 @@ VMware Fusion:
 
      $ vagrant up --provider vmware_fusion
 
-### Networking Conflicts
+## Networking Conflicts
 If you are trying to run both the Virtual Box and VMWare providers on the same machine, 
 you'll need to run them on different private networks that do not conflict. 
 
@@ -32,7 +32,7 @@ The output from vagrant up will provide instructions on how to target Diego.
 
 Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli) to target Diego.
 
-####Example Usage
+##Example Usage
 
      $ vagrant up
      
@@ -53,11 +53,15 @@ So to update, you have to destroy the box and bring it back up as shown below:
   vagrant destroy --force
   git pull
   vagrant up
+  
+##Troubleshooting
+-  xip.io is sometimes flaky, resulting in no such host errors.
+-  The alternative that we have found is to use dnsmasq configured to resolve all xip.io addresses to 192.168.11.11.
+-  This also requires creating a /etc/resolvers/io file that points to 127.0.0.1. See further instructions [here] (http://passingcuriosity.com/2013/dnsmasq-dev-osx/). 
 
-####Running Vagrant with a custom lattice tar
+##Running Vagrant with a custom lattice tar
 
     VAGRANT_LATTICE_TAR_PATH=/vagrant/lattice.tgz vagrant up
-
 
 #Aws
 
