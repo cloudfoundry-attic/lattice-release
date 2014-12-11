@@ -61,7 +61,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 	var startCommand = cli.Command{
 		Name:        "start",
 		ShortName:   "s",
-		Description: "Start a docker app on diego",
+		Description: "Start a docker app on lattice",
 		Usage:       "ltc start APP_NAME -i DOCKER_IMAGE -e NAME[=VALUE] -- START_COMMAND [APP_ARG1 APP_ARG2...]",
 		Action:      commandFactory.appRunnerCommand.startApp,
 		Flags:       startFlags,
@@ -81,7 +81,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command
 
 	var scaleCommand = cli.Command{
 		Name:        "scale",
-		Description: "Scale a docker app on diego",
+		Description: "Scale a docker app on lattice",
 		Usage:       "ltc scale APP_NAME --instances NUM_INSTANCES ",
 		Action:      commandFactory.appRunnerCommand.scaleApp,
 		Flags:       scaleFlags,
@@ -93,8 +93,8 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command
 func (commandFactory *AppRunnerCommandFactory) MakeStopAppCommand() cli.Command {
 
 	var stopCommand = cli.Command{
-		Name:        "stop",
-		Description: "Stop a docker app on diego",
+		Name:        "remove",
+		Description: "Remove a docker app from lattice",
 		Usage:       "ltc stop APP_NAME",
 		Action:      commandFactory.appRunnerCommand.stopApp,
 	}

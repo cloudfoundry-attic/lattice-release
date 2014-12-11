@@ -30,7 +30,7 @@ func (c *commandFactory) MakeSetTargetCommand() cli.Command {
 		Name:        "target",
 		ShortName:   "t",
 		Description: "set a target lattice location",
-		Usage:       "ltc target DIEGO_DOMAIN [--username USERNAME --password PASSWORD]",
+		Usage:       "ltc target LATTICE_DOMAIN [--username USERNAME --password PASSWORD]",
 		Action:      c.cmd.setTarget,
 		Flags:       targetFlags,
 	}
