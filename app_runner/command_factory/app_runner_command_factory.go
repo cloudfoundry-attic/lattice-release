@@ -2,12 +2,12 @@ package command_factory
 
 import (
 	"fmt"
-	"io"
 	"strings"
 	"time"
 
 	"github.com/dajulia3/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/pivotal-cf-experimental/lattice-cli/output"
 )
 
 type appRunner interface {
@@ -21,7 +21,7 @@ type AppRunnerCommandFactory struct {
 	appRunnerCommand *appRunnerCommand
 }
 
-func NewAppRunnerCommandFactory(appRunner appRunner, output io.Writer, timeout time.Duration, domain string, env []string) *AppRunnerCommandFactory {
+func NewAppRunnerCommandFactory(appRunner appRunner, output *output.Output, timeout time.Duration, domain string, env []string) *AppRunnerCommandFactory {
 	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, output, timeout, domain, env}}
 }
 
@@ -104,7 +104,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeStopAppCommand() cli.Command 
 
 type appRunnerCommand struct {
 	appRunner appRunner
-	output    io.Writer
+	output    *output.Output
 	timeout   time.Duration
 	domain    string
 	env       []string
@@ -121,19 +121,19 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 
 	switch {
 	case name == "":
-		cmd.incorrectUsage("App Name required")
+		cmd.output.IncorrectUsage("App Name required")
 		return
 	case dockerImage == "":
-		cmd.incorrectUsage("Docker Image required")
+		cmd.output.IncorrectUsage("Docker Image required")
 		return
 	case !strings.HasPrefix(dockerImage, "docker:///"):
-		cmd.incorrectUsage("Docker Image should begin with: docker:///")
+		cmd.output.IncorrectUsage("Docker Image should begin with: docker:///")
 		return
 	case len(context.Args()) < 3:
-		cmd.incorrectUsage("Start Command required")
+		cmd.output.IncorrectUsage("Start Command required")
 		return
 	case context.Args().Get(1) != "--":
-		cmd.incorrectUsage("'--' Required before start command")
+		cmd.output.IncorrectUsage("'--' Required before start command")
 		return
 	}
 	startCommand := context.Args().Get(2)
@@ -142,7 +142,7 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	err := cmd.appRunner.StartDockerApp(name, dockerImage, startCommand, appArgs, cmd.buildEnvironment(envVars), privileged, memoryMB, diskMB, port)
 
 	if err != nil {
-		cmd.say(fmt.Sprintf("Error Starting App: %s", err))
+		cmd.output.Say(fmt.Sprintf("Error Starting App: %s", err))
 		return
 	}
 
@@ -153,81 +153,61 @@ func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 	instances := c.Int("instances")
 	appName := c.Args().First()
 	if appName == "" {
-		cmd.incorrectUsage("App Name required")
+		cmd.output.IncorrectUsage("App Name required")
 		return
 	} else if instances == 0 {
-		cmd.say(fmt.Sprintf("Error Scaling to 0 instances - Please stop with: lattice-cli stop cool-web-app"))
+		cmd.output.Say(fmt.Sprintf("Error Scaling to 0 instances - Please stop with: lattice-cli stop cool-web-app"))
 		return
 	}
 
 	err := cmd.appRunner.ScaleDockerApp(appName, instances)
 
 	if err != nil {
-		cmd.say(fmt.Sprintf("Error Scaling App: %s", err))
+		cmd.output.Say(fmt.Sprintf("Error Scaling App: %s", err))
 		return
 	}
 
-	cmd.say("App Scaled Successfully")
+	cmd.output.Say("App Scaled Successfully")
 }
 
 func (cmd *appRunnerCommand) stopApp(c *cli.Context) {
 	appName := c.Args().First()
 	if appName == "" {
-		cmd.incorrectUsage("App Name required")
+		cmd.output.IncorrectUsage("App Name required")
 		return
 	}
 
 	err := cmd.appRunner.StopDockerApp(appName)
 
 	if err != nil {
-		cmd.say(fmt.Sprintf("Error Stopping App: %s", err))
+		cmd.output.Say(fmt.Sprintf("Error Stopping App: %s", err))
 		return
 	}
 
-	cmd.say("App Stopped Successfully")
+	cmd.output.Say("App Stopped Successfully")
 }
 
 func (cmd *appRunnerCommand) pollAppUntilUp(name string) {
-	cmd.say("Starting App: " + name)
+	cmd.output.Say("Starting App: " + name)
 	startingTime := time.Now()
 	for startingTime.Add(cmd.timeout).After(time.Now()) {
 		if status, _ := cmd.appRunner.IsDockerAppUp(name); status {
-			cmd.newLine()
-			cmd.say(colors.Green(name + " is now running."))
-			cmd.newLine()
-			cmd.say(colors.Green(cmd.urlForApp(name)))
+			cmd.output.NewLine()
+			cmd.output.Say(colors.Green(name + " is now running."))
+			cmd.output.NewLine()
+			cmd.output.Say(colors.Green(cmd.urlForApp(name)))
 			return
 		} else {
-			cmd.dot()
+			cmd.output.Dot()
 		}
 		time.Sleep(time.Second)
 	}
-	cmd.newLine()
-	cmd.say(colors.Red(name + " took too long to start."))
+	cmd.output.NewLine()
+	cmd.output.Say(colors.Red(name + " took too long to start."))
 }
 
 func (cmd *appRunnerCommand) urlForApp(name string) string {
 	return fmt.Sprintf("http://%s.%s", name, cmd.domain)
-}
-
-func (cmd *appRunnerCommand) say(output string) {
-	cmd.output.Write([]byte(output))
-}
-
-func (cmd *appRunnerCommand) incorrectUsage(message string) {
-	if len(message) > 0 {
-		cmd.say("Incorrect Usage: " + message)
-	} else {
-		cmd.say("Incorrect Usage")
-	}
-}
-
-func (cmd *appRunnerCommand) dot() {
-	cmd.output.Write([]byte("."))
-}
-
-func (cmd *appRunnerCommand) newLine() {
-	cmd.output.Write([]byte("\n"))
 }
 
 func (cmd *appRunnerCommand) buildEnvironment(envVars []string) map[string]string {

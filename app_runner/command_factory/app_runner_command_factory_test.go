@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/command_factory"
@@ -34,7 +35,8 @@ var _ = Describe("CommandFactory", func() {
 
 		BeforeEach(func() {
 			env := []string{"SHELL=/bin/bash", "COLOR=Blue"}
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain, env)
+
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, env)
 			startCommand = commandFactory.MakeStartAppCommand()
 		})
 
@@ -201,7 +203,7 @@ var _ = Describe("CommandFactory", func() {
 
 		var scaleCommand cli.Command
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain, []string{})
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, []string{})
 			scaleCommand = commandFactory.MakeScaleAppCommand()
 		})
 
@@ -265,7 +267,7 @@ var _ = Describe("CommandFactory", func() {
 
 		var stopCommand cli.Command
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, buffer, timeout, domain, []string{})
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, []string{})
 			stopCommand = commandFactory.MakeStopAppCommand()
 		})
 

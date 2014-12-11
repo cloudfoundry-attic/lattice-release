@@ -1,17 +1,16 @@
 package command_factory
 
 import (
-	"io"
-
 	"github.com/dajulia3/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
+	"github.com/pivotal-cf-experimental/lattice-cli/output"
 )
 
 type commandFactory struct {
 	cmd *configCommand
 }
 
-func NewConfigCommandFactory(config *config.Config, output io.Writer) *commandFactory {
+func NewConfigCommandFactory(config *config.Config, output *output.Output) *commandFactory {
 	return &commandFactory{&configCommand{config, output}}
 }
 
@@ -41,7 +40,7 @@ func (c *commandFactory) MakeSetTargetCommand() cli.Command {
 
 type configCommand struct {
 	config *config.Config
-	output io.Writer
+	output *output.Output
 }
 
 func (cmd *configCommand) setTarget(context *cli.Context) {
@@ -50,13 +49,13 @@ func (cmd *configCommand) setTarget(context *cli.Context) {
 	password := context.String("password")
 
 	if target == "" {
-		cmd.incorrectUsage("Target required.")
+		cmd.output.IncorrectUsage("Target required.")
 		return
 	} else if username != "" && password == "" {
-		cmd.incorrectUsage("Password required with Username.")
+		cmd.output.IncorrectUsage("Password required with Username.")
 		return
 	} else if username == "" && password != "" {
-		cmd.incorrectUsage("Username required with Password.")
+		cmd.output.IncorrectUsage("Username required with Password.")
 		return
 	}
 

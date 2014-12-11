@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 
 	"github.com/pivotal-cf-experimental/lattice-cli/logs/command_factory"
@@ -18,11 +19,11 @@ import (
 var _ = Describe("CommandFactory", func() {
 	Describe("logsCommand", func() {
 		var (
-			output *gbytes.Buffer
+			buffer *gbytes.Buffer
 		)
 
 		BeforeEach(func() {
-			output = gbytes.NewBuffer()
+			buffer = gbytes.NewBuffer()
 		})
 
 		It("Tails logs", func() {
@@ -32,7 +33,7 @@ var _ = Describe("CommandFactory", func() {
 
 			appGuidChan := make(chan string)
 			logReader := &fakeLogReader{appGuidChan: appGuidChan}
-			commandFactory := command_factory.NewLogsCommandFactory(logReader, output)
+			commandFactory := command_factory.NewLogsCommandFactory(logReader, output.New(buffer))
 			tailLogsCommand := commandFactory.MakeLogsCommand()
 
 			time := time.Now()
@@ -52,23 +53,23 @@ var _ = Describe("CommandFactory", func() {
 
 			Eventually(appGuidChan).Should(Receive(Equal("my-app-guid")))
 
-			logOutputString := fmt.Sprintf("%s [%s|%s] First log\n", colors.Cyan(time.Format("02 Jan 15:04")), colors.Yellow(sourceType), colors.Yellow(sourceInstance))
-			Eventually(string(output.Contents())).Should(ContainSubstring(logOutputString))
+			logbufferString := fmt.Sprintf("%s [%s|%s] First log\n", colors.Cyan(time.Format("02 Jan 15:04")), colors.Yellow(sourceType), colors.Yellow(sourceInstance))
+			Eventually(string(buffer.Contents())).Should(ContainSubstring(logbufferString))
 
-			Eventually(output).Should(gbytes.Say("First Error\n"))
+			Eventually(buffer).Should(gbytes.Say("First Error\n"))
 		})
 
 		It("Handles invalid appguids", func() {
 			args := []string{}
 
 			logReader := &fakeLogReader{}
-			commandFactory := command_factory.NewLogsCommandFactory(logReader, output)
+			commandFactory := command_factory.NewLogsCommandFactory(logReader, output.New(buffer))
 			tailLogsCommand := commandFactory.MakeLogsCommand()
 
 			err := test_helpers.ExecuteCommandWithArgs(tailLogsCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(output).To(gbytes.Say("Incorrect Usage"))
+			Expect(buffer).To(gbytes.Say("Incorrect Usage"))
 		})
 
 	})

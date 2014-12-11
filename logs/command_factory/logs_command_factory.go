@@ -2,20 +2,20 @@ package command_factory
 
 import (
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/cloudfoundry/noaa/events"
 	"github.com/dajulia3/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/logs"
+	"github.com/pivotal-cf-experimental/lattice-cli/output"
 )
 
 type logsCommandFactory struct {
 	cmd *logsCommand
 }
 
-func NewLogsCommandFactory(logReader logs.LogReader, output io.Writer) *logsCommandFactory {
+func NewLogsCommandFactory(logReader logs.LogReader, output *output.Output) *logsCommandFactory {
 	outputChan := make(chan string, 10)
 	return &logsCommandFactory{&logsCommand{logReader, output, outputChan}}
 }
@@ -35,7 +35,7 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 
 type logsCommand struct {
 	logReader  logs.LogReader
-	output     io.Writer
+	output     *output.Output
 	outputChan chan string
 }
 
@@ -43,14 +43,14 @@ func (cmd *logsCommand) tailLogs(context *cli.Context) {
 	appGuid := context.Args().First()
 
 	if appGuid == "" {
-		cmd.say("Incorrect Usage")
+		cmd.output.IncorrectUsage("")
 		return
 	}
 
 	go cmd.logReader.TailLogs(appGuid, cmd.logCallback, cmd.errorCallback)
 
 	for log := range cmd.outputChan {
-		cmd.say(log + "\n")
+		cmd.output.Say(log + "\n")
 	}
 }
 
@@ -62,8 +62,4 @@ func (cmd *logsCommand) logCallback(log *events.LogMessage) {
 
 func (cmd *logsCommand) errorCallback(err error) {
 	cmd.outputChan <- err.Error()
-}
-
-func (cmd *logsCommand) say(output string) {
-	cmd.output.Write([]byte(output))
 }
