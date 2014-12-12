@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/cloudfoundry/gunk/timeprovider/faketimeprovider"
 	"github.com/dajulia3/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -18,10 +19,11 @@ import (
 var _ = Describe("CommandFactory", func() {
 
 	var (
-		appRunner *fakeAppRunner
-		buffer    *gbytes.Buffer
-		timeout   time.Duration = 1 * time.Millisecond
-		domain    string        = "192.168.11.11.xip.io"
+		appRunner    *fakeAppRunner
+		buffer       *gbytes.Buffer
+		timeout      time.Duration = 10 * time.Second
+		domain       string        = "192.168.11.11.xip.io"
+		timeProvider *faketimeprovider.FakeTimeProvider
 	)
 
 	BeforeEach(func() {
@@ -36,11 +38,12 @@ var _ = Describe("CommandFactory", func() {
 		BeforeEach(func() {
 			env := []string{"SHELL=/bin/bash", "COLOR=Blue"}
 
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, env)
+			timeProvider = faketimeprovider.New(time.Now())
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, env, timeProvider)
 			startCommand = commandFactory.MakeStartAppCommand()
 		})
 
-		It("starts a Docker based  app as specified in the command via the AppRunner", func() {
+		It("starts a Docker based  app as specified in the command via the AppRunner", func(done Done) {
 			args := []string{
 				"--memory-mb=12",
 				"--disk-mb=12",
@@ -59,8 +62,8 @@ var _ = Describe("CommandFactory", func() {
 			}
 
 			appRunner.upDockerApps["cool-web-app"] = true
-			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
+			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(len(appRunner.startedDockerApps)).To(Equal(1))
@@ -74,12 +77,14 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.startedDockerApps[0].diskMB).To(Equal(12))
 			Expect(appRunner.startedDockerApps[0].port).To(Equal(3000))
 
-			Expect(buffer).To(gbytes.Say("Starting App: cool-web-app"))
-			Expect(string(buffer.Contents())).To(ContainSubstring(colors.Green("cool-web-app is now running.")))
-			Expect(string(buffer.Contents())).To(ContainSubstring(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
+			Expect(buffer).To(test_helpers.Say("Starting App: cool-web-app\n"))
+			Expect(buffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
+			Expect(buffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
+
+			close(done)
 		})
 
-		It("starts a Docker based app with sensible defaults", func() {
+		It("starts a Docker based app with sensible defaults", func(done Done) {
 			args := []string{
 				"--docker-image=docker:///fun/app",
 				"cool-web-app",
@@ -97,6 +102,35 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.startedDockerApps[0].memoryMB).To(Equal(128))
 			Expect(appRunner.startedDockerApps[0].diskMB).To(Equal(1024))
 			Expect(appRunner.startedDockerApps[0].port).To(Equal(8080))
+
+			close(done)
+		})
+
+		It("polls for the app to start", func() {
+			appRunner.upDockerApps["cool-web-app"] = false
+
+			args := []string{
+				"--docker-image=docker:///fun/app",
+				"cool-web-app",
+				"--",
+				"/start-me-please",
+			}
+
+			go test_helpers.ExecuteCommandWithArgs(startCommand, args)
+
+			Eventually(buffer).Should(test_helpers.Say("Starting App: cool-web-app"))
+
+			timeProvider.IncrementBySeconds(1)
+			Eventually(buffer, 10).Should(test_helpers.Say("."))
+			timeProvider.IncrementBySeconds(1)
+			Eventually(buffer, 10).Should(test_helpers.Say("."))
+
+			appRunner.upDockerApps["cool-web-app"] = true
+			timeProvider.IncrementBySeconds(1)
+
+			Eventually(buffer).Should(test_helpers.SayNewLine())
+			Eventually(buffer).Should(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
+			Eventually(buffer).Should(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
 		})
 
 		It("alerts the user if the app does not start", func() {
@@ -108,13 +142,16 @@ var _ = Describe("CommandFactory", func() {
 			}
 
 			appRunner.upDockerApps["cool-web-app"] = false
-			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
+			go test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(buffer.Contents())).To(ContainSubstring(colors.Red("cool-web-app took too long to start.")))
+			Eventually(buffer).Should(test_helpers.Say("Starting App: cool-web-app"))
+
+			timeProvider.IncrementBySeconds(10)
+
+			Eventually(buffer).Should(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
 		})
 
-		It("validates that the name is passed in", func() {
+		It("validates that the name is passed in", func(done Done) {
 			args := []string{
 				"--docker-image=docker:///fun/app",
 			}
@@ -122,11 +159,13 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: App Name required"))
+			Expect(buffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
 			Expect(len(appRunner.startedDockerApps)).To(Equal(0))
+
+			close(done)
 		})
 
-		It("validates that the dockerImage is passed in", func() {
+		It("validates that the dockerImage is passed in", func(done Done) {
 			args := []string{
 				"cool-web-app",
 				"--",
@@ -136,12 +175,13 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: Docker Image required"))
+			Expect(buffer).To(test_helpers.Say("Incorrect Usage: Docker Image required"))
 			Expect(len(appRunner.startedDockerApps)).To(Equal(0))
 
+			close(done)
 		})
 
-		It("validates that the startCommand is passed in", func() {
+		It("validates that the startCommand is passed in", func(done Done) {
 			args := []string{
 				"--docker-image=docker:///fun/app",
 				"cool-web-app",
@@ -150,11 +190,13 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: Start Command required"))
+			Expect(buffer).To(test_helpers.Say("Incorrect Usage: Start Command required"))
 			Expect(len(appRunner.startedDockerApps)).To(Equal(0))
+
+			close(done)
 		})
 
-		It("validates that the terminator -- is passed in", func() {
+		It("validates that the terminator -- is passed in", func(done Done) {
 			args := []string{
 				"--docker-image=docker:///fun/app",
 				"cool-web-app",
@@ -164,11 +206,13 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: '--' Required before start command"))
+			Expect(buffer).To(test_helpers.Say("Incorrect Usage: '--' Required before start command"))
 			Expect(len(appRunner.startedDockerApps)).To(Equal(0))
+
+			close(done)
 		})
 
-		It("validates that the full docker path is passed in", func() {
+		It("validates that the full docker path is passed in", func(done Done) {
 			args := []string{
 				"--docker-image=fun/app",
 				"cool-web-app",
@@ -178,11 +222,13 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: Docker Image should begin with: docker:///"))
+			Expect(buffer).To(test_helpers.Say("Incorrect Usage: Docker Image should begin with: docker:///"))
 			Expect(len(appRunner.startedDockerApps)).To(Equal(0))
+
+			close(done)
 		})
 
-		It("outputs error messages", func() {
+		It("outputs error messages", func(done Done) {
 			args := []string{
 				"--docker-image=docker:///fun/app",
 				"cool-web-app",
@@ -195,7 +241,9 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Error Starting App: Major Fault"))
+			Expect(buffer).To(test_helpers.Say("Error Starting App: Major Fault"))
+
+			close(done)
 		})
 	})
 
@@ -203,7 +251,8 @@ var _ = Describe("CommandFactory", func() {
 
 		var scaleCommand cli.Command
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, []string{})
+			timeProvider = faketimeprovider.New(time.Now())
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, []string{}, timeProvider)
 			scaleCommand = commandFactory.MakeScaleAppCommand()
 		})
 
@@ -220,7 +269,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.scaledDockerApps[0].name).To(Equal("cool-web-app"))
 			Expect(appRunner.scaledDockerApps[0].instances).To(Equal(22))
 
-			Expect(buffer).To(gbytes.Say("App Scaled Successfully"))
+			Expect(buffer).To(test_helpers.Say("App Scaled Successfully"))
 		})
 
 		It("validates that the name is passed in", func() {
@@ -232,7 +281,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: App Name required"))
+			Expect(buffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
 			Expect(len(appRunner.scaledDockerApps)).To(Equal(0))
 		})
 
@@ -246,7 +295,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Error Scaling App: Major Fault"))
+			Expect(buffer).To(test_helpers.Say("Error Scaling App: Major Fault"))
 		})
 
 		It("validates that the number instances is nonzero", func() {
@@ -258,31 +307,84 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Error Scaling to 0 instances - Please stop with: lattice-cli stop cool-web-app"))
+			Expect(buffer).To(test_helpers.Say("Error Scaling to 0 instances - Please stop with: lattice-cli stop cool-web-app"))
 			Expect(len(appRunner.scaledDockerApps)).To(Equal(0))
 		})
 	})
 
 	Describe("stopApp", func() {
-
 		var removeCommand cli.Command
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, []string{})
+			timeProvider = faketimeprovider.New(time.Now())
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, []string{}, timeProvider)
 			removeCommand = commandFactory.MakeRemoveAppCommand()
 		})
 
-		It("stops a Docker based  app as specified in the command via the AppRunner", func() {
+		It("stops a Docker based  app as specified in the command via the AppRunner", func(done Done) {
+			args := []string{
+				"cool",
+			}
+
+			appRunner.existingDockerApps["cool"] = true
+
+			executeCommandDone := make(chan struct{})
+			go func() {
+				err := test_helpers.ExecuteCommandWithArgs(removeCommand, args)
+				Expect(err).NotTo(HaveOccurred())
+				close(executeCommandDone)
+			}()
+
+			Eventually(buffer).Should(test_helpers.Say("Removing cool"))
+
+			timeProvider.IncrementBySeconds(1)
+			Eventually(buffer, 10).Should(test_helpers.Say("."))
+			timeProvider.IncrementBySeconds(1)
+			Eventually(buffer, 10).Should(test_helpers.Say("."))
+
+			timeProvider.IncrementBySeconds(1)
+			appRunner.existingDockerApps["cool"] = false
+
+			Eventually(buffer).Should(test_helpers.SayNewLine())
+			Eventually(buffer).Should(test_helpers.Say(colors.Green("Successfully Removed cool.")))
+
+			Expect(len(appRunner.removedDockerApps)).To(Equal(1))
+			Expect(appRunner.removedDockerApps[0].name).To(Equal("cool"))
+
+			<-executeCommandDone
+			close(done)
+		})
+
+		It("alerts the user if the app does not remove", func() {
+			appRunner.existingDockerApps["cool-web-app"] = true
+
 			args := []string{
 				"cool-web-app",
 			}
 
-			err := test_helpers.ExecuteCommandWithArgs(removeCommand, args)
+			go test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(appRunner.removedDockerApps)).To(Equal(1))
-			Expect(appRunner.removedDockerApps[0].name).To(Equal("cool-web-app"))
+			Eventually(buffer).Should(test_helpers.Say("Removing cool-web-app"))
 
-			Expect(buffer).To(gbytes.Say("App Removed Successfully"))
+			timeProvider.IncrementBySeconds(10)
+
+			Eventually(buffer).Should(test_helpers.Say(colors.Red("Failed to remove cool-web-app.")))
+		})
+
+		It("alerts the user if DockerAppExists() returns an error", func() {
+			appRunner.appStatusError = errors.New("Something Bad")
+			appRunner.existingDockerApps["cool-web-app"] = false
+
+			args := []string{
+				"cool-web-app",
+			}
+
+			go test_helpers.ExecuteCommandWithArgs(removeCommand, args)
+
+			Eventually(buffer).Should(test_helpers.Say("Removing cool-web-app"))
+
+			timeProvider.IncrementBySeconds(10)
+
+			Eventually(buffer).Should(test_helpers.Say(colors.Red("Failed to remove cool-web-app.")))
 		})
 
 		It("validates that the name is passed in", func() {
@@ -293,7 +395,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Incorrect Usage: App Name required"))
+			Expect(buffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
 			Expect(len(appRunner.removedDockerApps)).To(Equal(0))
 		})
 
@@ -306,17 +408,18 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(gbytes.Say("Error Stopping App: Major Fault"))
+			Expect(buffer).To(test_helpers.Say("Error Stopping App: Major Fault"))
 		})
 	})
 })
 
 func newFakeAppRunner() *fakeAppRunner {
 	return &fakeAppRunner{
-		startedDockerApps: []startedDockerApps{},
-		scaledDockerApps:  []scaledDockerApps{},
-		removedDockerApps: []removedDockerApps{},
-		upDockerApps:      map[string]bool{},
+		startedDockerApps:  []startedDockerApps{},
+		scaledDockerApps:   []scaledDockerApps{},
+		removedDockerApps:  []removedDockerApps{},
+		upDockerApps:       map[string]bool{},
+		existingDockerApps: map[string]bool{},
 	}
 }
 
@@ -342,11 +445,13 @@ type removedDockerApps struct {
 }
 
 type fakeAppRunner struct {
-	err               error
-	startedDockerApps []startedDockerApps
-	scaledDockerApps  []scaledDockerApps
-	removedDockerApps []removedDockerApps
-	upDockerApps      map[string]bool
+	err                error
+	appStatusError     error
+	startedDockerApps  []startedDockerApps
+	scaledDockerApps   []scaledDockerApps
+	removedDockerApps  []removedDockerApps
+	upDockerApps       map[string]bool
+	existingDockerApps map[string]bool
 }
 
 func (f *fakeAppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
@@ -385,7 +490,11 @@ func (f *fakeAppRunner) RemoveDockerApp(name string) error {
 }
 
 func (f *fakeAppRunner) IsDockerAppUp(name string) (bool, error) {
-	return f.upDockerApps[name], nil
+	return f.upDockerApps[name], f.appStatusError
+}
+
+func (f *fakeAppRunner) DockerAppExists(name string) (bool, error) {
+	return f.existingDockerApps[name], f.appStatusError
 }
 
 func (f *fakeAppRunner) SetError(err error) {

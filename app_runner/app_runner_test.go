@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
+
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
 )
 
@@ -234,6 +235,38 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns([]receptor.ActualLRPResponse{}, receptorError)
 				_, err := appRunner.IsDockerAppUp("nescafe-app")
 				Expect(err).To(Equal(receptorError))
+			})
+		})
+	})
+
+	Describe("DockerAppExists", func() {
+		It("returns true if the docker app exists", func() {
+			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
+			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+
+			exists, err := appRunner.DockerAppExists("americano-app")
+			Expect(err).To(BeNil())
+			Expect(exists).To(Equal(true))
+		})
+
+		It("returns false if the docker app does not exist", func() {
+			desiredLRPs := []receptor.DesiredLRPResponse{}
+			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+
+			exists, err := appRunner.DockerAppExists("americano-app")
+			Expect(err).To(BeNil())
+			Expect(exists).To(Equal(false))
+		})
+
+		Describe("returning errors from the receptor", func() {
+			It("returns errors fetching the status", func() {
+				desiredLRPs := []receptor.DesiredLRPResponse{}
+				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, errors.New("Something Bad"))
+
+				exists, err := appRunner.DockerAppExists("americano-app")
+				Expect(err).ToNot(BeNil())
+				Expect(err.Error()).To(Equal("Something Bad"))
+				Expect(exists).To(Equal(false))
 			})
 		})
 	})

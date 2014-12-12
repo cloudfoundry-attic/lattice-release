@@ -21,7 +21,7 @@ func NewAppRunner(receptorClient receptor.Client, domain string) *AppRunner {
 }
 
 func (appRunner *AppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
-	if desiredLRPsCount, err := appRunner.desiredLRPsCount(name); err != nil {
+	if _, desiredLRPsCount, err := appRunner.desiredLRPInfo(name); err != nil {
 		return err
 	} else if desiredLRPsCount != 0 {
 		return newExistingAppError(name)
@@ -30,7 +30,7 @@ func (appRunner *AppRunner) StartDockerApp(name, dockerImagePath, startCommand s
 }
 
 func (appRunner *AppRunner) ScaleDockerApp(name string, instances int) error {
-	if desiredLRPsCount, err := appRunner.desiredLRPsCount(name); err != nil {
+	if _, desiredLRPsCount, err := appRunner.desiredLRPInfo(name); err != nil {
 		return err
 	} else if desiredLRPsCount == 0 {
 		return newAppNotStartedError(name)
@@ -40,7 +40,7 @@ func (appRunner *AppRunner) ScaleDockerApp(name string, instances int) error {
 }
 
 func (appRunner *AppRunner) RemoveDockerApp(name string) error {
-	if desiredLRPsCount, err := appRunner.desiredLRPsCount(name); err != nil {
+	if _, desiredLRPsCount, err := appRunner.desiredLRPInfo(name); err != nil {
 		return err
 	} else if desiredLRPsCount == 0 {
 		return newAppNotStartedError(name)
@@ -56,19 +56,24 @@ func (appRunner *AppRunner) IsDockerAppUp(processGuid string) (bool, error) {
 	return status, err
 }
 
-func (appRunner *AppRunner) desiredLRPsCount(name string) (int, error) {
+func (appRunner *AppRunner) DockerAppExists(name string) (bool, error) {
+	exists, _, err := appRunner.desiredLRPInfo(name)
+	return exists, err
+}
+
+func (appRunner *AppRunner) desiredLRPInfo(name string) (exists bool, count int, err error) {
 	desiredLRPs, err := appRunner.receptorClient.DesiredLRPs()
 	if err != nil {
-		return 0, err
+		return false, 0, err
 	}
 
 	for _, desiredLRP := range desiredLRPs {
 		if desiredLRP.ProcessGuid == name {
-			return desiredLRP.Instances, nil
+			return true, desiredLRP.Instances, nil
 		}
 	}
 
-	return 0, nil
+	return false, 0, nil
 }
 
 func (appRunner *AppRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/dajulia3/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
@@ -15,14 +16,15 @@ type appRunner interface {
 	ScaleDockerApp(name string, instances int) error
 	RemoveDockerApp(name string) error
 	IsDockerAppUp(name string) (bool, error)
+	DockerAppExists(name string) (bool, error)
 }
 
 type AppRunnerCommandFactory struct {
 	appRunnerCommand *appRunnerCommand
 }
 
-func NewAppRunnerCommandFactory(appRunner appRunner, output *output.Output, timeout time.Duration, domain string, env []string) *AppRunnerCommandFactory {
-	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, output, timeout, domain, env}}
+func NewAppRunnerCommandFactory(appRunner appRunner, output *output.Output, timeout time.Duration, domain string, env []string, timeProvider timeprovider.TimeProvider) *AppRunnerCommandFactory {
+	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, output, timeout, domain, env, timeProvider}}
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command {
@@ -103,11 +105,12 @@ func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Comman
 }
 
 type appRunnerCommand struct {
-	appRunner appRunner
-	output    *output.Output
-	timeout   time.Duration
-	domain    string
-	env       []string
+	appRunner    appRunner
+	output       *output.Output
+	timeout      time.Duration
+	domain       string
+	env          []string
+	timeProvider timeprovider.TimeProvider
 }
 
 func (cmd *appRunnerCommand) startApp(context *cli.Context) {
@@ -146,7 +149,20 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		return
 	}
 
-	cmd.pollAppUntilUp(name)
+	cmd.output.Say("Starting App: " + name)
+
+	ok := cmd.pollUntilSuccess(func() bool {
+		appUp, _ := cmd.appRunner.IsDockerAppUp(name)
+		return appUp
+	})
+
+	if ok {
+		cmd.output.Say(colors.Green(name + " is now running.\n"))
+		cmd.output.Say(colors.Green(cmd.urlForApp(name)))
+	} else {
+		cmd.output.Say(colors.Red(name + " took too long to start."))
+	}
+
 }
 
 func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
@@ -178,32 +194,36 @@ func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
 	}
 
 	err := cmd.appRunner.RemoveDockerApp(appName)
-
 	if err != nil {
 		cmd.output.Say(fmt.Sprintf("Error Stopping App: %s", err))
 		return
 	}
 
-	cmd.output.Say("App Removed Successfully")
+	cmd.output.Say(fmt.Sprintf("Removing %s", appName))
+	ok := cmd.pollUntilSuccess(func() bool {
+		appExists, err := cmd.appRunner.DockerAppExists(appName)
+		return err == nil && !appExists
+	})
+
+	if ok {
+		cmd.output.Say(colors.Green("Successfully Removed " + appName + "."))
+	} else {
+		cmd.output.Say(colors.Red(fmt.Sprintf("Failed to remove %s.", appName)))
+	}
 }
 
-func (cmd *appRunnerCommand) pollAppUntilUp(name string) {
-	cmd.output.Say("Starting App: " + name)
-	startingTime := time.Now()
-	for startingTime.Add(cmd.timeout).After(time.Now()) {
-		if status, _ := cmd.appRunner.IsDockerAppUp(name); status {
+func (cmd *appRunnerCommand) pollUntilSuccess(pollingFunc func() bool) (ok bool) {
+	startingTime := cmd.timeProvider.Now()
+	for startingTime.Add(cmd.timeout).After(cmd.timeProvider.Now()) {
+		if result := pollingFunc(); result {
 			cmd.output.NewLine()
-			cmd.output.Say(colors.Green(name + " is now running."))
-			cmd.output.NewLine()
-			cmd.output.Say(colors.Green(cmd.urlForApp(name)))
-			return
+			return true
 		} else {
 			cmd.output.Dot()
 		}
-		time.Sleep(time.Second)
+		cmd.timeProvider.Sleep(1 * time.Second)
 	}
-	cmd.output.NewLine()
-	cmd.output.Say(colors.Red(name + " took too long to start."))
+	return false
 }
 
 func (cmd *appRunnerCommand) urlForApp(name string) string {
