@@ -314,6 +314,57 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("stopApp", func() {
+		var stopCommand cli.Command
+		BeforeEach(func() {
+			timeProvider = faketimeprovider.New(time.Now())
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, []string{}, timeProvider)
+			stopCommand = commandFactory.MakeStopAppCommand()
+		})
+
+		It("scales an app to zero", func() {
+			args := []string{
+				"cool-web-app",
+			}
+
+			err := test_helpers.ExecuteCommandWithArgs(stopCommand, args)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(appRunner.ScaleAppCallCount()).To(Equal(1))
+
+			name, instances := appRunner.ScaleAppArgsForCall(0)
+
+			Expect(name).To(Equal("cool-web-app"))
+			Expect(instances).To(Equal(0))
+
+			Expect(buffer).To(test_helpers.Say("App Stopped Successfully"))
+		})
+
+		It("validates that the name is passed in", func() {
+			args := []string{
+				"",
+			}
+
+			err := test_helpers.ExecuteCommandWithArgs(stopCommand, args)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(buffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
+			Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+		})
+
+		It("outputs error messages", func() {
+			args := []string{
+				"cool-web-app",
+			}
+
+			appRunner.ScaleAppReturns(errors.New("Major Fault"))
+			err := test_helpers.ExecuteCommandWithArgs(stopCommand, args)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(buffer).To(test_helpers.Say("Error Stopping App: Major Fault"))
+		})
+	})
+
+	Describe("removeApp", func() {
 		var removeCommand cli.Command
 		BeforeEach(func() {
 			timeProvider = faketimeprovider.New(time.Now())

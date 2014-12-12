@@ -85,12 +85,24 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command
 	return scaleCommand
 }
 
+func (commandFactory *AppRunnerCommandFactory) MakeStopAppCommand() cli.Command {
+
+	var stopCommand = cli.Command{
+		Name:        "stop",
+		Description: "Stop a docker app on lattice",
+		Usage:       "ltc stop APP_NAME ",
+		Action:      commandFactory.appRunnerCommand.stopApp,
+	}
+
+	return stopCommand
+}
+
 func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 
 	var removeCommand = cli.Command{
 		Name:        "remove",
 		Description: "Remove a docker app from lattice",
-		Usage:       "ltc stop APP_NAME",
+		Usage:       "ltc remove APP_NAME",
 		Action:      commandFactory.appRunnerCommand.removeApp,
 	}
 
@@ -174,6 +186,23 @@ func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 	}
 
 	cmd.output.Say("App Scaled Successfully")
+}
+
+func (cmd *appRunnerCommand) stopApp(c *cli.Context) {
+	appName := c.Args().First()
+	if appName == "" {
+		cmd.output.IncorrectUsage("App Name required")
+		return
+	}
+
+	err := cmd.appRunner.ScaleApp(appName, 0)
+
+	if err != nil {
+		cmd.output.Say(fmt.Sprintf("Error Stopping App: %s", err))
+		return
+	}
+
+	cmd.output.Say("App Stopped Successfully")
 }
 
 func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
