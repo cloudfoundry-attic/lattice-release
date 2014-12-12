@@ -173,36 +173,14 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 	instances := c.Int("instances")
 	appName := c.Args().First()
-	if appName == "" {
-		cmd.output.IncorrectUsage("App Name required")
-		return
-	}
 
-	err := cmd.appRunner.ScaleApp(appName, instances)
-
-	if err != nil {
-		cmd.output.Say(fmt.Sprintf("Error Scaling App: %s", err))
-		return
-	}
-
-	cmd.output.Say("App Scaled Successfully")
+	cmd.setAppInstances(appName, instances)
 }
 
 func (cmd *appRunnerCommand) stopApp(c *cli.Context) {
 	appName := c.Args().First()
-	if appName == "" {
-		cmd.output.IncorrectUsage("App Name required")
-		return
-	}
 
-	err := cmd.appRunner.ScaleApp(appName, 0)
-
-	if err != nil {
-		cmd.output.Say(fmt.Sprintf("Error Stopping App: %s", err))
-		return
-	}
-
-	cmd.output.Say("App Stopped Successfully")
+	cmd.setAppInstances(appName, 0)
 }
 
 func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
@@ -229,6 +207,22 @@ func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
 	} else {
 		cmd.output.Say(colors.Red(fmt.Sprintf("Failed to remove %s.", appName)))
 	}
+}
+
+func (cmd *appRunnerCommand) setAppInstances(appName string, instances int) {
+	if appName == "" {
+		cmd.output.IncorrectUsage("App Name required")
+		return
+	}
+
+	err := cmd.appRunner.ScaleApp(appName, instances)
+
+	if err != nil {
+		cmd.output.Say(fmt.Sprintf("Error Scaling App to %d instances: %s", instances, err))
+		return
+	}
+
+	cmd.output.Say(fmt.Sprintf("App Scaled Successfully to %d instances", instances))
 }
 
 func (cmd *appRunnerCommand) pollUntilSuccess(pollingFunc func() bool) (ok bool) {

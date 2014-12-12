@@ -308,7 +308,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(test_helpers.Say("Error Scaling App: Major Fault"))
+			Expect(buffer).To(test_helpers.Say("Error Scaling App to 22 instances: Major Fault"))
 		})
 
 	})
@@ -336,7 +336,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(name).To(Equal("cool-web-app"))
 			Expect(instances).To(Equal(0))
 
-			Expect(buffer).To(test_helpers.Say("App Stopped Successfully"))
+			Expect(buffer).To(test_helpers.Say("App Scaled Successfully to 0 instances"))
 		})
 
 		It("validates that the name is passed in", func() {
@@ -360,7 +360,7 @@ var _ = Describe("CommandFactory", func() {
 			err := test_helpers.ExecuteCommandWithArgs(stopCommand, args)
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(test_helpers.Say("Error Stopping App: Major Fault"))
+			Expect(buffer).To(test_helpers.Say("Error Scaling App to 0 instances: Major Fault"))
 		})
 	})
 
