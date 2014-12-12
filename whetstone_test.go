@@ -49,7 +49,7 @@ var _ = Describe("Lattice", func() {
 		})
 
 		AfterEach(func() {
-			stopApp(appName)
+			removeApp(appName)
 
 			Eventually(errorCheckForRoute(route), timeout, 1).Should(HaveOccurred())
 		})
@@ -99,8 +99,8 @@ func scaleApp(appName string) {
 	expectExit(session)
 }
 
-func stopApp(appName string) {
-	command := command(cli, "stop", appName)
+func removeApp(appName string) {
+	command := command(cli, "remove", appName)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
