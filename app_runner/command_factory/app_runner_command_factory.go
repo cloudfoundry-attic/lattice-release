@@ -7,23 +7,16 @@ import (
 
 	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/dajulia3/cli"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 )
-
-type appRunner interface {
-	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error
-	ScaleDockerApp(name string, instances int) error
-	RemoveDockerApp(name string) error
-	IsDockerAppUp(name string) (bool, error)
-	DockerAppExists(name string) (bool, error)
-}
 
 type AppRunnerCommandFactory struct {
 	appRunnerCommand *appRunnerCommand
 }
 
-func NewAppRunnerCommandFactory(appRunner appRunner, output *output.Output, timeout time.Duration, domain string, env []string, timeProvider timeprovider.TimeProvider) *AppRunnerCommandFactory {
+func NewAppRunnerCommandFactory(appRunner app_runner.AppRunner, output *output.Output, timeout time.Duration, domain string, env []string, timeProvider timeprovider.TimeProvider) *AppRunnerCommandFactory {
 	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, output, timeout, domain, env, timeProvider}}
 }
 
@@ -105,7 +98,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Comman
 }
 
 type appRunnerCommand struct {
-	appRunner    appRunner
+	appRunner    app_runner.AppRunner
 	output       *output.Output
 	timeout      time.Duration
 	domain       string
@@ -152,7 +145,7 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	cmd.output.Say("Starting App: " + name)
 
 	ok := cmd.pollUntilSuccess(func() bool {
-		appUp, _ := cmd.appRunner.IsDockerAppUp(name)
+		appUp, _ := cmd.appRunner.IsAppUp(name)
 		return appUp
 	})
 
@@ -176,7 +169,7 @@ func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 		return
 	}
 
-	err := cmd.appRunner.ScaleDockerApp(appName, instances)
+	err := cmd.appRunner.ScaleApp(appName, instances)
 
 	if err != nil {
 		cmd.output.Say(fmt.Sprintf("Error Scaling App: %s", err))
@@ -193,7 +186,7 @@ func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
 		return
 	}
 
-	err := cmd.appRunner.RemoveDockerApp(appName)
+	err := cmd.appRunner.RemoveApp(appName)
 	if err != nil {
 		cmd.output.Say(fmt.Sprintf("Error Stopping App: %s", err))
 		return
@@ -201,7 +194,7 @@ func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
 
 	cmd.output.Say(fmt.Sprintf("Removing %s", appName))
 	ok := cmd.pollUntilSuccess(func() bool {
-		appExists, err := cmd.appRunner.DockerAppExists(appName)
+		appExists, err := cmd.appRunner.AppExists(appName)
 		return err == nil && !appExists
 	})
 

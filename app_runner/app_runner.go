@@ -7,20 +7,28 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
+type AppRunner interface {
+	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error
+	ScaleApp(name string, instances int) error
+	RemoveApp(name string) error
+	IsAppUp(name string) (bool, error)
+	AppExists(name string) (bool, error)
+}
+
 const (
 	spyDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz"
 )
 
-type AppRunner struct {
+type appRunner struct {
 	receptorClient receptor.Client
 	domain         string
 }
 
-func NewAppRunner(receptorClient receptor.Client, domain string) *AppRunner {
-	return &AppRunner{receptorClient, domain}
+func NewAppRunner(receptorClient receptor.Client, domain string) AppRunner {
+	return &appRunner{receptorClient, domain}
 }
 
-func (appRunner *AppRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
+func (appRunner *appRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
 	if _, desiredLRPsCount, err := appRunner.desiredLRPInfo(name); err != nil {
 		return err
 	} else if desiredLRPsCount != 0 {
@@ -29,7 +37,7 @@ func (appRunner *AppRunner) StartDockerApp(name, dockerImagePath, startCommand s
 	return appRunner.desireLrp(name, startCommand, dockerImagePath, appArgs, environmentVariables, privileged, memoryMB, diskMB, port)
 }
 
-func (appRunner *AppRunner) ScaleDockerApp(name string, instances int) error {
+func (appRunner *appRunner) ScaleApp(name string, instances int) error {
 	if _, desiredLRPsCount, err := appRunner.desiredLRPInfo(name); err != nil {
 		return err
 	} else if desiredLRPsCount == 0 {
@@ -39,7 +47,7 @@ func (appRunner *AppRunner) ScaleDockerApp(name string, instances int) error {
 	return appRunner.updateLrp(name, instances)
 }
 
-func (appRunner *AppRunner) RemoveDockerApp(name string) error {
+func (appRunner *appRunner) RemoveApp(name string) error {
 	if _, desiredLRPsCount, err := appRunner.desiredLRPInfo(name); err != nil {
 		return err
 	} else if desiredLRPsCount == 0 {
@@ -49,19 +57,19 @@ func (appRunner *AppRunner) RemoveDockerApp(name string) error {
 	return appRunner.receptorClient.DeleteDesiredLRP(name)
 }
 
-func (appRunner *AppRunner) IsDockerAppUp(processGuid string) (bool, error) {
+func (appRunner *appRunner) IsAppUp(processGuid string) (bool, error) {
 	actualLrps, err := appRunner.receptorClient.ActualLRPsByProcessGuid(processGuid)
 	status := len(actualLrps) > 0 && actualLrps[0].State == receptor.ActualLRPStateRunning
 
 	return status, err
 }
 
-func (appRunner *AppRunner) DockerAppExists(name string) (bool, error) {
+func (appRunner *appRunner) AppExists(name string) (bool, error) {
 	exists, _, err := appRunner.desiredLRPInfo(name)
 	return exists, err
 }
 
-func (appRunner *AppRunner) desiredLRPInfo(name string) (exists bool, count int, err error) {
+func (appRunner *appRunner) desiredLRPInfo(name string) (exists bool, count int, err error) {
 	desiredLRPs, err := appRunner.receptorClient.DesiredLRPs()
 	if err != nil {
 		return false, 0, err
@@ -76,7 +84,7 @@ func (appRunner *AppRunner) desiredLRPInfo(name string) (exists bool, count int,
 	return false, 0, nil
 }
 
-func (appRunner *AppRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
+func (appRunner *appRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
 	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          name,
 		Domain:               "diego-edge",
@@ -117,7 +125,7 @@ func buildEnvironmentVariables(environmentVariables map[string]string, port int)
 	return append(appEnvVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", port)})
 }
 
-func (appRunner *AppRunner) updateLrp(name string, instances int) error {
+func (appRunner *appRunner) updateLrp(name string, instances int) error {
 	err := appRunner.receptorClient.UpdateDesiredLRP(
 		name,
 		receptor.DesiredLRPUpdateRequest{
