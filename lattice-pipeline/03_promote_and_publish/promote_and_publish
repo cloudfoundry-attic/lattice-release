@@ -12,6 +12,12 @@ upload_lattice_to_s3() {
     echo $lattice_s3_url
 }
 
+extract_deliver_stories_message() {
+git log $GO_FROM_REVISION_LATTICE..$GO_TO_REVISION_LATTICE | \
+    egrep -io "\[\s*(?:Finishes|Fixes)\s*(#(\d+)\s*)+\]" | \
+    perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi'
+}
+
 bump_and_push_lattice() {
     pushd lattice
         previous_lattice_version=`cat Version`
@@ -19,8 +25,14 @@ bump_and_push_lattice() {
         echo $new_lattice_version > Version
         echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
 
+
+        deliver_stories_message=$(extract_deliver_stories_message)
         git add Version
-        git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version"
+        git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
+
+        $deliver_stories_message
+        "
+
         git pull origin master
         git checkout master
         echo "merging develop onto master"
