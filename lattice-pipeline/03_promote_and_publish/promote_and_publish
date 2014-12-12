@@ -71,8 +71,9 @@ fi
 
 lattice_tar_path=$1
 
-upload_lattice_to_s3
 
 setup_ssh_access_to_github
 
 bump_and_push_lattice
+
+upload_lattice_to_s3
