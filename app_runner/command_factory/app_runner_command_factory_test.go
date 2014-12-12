@@ -157,6 +157,7 @@ var _ = Describe("CommandFactory", func() {
 
 			timeProvider.IncrementBySeconds(10)
 
+			Eventually(buffer).Should(test_helpers.SayNewLine())
 			Eventually(buffer).Should(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
 		})
 

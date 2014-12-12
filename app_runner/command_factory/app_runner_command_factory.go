@@ -216,6 +216,7 @@ func (cmd *appRunnerCommand) pollUntilSuccess(pollingFunc func() bool) (ok bool)
 		}
 		cmd.timeProvider.Sleep(1 * time.Second)
 	}
+	cmd.output.NewLine()
 	return false
 }
 
