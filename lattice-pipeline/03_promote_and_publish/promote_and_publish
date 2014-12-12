@@ -31,12 +31,17 @@ bump_and_push_lattice() {
         git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
 
         $deliver_stories_message
+
+        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME , Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
         "
 
         git pull origin master
         git checkout master
-        echo "merging develop onto master"
-        git merge develop
+        echo "merging master into develop"
+        git merge develop -m "Merge branch 'master' of github.com:pivotal-cf-experimental/lattice into develop
+
+        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME , Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME"
+
         echo "pushing local master to origin/master"
         git push origin master
         echo "Successfully pushed updates to origin/master"
