@@ -311,18 +311,6 @@ var _ = Describe("CommandFactory", func() {
 			Expect(buffer).To(test_helpers.Say("Error Scaling App: Major Fault"))
 		})
 
-		It("validates that the number instances is nonzero", func() {
-			args := []string{
-				"--instances=0",
-				"cool-web-app",
-			}
-
-			err := test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
-
-			Expect(err).NotTo(HaveOccurred())
-			Expect(buffer).To(test_helpers.Say("Error Scaling to 0 instances - Please stop with: lattice-cli stop cool-web-app"))
-			Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
-		})
 	})
 
 	Describe("stopApp", func() {

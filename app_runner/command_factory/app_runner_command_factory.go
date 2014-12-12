@@ -164,9 +164,6 @@ func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 	if appName == "" {
 		cmd.output.IncorrectUsage("App Name required")
 		return
-	} else if instances == 0 {
-		cmd.output.Say(fmt.Sprintf("Error Scaling to 0 instances - Please stop with: lattice-cli stop cool-web-app"))
-		return
 	}
 
 	err := cmd.appRunner.ScaleApp(appName, instances)
