@@ -24,7 +24,7 @@ type appRunner struct {
 	domain         string
 }
 
-func NewAppRunner(receptorClient receptor.Client, domain string) AppRunner {
+func New(receptorClient receptor.Client, domain string) AppRunner {
 	return &appRunner{receptorClient, domain}
 }
 

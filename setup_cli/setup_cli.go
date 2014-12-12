@@ -32,7 +32,7 @@ func NewCliApp() *cli.App {
 	config.Load()
 
 	receptorClient := receptor.NewClient(config.Receptor())
-	appRunner := app_runner.NewAppRunner(receptorClient, config.Target())
+	appRunner := app_runner.New(receptorClient, config.Target())
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, output, timeout(), config.Target(), os.Environ(), timeprovider.NewTimeProvider())
 

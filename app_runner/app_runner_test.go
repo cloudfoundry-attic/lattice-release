@@ -22,7 +22,7 @@ var _ = Describe("AppRunner", func() {
 
 	BeforeEach(func() {
 		fakeReceptorClient = &fake_receptor.FakeClient{}
-		appRunner = app_runner.NewAppRunner(fakeReceptorClient, "myDiegoInstall.com")
+		appRunner = app_runner.New(fakeReceptorClient, "myDiegoInstall.com")
 
 	})
 
