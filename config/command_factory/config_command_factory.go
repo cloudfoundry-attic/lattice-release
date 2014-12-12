@@ -1,6 +1,9 @@
 package command_factory
 
 import (
+	"bufio"
+	"io"
+
 	"github.com/dajulia3/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
@@ -10,8 +13,8 @@ type commandFactory struct {
 	cmd *configCommand
 }
 
-func NewConfigCommandFactory(config *config.Config, output *output.Output) *commandFactory {
-	return &commandFactory{&configCommand{config, output}}
+func NewConfigCommandFactory(config *config.Config, input io.Reader, output *output.Output) *commandFactory {
+	return &commandFactory{&configCommand{config, input, output}}
 }
 
 func (c *commandFactory) MakeSetTargetCommand() cli.Command {
@@ -40,24 +43,26 @@ func (c *commandFactory) MakeSetTargetCommand() cli.Command {
 
 type configCommand struct {
 	config *config.Config
+	input  io.Reader
 	output *output.Output
 }
 
 func (cmd *configCommand) setTarget(context *cli.Context) {
 	target := context.Args().First()
-	username := context.String("username")
-	password := context.String("password")
 
 	if target == "" {
 		cmd.output.IncorrectUsage("Target required.")
 		return
-	} else if username != "" && password == "" {
-		cmd.output.IncorrectUsage("Password required with Username.")
-		return
-	} else if username == "" && password != "" {
-		cmd.output.IncorrectUsage("Username required with Password.")
-		return
 	}
+
+	cmd.say("Username: ")
+	reader := bufio.NewReader(cmd.input)
+	username, _ := reader.ReadString('\n')
+	username = username[:len(username)-1]
+
+	cmd.say("Password: ")
+	password, _ := reader.ReadString('\n')
+	password = password[:len(password)-1]
 
 	err := cmd.config.SetTarget(target)
 	if err != nil {

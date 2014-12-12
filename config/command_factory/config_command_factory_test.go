@@ -18,22 +18,31 @@ import (
 var _ = Describe("CommandFactory", func() {
 	Describe("setApiEndpoint", func() {
 		var (
-			buffer  *gbytes.Buffer
-			command cli.Command
-			config  *config_package.Config
+			inbuffer *gbytes.Buffer
+			buffer   *gbytes.Buffer
+			command  cli.Command
+			config   *config_package.Config
 		)
 
 		BeforeEach(func() {
+			inbuffer = gbytes.NewBuffer()
 			buffer = gbytes.NewBuffer()
 			config = config_package.New(persister.NewFakePersister())
 
-			commandFactory := command_factory.NewConfigCommandFactory(config, output.New(buffer))
+			commandFactory := command_factory.NewConfigCommandFactory(config, inbuffer, output.New(buffer))
 			command = commandFactory.MakeSetTargetCommand()
 		})
 
 		Describe("targetCommand", func() {
 			It("sets the api, username, password from the target specified", func() {
-				err := test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com", "--username=testusername", "--password=testpassword"})
+
+				inbuffer.Write([]byte("testusername\n"))
+				inbuffer.Write([]byte("testpassword\n"))
+
+				err := test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com"})
+
+				Expect(buffer).To(gbytes.Say("Username: "))
+				Expect(buffer).To(gbytes.Say("Password: "))
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(config.Target()).To(Equal("myapi.com"))
@@ -42,7 +51,13 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("does not set a username or password if none are passed in", func() {
+				inbuffer.Write([]byte("\n"))
+				inbuffer.Write([]byte("\n"))
+
 				err := test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com"})
+
+				Expect(buffer).To(gbytes.Say("Username: "))
+				Expect(buffer).To(gbytes.Say("Password: "))
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(config.Target()).To(Equal("myapi.com"))
@@ -57,27 +72,19 @@ var _ = Describe("CommandFactory", func() {
 				Expect(buffer).To(gbytes.Say("Incorrect Usage: Target required."))
 			})
 
-			It("returns an error if username is set and password is not", func() {
-				err := test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com", "--username=testusername"})
-
-				Expect(err).NotTo(HaveOccurred())
-				Expect(buffer).To(gbytes.Say("Incorrect Usage: Password required with Username."))
-			})
-
-			It("returns an error if password is set and username is not", func() {
-				err := test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com", "--password=testpassword"})
-
-				Expect(err).NotTo(HaveOccurred())
-				Expect(buffer).To(gbytes.Say("Incorrect Usage: Username required with Password."))
-			})
-
-			It("buffers errors from setting the target", func() {
+			It("bubbles errors from setting the target", func() {
 				fakePersister := persister.NewFakePersisterWithError(errors.New("FAILURE setting api"))
 
-				commandFactory := command_factory.NewConfigCommandFactory(config_package.New(fakePersister), output.New(buffer))
+				inbuffer.Write([]byte("\n"))
+				inbuffer.Write([]byte("\n"))
+
+				commandFactory := command_factory.NewConfigCommandFactory(config_package.New(fakePersister), inbuffer, output.New(buffer))
 				command = commandFactory.MakeSetTargetCommand()
 
 				err := test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com"})
+
+				Expect(buffer).To(gbytes.Say("Username: "))
+				Expect(buffer).To(gbytes.Say("Password: "))
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(buffer).To(gbytes.Say("FAILURE setting api"))

@@ -26,6 +26,7 @@ func NewCliApp() *cli.App {
 	app.Name = "ltc"
 	app.Usage = "Command line interface for Lattice."
 
+	input := os.Stdin
 	output := output.New(os.Stdout)
 
 	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(userHome())))
@@ -39,7 +40,7 @@ func NewCliApp() *cli.App {
 	logReader := logs.NewLogReader(noaa.NewConsumer(setup_cli_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, output)
 
-	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, output)
+	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, input, output)
 
 	app.Commands = []cli.Command{
 		appRunnerCommandFactory.MakeStartAppCommand(),
