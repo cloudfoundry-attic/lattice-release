@@ -36,6 +36,7 @@ bump_and_push_lattice() {
         "
 
         git pull origin master
+        git pull origin develop
         git checkout master
         echo "merging master into develop"
         git merge develop -m "Merge branch 'master' of github.com:pivotal-cf-experimental/lattice into develop
@@ -47,6 +48,7 @@ bump_and_push_lattice() {
         echo "Successfully pushed updates to origin/master"
 
         echo "pushing local develop to origin/develop"
+        git pull --rebase origin develop
         git push origin develop
         echo "Successfully pushed updates to origin/develop"
     popd
