@@ -28,9 +28,9 @@ to
 
 or a different non-conflicting IP.
 
-The output from vagrant up will provide instructions on how to target Diego. 
+The output from vagrant up will provide instructions on how to target Lattice. 
 
-Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli) to target Diego.
+Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli) to target Lattice.
 
 ##Example Usage
 
@@ -47,12 +47,12 @@ Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli) to
 
 ##Updating
 
-Currently, Diego Edge does not support updating via provision.
+Currently, Lattice does not support updating via provision.
 So to update, you have to destroy the box and bring it back up as shown below:
 
-  vagrant destroy --force
-  git pull
-  vagrant up
+     vagrant destroy --force
+     git pull
+     vagrant up
   
 ##Troubleshooting
 -  xip.io is sometimes flaky, resulting in no such host errors.
