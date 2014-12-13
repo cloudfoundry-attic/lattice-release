@@ -1,0 +1,70 @@
+#!/bin/bash
+set -e
+
+save_logs() {
+    echo "save logs"
+
+    pushd $WORKSPACE_DIR/lattice
+        vagrant ssh -c "sudo tar -czf /vagrant/vagrant_upstart_logs.tgz /var/log/upstart"
+    popd
+
+    mv lattice/vagrant_upstart_logs.tgz .
+}
+
+cleanup_vagrant() {
+    echo "cleaning up vagrant"
+    pushd $WORKSPACE_DIR/lattice
+        vagrant destroy --force
+    popd
+}
+
+cleanup(){
+    set +e
+    save_logs
+    cleanup_vagrant
+}
+
+assert_that_vtx_is_enabled_if_linux(){
+    if [ -a /proc/cpuinfo ]; then
+        set +e
+        egrep "vmx|svm" /proc/cpuinfo
+
+        if [ "$?" -ne "0" ]; then
+            echo "VT-x is not enabled on this machine."
+            exit 2
+        fi
+        
+        set -e
+    fi
+}
+
+assert_that_vtx_is_enabled_if_linux
+
+export DIEGO_RELEASE_PATH=$1
+export LATTICE_TAR_PATH=$2
+WORKSPACE_DIR=`pwd`
+
+cp $LATTICE_TAR_PATH lattice
+export VAGRANT_LATTICE_TAR_PATH=/vagrant/$(basename $LATTICE_TAR_PATH)
+
+trap cleanup EXIT
+
+pushd $WORKSPACE_DIR/lattice
+    vagrant up --provider=virtualbox
+    export $(cat .lattice-environment)
+popd
+
+export GOPATH=$DIEGO_RELEASE_PATH
+
+rm -rf $GOPATH/pkg/*
+
+mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
+
+cp -r $WORKSPACE_DIR/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/
+cp -r $WORKSPACE_DIR/lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental/
+
+go get github.com/onsi/ginkgo/ginkgo
+go get github.com/onsi/gomega
+go get -v -t github.com/pivotal-cf-experimental/...
+
+PATH=$PATH:$GOPATH/bin ginkgo -noColor -v $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -domain=$SYSTEM_DOMAIN -timeout=300

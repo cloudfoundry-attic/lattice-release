@@ -2,44 +2,68 @@
 
 set -e
 
-DIEGO_EDGE_BUILD_PATH=$1
+echo "Installing Diego Edge"
 
-if [ -z "$DIEGO_EDGE_BUILD_PATH" ]; then
-    DIEGO_EDGE_BUILD_PATH='.'
+LATTICE_BUILD_PATH=$1
+
+if [ -z "$LATTICE_BUILD_PATH" ]; then
+    LATTICE_BUILD_PATH='.'
 fi
 
-cp $DIEGO_EDGE_BUILD_PATH/upstart/* /etc/init
-cp $DIEGO_EDGE_BUILD_PATH/bin/* /usr/local/bin
 
-mkdir -p /var/diego/static-files/docker-circus
+install_dependencies() {
+    echo "Installing Dependencies..."
+    pushd /tmp
+        SHADOW_TAR_OBJECT_ID="8f17023f-2a94-4d98-a737-ddbf166e7188"
+        wget "http://go-diego-go.s3.amazonaws.com/${SHADOW_TAR_OBJECT_ID}" -O - | tar xzf -
+        pushd shadow-4.2.1
+            ./configure --prefix=/var/lattice
+            make
+            make install
+        popd
+    popd
+}
 
-pushd $DIEGO_EDGE_BUILD_PATH/bin
-    tar -czf /var/diego/static-files/docker-circus/docker-circus.tgz spy
-popd
+cp $LATTICE_BUILD_PATH/upstart/* /etc/init
+cp $LATTICE_BUILD_PATH/bin/* /usr/local/bin
 
-mkdir -p /var/diego/garden
-mkdir -p /var/diego/garden/depot
-mkdir -p /var/diego/garden/rootfs
-mkdir -p /var/diego/garden/overlays
-mkdir -p /var/diego/garden/graph
+mkdir -p /var/lattice/static-files/docker-circus
 
-cp -a $DIEGO_EDGE_BUILD_PATH/garden/garden-bin /var/diego/garden/garden-bin
-cp -a $DIEGO_EDGE_BUILD_PATH/garden/skeleton /var/diego/garden/skeleton
+pushd $LATTICE_BUILD_PATH/bin > /dev/null
+    tar -czf /var/lattice/static-files/docker-circus/docker-circus.tgz spy
+popd > /dev/null
 
-mkdir -p /var/diego/config
-cp -r $DIEGO_EDGE_BUILD_PATH/config /var/diego
+mkdir -p /var/lattice/garden
+mkdir -p /var/lattice/garden/depot
+mkdir -p /var/lattice/garden/rootfs
+mkdir -p /var/lattice/garden/overlays
+mkdir -p /var/lattice/garden/graph
 
+cp -a $LATTICE_BUILD_PATH/garden/garden-bin /var/lattice/garden/garden-bin
+cp -a $LATTICE_BUILD_PATH/garden/skeleton /var/lattice/garden/skeleton
+
+mkdir -p /var/lattice/config
+cp -r $LATTICE_BUILD_PATH/config /var/lattice
+
+mkdir -p /var/lattice/setup
+cp -a ${LATTICE_BUILD_PATH}infrastructure-specific-setup /var/lattice/setup
+
+apt-get -y update
+apt-get -y install gcc
+apt-get -y install make
 apt-get -y install quota
 apt-get -y install linux-image-extra-$(uname -r)
+apt-get -y install curl
 
-pushd /tmp
-    SHADOW_TAR_OBJECT_ID="8f17023f-2a94-4d98-a737-ddbf166e7188"
-    wget "http://go-diego-go.s3.amazonaws.com/${SHADOW_TAR_OBJECT_ID}" -O - | tar xzf -
-    pushd shadow-4.2.1
-        ./configure --prefix=/var/diego
-        make
-        make install
-    popd
-popd
+mkdir -p /var/lattice/run
 
-start diego-edge-bootstrap
+mkdir -p /var/lattice/log
+install_dependencies &> /var/lattice/log/lattice-install.log
+start lattice-bootstrap &>> /var/lattice/log/lattice-bootstrap.log
+
+export $(cat /var/lattice/setup/lattice-environment)
+
+echo "Finished!
+Lattice is now installed and running. You may target it with the Lattice cli via:
+lattice-cli target $SYSTEM_DOMAIN"
+

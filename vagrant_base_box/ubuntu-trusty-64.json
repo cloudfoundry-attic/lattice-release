@@ -1,0 +1,143 @@
+{
+    "variables": {
+        "ssh_name": "vagrant",
+        "ssh_pass": "vagrant",
+        "hostname": "ubuntu-trusty-64",
+        "Version": "4.3.8"
+    },
+    "builders": [
+        {
+            "type": "vmware-iso",
+            "headless": true,
+            "vm_name": "packer-ubuntu-14.04-amd64",
+            "guest_os_type": "ubuntu-64",
+            "disk_size": 10000,
+            "ssh_username": "{{user `ssh_name`}}",
+            "ssh_password": "{{user `ssh_pass`}}",
+            "iso_url": "http://releases.ubuntu.com/trusty/ubuntu-14.04-server-amd64.iso",
+            "iso_checksum": "01545fa976c8367b4f0d59169ac4866c",
+            "iso_checksum_type": "md5",
+            "http_directory": "preseed",
+            "tools_upload_flavor": "linux",
+            "ssh_wait_timeout": "20m",
+            "shutdown_command": "echo {{user `ssh_pass`}} | sudo -S shutdown -P now",
+            "boot_command": [
+                "<esc><esc><enter><wait>",
+                "/install/vmlinuz noapic ",
+                "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+                "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
+                "hostname={{user `hostname`}} ",
+                "fb=false debconf/frontend=noninteractive ",
+                "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
+                "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+                "initrd=/install/initrd.gz -- <enter>"
+            ],
+            "vmx_data": {
+                "memsize": "4096"
+            }
+        },
+        {
+            "type": "virtualbox-iso",
+            "headless": true,
+            "vm_name": "packer-ubuntu-14.04-amd64",
+            "virtualbox_version_file": ".vbox_version",
+            "guest_os_type": "Ubuntu_64",
+            "disk_size": 10000,
+            "ssh_username": "{{user `ssh_name`}}",
+            "ssh_password": "{{user `ssh_pass`}}",
+            "iso_url": "http://releases.ubuntu.com/trusty/ubuntu-14.04-server-amd64.iso",
+            "iso_checksum": "01545fa976c8367b4f0d59169ac4866c",
+            "iso_checksum_type": "md5",
+            "http_directory": "preseed",
+            "ssh_wait_timeout": "20m",
+            "shutdown_command": "echo {{user `ssh_pass`}} | sudo -S shutdown -P now",
+            "boot_command": [
+                "<esc><esc><enter><wait>",
+                "/install/vmlinuz noapic ",
+                "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+                "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
+                "hostname={{user `hostname`}} ",
+                "fb=false debconf/frontend=noninteractive ",
+                "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
+                "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+                "initrd=/install/initrd.gz -- <enter>"
+            ],
+            "vboxmanage": [
+                [ "modifyvm", "{{.Name}}", "--memory", "4096" ],
+                [ "modifyvm", "{{.Name}}", "--natdnshostresolver1", "on" ]
+            ]
+        }
+    ],
+
+    "provisioners": [
+        {
+            "type": "shell",
+            "execute_command": "echo '{{user `ssh_pass`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "inline": [
+                "echo '%sudo    ALL=(ALL)  NOPASSWD:ALL' >> /etc/sudoers"
+            ]
+        },
+        {
+            "type": "shell",
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "apt-get update",
+                "apt-get -y upgrade",
+                "apt-get -y install build-essential linux-headers-$(uname -r)",
+
+                "mkdir -p /home/vagrant/.ssh",
+                "wget --no-check-certificate -O authorized_keys 'https://github.com/mitchellh/vagrant/raw/master/keys/vagrant.pub'",
+                "mv authorized_keys /home/vagrant/.ssh/",
+                "chown -R vagrant /home/vagrant/.ssh",
+                "echo 'UseDNS no' >> /etc/ssh/sshd_config"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["vmware-iso"],
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "sudo apt-get -y install open-vm-tools",
+                "mkdir /tmp/vmware-tools-disk",
+                "mkdir /tmp/vmware-tools",
+                "mount -o loop /home/vagrant/linux.iso /tmp/vmware-tools-disk",
+                "tar xzf /tmp/vmware-tools-disk/VMwareTools-*.tar.gz -C /tmp/vmware-tools",
+                "/tmp/vmware-tools/vmware-tools-distrib/vmware-install.pl --default",
+                "umount /tmp/vmware-tools-disk",
+                "rm -rf  /tmp/vware-tools-disk",
+                "rm -rf  /tmp/vmware-tools",
+                "rm /home/vagrant/linux.iso"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["virtualbox-iso"],
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "echo 'installing virtualbox guest additions version {{.Version}}'",
+                "sudo apt-get install -y linux-headers-generic dkms virtualbox-guest-utils",
+                "mkdir /tmp/virtualbox",
+                "mount -o loop /home/vagrant/VBoxGuestAdditions.iso /tmp/virtualbox",
+                "sh /tmp/vbox/VBoxLinuxAdditions.run",
+                "umount /tmp/virtualbox",
+                "rm -rf /tmp/virtualbox",
+                "rm /home/vagrant/*.iso"
+            ]
+        },
+        {
+            "type": "shell",
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "apt-get -y autoremove",
+                "apt-get -y clean",
+                "dd if=/dev/zero of=/EMPTY bs=1M",
+                "rm -f /EMPTY"
+            ]
+        }
+    ],
+    "post-processors": [
+        {
+            "type": "vagrant"
+        }
+    ]
+}

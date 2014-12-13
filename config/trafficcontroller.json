@@ -12,7 +12,7 @@
     "Zone": "z1",
     "Host": "0.0.0.0",
     "ApiHost": "DONTCARE",
-    "SystemDomain": "192.168.11.11.xip.io",
+    "SystemDomain": "SYSTEMDOMAIN_PLACEHOLDER",
     "NatsHosts": ["127.0.0.1"],
     "NatsPort": 4222,
     "NatsUser": "nats",

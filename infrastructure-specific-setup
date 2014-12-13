@@ -1,0 +1,32 @@
+#!/bin/sh
+
+echo "Detecting infrastructure..."
+
+aws_api_base_url=http://169.254.169.254/2014-02-25
+env_file=/var/lattice/setup/lattice-environment
+
+curl -s --connect-timeout 3 $aws_api_base_url
+aws_curl_result=$?
+echo -n "" > $env_file
+if [ "$aws_curl_result" -eq 0 ]; then
+    echo "Detected AWS"
+
+    export "SYSTEM_DOMAIN=$(curl -s --connect-timeout 3 $aws_api_base_url/meta-data/public-ipv4).xip.io"
+
+    has_user_data=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 $aws_api_base_url/user-data)
+    if [ "$has_user_data" -eq "404" ]; then
+        echo "You must set LATTICE_USERNAME and LATTICE_PASSWORD in AWS user data"
+        exit 4
+    fi
+    curl -s --connect-timeout 3 $aws_api_base_url/user-data >> $env_file
+    echo >> $env_file #insert a blank line in case they don't put a new line at the end of the AWS user data
+else
+    echo "Detected Non-AWS"
+
+    export "SYSTEM_DOMAIN=$(hostname -I | awk '{ print $2 }').xip.io"
+fi
+
+echo "SYSTEM_DOMAIN=$SYSTEM_DOMAIN" >> $env_file
+echo "Setting System Domain to $SYSTEM_DOMAIN."
+
+sed -i "s/SYSTEMDOMAIN_PLACEHOLDER/$SYSTEM_DOMAIN/" /var/lattice/config/trafficcontroller.json

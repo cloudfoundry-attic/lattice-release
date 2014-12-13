@@ -14,7 +14,7 @@ nats:
 
 
 logging:
-  file: /var/log/gorouter.log
+  file: /var/lattice/log/gorouter.log
 
 #  syslog: vcap.gorouter
 
@@ -30,10 +30,10 @@ logging:
 
 port: 80
 index: 0
-pidfile: /var/diego/gorouter.pid
+pidfile: /var/lattice/run/gorouter.pid
 go_max_procs: 8
 trace_key: 22
-access_log: /var/log/gorouter-access.log
+access_log: /var/lattice/log/gorouter-access.log
 
 publish_start_message_interval: 30
 prune_stale_droplets_interval: 30
