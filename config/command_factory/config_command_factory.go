@@ -3,6 +3,7 @@ package command_factory
 import (
 	"bufio"
 	"io"
+	"strings"
 
 	"github.com/dajulia3/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
@@ -55,14 +56,15 @@ func (cmd *configCommand) setTarget(context *cli.Context) {
 		return
 	}
 
-	cmd.say("Username: ")
 	reader := bufio.NewReader(cmd.input)
+
+	cmd.say("Username: ")
 	username, _ := reader.ReadString('\n')
-	username = username[:len(username)-1]
+	username = strings.TrimSuffix(username, "\n")
 
 	cmd.say("Password: ")
 	password, _ := reader.ReadString('\n')
-	password = password[:len(password)-1]
+	password = strings.TrimSuffix(password, "\n")
 
 	err := cmd.config.SetTarget(target)
 	if err != nil {
