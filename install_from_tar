@@ -2,7 +2,18 @@
 
 set -e
 
-PATH_TO_LATTICE_TAR=$1
+COMPONENT_TO_INSTALL=$1
+PATH_TO_LATTICE_TAR=$2
+
+if [ $COMPONENT_TO_INSTALL != "diego-cell" ] && [ $COMPONENT_TO_INSTALL != "coordinator" ] && [ $COMPONENT_TO_INSTALL != "all" ]; then
+    echo "Incorrect Usage. Must install either diego-cell or coordinator or both.
+    Usage: install_from_tar diego-cell [LATTICE_TAR_PATH] OR
+           install_from_tar coordinator [LATTICE_TAR_PATH]
+           install_from_tar all [LATTICE_TAR_PATH]
+    "
+    exit 2
+fi
+
 if [ -z "${PATH_TO_LATTICE_TAR}" ]; then
   echo "Downloading latest Diego Edge Release tar"
   PATH_TO_LATTICE_TAR=/tmp/lattice-latest.tgz
@@ -13,4 +24,10 @@ fi
 
 tar -xf $PATH_TO_LATTICE_TAR -C /tmp
 
-/tmp/lattice-build/install /tmp/lattice-build/
+if [ $COMPONENT_TO_INSTALL == "all" ]; then
+    /tmp/lattice-build/diego-cell/install-diego-cell /tmp/lattice-build/diego-cell
+    /tmp/lattice-build/coordinator/install-coordinator /tmp/lattice-build/coordinator
+else
+    /tmp/lattice-build/$COMPONENT_TO_INSTALL/install-$COMPONENT_TO_INSTALL /tmp/lattice-build/$COMPONENT_TO_INSTALL
+fi
+

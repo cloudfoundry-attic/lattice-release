@@ -1,0 +1,59 @@
+#!/bin/bash
+
+set -e
+
+echo "Installing Lattice - Diego Cell"
+
+LATTICE_DIEGO_CELL_BUILD_PATH=$1
+
+if [ -z "$LATTICE_DIEGO_CELL_BUILD_PATH" ]; then
+    LATTICE_DIEGO_CELL_BUILD_PATH='.'
+fi
+
+install_dependencies() {
+    echo "Installing Dependencies..."
+    pushd /tmp
+        SHADOW_TAR_OBJECT_ID="8f17023f-2a94-4d98-a737-ddbf166e7188"
+        wget "http://go-diego-go.s3.amazonaws.com/${SHADOW_TAR_OBJECT_ID}" -O - | tar xzf -
+        pushd shadow-4.2.1
+            ./configure --prefix=/var/lattice
+            make
+            make install
+        popd
+    popd
+}
+
+cp $LATTICE_DIEGO_CELL_BUILD_PATH/upstart/* /etc/init
+cp $LATTICE_DIEGO_CELL_BUILD_PATH/bin/* /usr/local/bin
+
+mkdir -p /var/lattice/garden
+mkdir -p /var/lattice/garden/depot
+mkdir -p /var/lattice/garden/rootfs
+mkdir -p /var/lattice/garden/overlays
+mkdir -p /var/lattice/garden/graph
+
+cp -a $LATTICE_DIEGO_CELL_BUILD_PATH/garden/garden-bin /var/lattice/garden/garden-bin
+cp -a $LATTICE_DIEGO_CELL_BUILD_PATH/garden/skeleton /var/lattice/garden/skeleton
+
+mkdir -p /var/lattice/config
+cp -r $LATTICE_DIEGO_CELL_BUILD_PATH/config /var/lattice
+
+mkdir -p /var/lattice/setup
+
+apt-get -y update
+apt-get -y install gcc
+apt-get -y install make
+apt-get -y install quota
+apt-get -y install linux-image-extra-$(uname -r)
+apt-get -y install curl
+
+mkdir -p /var/lattice/run
+mkdir -p /var/lattice/log
+
+install_dependencies &> /var/lattice/log/diego-cell-install.log
+start lattice-diego-cell-bootstrap &>> /var/lattice/log/diego-cell-bootstrap.log
+
+export $(cat /var/lattice/setup/lattice-environment)
+
+echo "Finished Installing Lattice Diego-Cell!"
+

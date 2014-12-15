@@ -26,7 +26,7 @@
 {
 "type": "shell",
 "script": "install_from_tar",
-"execute_command": "sudo {{.Path}} ~/lattice.tgz"
+"execute_command": "sudo {{.Path}} all ~/lattice.tgz"
 }
 ]
 }

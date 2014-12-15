@@ -3,6 +3,8 @@
 set -e
 
 compile_garden_linux() {
+    mkdir -p $OUTPUT_DIR/diego-cell/garden
+
     GOPATH=$GOPATH/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace:$GOPATH
     go install -tags daemon github.com/cloudfoundry-incubator/garden-linux
     GOPATH=$DIEGO_RELEASE_PATH
@@ -10,8 +12,8 @@ compile_garden_linux() {
     pushd $DIEGO_RELEASE_PATH/src/github.com/cloudfoundry-incubator/garden-linux/old
         make
 
-        cp -a linux_backend/bin $OUTPUT_DIR/garden/garden-bin
-        cp -a linux_backend/skeleton $OUTPUT_DIR/garden/skeleton
+        cp -a linux_backend/bin $OUTPUT_DIR/diego-cell/garden/garden-bin
+        cp -a linux_backend/skeleton $OUTPUT_DIR/diego-cell/garden/skeleton
     popd
 }
 
@@ -30,14 +32,78 @@ compile_gorouter() {
     popd
 }
 
-compile_loggregator() {
+compile_coordinator_loggregator() {
     pushd $CF_RELEASE_PATH/src/loggregator
         GOPATH=`pwd`
         go install trafficcontroller
         go install doppler
+        GOPATH=$DIEGO_RELEASE_PATH
+    popd
+}
+
+compile_diego_cell_loggregator() {
+    pushd $CF_RELEASE_PATH/src/loggregator
+        GOPATH=`pwd`
         go install metron
         GOPATH=$DIEGO_RELEASE_PATH
     popd
+}
+
+
+compile_diego-cell() {
+    export GOBIN=$OUTPUT_DIR/diego-cell/bin
+
+    pushd $GOPATH
+        go install github.com/cloudfoundry-incubator/rep/cmd/rep
+        go install github.com/cloudfoundry-incubator/executor/cmd/executor
+        go install github.com/cloudfoundry-incubator/auctioneer/cmd/auctioneer
+        go install github.com/cloudfoundry-incubator/converger/cmd/converger
+
+        pushd src/github.com/coreos/etcd
+            ./build
+            cp bin/etcd $GOBIN
+        popd
+    popd
+
+    compile_garden_linux
+    compile_diego_cell_loggregator
+
+    CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
+    wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul
+    chmod +x $GOBIN/consul
+
+    cp -a $LATTICE_PATH/diego-cell/upstart $OUTPUT_DIR/diego-cell
+    cp -a $LATTICE_PATH/diego-cell/config $OUTPUT_DIR/diego-cell
+    cp -a $LATTICE_PATH/diego-cell/install-diego-cell $OUTPUT_DIR/diego-cell/install-diego-cell
+}
+
+compile_coordinator() {
+    export GOBIN=$OUTPUT_DIR/coordinator/bin
+
+    pushd $GOPATH
+        go install github.com/cloudfoundry-incubator/route-emitter/cmd/route-emitter
+        go install github.com/apcera/gnatsd
+        go install github.com/cloudfoundry-incubator/receptor/cmd/receptor
+        go install github.com/cloudfoundry-incubator/file-server/cmd/file-server
+        go install github.com/cloudfoundry-incubator/docker-circus/spy
+
+        pushd src/github.com/coreos/etcd
+            ./build
+            cp bin/etcd $GOBIN
+        popd
+    popd
+
+    compile_gorouter
+    compile_coordinator_loggregator
+
+    CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
+    wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul
+    chmod +x $GOBIN/consul
+
+    cp -a $LATTICE_PATH/coordinator/upstart $OUTPUT_DIR/coordinator
+    cp -a $LATTICE_PATH/coordinator/config $OUTPUT_DIR/coordinator
+    cp -a $LATTICE_PATH/coordinator/infrastructure-specific-setup $OUTPUT_DIR/coordinator
+    cp -a $LATTICE_PATH/coordinator/install-coordinator $OUTPUT_DIR/coordinator/install-coordinator
 }
 
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
@@ -51,41 +117,12 @@ export CF_RELEASE_PATH=$3
 export LATTICE_PATH=$4
 export GOOS=linux
 export GOARCH=amd64
-
-rm -rf $OUTPUT_DIR/*
-mkdir -p $OUTPUT_DIR/garden
-
-export GOBIN=$OUTPUT_DIR/bin
 export GOPATH=$DIEGO_RELEASE_PATH
 
+rm -rf $OUTPUT_DIR/*
 rm -rf $GOPATH/pkg/*
 
-pushd $GOPATH
-    go install github.com/cloudfoundry-incubator/rep/cmd/rep
-    go install github.com/cloudfoundry-incubator/executor/cmd/executor
-    go install github.com/cloudfoundry-incubator/auctioneer/cmd/auctioneer
-    go install github.com/cloudfoundry-incubator/converger/cmd/converger
-    go install github.com/cloudfoundry-incubator/route-emitter/cmd/route-emitter
-    go install github.com/apcera/gnatsd
-    go install github.com/cloudfoundry-incubator/receptor/cmd/receptor
-    go install github.com/cloudfoundry-incubator/file-server/cmd/file-server
-    go install github.com/cloudfoundry-incubator/docker-circus/spy
+compile_diego-cell
+compile_coordinator
 
-    pushd src/github.com/coreos/etcd
-        ./build
-        cp bin/etcd $GOBIN
-    popd
-popd
-
-compile_garden_linux
-compile_gorouter
-compile_loggregator
-
-CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
-wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul
-chmod +x $GOBIN/consul
-
-cp -a $LATTICE_PATH/upstart $OUTPUT_DIR
-cp -a $LATTICE_PATH/config $OUTPUT_DIR
-cp -a $LATTICE_PATH/infrastructure-specific-setup $OUTPUT_DIR
-cp -a $LATTICE_PATH/install $OUTPUT_DIR/install
+#cp -a $LATTICE_PATH/install $OUTPUT_DIR/install

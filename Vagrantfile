@@ -7,7 +7,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provision "shell" do |s|
     s.path = "install_from_tar"
-    s.args = ENV["VAGRANT_LATTICE_TAR_PATH"]
+    s.args = ["all", ENV["VAGRANT_LATTICE_TAR_PATH"].to_s]
   end
 
   config.vm.provision "shell" do |s|
