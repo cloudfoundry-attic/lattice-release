@@ -1,3 +1,5 @@
 #!/bin/bash
 
+set -e
+
 packer build lattice-pipeline/04_packaging/packer_template.json
