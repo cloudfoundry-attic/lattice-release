@@ -115,8 +115,8 @@ func targetLattice(domain string) {
 
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
-	stdinbuf.Write([]byte("user\n"))
-	stdinbuf.Write([]byte("pass\n"))
+	stdinbuf.Write([]byte("\n"))
+	stdinbuf.Write([]byte("\n"))
 
 	Eventually(session.Out).Should(gbytes.Say("Username:"))
 	Eventually(session.Out).Should(gbytes.Say("Password:"))
