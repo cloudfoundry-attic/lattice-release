@@ -108,20 +108,26 @@ func removeApp(appName string) {
 }
 
 func targetLattice(domain string) {
+	var (
+		stdinReader *io.PipeReader
+		stdinWriter *io.PipeWriter
+	)
+
+	stdinReader, stdinWriter = io.Pipe()
+
 	command := command(cli, "target", domain)
 
-	stdinbuf := gbytes.NewBuffer()
-	command.Stdin = stdinbuf
+	command.Stdin = stdinReader
 
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
-	stdinbuf.Write([]byte("\n"))
-	stdinbuf.Write([]byte("\n"))
-
-	Eventually(session.Out).Should(gbytes.Say("Username:"))
-	Eventually(session.Out).Should(gbytes.Say("Password:"))
+	Eventually(session.Out).Should(gbytes.Say("Username: "))
+	stdinWriter.Write([]byte("\n"))
+	Eventually(session.Out).Should(gbytes.Say("Password: "))
+	stdinWriter.Write([]byte("\n"))
 
 	Expect(err).ToNot(HaveOccurred())
+	stdinWriter.Close()
 	expectExit(session)
 }
 
