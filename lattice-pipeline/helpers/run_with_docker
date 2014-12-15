@@ -22,5 +22,16 @@ docker run -a stdout -a stderr -w /workspace \
   -v `pwd`:/workspace \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
+  -e GO_FROM_REVISION_DIEGO_RELEASE \
+  -e GO_TO_REVISION_DIEGO_RELEASE \
+  -e GO_FROM_REVISION_CF_RELEASE_RUNTIME_PASSED \
+  -e GO_TO_REVISION_CF_RELEASE_RUNTIME_PASSED \
+  -e GO_FROM_REVISION_LATTICE \
+  -e GO_TO_REVISION_LATTICE \
+  -e GO_TRIGGER_USER \
+  -e GO_PIPELINE_LABEL \
+  -e $GO_PIPELINE_NAME \
+  -e $GO_STAGE_NAME \
+  -e $GO_JOB_NAME \
   $DOCKER_IMAGE \
   /bin/bash -c "$command_with_args"
