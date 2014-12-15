@@ -49,6 +49,8 @@ type configCommand struct {
 }
 
 func (cmd *configCommand) setTarget(context *cli.Context) {
+	var err error
+
 	target := context.Args().First()
 
 	if target == "" {
@@ -59,14 +61,20 @@ func (cmd *configCommand) setTarget(context *cli.Context) {
 	reader := bufio.NewReader(cmd.input)
 
 	cmd.say("Username: ")
-	username, _ := reader.ReadString('\n')
+	username, err := reader.ReadString('\n')
+	if err != nil {
+		return
+	}
 	username = strings.TrimSuffix(username, "\n")
 
 	cmd.say("Password: ")
-	password, _ := reader.ReadString('\n')
+	password, err := reader.ReadString('\n')
+	if err != nil {
+		return
+	}
 	password = strings.TrimSuffix(password, "\n")
 
-	err := cmd.config.SetTarget(target)
+	err = cmd.config.SetTarget(target)
 	if err != nil {
 		cmd.say(err.Error())
 		return
