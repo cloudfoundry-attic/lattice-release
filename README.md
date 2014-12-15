@@ -88,11 +88,11 @@ Launch an instance of lattice with your base64 encoded username and password fil
 
     aws ec2 run-instances --image-id ami-67485a22 --security-groups default --key-name ec2-west-1 --user-data `base64 lattice-credentials`
     
-#Testing the Diego Edge Box
+#Testing the Lattice Box
 
  Follow the [whetstone instructions](https://github.com/pivotal-cf-experimental/whetstone) for lattice
 
-#Using Diego Edge
+#Using Lattice
 
  Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli).
 
