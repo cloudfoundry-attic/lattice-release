@@ -64,7 +64,8 @@ setup_ssh_access_to_github() {
 
 if [ ${GO_FROM_REVISION_DIEGO_RELEASE} == ${GO_TO_REVISION_DIEGO_RELEASE} ] &&
     [ ${GO_FROM_REVISION_CF_RELEASE_RUNTIME_PASSED} == ${GO_TO_REVISION_CF_RELEASE_RUNTIME_PASSED} ] &&
-    [ ${GO_FROM_REVISION_LATTICE} == ${GO_TO_REVISION_LATTICE} ]; then
+    [ ${GO_FROM_REVISION_LATTICE} == ${GO_TO_REVISION_LATTICE} ] &&
+    [ ${GO_TRIGGER_USER} == "changes" ]; then
     echo "No change in Lattice or its source code dependencies. Skipping publishing a new version."
     exit 0
 fi
