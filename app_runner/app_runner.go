@@ -38,10 +38,8 @@ func (appRunner *appRunner) StartDockerApp(name, dockerImagePath, startCommand s
 }
 
 func (appRunner *appRunner) ScaleApp(name string, instances int) error {
-	if _, desiredLRPsCount, err := appRunner.desiredLRPInfo(name); err != nil {
+	if _, _, err := appRunner.desiredLRPInfo(name); err != nil {
 		return err
-	} else if desiredLRPsCount == 0 {
-		return newAppNotStartedError(name)
 	}
 
 	return appRunner.updateLrp(name, instances)
