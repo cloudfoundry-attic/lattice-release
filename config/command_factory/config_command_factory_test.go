@@ -19,11 +19,11 @@ import (
 var _ = Describe("CommandFactory", func() {
 	Describe("setApiEndpoint", func() {
 		var (
-			stdinReader *io.PipeReader
-			stdinWriter *io.PipeWriter
-			buffer      *gbytes.Buffer
-			command     cli.Command
-			config      *config_package.Config
+			stdinReader      *io.PipeReader
+			stdinWriter      *io.PipeWriter
+			buffer           *gbytes.Buffer
+			setTargetCommand cli.Command
+			config           *config_package.Config
 		)
 
 		BeforeEach(func() {
@@ -32,30 +32,38 @@ var _ = Describe("CommandFactory", func() {
 			config = config_package.New(persister.NewFakePersister())
 
 			commandFactory := command_factory.NewConfigCommandFactory(config, stdinReader, output.New(buffer))
-			command = commandFactory.MakeSetTargetCommand()
+			setTargetCommand = commandFactory.MakeSetTargetCommand()
 		})
 
 		Describe("targetCommand", func() {
 
-			It("sets the api, username, password from the target specified", func() {
+			It("sets the api, username, password from the target specified", func(done Done) {
+				setTargetCommandDone := make(chan struct{})
 
-				go test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com"})
+				go func() {
+					test_helpers.ExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+					close(setTargetCommandDone)
+				}()
 
 				Eventually(buffer).Should(test_helpers.Say("Username: "))
 				stdinWriter.Write([]byte("testusername\n"))
 				Eventually(buffer).Should(test_helpers.Say("Password: "))
 				stdinWriter.Write([]byte("testpassword\n"))
 
+				<-setTargetCommandDone
+
 				Expect(config.Target()).To(Equal("myapi.com"))
 				Expect(config.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
 				Expect(buffer).To(test_helpers.Say("Api Location Set"))
+
+				close(done)
 			})
 
 			It("does not update the config if error on reading username", func() {
 				config.SetTarget("oldtarget.com")
 				config.SetLogin("olduser", "oldpass")
 
-				go test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com"})
+				go test_helpers.ExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
 
 				Eventually(buffer).Should(test_helpers.Say("Username:"))
 				stdinWriter.Close()
@@ -68,7 +76,7 @@ var _ = Describe("CommandFactory", func() {
 				config.SetTarget("oldtarget.com")
 				config.SetLogin("olduser", "oldpass")
 
-				go test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com"})
+				go test_helpers.ExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
 
 				Eventually(buffer).Should(test_helpers.Say("Username: "))
 				stdinWriter.Write([]byte("testusername\n"))
@@ -79,22 +87,31 @@ var _ = Describe("CommandFactory", func() {
 				Expect(config.Receptor()).To(Equal("http://olduser:oldpass@receptor.oldtarget.com"))
 			})
 
-			It("does not set a username or password if none are passed in", func() {
+			It("does not set a username or password if none are passed in", func(done Done) {
+				makeSetTargetCommandDone := make(chan struct{})
 
-				go test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com"})
+				go func() {
+					test_helpers.ExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+					close(makeSetTargetCommandDone)
+				}()
 
 				Eventually(buffer).Should(test_helpers.Say("Username: "))
 				stdinWriter.Write([]byte("\n"))
+
 				Eventually(buffer).Should(test_helpers.Say("Password: "))
 				stdinWriter.Write([]byte("\n"))
+
+				<-makeSetTargetCommandDone
 
 				Expect(config.Target()).To(Equal("myapi.com"))
 				Expect(config.Receptor()).To(Equal("http://receptor.myapi.com"))
 				Expect(buffer).To(test_helpers.Say("Api Location Set"))
+
+				close(done)
 			})
 
 			It("returns an error if the target is blank", func() {
-				err := test_helpers.ExecuteCommandWithArgs(command, []string{""})
+				err := test_helpers.ExecuteCommandWithArgs(setTargetCommand, []string{""})
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(buffer).To(test_helpers.Say("Incorrect Usage: Target required."))
@@ -104,9 +121,9 @@ var _ = Describe("CommandFactory", func() {
 				fakePersister := persister.NewFakePersisterWithError(errors.New("FAILURE setting api"))
 
 				commandFactory := command_factory.NewConfigCommandFactory(config_package.New(fakePersister), stdinReader, output.New(buffer))
-				command = commandFactory.MakeSetTargetCommand()
+				setTargetCommand = commandFactory.MakeSetTargetCommand()
 
-				go test_helpers.ExecuteCommandWithArgs(command, []string{"myapi.com"})
+				go test_helpers.ExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
 
 				Eventually(buffer).Should(test_helpers.Say("Username: "))
 				stdinWriter.Write([]byte("\n"))

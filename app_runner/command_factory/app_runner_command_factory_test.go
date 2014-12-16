@@ -382,7 +382,7 @@ var _ = Describe("CommandFactory", func() {
 
 			executeCommandDone := make(chan struct{})
 			go func() {
-				err := test_helpers.ExecuteCommandWithArgs(removeCommand, args)
+				err := test_helpers.ExecuteCommandWithArgs(removeCommand, args) //RACE b/c prev write soon -> AppExists
 				Expect(err).NotTo(HaveOccurred())
 				close(executeCommandDone)
 			}()
@@ -398,7 +398,7 @@ var _ = Describe("CommandFactory", func() {
 			Eventually(buffer, 10).Should(test_helpers.Say("."))
 
 			timeProvider.IncrementBySeconds(1)
-			appRunner.AppExistsReturns(false, nil)
+			appRunner.AppExistsReturns(false, nil) //WRITE TO APPEXISTSRETURNS
 
 			Eventually(buffer).Should(test_helpers.SayNewLine())
 			Eventually(buffer).Should(test_helpers.Say(colors.Green("Successfully Removed cool.")))
