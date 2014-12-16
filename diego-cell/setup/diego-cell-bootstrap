@@ -1,0 +1,37 @@
+#!/bin/sh
+
+echo "Detecting infrastructure..."
+
+aws_api_base_url=http://169.254.169.254/2014-02-25
+env_file=/var/lattice/setup/lattice-environment
+
+curl -s --connect-timeout 3 $aws_api_base_url
+aws_curl_result=$?
+echo -n "" > $env_file
+if [ "$aws_curl_result" -eq 0 ]; then
+    echo "Detected AWS"
+
+    #export "SYSTEM_DOMAIN=$(curl -s --connect-timeout 3 $aws_api_base_url/meta-data/public-ipv4).xip.io"
+
+    export "DIEGO_CELL_ID=cell-$(curl -s --connect-timeout 3 $aws_api_base_url/meta-data/instance-id)"
+
+    has_user_data=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 $aws_api_base_url/user-data)
+    if [ "$has_user_data" -eq "404" ]; then
+        echo "You must set LATTICE_COORDINATOR_IP in AWS user data"
+        exit 4
+    fi
+
+    USER_DATA=$(curl -s --connect-timeout 3 $aws_api_base_url/user-data | base64 -d)
+    if [ "$?" -ne 0 ]; then
+        USER_DATA=$(curl -s --connect-timeout 3 $aws_api_base_url/user-data)
+    fi
+    echo "$USER_DATA" >> $env_file
+    echo >> $env_file #insert a blank line in case they don't put a new line at the end of the AWS user data
+else
+    echo "Detected Non-AWS"
+
+    echo "LATTICE_COORDINATOR_IP=127.0.0.1" >> $env_file
+    DIEGO_CELL_ID="cell-01"
+fi
+
+echo "DIEGO_CELL_ID=$DIEGO_CELL_ID" >> $env_file

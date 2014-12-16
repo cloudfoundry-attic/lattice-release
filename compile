@@ -74,6 +74,8 @@ compile_diego-cell() {
 
     cp -a $LATTICE_PATH/diego-cell/upstart $OUTPUT_DIR/diego-cell
     cp -a $LATTICE_PATH/diego-cell/config $OUTPUT_DIR/diego-cell
+    cp -a $LATTICE_PATH/diego-cell/setup $OUTPUT_DIR/diego-cell
+
     cp -a $LATTICE_PATH/diego-cell/install-diego-cell $OUTPUT_DIR/diego-cell/install-diego-cell
 }
 
@@ -102,7 +104,8 @@ compile_coordinator() {
 
     cp -a $LATTICE_PATH/coordinator/upstart $OUTPUT_DIR/coordinator
     cp -a $LATTICE_PATH/coordinator/config $OUTPUT_DIR/coordinator
-    cp -a $LATTICE_PATH/coordinator/infrastructure-specific-setup $OUTPUT_DIR/coordinator
+    cp -a $LATTICE_PATH/coordinator/setup $OUTPUT_DIR/coordinator
+
     cp -a $LATTICE_PATH/coordinator/install-coordinator $OUTPUT_DIR/coordinator/install-coordinator
 }
 

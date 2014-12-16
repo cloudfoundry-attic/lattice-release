@@ -1,0 +1,6 @@
+{
+    "ports": {
+        "dns": 53,
+        "recursor": true
+    }
+}

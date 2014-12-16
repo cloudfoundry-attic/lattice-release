@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -x
+
 echo "Detecting infrastructure..."
 
 aws_api_base_url=http://169.254.169.254/2014-02-25
@@ -23,7 +25,7 @@ if [ "$aws_curl_result" -eq 0 ]; then
     if [ "$?" -ne 0 ]; then
         USER_DATA=$(curl -s --connect-timeout 3 $aws_api_base_url/user-data)
     fi
-    echo $USER_DATA >> $env_file
+    echo "$USER_DATA" >> $env_file
     echo >> $env_file # insert a blank line in case they don't put a new line at the end of the AWS user data
 else
     echo "Detected Non-AWS"

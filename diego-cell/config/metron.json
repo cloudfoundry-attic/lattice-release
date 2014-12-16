@@ -9,7 +9,7 @@
     "VarzUser": "",
     "VarzPass": "",
     "VarzPort": 0,
-    "NatsHosts": ["127.0.0.1"],
+    "NatsHosts": ["nats.service.dc1.consul"],
     "NatsPort": 4222,
     "NatsUser": "nats",
     "NatsPass": "nats",

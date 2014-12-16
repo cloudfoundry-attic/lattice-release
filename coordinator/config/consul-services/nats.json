@@ -1,0 +1,6 @@
+{
+    "service": {
+        "name": "nats",
+        "port": 4222
+    }
+}

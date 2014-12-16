@@ -1,0 +1,6 @@
+{
+    "service": {
+        "name": "etcd",
+        "port": 4001
+    }
+}

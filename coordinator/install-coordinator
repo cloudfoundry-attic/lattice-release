@@ -20,17 +20,17 @@ pushd $LATTICE_COORDINATOR_BUILD_PATH/bin > /dev/null
 popd > /dev/null
 
 mkdir -p /var/lattice/config
-cp -r $LATTICE_COORDINATOR_BUILD_PATH/config /var/lattice
+cp -a $LATTICE_COORDINATOR_BUILD_PATH/config /var/lattice
 
 mkdir -p /var/lattice/setup
-cp -a ${LATTICE_COORDINATOR_BUILD_PATH}/infrastructure-specific-setup /var/lattice/setup
+cp -a $LATTICE_COORDINATOR_BUILD_PATH/setup /var/lattice
 
 apt-get -y update
 apt-get -y install curl
 
 mkdir -p /var/lattice/run
-
 mkdir -p /var/lattice/log
+
 start lattice-coordinator-bootstrap &>> /var/lattice/log/coordinator-bootstrap.log
 
 export $(cat /var/lattice/setup/lattice-environment)

@@ -36,9 +36,10 @@ cp -a $LATTICE_DIEGO_CELL_BUILD_PATH/garden/garden-bin /var/lattice/garden/garde
 cp -a $LATTICE_DIEGO_CELL_BUILD_PATH/garden/skeleton /var/lattice/garden/skeleton
 
 mkdir -p /var/lattice/config
-cp -r $LATTICE_DIEGO_CELL_BUILD_PATH/config /var/lattice
+cp -a $LATTICE_DIEGO_CELL_BUILD_PATH/config /var/lattice
 
 mkdir -p /var/lattice/setup
+cp -a $LATTICE_DIEGO_CELL_BUILD_PATH/setup /var/lattice
 
 apt-get -y update
 apt-get -y install gcc
@@ -51,7 +52,7 @@ mkdir -p /var/lattice/run
 mkdir -p /var/lattice/log
 
 install_dependencies &> /var/lattice/log/diego-cell-install.log
-start lattice-diego-cell-bootstrap &>> /var/lattice/log/diego-cell-bootstrap.log
+start lattice-diego-cell-bootstrap
 
 export $(cat /var/lattice/setup/lattice-environment)
 
