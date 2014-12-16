@@ -18,8 +18,13 @@ if [ "$aws_curl_result" -eq 0 ]; then
         echo "You must set LATTICE_USERNAME and LATTICE_PASSWORD in AWS user data"
         exit 4
     fi
-    curl -s --connect-timeout 3 $aws_api_base_url/user-data >> $env_file
-    echo >> $env_file #insert a blank line in case they don't put a new line at the end of the AWS user data
+
+    USER_DATA=$(curl -s --connect-timeout 3 $aws_api_base_url/user-data | base64 -d)
+    if [ "$?" -ne 0 ]; then
+        USER_DATA=$(curl -s --connect-timeout 3 $aws_api_base_url/user-data)
+    fi
+    echo $USER_DATA >> $env_file
+    echo >> $env_file # insert a blank line in case they don't put a new line at the end of the AWS user data
 else
     echo "Detected Non-AWS"
 

@@ -90,8 +90,28 @@ Create a key pair
       
 Launch an instance of lattice with your base64 encoded username and password file
 
-    aws ec2 run-instances --image-id ami-67485a22 --security-groups default --key-name lattice-key --user-data `base64 lattice-credentials`
-    
+    aws ec2 run-instances --image-id ami-03958746 --security-groups lattice --key-name lattice-key --user-data `base64 lattice-credentials`
+
+Find the PublicIpAddress of the instance you just launched.  You can either use the EC2 Web Console or run the following 
+command that lists all instances provisioned with the above AMI.
+
+    aws ec2 describe-instances --filter "Name=image-id,Values=ami-03958746" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
+ 
+Sample output:
+
+    aws ec2 describe-instances --filter "Name=image-id,Values=ami-03958746" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
+            "ReservationId": "r-68fb47a2",
+                    "LaunchTime": "2014-12-16T15:43:06.000Z",
+                    "PublicIpAddress": "12.345.130.132",
+                    "InstanceId": "i-d2b59718",
+                    "ImageId": "ami-03958746",
+
+Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli). The target will be the PublicIpAddress with the suffix "xip.io" appended. The cli will prompt for the username and password used above.
+
+    ltc target 12.345.130.132.xip.io
+        Username: <Your Username>
+        Password: <Your Password>
+   
 #Testing the Lattice Box
 
  Follow the [whetstone instructions](https://github.com/pivotal-cf-experimental/whetstone) for lattice

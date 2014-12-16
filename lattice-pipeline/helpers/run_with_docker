@@ -18,6 +18,7 @@ fi
 
 command_with_args="$@"
 echo "Running command with $@"
+
 docker run -a stdout -a stderr -w /workspace \
   -v `pwd`:/workspace \
   -e AWS_ACCESS_KEY_ID \
@@ -30,8 +31,8 @@ docker run -a stdout -a stderr -w /workspace \
   -e GO_TO_REVISION_LATTICE \
   -e GO_TRIGGER_USER \
   -e GO_PIPELINE_LABEL \
-  -e $GO_PIPELINE_NAME \
-  -e $GO_STAGE_NAME \
-  -e $GO_JOB_NAME \
+  -e GO_PIPELINE_NAME \
+  -e GO_STAGE_NAME \
+  -e GO_JOB_NAME \
   $DOCKER_IMAGE \
   /bin/bash -c "$command_with_args"
