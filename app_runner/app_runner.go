@@ -48,9 +48,9 @@ func (appRunner *appRunner) ScaleApp(name string, instances int) error {
 }
 
 func (appRunner *appRunner) RemoveApp(name string) error {
-	if _, desiredLRPsCount, err := appRunner.desiredLRPInfo(name); err != nil {
+	if lrpExists, _, err := appRunner.desiredLRPInfo(name); err != nil {
 		return err
-	} else if desiredLRPsCount == 0 {
+	} else if !lrpExists {
 		return newAppNotStartedError(name)
 	}
 
@@ -65,8 +65,23 @@ func (appRunner *appRunner) IsAppUp(processGuid string) (bool, error) {
 }
 
 func (appRunner *appRunner) AppExists(name string) (bool, error) {
-	exists, _, err := appRunner.desiredLRPInfo(name)
+	exists, err := appRunner.actualLRPInfo(name)
 	return exists, err
+}
+
+func (appRunner *appRunner) actualLRPInfo(name string) (exists bool, err error) {
+	actualLRPs, err := appRunner.receptorClient.ActualLRPs()
+	if err != nil {
+		return false, err
+	}
+
+	for _, actualLRP := range actualLRPs {
+		if actualLRP.ProcessGuid == name {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (appRunner *appRunner) desiredLRPInfo(name string) (exists bool, count int, err error) {

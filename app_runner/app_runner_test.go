@@ -241,8 +241,8 @@ var _ = Describe("AppRunner", func() {
 
 	Describe("AppExists", func() {
 		It("returns true if the docker app exists", func() {
-			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
-			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+			actualLRPs := []receptor.ActualLRPResponse{receptor.ActualLRPResponse{ProcessGuid: "americano-app"}}
+			fakeReceptorClient.ActualLRPsReturns(actualLRPs, nil)
 
 			exists, err := appRunner.AppExists("americano-app")
 			Expect(err).To(BeNil())
@@ -250,8 +250,8 @@ var _ = Describe("AppRunner", func() {
 		})
 
 		It("returns false if the docker app does not exist", func() {
-			desiredLRPs := []receptor.DesiredLRPResponse{}
-			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+			actualLRPs := []receptor.ActualLRPResponse{}
+			fakeReceptorClient.ActualLRPsReturns(actualLRPs, nil)
 
 			exists, err := appRunner.AppExists("americano-app")
 			Expect(err).To(BeNil())
@@ -260,8 +260,8 @@ var _ = Describe("AppRunner", func() {
 
 		Describe("returning errors from the receptor", func() {
 			It("returns errors fetching the status", func() {
-				desiredLRPs := []receptor.DesiredLRPResponse{}
-				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, errors.New("Something Bad"))
+				actualLRPs := []receptor.ActualLRPResponse{}
+				fakeReceptorClient.ActualLRPsReturns(actualLRPs, errors.New("Something Bad"))
 
 				exists, err := appRunner.AppExists("americano-app")
 				Expect(err).ToNot(BeNil())

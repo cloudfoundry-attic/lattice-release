@@ -366,6 +366,7 @@ var _ = Describe("CommandFactory", func() {
 
 	Describe("removeApp", func() {
 		var removeCommand cli.Command
+
 		BeforeEach(func() {
 			timeProvider = faketimeprovider.New(time.Now())
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(buffer), timeout, domain, []string{}, timeProvider)
