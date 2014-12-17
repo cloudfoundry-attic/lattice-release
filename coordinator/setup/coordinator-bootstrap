@@ -35,5 +35,3 @@ fi
 
 echo "SYSTEM_DOMAIN=$SYSTEM_DOMAIN" >> $env_file
 echo "Setting System Domain to $SYSTEM_DOMAIN."
-
-sed -i "s/SYSTEMDOMAIN_PLACEHOLDER/$SYSTEM_DOMAIN/" /var/lattice/config/trafficcontroller.json

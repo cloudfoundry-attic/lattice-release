@@ -1,5 +1,5 @@
 {
-    "EtcdUrls": ["http://127.0.0.1:4001"],
+    "EtcdUrls": ["http://etcd.service.dc1.consul:4001"],
     "EtcdMaxConcurrentRequests": 10,
     "SharedSecret": "loggregator-secret",
     "LegacyIncomingMessagesPort": 4456,
