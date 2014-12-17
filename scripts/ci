@@ -2,6 +2,7 @@
 set -e
 mkdir -p go
 export GOPATH=`pwd`/go
+export PATH="$PATH:$GOPATH/bin"
 
 mkdir -p go/src/github.com/pivotal-cf-experimental/
 cp -rf lattice-cli go/src/github.com/pivotal-cf-experimental/lattice-cli
