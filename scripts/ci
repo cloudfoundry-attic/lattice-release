@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+go get -u -v github.com/onsi/ginkgo/ginkgo
+go get -u -v github.com/onsi/gomega
+go get -u -v -t ./...
+
+scripts/test
+
+set +e
+
+echo "Detecting Race Conditions..."
+ginkgo -r --race | grep "WARNING: DATA RACE" >/dev/null
+
+if [ "$?" -eq "0" ]; then
+    echo "Detected Race conditions, failing the build!"
+    exit 1
+fi
