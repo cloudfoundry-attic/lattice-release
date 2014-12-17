@@ -23,4 +23,6 @@ ginkgo -r --race | grep "WARNING: DATA RACE" >/dev/null
 if [ "$?" -eq "0" ]; then
     echo "Detected Race conditions, failing the build!"
     exit 1
+else
+    echo "No race conditions detected."
 fi
