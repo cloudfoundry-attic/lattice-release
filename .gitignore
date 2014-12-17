@@ -9,3 +9,6 @@ lattice.tgz
 .lattice-environment
 *.box
 *.iso
+
+diego-cell-config
+lattice-credentials
