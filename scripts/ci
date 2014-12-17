@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
-mkdir -p go
-export GOPATH=`pwd`/go
+export GOPATH=`pwd`
 go get -u -v github.com/onsi/ginkgo/ginkgo
 go get -u -v github.com/onsi/gomega
 go get -u -v -t ./...
