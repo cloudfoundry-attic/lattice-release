@@ -66,9 +66,8 @@ var _ = Describe("CommandFactory", func() {
 			commandFactory := command_factory.NewLogsCommandFactory(logReader, output.New(buffer))
 			tailLogsCommand := commandFactory.MakeLogsCommand()
 
-			err := test_helpers.ExecuteCommandWithArgs(tailLogsCommand, args)
+			test_helpers.ExecuteCommandWithArgs(tailLogsCommand, args)
 
-			Expect(err).NotTo(HaveOccurred())
 			Expect(buffer).To(gbytes.Say("Incorrect Usage"))
 		})
 
