@@ -457,7 +457,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(buffer).To(test_helpers.Say(colors.Red("Failed to remove cool-web-app.")))
 		})
 
-		It("alerts the user if DockerAppExists() returns an error", func() {
+		It("alerts the user if the app runner returns an error", func() {
 			appRunner.AppExistsReturns(false, errors.New("Something Bad"))
 
 			args := []string{
