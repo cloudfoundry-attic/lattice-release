@@ -16,7 +16,7 @@ var (
 
 var _ = BeforeSuite(func() {
 	var err error
-	cli, err = gexec.Build("github.com/pivotal-cf-experimental/lattice-cli")
+	cli, err = gexec.Build("github.com/pivotal-cf-experimental/lattice-cli/ltc")
 	Expect(err).ToNot(HaveOccurred())
 })
 

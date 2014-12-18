@@ -13,8 +13,8 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/config/config_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
 	"github.com/pivotal-cf-experimental/lattice-cli/logs"
+	"github.com/pivotal-cf-experimental/lattice-cli/ltc/setup_cli/setup_cli_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
-	"github.com/pivotal-cf-experimental/lattice-cli/setup_cli/setup_cli_helpers"
 
 	app_runner_command_factory "github.com/pivotal-cf-experimental/lattice-cli/app_runner/command_factory"
 	config_command_factory "github.com/pivotal-cf-experimental/lattice-cli/config/command_factory"
