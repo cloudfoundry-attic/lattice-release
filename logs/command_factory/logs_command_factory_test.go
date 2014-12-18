@@ -19,11 +19,11 @@ import (
 var _ = Describe("CommandFactory", func() {
 	Describe("logsCommand", func() {
 		var (
-			buffer *gbytes.Buffer
+			outputBuffer *gbytes.Buffer
 		)
 
 		BeforeEach(func() {
-			buffer = gbytes.NewBuffer()
+			outputBuffer = gbytes.NewBuffer()
 		})
 
 		It("Tails logs", func() {
@@ -33,7 +33,7 @@ var _ = Describe("CommandFactory", func() {
 
 			appGuidChan := make(chan string)
 			logReader := &fakeLogReader{appGuidChan: appGuidChan}
-			commandFactory := command_factory.NewLogsCommandFactory(logReader, output.New(buffer))
+			commandFactory := command_factory.NewLogsCommandFactory(logReader, output.New(outputBuffer))
 			tailLogsCommand := commandFactory.MakeLogsCommand()
 
 			time := time.Now()
@@ -53,22 +53,22 @@ var _ = Describe("CommandFactory", func() {
 
 			Eventually(appGuidChan).Should(Receive(Equal("my-app-guid")))
 
-			logbufferString := fmt.Sprintf("%s [%s|%s] First log\n", colors.Cyan(time.Format("02 Jan 15:04")), colors.Yellow(sourceType), colors.Yellow(sourceInstance))
-			Eventually(string(buffer.Contents())).Should(ContainSubstring(logbufferString))
+			logoutputBufferString := fmt.Sprintf("%s [%s|%s] First log\n", colors.Cyan(time.Format("02 Jan 15:04")), colors.Yellow(sourceType), colors.Yellow(sourceInstance))
+			Eventually(string(outputBuffer.Contents())).Should(ContainSubstring(logoutputBufferString))
 
-			Eventually(buffer).Should(gbytes.Say("First Error\n"))
+			Eventually(outputBuffer).Should(gbytes.Say("First Error\n"))
 		})
 
 		It("Handles invalid appguids", func() {
 			args := []string{}
 
 			logReader := &fakeLogReader{}
-			commandFactory := command_factory.NewLogsCommandFactory(logReader, output.New(buffer))
+			commandFactory := command_factory.NewLogsCommandFactory(logReader, output.New(outputBuffer))
 			tailLogsCommand := commandFactory.MakeLogsCommand()
 
 			test_helpers.ExecuteCommandWithArgs(tailLogsCommand, args)
 
-			Expect(buffer).To(gbytes.Say("Incorrect Usage"))
+			Expect(outputBuffer).To(gbytes.Say("Incorrect Usage"))
 		})
 
 	})
