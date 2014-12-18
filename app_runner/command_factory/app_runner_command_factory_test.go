@@ -314,7 +314,6 @@ var _ = Describe("CommandFactory", func() {
 
 		It("validates that the name is passed in", func() {
 			args := []string{
-				"--instances=22",
 				"",
 			}
 

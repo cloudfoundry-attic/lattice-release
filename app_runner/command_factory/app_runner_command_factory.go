@@ -171,13 +171,16 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 }
 
 func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
-	if !c.IsSet("instances") {
+	appName := c.Args().First()
+	instances := c.Int("instances")
+
+	if appName == "" {
+		cmd.output.IncorrectUsage("App Name required")
+		return
+	} else if !c.IsSet("instances") {
 		cmd.output.IncorrectUsage("Number of Instances Required")
 		return
 	}
-
-	instances := c.Int("instances")
-	appName := c.Args().First()
 
 	cmd.setAppInstances(appName, instances)
 }
@@ -185,15 +188,15 @@ func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 func (cmd *appRunnerCommand) stopApp(c *cli.Context) {
 	appName := c.Args().First()
 
-	cmd.setAppInstances(appName, 0)
-}
-
-func (cmd *appRunnerCommand) setAppInstances(appName string, instances int) {
 	if appName == "" {
 		cmd.output.IncorrectUsage("App Name required")
 		return
 	}
 
+	cmd.setAppInstances(appName, 0)
+}
+
+func (cmd *appRunnerCommand) setAppInstances(appName string, instances int) {
 	err := cmd.appRunner.ScaleApp(appName, instances)
 
 	if err != nil {
