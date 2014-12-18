@@ -49,7 +49,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 			logReader.addError(errors.New("First Error"))
 
-			go test_helpers.ExecuteCommandWithArgs(tailLogsCommand, args)
+			test_helpers.AsyncExecuteCommandWithArgs(tailLogsCommand, args)
 
 			Eventually(appGuidChan).Should(Receive(Equal("my-app-guid")))
 

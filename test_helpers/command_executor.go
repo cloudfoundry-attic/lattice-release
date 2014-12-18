@@ -7,11 +7,8 @@ import (
 )
 
 func ExecuteCommandWithArgs(command cli.Command, commandArgs []string) {
-	cliApp := cli.NewApp()
-	cliApp.Commands = []cli.Command{command}
-	cliAppArgs := append([]string{"lattice-cli", command.Name}, commandArgs...)
-	err := cliApp.Run(cliAppArgs)
-	Expect(err).To(BeNil())
+	commandFinishChan := AsyncExecuteCommandWithArgs(command, commandArgs)
+	Eventually(commandFinishChan).Should(BeClosed())
 }
 
 func AsyncExecuteCommandWithArgs(command cli.Command, commandArgs []string) chan struct{} {
@@ -19,9 +16,17 @@ func AsyncExecuteCommandWithArgs(command cli.Command, commandArgs []string) chan
 
 	go func() {
 		defer GinkgoRecover()
-		ExecuteCommandWithArgs(command, commandArgs)
+		executeCommandWithArgs(command, commandArgs)
 		close(commandDone)
 	}()
 
 	return commandDone
+}
+
+func executeCommandWithArgs(command cli.Command, commandArgs []string) {
+	cliApp := cli.NewApp()
+	cliApp.Commands = []cli.Command{command}
+	cliAppArgs := append([]string{"lattice-cli", command.Name}, commandArgs...)
+	err := cliApp.Run(cliAppArgs)
+	Expect(err).To(BeNil())
 }
