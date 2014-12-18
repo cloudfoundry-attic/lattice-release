@@ -422,6 +422,9 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.RemoveAppCallCount()).To(Equal(1))
 			Expect(appRunner.RemoveAppArgsForCall(0)).To(Equal("cool"))
 
+			Expect(appRunner.AppExistsCallCount()).To(Equal(1))
+			Expect(appRunner.AppExistsArgsForCall(0)).To(Equal("cool"))
+
 			timeProvider.IncrementBySeconds(1)
 			Eventually(buffer).Should(test_helpers.Say("."))
 			timeProvider.IncrementBySeconds(1)
@@ -434,7 +437,6 @@ var _ = Describe("CommandFactory", func() {
 
 			Eventually(buffer).Should(test_helpers.SayNewLine())
 			Eventually(buffer).Should(test_helpers.Say(colors.Green("Successfully Removed cool.")))
-
 		})
 
 		It("alerts the user if the app does not remove", func() {
