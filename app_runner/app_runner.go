@@ -11,8 +11,8 @@ type AppRunner interface {
 	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error
 	ScaleApp(name string, instances int) error
 	RemoveApp(name string) error
-	IsAppUp(name string) (bool, error)
 	AppExists(name string) (bool, error)
+	NumOfRunningAppInstances(name string) (int, error)
 }
 
 const (
@@ -29,16 +29,16 @@ func New(receptorClient receptor.Client, domain string) AppRunner {
 }
 
 func (appRunner *appRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
-	if _, desiredLRPsCount, err := appRunner.desiredLRPInfo(name); err != nil {
+	if exists, err := appRunner.desiredLRPExists(name); err != nil {
 		return err
-	} else if desiredLRPsCount != 0 {
+	} else if exists {
 		return newExistingAppError(name)
 	}
 	return appRunner.desireLrp(name, startCommand, dockerImagePath, appArgs, environmentVariables, privileged, memoryMB, diskMB, port)
 }
 
 func (appRunner *appRunner) ScaleApp(name string, instances int) error {
-	if exists, _, err := appRunner.desiredLRPInfo(name); err != nil {
+	if exists, err := appRunner.desiredLRPExists(name); err != nil {
 		return err
 	} else if !exists {
 		return newAppNotStartedError(name)
@@ -48,7 +48,7 @@ func (appRunner *appRunner) ScaleApp(name string, instances int) error {
 }
 
 func (appRunner *appRunner) RemoveApp(name string) error {
-	if lrpExists, _, err := appRunner.desiredLRPInfo(name); err != nil {
+	if lrpExists, err := appRunner.desiredLRPExists(name); err != nil {
 		return err
 	} else if !lrpExists {
 		return newAppNotStartedError(name)
@@ -57,19 +57,7 @@ func (appRunner *appRunner) RemoveApp(name string) error {
 	return appRunner.receptorClient.DeleteDesiredLRP(name)
 }
 
-func (appRunner *appRunner) IsAppUp(processGuid string) (bool, error) {
-	actualLrps, err := appRunner.receptorClient.ActualLRPsByProcessGuid(processGuid)
-	status := len(actualLrps) > 0 && actualLrps[0].State == receptor.ActualLRPStateRunning
-
-	return status, err
-}
-
 func (appRunner *appRunner) AppExists(name string) (bool, error) {
-	exists, err := appRunner.actualLRPInfo(name)
-	return exists, err
-}
-
-func (appRunner *appRunner) actualLRPInfo(name string) (exists bool, err error) {
 	actualLRPs, err := appRunner.receptorClient.ActualLRPs()
 	if err != nil {
 		return false, err
@@ -84,19 +72,35 @@ func (appRunner *appRunner) actualLRPInfo(name string) (exists bool, err error) 
 	return false, nil
 }
 
-func (appRunner *appRunner) desiredLRPInfo(name string) (exists bool, count int, err error) {
+func (appRunner *appRunner) NumOfRunningAppInstances(name string) (count int, err error) {
+	runningInstances := 0
+	instances, err := appRunner.receptorClient.ActualLRPsByProcessGuid(name)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, instance := range instances {
+		if instance.State == receptor.ActualLRPStateRunning {
+			runningInstances += 1
+		}
+	}
+
+	return runningInstances, nil
+}
+
+func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err error) {
 	desiredLRPs, err := appRunner.receptorClient.DesiredLRPs()
 	if err != nil {
-		return false, 0, err
+		return false, err
 	}
 
 	for _, desiredLRP := range desiredLRPs {
 		if desiredLRP.ProcessGuid == name {
-			return true, desiredLRP.Instances, nil
+			return true, nil
 		}
 	}
 
-	return false, 0, nil
+	return false, nil
 }
 
 func (appRunner *appRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {

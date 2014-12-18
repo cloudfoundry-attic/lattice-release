@@ -197,45 +197,30 @@ var _ = Describe("AppRunner", func() {
 
 	})
 
-	Describe("IsAppUp", func() {
-		It("returns true if the docker app is running with a status of ActualLRPStateRunning", func() {
-			actualLrpsResponse := []receptor.ActualLRPResponse{receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning}}
+	Describe("NumOfRunningAppInstances", func() {
+		It("returns the number of running instances for a given app guid", func() {
+			actualLrpsResponse := []receptor.ActualLRPResponse{
+				receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 1},
+				receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 2},
+				receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateClaimed, Index: 3},
+			}
 			fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
 
-			status, err := appRunner.IsAppUp("americano-app")
+			count, err := appRunner.NumOfRunningAppInstances("americano-app")
 			Expect(err).To(BeNil())
-			Expect(status).To(BeTrue())
+			Expect(count).To(Equal(2))
 
 			Expect(fakeReceptorClient.ActualLRPsByProcessGuidCallCount()).To(Equal(1))
-
 			Expect(fakeReceptorClient.ActualLRPsByProcessGuidArgsForCall(0)).To(Equal("americano-app"))
 		})
 
-		It("returns false if the docker app is running without a status of ActualLRPStateRunning", func() {
-			actualLrpsResponse := []receptor.ActualLRPResponse{receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateClaimed}}
-			fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
+		It("returns errors from the receptor", func() {
+			receptorError := errors.New("receptor did not like that requeset")
+			fakeReceptorClient.ActualLRPsByProcessGuidReturns([]receptor.ActualLRPResponse{}, receptorError)
 
-			status, _ := appRunner.IsAppUp("americano-app")
-			Expect(status).To(BeFalse())
+			_, err := appRunner.NumOfRunningAppInstances("nescafe-app")
 
-		})
-
-		It("returns false if the docker app is not running", func() {
-			actualLrpsResponse := []receptor.ActualLRPResponse{}
-			fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
-
-			status, _ := appRunner.IsAppUp("americano-app")
-			Expect(status).To(BeFalse())
-
-		})
-
-		Describe("returning errors from the receptor", func() {
-			It("returns errors fetching the existing count", func() {
-				receptorError := errors.New("error - Existing Count")
-				fakeReceptorClient.ActualLRPsByProcessGuidReturns([]receptor.ActualLRPResponse{}, receptorError)
-				_, err := appRunner.IsAppUp("nescafe-app")
-				Expect(err).To(Equal(receptorError))
-			})
+			Expect(err).To(Equal(receptorError))
 		})
 	})
 

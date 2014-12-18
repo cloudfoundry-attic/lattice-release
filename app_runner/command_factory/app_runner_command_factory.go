@@ -157,8 +157,8 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	cmd.output.Say("Starting App: " + name)
 
 	ok := cmd.pollUntilSuccess(func() bool {
-		appUp, _ := cmd.appRunner.IsAppUp(name)
-		return appUp
+		instances, _ := cmd.appRunner.NumOfRunningAppInstances(name)
+		return instances > 0
 	})
 
 	if ok {
@@ -201,7 +201,18 @@ func (cmd *appRunnerCommand) setAppInstances(appName string, instances int) {
 		return
 	}
 
-	cmd.output.Say(fmt.Sprintf("App Scaled Successfully to %d instances", instances))
+	cmd.output.Say(fmt.Sprintf("Scaling %s to %d instances", appName, instances))
+
+	ok := cmd.pollUntilSuccess(func() bool {
+		numRunning, _ := cmd.appRunner.NumOfRunningAppInstances(appName)
+		return numRunning == instances
+	})
+
+	if ok {
+		cmd.output.Say(colors.Green("App Scaled Successfully"))
+	} else {
+		cmd.output.Say(colors.Red(appName + " took too long to scale."))
+	}
 }
 
 func (cmd *appRunnerCommand) removeApp(c *cli.Context) {

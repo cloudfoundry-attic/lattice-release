@@ -41,15 +41,6 @@ type FakeAppRunner struct {
 	removeAppReturns struct {
 		result1 error
 	}
-	IsAppUpStub        func(name string) (bool, error)
-	isAppUpMutex       sync.RWMutex
-	isAppUpArgsForCall []struct {
-		name string
-	}
-	isAppUpReturns struct {
-		result1 bool
-		result2 error
-	}
 	AppExistsStub        func(name string) (bool, error)
 	appExistsMutex       sync.RWMutex
 	appExistsArgsForCall []struct {
@@ -57,6 +48,15 @@ type FakeAppRunner struct {
 	}
 	appExistsReturns struct {
 		result1 bool
+		result2 error
+	}
+	NumOfRunningAppInstancesStub        func(name string) (int, error)
+	numOfRunningAppInstancesMutex       sync.RWMutex
+	numOfRunningAppInstancesArgsForCall []struct {
+		name string
+	}
+	numOfRunningAppInstancesReturns struct {
+		result1 int
 		result2 error
 	}
 }
@@ -166,39 +166,6 @@ func (fake *FakeAppRunner) RemoveAppReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeAppRunner) IsAppUp(name string) (bool, error) {
-	fake.isAppUpMutex.Lock()
-	fake.isAppUpArgsForCall = append(fake.isAppUpArgsForCall, struct {
-		name string
-	}{name})
-	fake.isAppUpMutex.Unlock()
-	if fake.IsAppUpStub != nil {
-		return fake.IsAppUpStub(name)
-	} else {
-		return fake.isAppUpReturns.result1, fake.isAppUpReturns.result2
-	}
-}
-
-func (fake *FakeAppRunner) IsAppUpCallCount() int {
-	fake.isAppUpMutex.RLock()
-	defer fake.isAppUpMutex.RUnlock()
-	return len(fake.isAppUpArgsForCall)
-}
-
-func (fake *FakeAppRunner) IsAppUpArgsForCall(i int) string {
-	fake.isAppUpMutex.RLock()
-	defer fake.isAppUpMutex.RUnlock()
-	return fake.isAppUpArgsForCall[i].name
-}
-
-func (fake *FakeAppRunner) IsAppUpReturns(result1 bool, result2 error) {
-	fake.IsAppUpStub = nil
-	fake.isAppUpReturns = struct {
-		result1 bool
-		result2 error
-	}{result1, result2}
-}
-
 func (fake *FakeAppRunner) AppExists(name string) (bool, error) {
 	fake.appExistsMutex.Lock()
 	fake.appExistsArgsForCall = append(fake.appExistsArgsForCall, struct {
@@ -230,6 +197,39 @@ func (fake *FakeAppRunner) AppExistsReturns(result1 bool, result2 error) {
 	fake.AppExistsStub = nil
 	fake.appExistsReturns = struct {
 		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeAppRunner) NumOfRunningAppInstances(name string) (int, error) {
+	fake.numOfRunningAppInstancesMutex.Lock()
+	fake.numOfRunningAppInstancesArgsForCall = append(fake.numOfRunningAppInstancesArgsForCall, struct {
+		name string
+	}{name})
+	fake.numOfRunningAppInstancesMutex.Unlock()
+	if fake.NumOfRunningAppInstancesStub != nil {
+		return fake.NumOfRunningAppInstancesStub(name)
+	} else {
+		return fake.numOfRunningAppInstancesReturns.result1, fake.numOfRunningAppInstancesReturns.result2
+	}
+}
+
+func (fake *FakeAppRunner) NumOfRunningAppInstancesCallCount() int {
+	fake.numOfRunningAppInstancesMutex.RLock()
+	defer fake.numOfRunningAppInstancesMutex.RUnlock()
+	return len(fake.numOfRunningAppInstancesArgsForCall)
+}
+
+func (fake *FakeAppRunner) NumOfRunningAppInstancesArgsForCall(i int) string {
+	fake.numOfRunningAppInstancesMutex.RLock()
+	defer fake.numOfRunningAppInstancesMutex.RUnlock()
+	return fake.numOfRunningAppInstancesArgsForCall[i].name
+}
+
+func (fake *FakeAppRunner) NumOfRunningAppInstancesReturns(result1 int, result2 error) {
+	fake.NumOfRunningAppInstancesStub = nil
+	fake.numOfRunningAppInstancesReturns = struct {
+		result1 int
 		result2 error
 	}{result1, result2}
 }

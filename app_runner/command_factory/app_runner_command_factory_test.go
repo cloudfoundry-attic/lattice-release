@@ -62,11 +62,9 @@ var _ = Describe("CommandFactory", func() {
 				"--appFlavor=\"purple\"",
 			}
 
-			appRunner.IsAppUpReturns(true, nil)
+			appRunner.NumOfRunningAppInstancesReturns(1, nil)
 
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
-
-			appRunner.IsAppUpReturns(true, nil)
 
 			Expect(appRunner.StartDockerAppCallCount()).To(Equal(1))
 			name, dockerImagePath, startCommand, appArgs, environmentVariables, privileged, memoryMB, diskMB, port := appRunner.StartDockerAppArgsForCall(0)
@@ -93,7 +91,7 @@ var _ = Describe("CommandFactory", func() {
 				"/start-me-please",
 			}
 
-			appRunner.IsAppUpReturns(true, nil)
+			appRunner.NumOfRunningAppInstancesReturns(1, nil)
 
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
@@ -114,27 +112,27 @@ var _ = Describe("CommandFactory", func() {
 				"/start-me-please",
 			}
 
-			appRunner.IsAppUpReturns(false, nil)
+			appRunner.NumOfRunningAppInstancesReturns(0, nil)
 
-			setTargetCommandDone := test_helpers.AsyncExecuteCommandWithArgs(startCommand, args)
+			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(startCommand, args)
 
 			Eventually(buffer).Should(test_helpers.Say("Starting App: cool-web-app"))
 
-			Expect(appRunner.IsAppUpCallCount()).To(Equal(1))
-			Expect(appRunner.IsAppUpArgsForCall(0)).To(Equal("cool-web-app"))
+			Expect(appRunner.NumOfRunningAppInstancesCallCount()).To(Equal(1))
+			Expect(appRunner.NumOfRunningAppInstancesArgsForCall(0)).To(Equal("cool-web-app"))
 
 			timeProvider.IncrementBySeconds(1)
 			Eventually(buffer, 10).Should(test_helpers.Say("."))
 			timeProvider.IncrementBySeconds(1)
 			Eventually(buffer, 10).Should(test_helpers.Say("."))
 
-			appRunner.IsAppUpReturns(true, nil)
+			appRunner.NumOfRunningAppInstancesReturns(1, nil)
 			timeProvider.IncrementBySeconds(1)
 
-			<-setTargetCommandDone
-			Eventually(buffer).Should(test_helpers.SayNewLine())
-			Eventually(buffer).Should(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-			Eventually(buffer).Should(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
+			Eventually(commandFinishChan).Should(BeClosed())
+			Expect(buffer).To(test_helpers.SayNewLine())
+			Expect(buffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
+			Expect(buffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
 		})
 
 		It("alerts the user if the app does not start", func() {
@@ -145,18 +143,18 @@ var _ = Describe("CommandFactory", func() {
 				"/start-me-please",
 			}
 
-			appRunner.IsAppUpReturns(false, nil)
+			appRunner.NumOfRunningAppInstancesReturns(0, nil)
 
-			setTargetCommandDone := test_helpers.AsyncExecuteCommandWithArgs(startCommand, args)
+			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(startCommand, args)
 
 			Eventually(buffer).Should(test_helpers.Say("Starting App: cool-web-app"))
 
 			timeProvider.IncrementBySeconds(10)
 
-			<-setTargetCommandDone
+			Eventually(commandFinishChan).Should(BeClosed())
 
-			Eventually(buffer).Should(test_helpers.SayNewLine())
-			Eventually(buffer).Should(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
+			Expect(buffer).To(test_helpers.SayNewLine())
+			Expect(buffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
 		})
 
 		It("validates that the name is passed in", func() {
@@ -246,22 +244,58 @@ var _ = Describe("CommandFactory", func() {
 			scaleCommand = commandFactory.MakeScaleAppCommand()
 		})
 
-		It("starts a Docker based  app as specified in the command via the AppRunner", func() {
+		It("scales an with the specified number of instances", func() {
 			args := []string{
 				"--instances=22",
 				"cool-web-app",
 			}
 
-			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+			appRunner.NumOfRunningAppInstancesReturns(1, nil)
+
+			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
+
+			Eventually(buffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
 
 			Expect(appRunner.ScaleAppCallCount()).To(Equal(1))
-
 			name, instances := appRunner.ScaleAppArgsForCall(0)
-
 			Expect(name).To(Equal("cool-web-app"))
 			Expect(instances).To(Equal(22))
 
-			Expect(buffer).To(test_helpers.Say("App Scaled Successfully"))
+			Expect(appRunner.NumOfRunningAppInstancesCallCount()).To(Equal(1))
+			Expect(appRunner.NumOfRunningAppInstancesArgsForCall(0)).To(Equal("cool-web-app"))
+
+			timeProvider.IncrementBySeconds(1)
+			Eventually(buffer).Should(test_helpers.Say("."))
+			timeProvider.IncrementBySeconds(1)
+			Eventually(buffer).Should(test_helpers.Say("."))
+
+			appRunner.NumOfRunningAppInstancesReturns(22, nil)
+			timeProvider.IncrementBySeconds(1)
+
+			Eventually(commandFinishChan).Should(BeClosed())
+
+			Expect(buffer).To(test_helpers.SayNewLine())
+			Expect(buffer).To(test_helpers.Say(colors.Green("App Scaled Successfully")))
+		})
+
+		It("alerts the user if the app does not scale succesfully", func() {
+			appRunner.NumOfRunningAppInstancesReturns(1, nil)
+
+			args := []string{
+				"--instances=22",
+				"cool-web-app",
+			}
+
+			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
+
+			Eventually(buffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
+
+			timeProvider.IncrementBySeconds(10)
+
+			Eventually(commandFinishChan).Should(BeClosed())
+
+			Expect(buffer).To(test_helpers.SayNewLine())
+			Expect(buffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to scale.")))
 		})
 
 		It("validates that the name is passed in", func() {
@@ -314,16 +348,32 @@ var _ = Describe("CommandFactory", func() {
 				"cool-web-app",
 			}
 
-			test_helpers.ExecuteCommandWithArgs(stopCommand, args)
+			appRunner.NumOfRunningAppInstancesReturns(1, nil)
+
+			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(stopCommand, args)
+
+			Eventually(buffer).Should(test_helpers.Say("Scaling cool-web-app to 0 instances"))
 
 			Expect(appRunner.ScaleAppCallCount()).To(Equal(1))
-
 			name, instances := appRunner.ScaleAppArgsForCall(0)
-
 			Expect(name).To(Equal("cool-web-app"))
 			Expect(instances).To(Equal(0))
 
-			Expect(buffer).To(test_helpers.Say("App Scaled Successfully to 0 instances"))
+			Expect(appRunner.NumOfRunningAppInstancesCallCount()).To(Equal(1))
+			Expect(appRunner.NumOfRunningAppInstancesArgsForCall(0)).To(Equal("cool-web-app"))
+
+			timeProvider.IncrementBySeconds(1)
+			Eventually(buffer).Should(test_helpers.Say("."))
+			timeProvider.IncrementBySeconds(1)
+			Eventually(buffer).Should(test_helpers.Say("."))
+
+			appRunner.NumOfRunningAppInstancesReturns(0, nil)
+			timeProvider.IncrementBySeconds(1)
+
+			Eventually(commandFinishChan).Should(BeClosed())
+
+			Expect(buffer).To(test_helpers.SayNewLine())
+			Expect(buffer).To(test_helpers.Say("App Scaled Successfully"))
 		})
 
 		It("validates that the name is passed in", func() {
@@ -365,12 +415,12 @@ var _ = Describe("CommandFactory", func() {
 
 			appRunner.AppExistsReturns(true, nil)
 
-			executeCommandDone := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
+			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
 
 			Eventually(buffer).Should(test_helpers.Say("Removing cool"))
 
-			Expect(appRunner.AppExistsCallCount()).To(Equal(1))
-			Expect(appRunner.AppExistsArgsForCall(0)).To(Equal("cool"))
+			Expect(appRunner.RemoveAppCallCount()).To(Equal(1))
+			Expect(appRunner.RemoveAppArgsForCall(0)).To(Equal("cool"))
 
 			timeProvider.IncrementBySeconds(1)
 			Eventually(buffer).Should(test_helpers.Say("."))
@@ -380,13 +430,11 @@ var _ = Describe("CommandFactory", func() {
 			timeProvider.IncrementBySeconds(1)
 			appRunner.AppExistsReturns(false, nil)
 
+			Eventually(commandFinishChan).Should(BeClosed())
+
 			Eventually(buffer).Should(test_helpers.SayNewLine())
 			Eventually(buffer).Should(test_helpers.Say(colors.Green("Successfully Removed cool.")))
 
-			Expect(appRunner.RemoveAppCallCount()).To(Equal(1))
-			Expect(appRunner.RemoveAppArgsForCall(0)).To(Equal("cool"))
-
-			<-executeCommandDone
 		})
 
 		It("alerts the user if the app does not remove", func() {
@@ -396,14 +444,15 @@ var _ = Describe("CommandFactory", func() {
 				"cool-web-app",
 			}
 
-			commandDone := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
+			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
 
 			Eventually(buffer).Should(test_helpers.Say("Removing cool-web-app"))
 
 			timeProvider.IncrementBySeconds(10)
-			Eventually(buffer).Should(test_helpers.Say(colors.Red("Failed to remove cool-web-app.")))
 
-			<-commandDone
+			Eventually(commandFinishChan).Should(BeClosed())
+
+			Expect(buffer).To(test_helpers.Say(colors.Red("Failed to remove cool-web-app.")))
 		})
 
 		It("alerts the user if DockerAppExists() returns an error", func() {
@@ -413,14 +462,14 @@ var _ = Describe("CommandFactory", func() {
 				"cool-web-app",
 			}
 
-			commandDone := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
+			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
 
 			Eventually(buffer).Should(test_helpers.Say("Removing cool-web-app"))
 
 			timeProvider.IncrementBySeconds(10)
 
-			<-commandDone
-			Eventually(buffer).Should(test_helpers.Say(colors.Red("Failed to remove cool-web-app.")))
+			Eventually(commandFinishChan).Should(BeClosed())
+			Expect(buffer).To(test_helpers.Say(colors.Red("Failed to remove cool-web-app.")))
 		})
 
 		It("validates that the name is passed in", func() {
