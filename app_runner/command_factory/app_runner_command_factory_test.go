@@ -288,6 +288,17 @@ var _ = Describe("CommandFactory", func() {
 			Expect(buffer).To(test_helpers.Say("Error Scaling App to 22 instances: Major Fault"))
 		})
 
+		It("returns an error if instances is not set", func() {
+			args := []string{
+				"cool-web-app",
+			}
+
+			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+
+			Expect(buffer).To(test_helpers.Say("Incorrect Usage: Number of Instances Required"))
+			Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+		})
+
 	})
 
 	Describe("stopApp", func() {

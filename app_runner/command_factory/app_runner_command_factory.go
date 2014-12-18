@@ -171,6 +171,11 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 }
 
 func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
+	if !c.IsSet("instances") {
+		cmd.output.IncorrectUsage("Number of Instances Required")
+		return
+	}
+
 	instances := c.Int("instances")
 	appName := c.Args().First()
 
