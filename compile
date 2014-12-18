@@ -58,11 +58,6 @@ compile_diego-cell() {
         go install github.com/cloudfoundry-incubator/executor/cmd/executor
         go install github.com/cloudfoundry-incubator/auctioneer/cmd/auctioneer
         go install github.com/cloudfoundry-incubator/converger/cmd/converger
-
-        pushd src/github.com/coreos/etcd
-            ./build
-            cp bin/etcd $GOBIN
-        popd
     popd
 
     compile_garden_linux

@@ -24,7 +24,7 @@ install_dependencies() {
 }
 
 cp $LATTICE_DIEGO_CELL_BUILD_PATH/upstart/* /etc/init
-cp $LATTICE_DIEGO_CELL_BUILD_PATH/bin/* /usr/local/bin
+cp -n $LATTICE_DIEGO_CELL_BUILD_PATH/bin/* /usr/local/bin
 
 mkdir -p /var/lattice/garden
 mkdir -p /var/lattice/garden/depot

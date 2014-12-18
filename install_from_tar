@@ -25,8 +25,10 @@ fi
 tar -xf $PATH_TO_LATTICE_TAR -C /tmp
 
 if [ $COMPONENT_TO_INSTALL == "all" ]; then
-    /tmp/lattice-build/diego-cell/install-diego-cell /tmp/lattice-build/diego-cell
     /tmp/lattice-build/coordinator/install-coordinator /tmp/lattice-build/coordinator
+    /tmp/lattice-build/diego-cell/install-diego-cell /tmp/lattice-build/diego-cell
+
+    rm -v /etc/init/consul-client.conf
 else
     /tmp/lattice-build/$COMPONENT_TO_INSTALL/install-$COMPONENT_TO_INSTALL /tmp/lattice-build/$COMPONENT_TO_INSTALL
 fi
