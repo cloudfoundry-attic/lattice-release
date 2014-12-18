@@ -38,14 +38,14 @@ var _ = Describe("CommandFactory", func() {
 		Describe("targetCommand", func() {
 
 			It("sets the api, username, password from the target specified", func() {
-				setTargetCommandDone := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
 				stdinWriter.Write([]byte("testusername\n"))
 				Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
 				stdinWriter.Write([]byte("testpassword\n"))
 
-				<-setTargetCommandDone
+				Eventually(commandFinishChan).Should(BeClosed())
 
 				Expect(config.Target()).To(Equal("myapi.com"))
 				Expect(config.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
@@ -56,13 +56,13 @@ var _ = Describe("CommandFactory", func() {
 				config.SetTarget("oldtarget.com")
 				config.SetLogin("olduser", "oldpass")
 
-				setTargetCommandDone := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username:"))
 				stdinWriter.Close()
 
 				Consistently(outputBuffer).ShouldNot(test_helpers.Say("Api Location Set"))
-				<-setTargetCommandDone
+				Eventually(commandFinishChan).Should(BeClosed())
 
 				Expect(config.Receptor()).To(Equal("http://olduser:oldpass@receptor.oldtarget.com"))
 			})
@@ -71,22 +71,21 @@ var _ = Describe("CommandFactory", func() {
 				config.SetTarget("oldtarget.com")
 				config.SetLogin("olduser", "oldpass")
 
-				commandDone := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
 				stdinWriter.Write([]byte("testusername\n"))
 				Eventually(outputBuffer).Should(test_helpers.Say("Password:"))
 				stdinWriter.Close()
 
-				<-commandDone
+				Eventually(commandFinishChan).Should(BeClosed())
 
 				Consistently(outputBuffer).ShouldNot(test_helpers.Say("Api Location Set"))
 				Expect(config.Receptor()).To(Equal("http://olduser:oldpass@receptor.oldtarget.com"))
 			})
 
 			It("does not set a username or password if none are passed in", func() {
-
-				commandDone := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
 				stdinWriter.Write([]byte("\n"))
@@ -94,7 +93,7 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
 				stdinWriter.Write([]byte("\n"))
 
-				<-commandDone
+				Eventually(commandFinishChan).Should(BeClosed())
 
 				Expect(config.Target()).To(Equal("myapi.com"))
 				Expect(config.Receptor()).To(Equal("http://receptor.myapi.com"))
@@ -113,14 +112,15 @@ var _ = Describe("CommandFactory", func() {
 				commandFactory := command_factory.NewConfigCommandFactory(config_package.New(fakePersister), stdinReader, output.New(outputBuffer))
 				setTargetCommand = commandFactory.MakeSetTargetCommand()
 
-				commandDone := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
 				stdinWriter.Write([]byte("\n"))
 				Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
 				stdinWriter.Write([]byte("\n"))
 
-				<-commandDone
+				Eventually(commandFinishChan).Should(BeClosed())
+
 				Eventually(outputBuffer).Should(test_helpers.Say("FAILURE setting api"))
 			})
 		})
