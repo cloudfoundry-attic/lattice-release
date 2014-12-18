@@ -4,34 +4,27 @@ set -e
 
 echo "Installing Lattice - Coordinator"
 
-LATTICE_COORDINATOR_BUILD_PATH=$1
+lattice_coordinator_path=/tmp/lattice-build/coordinator
 
-if [ -z "$LATTICE_COORDINATOR_BUILD_PATH" ]; then
-    LATTICE_COORDINATOR_BUILD_PATH='.'
-fi
-
-cp $LATTICE_COORDINATOR_BUILD_PATH/upstart/* /etc/init
-cp $LATTICE_COORDINATOR_BUILD_PATH/bin/* /usr/local/bin
+cp $lattice_coordinator_path/upstart/* /etc/init
+cp $lattice_coordinator_path/bin/* /usr/local/bin
 
 mkdir -p /var/lattice/static-files/docker-circus
 
-pushd $LATTICE_COORDINATOR_BUILD_PATH/bin > /dev/null
+pushd $lattice_coordinator_path/bin > /dev/null
     tar -czf /var/lattice/static-files/docker-circus/docker-circus.tgz spy
 popd > /dev/null
 
 mkdir -p /var/lattice/config
-cp -a $LATTICE_COORDINATOR_BUILD_PATH/config /var/lattice
+cp -a $lattice_coordinator_path/config /var/lattice
 
 mkdir -p /var/lattice/setup
-cp -a $LATTICE_COORDINATOR_BUILD_PATH/setup /var/lattice
-
-apt-get -y update
-apt-get -y install curl
+cp -a $lattice_coordinator_path/setup /var/lattice
 
 mkdir -p /var/lattice/run
 mkdir -p /var/lattice/log
 
-start lattice-coordinator-bootstrap &>> /var/lattice/log/coordinator-bootstrap.log
+start bootstrap &>> /var/lattice/log/coordinator-bootstrap.log
 
 export $(cat /var/lattice/setup/lattice-environment)
 

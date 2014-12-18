@@ -67,11 +67,7 @@ compile_diego-cell() {
     wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul
     chmod +x $GOBIN/consul
 
-    cp -a $LATTICE_PATH/diego-cell/upstart $OUTPUT_DIR/diego-cell
-    cp -a $LATTICE_PATH/diego-cell/config $OUTPUT_DIR/diego-cell
-    cp -a $LATTICE_PATH/diego-cell/setup $OUTPUT_DIR/diego-cell
-
-    cp -a $LATTICE_PATH/diego-cell/install-diego-cell $OUTPUT_DIR/diego-cell/install-diego-cell
+    cp -av $LATTICE_PATH/diego-cell/ $OUTPUT_DIR/
 }
 
 compile_coordinator() {
@@ -97,11 +93,7 @@ compile_coordinator() {
     wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul
     chmod +x $GOBIN/consul
 
-    cp -a $LATTICE_PATH/coordinator/upstart $OUTPUT_DIR/coordinator
-    cp -a $LATTICE_PATH/coordinator/config $OUTPUT_DIR/coordinator
-    cp -a $LATTICE_PATH/coordinator/setup $OUTPUT_DIR/coordinator
-
-    cp -a $LATTICE_PATH/coordinator/install-coordinator $OUTPUT_DIR/coordinator/install-coordinator
+    cp -av $LATTICE_PATH/coordinator/ $OUTPUT_DIR/
 }
 
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
@@ -120,7 +112,7 @@ export GOPATH=$DIEGO_RELEASE_PATH
 rm -rf $OUTPUT_DIR/*
 rm -rf $GOPATH/pkg/*
 
+cp -av $LATTICE_PATH/common/ $OUTPUT_DIR/
+
 compile_diego-cell
 compile_coordinator
-
-#cp -a $LATTICE_PATH/install $OUTPUT_DIR/install

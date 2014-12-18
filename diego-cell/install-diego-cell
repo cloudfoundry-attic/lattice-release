@@ -4,11 +4,7 @@ set -e
 
 echo "Installing Lattice - Diego Cell"
 
-LATTICE_DIEGO_CELL_BUILD_PATH=$1
-
-if [ -z "$LATTICE_DIEGO_CELL_BUILD_PATH" ]; then
-    LATTICE_DIEGO_CELL_BUILD_PATH='.'
-fi
+lattice_diego_cell_build_path=/tmp/lattice-build/diego-cell
 
 install_dependencies() {
     echo "Installing Dependencies..."
@@ -23,8 +19,8 @@ install_dependencies() {
     popd
 }
 
-cp $LATTICE_DIEGO_CELL_BUILD_PATH/upstart/* /etc/init
-cp -n $LATTICE_DIEGO_CELL_BUILD_PATH/bin/* /usr/local/bin
+cp $lattice_diego_cell_build_path/upstart/* /etc/init
+cp -n $lattice_diego_cell_build_path/bin/* /usr/local/bin
 
 mkdir -p /var/lattice/garden
 mkdir -p /var/lattice/garden/depot
@@ -32,29 +28,22 @@ mkdir -p /var/lattice/garden/rootfs
 mkdir -p /var/lattice/garden/overlays
 mkdir -p /var/lattice/garden/graph
 
-cp -a $LATTICE_DIEGO_CELL_BUILD_PATH/garden/garden-bin /var/lattice/garden/garden-bin
-cp -a $LATTICE_DIEGO_CELL_BUILD_PATH/garden/skeleton /var/lattice/garden/skeleton
+cp -a $lattice_diego_cell_build_path/garden/garden-bin /var/lattice/garden/garden-bin
+cp -a $lattice_diego_cell_build_path/garden/skeleton /var/lattice/garden/skeleton
 
 mkdir -p /var/lattice/config
-cp -a $LATTICE_DIEGO_CELL_BUILD_PATH/config /var/lattice
+cp -a $lattice_diego_cell_build_path/config /var/lattice
 
-mkdir -p /var/lattice/setup
-cp -a $LATTICE_DIEGO_CELL_BUILD_PATH/setup /var/lattice
-
-apt-get -y update
 apt-get -y install gcc
 apt-get -y install make
 apt-get -y install quota
 apt-get -y install linux-image-extra-$(uname -r)
-apt-get -y install curl
 
 mkdir -p /var/lattice/run
 mkdir -p /var/lattice/log
 
 install_dependencies &> /var/lattice/log/diego-cell-install.log
-start lattice-diego-cell-bootstrap
-
-export $(cat /var/lattice/setup/lattice-environment)
+start bootstrap
 
 echo "Finished Installing Lattice Diego-Cell!"
 
