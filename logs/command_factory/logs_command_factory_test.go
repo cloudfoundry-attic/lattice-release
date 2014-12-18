@@ -54,9 +54,9 @@ var _ = Describe("CommandFactory", func() {
 			Eventually(appGuidChan).Should(Receive(Equal("my-app-guid")))
 
 			logoutputBufferString := fmt.Sprintf("%s [%s|%s] First log\n", colors.Cyan(time.Format("02 Jan 15:04")), colors.Yellow(sourceType), colors.Yellow(sourceInstance))
-			Eventually(string(outputBuffer.Contents())).Should(ContainSubstring(logoutputBufferString))
+			Eventually(outputBuffer).Should(test_helpers.Say(logoutputBufferString))
 
-			Eventually(outputBuffer).Should(gbytes.Say("First Error\n"))
+			Eventually(outputBuffer).Should(test_helpers.Say("First Error\n"))
 		})
 
 		It("Handles invalid appguids", func() {
@@ -68,7 +68,7 @@ var _ = Describe("CommandFactory", func() {
 
 			test_helpers.ExecuteCommandWithArgs(tailLogsCommand, args)
 
-			Expect(outputBuffer).To(gbytes.Say("Incorrect Usage"))
+			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage"))
 		})
 
 	})
