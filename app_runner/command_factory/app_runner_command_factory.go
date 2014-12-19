@@ -51,6 +51,11 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 			Usage: "port that the docker app listens on",
 			Value: 8080,
 		},
+		cli.IntFlag{
+			Name:  "instances",
+			Usage: "number of app instances",
+			Value: 1,
+		},
 	}
 
 	var startCommand = cli.Command{
@@ -122,6 +127,7 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	dockerImage := context.String("docker-image")
 	envVars := context.StringSlice("env")
 	privileged := context.Bool("run-as-root")
+	instances := context.Int("instances")
 	memoryMB := context.Int("memory-mb")
 	diskMB := context.Int("disk-mb")
 	port := context.Int("port")
@@ -147,7 +153,7 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	startCommand := context.Args().Get(2)
 	appArgs := context.Args()[3:]
 
-	err := cmd.appRunner.StartDockerApp(name, dockerImage, startCommand, appArgs, cmd.buildEnvironment(envVars), privileged, memoryMB, diskMB, port)
+	err := cmd.appRunner.StartDockerApp(name, dockerImage, startCommand, appArgs, cmd.buildEnvironment(envVars), privileged, instances, memoryMB, diskMB, port)
 
 	if err != nil {
 		cmd.output.Say(fmt.Sprintf("Error Starting App: %s", err))

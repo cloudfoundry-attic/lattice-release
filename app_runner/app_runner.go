@@ -8,7 +8,7 @@ import (
 )
 
 type AppRunner interface {
-	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error
+	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, instances, memoryMB, diskMB, port int) error
 	ScaleApp(name string, instances int) error
 	RemoveApp(name string) error
 	AppExists(name string) (bool, error)
@@ -28,13 +28,13 @@ func New(receptorClient receptor.Client, domain string) AppRunner {
 	return &appRunner{receptorClient, domain}
 }
 
-func (appRunner *appRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
+func (appRunner *appRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, instances, memoryMB, diskMB, port int) error {
 	if exists, err := appRunner.desiredLRPExists(name); err != nil {
 		return err
 	} else if exists {
 		return newExistingAppError(name)
 	}
-	return appRunner.desireLrp(name, startCommand, dockerImagePath, appArgs, environmentVariables, privileged, memoryMB, diskMB, port)
+	return appRunner.desireLrp(name, startCommand, dockerImagePath, appArgs, environmentVariables, privileged, instances, memoryMB, diskMB, port)
 }
 
 func (appRunner *appRunner) ScaleApp(name string, instances int) error {
@@ -103,12 +103,12 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 	return false, nil
 }
 
-func (appRunner *appRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error {
+func (appRunner *appRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, instances, memoryMB, diskMB, port int) error {
 	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          name,
 		Domain:               "diego-edge",
 		RootFSPath:           dockerImagePath,
-		Instances:            1,
+		Instances:            instances,
 		Stack:                "lucid64",
 		Routes:               []string{fmt.Sprintf("%s.%s", name, appRunner.domain)},
 		MemoryMB:             memoryMB,

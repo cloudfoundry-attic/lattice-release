@@ -8,7 +8,7 @@ import (
 )
 
 type FakeAppRunner struct {
-	StartDockerAppStub        func(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB, diskMB, port int) error
+	StartDockerAppStub        func(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, instances, memoryMB, diskMB, port int) error
 	startDockerAppMutex       sync.RWMutex
 	startDockerAppArgsForCall []struct {
 		name                 string
@@ -17,6 +17,7 @@ type FakeAppRunner struct {
 		appArgs              []string
 		environmentVariables map[string]string
 		privileged           bool
+		instances            int
 		memoryMB             int
 		diskMB               int
 		port                 int
@@ -61,7 +62,7 @@ type FakeAppRunner struct {
 	}
 }
 
-func (fake *FakeAppRunner) StartDockerApp(name string, startCommand string, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, memoryMB int, diskMB int, port int) error {
+func (fake *FakeAppRunner) StartDockerApp(name string, startCommand string, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, instances int, memoryMB int, diskMB int, port int) error {
 	fake.startDockerAppMutex.Lock()
 	fake.startDockerAppArgsForCall = append(fake.startDockerAppArgsForCall, struct {
 		name                 string
@@ -70,13 +71,14 @@ func (fake *FakeAppRunner) StartDockerApp(name string, startCommand string, dock
 		appArgs              []string
 		environmentVariables map[string]string
 		privileged           bool
+		instances            int
 		memoryMB             int
 		diskMB               int
 		port                 int
-	}{name, startCommand, dockerImagePath, appArgs, environmentVariables, privileged, memoryMB, diskMB, port})
+	}{name, startCommand, dockerImagePath, appArgs, environmentVariables, privileged, instances, memoryMB, diskMB, port})
 	fake.startDockerAppMutex.Unlock()
 	if fake.StartDockerAppStub != nil {
-		return fake.StartDockerAppStub(name, startCommand, dockerImagePath, appArgs, environmentVariables, privileged, memoryMB, diskMB, port)
+		return fake.StartDockerAppStub(name, startCommand, dockerImagePath, appArgs, environmentVariables, privileged, instances, memoryMB, diskMB, port)
 	} else {
 		return fake.startDockerAppReturns.result1
 	}
@@ -88,10 +90,10 @@ func (fake *FakeAppRunner) StartDockerAppCallCount() int {
 	return len(fake.startDockerAppArgsForCall)
 }
 
-func (fake *FakeAppRunner) StartDockerAppArgsForCall(i int) (string, string, string, []string, map[string]string, bool, int, int, int) {
+func (fake *FakeAppRunner) StartDockerAppArgsForCall(i int) (string, string, string, []string, map[string]string, bool, int, int, int, int) {
 	fake.startDockerAppMutex.RLock()
 	defer fake.startDockerAppMutex.RUnlock()
-	return fake.startDockerAppArgsForCall[i].name, fake.startDockerAppArgsForCall[i].startCommand, fake.startDockerAppArgsForCall[i].dockerImagePath, fake.startDockerAppArgsForCall[i].appArgs, fake.startDockerAppArgsForCall[i].environmentVariables, fake.startDockerAppArgsForCall[i].privileged, fake.startDockerAppArgsForCall[i].memoryMB, fake.startDockerAppArgsForCall[i].diskMB, fake.startDockerAppArgsForCall[i].port
+	return fake.startDockerAppArgsForCall[i].name, fake.startDockerAppArgsForCall[i].startCommand, fake.startDockerAppArgsForCall[i].dockerImagePath, fake.startDockerAppArgsForCall[i].appArgs, fake.startDockerAppArgsForCall[i].environmentVariables, fake.startDockerAppArgsForCall[i].privileged, fake.startDockerAppArgsForCall[i].instances, fake.startDockerAppArgsForCall[i].memoryMB, fake.startDockerAppArgsForCall[i].diskMB, fake.startDockerAppArgsForCall[i].port
 }
 
 func (fake *FakeAppRunner) StartDockerAppReturns(result1 error) {

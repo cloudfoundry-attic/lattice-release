@@ -51,6 +51,7 @@ var _ = Describe("CommandFactory", func() {
 				"--port=3000",
 				"--docker-image=docker:///fun/app",
 				"--run-as-root=true",
+				"--instances=22",
 				"--env=TIMEZONE=CST",
 				"--env=LANG=\"Chicago English\"",
 				"--env=COLOR",
@@ -67,11 +68,12 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(appRunner.StartDockerAppCallCount()).To(Equal(1))
-			name, dockerImagePath, startCommand, appArgs, environmentVariables, privileged, memoryMB, diskMB, port := appRunner.StartDockerAppArgsForCall(0)
+			name, dockerImagePath, startCommand, appArgs, environmentVariables, privileged, instances, memoryMB, diskMB, port := appRunner.StartDockerAppArgsForCall(0)
 			Expect(name).To(Equal("cool-web-app"))
 			Expect(startCommand).To(Equal("/start-me-please"))
 			Expect(dockerImagePath).To(Equal("docker:///fun/app"))
 			Expect(appArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
+			Expect(instances).To(Equal(22))
 			Expect(environmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "COLOR": "Blue", "UNSET": ""}))
 			Expect(privileged).To(Equal(true))
 			Expect(memoryMB).To(Equal(12))
@@ -96,12 +98,13 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(appRunner.StartDockerAppCallCount()).To(Equal(1))
-			_, _, _, _, _, privileged, memoryMB, diskMB, port := appRunner.StartDockerAppArgsForCall(0)
+			_, _, _, _, _, privileged, instances, memoryMB, diskMB, port := appRunner.StartDockerAppArgsForCall(0)
 
 			Expect(privileged).To(Equal(false))
 			Expect(memoryMB).To(Equal(128))
 			Expect(diskMB).To(Equal(1024))
 			Expect(port).To(Equal(8080))
+			Expect(instances).To(Equal(1))
 		})
 
 		It("polls for the app to start", func() {
