@@ -8,44 +8,44 @@ import (
 )
 
 type FakeTargetVerifier struct {
-	RequiresAuthStub        func(name string) bool
-	requiresAuthMutex       sync.RWMutex
-	requiresAuthArgsForCall []struct {
+	ValidateReceptorStub        func(name string) bool
+	validateReceptorMutex       sync.RWMutex
+	validateReceptorArgsForCall []struct {
 		name string
 	}
-	requiresAuthReturns struct {
+	validateReceptorReturns struct {
 		result1 bool
 	}
 }
 
-func (fake *FakeTargetVerifier) RequiresAuth(name string) bool {
-	fake.requiresAuthMutex.Lock()
-	fake.requiresAuthArgsForCall = append(fake.requiresAuthArgsForCall, struct {
+func (fake *FakeTargetVerifier) ValidateReceptor(name string) bool {
+	fake.validateReceptorMutex.Lock()
+	fake.validateReceptorArgsForCall = append(fake.validateReceptorArgsForCall, struct {
 		name string
 	}{name})
-	fake.requiresAuthMutex.Unlock()
-	if fake.RequiresAuthStub != nil {
-		return fake.RequiresAuthStub(name)
+	fake.validateReceptorMutex.Unlock()
+	if fake.ValidateReceptorStub != nil {
+		return fake.ValidateReceptorStub(name)
 	} else {
-		return fake.requiresAuthReturns.result1
+		return fake.validateReceptorReturns.result1
 	}
 }
 
-func (fake *FakeTargetVerifier) RequiresAuthCallCount() int {
-	fake.requiresAuthMutex.RLock()
-	defer fake.requiresAuthMutex.RUnlock()
-	return len(fake.requiresAuthArgsForCall)
+func (fake *FakeTargetVerifier) ValidateReceptorCallCount() int {
+	fake.validateReceptorMutex.RLock()
+	defer fake.validateReceptorMutex.RUnlock()
+	return len(fake.validateReceptorArgsForCall)
 }
 
-func (fake *FakeTargetVerifier) RequiresAuthArgsForCall(i int) string {
-	fake.requiresAuthMutex.RLock()
-	defer fake.requiresAuthMutex.RUnlock()
-	return fake.requiresAuthArgsForCall[i].name
+func (fake *FakeTargetVerifier) ValidateReceptorArgsForCall(i int) string {
+	fake.validateReceptorMutex.RLock()
+	defer fake.validateReceptorMutex.RUnlock()
+	return fake.validateReceptorArgsForCall[i].name
 }
 
-func (fake *FakeTargetVerifier) RequiresAuthReturns(result1 bool) {
-	fake.RequiresAuthStub = nil
-	fake.requiresAuthReturns = struct {
+func (fake *FakeTargetVerifier) ValidateReceptorReturns(result1 bool) {
+	fake.ValidateReceptorStub = nil
+	fake.validateReceptorReturns = struct {
 		result1 bool
 	}{result1}
 }

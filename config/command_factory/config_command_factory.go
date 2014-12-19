@@ -51,8 +51,6 @@ type configCommand struct {
 }
 
 func (cmd *configCommand) setTarget(context *cli.Context) {
-	var err error
-
 	target := context.Args().First()
 
 	if target == "" {
@@ -61,22 +59,26 @@ func (cmd *configCommand) setTarget(context *cli.Context) {
 	}
 
 	cmd.config.SetTarget(target)
-	var username, password string
-	if cmd.targetVerifier.RequiresAuth(cmd.config.Receptor()) {
-		username, err = cmd.prompt("Username: ")
-		if err != nil {
-			return
-		}
-
-		password, err = cmd.prompt("Password: ")
-		if err != nil {
-			return
-		}
+	cmd.config.SetLogin("", "")
+	if cmd.targetVerifier.ValidateReceptor(cmd.config.Receptor()) {
+		cmd.save()
+		return
 	}
 
-	cmd.config.SetLogin(username, password)
+	username := cmd.prompt("Username: ")
+	password := cmd.prompt("Password: ")
 
-	err = cmd.config.Save()
+	cmd.config.SetLogin(username, password)
+	if cmd.targetVerifier.ValidateReceptor(cmd.config.Receptor()) {
+		cmd.save()
+		return
+	}
+
+	cmd.output.Say("Could not verify target.")
+}
+
+func (cmd *configCommand) save() {
+	err := cmd.config.Save()
 	if err != nil {
 		cmd.output.Say(err.Error())
 		return
@@ -85,16 +87,13 @@ func (cmd *configCommand) setTarget(context *cli.Context) {
 	cmd.output.Say("Api Location Set")
 }
 
-func (cmd *configCommand) prompt(promptText string) (string, error) {
+func (cmd *configCommand) prompt(promptText string) string {
 	reader := bufio.NewReader(cmd.input)
 	cmd.output.Say(promptText)
 
-	result, err := reader.ReadString('\n')
-	if err != nil {
-		return "", err
-	}
+	result, _ := reader.ReadString('\n')
 
-	return strings.TrimSuffix(result, "\n"), nil
+	return strings.TrimSuffix(result, "\n")
 }
 
 func (cmd *configCommand) incorrectUsage(message string) {
