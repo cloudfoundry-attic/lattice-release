@@ -42,7 +42,7 @@ func NewCliApp() *cli.App {
 	logReader := logs.NewLogReader(noaa.NewConsumer(setup_cli_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, output)
 
-	targetVerifier := target_verifier.New(receptor_client_factory.BuildReceptorClient)
+	targetVerifier := target_verifier.New(receptor_client_factory.MakeReceptorClient)
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, targetVerifier, input, output)
 
 	app.Commands = []cli.Command{

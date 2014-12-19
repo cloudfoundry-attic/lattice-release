@@ -10,9 +10,9 @@ import (
 )
 
 var _ = Describe("receptorClientFactory", func() {
-	Describe("BuildReceptorClient", func() {
+	Describe("MakeReceptorClient", func() {
 		It("returns a receptor with the target specified", func() {
-			Expect(receptor_client_factory.BuildReceptorClient("mylattice.com")).To(Equal(receptor.NewClient("mylattice.com")))
+			Expect(receptor_client_factory.MakeReceptorClient("mylattice.com")).To(Equal(receptor.NewClient("mylattice.com")))
 		})
 	})
 })

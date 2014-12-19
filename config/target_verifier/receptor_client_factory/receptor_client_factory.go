@@ -4,6 +4,6 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 )
 
-func BuildReceptorClient(target string) receptor.Client {
+func MakeReceptorClient(target string) receptor.Client {
 	return receptor.NewClient(target)
 }
