@@ -5,11 +5,11 @@ set -e
 COMPONENT_TO_INSTALL=$1
 PATH_TO_LATTICE_TAR=$2
 
-if [ $COMPONENT_TO_INSTALL != "diego-cell" ] && [ $COMPONENT_TO_INSTALL != "coordinator" ] && [ $COMPONENT_TO_INSTALL != "all" ]; then
+if [ $COMPONENT_TO_INSTALL != "diego-cell" ] && [ $COMPONENT_TO_INSTALL != "coordinator" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
     echo "Incorrect Usage. Must install either diego-cell or coordinator or both.
     Usage: install_from_tar diego-cell [LATTICE_TAR_PATH] OR
            install_from_tar coordinator [LATTICE_TAR_PATH]
-           install_from_tar all [LATTICE_TAR_PATH]
+           install_from_tar collocated [LATTICE_TAR_PATH]
     "
     exit 2
 fi
@@ -26,11 +26,18 @@ tar -xf $PATH_TO_LATTICE_TAR -C /tmp
 
 /tmp/lattice-build/common/install-common
 
-if [ $COMPONENT_TO_INSTALL == "all" ]; then
+if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
     /tmp/lattice-build/coordinator/install-coordinator
-    /tmp/lattice-build/diego-cell/install-diego-cell
 
-    rm -v /etc/init/consul-client.conf
+#    if [ $(status bootstrap | grep start >/dev/null; echo $?) -eq "0" ]; then
+#        stop bootstrap
+#    fi
+    stop consul
+    stop bootstrap
+
+    sleep 2
+
+    /tmp/lattice-build/diego-cell/install-diego-cell
 else
     /tmp/lattice-build/$COMPONENT_TO_INSTALL/install-$COMPONENT_TO_INSTALL
 fi

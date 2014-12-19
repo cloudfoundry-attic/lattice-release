@@ -19,7 +19,9 @@ install_dependencies() {
     popd
 }
 
-cp $lattice_diego_cell_build_path/upstart/* /etc/init
+#-n so we don't overwrite the coordinator upstart scripts in collocated installation.
+#In collocated, Consul should run only in server mode and not use the diego-cell consul upstart which is client-only mode
+cp -n $lattice_diego_cell_build_path/upstart/* /etc/init
 cp -n $lattice_diego_cell_build_path/bin/* /usr/local/bin
 
 mkdir -p /var/lattice/garden
