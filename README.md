@@ -20,3 +20,7 @@ Integration tests for Lattice
 To run against [Lattice](https://github.com/pivotal-cf-experimental/lattice) with a 30 sec app start timeout
 
     ginkgo -- -domain="192.168.11.11.xip.io" -timeout=30
+
+To run against Lattice with a username and password
+
+    ginkgo -- -domain="12.345.130.132.xip.io" -timeout=30 --username <USERNAME> --password <PASSWORD>

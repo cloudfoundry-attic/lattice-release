@@ -12,16 +12,20 @@ import (
 )
 
 var (
-	domain  string
-	timeout int
-	numCpu  int
+	domain   string
+	username string
+	password string
+	timeout  int
+	numCpu   int
 )
 
 func init() {
 	numCpu = runtime.NumCPU()
 	runtime.GOMAXPROCS(numCpu)
 
-	flag.StringVar(&domain, "domain", "", "Domain of Diego - REQUIRED")
+	flag.StringVar(&domain, "domain", "", "Domain of Lattice - REQUIRED")
+	flag.StringVar(&username, "username", "", "Username for Lattice")
+	flag.StringVar(&password, "password", "", "Password for Lattice")
 	flag.IntVar(&timeout, "timeout", 30, "How long whetstone will wait for docker apps to start")
 }
 

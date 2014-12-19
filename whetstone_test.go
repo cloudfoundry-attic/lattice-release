@@ -45,7 +45,7 @@ var _ = Describe("Lattice", func() {
 			appName = fmt.Sprintf("whetstone-%s", factories.GenerateGuid())
 			route = fmt.Sprintf("%s.%s", appName, domain)
 
-			targetLattice(domain)
+			targetLattice(domain, username, password)
 		})
 
 		AfterEach(func() {
@@ -107,12 +107,24 @@ func removeApp(appName string) {
 	expectExit(session)
 }
 
-func targetLattice(domain string) {
+func targetLattice(domain, username, password string) {
+	stdinReader, stdinWriter := io.Pipe()
+
 	command := command(cli, "target", domain)
+	command.Stdin = stdinReader
 
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-
 	Expect(err).ToNot(HaveOccurred())
+
+	if username != "" || password != "" {
+		Eventually(session.Out).Should(gbytes.Say("Username: "))
+		stdinWriter.Write([]byte(username + "\n"))
+
+		Eventually(session.Out).Should(gbytes.Say("Password: "))
+		stdinWriter.Write([]byte(password + "\n"))
+	}
+
+	stdinWriter.Close()
 	expectExit(session)
 }
 
