@@ -10,6 +10,7 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	config_package "github.com/pivotal-cf-experimental/lattice-cli/config"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
+	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier/fake_target_verifier"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 
@@ -24,20 +25,24 @@ var _ = Describe("CommandFactory", func() {
 			outputBuffer     *gbytes.Buffer
 			setTargetCommand cli.Command
 			config           *config_package.Config
+			targetVerifier   *fake_target_verifier.FakeTargetVerifier
 		)
 
 		BeforeEach(func() {
 			stdinReader, stdinWriter = io.Pipe()
 			outputBuffer = gbytes.NewBuffer()
+			targetVerifier = &fake_target_verifier.FakeTargetVerifier{}
+
 			config = config_package.New(persister.NewFakePersister())
 
-			commandFactory := command_factory.NewConfigCommandFactory(config, stdinReader, output.New(outputBuffer))
+			commandFactory := command_factory.NewConfigCommandFactory(config, targetVerifier, stdinReader, output.New(outputBuffer))
 			setTargetCommand = commandFactory.MakeSetTargetCommand()
 		})
 
 		Describe("targetCommand", func() {
-
 			It("sets the api, username, password from the target specified", func() {
+				targetVerifier.RequiresAuthReturns(true)
+
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
@@ -52,24 +57,44 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Api Location Set"))
 			})
 
-			It("does not update the config if error on reading username", func() {
+			It("does not ask for username and password if it does not require auth", func() {
+				targetVerifier.RequiresAuthReturns(false)
+
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+
+				Eventually(commandFinishChan).Should(BeClosed())
+
+				Expect(targetVerifier.RequiresAuthCallCount()).To(Equal(1))
+				Expect(targetVerifier.RequiresAuthArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
+
+				Expect(config.Receptor()).To(Equal("http://receptor.myapi.com"))
+			})
+
+			It("does not save the config if error reading username", func() {
+				targetVerifier.RequiresAuthReturns(true)
+
 				config.SetTarget("oldtarget.com")
 				config.SetLogin("olduser", "oldpass")
+				config.Save()
 
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username:"))
 				stdinWriter.Close()
 
-				Consistently(outputBuffer).ShouldNot(test_helpers.Say("Api Location Set"))
 				Eventually(commandFinishChan).Should(BeClosed())
+				Expect(outputBuffer).ToNot(test_helpers.Say("Api Location Set"))
 
+				config.Load()
 				Expect(config.Receptor()).To(Equal("http://olduser:oldpass@receptor.oldtarget.com"))
 			})
 
-			It("does not update the config if error on reading password", func() {
+			It("does not save the config if error reading password", func() {
+				targetVerifier.RequiresAuthReturns(true)
+
 				config.SetTarget("oldtarget.com")
 				config.SetLogin("olduser", "oldpass")
+				config.Save()
 
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
 
@@ -80,24 +105,10 @@ var _ = Describe("CommandFactory", func() {
 
 				Eventually(commandFinishChan).Should(BeClosed())
 
-				Consistently(outputBuffer).ShouldNot(test_helpers.Say("Api Location Set"))
+				Expect(outputBuffer).ToNot(test_helpers.Say("Api Location Set"))
+
+				config.Load()
 				Expect(config.Receptor()).To(Equal("http://olduser:oldpass@receptor.oldtarget.com"))
-			})
-
-			It("does not set a username or password if none are passed in", func() {
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
-
-				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
-				stdinWriter.Write([]byte("\n"))
-
-				Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
-				stdinWriter.Write([]byte("\n"))
-
-				Eventually(commandFinishChan).Should(BeClosed())
-
-				Expect(config.Target()).To(Equal("myapi.com"))
-				Expect(config.Receptor()).To(Equal("http://receptor.myapi.com"))
-				Expect(outputBuffer).To(test_helpers.Say("Api Location Set"))
 			})
 
 			It("returns an error if the target is blank", func() {
@@ -106,10 +117,11 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Target required."))
 			})
 
-			It("bubbles errors from setting the target", func() {
+			It("bubbles up errors from setting the target", func() {
+				targetVerifier.RequiresAuthReturns(true)
 				fakePersister := persister.NewFakePersisterWithError(errors.New("FAILURE setting api"))
 
-				commandFactory := command_factory.NewConfigCommandFactory(config_package.New(fakePersister), stdinReader, output.New(outputBuffer))
+				commandFactory := command_factory.NewConfigCommandFactory(config_package.New(fakePersister), targetVerifier, stdinReader, output.New(outputBuffer))
 				setTargetCommand = commandFactory.MakeSetTargetCommand()
 
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})

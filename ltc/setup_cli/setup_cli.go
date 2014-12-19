@@ -12,6 +12,8 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/config_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
+	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier"
+	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier/receptor_client_factory"
 	"github.com/pivotal-cf-experimental/lattice-cli/logs"
 	"github.com/pivotal-cf-experimental/lattice-cli/ltc/setup_cli/setup_cli_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
@@ -40,7 +42,8 @@ func NewCliApp() *cli.App {
 	logReader := logs.NewLogReader(noaa.NewConsumer(setup_cli_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, output)
 
-	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, input, output)
+	targetVerifier := target_verifier.New(receptor_client_factory.BuildReceptorClient)
+	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, targetVerifier, input, output)
 
 	app.Commands = []cli.Command{
 		appRunnerCommandFactory.MakeStartAppCommand(),

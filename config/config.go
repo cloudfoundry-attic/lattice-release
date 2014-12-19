@@ -20,15 +20,13 @@ func New(persister persister.Persister) *Config {
 	return config
 }
 
-func (c *Config) SetTarget(target string) error {
+func (c *Config) SetTarget(target string) {
 	c.data.Target = target
-	return c.save()
 }
 
-func (c *Config) SetLogin(username string, password string) error {
+func (c *Config) SetLogin(username string, password string) {
 	c.data.Username = username
 	c.data.Password = password
-	return c.save()
 }
 
 func (c *Config) Loggregator() string {
@@ -51,6 +49,6 @@ func (c *Config) Target() string {
 	return c.data.Target
 }
 
-func (c *Config) save() error {
+func (c *Config) Save() error {
 	return c.persister.Save(c.data)
 }

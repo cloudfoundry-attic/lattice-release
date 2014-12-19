@@ -7,6 +7,7 @@ import (
 
 	"github.com/dajulia3/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
+	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 )
 
@@ -14,8 +15,8 @@ type commandFactory struct {
 	cmd *configCommand
 }
 
-func NewConfigCommandFactory(config *config.Config, input io.Reader, output *output.Output) *commandFactory {
-	return &commandFactory{&configCommand{config, input, output}}
+func NewConfigCommandFactory(config *config.Config, targetVerifier target_verifier.TargetVerifier, input io.Reader, output *output.Output) *commandFactory {
+	return &commandFactory{&configCommand{config, input, output, targetVerifier}}
 }
 
 func (c *commandFactory) MakeSetTargetCommand() cli.Command {
@@ -43,9 +44,10 @@ func (c *commandFactory) MakeSetTargetCommand() cli.Command {
 }
 
 type configCommand struct {
-	config *config.Config
-	input  io.Reader
-	output *output.Output
+	config         *config.Config
+	input          io.Reader
+	output         *output.Output
+	targetVerifier target_verifier.TargetVerifier
 }
 
 func (cmd *configCommand) setTarget(context *cli.Context) {
@@ -58,45 +60,47 @@ func (cmd *configCommand) setTarget(context *cli.Context) {
 		return
 	}
 
-	reader := bufio.NewReader(cmd.input)
+	cmd.config.SetTarget(target)
+	var username, password string
+	if cmd.targetVerifier.RequiresAuth(cmd.config.Receptor()) {
+		username, err = cmd.prompt("Username: ")
+		if err != nil {
+			return
+		}
 
-	cmd.say("Username: ")
-	username, err := reader.ReadString('\n')
-	if err != nil {
-		return
-	}
-	username = strings.TrimSuffix(username, "\n")
-
-	cmd.say("Password: ")
-	password, err := reader.ReadString('\n')
-	if err != nil {
-		return
-	}
-	password = strings.TrimSuffix(password, "\n")
-
-	err = cmd.config.SetTarget(target)
-	if err != nil {
-		cmd.say(err.Error())
-		return
+		password, err = cmd.prompt("Password: ")
+		if err != nil {
+			return
+		}
 	}
 
-	err = cmd.config.SetLogin(username, password)
+	cmd.config.SetLogin(username, password)
+
+	err = cmd.config.Save()
 	if err != nil {
-		cmd.say(err.Error())
+		cmd.output.Say(err.Error())
 		return
 	}
 
-	cmd.say("Api Location Set")
+	cmd.output.Say("Api Location Set")
 }
 
-func (cmd *configCommand) say(output string) {
-	cmd.output.Write([]byte(output))
+func (cmd *configCommand) prompt(promptText string) (string, error) {
+	reader := bufio.NewReader(cmd.input)
+	cmd.output.Say(promptText)
+
+	result, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSuffix(result, "\n"), nil
 }
 
 func (cmd *configCommand) incorrectUsage(message string) {
 	if len(message) > 0 {
-		cmd.say("Incorrect Usage: " + message)
+		cmd.output.Say("Incorrect Usage: " + message)
 	} else {
-		cmd.say("Incorrect Usage")
+		cmd.output.Say("Incorrect Usage")
 	}
 }

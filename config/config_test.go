@@ -10,7 +10,77 @@ import (
 )
 
 var _ = Describe("config", func() {
+	Describe("SetTarget", func() {
+		It("sets the target", func() {
+			testConfig := config.New(&fakePersister{})
+			testConfig.SetTarget("mynewapi.com")
+
+			Expect(testConfig.Target()).To(Equal("mynewapi.com"))
+		})
+	})
+
+	Describe("Receptor", func() {
+		It("returns the Receptor with a username and password", func() {
+			testConfig := config.New(&fakePersister{})
+			testConfig.SetTarget("mynewapi.com")
+			testConfig.SetLogin("testusername", "testpassword")
+
+			Expect(testConfig.Receptor()).To(Equal("http://testusername:testpassword@receptor.mynewapi.com"))
+		})
+
+		It("returns a Receptor without a username and password", func() {
+			testConfig := config.New(&fakePersister{})
+			testConfig.SetTarget("mynewapi.com")
+			testConfig.SetLogin("", "")
+
+			Expect(testConfig.Receptor()).To(Equal("http://receptor.mynewapi.com"))
+		})
+	})
+
+	Describe("Loggregator", func() {
+		It("provides the loggregator doppler path", func() {
+			testConfig := config.New(&fakePersister{})
+			testConfig.SetTarget("mytestapi.com")
+
+			Expect(testConfig.Loggregator()).To(Equal("doppler.mytestapi.com"))
+		})
+	})
+
+	Describe("Save", func() {
+		It("Saves the target with the persistor", func() {
+			fakePersister := &fakePersister{}
+			testConfig := config.New(fakePersister)
+
+			testConfig.SetTarget("mynewapi.com")
+			testConfig.SetLogin("testusername", "testpassword")
+
+			testConfig.Save()
+
+			Expect(fakePersister.target).To(Equal("mynewapi.com"))
+			Expect(fakePersister.username).To(Equal("testusername"))
+			Expect(fakePersister.password).To(Equal("testpassword"))
+		})
+
+		It("returns errors from the persistor", func() {
+			testConfig := config.New(&fakePersister{err: errors.New("Error")})
+
+			err := testConfig.Save()
+
+			Expect(err).To(Equal(errors.New("Error")))
+		})
+	})
+
 	Describe("Load", func() {
+		It("loads the target, username, and password from the persister", func() {
+			fakePersister := &fakePersister{target: "mysavedapi.com", username: "saveduser", password: "password"}
+			testConfig := config.New(fakePersister)
+
+			testConfig.Load()
+
+			Expect(fakePersister.target).To(Equal("mysavedapi.com"))
+			Expect(testConfig.Receptor()).To(Equal("http://saveduser:password@receptor.mysavedapi.com"))
+		})
+
 		It("returns errors from loading the config", func() {
 			testConfig := config.New(&fakePersister{err: errors.New("Error")})
 
@@ -18,85 +88,6 @@ var _ = Describe("config", func() {
 
 			Expect(err).To(Equal(errors.New("Error")))
 		})
-	})
-
-	Describe("SetTarget", func() {
-		It("saves api to the persistor", func() {
-			fakePersister := &fakePersister{}
-			testConfig := config.New(fakePersister)
-
-			testConfig.SetTarget("mynewapi.com")
-
-			Expect(fakePersister.target).To(Equal("mynewapi.com"))
-		})
-
-		It("returns errors from the persistor", func() {
-			testConfig := config.New(&fakePersister{err: errors.New("Error")})
-
-			err := testConfig.SetTarget("mynewapi.com")
-
-			Expect(err).To(Equal(errors.New("Error")))
-		})
-	})
-
-	Describe("SetLogin", func() {
-		It("saves api to the persistor", func() {
-			fakePersister := &fakePersister{}
-			testConfig := config.New(fakePersister)
-
-			testConfig.SetLogin("testusername", "testpassword")
-
-			Expect(fakePersister.username).To(Equal("testusername"))
-			Expect(fakePersister.password).To(Equal("testpassword"))
-
-		})
-
-		It("returns errors from the persistor", func() {
-			testConfig := config.New(&fakePersister{err: errors.New("Error")})
-
-			err := testConfig.SetLogin("testusername", "testpassword")
-
-			Expect(err).To(Equal(errors.New("Error")))
-		})
-	})
-
-	Describe("Receptor", func() {
-		It("Loads the Receptor from the persistor with a username and password", func() {
-			testConfig := config.New(&fakePersister{target: "mytestapi.com", username: "testusername", password: "testpassword"})
-
-			testConfig.Load()
-
-			Expect(testConfig.Receptor()).To(Equal("http://testusername:testpassword@receptor.mytestapi.com"))
-		})
-
-		It("Loads the Receptor from the persistor without a username and password", func() {
-			testConfig := config.New(&fakePersister{target: "mytestapi.com"})
-
-			testConfig.Load()
-
-			Expect(testConfig.Receptor()).To(Equal("http://receptor.mytestapi.com"))
-		})
-	})
-
-	Describe("Loggregator", func() {
-		It("Loads the Loggregator from the persistor", func() {
-			testConfig := config.New(&fakePersister{target: "mytestapi.com"})
-
-			testConfig.Load()
-
-			Expect(testConfig.Loggregator()).To(Equal("doppler.mytestapi.com"))
-		})
-	})
-
-	Describe("Target", func() {
-		It("Loads the target from the persistor", func() {
-			testConfig := config.New(&fakePersister{target: "mytestapi.com"})
-
-			testConfig.Load()
-
-			Expect(testConfig.Target()).To(Equal("mytestapi.com"))
-		})
-
 	})
 })
 
