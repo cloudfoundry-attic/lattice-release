@@ -476,8 +476,8 @@ var _ = Describe("CommandFactory", func() {
 			timeProvider.IncrementBySeconds(1)
 			Eventually(outputBuffer).Should(test_helpers.Say("."))
 
-			timeProvider.IncrementBySeconds(1)
 			appRunner.AppExistsReturns(false, nil)
+			timeProvider.IncrementBySeconds(1)
 
 			Eventually(commandFinishChan).Should(BeClosed())
 

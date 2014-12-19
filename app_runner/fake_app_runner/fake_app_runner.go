@@ -194,8 +194,6 @@ func (fake *FakeAppRunner) AppExistsArgsForCall(i int) string {
 }
 
 func (fake *FakeAppRunner) AppExistsReturns(result1 bool, result2 error) {
-	fake.appExistsMutex.Lock()
-	defer fake.appExistsMutex.Unlock()
 	fake.AppExistsStub = nil
 	fake.appExistsReturns = struct {
 		result1 bool
