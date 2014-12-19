@@ -63,7 +63,7 @@ var _ = Describe("CommandFactory", func() {
 				"--appFlavor=\"purple\"",
 			}
 
-			appRunner.NumOfRunningAppInstancesReturns(1, nil)
+			appRunner.NumOfRunningAppInstancesReturns(22, nil)
 
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
@@ -107,9 +107,10 @@ var _ = Describe("CommandFactory", func() {
 			Expect(instances).To(Equal(1))
 		})
 
-		It("polls for the app to start", func() {
+		It("polls for the app to start with correct number of instances", func() {
 			args := []string{
 				"--docker-image=docker:///fun/app",
+				"--instances=10",
 				"cool-web-app",
 				"--",
 				"/start-me-please",
@@ -126,10 +127,13 @@ var _ = Describe("CommandFactory", func() {
 
 			timeProvider.IncrementBySeconds(1)
 			Eventually(outputBuffer, 10).Should(test_helpers.Say("."))
+
+			appRunner.NumOfRunningAppInstancesReturns(9, nil)
 			timeProvider.IncrementBySeconds(1)
 			Eventually(outputBuffer, 10).Should(test_helpers.Say("."))
+			Expect(commandFinishChan).ShouldNot(BeClosed())
 
-			appRunner.NumOfRunningAppInstancesReturns(1, nil)
+			appRunner.NumOfRunningAppInstancesReturns(10, nil)
 			timeProvider.IncrementBySeconds(1)
 
 			Eventually(commandFinishChan).Should(BeClosed())

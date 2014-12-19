@@ -163,8 +163,8 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	cmd.output.Say("Starting App: " + name)
 
 	ok := cmd.pollUntilSuccess(func() bool {
-		instances, _ := cmd.appRunner.NumOfRunningAppInstances(name)
-		return instances > 0
+		numberOfRunningInstances, _ := cmd.appRunner.NumOfRunningAppInstances(name)
+		return numberOfRunningInstances == instances
 	})
 
 	if ok {
