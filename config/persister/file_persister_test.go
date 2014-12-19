@@ -11,11 +11,11 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
 )
 
-type data struct {
-	Value string
-}
-
 var _ = Describe("filePersister", func() {
+	type data struct {
+		Value string
+	}
+
 	var (
 		tmpDir  string
 		tmpFile *os.File
@@ -88,7 +88,6 @@ var _ = Describe("filePersister", func() {
 			err := persister.Save(func() {})
 
 			Expect(err).To(HaveOccurred())
-
 		})
 
 		It("writes to nonexistant directories", func() {

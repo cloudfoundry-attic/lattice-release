@@ -33,7 +33,7 @@ var _ = Describe("CommandFactory", func() {
 			outputBuffer = gbytes.NewBuffer()
 			targetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 
-			config = config_package.New(persister.NewFakePersister())
+			config = config_package.New(persister.NewMemPersister())
 
 			commandFactory := command_factory.NewConfigCommandFactory(config, targetVerifier, stdinReader, output.New(outputBuffer))
 			setTargetCommand = commandFactory.MakeSetTargetCommand()
@@ -117,9 +117,8 @@ var _ = Describe("CommandFactory", func() {
 
 			It("bubbles up errors from setting the target", func() {
 				targetVerifier.ValidateReceptorReturns(true)
-				fakePersister := persister.NewFakePersisterWithError(errors.New("FAILURE setting api"))
 
-				commandFactory := command_factory.NewConfigCommandFactory(config_package.New(fakePersister), targetVerifier, stdinReader, output.New(outputBuffer))
+				commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("FAILURE setting api")), targetVerifier, stdinReader, output.New(outputBuffer))
 				setTargetCommand = commandFactory.MakeSetTargetCommand()
 
 				test_helpers.ExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
@@ -130,3 +129,13 @@ var _ = Describe("CommandFactory", func() {
 
 	})
 })
+
+type errorPersister string
+
+func (f errorPersister) Load(i interface{}) error {
+	return errors.New(string(f))
+}
+
+func (f errorPersister) Save(i interface{}) error {
+	return errors.New(string(f))
+}
