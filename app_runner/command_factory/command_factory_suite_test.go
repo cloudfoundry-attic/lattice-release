@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestApp(t *testing.T) {
+func TestAppRunnerCommandFactory(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "App Running Command Factory Suite")
+	RunSpecs(t, "App Runner Command Factory Suite")
 }

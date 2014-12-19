@@ -9,5 +9,5 @@ import (
 
 func TestLatticeCli(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "LatticeCli Suite")
+	RunSpecs(t, "LatticeCli Main Suite")
 }
