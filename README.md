@@ -11,7 +11,7 @@ Make sure you have go installed and your $GOPATH is properly set. Then run:
 
     go get -u github.com/pivotal-cf-experimental/lattice-cli/ltc
 
-This installs or updates the lattice-cli binary to $GOPATH/bin. Rename the binary to ltc to match examples.
+This installs or updates the `ltc` binary to $GOPATH/bin.
 
 ##Commands:
 
