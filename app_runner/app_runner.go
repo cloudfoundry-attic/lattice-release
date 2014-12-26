@@ -106,7 +106,7 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 func (appRunner *appRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, instances, memoryMB, diskMB, port int) error {
 	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          name,
-		Domain:               "diego-edge",
+		Domain:               "lattice",
 		RootFSPath:           dockerImagePath,
 		Instances:            instances,
 		Stack:                "lucid64",
