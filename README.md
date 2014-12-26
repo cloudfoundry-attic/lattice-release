@@ -32,3 +32,11 @@ This installs or updates the `ltc` binary to $GOPATH/bin.
     ltc target 192.168.11.11.xip.io
     ltc start lattice-app -i "docker:///cloudfoundry/lattice-app" -- /lattice-app --message="hello"
     ltc logs lattice-app
+
+To view the app in a browser visit http://lattice-app.192.168.11.11.xip.io/
+
+To scale up the app:
+
+    ltc scale lattice-app -i 5
+
+Refresh the browser to see the requests routing to different Docker containers running lattice-app.
