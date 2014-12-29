@@ -33,7 +33,19 @@ var _ = Describe("AppRunner", func() {
 			args := []string{"app", "arg1", "--app", "arg 2"}
 			envs := map[string]string{"APPROOT": "/root/env/path"}
 			privileged := true
-			err := appRunner.StartDockerApp("americano-app", "docker://runtest/runner", "/app-run-statement", args, envs, privileged, 22, 128, 1024, 2000)
+			err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
+				Name:                 "americano-app",
+				StartCommand:         "/app-run-statement",
+				DockerImagePath:      "docker://runtest/runner",
+				AppArgs:              args,
+				EnvironmentVariables: envs,
+				Privileged:           privileged,
+				Instances:            22,
+				MemoryMB:             128,
+				DiskMB:               1024,
+				Port:                 2000,
+				WorkingDir:           "/user/web/myappdir",
+			})
 			Expect(err).To(BeNil())
 
 			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
@@ -58,6 +70,7 @@ var _ = Describe("AppRunner", func() {
 					Path:       "/app-run-statement",
 					Args:       []string{"app", "arg1", "--app", "arg 2"},
 					Privileged: true,
+					Dir:        "/user/web/myappdir",
 				},
 				Monitor: &models.RunAction{
 					Path:      "/tmp/spy",
@@ -71,7 +84,18 @@ var _ = Describe("AppRunner", func() {
 			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "app-already-desired", Instances: 1}}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 
-			err := appRunner.StartDockerApp("app-already-desired", "docker://faily/boom", "/app-bork-statement", []string{}, map[string]string{}, false, 1, 128, 1024, 8080)
+			err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
+				Name:                 "app-already-desired",
+				StartCommand:         "docker://faily/boom",
+				DockerImagePath:      "/app-bork-statement",
+				AppArgs:              []string{},
+				EnvironmentVariables: map[string]string{},
+				Privileged:           false,
+				Instances:            1,
+				MemoryMB:             128,
+				DiskMB:               1024,
+				Port:                 8080,
+			})
 
 			Expect(err).ToNot(BeNil())
 			Expect(err.Error()).To(Equal("App app-already-desired, is already running"))
@@ -83,7 +107,19 @@ var _ = Describe("AppRunner", func() {
 				receptorError := errors.New("error - Desiring an LRP")
 				fakeReceptorClient.CreateDesiredLRPReturns(receptorError)
 
-				err := appRunner.StartDockerApp("nescafe-app", "docker://faily/boom", "/app-bork-statement", []string{}, map[string]string{}, false, 1, 128, 1024, 8080)
+				err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
+					Name:                 "nescafe-app",
+					StartCommand:         "docker://faily/boom",
+					DockerImagePath:      "/app-bork-statement",
+					AppArgs:              []string{},
+					EnvironmentVariables: map[string]string{},
+					Privileged:           false,
+					Instances:            1,
+					MemoryMB:             128,
+					DiskMB:               1024,
+					Port:                 8080,
+				})
+
 				Expect(err).To(Equal(receptorError))
 			})
 
@@ -91,7 +127,19 @@ var _ = Describe("AppRunner", func() {
 				receptorError := errors.New("error - Existing Count")
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
 
-				err := appRunner.StartDockerApp("nescafe-app", "docker://faily/boom", "/app-bork-statement", []string{}, map[string]string{}, false, 1, 128, 1024, 8080)
+				err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
+					Name:                 "nescafe-app",
+					StartCommand:         "docker://faily/boom",
+					DockerImagePath:      "/app-bork-statement",
+					AppArgs:              []string{},
+					EnvironmentVariables: map[string]string{},
+					Privileged:           false,
+					Instances:            1,
+					MemoryMB:             128,
+					DiskMB:               1024,
+					Port:                 8080,
+				})
+
 				Expect(err).To(Equal(receptorError))
 			})
 		})

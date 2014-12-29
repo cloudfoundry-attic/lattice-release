@@ -27,6 +27,11 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 			Name:  "docker-image, i",
 			Usage: "docker image to run",
 		},
+		cli.StringFlag{
+			Name:  "working-dir, w",
+			Usage: "directory where lattice will run the start command",
+			Value: "/",
+		},
 		cli.BoolFlag{
 			Name:  "run-as-root, r",
 			Usage: "run app as privileged user",
@@ -125,6 +130,7 @@ type appRunnerCommand struct {
 
 func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	dockerImage := context.String("docker-image")
+	workingDir := context.String("working-dir")
 	envVars := context.StringSlice("env")
 	privileged := context.Bool("run-as-root")
 	instances := context.Int("instances")
@@ -153,7 +159,19 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	startCommand := context.Args().Get(2)
 	appArgs := context.Args()[3:]
 
-	err := cmd.appRunner.StartDockerApp(name, dockerImage, startCommand, appArgs, cmd.buildEnvironment(envVars), privileged, instances, memoryMB, diskMB, port)
+	err := cmd.appRunner.StartDockerApp(app_runner.StartDockerAppParams{
+		Name:                 name,
+		DockerImagePath:      dockerImage,
+		StartCommand:         startCommand,
+		AppArgs:              appArgs,
+		EnvironmentVariables: cmd.buildEnvironment(envVars),
+		Privileged:           privileged,
+		Instances:            instances,
+		MemoryMB:             memoryMB,
+		DiskMB:               diskMB,
+		Port:                 port,
+		WorkingDir:           workingDir,
+	})
 
 	if err != nil {
 		cmd.output.Say(fmt.Sprintf("Error Starting App: %s", err))

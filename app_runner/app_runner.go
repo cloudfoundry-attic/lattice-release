@@ -8,11 +8,25 @@ import (
 )
 
 type AppRunner interface {
-	StartDockerApp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, instances, memoryMB, diskMB, port int) error
+	StartDockerApp(params StartDockerAppParams) error
 	ScaleApp(name string, instances int) error
 	RemoveApp(name string) error
 	AppExists(name string) (bool, error)
 	NumOfRunningAppInstances(name string) (int, error)
+}
+
+type StartDockerAppParams struct {
+	Name                 string
+	StartCommand         string
+	DockerImagePath      string
+	AppArgs              []string
+	EnvironmentVariables map[string]string
+	Privileged           bool
+	Instances            int
+	MemoryMB             int
+	DiskMB               int
+	Port                 int
+	WorkingDir           string
 }
 
 const (
@@ -28,13 +42,13 @@ func New(receptorClient receptor.Client, domain string) AppRunner {
 	return &appRunner{receptorClient, domain}
 }
 
-func (appRunner *appRunner) StartDockerApp(name, dockerImagePath, startCommand string, appArgs []string, environmentVariables map[string]string, privileged bool, instances, memoryMB, diskMB, port int) error {
-	if exists, err := appRunner.desiredLRPExists(name); err != nil {
+func (appRunner *appRunner) StartDockerApp(params StartDockerAppParams) error {
+	if exists, err := appRunner.desiredLRPExists(params.Name); err != nil {
 		return err
 	} else if exists {
-		return newExistingAppError(name)
+		return newExistingAppError(params.Name)
 	}
-	return appRunner.desireLrp(name, startCommand, dockerImagePath, appArgs, environmentVariables, privileged, instances, memoryMB, diskMB, port)
+	return appRunner.desireLrp(params)
 }
 
 func (appRunner *appRunner) ScaleApp(name string, instances int) error {
@@ -103,32 +117,33 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 	return false, nil
 }
 
-func (appRunner *appRunner) desireLrp(name, startCommand, dockerImagePath string, appArgs []string, environmentVariables map[string]string, privileged bool, instances, memoryMB, diskMB, port int) error {
+func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
-		ProcessGuid:          name,
+		ProcessGuid:          params.Name,
 		Domain:               "diego-edge",
-		RootFSPath:           dockerImagePath,
-		Instances:            instances,
+		RootFSPath:           params.DockerImagePath,
+		Instances:            params.Instances,
 		Stack:                "lucid64",
-		Routes:               []string{fmt.Sprintf("%s.%s", name, appRunner.domain)},
-		MemoryMB:             memoryMB,
-		DiskMB:               diskMB,
-		Ports:                []uint32{uint32(port)},
-		LogGuid:              name,
+		Routes:               []string{fmt.Sprintf("%s.%s", params.Name, appRunner.domain)},
+		MemoryMB:             params.MemoryMB,
+		DiskMB:               params.DiskMB,
+		Ports:                []uint32{uint32(params.Port)},
+		LogGuid:              params.Name,
 		LogSource:            "APP",
-		EnvironmentVariables: buildEnvironmentVariables(environmentVariables, port),
+		EnvironmentVariables: buildEnvironmentVariables(params.EnvironmentVariables, params.Port),
 		Setup: &models.DownloadAction{
 			From: spyDownloadUrl,
 			To:   "/tmp",
 		},
 		Action: &models.RunAction{
-			Path:       startCommand,
-			Args:       appArgs,
-			Privileged: privileged,
+			Path:       params.StartCommand,
+			Args:       params.AppArgs,
+			Privileged: params.Privileged,
+			Dir:        params.WorkingDir,
 		},
 		Monitor: &models.RunAction{
 			Path:      "/tmp/spy",
-			Args:      []string{"-addr", fmt.Sprintf(":%d", port)},
+			Args:      []string{"-addr", fmt.Sprintf(":%d", params.Port)},
 			LogSource: "HEALTH",
 		},
 	})
