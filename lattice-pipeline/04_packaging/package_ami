@@ -1,5 +1,70 @@
 #!/bin/bash
 
-set -e
+lattice_dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )
+pushd lattice_dir
+trap "popd" EXIT
 
-packer build lattice-pipeline/04_packaging/packer_template.json
+echo "Starting Collocated Packer Build in Background"
+PACKER_LOG=1 packer build -var 'component_to_install=collocated' lattice-pipeline/04_packaging/packer_template.json some_cmd > collocated-packer-build.log 2>&1 &
+collocated_build_pid=$!
+
+echo "Starting Coordinator Packer Build in Background"
+PACKER_LOG=1 packer build -var 'component_to_install=coordinator' lattice-pipeline/04_packaging/packer_template.json > coordinator-packer-build.log 2>&1 &
+coordinator_build_pid=$!
+
+echo "Starting Diego Cell Packer Build in Background"
+PACKER_LOG=1 packer build -var 'component_to_install=diego-cell' lattice-pipeline/04_packaging/packer_template.json > diego-cell-packer-build.log 2>&1 &
+diego_cell_build_pid=$!
+
+echo "Waiting on Packer background processes to finish"
+
+collocated_build_exit_code=$(wait $collocated_build_pid)
+if [ $collocated_build_success ]; then
+    echo "Collocated build finished successfully"
+else
+    echo "Collocated build failed!"
+fi
+
+coordinator_build_exit_code=$(wait $coordinator_build_pid)
+if [ $coordinator_build_exit_code ]; then
+    echo "Coordinator build finished successfully"
+else
+    echo "Coordinator build failed!"
+fi
+
+diego_cell_build_exit_code=$(wait $diego_cell_build_pid)
+if [ $diego_cell_build_exit_code ]; then
+    echo "Diego Cell build finished successfully"
+else
+    echo "Diego Cell build failed!"
+fi
+
+echo "Packer build processes have all exited"
+
+#Output log files to console for ease of use on ci
+echo "==================================================="
+echo "Collocated Packer Build Logs"
+cat collocated-packer-build.log
+echo "==================================================="
+echo "Coordinator Packer Build Logs"
+cat coordinator-packer-build.log
+echo "==================================================="
+echo "Diego Cell Packer Build Logs"
+cat diego-cell-packer-build.log
+echo "==================================================="
+
+echo "****************************************************************"
+echo "The following Packer Artifacts were created:"
+[ "$collocated_build_exit_code" -eq "0" ] && echo "Collocated Installation AMI: `grep "ami-" collocated-packer-build.log`"
+[ "$coordinator_build_exit_code" -eq "0" ] && echo "Coordinator AMI: `grep "ami-" coordinator-packer-build.log`"
+[ "$diego_cell_build_exit_code" -eq "0" ] && echo "Diego Cell AMI: `grep "ami-" diego-cell-packer-build.log`"
+echo "****************************************************************"
+
+if [ "$collocated_build_exit_code" -eq "0" ] &&
+    [ "$coordinator_build_exit_code" -eq "0" ] &&
+    [ "$diego_cell_build_exit_code" -eq "0" ]; then
+    echo "All Packer builds completed successfully!"
+else
+    echo "There was an error with at least one of the packer builds."
+    exit 1
+fi

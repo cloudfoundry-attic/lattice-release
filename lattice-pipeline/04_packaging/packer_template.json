@@ -14,7 +14,7 @@
             "source_ami": "ami-696e652c",
             "instance_type": "t1.micro",
             "ssh_username": "ubuntu",
-            "ami_name": "lattice {{timestamp}}"
+            "ami_name": "lattice-{{user `component_to_install`}}-{{isotime \"20060102.1504\"}}"
         }
     ],
 

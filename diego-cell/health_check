@@ -1,0 +1,14 @@
+#!/bin/bash
+
+check_cell_processes(){
+    ps uawx | cut -c66- | egrep "^(auctioneer|consul|converger|executor|garden-linux|metron|rep)" | grep -v egrep
+}
+
+num_cell_processes=$(check_cell_processes | wc -l)
+
+echo "$num_cell_processes/7 Cell processes up and running."
+
+if [ $num_cell_processes -ne "7" ]; then
+    echo "expected 7 cell processes to be running, but got $num_cell_processes"
+    check_cell_processes
+fi

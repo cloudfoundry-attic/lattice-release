@@ -1,0 +1,14 @@
+#!/bin/bash
+
+check_coordinator_processes(){
+    ps uawx | cut -c66- | egrep "^(consul|doppler|etcd|file-server|gnatsd|gorouter|receptor|route-emitter|trafficcontroller)" | grep -v egrep
+}
+
+num_coordinator_processes=$(check_coordinator_processes | wc -l)
+
+echo "$num_coordinator_processes/9 Coordinator processes up and running."
+
+if [ $num_coordinator_processes -ne "9" ]; then
+    echo "expected 9 coordinator processes to be running, but got $num_coordinator_processes"
+    check_coordinator_processes
+fi

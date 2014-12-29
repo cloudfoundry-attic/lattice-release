@@ -65,7 +65,56 @@ So to update, you have to destroy the box and bring it back up as shown below:
 
 #Aws
 
-##Setting up AWS
+##Setting up AWS With a Collocated Installation
+Follow [Amazon's instructions](http://docs.aws.amazon.com/cli/latest/userguide/installing.html) for setting up the aws cli.
+
+Configure the aws cli with your aws access key, aws secret access key, and the us-west-1 region
+
+     aws config
+
+Set up security group
+
+     aws ec2 create-security-group --group-name lattice --description "lattice security group."
+
+Open up the instance to incoming tcp traffic
+
+     aws ec2 authorize-security-group-ingress --group-name lattice --protocol tcp --port 1-65535 --cidr 0.0.0.0/0
+
+Creates a credentials file containing the username and password that you want to use for the cli
+
+     echo "LATTICE_USERNAME=<Your Username>" > lattice-credentials
+     echo "LATTICE_PASSWORD=<Your Password>" >> lattice-credentials
+
+Create a key pair
+
+    aws ec2 create-key-pair --key-name lattice-key
+
+Launch an instance of lattice with your base64 encoded username and password file
+
+    aws ec2 run-instances --image-id ami-03958746 --security-groups lattice --key-name lattice-key --user-data `base64 lattice-credentials`
+
+Find the PublicIpAddress of the instance you just launched.  You can either use the EC2 Web Console or run the following
+command that lists all instances provisioned with the above AMI.
+
+    aws ec2 describe-instances --filter "Name=image-id,Values=ami-03958746" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
+
+Sample output:
+
+    aws ec2 describe-instances --filter "Name=image-id,Values=ami-03958746" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
+            "ReservationId": "r-68fb47a2",
+                    "LaunchTime": "2014-12-16T15:43:06.000Z",
+                    "PublicIpAddress": "12.345.130.132",
+                    "InstanceId": "i-d2b59718",
+                    "ImageId": "ami-03958746",
+
+Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli). The target will be the PublicIpAddress with the suffix "xip.io" appended. The cli will prompt for the username and password used above.
+
+    ltc target 12.345.130.132.xip.io
+        Username: <Your Username>
+        Password: <Your Password>
+
+
+##Setting up AWS With separate Coordinator and Cell(s)
 
 1. Follow [Amazon's instructions](http://docs.aws.amazon.com/cli/latest/userguide/installing.html) for setting up the aws cli. Configure the aws cli with your aws access key, aws secret access key, and the us-west-1 region. 
    
@@ -73,74 +122,79 @@ So to update, you have to destroy the box and bring it back up as shown below:
    aws config
    ```
    
-2. Create a Virtual Private Cloud, VPC. Find the VpcId from the output.
+1. Create a Virtual Private Cloud, VPC. Find the VpcId from the output.
    
    ```
    aws ec2 create-vpc --cidr-block 10.10.0.0/16
    ```
      
-3. Create a Subnet with the VpcId created above. Find the SubnetId from the output. 
+1. Create a Subnet with the VpcId created above. Find the SubnetId from the output.
 
    ```
    aws ec2 create-subnet --vpc-id vpc-XXXXXXXX --cidr-block 10.10.1.0/24
    ```
 
-4. Configure the subnet to assign public IP addresses on launch.
+1. Configure the subnet to assign public IP addresses on launch.
     
    ``` 
    aws ec2 modify-subnet-attribute --subnet-id subnet-XXXXXXXX --map-public-ip-on-launch
    ```
     
-5. Create an Internet Gateway. Find the InternetGatewayId from the output.
+1. Create an Internet Gateway. Find the InternetGatewayId from the output.
     
    ```
     aws ec2 create-internet-gateway    
    ```
     
-6. Attach the internet gateway to the VPC created above. Use the InternetGatewayId and the VpcId from above.
+1. Attach the internet gateway to the VPC created above. Use the InternetGatewayId and the VpcId from above.
     
    ```
     aws ec2 attach-internet-gateway --internet-gateway-id igw-XXXXXXXX --vpc-id vpc-XXXXXXXX
    ```
 
-7. Create a new routing table associated with the VPC.
+1. Create a new routing table associated with the VPC.
 
    ```
-    aws ec2 create-route-table --vpc-id <VPC-ID> 
+    aws ec2 create-route-table --vpc-id vpc-XXXXXXXX
+   ```
+1. Associate the route table with the subnet.
+
+   ```
+    aws ec2 associate-route-table --subnet-id=subnet-XXXXXXXX --route-table-id=rtb-XXXXXXXX
    ```
     
-8. Define a default route via the internet gateway on the routing table.
+1. Define a default route via the internet gateway on the routing table.
        
    ```
     aws ec2 create-route --route-table-id rtb-XXXXXXXX --destination-cidr-block 0.0.0.0/0 --gateway-id igw-XXXXXXXX   
    ```
    
-9. Create a security group. Use the VpcId from above. Find the GroupId of new security group from the output.
+1. Create a security group. Use the VpcId from above. Find the GroupId of new security group from the output.
 
    ```
     aws ec2 create-security-group --group-name lattice --description "lattice security group." --vpc-id vpc-XXXXXXXX    
    ```
 
-10. Open up the instance to incoming tcp traffic. Use the GroupId from above.
+1. Open up the instance to incoming tcp traffic. Use the GroupId from above.
     
    ```
     aws ec2 authorize-security-group-ingress --group-id sg-XXXXXXXX --protocol tcp --port 1-65535 --cidr 0.0.0.0/0
    ```
      
-11. Creates a credentials file containing the username and password that you want to use for the cli
+1. Creates a credentials file containing the username and password that you want to use for the cli
      
    ```
     echo "LATTICE_USERNAME=<Your Username>" > lattice-credentials
     echo "LATTICE_PASSWORD=<Your Password>" >> lattice-credentials
    ```
 
-12. Create a key pair
+1. Create a key pair
 
    ```
     aws ec2 create-key-pair --key-name lattice-key
    ```
       
-13. Launch an instance of the lattice coordinator. This uses the base64 encoded username and password credentials file from step 8. It also launches the instance with a private ip address of 10.10.1.11. Use the SubnetId and GroupId from above. 
+1. Launch an instance of the lattice coordinator. This uses the base64 encoded username and password credentials file from step 8. It also launches the instance with a private ip address of 10.10.1.11. Use the SubnetId and GroupId from above.
 
    ```
     aws ec2 run-instances \
@@ -152,13 +206,13 @@ So to update, you have to destroy the box and bring it back up as shown below:
         --user-data `base64 lattice-credentials`
    ```
 
-14. Creates a diego-cell-configuration file containing the private ip address from step 10.  
+1. Creates a diego-cell-configuration file containing the private ip address from step 10.
         
    ```
     echo "LATTICE_COORDINATOR_IP=10.10.1.11" > diego-cell-config
    ```
 
-15. Launch at least one instance of the diego-cell.
+1. Launch at least one instance of the diego-cell.
 
    ```
     aws ec2 run-instances \
