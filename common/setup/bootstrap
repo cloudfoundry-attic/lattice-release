@@ -37,7 +37,9 @@ if [ "$aws_curl_result" -eq 0 ]; then
 else
     echo "Detected Non-AWS"
 
-    export "SYSTEM_DOMAIN=$(hostname -I | awk '{ print $2 }').xip.io"
+    MY_IP=$(hostname -I | awk '{ print $2 }')
+    MY_IP=${MY_IP:-$(hostname -I | awk '{ print $1 }')}
+    export "SYSTEM_DOMAIN=$MY_IP.xip.io"
 
     DIEGO_CELL_ID="cell-01_z"
     echo "LATTICE_COORDINATOR_IP=127.0.0.1" >> $env_file
