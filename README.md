@@ -201,7 +201,7 @@ Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimenta
     aws ec2 run-instances \
         --subnet-id subnet-XXXXXXXX \
         --security-group-ids sg-XXXXXXXX \
-        --image-id ami-8fb8aaca \
+        --image-id ami-6909152c \
         --private-ip-address 10.10.1.11 \
         --key-name lattice-key3 \
         --user-data `base64 lattice-credentials`
@@ -219,7 +219,7 @@ Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimenta
     aws ec2 run-instances \
      --subnet-id subnet-XXXXXXXX \
      --security-group-ids sg-XXXXXXXX \
-     --image-id ami-e1b8aaa4 \
+     --image-id ami-73091536 \
      --key-name lattice-key3 \
      --user-data `base64 diego-cell-config`
    ```
