@@ -175,12 +175,13 @@ Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimenta
     aws ec2 create-security-group --group-name lattice --description "lattice security group." --vpc-id vpc-XXXXXXXX    
    ```
 
-1. Open up the instance to incoming tcp traffic. Use the GroupId from above.
+1. Open up the instance to incoming traffic. Use the GroupId from above.
     
    ```
     aws ec2 authorize-security-group-ingress --group-id sg-XXXXXXXX --protocol tcp --port 1-65535 --cidr 0.0.0.0/0
+    aws ec2 authorize-security-group-ingress --group-id sg-XXXXXXXX --protocol udp --port 1-65535 --cidr 0.0.0.0/0
    ```
-     
+
 1. Creates a credentials file containing the username and password that you want to use for the cli
      
    ```
