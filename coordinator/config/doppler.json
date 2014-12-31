@@ -12,7 +12,6 @@
     "MaxRetainedLogMessages": 100,
     "CollectorRegistrarIntervalMilliseconds": 60000,
     "SharedSecret": "loggregator-secret",
-
     "NatsHosts": ["127.0.0.1"],
     "NatsPort": 4222,
     "NatsUser": "nats",
