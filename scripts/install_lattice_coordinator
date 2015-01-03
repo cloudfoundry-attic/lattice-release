@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+
+echo "Installing Lattice Coordinator"
+lattice_coordinator_build_path=/tmp/lattice-build/coordinator
+
+sudo cp ${lattice_coordinator_build_path}/upstart/* /etc/init
+sudo cp ${lattice_coordinator_build_path}/bin/* /usr/local/bin
+
+sudo mkdir -p /var/lattice/static-files/docker-circus
+pushd $lattice_coordinator_build_path/bin > /dev/null
+    sudo tar -czf /var/lattice/static-files/docker-circus/docker-circus.tgz spy
+popd > /dev/null
+
+sudo mkdir -p /var/lattice/config
+sudo cp -a ${lattice_coordinator_build_path}/config /var/lattice
+
+sudo mkdir -p /var/lattice/setup
+sudo cp -a ${lattice_coordinator_build_path}/setup /var/lattice
+
+sudo mkdir -p /var/lattice/run
+sudo mkdir -p /var/lattice/log
+
+sudo start bootstrap
+
+export $(cat /var/lattice/setup/lattice-environment)
+
+echo "Finished installing Lattice Coordinator!
+Lattice is now installed and running. You may target it with the Lattice cli via:
+ltc target ${SYSTEM_DOMAIN}"

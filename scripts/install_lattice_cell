@@ -1,0 +1,47 @@
+#!/bin/bash
+
+set -e
+
+echo "Installing Lattice Cell"
+lattice_cell_build_path=/tmp/lattice-build/diego-cell
+
+install_dependencies() {
+    echo "Installing Dependencies..."
+    pushd /tmp
+        SHADOW_TAR_OBJECT_ID="8f17023f-2a94-4d98-a737-ddbf166e7188"
+        wget "http://go-diego-go.s3.amazonaws.com/${SHADOW_TAR_OBJECT_ID}" -O - | tar xzf -
+        pushd shadow-4.2.1
+            sudo ./configure --prefix=/var/lattice
+            sudo make
+            sudo make install
+        popd
+    popd
+}
+
+sudo cp -n ${lattice_cell_build_path}/upstart/* /etc/init
+sudo cp -n ${lattice_cell_build_path}/bin/* /usr/local/bin
+
+sudo mkdir -p /var/lattice/garden
+sudo mkdir -p /var/lattice/garden/depot
+sudo mkdir -p /var/lattice/garden/rootfs
+sudo mkdir -p /var/lattice/garden/overlays
+sudo mkdir -p /var/lattice/garden/graph
+
+sudo cp -a ${lattice_cell_build_path}/garden/garden-bin /var/lattice/garden/garden-bin
+sudo cp -a ${lattice_cell_build_path}/garden/skeleton /var/lattice/garden/skeleton
+
+sudo mkdir -p /var/lattice/config
+sudo cp -a ${lattice_cell_build_path}/config /var/lattice
+
+sudo apt-get -q -y install gcc
+sudo apt-get -q -y install make
+sudo apt-get -q -y install quota
+sudo apt-get -q -y install linux-image-extra-$(uname -r)
+
+sudo mkdir -p /var/lattice/run
+sudo mkdir -p /var/lattice/log
+
+install_dependencies
+sudo start bootstrap
+
+echo "Finished installing Lattice Cell!"

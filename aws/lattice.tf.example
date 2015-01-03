@@ -1,0 +1,18 @@
+module "lattice" {
+    source = "github.com/cf-platform-eng/lattice-terraform/aws"
+
+    # AWS access key
+    aws_access_key = "<CHANGE-ME>"
+
+    # AWS secret key
+    aws_secret_key = "<CHANGE-ME>"
+
+    # The SSH key name to use for the instances
+    aws_key_name = "<CHANGE-ME>"
+
+    # Path to the SSH private key file
+    aws_ssh_private_key_file = "<CHANGE-ME>"
+
+    # The number of Lattice Cells to launch
+    num_cells = 3
+}

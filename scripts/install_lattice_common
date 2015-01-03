@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -e
+
+echo "Installing Lattice dependencies"
+sudo apt-get -q -y update
+sudo apt-get -q -y install curl
+
+echo "Downloading Lattice release"
+wget --quiet https://s3-us-west-2.amazonaws.com/lattice/lattice-latest.tgz -O /tmp/lattice-latest.tgz
+tar -xf /tmp/lattice-latest.tgz -C /tmp
+
+echo "Installing Common Lattice tools"
+sudo mkdir -p /var/lattice/setup
+sudo sh -c 'echo "#!/bin/sh" > /var/lattice/setup/bootstrap'
+sudo chmod 755 /var/lattice/setup/bootstrap
