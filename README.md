@@ -203,7 +203,7 @@ Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimenta
         --security-group-ids sg-XXXXXXXX \
         --image-id ami-6909152c \
         --private-ip-address 10.10.1.11 \
-        --key-name lattice-key3 \
+        --key-name lattice-key \
         --user-data `base64 lattice-credentials`
    ```
 
@@ -220,7 +220,7 @@ Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimenta
      --subnet-id subnet-XXXXXXXX \
      --security-group-ids sg-XXXXXXXX \
      --image-id ami-73091536 \
-     --key-name lattice-key3 \
+     --key-name lattice-key \
      --user-data `base64 diego-cell-config`
    ```
 
@@ -230,18 +230,18 @@ Find the PublicIpAddress of the lattice coordinator instance you just launched. 
 command that lists all instances provisioned with the above AMI.
    
    ```
-    aws ec2 describe-instances --filter "Name=image-id,Values=ami-8fb8aaca" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
+    aws ec2 describe-instances --filter "Name=image-id,Values=ami-6909152c" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
    ```
    
 Sample output with a PublicIpAddress of 12.345.130.132:
    
    ```
-    aws ec2 describe-instances --filter "Name=image-id,Values=ami-8fb8aaca" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
+    aws ec2 describe-instances --filter "Name=image-id,Values=ami-6909152c" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
             "ReservationId": "r-68fb47a2",
                     "LaunchTime": "2014-12-16T15:43:06.000Z",
                     "PublicIpAddress": "12.345.130.132",
                     "InstanceId": "i-d2b59718",
-                    "ImageId": "ami-8fb8aaca",
+                    "ImageId": "ami-6909152c",
    ```
       
 Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli). The target will be the PublicIpAddress with the suffix "xip.io" appended. The cli will prompt for the username and password used above.
