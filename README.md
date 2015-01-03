@@ -70,7 +70,7 @@ Follow [Amazon's instructions](http://docs.aws.amazon.com/cli/latest/userguide/i
 
 Configure the aws cli with your aws access key, aws secret access key, and the us-west-1 region
 
-     aws config
+     aws configure
 
 Set up security group
 
