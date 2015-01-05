@@ -8,6 +8,7 @@ import (
 	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/dajulia3/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 )
@@ -16,8 +17,8 @@ type AppRunnerCommandFactory struct {
 	appRunnerCommand *appRunnerCommand
 }
 
-func NewAppRunnerCommandFactory(appRunner app_runner.AppRunner, output *output.Output, timeout time.Duration, domain string, env []string, timeProvider timeprovider.TimeProvider) *AppRunnerCommandFactory {
-	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, output, timeout, domain, env, timeProvider}}
+func NewAppRunnerCommandFactory(appRunner app_runner.AppRunner, dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher, output *output.Output, timeout time.Duration, domain string, env []string, timeProvider timeprovider.TimeProvider) *AppRunnerCommandFactory {
+	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, dockerMetadataFetcher, output, timeout, domain, env, timeProvider}}
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command {
@@ -120,12 +121,13 @@ func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Comman
 }
 
 type appRunnerCommand struct {
-	appRunner    app_runner.AppRunner
-	output       *output.Output
-	timeout      time.Duration
-	domain       string
-	env          []string
-	timeProvider timeprovider.TimeProvider
+	appRunner             app_runner.AppRunner
+	dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
+	output                *output.Output
+	timeout               time.Duration
+	domain                string
+	env                   []string
+	timeProvider          timeprovider.TimeProvider
 }
 
 func (cmd *appRunnerCommand) startApp(context *cli.Context) {
@@ -137,7 +139,11 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	memoryMB := context.Int("memory-mb")
 	diskMB := context.Int("disk-mb")
 	port := context.Int("port")
-	name := context.Args().First()
+	name := context.Args().Get(0)
+	terminator := context.Args().Get(1)
+	startCommand := context.Args().Get(2)
+
+	var appArgs []string
 
 	switch {
 	case name == "":
@@ -149,15 +155,33 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	case !strings.HasPrefix(dockerImage, "docker:///"):
 		cmd.output.IncorrectUsage("Docker Image should begin with: docker:///")
 		return
-	case len(context.Args()) < 3:
-		cmd.output.IncorrectUsage("Start Command required")
-		return
-	case context.Args().Get(1) != "--":
+	case startCommand != "" && terminator != "--":
 		cmd.output.IncorrectUsage("'--' Required before start command")
 		return
+	case len(context.Args()) > 3:
+		appArgs = context.Args()[3:]
+	case startCommand == "":
+		cmd.output.Say("No start command specified, fetching metadata from the Dockerimage...\n")
+
+		repoName := strings.Split(dockerImage, "docker:///")[1]
+		imageMetadata, err := cmd.dockerMetadataFetcher.FetchMetadata(repoName, "latest")
+		if err != nil {
+			cmd.output.Say(fmt.Sprintf("Error Fetching metadata: %s", err))
+			return
+		}
+
+		startCommand = imageMetadata.StartCommand[0]
+		cmd.output.Say("Start command is:\n")
+		cmd.output.Say(strings.Join(imageMetadata.StartCommand, " ") + "\n")
+
+		workingDir = imageMetadata.WorkingDir
+		if workingDir != "" {
+			cmd.output.Say("Working directory is:\n")
+			cmd.output.Say(workingDir + "\n")
+		}
+
+		appArgs = imageMetadata.StartCommand[1:]
 	}
-	startCommand := context.Args().Get(2)
-	appArgs := context.Args()[3:]
 
 	err := cmd.appRunner.StartDockerApp(app_runner.StartDockerAppParams{
 		Name:                 name,

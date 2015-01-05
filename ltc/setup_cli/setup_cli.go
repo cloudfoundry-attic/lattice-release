@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry/noaa"
 	"github.com/dajulia3/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/config_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
@@ -37,7 +38,7 @@ func NewCliApp() *cli.App {
 	receptorClient := receptor.NewClient(config.Receptor())
 	appRunner := app_runner.New(receptorClient, config.Target())
 
-	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, output, timeout(), config.Target(), os.Environ(), timeprovider.NewTimeProvider())
+	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, docker_metadata_fetcher.New(), output, timeout(), config.Target(), os.Environ(), timeprovider.NewTimeProvider())
 
 	logReader := logs.NewLogReader(noaa.NewConsumer(setup_cli_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, output)

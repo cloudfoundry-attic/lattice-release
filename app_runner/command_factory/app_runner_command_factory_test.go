@@ -9,6 +9,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher/fake_docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/fake_app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
@@ -20,16 +22,18 @@ import (
 var _ = Describe("CommandFactory", func() {
 
 	var (
-		appRunner    *fake_app_runner.FakeAppRunner
-		outputBuffer *gbytes.Buffer
-		timeout      time.Duration = 10 * time.Second
-		domain       string        = "192.168.11.11.xip.io"
-		timeProvider *faketimeprovider.FakeTimeProvider
+		appRunner             *fake_app_runner.FakeAppRunner
+		outputBuffer          *gbytes.Buffer
+		timeout               time.Duration = 10 * time.Second
+		domain                string        = "192.168.11.11.xip.io"
+		timeProvider          *faketimeprovider.FakeTimeProvider
+		dockerMetadataFetcher *fake_docker_metadata_fetcher.FakeDockerMetadataFetcher
 	)
 
 	BeforeEach(func() {
 		appRunner = &fake_app_runner.FakeAppRunner{}
 		outputBuffer = gbytes.NewBuffer()
+		dockerMetadataFetcher = &fake_docker_metadata_fetcher.FakeDockerMetadataFetcher{}
 	})
 
 	Describe("startApp", func() {
@@ -40,7 +44,7 @@ var _ = Describe("CommandFactory", func() {
 			env := []string{"SHELL=/bin/bash", "COLOR=Blue"}
 
 			timeProvider = faketimeprovider.New(time.Now())
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(outputBuffer), timeout, domain, env, timeProvider)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, dockerMetadataFetcher, output.New(outputBuffer), timeout, domain, env, timeProvider)
 			startCommand = commandFactory.MakeStartAppCommand()
 		})
 
@@ -69,7 +73,6 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(appRunner.StartDockerAppCallCount()).To(Equal(1))
-			//			name, dockerImagePath, startCommand, appArgs, environmentVariables, privileged, instances, memoryMB, diskMB, port, workingDir := appRunner.StartDockerAppArgsForCall(0)
 			startDockerAppParameters := appRunner.StartDockerAppArgsForCall(0)
 			Expect(startDockerAppParameters.Name).To(Equal("cool-web-app"))
 			Expect(startDockerAppParameters.StartCommand).To(Equal("/start-me-please"))
@@ -109,6 +112,62 @@ var _ = Describe("CommandFactory", func() {
 			Expect(startDockerAppParamters.Port).To(Equal(8080))
 			Expect(startDockerAppParamters.Instances).To(Equal(1))
 			Expect(startDockerAppParamters.WorkingDir).To(Equal("/"))
+		})
+
+		Context("when no start command is provided", func() {
+			var args = []string{
+				"--docker-image=docker:///fun-org/app",
+				"cool-web-app",
+			}
+
+			BeforeEach(func() {
+				appRunner.NumOfRunningAppInstancesReturns(1, nil)
+			})
+
+			It("starts a Docker app with the start command retrieved from the docker image metadata", func() {
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{WorkingDir: "/this/directory/right/here", StartCommand: []string{"/fetch-start", "arg1", "arg2"}}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(startCommand, args)
+
+				Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
+
+				repoName, tag := dockerMetadataFetcher.FetchMetadataArgsForCall(0)
+				Expect(repoName).To(Equal("fun-org/app"))
+				Expect(tag).To(Equal("latest"))
+
+				Expect(appRunner.StartDockerAppCallCount()).To(Equal(1))
+				startDockerAppParameters := appRunner.StartDockerAppArgsForCall(0)
+
+				Expect(startDockerAppParameters.StartCommand).To(Equal("/fetch-start"))
+				Expect(startDockerAppParameters.AppArgs).To(Equal([]string{"arg1", "arg2"}))
+				Expect(startDockerAppParameters.DockerImagePath).To(Equal("docker:///fun-org/app"))
+				Expect(startDockerAppParameters.WorkingDir).To(Equal("/this/directory/right/here"))
+
+				Expect(outputBuffer).To(test_helpers.Say("No start command specified, fetching metadata from the Dockerimage...\n"))
+				Expect(outputBuffer).To(test_helpers.Say("Start command is:\n"))
+				Expect(outputBuffer).To(test_helpers.Say("/fetch-start arg1 arg2\n"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Working directory is:\n"))
+				Expect(outputBuffer).To(test_helpers.Say("/this/directory/right/here\n"))
+			})
+
+			It("starts a Docker app with the start command retrieved from the docker image metadata", func() {
+				dockerMetadataFetcher.FetchMetadataReturns(nil, errors.New("Docker Says No."))
+
+				test_helpers.ExecuteCommandWithArgs(startCommand, args)
+
+				Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
+
+				Expect(outputBuffer).To(test_helpers.Say("Error Fetching metadata: Docker Says No."))
+			})
+
+			It("does not ouput the working directory if it is not set", func() {
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{StartCommand: []string{"/fetch-start"}}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(startCommand, args)
+
+				Expect(outputBuffer).ToNot(test_helpers.Say("Working directory is:"))
+			})
 		})
 
 		It("polls for the app to start with correct number of instances", func() {
@@ -192,19 +251,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
 		})
 
-		It("validates that the startCommand is passed in", func() {
-			args := []string{
-				"--docker-image=docker:///fun/app",
-				"cool-web-app",
-			}
-
-			test_helpers.ExecuteCommandWithArgs(startCommand, args)
-
-			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Start Command required"))
-			Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
-		})
-
-		It("validates that the terminator -- is passed in", func() {
+		It("validates that the terminator -- is passed in when a start command is specified", func() {
 			args := []string{
 				"--docker-image=docker:///fun/app",
 				"cool-web-app",
@@ -251,7 +298,7 @@ var _ = Describe("CommandFactory", func() {
 		var scaleCommand cli.Command
 		BeforeEach(func() {
 			timeProvider = faketimeprovider.New(time.Now())
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(outputBuffer), timeout, domain, []string{}, timeProvider)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, dockerMetadataFetcher, output.New(outputBuffer), timeout, domain, []string{}, timeProvider)
 			scaleCommand = commandFactory.MakeScaleAppCommand()
 		})
 
@@ -363,7 +410,7 @@ var _ = Describe("CommandFactory", func() {
 		var stopCommand cli.Command
 		BeforeEach(func() {
 			timeProvider = faketimeprovider.New(time.Now())
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(outputBuffer), timeout, domain, []string{}, timeProvider)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, dockerMetadataFetcher, output.New(outputBuffer), timeout, domain, []string{}, timeProvider)
 			stopCommand = commandFactory.MakeStopAppCommand()
 		})
 
@@ -441,7 +488,7 @@ var _ = Describe("CommandFactory", func() {
 
 		BeforeEach(func() {
 			timeProvider = faketimeprovider.New(time.Now())
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, output.New(outputBuffer), timeout, domain, []string{}, timeProvider)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, dockerMetadataFetcher, output.New(outputBuffer), timeout, domain, []string{}, timeProvider)
 			removeCommand = commandFactory.MakeRemoveAppCommand()
 		})
 
