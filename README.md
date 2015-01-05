@@ -225,7 +225,7 @@ Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimenta
 1. Creates a diego-cell-configuration file containing the private ip address from step 10.
         
    ```
-    echo "LATTICE_COORDINATOR_IP=10.10.1.11" > diego-cell-config
+    echo "CONSUL_SERVER_IP=10.10.1.11" > diego-cell-config
    ```
 
 1. Launch at least one instance of the diego-cell.

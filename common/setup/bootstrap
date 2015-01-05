@@ -40,7 +40,7 @@ else
     export "SYSTEM_DOMAIN=$(hostname -I | awk '{ print $2 }').xip.io"
 
     DIEGO_CELL_ID="cell-01_z"
-    echo "LATTICE_COORDINATOR_IP=127.0.0.1" >> $env_file
+    echo "CONSUL_SERVER_IP=127.0.0.1" >> $env_file
 fi
 
 echo "SYSTEM_DOMAIN=$SYSTEM_DOMAIN" >> $env_file
