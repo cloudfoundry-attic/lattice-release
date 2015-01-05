@@ -13,3 +13,7 @@ lattice.tgz
 collocated-config
 diego-cell-config
 lattice-credentials
+
+terraform.tfvars
+terraform.tfstate
+terraform.tfstate.backup

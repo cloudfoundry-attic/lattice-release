@@ -278,4 +278,3 @@ Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimenta
 #Developing
   Development work should be done on the develop branch.
   As a general rule, only CI should commit to master.
-  
