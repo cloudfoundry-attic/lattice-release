@@ -1,5 +1,7 @@
 #Vagrant
 
+
+
 ##Running the box
 
     $ vagrant up
