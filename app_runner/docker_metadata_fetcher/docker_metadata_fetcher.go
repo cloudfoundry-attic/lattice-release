@@ -53,7 +53,7 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(repoName string, tag string)
 
 	imgID, ok := tagsList[tag]
 	if !ok {
-		return nil, fmt.Errorf("unknown tag: %s:%s", repoName, tag)
+		return nil, fmt.Errorf("Unknown tag: %s:%s", repoName, tag)
 	}
 
 	var img *image.Image
@@ -65,6 +65,10 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(repoName string, tag string)
 				return nil, err
 			}
 		}
+	}
+
+	if img.Config == nil {
+		return nil, fmt.Errorf("Parsing start command failed")
 	}
 
 	startCommand := append(img.Config.Entrypoint, img.Config.Cmd...)
