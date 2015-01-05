@@ -68,44 +68,59 @@ So to update, you have to destroy the box and bring it back up as shown below:
 ##Setting up AWS With a Collocated Installation
 Follow [Amazon's instructions](http://docs.aws.amazon.com/cli/latest/userguide/installing.html) for setting up the aws cli.
 
-Configure the aws cli with your aws access key, aws secret access key, and the us-west-1 region
+1. Configure the aws cli with your aws access key, aws secret access key, and the us-west-1 region
 
-     aws config
+   ```
+   aws config
+   ```
 
-Set up security group
+1. Set up security group
 
-     aws ec2 create-security-group --group-name lattice --description "lattice security group."
+   ```
+   aws ec2 create-security-group --group-name lattice --description "lattice security group."
+   ```
 
-Open up the instance to incoming tcp traffic
+1. Open up the instance to incoming tcp traffic
 
-     aws ec2 authorize-security-group-ingress --group-name lattice --protocol tcp --port 1-65535 --cidr 0.0.0.0/0
+   ```
+   aws ec2 authorize-security-group-ingress --group-name lattice --protocol tcp --port 1-65535 --cidr 0.0.0.0/0
+   aws ec2 authorize-security-group-ingress --group-name lattice --protocol udp --port 1-65535 --cidr 0.0.0.0/0
+   ```
 
-Creates a credentials file containing the username and password that you want to use for the cli
+1. Creates a credentials file containing the username and password that you want to use for the cli
 
-     echo "LATTICE_USERNAME=<Your Username>" > lattice-credentials
-     echo "LATTICE_PASSWORD=<Your Password>" >> lattice-credentials
+   ```
+   echo "LATTICE_USERNAME=<Your Username>" > lattice-credentials
+   echo "LATTICE_PASSWORD=<Your Password>" >> lattice-credentials
+   ```
 
-Create a key pair
+1. Create a key pair
 
-    aws ec2 create-key-pair --key-name lattice-key
+   ```
+   aws ec2 create-key-pair --key-name lattice-key
+   ```
 
-Launch an instance of lattice with your base64 encoded username and password file
+1. Launch an instance of lattice with your base64 encoded username and password file
 
-    aws ec2 run-instances --image-id ami-03958746 --security-groups lattice --key-name lattice-key --user-data `base64 lattice-credentials`
+   ```
+   aws ec2 run-instances --image-id ami-7d091538 --security-groups lattice --key-name lattice-key --user-data `base64 lattice-credentials`
+   ```
+
+###Targeting
 
 Find the PublicIpAddress of the instance you just launched.  You can either use the EC2 Web Console or run the following
 command that lists all instances provisioned with the above AMI.
 
-    aws ec2 describe-instances --filter "Name=image-id,Values=ami-03958746" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
+    aws ec2 describe-instances --filter "Name=image-id,Values=ami-7d091538" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
 
 Sample output:
 
-    aws ec2 describe-instances --filter "Name=image-id,Values=ami-03958746" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
+    aws ec2 describe-instances --filter "Name=image-id,Values=ami-7d091538" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
             "ReservationId": "r-68fb47a2",
                     "LaunchTime": "2014-12-16T15:43:06.000Z",
                     "PublicIpAddress": "12.345.130.132",
                     "InstanceId": "i-d2b59718",
-                    "ImageId": "ami-03958746",
+                    "ImageId": "ami-7d091538",
 
 Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli). The target will be the PublicIpAddress with the suffix "xip.io" appended. The cli will prompt for the username and password used above.
 
@@ -203,7 +218,7 @@ Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimenta
         --security-group-ids sg-XXXXXXXX \
         --image-id ami-6909152c \
         --private-ip-address 10.10.1.11 \
-        --key-name lattice-key3 \
+        --key-name lattice-key \
         --user-data `base64 lattice-credentials`
    ```
 
@@ -220,23 +235,23 @@ Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimenta
      --subnet-id subnet-XXXXXXXX \
      --security-group-ids sg-XXXXXXXX \
      --image-id ami-73091536 \
-     --key-name lattice-key3 \
+     --key-name lattice-key \
      --user-data `base64 diego-cell-config`
    ```
 
-##Targeting Lattice on AWS
+###Targeting
 
 Find the PublicIpAddress of the lattice coordinator instance you just launched.  You can either use the EC2 Web Console or run the following 
 command that lists all instances provisioned with the above AMI.
    
    ```
-    aws ec2 describe-instances --filter "Name=image-id,Values=ami-8fb8aaca" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
+    aws ec2 describe-instances --filter "Name=image-id,Values=ami-6909152c" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
    ```
    
 Sample output with a PublicIpAddress of 12.345.130.132:
    
    ```
-    aws ec2 describe-instances --filter "Name=image-id,Values=ami-8fb8aaca" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
+    aws ec2 describe-instances --filter "Name=image-id,Values=ami-6909152c" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
             "ReservationId": "r-68fb47a2",
                     "LaunchTime": "2014-12-16T15:43:06.000Z",
                     "PublicIpAddress": "12.345.130.132",
