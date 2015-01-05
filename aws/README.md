@@ -33,7 +33,7 @@ module "lattice" {
     aws_ssh_private_key_file = "<CHANGE-ME>"
 
     # The number of Lattice Cells to launch
-    num_cells = 3
+    num_cells = "3"
 }
 ```
 
