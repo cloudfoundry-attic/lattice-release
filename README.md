@@ -2,6 +2,8 @@
 
 ##Running the box
 
+    $ git clone git@github.com:pivotal-cf-experimental/lattice.git
+    $ cd lattice
     $ vagrant up
 
 Vagrant up spins up a virtual hardware environment that is accessible at 192.168.11.11. You can do this with either VMware Fusion or VirtualBox:. You can specify your preferred provider with the --provider flag.
@@ -63,209 +65,82 @@ So to update, you have to destroy the box and bring it back up as shown below:
 
     VAGRANT_LATTICE_TAR_PATH=/vagrant/lattice.tgz vagrant up
 
-#Aws
-
-##Setting up AWS With a Collocated Installation
-Follow [Amazon's instructions](http://docs.aws.amazon.com/cli/latest/userguide/installing.html) for setting up the aws cli.
-
-1. Configure the aws cli with your aws access key, aws secret access key, and the us-west-1 region
-
-   ```
-   aws config
-   ```
-
-1. Set up security group
-
-   ```
-   aws ec2 create-security-group --group-name lattice --description "lattice security group."
-   ```
-
-1. Open up the instance to incoming tcp traffic
-
-   ```
-   aws ec2 authorize-security-group-ingress --group-name lattice --protocol tcp --port 1-65535 --cidr 0.0.0.0/0
-   aws ec2 authorize-security-group-ingress --group-name lattice --protocol udp --port 1-65535 --cidr 0.0.0.0/0
-   ```
-
-1. Creates a credentials file containing the username and password that you want to use for the cli
-
-   ```
-   echo "LATTICE_USERNAME=<Your Username>" > lattice-credentials
-   echo "LATTICE_PASSWORD=<Your Password>" >> lattice-credentials
-   ```
-
-1. Create a key pair
-
-   ```
-   aws ec2 create-key-pair --key-name lattice-key
-   ```
-
-1. Launch an instance of lattice with your base64 encoded username and password file
-
-   ```
-   aws ec2 run-instances --image-id ami-7d091538 --security-groups lattice --key-name lattice-key --user-data `base64 lattice-credentials`
-   ```
-
-###Targeting
-
-Find the PublicIpAddress of the instance you just launched.  You can either use the EC2 Web Console or run the following
-command that lists all instances provisioned with the above AMI.
-
-    aws ec2 describe-instances --filter "Name=image-id,Values=ami-7d091538" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
-
-Sample output:
-
-    aws ec2 describe-instances --filter "Name=image-id,Values=ami-7d091538" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
-            "ReservationId": "r-68fb47a2",
-                    "LaunchTime": "2014-12-16T15:43:06.000Z",
-                    "PublicIpAddress": "12.345.130.132",
-                    "InstanceId": "i-d2b59718",
-                    "ImageId": "ami-7d091538",
-
-Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli). The target will be the PublicIpAddress with the suffix "xip.io" appended. The cli will prompt for the username and password used above.
-
-    ltc target 12.345.130.132.xip.io
-        Username: <Your Username>
-        Password: <Your Password>
+#Terraform Deployment
 
 
-##Setting up AWS With separate Coordinator and Cell(s)
+This project contains several [Terraform](https://www.terraform.io/) templates to help you deploy
+[Lattice](https://github.com/pivotal-cf-experimental/lattice) on your choice of IaaS.
+They are located under the terraform directory.
 
-1. Follow [Amazon's instructions](http://docs.aws.amazon.com/cli/latest/userguide/installing.html) for setting up the aws cli. Configure the aws cli with your aws access key, aws secret access key, and the us-west-1 region. 
-   
-   ```
-   aws config
-   ```
-   
-1. Create a Virtual Private Cloud, VPC. Find the VpcId from the output.
-   
-   ```
-   aws ec2 create-vpc --cidr-block 10.10.0.0/16
-   ```
-     
-1. Create a Subnet with the VpcId created above. Find the SubnetId from the output.
+## Usage
 
-   ```
-   aws ec2 create-subnet --vpc-id vpc-XXXXXXXX --cidr-block 10.10.1.0/24
-   ```
+### Prerequisites
 
-1. Configure the subnet to assign public IP addresses on launch.
-    
-   ``` 
-   aws ec2 modify-subnet-attribute --subnet-id subnet-XXXXXXXX --map-public-ip-on-launch
-   ```
-    
-1. Create an Internet Gateway. Find the InternetGatewayId from the output.
-    
-   ```
-    aws ec2 create-internet-gateway    
-   ```
-    
-1. Attach the internet gateway to the VPC created above. Use the InternetGatewayId and the VpcId from above.
-    
-   ```
-    aws ec2 attach-internet-gateway --internet-gateway-id igw-XXXXXXXX --vpc-id vpc-XXXXXXXX
-   ```
+* [Terraform](https://www.terraform.io/intro/getting-started/install.html) installed on your machine
+* Credentials for your choice of IaaS
 
-1. Create a new routing table associated with the VPC.
+### Configure
 
-   ```
-    aws ec2 create-route-table --vpc-id vpc-XXXXXXXX
-   ```
-1. Associate the route table with the subnet.
+#### [Amazon Web Services](http://aws.amazon.com/):
 
-   ```
-    aws ec2 associate-route-table --subnet-id=subnet-XXXXXXXX --route-table-id=rtb-XXXXXXXX
-   ```
-    
-1. Define a default route via the internet gateway on the routing table.
-       
-   ```
-    aws ec2 create-route --route-table-id rtb-XXXXXXXX --destination-cidr-block 0.0.0.0/0 --gateway-id igw-XXXXXXXX   
-   ```
-   
-1. Create a security group. Use the VpcId from above. Find the GroupId of new security group from the output.
+Create a `lattice.tf` file by downloading the [AWS example file](https://github.com/pivotal-cf-experimental/lattice/terraform/blob/master/aws/lattice.tf.example):
 
-   ```
-    aws ec2 create-security-group --group-name lattice --description "lattice security group." --vpc-id vpc-XXXXXXXX    
-   ```
+``` bash
+wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/aws/lattice.tf.example -O lattice.tf
+```
 
-1. Open up the instance to incoming traffic. Use the GroupId from above.
-    
-   ```
-    aws ec2 authorize-security-group-ingress --group-id sg-XXXXXXXX --protocol tcp --port 1-65535 --cidr 0.0.0.0/0
-    aws ec2 authorize-security-group-ingress --group-id sg-XXXXXXXX --protocol udp --port 1-65535 --cidr 0.0.0.0/0
-   ```
+Update the downloaded file filling the variables according to the [AWS README](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/aws/README.md) file.
 
-1. Creates a credentials file containing the username and password that you want to use for the cli
-     
-   ```
-    echo "LATTICE_USERNAME=<Your Username>" > lattice-credentials
-    echo "LATTICE_PASSWORD=<Your Password>" >> lattice-credentials
-   ```
+#### [DigitalOcean](https://www.digitalocean.com):
 
-1. Create a key pair
+Create a `lattice.tf` file by downloading the [DigitalOcean example file](digitalocean/lattice.tf.example):
 
-   ```
-    aws ec2 create-key-pair --key-name lattice-key
-   ```
-      
-1. Launch an instance of the lattice coordinator. This uses the base64 encoded username and password credentials file from step 8. It also launches the instance with a private ip address of 10.10.1.11. Use the SubnetId and GroupId from above.
+``` bash
+wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/digitalocean/lattice.tf.example -O lattice.tf
+```
 
-   ```
-    aws ec2 run-instances \
-        --subnet-id subnet-XXXXXXXX \
-        --security-group-ids sg-XXXXXXXX \
-        --image-id ami-6909152c \
-        --private-ip-address 10.10.1.11 \
-        --key-name lattice-key \
-        --user-data `base64 lattice-credentials`
-   ```
+Update the downloaded file filling the variables according to the [DigitalOcean README](https://github.com/pivotal-cf-experimental/lattice/terraform/blob/master/terraform/digitalocean/README.md) file.
 
-1. Creates a diego-cell-configuration file containing the private ip address from step 10.
-        
-   ```
-    echo "CONSUL_SERVER_IP=10.10.1.11" > diego-cell-config
-   ```
+#### [Google Cloud](https://cloud.google.com/):
 
-1. Launch at least one instance of the diego-cell.
+Create a `lattice.tf` file downloading the [Google Cloud example file](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/google/lattice.tf.example):
 
-   ```
-    aws ec2 run-instances \
-     --subnet-id subnet-XXXXXXXX \
-     --security-group-ids sg-XXXXXXXX \
-     --image-id ami-73091536 \
-     --key-name lattice-key \
-     --user-data `base64 diego-cell-config`
-   ```
+``` bash
+wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/lattice-terraform/master/google/lattice.tf.example -O lattice.tf
+```
+Update the downloaded file filling the variables according to the [Google Cloud README](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/google/README.md) file.
 
-###Targeting
+### Deploy
 
-Find the PublicIpAddress of the lattice coordinator instance you just launched.  You can either use the EC2 Web Console or run the following 
-command that lists all instances provisioned with the above AMI.
-   
-   ```
-    aws ec2 describe-instances --filter "Name=image-id,Values=ami-6909152c" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
-   ```
-   
-Sample output with a PublicIpAddress of 12.345.130.132:
-   
-   ```
-    aws ec2 describe-instances --filter "Name=image-id,Values=ami-6909152c" | egrep -i "reservationid|instanceid|imageid|publicipaddress|launchtime"
-            "ReservationId": "r-68fb47a2",
-                    "LaunchTime": "2014-12-16T15:43:06.000Z",
-                    "PublicIpAddress": "12.345.130.132",
-                    "InstanceId": "i-d2b59718",
-                    "ImageId": "ami-8fb8aaca",
-   ```
-      
-Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli). The target will be the PublicIpAddress with the suffix "xip.io" appended. The cli will prompt for the username and password used above.
- ```
-  ltc target 12.345.130.132.xip.io
-      Username: <Your Username>
-      Password: <Your Password>
- ```
-   
+Get the templates and deploy the cluster:
+
+```
+terraform get -update
+terraform apply
+```
+
+After the cluster has been successfully, terraform will print the Lattice domain:
+
+```
+Outputs:
+
+  lattice_target = x.x.x.x.xip.io
+  lattice_username = xxxxxxxx
+  lattice_password = xxxxxxxx
+```
+
+
+
+## Destroy
+
+Destroy the cluster:
+
+```
+terraform destroy
+```
+
+
+
 #Testing the Lattice Box
 
  Follow the [whetstone instructions](https://github.com/pivotal-cf-experimental/whetstone) for lattice
@@ -275,6 +150,45 @@ Target Lattice using the [Lattice Cli](https://github.com/pivotal-cf-experimenta
  Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli).
 
 
-#Developing
-  Development work should be done on the develop branch.
-  As a general rule, only CI should commit to master.
+
+# Contributing
+
+In the spirit of [free software](http://www.fsf.org/licensing/essays/free-sw.html), **everyone** is encouraged to help improve this project.
+
+Here are some ways *you* can contribute:
+
+* by using alpha, beta, and prerelease versions
+* by reporting bugs
+* by suggesting new features
+* by writing or editing documentation
+* by writing specifications
+* by writing code (**no patch is too small**: fix typos, add comments, clean up inconsistent whitespace)
+* by refactoring code
+* by closing [issues](https://github.com/pivotal-cf-experimental/lattice-terraform/issues)
+* by reviewing patches
+
+##Development Workflow
+
+Development work should be done on the develop branch.
+As a general rule, only CI should commit to master.
+
+## Submitting an Issue
+We use the [GitHub issue tracker](https://github.com/pivotal-cf-experimental/lattice-terraform/issues) to track bugs and features.
+Before submitting a bug report or feature request, check to make sure it hasn't already been submitted.
+You can indicate support for an existing issue by voting it up.
+When submitting a bug report, please include a [Gist](http://gist.github.com/) that includes a stack trace and any
+details that may be necessary to reproduce the bug, including your gem version, Ruby version, and operating system.
+Ideally, a bug report should include a pull request with failing specs.
+
+## Submitting a Pull Request
+
+1. Fork the project.
+2. Create a topic branch.
+3. Implement your feature or bug fix.
+4. Commit and push your changes.
+5. Submit a pull request.
+
+# Copyright
+
+See [LICENSE](https://github.com/pivotal-cf-experimental/lattice/blob/master/LICENSE) for details.
+Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).
