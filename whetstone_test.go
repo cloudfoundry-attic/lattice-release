@@ -55,7 +55,8 @@ var _ = Describe("Lattice", func() {
 		})
 
 		It("eventually runs a docker app", func() {
-			startDockerApp(appName)
+			startDockerApp(appName, "-i", "docker:///cloudfoundry/lattice-app", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Whetstone", "--quiet")
+
 			Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
 			logsStream := streamLogs(appName)
@@ -69,12 +70,18 @@ var _ = Describe("Lattice", func() {
 
 			logsStream.Terminate().Wait()
 		})
-	})
 
+		It("eventually runs a docker app with metadata from Docker Hub", func() {
+			startDockerApp(appName, "-i", "docker:///cloudfoundry/lattice-app")
+
+			Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
+		})
+	})
 })
 
-func startDockerApp(appName string) {
-	command := command(cli, "start", appName, "-i", "docker:///cloudfoundry/lattice-app", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Whetstone", "--quiet")
+func startDockerApp(appName string, args ...string) {
+	startArgs := append([]string{"start", appName}, args...)
+	command := command(cli, startArgs...)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
