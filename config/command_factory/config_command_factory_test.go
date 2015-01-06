@@ -38,7 +38,7 @@ var _ = Describe("CommandFactory", func() {
 		setTargetCommand = commandFactory.MakeSetTargetCommand()
 	})
 
-	Describe("targetCommand", func() {
+	Describe("SetTargetCommand", func() {
 		verifyOldTargetStillSet := func() {
 			config.Load()
 			Expect(config.Receptor()).To(Equal("http://olduser:oldpass@receptor.oldtarget.com"))

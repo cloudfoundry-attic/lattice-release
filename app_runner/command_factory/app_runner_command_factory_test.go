@@ -36,7 +36,7 @@ var _ = Describe("CommandFactory", func() {
 		dockerMetadataFetcher = &fake_docker_metadata_fetcher.FakeDockerMetadataFetcher{}
 	})
 
-	Describe("startApp", func() {
+	Describe("StartAppCommand", func() {
 
 		var startCommand cli.Command
 
@@ -293,7 +293,7 @@ var _ = Describe("CommandFactory", func() {
 		})
 	})
 
-	Describe("scaleApp", func() {
+	Describe("ScaleAppCommand", func() {
 
 		var scaleCommand cli.Command
 		BeforeEach(func() {
@@ -406,7 +406,7 @@ var _ = Describe("CommandFactory", func() {
 
 	})
 
-	Describe("stopApp", func() {
+	Describe("StopAppCommand", func() {
 		var stopCommand cli.Command
 		BeforeEach(func() {
 			timeProvider = faketimeprovider.New(time.Now())
@@ -483,7 +483,7 @@ var _ = Describe("CommandFactory", func() {
 		})
 	})
 
-	Describe("removeApp", func() {
+	Describe("RemoveAppCommand", func() {
 		var removeCommand cli.Command
 
 		BeforeEach(func() {
