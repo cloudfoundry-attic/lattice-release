@@ -12,5 +12,3 @@ tar -xf /tmp/lattice-latest.tgz -C /tmp
 
 echo "Installing Common Lattice tools"
 sudo mkdir -p /var/lattice/setup
-sudo sh -c 'echo "#!/bin/sh" > /var/lattice/setup/bootstrap'
-sudo chmod 755 /var/lattice/setup/bootstrap
