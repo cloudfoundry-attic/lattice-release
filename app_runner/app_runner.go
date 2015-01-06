@@ -120,7 +120,7 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
-		Domain:               "diego-edge",
+		Domain:               "lattice",
 		RootFSPath:           params.DockerImagePath,
 		Instances:            params.Instances,
 		Stack:                "lucid64",

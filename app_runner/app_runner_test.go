@@ -51,7 +51,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
 			Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0)).To(Equal(receptor.DesiredLRPCreateRequest{
 				ProcessGuid:          "americano-app",
-				Domain:               "diego-edge",
+				Domain:               "lattice",
 				RootFSPath:           "docker://runtest/runner",
 				Instances:            22,
 				Stack:                "lucid64",
