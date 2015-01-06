@@ -21,7 +21,7 @@ func (f *fakereceptorClientBuilder) Build(target string) receptor.Client {
 }
 
 var _ = Describe("targetVerifier", func() {
-	Describe("ValidateReceptor", func() {
+	Describe("ValidateAuthorization", func() {
 		var fakeReceptorClient *fake_receptor.FakeClient
 		var targets []string
 
@@ -35,20 +35,31 @@ var _ = Describe("targetVerifier", func() {
 			targets = []string{}
 		})
 
-		It("returns false if the receptor returns an error", func() {
-			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, errors.New("Unauthorized"))
-			targetVerifier := target_verifier.New(fakeReceptorClientFactory)
-
-			Expect(targetVerifier.ValidateReceptor("http://receptor.mylattice.com")).To(BeFalse())
-			Expect(targets).To(Equal([]string{"http://receptor.mylattice.com"}))
-		})
-
 		It("returns true if the receptor does not return an error", func() {
 			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 			targetVerifier := target_verifier.New(fakeReceptorClientFactory)
 
-			Expect(targetVerifier.ValidateReceptor("http://receptor.mylattice.com")).To(BeTrue())
+			ok, err := targetVerifier.ValidateAuthorization("http://receptor.mylattice.com")
+			Expect(ok).To(BeTrue())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(targets).To(Equal([]string{"http://receptor.mylattice.com"}))
+		})
+
+		It("returns false if the receptor returns an authorization error", func() {
+			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, errors.New(receptor.Unauthorized))
+			targetVerifier := target_verifier.New(fakeReceptorClientFactory)
+
+			ok, err := targetVerifier.ValidateAuthorization("http://receptor.mylattice.com")
+			Expect(ok).To(BeFalse())
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("returns an error if the receptor returns an error other than unauthorized", func() {
+			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, errors.New(receptor.UnknownError))
+			targetVerifier := target_verifier.New(fakeReceptorClientFactory)
+
+			_, err := targetVerifier.ValidateAuthorization("http://receptor.mylattice.com")
+			Expect(err).To(HaveOccurred())
 		})
 	})
 })

@@ -8,46 +8,48 @@ import (
 )
 
 type FakeTargetVerifier struct {
-	ValidateReceptorStub        func(name string) bool
-	validateReceptorMutex       sync.RWMutex
-	validateReceptorArgsForCall []struct {
+	ValidateAuthorizationStub        func(name string) (bool, error)
+	validateAuthorizationMutex       sync.RWMutex
+	validateAuthorizationArgsForCall []struct {
 		name string
 	}
-	validateReceptorReturns struct {
+	validateAuthorizationReturns struct {
 		result1 bool
+		result2 error
 	}
 }
 
-func (fake *FakeTargetVerifier) ValidateReceptor(name string) bool {
-	fake.validateReceptorMutex.Lock()
-	fake.validateReceptorArgsForCall = append(fake.validateReceptorArgsForCall, struct {
+func (fake *FakeTargetVerifier) ValidateAuthorization(name string) (bool, error) {
+	fake.validateAuthorizationMutex.Lock()
+	fake.validateAuthorizationArgsForCall = append(fake.validateAuthorizationArgsForCall, struct {
 		name string
 	}{name})
-	fake.validateReceptorMutex.Unlock()
-	if fake.ValidateReceptorStub != nil {
-		return fake.ValidateReceptorStub(name)
+	fake.validateAuthorizationMutex.Unlock()
+	if fake.ValidateAuthorizationStub != nil {
+		return fake.ValidateAuthorizationStub(name)
 	} else {
-		return fake.validateReceptorReturns.result1
+		return fake.validateAuthorizationReturns.result1, fake.validateAuthorizationReturns.result2
 	}
 }
 
-func (fake *FakeTargetVerifier) ValidateReceptorCallCount() int {
-	fake.validateReceptorMutex.RLock()
-	defer fake.validateReceptorMutex.RUnlock()
-	return len(fake.validateReceptorArgsForCall)
+func (fake *FakeTargetVerifier) ValidateAuthorizationCallCount() int {
+	fake.validateAuthorizationMutex.RLock()
+	defer fake.validateAuthorizationMutex.RUnlock()
+	return len(fake.validateAuthorizationArgsForCall)
 }
 
-func (fake *FakeTargetVerifier) ValidateReceptorArgsForCall(i int) string {
-	fake.validateReceptorMutex.RLock()
-	defer fake.validateReceptorMutex.RUnlock()
-	return fake.validateReceptorArgsForCall[i].name
+func (fake *FakeTargetVerifier) ValidateAuthorizationArgsForCall(i int) string {
+	fake.validateAuthorizationMutex.RLock()
+	defer fake.validateAuthorizationMutex.RUnlock()
+	return fake.validateAuthorizationArgsForCall[i].name
 }
 
-func (fake *FakeTargetVerifier) ValidateReceptorReturns(result1 bool) {
-	fake.ValidateReceptorStub = nil
-	fake.validateReceptorReturns = struct {
+func (fake *FakeTargetVerifier) ValidateAuthorizationReturns(result1 bool, result2 error) {
+	fake.ValidateAuthorizationStub = nil
+	fake.validateAuthorizationReturns = struct {
 		result1 bool
-	}{result1}
+		result2 error
+	}{result1, result2}
 }
 
 var _ target_verifier.TargetVerifier = new(FakeTargetVerifier)

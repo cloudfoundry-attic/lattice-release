@@ -60,7 +60,11 @@ func (cmd *configCommand) setTarget(context *cli.Context) {
 
 	cmd.config.SetTarget(target)
 	cmd.config.SetLogin("", "")
-	if cmd.targetVerifier.ValidateReceptor(cmd.config.Receptor()) {
+
+	if ok, err := cmd.targetVerifier.ValidateAuthorization(cmd.config.Receptor()); err != nil {
+		cmd.output.Say("Error verifying target: " + err.Error())
+		return
+	} else if ok {
 		cmd.save()
 		return
 	}
@@ -69,12 +73,15 @@ func (cmd *configCommand) setTarget(context *cli.Context) {
 	password := cmd.prompt("Password: ")
 
 	cmd.config.SetLogin(username, password)
-	if cmd.targetVerifier.ValidateReceptor(cmd.config.Receptor()) {
-		cmd.save()
+	if ok, err := cmd.targetVerifier.ValidateAuthorization(cmd.config.Receptor()); err != nil {
+		cmd.output.Say("Error verifying target: " + err.Error())
+		return
+	} else if !ok {
+		cmd.output.Say("Could not authorize target.")
 		return
 	}
 
-	cmd.output.Say("Could not verify target.")
+	cmd.save()
 }
 
 func (cmd *configCommand) save() {
