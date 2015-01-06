@@ -52,7 +52,7 @@ func NewCliApp() *cli.App {
 		appRunnerCommandFactory.MakeStopAppCommand(),
 		appRunnerCommandFactory.MakeRemoveAppCommand(),
 		logsCommandFactory.MakeLogsCommand(),
-		configCommandFactory.MakeSetTargetCommand(),
+		configCommandFactory.MakeTargetCommand(),
 	}
 	return app
 }

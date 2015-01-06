@@ -10,12 +10,21 @@ import (
 )
 
 var _ = Describe("config", func() {
-	Describe("SetTarget", func() {
+	Describe("Target", func() {
 		It("sets the target", func() {
 			testConfig := config.New(&fakePersister{})
 			testConfig.SetTarget("mynewapi.com")
 
 			Expect(testConfig.Target()).To(Equal("mynewapi.com"))
+		})
+	})
+
+	Describe("Username", func() {
+		It("sets the target", func() {
+			testConfig := config.New(&fakePersister{})
+			testConfig.SetLogin("ausername", "apassword")
+
+			Expect(testConfig.Username()).To(Equal("ausername"))
 		})
 	})
 

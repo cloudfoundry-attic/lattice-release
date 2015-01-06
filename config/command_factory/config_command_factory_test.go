@@ -19,12 +19,12 @@ import (
 
 var _ = Describe("CommandFactory", func() {
 	var (
-		stdinReader      *io.PipeReader
-		stdinWriter      *io.PipeWriter
-		outputBuffer     *gbytes.Buffer
-		setTargetCommand cli.Command
-		config           *config_package.Config
-		targetVerifier   *fake_target_verifier.FakeTargetVerifier
+		stdinReader    *io.PipeReader
+		stdinWriter    *io.PipeWriter
+		outputBuffer   *gbytes.Buffer
+		targetCommand  cli.Command
+		config         *config_package.Config
+		targetVerifier *fake_target_verifier.FakeTargetVerifier
 	)
 
 	BeforeEach(func() {
@@ -35,10 +35,10 @@ var _ = Describe("CommandFactory", func() {
 		config = config_package.New(persister.NewMemPersister())
 
 		commandFactory := command_factory.NewConfigCommandFactory(config, targetVerifier, stdinReader, output.New(outputBuffer))
-		setTargetCommand = commandFactory.MakeSetTargetCommand()
+		targetCommand = commandFactory.MakeTargetCommand()
 	})
 
-	Describe("SetTargetCommand", func() {
+	Describe("TargetCommand", func() {
 		verifyOldTargetStillSet := func() {
 			config.Load()
 			Expect(config.Receptor()).To(Equal("http://olduser:oldpass@receptor.oldtarget.com"))
@@ -50,13 +50,37 @@ var _ = Describe("CommandFactory", func() {
 			config.Save()
 		})
 
-		Context("target without auth", func() {
+		Context("displaying the target", func() {
+			It("outputs the current target", func() {
+				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{})
+
+				Expect(outputBuffer).To(test_helpers.Say("Target:\t\toldtarget.com\n"))
+				Expect(outputBuffer).To(test_helpers.Say("Username:\tolduser"))
+			})
+
+			It("does not show the username if no username is set", func() {
+				config.SetLogin("", "")
+
+				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{})
+
+				Expect(outputBuffer).ToNot(test_helpers.Say("Username:"))
+			})
+
+			It("alerts the user if no target is set", func() {
+				config.SetTarget("")
+				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{})
+
+				Expect(outputBuffer).To(test_helpers.Say("Target not set."))
+			})
+		})
+
+		Context("setting target without auth", func() {
 			BeforeEach(func() {
 				targetVerifier.ValidateAuthorizationReturns(true, nil)
 			})
 
 			It("saves the new target", func() {
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
 				Eventually(commandFinishChan).Should(BeClosed())
 
@@ -67,7 +91,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("clears out existing saved target credentials", func() {
-				test_helpers.ExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
 				Expect(targetVerifier.ValidateAuthorizationCallCount()).To(Equal(1))
 				Expect(targetVerifier.ValidateAuthorizationArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
@@ -75,21 +99,21 @@ var _ = Describe("CommandFactory", func() {
 
 			It("bubbles up errors from setting the target", func() {
 				commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("FAILURE setting api")), targetVerifier, stdinReader, output.New(outputBuffer))
-				setTargetCommand = commandFactory.MakeSetTargetCommand()
+				targetCommand = commandFactory.MakeTargetCommand()
 
-				test_helpers.ExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("FAILURE setting api"))
 			})
 		})
 
-		Context("target requiring auth", func() {
+		Context("setting target that requiries auth", func() {
 			BeforeEach(func() {
 				targetVerifier.ValidateAuthorizationReturns(false, nil)
 			})
 
 			It("sets the api, username, password from the target specified", func() {
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"myapi.com"})
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
 				stdinWriter.Write([]byte("testusername\n"))
@@ -110,7 +134,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("does not save the config if the receptor is never authorized", func() {
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"newtarget.com"})
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
 				stdinWriter.Write([]byte("notgood\n"))
@@ -124,7 +148,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("does not save the config if the receptor is never authorized", func() {
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(setTargetCommand, []string{"newtarget.com"})
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
 				stdinWriter.Write([]byte("notgood\n"))
@@ -141,18 +165,10 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		Context("setting an invalid target", func() {
-			It("returns an error if the target is blank", func() {
-				test_helpers.ExecuteCommandWithArgs(setTargetCommand, []string{""})
-
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Target required."))
-
-				verifyOldTargetStillSet()
-			})
-
 			It("does not save the config if the target verifier returns an error", func() {
 				targetVerifier.ValidateAuthorizationReturns(false, errors.New("Unknown Error"))
 
-				test_helpers.ExecuteCommandWithArgs(setTargetCommand, []string{"newtarget.com"})
+				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
 
 				Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
 

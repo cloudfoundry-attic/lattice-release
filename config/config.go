@@ -29,6 +29,14 @@ func (c *Config) SetLogin(username string, password string) {
 	c.data.Password = password
 }
 
+func (c *Config) Target() string {
+	return c.data.Target
+}
+
+func (c *Config) Username() string {
+	return c.data.Username
+}
+
 func (c *Config) Loggregator() string {
 	return "doppler." + c.data.Target
 }
@@ -43,10 +51,6 @@ func (c *Config) Receptor() string {
 
 func (c *Config) Load() error {
 	return c.persister.Load(c.data)
-}
-
-func (c *Config) Target() string {
-	return c.data.Target
 }
 
 func (c *Config) Save() error {

@@ -2,6 +2,7 @@ package command_factory
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"strings"
 
@@ -19,7 +20,7 @@ func NewConfigCommandFactory(config *config.Config, targetVerifier target_verifi
 	return &commandFactory{&configCommand{config, input, output, targetVerifier}}
 }
 
-func (c *commandFactory) MakeSetTargetCommand() cli.Command {
+func (c *commandFactory) MakeTargetCommand() cli.Command {
 	var targetFlags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "username, u",
@@ -36,7 +37,7 @@ func (c *commandFactory) MakeSetTargetCommand() cli.Command {
 		ShortName:   "t",
 		Description: "set a target lattice location",
 		Usage:       "ltc target LATTICE_DOMAIN [--username USERNAME --password PASSWORD]",
-		Action:      c.cmd.setTarget,
+		Action:      c.cmd.target,
 		Flags:       targetFlags,
 	}
 
@@ -50,11 +51,11 @@ type configCommand struct {
 	targetVerifier target_verifier.TargetVerifier
 }
 
-func (cmd *configCommand) setTarget(context *cli.Context) {
+func (cmd *configCommand) target(context *cli.Context) {
 	target := context.Args().First()
 
 	if target == "" {
-		cmd.output.IncorrectUsage("Target required.")
+		cmd.printTarget()
 		return
 	}
 
@@ -108,5 +109,17 @@ func (cmd *configCommand) incorrectUsage(message string) {
 		cmd.output.Say("Incorrect Usage: " + message)
 	} else {
 		cmd.output.Say("Incorrect Usage")
+	}
+}
+
+func (cmd *configCommand) printTarget() {
+	if cmd.config.Target() == "" {
+		cmd.output.Say("Target not set.")
+		return
+	}
+	cmd.output.Say(fmt.Sprintf("Target:\t\t%s", cmd.config.Target()))
+
+	if cmd.config.Username() != "" {
+		cmd.output.Say(fmt.Sprintf("\nUsername:\t%s", cmd.config.Username()))
 	}
 }
