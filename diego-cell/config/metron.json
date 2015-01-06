@@ -3,7 +3,7 @@
     "EtcdMaxConcurrentRequests": 10,
     "SharedSecret": "loggregator-secret",
     "LegacyIncomingMessagesPort": 4456,
-    "DropsondeIncomingMessagesPort": 4458,
+    "DropsondeIncomingMessagesPort": 3457,
     "Index": 0,
     "Job": "cell_z1",
     "VarzUser": "",
