@@ -1,5 +1,5 @@
 module "lattice" {
-    source = "github.com/cf-platform-eng/lattice-terraform/google"
+    source = "github.com/pivotal-cf-experimental/lattice/terraform/google"
 
     # Path to the JSON file used to describe your account credentials, downloaded from Google Cloud Console
     gce_account_file = "<CHANGE-ME>"

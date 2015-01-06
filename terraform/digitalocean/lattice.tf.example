@@ -1,5 +1,5 @@
 module "lattice" {
-    source = "github.com/cf-platform-eng/lattice-terraform/digitalocean"
+    source = "github.com/pivotal-cf-experimental/lattice/terraform/digitalocean"
 
     # Digital Ocean API token
     do_token = "<CHANGE-ME>"

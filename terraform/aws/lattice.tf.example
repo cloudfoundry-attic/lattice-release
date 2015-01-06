@@ -1,5 +1,5 @@
 module "lattice" {
-    source = "github.com/cf-platform-eng/lattice-terraform/aws"
+    source = "github.com/pivotal-cf-experimental/lattice/terraform/aws"
 
     # AWS access key
     aws_access_key = "<CHANGE-ME>"
