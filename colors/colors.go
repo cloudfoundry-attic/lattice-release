@@ -12,25 +12,29 @@ const (
 )
 
 func Red(output string) string {
-	return fmt.Sprintf("%s%s%s", red, output, defaultStyle)
+	return colorize(output, red)
 }
 
 func Green(output string) string {
-	return fmt.Sprintf("%s%s%s", green, output, defaultStyle)
+	return colorize(output, green)
 }
 
 func Cyan(output string) string {
-	return fmt.Sprintf("%s%s%s", cyan, output, defaultStyle)
+	return colorize(output, cyan)
 }
 
 func Yellow(output string) string {
-	return fmt.Sprintf("%s%s%s", yellow, output, defaultStyle)
+	return colorize(output, yellow)
 }
 
 func NoColor(output string) string {
-	return fmt.Sprintf("%s%s%s", defaultStyle, output, defaultStyle)
+	return colorize(output, defaultStyle)
 }
 
 func Bold(output string) string {
-	return fmt.Sprintf("%s%s%s", boldStyle, output, defaultStyle)
+	return colorize(output, boldStyle)
+}
+
+func colorize(output string, color string) string {
+	return fmt.Sprintf("%s%s%s", color, output, defaultStyle)
 }
