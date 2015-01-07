@@ -3,7 +3,6 @@
 set -e
 
 mkdir -p /var/lattice/setup
-cp -a /tmp/lattice-build/common/setup/* /var/lattice/setup/
 
 apt-get -y update
 apt-get -y install curl

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ -f "$LOCAL_LATTICE_TAR_PATH" ]; then
+  echo "Found existing lattice tar at $LOCAL_LATTICE_TAR_PATH"
+  echo "If you want to redownload lattice, delete the .lattice folder and try again."
+else
+  echo "Downloading latest Lattice Release tar to `pwd`/.lattice/lattice.tgz"
+  mkdir -p .lattice
+
+  LATTICE_LATEST=https://s3-us-west-2.amazonaws.com/lattice/lattice-latest.tgz
+  wget --quiet $LATTICE_LATEST -O .lattice/lattice.tgz
+  echo "Download complete"
+fi

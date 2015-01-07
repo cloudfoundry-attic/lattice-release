@@ -73,3 +73,8 @@ variable "lattice_password" {
     description = "Lattice password."
     default = "c1oudc0w"
 }
+
+variable "local_lattice_tar_path" {
+    description = "Path to the lattice tar, to deploy to your cluster. If not provided, then by default, the provisioner will download the latest lattice tar to a .lattice directory within your module path"
+    default=".lattice/lattice.tgz"
+}
