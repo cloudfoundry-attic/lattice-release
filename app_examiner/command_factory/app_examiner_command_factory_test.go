@@ -48,12 +48,12 @@ var _ = Describe("CommandFactory", func() {
 
 			expectedOutput := gbytes.NewBuffer()
 			w := new(tabwriter.Writer)
-			w.Init(expectedOutput, 15+len(colors.NoColor("")), 8, 1, '\t', 0)
+			w.Init(expectedOutput, 10+len(colors.NoColor("")), 8, 1, '\t', 0)
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("App Name"), colors.Bold("Instances"), colors.Bold("DiskMb"), colors.Bold("MemoryMB"), colors.Bold("Routes"))
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process1"), colors.Red("0/21"), colors.NoColor("100"), colors.NoColor("50"), colors.NoColor("alldaylong.com"))
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process2"), colors.Yellow("9/8"), colors.NoColor("400"), colors.NoColor("30"), colors.NoColor("never.io"))
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process3"), colors.Green("5/5"), colors.NoColor("600"), colors.NoColor("90"), colors.NoColor("allthetime.com herewego.org"))
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process4"), colors.Green("0/0"), colors.NoColor("10"), colors.NoColor("10"), colors.NoColor(""))
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process1"), colors.Red("0/21"), colors.NoColor("100"), colors.NoColor("50"), colors.Cyan("alldaylong.com"))
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process2"), colors.Yellow("9/8"), colors.NoColor("400"), colors.NoColor("30"), colors.Cyan("never.io"))
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process3"), colors.Green("5/5"), colors.NoColor("600"), colors.NoColor("90"), colors.Cyan("allthetime.com herewego.org"))
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process4"), colors.Green("0/0"), colors.NoColor("10"), colors.NoColor("10"), colors.Cyan(""))
 			w.Flush()
 
 			test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})

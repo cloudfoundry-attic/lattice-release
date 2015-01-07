@@ -50,7 +50,7 @@ func (cmd *appExaminerCommand) listApps(context *cli.Context) {
 	}
 
 	w := &tabwriter.Writer{}
-	w.Init(cmd.output, 15+len(colors.NoColor("")), 8, 1, '\t', 0)
+	w.Init(cmd.output, 10+len(colors.NoColor("")), 8, 1, '\t', 0)
 
 	header := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", colors.Bold("App Name"), colors.Bold("Instances"), colors.Bold("DiskMb"), colors.Bold("MemoryMB"), colors.Bold("Routes"))
 	fmt.Fprintln(w, header)
@@ -58,7 +58,7 @@ func (cmd *appExaminerCommand) listApps(context *cli.Context) {
 	for _, appInfo := range appList {
 		routes := strings.Join(appInfo.Routes, " ")
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold(appInfo.ProcessGuid), colorInstances(appInfo), colors.NoColor(strconv.Itoa(appInfo.DiskMB)), colors.NoColor(strconv.Itoa(appInfo.MemoryMB)), colors.NoColor(routes))
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold(appInfo.ProcessGuid), colorInstances(appInfo), colors.NoColor(strconv.Itoa(appInfo.DiskMB)), colors.NoColor(strconv.Itoa(appInfo.MemoryMB)), colors.Cyan(routes))
 	}
 	w.Flush()
 }
