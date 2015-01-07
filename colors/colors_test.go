@@ -31,4 +31,16 @@ var _ = Describe("colors", func() {
 			Expect(colors.Yellow("INFO")).To(Equal("\x1b[33mINFO\x1b[0m"))
 		})
 	})
+
+	Describe("Bold", func() {
+		It("adds the yellow color code", func() {
+			Expect(colors.Bold("Bold")).To(Equal("\x1b[1mBold\x1b[0m"))
+		})
+	})
+
+	Describe("NoColor", func() {
+		It("adds the yellow color code", func() {
+			Expect(colors.NoColor("None")).To(Equal("\x1b[0mNone\x1b[0m"))
+		})
+	})
 })

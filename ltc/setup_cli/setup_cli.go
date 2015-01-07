@@ -8,6 +8,7 @@ import (
 	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/cloudfoundry/noaa"
 	"github.com/dajulia3/cli"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
@@ -19,6 +20,7 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/ltc/setup_cli/setup_cli_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 
+	app_examiner_command_factory "github.com/pivotal-cf-experimental/lattice-cli/app_examiner/command_factory"
 	app_runner_command_factory "github.com/pivotal-cf-experimental/lattice-cli/app_runner/command_factory"
 	config_command_factory "github.com/pivotal-cf-experimental/lattice-cli/config/command_factory"
 	logs_command_factory "github.com/pivotal-cf-experimental/lattice-cli/logs/command_factory"
@@ -46,6 +48,9 @@ func NewCliApp() *cli.App {
 	targetVerifier := target_verifier.New(receptor_client_factory.MakeReceptorClient)
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, targetVerifier, input, output)
 
+	appExaminer := app_examiner.New(receptorClient)
+	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, output)
+
 	app.Commands = []cli.Command{
 		appRunnerCommandFactory.MakeStartAppCommand(),
 		appRunnerCommandFactory.MakeScaleAppCommand(),
@@ -53,6 +58,7 @@ func NewCliApp() *cli.App {
 		appRunnerCommandFactory.MakeRemoveAppCommand(),
 		logsCommandFactory.MakeLogsCommand(),
 		configCommandFactory.MakeTargetCommand(),
+		appExaminerCommandFactory.MakeListAppCommand(),
 	}
 	return app
 }
