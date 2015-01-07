@@ -71,22 +71,26 @@ resource "aws_instance" "lattice-coordinator" {
         key_file = "${var.aws_ssh_private_key_file}"
     }
 
+    provisioner "file" {
+        source = "${path.module}/../scripts/install_from_tar"
+        destination = "/tmp/install_from_tar"
+    }
     provisioner "remote-exec" {
-        inline = [
-            "sudo mkdir -p /var/lattice/setup/",
-            "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${aws_instance.lattice-coordinator.private_ip}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_instance.lattice-coordinator.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
-        ]
+        inline = ["sudo chmod 755 /tmp/install_from_tar"]
     }
 
     provisioner "remote-exec" {
-        scripts = [
-            "${path.module}/../scripts/install_lattice_common",
-            "${path.module}/../scripts/install_lattice_coordinator",
-        ]
+        script = "${path.module}/../scripts/install-lattice-coordinator"
     }
+
+    provisioner "remote-exec" {
+            inline = [
+                "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
+                "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
+                "sudo sh -c 'echo \"CONSUL_SERVER_IP=${aws_instance.lattice-coordinator.private_ip}\" >> /var/lattice/setup/lattice-environment'",
+                "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_instance.lattice-coordinator.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
+            ]
+        }
 }
 
 resource "aws_instance" "lattice-cell" {
@@ -107,9 +111,21 @@ resource "aws_instance" "lattice-cell" {
         key_file = "${var.aws_ssh_private_key_file}"
     }
 
+    provisioner "file" {
+        source = "${path.module}/../scripts/install_from_tar"
+        destination = "/tmp/install_from_tar"
+    }
+
+    provisioner "remote-exec" {
+        inline = ["sudo chmod 755 /tmp/install_from_tar"]
+    }
+
+    provisioner "remote-exec" {
+        script = "${path.module}/../scripts/install-lattice-cell"
+    }
+
     provisioner "remote-exec" {
         inline = [
-            "sudo mkdir -p /var/lattice/setup/",
             "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${aws_instance.lattice-coordinator.private_ip}\" >> /var/lattice/setup/lattice-environment'",
@@ -118,10 +134,4 @@ resource "aws_instance" "lattice-cell" {
         ]
     }
 
-    provisioner "remote-exec" {
-        scripts = [
-            "${path.module}/../scripts/install_lattice_common",
-            "${path.module}/../scripts/install_lattice_cell",
-        ]
-    }
 }

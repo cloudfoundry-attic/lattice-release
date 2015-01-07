@@ -14,6 +14,9 @@ collocated-config
 diego-cell-config
 lattice-credentials
 
+lattice.tf
 terraform.tfvars
 terraform.tfstate
 terraform.tfstate.backup
+.lattice.tf.swp
+.terraform

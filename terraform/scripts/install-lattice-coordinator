@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sudo /tmp/install_from_tar coordinator

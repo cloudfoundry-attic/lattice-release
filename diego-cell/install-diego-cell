@@ -2,8 +2,7 @@
 
 set -e
 
-echo "Installing Lattice - Diego Cell"
-
+echo "Installing Lattice Cell"
 lattice_diego_cell_build_path=/tmp/lattice-build/diego-cell
 
 install_dependencies() {
@@ -47,5 +46,4 @@ mkdir -p /var/lattice/log
 install_dependencies &> /var/lattice/log/diego-cell-install.log
 start bootstrap
 
-echo "Finished Installing Lattice Diego-Cell!"
-
+echo "Finished Installing Lattice Cell!"
