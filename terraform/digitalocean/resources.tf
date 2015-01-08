@@ -95,7 +95,7 @@ resource "digitalocean_droplet" "lattice-cell" {
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${digitalocean_droplet.lattice-coordinator.ipv4_address}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"SYSTEM_DOMAIN=${digitalocean_droplet.lattice-coordinator.ipv4_address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"DIEGO_CELL_ID=lattice-cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"LATTICE_CELL_ID=lattice-cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
         ]
     }
 
