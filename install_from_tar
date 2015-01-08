@@ -5,9 +5,9 @@ set -e
 COMPONENT_TO_INSTALL=$1
 PATH_TO_LATTICE_TAR=$2
 
-if [ $COMPONENT_TO_INSTALL != "diego-cell" ] && [ $COMPONENT_TO_INSTALL != "coordinator" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
-    echo "Incorrect Usage. Must install either diego-cell or coordinator or both.
-    Usage: install_from_tar diego-cell [LATTICE_TAR_PATH] OR
+if [ $COMPONENT_TO_INSTALL != "lattice-cell" ] && [ $COMPONENT_TO_INSTALL != "coordinator" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
+    echo "Incorrect Usage. Must install either lattice-cell or coordinator or both.
+    Usage: install_from_tar lattice-cell [LATTICE_TAR_PATH] OR
            install_from_tar coordinator [LATTICE_TAR_PATH]
            install_from_tar collocated [LATTICE_TAR_PATH]
     "
@@ -36,7 +36,7 @@ if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
 
     sleep 2
 
-    /tmp/lattice-build/diego-cell/install-diego-cell
+    /tmp/lattice-build/lattice-cell/install-lattice-cell
 else
     /tmp/lattice-build/$COMPONENT_TO_INSTALL/install-$COMPONENT_TO_INSTALL
 fi

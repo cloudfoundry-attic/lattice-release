@@ -3,7 +3,7 @@
 set -e
 
 compile_garden_linux() {
-    mkdir -p $OUTPUT_DIR/diego-cell/garden
+    mkdir -p $OUTPUT_DIR/lattice-cell/garden
 
     GOPATH=$GOPATH/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace:$GOPATH
     go install -tags daemon github.com/cloudfoundry-incubator/garden-linux
@@ -12,8 +12,8 @@ compile_garden_linux() {
     pushd $DIEGO_RELEASE_PATH/src/github.com/cloudfoundry-incubator/garden-linux/old
         make
 
-        cp -a linux_backend/bin $OUTPUT_DIR/diego-cell/garden/garden-bin
-        cp -a linux_backend/skeleton $OUTPUT_DIR/diego-cell/garden/skeleton
+        cp -a linux_backend/bin $OUTPUT_DIR/lattice-cell/garden/garden-bin
+        cp -a linux_backend/skeleton $OUTPUT_DIR/lattice-cell/garden/skeleton
     popd
 }
 
@@ -41,7 +41,7 @@ compile_coordinator_loggregator() {
     popd
 }
 
-compile_diego_cell_loggregator() {
+compile_lattice_cell_loggregator() {
     pushd $CF_RELEASE_PATH/src/loggregator
         GOPATH=`pwd`
         go install metron
@@ -50,8 +50,8 @@ compile_diego_cell_loggregator() {
 }
 
 
-compile_diego-cell() {
-    export GOBIN=$OUTPUT_DIR/diego-cell/bin
+compile_lattice-cell() {
+    export GOBIN=$OUTPUT_DIR/lattice-cell/bin
 
     pushd $GOPATH
         go install github.com/cloudfoundry-incubator/rep/cmd/rep
@@ -61,13 +61,13 @@ compile_diego-cell() {
     popd
 
     compile_garden_linux
-    compile_diego_cell_loggregator
+    compile_lattice_cell_loggregator
 
     CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
     wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul
     chmod +x $GOBIN/consul
 
-    cp -av $LATTICE_PATH/diego-cell/ $OUTPUT_DIR/
+    cp -av $LATTICE_PATH/lattice-cell/ $OUTPUT_DIR/
 }
 
 compile_coordinator() {
@@ -114,5 +114,5 @@ rm -rf $GOPATH/pkg/*
 
 cp -av $LATTICE_PATH/common/ $OUTPUT_DIR/
 
-compile_diego-cell
+compile_lattice-cell
 compile_coordinator

@@ -3,7 +3,7 @@
 set -e
 
 echo "Installing Lattice Cell"
-lattice_diego_cell_build_path=/tmp/lattice-build/diego-cell
+lattice_cell_build_path=/tmp/lattice-build/lattice-cell
 
 install_dependencies() {
     echo "Installing Dependencies..."
@@ -19,9 +19,9 @@ install_dependencies() {
 }
 
 #-n so we don't overwrite the coordinator upstart scripts in collocated installation.
-#In collocated, Consul should run only in server mode and not use the diego-cell consul upstart which is client-only mode
-cp -n $lattice_diego_cell_build_path/upstart/* /etc/init
-cp -n $lattice_diego_cell_build_path/bin/* /usr/local/bin
+#In collocated, Consul should run only in server mode and not use the lattice-cell consul upstart which is client-only mode
+cp -n $lattice_cell_build_path/upstart/* /etc/init
+cp -n $lattice_cell_build_path/bin/* /usr/local/bin
 
 mkdir -p /var/lattice/garden
 mkdir -p /var/lattice/garden/depot
@@ -29,11 +29,11 @@ mkdir -p /var/lattice/garden/rootfs
 mkdir -p /var/lattice/garden/overlays
 mkdir -p /var/lattice/garden/graph
 
-cp -a $lattice_diego_cell_build_path/garden/garden-bin /var/lattice/garden/garden-bin
-cp -a $lattice_diego_cell_build_path/garden/skeleton /var/lattice/garden/skeleton
+cp -a $lattice_cell_build_path/garden/garden-bin /var/lattice/garden/garden-bin
+cp -a $lattice_cell_build_path/garden/skeleton /var/lattice/garden/skeleton
 
 mkdir -p /var/lattice/config
-cp -a $lattice_diego_cell_build_path/config /var/lattice
+cp -a $lattice_cell_build_path/config /var/lattice
 
 apt-get -y install gcc
 apt-get -y install make
@@ -43,7 +43,7 @@ apt-get -y install linux-image-extra-$(uname -r)
 mkdir -p /var/lattice/run
 mkdir -p /var/lattice/log
 
-install_dependencies &> /var/lattice/log/diego-cell-install.log
+install_dependencies &> /var/lattice/log/lattice-cell-install.log
 start bootstrap
 
 echo "Finished Installing Lattice Cell!"

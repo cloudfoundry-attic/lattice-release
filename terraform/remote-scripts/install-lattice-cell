@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo /tmp/install_from_tar diego-cell
+sudo /tmp/install_from_tar lattice-cell
