@@ -15,7 +15,7 @@ if [ $COMPONENT_TO_INSTALL != "lattice-cell" ] && [ $COMPONENT_TO_INSTALL != "co
 fi
 
 if [ -z "${PATH_TO_LATTICE_TAR}" ]; then
-  echo "Downloading latest Diego Edge Release tar"
+  echo "Downloading latest Lattice Release tar"
   PATH_TO_LATTICE_TAR=/tmp/lattice-latest.tgz
 
   LATTICE_LATEST=https://s3-us-west-2.amazonaws.com/lattice/lattice-latest.tgz
