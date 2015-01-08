@@ -112,7 +112,8 @@ export GOPATH=$DIEGO_RELEASE_PATH
 rm -rf $OUTPUT_DIR/*
 rm -rf $GOPATH/pkg/*
 
-cp -av $LATTICE_PATH/common/ $OUTPUT_DIR/
+mkdir -pv $LATTICE_PATH/common
+cp -av $LATTICE_PATH/common/* $OUTPUT_DIR/common/
 
 compile_lattice-cell
 compile_coordinator
