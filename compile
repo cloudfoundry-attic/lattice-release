@@ -109,10 +109,20 @@ export GOOS=linux
 export GOARCH=amd64
 export GOPATH=$DIEGO_RELEASE_PATH
 
-rm -rf $OUTPUT_DIR/*
-rm -rf $GOPATH/pkg/*
+echo "DIEGO_RELEASE_PATH=$DIEGO_RELEASE_PATH"
+echo "CF_RELEASE_PATH=$CF_RELEASE_PATH"
+echo "LATTICE_PATH=$LATTICE_PATH"
+echo "GOOS=$GOOS"
+echo "GOARCH=$GOARCH"
+echo "GOPATH=$GOPATH"
 
-mkdir -pv $LATTICE_PATH/common
+rm -rfv $OUTPUT_DIR/*
+rm -rfv $GOPATH/pkg/*
+
+mkdir -pv $LATTICE_PATH/common/
+
+ls -ld $LATTICE_PATH/common/                            ## DEBUG ##
+
 cp -av $LATTICE_PATH/common/* $OUTPUT_DIR/common/
 
 compile_lattice-cell
