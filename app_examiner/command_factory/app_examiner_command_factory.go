@@ -44,6 +44,7 @@ func (cmd *appExaminerCommand) listApps(context *cli.Context) {
 	if err != nil {
 		cmd.output.Say("Error listing apps: " + err.Error())
 
+		return
 	} else if len(appList) == 0 {
 		cmd.output.Say("No apps to display.")
 		return
