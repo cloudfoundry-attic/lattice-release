@@ -34,6 +34,17 @@ module "lattice" {
 
     # The number of Lattice Cells to launch
     num_cells = "3"
+
+    #################################
+    ###  Optional Settings Below  ###
+    #################################
+
+    #If you wish to use your own lattice release instead of the latest version, uncomment the variable assignment below
+    #and set it to your own lattice tar's path.
+    # local_lattice_tar_path = ~/lattice.tgz
+
+    # AWS region (e.g., us-west-1)
+    # aws_region = "<CHANGE-ME>"
 }
 ```
 
@@ -49,10 +60,10 @@ The available variables that can be configured are:
 * `aws_subnet_cidr_block`: The IPv4 address range that machines in the network are assigned to, represented as a CIDR block (default `10.0.1.0/24`)
 * `aws_image`: The name of the image to base the launched instances (default `ubuntu trusty 64bit hvm ami`)
 * `aws_instance_type_coordinator`: The machine type to use for the Lattice Coordinator instance (default `m3.medium`)
-* `aws_instance_type_cell`: The machine type to use for the Lattice Cells instances (default `m3.xlarge`)
+* `aws_instance_type_cell`: The machine type to use for the Lattice Cells instances (default `m3.medium`)
 * `num_cells`: The number of Lattice Cells to launch (default `3`)
-* `lattice_username`: Lattice username (default `admin`)
-* `lattice_password`: Lattice password (default `c1oudc0w`)
+* `lattice_username`: Lattice username (default `user`)
+* `lattice_password`: Lattice password (default `pass`)
 
 Refer to the [Terraform AWS provider](https://www.terraform.io/docs/providers/aws/index.html)
 documentation for more details about how to configure the proper credentials.
