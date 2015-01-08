@@ -10,10 +10,6 @@ lattice.tgz
 *.box
 *.iso
 
-collocated-config
-diego-cell-config
-lattice-credentials
-
 lattice.tf
 terraform.tfvars
 terraform.tfstate
