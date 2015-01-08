@@ -12,6 +12,29 @@ resource "digitalocean_droplet" "lattice-coordinator" {
         key_file = "${var.do_ssh_private_key_file}"
     }
 
+    #COMMON
+    provisioner "local-exec" {
+      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} ${path.module}/../local-scripts/download-lattice-tar"
+    }
+
+    provisioner "file" {
+      source = "${var.local_lattice_tar_path}"
+      destination = "/tmp/lattice.tgz"
+    }
+
+    provisioner "file" {
+      source = "${path.module}/../remote-scripts/install_from_tar"
+      destination = "/tmp/install_from_tar"
+    }
+
+    provisioner "remote-exec" {
+      inline = [
+          "sudo chmod 755 /tmp/install_from_tar",
+          "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
+      ]
+    }
+    #/COMMON
+
     provisioner "remote-exec" {
         inline = [
             "sudo mkdir -p /var/lattice/setup/",
@@ -23,10 +46,7 @@ resource "digitalocean_droplet" "lattice-coordinator" {
     }
 
     provisioner "remote-exec" {
-        scripts = [
-            "${path.module}/../scripts/install_lattice_common",
-            "${path.module}/../scripts/install_lattice_coordinator",
-        ]
+        script = "${path.module}/../remote-scripts/install-lattice-coordinator"
     }
 }
 
@@ -45,27 +65,28 @@ resource "digitalocean_droplet" "lattice-cell" {
         key_file = "${var.do_ssh_private_key_file}"
     }
 
-#COMMON
+    #COMMON
     provisioner "local-exec" {
-        command = "sudo MODULE_PATH='${path.module}' LOCAL_LATTICE_TAR_PATH='${var.local_lattice_tar_path}' ${path.module}/../local-scripts/download-lattice-tar"
-    }
-    provisioner "file" {
-        source = "${var.local_lattice_tar_path}"
-        destination = "/tmp/lattice.tgz"
+      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} ${path.module}/../local-scripts/download-lattice-tar"
     }
 
     provisioner "file" {
-        source = "${path.module}/../remote-scripts/install_from_tar"
-        destination = "/tmp/install_from_tar"
+      source = "${var.local_lattice_tar_path}"
+      destination = "/tmp/lattice.tgz"
+    }
+
+    provisioner "file" {
+      source = "${path.module}/../remote-scripts/install_from_tar"
+      destination = "/tmp/install_from_tar"
     }
 
     provisioner "remote-exec" {
-        inline = [
-            "sudo chmod 755 /tmp/install_from_tar",
-            "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
-        ]
+      inline = [
+          "sudo chmod 755 /tmp/install_from_tar",
+          "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
+      ]
     }
-#/COMMON
+    #/COMMON
 
     provisioner "remote-exec" {
         inline = [

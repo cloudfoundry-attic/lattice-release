@@ -32,6 +32,17 @@ module "lattice" {
 
     # The number of Lattice Cells to launch
     num_cells = "3"
+
+    #################################
+    ###  Optional Settings Below  ###
+    #################################
+
+    #If you wish to use your own lattice release instead of the latest version, uncomment the variable assignment below
+    #and set it to your own lattice tar's path.
+    # local_lattice_tar_path = ~/lattice.tgz
+
+    # Digital Ocean region
+    # do_region = "<CHANGE-ME>"
 }
 ```
 
@@ -45,8 +56,8 @@ The available variables that can be configured are:
 * `do_size_coordinator`: The DO size to use for the Lattice Coordinator instance (default `512mb`)
 * `do_size_cell`: The DO size to use for the Lattice Cell instances (default `2gb`)
 * `num_cells`: The number of Lattice Cells to launch (default `3`)
-* `lattice_username`: Lattice username (default `admin`)
-* `lattice_password`: Lattice password (default `c1oudc0w`)
+* `lattice_username`: Lattice username (default `user`)
+* `lattice_password`: Lattice password (default `pass`)
 
 Refer to the [Terraform DigitalOcean (DO) provider](https://www.terraform.io/docs/providers/do/index.html)
 documentation for more details about how to configure the proper credentials.
