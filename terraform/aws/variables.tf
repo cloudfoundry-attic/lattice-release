@@ -56,7 +56,7 @@ variable "aws_instance_type_coordinator" {
 
 variable "aws_instance_type_cell" {
     description = "The machine type to use for the Lattice Cells instances."
-    default = "m3.xlarge"
+    default = "m3.medium"
 }
 
 variable "num_cells" {
@@ -66,12 +66,12 @@ variable "num_cells" {
 
 variable "lattice_username" {
     description = "Lattice username."
-    default = "admin"
+    default = "user"
 }
 
 variable "lattice_password" {
     description = "Lattice password."
-    default = "c1oudc0w"
+    default = "pass"
 }
 
 variable "local_lattice_tar_path" {
