@@ -119,9 +119,9 @@ echo "GOPATH=$GOPATH"
 rm -rfv $OUTPUT_DIR/*
 rm -rfv $GOPATH/pkg/*
 
-mkdir -pv $LATTICE_PATH/common/
+mkdir -pv $OUTPUT_DIR/common/
 
-ls -ld $LATTICE_PATH/common/                            ## DEBUG ##
+ls -ld $OUTPUT_DIR/common/                            ## DEBUG ##
 
 cp -av $LATTICE_PATH/common/* $OUTPUT_DIR/common/
 
