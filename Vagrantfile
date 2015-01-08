@@ -1,7 +1,7 @@
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  system_ip = "192.168.11.11"
+  system_ip = ENV["LATTICE_SYSTEM_IP"] || "192.168.11.11"
   config.vm.network "private_network", ip: system_ip
 
   config.vm.box = "lattice/ubuntu-trusty-64"
