@@ -93,6 +93,21 @@ Destroy the cluster:
 terraform destroy
 ```
 
+### Caveats
+
+When working with Digital Ocean, terraform sometimes gets into an inconsistent state.  It is common for
+the "terraform apply" command to time out while provisioning the VMs, and subsequent terraform commands will
+then error out.  In some cases, a droplet will get stuck in the "New" status (not getting to "Active"), and
+all Digital Ocean API commands will return:
+
+```
+* Error deleting droplet: Error destroying droplet: API Error: unprocessable_entity: Droplet already has a pending event.
+```
+
+In the event this happens, the recommended avenue is to use the Digital Ocean console to tear down all the droplets,
+remove the terraform.tfstate file from the current directory, and then run "terraform apply" again to provision
+from scratch.
+
 ## Copyright
 
 See [LICENSE](https://github.com/pivotal-cf-experimental/lattice/blob/master/LICENSE) for details.
