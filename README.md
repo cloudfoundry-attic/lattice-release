@@ -83,7 +83,7 @@ They are located under the terraform directory.
 
 #### [Amazon Web Services](http://aws.amazon.com/):
 
-Create a `lattice.tf` file by downloading the [AWS example file](https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/aws/lattice.tf.example):
+Create a `lattice.tf` file by downloading the [AWS example file](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/aws/lattice.tf.example):
 
 ``` bash
 wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/aws/lattice.tf.example -O lattice.tf
@@ -93,7 +93,7 @@ Update the downloaded file filling the variables according to the [AWS README](h
 
 #### [DigitalOcean](https://www.digitalocean.com):
 
-Create a `lattice.tf` file by downloading the [DigitalOcean example file](https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/digitalocean/lattice.tf.example):
+Create a `lattice.tf` file by downloading the [DigitalOcean example file](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/digitalocean/lattice.tf.example):
 
 ``` bash
 wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/digitalocean/lattice.tf.example -O lattice.tf
