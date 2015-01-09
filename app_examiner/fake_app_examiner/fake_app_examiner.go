@@ -15,6 +15,13 @@ type FakeAppExaminer struct {
 		result1 []app_examiner.AppInfo
 		result2 error
 	}
+	ListCellsStub        func() ([]app_examiner.CellInfo, error)
+	listCellsMutex       sync.RWMutex
+	listCellsArgsForCall []struct{}
+	listCellsReturns     struct {
+		result1 []app_examiner.CellInfo
+		result2 error
+	}
 }
 
 func (fake *FakeAppExaminer) ListApps() ([]app_examiner.AppInfo, error) {
@@ -38,6 +45,31 @@ func (fake *FakeAppExaminer) ListAppsReturns(result1 []app_examiner.AppInfo, res
 	fake.ListAppsStub = nil
 	fake.listAppsReturns = struct {
 		result1 []app_examiner.AppInfo
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeAppExaminer) ListCells() ([]app_examiner.CellInfo, error) {
+	fake.listCellsMutex.Lock()
+	fake.listCellsArgsForCall = append(fake.listCellsArgsForCall, struct{}{})
+	fake.listCellsMutex.Unlock()
+	if fake.ListCellsStub != nil {
+		return fake.ListCellsStub()
+	} else {
+		return fake.listCellsReturns.result1, fake.listCellsReturns.result2
+	}
+}
+
+func (fake *FakeAppExaminer) ListCellsCallCount() int {
+	fake.listCellsMutex.RLock()
+	defer fake.listCellsMutex.RUnlock()
+	return len(fake.listCellsArgsForCall)
+}
+
+func (fake *FakeAppExaminer) ListCellsReturns(result1 []app_examiner.CellInfo, result2 error) {
+	fake.ListCellsStub = nil
+	fake.listCellsReturns = struct {
+		result1 []app_examiner.CellInfo
 		result2 error
 	}{result1, result2}
 }

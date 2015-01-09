@@ -5,6 +5,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
@@ -74,19 +75,130 @@ var _ = Describe("AppRunner", func() {
 		})
 
 		Context("with the receptor returning errors", func() {
-			It("returns errors from fetching the AcutalLRPs", func() {
-				fakeReceptorClient.ActualLRPsReturns([]receptor.ActualLRPResponse{}, errors.New("Receptor is Running."))
+			It("returns errors from fetching the ActualLRPs", func() {
+				fakeReceptorClient.ActualLRPsReturns(nil, errors.New("Receptor is Running."))
 				_, err := appExaminer.ListApps()
 
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("returns errors from from fetching the DesiredLRPs", func() {
-				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, errors.New("You should go catch it."))
+				fakeReceptorClient.DesiredLRPsReturns(nil, errors.New("You should go catch it."))
 				_, err := appExaminer.ListApps()
 
 				Expect(err).To(HaveOccurred())
 			})
+		})
+	})
+
+	Describe("ListCells", func() {
+		Context("receptor returns actual lrps that are all on existing cells", func() {
+			BeforeEach(func() {
+				actualLrps := []receptor.ActualLRPResponse{
+					receptor.ActualLRPResponse{CellID: "Cell-1", State: receptor.ActualLRPStateRunning},
+					receptor.ActualLRPResponse{CellID: "Cell-1", State: receptor.ActualLRPStateRunning},
+					receptor.ActualLRPResponse{CellID: "Cell-2", State: receptor.ActualLRPStateClaimed},
+					receptor.ActualLRPResponse{CellID: "Cell-2", State: receptor.ActualLRPStateRunning},
+				}
+
+				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
+
+				cells := []receptor.CellResponse{
+					receptor.CellResponse{CellID: "Cell-1"},
+					receptor.CellResponse{CellID: "Cell-2"},
+					receptor.CellResponse{CellID: "Cell-3"},
+				}
+				fakeReceptorClient.CellsReturns(cells, nil)
+			})
+
+			It("returns a list of alphabetically sorted examined cells", func() {
+				cellList, err := appExaminer.ListCells()
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(len(cellList)).To(Equal(3))
+
+				cell1 := cellList[0]
+				Expect(cell1.CellID).To(Equal("Cell-1"))
+				Expect(cell1.RunningInstances).To(Equal(2))
+				Expect(cell1.ClaimedInstances).To(Equal(0))
+
+				cell2 := cellList[1]
+				Expect(cell2.CellID).To(Equal("Cell-2"))
+				Expect(cell2.RunningInstances).To(Equal(1))
+				Expect(cell2.ClaimedInstances).To(Equal(1))
+
+				cell3 := cellList[2]
+				Expect(cell3.CellID).To(Equal("Cell-3"))
+				Expect(cell3.RunningInstances).To(Equal(0))
+				Expect(cell3.ClaimedInstances).To(Equal(0))
+			})
+		})
+
+		Context("receptor returns actual lrps, and some of their cells no longer exist", func() {
+			BeforeEach(func() {
+				actualLrps := []receptor.ActualLRPResponse{
+					receptor.ActualLRPResponse{CellID: "Cell-0", State: receptor.ActualLRPStateRunning},
+					receptor.ActualLRPResponse{CellID: "Cell-0", State: receptor.ActualLRPStateClaimed},
+					receptor.ActualLRPResponse{CellID: "Cell-1", State: receptor.ActualLRPStateRunning},
+				}
+
+				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
+
+				cells := []receptor.CellResponse{
+					receptor.CellResponse{CellID: "Cell-1"},
+				}
+				fakeReceptorClient.CellsReturns(cells, nil)
+			})
+
+			It("returns a list of alphabetically sorted examined cells", func() {
+				cellList, err := appExaminer.ListCells()
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(len(cellList)).To(Equal(2))
+
+				cell0 := cellList[0]
+				Expect(cell0.CellID).To(Equal("Cell-0"))
+				Expect(cell0.Missing).To(Equal(true))
+				Expect(cell0.RunningInstances).To(Equal(1))
+				Expect(cell0.ClaimedInstances).To(Equal(1))
+			})
+		})
+
+		Context("receptor returns unclaimed actual lrps", func() {
+			BeforeEach(func() {
+				actualLrps := []receptor.ActualLRPResponse{
+					receptor.ActualLRPResponse{State: receptor.ActualLRPStateUnclaimed},
+					receptor.ActualLRPResponse{State: receptor.ActualLRPStateUnclaimed},
+				}
+
+				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
+
+				fakeReceptorClient.CellsReturns([]receptor.CellResponse{}, nil)
+			})
+
+			It("ignores unclaimed actual lrps", func() {
+				cellList, err := appExaminer.ListCells()
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(len(cellList)).To(Equal(0))
+			})
+		})
+
+		Context("with the receptor returning errors", func() {
+			It("returns errors from from fetching the Cells", func() {
+				fakeReceptorClient.CellsReturns(nil, errors.New("You should go catch it."))
+				_, err := appExaminer.ListCells()
+
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("returns errors from fetching the ActualLRPs", func() {
+				fakeReceptorClient.ActualLRPsReturns(nil, errors.New("Receptor is Running."))
+				_, err := appExaminer.ListCells()
+
+				Expect(err).To(HaveOccurred())
+			})
+
 		})
 	})
 })

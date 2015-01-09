@@ -2,6 +2,7 @@ package setup_cli
 
 import (
 	"os"
+	"os/signal"
 	"time"
 
 	"github.com/cloudfoundry-incubator/receptor"
@@ -37,10 +38,14 @@ func NewCliApp() *cli.App {
 	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(userHome())))
 	config.Load()
 
+	signalChan := make(chan os.Signal)
+	signal.Notify(signalChan)
+
 	receptorClient := receptor.NewClient(config.Receptor())
 	appRunner := app_runner.New(receptorClient, config.Target())
 
-	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, docker_metadata_fetcher.New(), output, timeout(), config.Target(), os.Environ(), timeprovider.NewTimeProvider())
+	timeprovider := timeprovider.NewTimeProvider()
+	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, docker_metadata_fetcher.New(), output, timeout(), config.Target(), os.Environ(), timeprovider)
 
 	logReader := logs.NewLogReader(noaa.NewConsumer(setup_cli_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, output)
@@ -49,7 +54,7 @@ func NewCliApp() *cli.App {
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, targetVerifier, input, output)
 
 	appExaminer := app_examiner.New(receptorClient)
-	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, output)
+	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, output, timeprovider, signalChan)
 
 	app.Commands = []cli.Command{
 		appRunnerCommandFactory.MakeStartAppCommand(),
@@ -59,6 +64,7 @@ func NewCliApp() *cli.App {
 		logsCommandFactory.MakeLogsCommand(),
 		configCommandFactory.MakeTargetCommand(),
 		appExaminerCommandFactory.MakeListAppCommand(),
+		appExaminerCommandFactory.MakeVisualizeCommand(),
 	}
 	return app
 }

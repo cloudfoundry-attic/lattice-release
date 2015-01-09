@@ -1,6 +1,11 @@
 package colors
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
+
+var ColorCodeLength = len(red) + len(defaultStyle)
 
 const (
 	red          string = "\x1b[91m"
@@ -36,5 +41,8 @@ func Bold(output string) string {
 }
 
 func colorize(output string, color string) string {
+	if strings.TrimSpace(output) == "" {
+		return output
+	}
 	return fmt.Sprintf("%s%s%s", color, output, defaultStyle)
 }

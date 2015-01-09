@@ -14,8 +14,16 @@ type AppInfo struct {
 	Routes                 []string
 }
 
+type CellInfo struct {
+	CellID           string
+	RunningInstances int
+	ClaimedInstances int
+	Missing          bool
+}
+
 type AppExaminer interface {
 	ListApps() ([]AppInfo, error)
+	ListCells() ([]CellInfo, error)
 }
 
 type appExaminer struct {
@@ -24,6 +32,42 @@ type appExaminer struct {
 
 func New(receptorClient receptor.Client) *appExaminer {
 	return &appExaminer{receptorClient}
+}
+
+func (e *appExaminer) ListCells() ([]CellInfo, error) {
+	allCells := make(map[string]*CellInfo)
+	cellList, err := e.receptorClient.Cells()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, cell := range cellList {
+		allCells[cell.CellID] = &CellInfo{CellID: cell.CellID}
+	}
+
+	actualLRPs, err := e.receptorClient.ActualLRPs()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, actualLRP := range actualLRPs {
+		if actualLRP.State == receptor.ActualLRPStateUnclaimed {
+			continue
+		}
+
+		_, ok := allCells[actualLRP.CellID]
+		if !ok {
+			allCells[actualLRP.CellID] = &CellInfo{CellID: actualLRP.CellID, Missing: true}
+		}
+
+		if actualLRP.State == receptor.ActualLRPStateRunning {
+			allCells[actualLRP.CellID].RunningInstances++
+		} else if actualLRP.State == receptor.ActualLRPStateClaimed {
+			allCells[actualLRP.CellID].ClaimedInstances++
+		}
+	}
+
+	return sortCells(allCells), nil
 }
 
 func (e *appExaminer) ListApps() ([]AppInfo, error) {
@@ -70,6 +114,28 @@ func sortApps(allApps map[string]*AppInfo) []AppInfo {
 }
 
 func sortAppKeys(allApps map[string]*AppInfo) []string {
+	keys := make([]string, 0, len(allApps))
+	for key := range allApps {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	return keys
+}
+
+func sortCells(allCells map[string]*CellInfo) []CellInfo {
+	sortedKeys := sortCellKeys(allCells)
+
+	sortedCells := make([]CellInfo, 0, len(sortedKeys))
+	for _, key := range sortedKeys {
+		sortedCells = append(sortedCells, *allCells[key])
+
+	}
+
+	return sortedCells
+}
+
+func sortCellKeys(allApps map[string]*CellInfo) []string {
 	keys := make([]string, 0, len(allApps))
 	for key := range allApps {
 		keys = append(keys, key)
