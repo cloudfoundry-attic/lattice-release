@@ -83,7 +83,7 @@ They are located under the terraform directory.
 
 #### [Amazon Web Services](http://aws.amazon.com/):
 
-Create a `lattice.tf` file by downloading the [AWS example file](https://github.com/pivotal-cf-experimental/lattice/terraform/blob/master/aws/lattice.tf.example):
+Create a `lattice.tf` file by downloading the [AWS example file](https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/aws/lattice.tf.example):
 
 ``` bash
 wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/aws/lattice.tf.example -O lattice.tf
@@ -93,13 +93,13 @@ Update the downloaded file filling the variables according to the [AWS README](h
 
 #### [DigitalOcean](https://www.digitalocean.com):
 
-Create a `lattice.tf` file by downloading the [DigitalOcean example file](digitalocean/lattice.tf.example):
+Create a `lattice.tf` file by downloading the [DigitalOcean example file](https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/digitalocean/lattice.tf.example):
 
 ``` bash
 wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/digitalocean/lattice.tf.example -O lattice.tf
 ```
 
-Update the downloaded file filling the variables according to the [DigitalOcean README](https://github.com/pivotal-cf-experimental/lattice/terraform/blob/master/terraform/digitalocean/README.md) file.
+Update the downloaded file filling the variables according to the [DigitalOcean README](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/digitalocean/README.md) file.
 
 #### [Google Cloud](https://cloud.google.com/):
 
@@ -164,7 +164,7 @@ Here are some ways *you* can contribute:
 * by writing specifications
 * by writing code (**no patch is too small**: fix typos, add comments, clean up inconsistent whitespace)
 * by refactoring code
-* by closing [issues](https://github.com/pivotal-cf-experimental/lattice-terraform/issues)
+* by closing [issues](https://github.com/pivotal-cf-experimental/lattice/issues)
 * by reviewing patches
 
 ##Development Workflow
@@ -173,7 +173,7 @@ Development work should be done on the develop branch.
 As a general rule, only CI should commit to master.
 
 ## Submitting an Issue
-We use the [GitHub issue tracker](https://github.com/pivotal-cf-experimental/lattice-terraform/issues) to track bugs and features.
+We use the [GitHub issue tracker](https://github.com/pivotal-cf-experimental/lattice/issues) to track bugs and features.
 Before submitting a bug report or feature request, check to make sure it hasn't already been submitted.
 You can indicate support for an existing issue by voting it up.
 When submitting a bug report, please include a [Gist](http://gist.github.com/) that includes a stack trace and any
