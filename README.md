@@ -18,17 +18,14 @@ VMware Fusion:
 
 ## Networking Conflicts
 If you are trying to run both the Virtual Box and VMWare providers on the same machine, 
-you'll need to run them on different private networks that do not conflict. 
+you'll need to run them on different private networks (subnets) that do not conflict.
 
-Change the line of the vagrant file that says
+Set the System IP to an address that does not conflict with the host networking configuration by passing the
+LATTICE_SYSTEM_IP environment variable to the vagrant up command:
 
-      config.vm.network "private_network", ip: "192.168.11.11"
-
-to 
-
-      config.vm.network "private_network", ip: "192.168.80.100"
-
-or a different non-conflicting IP.
+```
+LATTICE_SYSTEM_IP=192.168.80.100 vagrant up
+```
 
 The output from vagrant up will provide instructions on how to target Lattice. 
 
