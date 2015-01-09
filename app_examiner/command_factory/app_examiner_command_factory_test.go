@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"syscall"
+	"sync"
 	"text/tabwriter"
 	"time"
 
@@ -30,6 +30,7 @@ var _ = Describe("CommandFactory", func() {
 		outputBuffer *gbytes.Buffer
 		timeProvider *faketimeprovider.FakeTimeProvider
 		osSignalChan chan os.Signal
+		exitHandler  *fakeExitHandler
 	)
 
 	BeforeEach(func() {
@@ -37,13 +38,14 @@ var _ = Describe("CommandFactory", func() {
 		outputBuffer = gbytes.NewBuffer()
 		osSignalChan = make(chan os.Signal, 1)
 		timeProvider = faketimeprovider.New(time.Now())
+		exitHandler = &fakeExitHandler{}
 	})
 
 	Describe("ListAppsCommand", func() {
 		var listAppsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), timeProvider, osSignalChan)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), timeProvider, exitHandler)
 			listAppsCommand = commandFactory.MakeListAppCommand()
 		})
 
@@ -94,7 +96,7 @@ var _ = Describe("CommandFactory", func() {
 		var visualizeCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), timeProvider, osSignalChan)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), timeProvider, exitHandler)
 			visualizeCommand = commandFactory.MakeVisualizeCommand()
 		})
 
@@ -170,18 +172,37 @@ var _ = Describe("CommandFactory", func() {
 			It("Ensures the user's cursor is visible even if they interrupt ltc", func() {
 				closeChan = test_helpers.AsyncExecuteCommandWithArgs(visualizeCommand, []string{"-rate=1s"})
 
-				osSignalChan <- syscall.SIGHUP
-				Consistently(closeChan).ShouldNot(BeClosed())
+				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 
-				osSignalChan <- os.Interrupt
-				Eventually(closeChan).Should(BeClosed())
+				exitHandler.SimulateExit()
+
+				Expect(outputBuffer).Should(test_helpers.Say(cursor.Show()))
 			})
 
 			AfterEach(func() {
-				osSignalChan <- os.Interrupt
+				go exitHandler.SimulateExit()
 				Eventually(closeChan).Should(BeClosed())
 			})
 		})
 
 	})
 })
+
+type fakeExitHandler struct {
+	sync.RWMutex
+	exitFunc func()
+}
+
+func (f *fakeExitHandler) OnExit(exitHandler func()) {
+	f.Lock()
+	defer f.Unlock()
+	f.exitFunc = exitHandler
+}
+
+func (f *fakeExitHandler) SimulateExit() {
+	f.Lock()
+	defer f.Unlock()
+	if f.exitFunc != nil {
+		f.exitFunc()
+	}
+}

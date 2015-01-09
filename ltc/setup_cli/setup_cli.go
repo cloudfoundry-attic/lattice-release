@@ -17,6 +17,7 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier/receptor_client_factory"
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler"
 	"github.com/pivotal-cf-experimental/lattice-cli/logs"
 	"github.com/pivotal-cf-experimental/lattice-cli/ltc/setup_cli/setup_cli_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
@@ -32,14 +33,22 @@ func NewCliApp() *cli.App {
 	app.Name = "ltc"
 	app.Usage = "Command line interface for Lattice."
 
-	input := os.Stdin
-	output := output.New(os.Stdout)
-
 	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(userHome())))
 	config.Load()
 
 	signalChan := make(chan os.Signal)
-	signal.Notify(signalChan)
+	signal.Notify(signalChan, os.Interrupt)
+	exitHandler := exit_handler.New(signalChan, os.Exit)
+	go exitHandler.Run()
+
+	app.Commands = cliCommands(exitHandler, config)
+
+	return app
+}
+
+func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config) []cli.Command {
+	input := os.Stdin
+	output := output.New(os.Stdout)
 
 	receptorClient := receptor.NewClient(config.Receptor())
 	appRunner := app_runner.New(receptorClient, config.Target())
@@ -54,9 +63,9 @@ func NewCliApp() *cli.App {
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, targetVerifier, input, output)
 
 	appExaminer := app_examiner.New(receptorClient)
-	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, output, timeprovider, signalChan)
+	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, output, timeprovider, exitHandler)
 
-	app.Commands = []cli.Command{
+	return []cli.Command{
 		appRunnerCommandFactory.MakeStartAppCommand(),
 		appRunnerCommandFactory.MakeScaleAppCommand(),
 		appRunnerCommandFactory.MakeStopAppCommand(),
@@ -66,7 +75,6 @@ func NewCliApp() *cli.App {
 		appExaminerCommandFactory.MakeListAppCommand(),
 		appExaminerCommandFactory.MakeVisualizeCommand(),
 	}
-	return app
 }
 
 func userHome() string {

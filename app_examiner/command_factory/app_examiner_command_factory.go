@@ -2,7 +2,6 @@ package command_factory
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -19,8 +18,12 @@ type AppExaminerCommandFactory struct {
 	appExaminerCommand *appExaminerCommand
 }
 
-func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, output *output.Output, timeProvider timeprovider.TimeProvider, signalChan chan os.Signal) *AppExaminerCommandFactory {
-	return &AppExaminerCommandFactory{&appExaminerCommand{appExaminer, output, timeProvider, signalChan}}
+type exitHandler interface {
+	OnExit(func())
+}
+
+func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, output *output.Output, timeProvider timeprovider.TimeProvider, exitHandler exitHandler) *AppExaminerCommandFactory {
+	return &AppExaminerCommandFactory{&appExaminerCommand{appExaminer, output, timeProvider, exitHandler}}
 }
 
 func (commandFactory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
@@ -61,7 +64,7 @@ type appExaminerCommand struct {
 	appExaminer  app_examiner.AppExaminer
 	output       *output.Output
 	timeProvider timeprovider.TimeProvider
-	signalChan   chan os.Signal
+	exitHandler  exitHandler
 }
 
 func (cmd *appExaminerCommand) listApps(context *cli.Context) {
@@ -100,24 +103,19 @@ func (cmd *appExaminerCommand) visualizeCells(context *cli.Context) {
 
 	closeChan := make(chan bool)
 	cmd.output.Say(cursor.Hide())
-	go func() {
-		for {
-			select {
-			case <-closeChan:
-				return
-			case <-cmd.timeProvider.NewTimer(rate).C():
-				cmd.output.Say(cursor.Up(linesWritten))
-				linesWritten = cmd.printDistribution()
-			}
-		}
-	}()
 
-	for signal := range cmd.signalChan {
-		if signal == os.Interrupt {
-			closeChan <- true
-			cmd.output.Say(cursor.Show())
+	cmd.exitHandler.OnExit(func() {
+		closeChan <- true
+		cmd.output.Say(cursor.Show())
+	})
+
+	for {
+		select {
+		case <-closeChan:
 			return
-
+		case <-cmd.timeProvider.NewTimer(rate).C():
+			cmd.output.Say(cursor.Up(linesWritten))
+			linesWritten = cmd.printDistribution()
 		}
 	}
 }
