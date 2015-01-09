@@ -77,7 +77,7 @@ func (cmd *appExaminerCommand) listApps(context *cli.Context) {
 	w := &tabwriter.Writer{}
 	w.Init(cmd.output, 10+colors.ColorCodeLength, 8, 1, '\t', 0)
 
-	header := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", colors.Bold("App Name"), colors.Bold("Instances"), colors.Bold("DiskMb"), colors.Bold("MemoryMB"), colors.Bold("Routes"))
+	header := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", colors.Bold("App Name"), colors.Bold("Instances"), colors.Bold("DiskMB"), colors.Bold("MemoryMB"), colors.Bold("Routes"))
 	fmt.Fprintln(w, header)
 
 	for _, appInfo := range appList {
