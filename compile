@@ -120,9 +120,6 @@ rm -rfv $OUTPUT_DIR/*
 rm -rfv $GOPATH/pkg/*
 
 mkdir -pv $OUTPUT_DIR/common/
-
-ls -ld $OUTPUT_DIR/common/                            ## DEBUG ##
-
 cp -av $LATTICE_PATH/common/* $OUTPUT_DIR/common/
 
 compile_lattice-cell
