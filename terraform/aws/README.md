@@ -14,7 +14,7 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 
 ### Configure
 
-Create a `lattice.tf` file (or use the provided [example](https://github.com/pivotal-cf-experimental/lattice/terraform/blob/master/aws/lattice.tf.example)) and add the following contents updating the variables properly:
+Create a `lattice.tf` file (or use the provided [example](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/aws/lattice.tf.example)) and add the following contents updating the variables properly:
 
 ```
 module "lattice" {
@@ -101,5 +101,5 @@ terraform destroy
 
 ## Copyright
 
-See [LICENSE](https://github.com/pivotal-cf-experimental/lattice/terraform/blob/master/LICENSE) for details.
+See [LICENSE](https://github.com/pivotal-cf-experimental/lattice/blob/master/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).
