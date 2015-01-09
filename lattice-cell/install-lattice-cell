@@ -20,28 +20,28 @@ install_dependencies() {
 
 #-n so we don't overwrite the coordinator upstart scripts in collocated installation.
 #In collocated, Consul should run only in server mode and not use the lattice-cell consul upstart which is client-only mode
-cp -n $lattice_cell_build_path/upstart/* /etc/init
-cp -n $lattice_cell_build_path/bin/* /usr/local/bin
+cp -nv $lattice_cell_build_path/upstart/* /etc/init
+cp -nv $lattice_cell_build_path/bin/* /usr/local/bin
 
-mkdir -p /var/lattice/garden
-mkdir -p /var/lattice/garden/depot
-mkdir -p /var/lattice/garden/rootfs
-mkdir -p /var/lattice/garden/overlays
-mkdir -p /var/lattice/garden/graph
+mkdir -pv /var/lattice/garden
+mkdir -pv /var/lattice/garden/depot
+mkdir -pv /var/lattice/garden/rootfs
+mkdir -pv /var/lattice/garden/overlays
+mkdir -pv /var/lattice/garden/graph
 
-cp -a $lattice_cell_build_path/garden/garden-bin /var/lattice/garden/garden-bin
-cp -a $lattice_cell_build_path/garden/skeleton /var/lattice/garden/skeleton
+cp -av $lattice_cell_build_path/garden/garden-bin /var/lattice/garden/garden-bin
+cp -av $lattice_cell_build_path/garden/skeleton /var/lattice/garden/skeleton
 
-mkdir -p /var/lattice/config
-cp -a $lattice_cell_build_path/config /var/lattice
+mkdir -pv /var/lattice/config
+cp -anv $lattice_cell_build_path/config /var/lattice
 
 apt-get -y install gcc
 apt-get -y install make
 apt-get -y install quota
 apt-get -y install linux-image-extra-$(uname -r)
 
-mkdir -p /var/lattice/run
-mkdir -p /var/lattice/log
+mkdir -pv /var/lattice/run
+mkdir -pv /var/lattice/log
 
 install_dependencies &> /var/lattice/log/lattice-cell-install.log
 start bootstrap

@@ -37,6 +37,7 @@ compile_coordinator_loggregator() {
         GOPATH=`pwd`
         go install trafficcontroller
         go install doppler
+        go install metron
         GOPATH=$DIEGO_RELEASE_PATH
     popd
 }
@@ -116,8 +117,8 @@ echo "GOOS=$GOOS"
 echo "GOARCH=$GOARCH"
 echo "GOPATH=$GOPATH"
 
-rm -rfv $OUTPUT_DIR/*
-rm -rfv $GOPATH/pkg/*
+rm -rf $OUTPUT_DIR/*
+rm -rf $GOPATH/pkg/*
 
 mkdir -pv $OUTPUT_DIR/common/
 cp -av $LATTICE_PATH/common/* $OUTPUT_DIR/common/

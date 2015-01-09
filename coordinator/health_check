@@ -1,7 +1,7 @@
 #!/bin/bash
 
 check_coordinator_processes(){
-    ps uawx | cut -c66- | egrep "^(consul|doppler|etcd|file-server|gnatsd|gorouter|receptor|route-emitter|trafficcontroller)" | grep -v egrep
+    ps uawx | cut -c66- | egrep "^(consul|doppler|etcd|file-server|gnatsd|gorouter|receptor|route-emitter|trafficcontroller|metron)" | grep -v egrep
 }
 
 num_coordinator_processes=$(check_coordinator_processes | wc -l)

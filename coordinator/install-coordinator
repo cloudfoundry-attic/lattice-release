@@ -6,23 +6,23 @@ echo "Installing Lattice - Coordinator"
 
 lattice_coordinator_path=/tmp/lattice-build/coordinator
 
-cp $lattice_coordinator_path/upstart/* /etc/init
-cp $lattice_coordinator_path/bin/* /usr/local/bin
+cp -v $lattice_coordinator_path/upstart/* /etc/init
+cp -v $lattice_coordinator_path/bin/* /usr/local/bin
 
-mkdir -p /var/lattice/static-files/docker-circus
+mkdir -pv /var/lattice/static-files/docker-circus
 
 pushd $lattice_coordinator_path/bin > /dev/null
     tar -czf /var/lattice/static-files/docker-circus/docker-circus.tgz spy
 popd > /dev/null
 
-mkdir -p /var/lattice/config
-cp -a $lattice_coordinator_path/config /var/lattice
+mkdir -pv /var/lattice/config
+cp -av $lattice_coordinator_path/config /var/lattice
 
-mkdir -p /var/lattice/setup
-cp -a $lattice_coordinator_path/setup /var/lattice
+mkdir -pv /var/lattice/setup
+cp -av $lattice_coordinator_path/setup /var/lattice
 
-mkdir -p /var/lattice/run
-mkdir -p /var/lattice/log
+mkdir -pv /var/lattice/run
+mkdir -pv /var/lattice/log
 
 start bootstrap &>> /var/lattice/log/coordinator-bootstrap.log
 
