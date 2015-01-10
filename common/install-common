@@ -4,5 +4,7 @@ set -e
 
 mkdir -pv /var/lattice/setup
 
-apt-get -y update
-apt-get -y install curl
+if [[ ! -x curl ]]; then
+  apt-get -y update
+  apt-get -y install curl
+fi
