@@ -73,7 +73,7 @@ They are located under the terraform directory.
 
 ### Prerequisites
 
-* [Terraform](https://www.terraform.io/intro/getting-started/install.html) installed on your machine
+* [Terraform](https://www.terraform.io/intro/getting-started/install.html) >= 0.3.6 installed on your machine
 * Credentials for your choice of IaaS
 
 ### Configure

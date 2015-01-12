@@ -12,7 +12,6 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 * A [Google Compute Engine project](https://cloud.google.com/compute/docs/projects)
 * A [Google Compute Engine account and client secrets files](https://www.terraform.io/docs/providers/google/index.html)
 * A [Google Compute Engine Password-less SSH Key](https://cloud.google.com/compute/docs/console#sshkeys)
-* [Terraform](https://www.terraform.io/downloads.html) >= 0.3.6 (not yet released as January 2nd 2015, [![hashicorp/terraform/pull/724](https://github-shields.cfapps.io/github/hashicorp/terraform/pull/724.svg)](https://github-shields.cfapps.io/github/hashicorp/terraform/pull/724) should be merged)
 
 ### Configure
 
