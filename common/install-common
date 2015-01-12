@@ -6,3 +6,11 @@ mkdir -pv /var/lattice/setup
 
 apt-get -y update
 apt-get -y install curl
+
+## log rotation ##
+lattice_common_build_path=/tmp/lattice-build/common
+cp -v $lattice_common_build_path/system-config/lattice.logrotate.txt /etc/logrotate.d/lattice
+
+echo "## logrotation"  >> /etc/crontab
+echo "*/5 * 	* * * 	root	/etc/cron.daily/logrotate" >> /etc/crontab
+

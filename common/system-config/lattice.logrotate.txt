@@ -1,0 +1,8 @@
+/var/lattice/log/*.log {
+        size 100M
+        missingok
+        rotate 5
+        compress
+        notifempty
+        create 644 root root
+}
