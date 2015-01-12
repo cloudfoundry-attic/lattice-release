@@ -62,6 +62,17 @@ The available variables that can be configured are:
 Refer to the [Terraform DigitalOcean (DO) provider](https://www.terraform.io/docs/providers/do/index.html)
 documentation for more details about how to configure the proper credentials.
 
+#### Generating the SSH public key fingerprint 
+
+You can generate the SSH public key fingerprint from your public key via (e.g.)
+
+```
+ssh-keygen -lf ~/.ssh/id_rsa.pub
+2048 aa:bb:cc:dd:ee:ff:aa:bb:cc:dd:ee:ff:aa:bb:cc:dd foo@bar.com (RSA)
+```
+
+The fingerprint is the second column in the output (`aa:bb...`)
+
 ### Deploy
 
 Get the templates and deploy the cluster:
