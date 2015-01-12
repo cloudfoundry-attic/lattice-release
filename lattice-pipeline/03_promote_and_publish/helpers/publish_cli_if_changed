@@ -1,0 +1,65 @@
+#!/bin/bash
+
+set -e
+
+get_previous_cli_version() {
+    pushd lattice-cli
+        previous_cli_version=$(git tag -l --sort "-version:refname" "v[0-9]*" | head -1)
+    popd
+ previous_cli_version=-1
+}
+
+check_if_cli_needs_bump() {
+    get_previous_cli_version
+    pushd lattice-cli
+        if [ "$(git rev-list $previous_cli_version..HEAD --count)" -gt "0" ]; then
+            cli_needs_bump="true"
+        else
+            cli_needs_bump="false"
+        fi
+    popd
+}
+
+bump_cli_version() {
+    get_previous_cli_version
+    pushd lattice-cli
+        new_cli_version="v$((previous_cli_version+1))" &&
+        git tag -a "$new_cli_version" -m "$(date)" &&
+        git push origin --tags
+    popd
+
+    echo "Bumped cli version from $previous_cli_version -> $new_cli_version and pushed tags"
+}
+
+compile_and_publish_cli() {
+    echo "Compiling cli..."
+    export GOPATH=/workspace/diego-release
+    mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
+    cp -r lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental
+
+    OUTDIR="$(pwd)/compiled-binaries"
+    mkdir -p $OUTDIR
+    export GOBIN="$OUTDIR"
+
+    rm -rf $GOPATH/pkg/*
+
+    GOARCH=amd64 GOOS=linux go install github.com/pivotal-cf-experimental/lattice-cli/ltc && cp $OUTDIR/ltc $OUTDIR/cf-darwin-amd64
+    GOARCH=amd64 GOOS=darwin go install github.com/pivotal-cf-experimental/lattice-cli/ltc && cp $OUTDIR/ltc $OUTDIR/cf-linux-amd64
+
+    echo "Compiled. Uploading to s3.."
+
+    aws s3 cp $OUTDIR/cf-darwin-amd64 "s3://lattice/latest/darwin-amd64/ltc"
+    aws s3 cp $OUTDIR/cf-linux-amd64 "s3://lattice/latest/linux-amd64/ltc"
+
+    aws s3 cp $OUTDIR/cf-darwin-amd64 "s3://lattice/${new_cli_version}/darwin-amd64/ltc"
+    aws s3 cp $OUTDIR/cf-linux-amd64 "s3://lattice/${new_cli_version}/linux-amd64/ltc"
+
+    echo "Successfully uploaded to s3"
+}
+
+check_if_cli_needs_bump
+
+if [ $cli_needs_bump == "true" ]; then
+    bump_cli_version
+    compile_and_publish_cli
+fi

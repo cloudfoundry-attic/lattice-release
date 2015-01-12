@@ -26,10 +26,14 @@ RUN \
     git config --global user.email "cf-diego-edge-eng+gocd@pivotal.io"
 
 RUN \
-    git config --global user.name "Diego Edge Continuous Deployment"
+    git config --global user.name "Lattice Continuous Deployment"
 
 RUN \
-     wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz  -O - | tar -xzf - -C /usr/local
+     wget https://storage.googleapis.com/golang/go1.4.src.tar.gz  -O - | tar -xzf - -C /usr/local && \
+     cd /usr/local/go/src && \
+     GOOS=linux GOARCH=amd64 CGO_ENABLED=1 ./make.bash --no-clean && \
+     GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 ./make.bash --no-clean
+
 
 RUN \
     echo "Host github.com" > /etc/ssh/ssh_config
