@@ -6,9 +6,9 @@ check_coordinator_processes(){
 
 num_coordinator_processes=$(check_coordinator_processes | wc -l)
 
-echo "$num_coordinator_processes/9 Coordinator processes up and running."
+echo "$num_coordinator_processes/10 Coordinator processes up and running."
 
-if [ $num_coordinator_processes -ne "9" ]; then
-    echo "expected 9 coordinator processes to be running, but got $num_coordinator_processes"
+if [ $num_coordinator_processes -ne "10" ]; then
+    echo "expected 10 coordinator processes to be running, but got $num_coordinator_processes"
     check_coordinator_processes
 fi
