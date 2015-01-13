@@ -82,6 +82,7 @@ var _ = Describe("Lattice", func() {
 func startDockerApp(appName string, args ...string) {
 	startArgs := append([]string{"start", appName}, args...)
 	command := command(cli, startArgs...)
+	fmt.Fprintf(GinkgoWriter, "Starting Docker app with command %#v", command)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
