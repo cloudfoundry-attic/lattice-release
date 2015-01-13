@@ -5,6 +5,7 @@ set -e
 get_previous_cli_version() {
     pushd lattice-cli
         previous_cli_version=$(git tag -l --sort "-version:refname" "v[0-9]*" | head -1)
+        echo "Previous cli version: $previous_cli_version"
     popd
 }
 
@@ -14,9 +15,9 @@ check_if_cli_needs_bump() {
     pushd lattice-cli
         if [ "$(git rev-list $previous_cli_version..HEAD --count)" -gt "0" ]; then
             cli_needs_bump="true"
-            echo "No new changes to cli. No bump needed"
-        else
             echo "Detected changes to cli. Bump!"
+        else
+            echo "No new changes to cli. No bump needed"
             cli_needs_bump="false"
         fi
     popd
