@@ -11,6 +11,8 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
+	"log"
+	"os"
 )
 
 type AppRunnerCommandFactory struct {
@@ -142,6 +144,11 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	name := context.Args().Get(0)
 	terminator := context.Args().Get(1)
 	startCommand := context.Args().Get(2)
+
+	debugLogger := log.New(os.Stderr,
+		"\nDebug:", log.Ltime|log.Lshortfile)
+
+	debugLogger.Printf("startApp context.args: %#v\n", context.Args())
 
 	var appArgs []string
 
