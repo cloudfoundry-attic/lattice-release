@@ -11,13 +11,16 @@ RUN \
 RUN \
   apt-get update; \
   apt-get -y install \
+    software-properties-common \
     curl \
-    git \
     libcurl4-openssl-dev \
     python-dev \
     python-pip \
     wget \
-    jq
+    jq; \
+  add-apt-repository ppa:git-core/ppa -y; \
+  apt-get update; \
+  apt-get -y install git
 
 RUN \
   bash -l -c "pip install awscli";

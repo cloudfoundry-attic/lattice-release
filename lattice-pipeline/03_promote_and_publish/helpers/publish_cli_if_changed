@@ -6,7 +6,6 @@ get_previous_cli_version() {
     pushd lattice-cli
         previous_cli_version=$(git tag -l --sort "-version:refname" "v[0-9]*" | head -1)
     popd
- previous_cli_version=-1
 }
 
 check_if_cli_needs_bump() {
