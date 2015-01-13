@@ -8,7 +8,7 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/cloudfoundry/noaa"
-	"github.com/dajulia3/cli"
+	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"

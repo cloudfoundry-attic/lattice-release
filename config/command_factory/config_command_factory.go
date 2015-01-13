@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/dajulia3/cli"
+	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"

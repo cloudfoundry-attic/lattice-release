@@ -1,7 +1,7 @@
 package test_helpers
 
 import (
-	"github.com/dajulia3/cli"
+	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

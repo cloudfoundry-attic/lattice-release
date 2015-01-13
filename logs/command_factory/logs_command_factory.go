@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/noaa/events"
-	"github.com/dajulia3/cli"
+	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/logs"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"

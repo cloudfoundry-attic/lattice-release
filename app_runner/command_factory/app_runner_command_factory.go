@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/gunk/timeprovider"
-	"github.com/dajulia3/cli"
+	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/gunk/timeprovider/faketimeprovider"
-	"github.com/dajulia3/cli"
+	"github.com/codegangsta/cli"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner/fake_app_examiner"
