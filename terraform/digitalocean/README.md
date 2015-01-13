@@ -18,7 +18,7 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 Create a `lattice.tf` file (or use the provided [example](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/digitalocean/lattice.tf.example)) and add the following contents updating the variables properly:
 
 ```
-module "lattice" {
+module "lattice-digitalocean" {
     source = "github.com/pivotal-cf-experimental/lattice/terraform/digitalocean"
 
     # Digital Ocean API token

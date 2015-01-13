@@ -17,7 +17,7 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 Create a `lattice.tf` file (or use the provided [example](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/aws/lattice.tf.example)) and add the following contents updating the variables properly:
 
 ```
-module "lattice" {
+module "lattice-aws" {
     source = "github.com/pivotal-cf-experimental/lattice/terraform/aws"
 
     # AWS access key

@@ -1,4 +1,4 @@
-module "lattice" {
+module "lattice-digitalocean" {
     source = "github.com/pivotal-cf-experimental/lattice/terraform/digitalocean"
 
     # Digital Ocean API token

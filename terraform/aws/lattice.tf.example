@@ -1,4 +1,4 @@
-module "lattice" {
+module "lattice-aws" {
     source = "github.com/pivotal-cf-experimental/lattice/terraform/aws"
 
     # AWS access key

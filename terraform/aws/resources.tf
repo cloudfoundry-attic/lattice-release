@@ -1,4 +1,4 @@
-resource "aws_vpc" "lattice" {
+resource "aws_vpc" "lattice-aws" {
     cidr_block = "${var.aws_vpc_cidr_block}"
     enable_dns_support = true
     enable_dns_hostnames = true
@@ -7,8 +7,8 @@ resource "aws_vpc" "lattice" {
     }
 }
 
-resource "aws_subnet" "lattice" {
-    vpc_id = "${aws_vpc.lattice.id}"
+resource "aws_subnet" "lattice-aws" {
+    vpc_id = "${aws_vpc.lattice-aws.id}"
     cidr_block = "${var.aws_subnet_cidr_block}"
     map_public_ip_on_launch = true
     tags {
@@ -16,27 +16,27 @@ resource "aws_subnet" "lattice" {
     }
 }
 
-resource "aws_internet_gateway" "lattice" {
-    vpc_id = "${aws_vpc.lattice.id}"
+resource "aws_internet_gateway" "lattice-aws" {
+    vpc_id = "${aws_vpc.lattice-aws.id}"
 }
 
-resource "aws_route_table" "lattice" {
-    vpc_id = "${aws_vpc.lattice.id}"
+resource "aws_route_table" "lattice-aws" {
+    vpc_id = "${aws_vpc.lattice-aws.id}"
     route {
         cidr_block = "0.0.0.0/0"
-        gateway_id = "${aws_internet_gateway.lattice.id}"
+        gateway_id = "${aws_internet_gateway.lattice-aws.id}"
     }
 }
 
-resource "aws_route_table_association" "lattice" {
-    subnet_id = "${aws_subnet.lattice.id}"
-    route_table_id = "${aws_route_table.lattice.id}"
+resource "aws_route_table_association" "lattice-aws" {
+    subnet_id = "${aws_subnet.lattice-aws.id}"
+    route_table_id = "${aws_route_table.lattice-aws.id}"
 }
 
-resource "aws_security_group" "lattice" {
+resource "aws_security_group" "lattice-aws" {
     name = "lattice"
     description = "lattice security group"
-    vpc_id = "${aws_vpc.lattice.id}"
+    vpc_id = "${aws_vpc.lattice-aws.id}"
     ingress {
         protocol = "tcp"
         from_port = 1
@@ -58,9 +58,9 @@ resource "aws_instance" "lattice-coordinator" {
     ami = "${lookup(var.aws_image, var.aws_region)}"
     instance_type = "${var.aws_instance_type_coordinator}"
     key_name = "${var.aws_key_name}"
-    subnet_id = "${aws_subnet.lattice.id}"
+    subnet_id = "${aws_subnet.lattice-aws.id}"
     security_groups = [
-      "${aws_security_group.lattice.id}",
+      "${aws_security_group.lattice-aws.id}",
     ]
     tags {
         Name = "lattice-coordinator"
@@ -89,7 +89,7 @@ resource "aws_instance" "lattice-coordinator" {
     provisioner "remote-exec" {
       inline = [
           "sudo chmod 755 /tmp/install_from_tar",
-          "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
+          "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\"" #SHOULDN'T PATH_TO_LATTICE_TAR be set to /tmp/lattice.tgz???
       ]
     }
     #/COMMON
@@ -114,9 +114,9 @@ resource "aws_instance" "lattice-cell" {
     ami = "${lookup(var.aws_image, var.aws_region)}"
     instance_type = "${var.aws_instance_type_cell}"
     key_name = "${var.aws_key_name}"
-    subnet_id = "${aws_subnet.lattice.id}"
+    subnet_id = "${aws_subnet.lattice-aws.id}"
     security_groups = [
-      "${aws_security_group.lattice.id}",
+      "${aws_security_group.lattice-aws.id}",
     ]
     tags {
         Name = "lattice-cell-${count.index}"
