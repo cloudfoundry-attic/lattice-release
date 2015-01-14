@@ -9,6 +9,13 @@ get_previous_cli_version() {
     popd
 }
 
+sync_up_cli_tags_off_remote() {
+    pushd lattice-cli
+        git tag -l | xargs git tag -d
+        git fetch --tags
+    popd
+}
+
 check_if_cli_needs_bump() {
     echo "Checking if cli needs bump..."
     get_previous_cli_version
@@ -62,6 +69,7 @@ compile_and_publish_cli() {
     echo "Successfully uploaded to s3"
 }
 
+sync_up_cli_tags_off_remote
 check_if_cli_needs_bump
 
 if [ $cli_needs_bump == "true" ]; then
