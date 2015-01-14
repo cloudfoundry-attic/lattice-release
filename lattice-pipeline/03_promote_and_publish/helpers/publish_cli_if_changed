@@ -40,22 +40,24 @@ compile_and_publish_cli() {
     mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
     cp -r lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental
 
+    go get -v -u -t github.com/pivotal-cf-experimental/lattice-cli/...
+
     OUTDIR="$(pwd)/compiled-binaries"
     mkdir -p $OUTDIR
     export GOBIN="$OUTDIR"
 
     rm -rf $GOPATH/pkg/*
 
-    GOARCH=amd64 GOOS=linux go install github.com/pivotal-cf-experimental/lattice-cli/ltc && cp $OUTDIR/ltc $OUTDIR/cf-darwin-amd64
-    GOARCH=amd64 GOOS=darwin go install github.com/pivotal-cf-experimental/lattice-cli/ltc && cp $OUTDIR/ltc $OUTDIR/cf-linux-amd64
+    GOARCH=amd64 GOOS=linux go install github.com/pivotal-cf-experimental/lattice-cli/ltc && cp $OUTDIR/ltc $OUTDIR/ltc-darwin-amd64
+    GOARCH=amd64 GOOS=darwin go install github.com/pivotal-cf-experimental/lattice-cli/ltc && cp $OUTDIR/ltc $OUTDIR/ltc-linux-amd64
 
     echo "Compiled. Uploading to s3.."
 
-    aws s3 cp $OUTDIR/cf-darwin-amd64 "s3://lattice/latest/darwin-amd64/ltc"
-    aws s3 cp $OUTDIR/cf-linux-amd64 "s3://lattice/latest/linux-amd64/ltc"
+    aws s3 cp $OUTDIR/ltc-darwin-amd64 "s3://lattice/latest/darwin-amd64/ltc"
+    aws s3 cp $OUTDIR/ltc-linux-amd64 "s3://lattice/latest/linux-amd64/ltc"
 
-    aws s3 cp $OUTDIR/cf-darwin-amd64 "s3://lattice/${new_cli_version}/darwin-amd64/ltc"
-    aws s3 cp $OUTDIR/cf-linux-amd64 "s3://lattice/${new_cli_version}/linux-amd64/ltc"
+    aws s3 cp $OUTDIR/ltc-darwin-amd64 "s3://lattice/${new_cli_version}/darwin-amd64/ltc"
+    aws s3 cp $OUTDIR/ltc-linux-amd64 "s3://lattice/${new_cli_version}/linux-amd64/ltc"
 
     echo "Successfully uploaded to s3"
 }
