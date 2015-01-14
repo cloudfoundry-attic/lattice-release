@@ -68,6 +68,6 @@ go get github.com/onsi/gomega
 go get -v -t github.com/pivotal-cf-experimental/...
 
 rm -rfv $GOPATH/src/github.com/codegangsta/cli
-go get -v -t github.com/codegangsta/cli
+go get -v -u -t github.com/codegangsta/cli
 
 PATH=$PATH:$GOPATH/bin ginkgo -noColor -v $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -domain=$SYSTEM_DOMAIN -timeout=300
