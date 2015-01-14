@@ -21,6 +21,7 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/logs"
 	"github.com/pivotal-cf-experimental/lattice-cli/ltc/setup_cli/setup_cli_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
+	"github.com/pivotal-golang/lager"
 
 	app_examiner_command_factory "github.com/pivotal-cf-experimental/lattice-cli/app_examiner/command_factory"
 	app_runner_command_factory "github.com/pivotal-cf-experimental/lattice-cli/app_runner/command_factory"
@@ -41,12 +42,26 @@ func NewCliApp() *cli.App {
 	exitHandler := exit_handler.New(signalChan, os.Exit)
 	go exitHandler.Run()
 
-	app.Commands = cliCommands(exitHandler, config)
+	app.Commands = cliCommands(exitHandler, config, logger())
 
 	return app
 }
 
-func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config) []cli.Command {
+func logger() lager.Logger {
+	logger := lager.NewLogger("ltc")
+	var logLevel lager.LogLevel
+
+	if os.Getenv("LTC_LOG_LEVEL") == "DEBUG" {
+		logLevel = lager.DEBUG
+	} else {
+		logLevel = lager.INFO
+	}
+
+	logger.RegisterSink(lager.NewWriterSink(os.Stderr, logLevel))
+	return logger
+}
+
+func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config, logger lager.Logger) []cli.Command {
 	input := os.Stdin
 	output := output.New(os.Stdout)
 
@@ -54,7 +69,19 @@ func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config) [
 	appRunner := app_runner.New(receptorClient, config.Target())
 
 	timeprovider := timeprovider.NewTimeProvider()
-	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunner, docker_metadata_fetcher.New(), output, timeout(), config.Target(), os.Environ(), timeprovider)
+
+	appRunnerCommandFactoryConfig := app_runner_command_factory.AppRunnerCommandFactoryConfig{
+		AppRunner:             appRunner,
+		DockerMetadataFetcher: docker_metadata_fetcher.New(),
+		Output:                output,
+		Timeout:               timeout(),
+		Domain:                config.Target(),
+		Env:                   os.Environ(),
+		TimeProvider:          timeprovider,
+		Logger:                logger,
+	}
+
+	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 
 	logReader := logs.NewLogReader(noaa.NewConsumer(setup_cli_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, output)

@@ -9,6 +9,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
+	"github.com/pivotal-golang/lager"
+
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher/fake_docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/fake_app_runner"
@@ -22,18 +24,21 @@ import (
 var _ = Describe("CommandFactory", func() {
 
 	var (
-		appRunner             *fake_app_runner.FakeAppRunner
-		outputBuffer          *gbytes.Buffer
-		timeout               time.Duration = 10 * time.Second
-		domain                string        = "192.168.11.11.xip.io"
-		timeProvider          *faketimeprovider.FakeTimeProvider
-		dockerMetadataFetcher *fake_docker_metadata_fetcher.FakeDockerMetadataFetcher
+		appRunner                     *fake_app_runner.FakeAppRunner
+		outputBuffer                  *gbytes.Buffer
+		timeout                       time.Duration = 10 * time.Second
+		domain                        string        = "192.168.11.11.xip.io"
+		timeProvider                  *faketimeprovider.FakeTimeProvider
+		dockerMetadataFetcher         *fake_docker_metadata_fetcher.FakeDockerMetadataFetcher
+		appRunnerCommandFactoryConfig command_factory.AppRunnerCommandFactoryConfig
+		logger                        lager.Logger
 	)
 
 	BeforeEach(func() {
 		appRunner = &fake_app_runner.FakeAppRunner{}
 		outputBuffer = gbytes.NewBuffer()
 		dockerMetadataFetcher = &fake_docker_metadata_fetcher.FakeDockerMetadataFetcher{}
+		logger = lager.NewLogger("ltc-test")
 	})
 
 	Describe("StartAppCommand", func() {
@@ -44,7 +49,19 @@ var _ = Describe("CommandFactory", func() {
 			env := []string{"SHELL=/bin/bash", "COLOR=Blue"}
 
 			timeProvider = faketimeprovider.New(time.Now())
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, dockerMetadataFetcher, output.New(outputBuffer), timeout, domain, env, timeProvider)
+
+			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:             appRunner,
+				DockerMetadataFetcher: dockerMetadataFetcher,
+				Output:                output.New(outputBuffer),
+				Timeout:               timeout,
+				Domain:                domain,
+				Env:                   env,
+				TimeProvider:          timeProvider,
+				Logger:                logger,
+			}
+
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			startCommand = commandFactory.MakeStartAppCommand()
 		})
 
@@ -298,7 +315,19 @@ var _ = Describe("CommandFactory", func() {
 		var scaleCommand cli.Command
 		BeforeEach(func() {
 			timeProvider = faketimeprovider.New(time.Now())
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, dockerMetadataFetcher, output.New(outputBuffer), timeout, domain, []string{}, timeProvider)
+
+			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:             appRunner,
+				DockerMetadataFetcher: dockerMetadataFetcher,
+				Output:                output.New(outputBuffer),
+				Timeout:               timeout,
+				Domain:                domain,
+				Env:                   []string{},
+				TimeProvider:          timeProvider,
+				Logger:                logger,
+			}
+
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			scaleCommand = commandFactory.MakeScaleAppCommand()
 		})
 
@@ -410,7 +439,19 @@ var _ = Describe("CommandFactory", func() {
 		var stopCommand cli.Command
 		BeforeEach(func() {
 			timeProvider = faketimeprovider.New(time.Now())
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, dockerMetadataFetcher, output.New(outputBuffer), timeout, domain, []string{}, timeProvider)
+
+			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:             appRunner,
+				DockerMetadataFetcher: dockerMetadataFetcher,
+				Output:                output.New(outputBuffer),
+				Timeout:               timeout,
+				Domain:                domain,
+				Env:                   []string{},
+				TimeProvider:          timeProvider,
+				Logger:                logger,
+			}
+
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			stopCommand = commandFactory.MakeStopAppCommand()
 		})
 
@@ -488,7 +529,18 @@ var _ = Describe("CommandFactory", func() {
 
 		BeforeEach(func() {
 			timeProvider = faketimeprovider.New(time.Now())
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunner, dockerMetadataFetcher, output.New(outputBuffer), timeout, domain, []string{}, timeProvider)
+			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:             appRunner,
+				DockerMetadataFetcher: dockerMetadataFetcher,
+				Output:                output.New(outputBuffer),
+				Timeout:               timeout,
+				Domain:                domain,
+				Env:                   []string{},
+				TimeProvider:          timeProvider,
+				Logger:                logger,
+			}
+
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			removeCommand = commandFactory.MakeRemoveAppCommand()
 		})
 

@@ -11,16 +11,26 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
-	"log"
-	"os"
+	"github.com/pivotal-golang/lager"
 )
 
 type AppRunnerCommandFactory struct {
 	appRunnerCommand *appRunnerCommand
 }
 
-func NewAppRunnerCommandFactory(appRunner app_runner.AppRunner, dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher, output *output.Output, timeout time.Duration, domain string, env []string, timeProvider timeprovider.TimeProvider) *AppRunnerCommandFactory {
-	return &AppRunnerCommandFactory{&appRunnerCommand{appRunner, dockerMetadataFetcher, output, timeout, domain, env, timeProvider}}
+type AppRunnerCommandFactoryConfig struct {
+	AppRunner             app_runner.AppRunner
+	DockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
+	Output                *output.Output
+	Timeout               time.Duration
+	Domain                string
+	Env                   []string
+	TimeProvider          timeprovider.TimeProvider
+	Logger                lager.Logger
+}
+
+func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunnerCommandFactory {
+	return &AppRunnerCommandFactory{&appRunnerCommand{config.AppRunner, config.DockerMetadataFetcher, config.Output, config.Timeout, config.Domain, config.Env, config.TimeProvider}}
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command {
@@ -144,11 +154,6 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	name := context.Args().Get(0)
 	terminator := context.Args().Get(1)
 	startCommand := context.Args().Get(2)
-
-	debugLogger := log.New(os.Stderr,
-		"\nDebug:", log.Ltime|log.Lshortfile)
-
-	debugLogger.Printf("startApp context.args: %#v\n", context.Args())
 
 	var appArgs []string
 
