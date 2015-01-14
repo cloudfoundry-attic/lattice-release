@@ -5,7 +5,7 @@ save_logs() {
     echo "save logs"
 
     pushd $WORKSPACE_DIR/lattice
-        vagrant ssh -c "sudo tar -czf /vagrant/vagrant_upstart_logs.tgz /var/log/upstart"
+        vagrant ssh -c "sudo tar -czf /vagrant/vagrant_upstart_logs.tgz /var/log/upstart /var/lattice/log"
     popd
 
     mv lattice/vagrant_upstart_logs.tgz .
