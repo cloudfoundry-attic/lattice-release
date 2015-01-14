@@ -47,7 +47,7 @@ compile_and_publish_cli() {
     mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
     cp -r lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental
 
-    go get -v -u -t github.com/pivotal-cf-experimental/lattice-cli/...
+    go get -v -t github.com/pivotal-cf-experimental/lattice-cli/...
 
     OUTDIR="$(pwd)/compiled-binaries"
     mkdir -p $OUTDIR
