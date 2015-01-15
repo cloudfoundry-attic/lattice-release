@@ -7,11 +7,16 @@ Lattice CLI
 
 ##Setup:
 
-Make sure you have go installed and your $GOPATH is properly set. Then run:
+Download the appropriate binary for your architecture:
 
-    go get -u github.com/pivotal-cf-experimental/lattice-cli/ltc
+    (MacOS) https://s3-us-west-2.amazonaws.com/lattice/latest/darwin-amd64/ltc
+    (Linux) https://s3-us-west-2.amazonaws.com/lattice/latest/linux-amd64/ltc
 
-This installs or updates the `ltc` binary to $GOPATH/bin.
+Make the file executable:
+
+    chmod a+x ltc
+
+And copy the file into your path (e.g., /usr/local/bin) or run it directly with ```./ltc```
 
 ##Commands:
 
