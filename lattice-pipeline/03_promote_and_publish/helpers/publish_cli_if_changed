@@ -55,8 +55,8 @@ compile_and_publish_cli() {
 
     rm -rf $GOPATH/pkg/*
 
-    GOARCH=amd64 GOOS=linux go build -o $OUTDIR/ltc-darwin-amd64 github.com/pivotal-cf-experimental/lattice-cli/ltc
-    GOARCH=amd64 GOOS=darwin go build -o $OUTDIR/ltc-linux-amd64 github.com/pivotal-cf-experimental/lattice-cli/ltc
+    GOARCH=amd64 GOOS=linux go build -o $OUTDIR/ltc-linux-amd64 github.com/pivotal-cf-experimental/lattice-cli/ltc
+    GOARCH=amd64 GOOS=darwin go build -o $OUTDIR/ltc-darwin-amd64 github.com/pivotal-cf-experimental/lattice-cli/ltc
 
     echo "Compiled. Uploading to s3.."
 
