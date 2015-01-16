@@ -132,7 +132,7 @@ func (cmd *appExaminerCommand) appStatus(context *cli.Context) {
 		horizontalRule("-")
 	}
 
-	titleBar(appName)
+	titleBar(colors.Bold(appName))
 
 	fmt.Fprintf(w, "%s\t%s\n", "Instances", colorInstances(appInfo))
 	fmt.Fprintf(w, "%s\t%s\n", "Stack", appInfo.Stack)
