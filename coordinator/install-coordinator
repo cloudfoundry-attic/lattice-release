@@ -30,5 +30,5 @@ export $(cat /var/lattice/setup/lattice-environment)
 
 echo "Finished!
 Lattice is now installed and running. You may target it with the Lattice cli via:
-lattice-cli target $SYSTEM_DOMAIN"
+ltc target $SYSTEM_DOMAIN"
 
