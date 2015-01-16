@@ -13,6 +13,7 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/output/cursor"
+	"io"
 )
 
 type AppExaminerCommandFactory struct {
@@ -102,6 +103,11 @@ func (cmd *appExaminerCommand) listApps(context *cli.Context) {
 	w.Flush()
 }
 
+func printHorizontalRule(w io.Writer, pattern string) {
+	header := strings.Repeat(pattern, 80) + "\n"
+	fmt.Fprintf(w, header)
+}
+
 func (cmd *appExaminerCommand) appStatus(context *cli.Context) {
 	if len(context.Args()) < 1 {
 		cmd.output.IncorrectUsage("App Name required")
@@ -119,20 +125,26 @@ func (cmd *appExaminerCommand) appStatus(context *cli.Context) {
 	minColumnWidth := 13
 	w := tabwriter.NewWriter(cmd.output, minColumnWidth, 8, 1, '\t', 0)
 
-	horizontalRule := func(pattern string) {
-		header := strings.Repeat(pattern, 80) + "\n"
-		fmt.Fprintf(w, header)
-	}
-
-	headingIndentation := strings.Repeat(" ", minColumnWidth/2)
+	headingPrefix := strings.Repeat(" ", minColumnWidth/2)
 
 	titleBar := func(title string) {
-		horizontalRule("=")
-		fmt.Fprintf(w, "%s%s\n", headingIndentation, title)
-		horizontalRule("-")
+		printHorizontalRule(w, "=")
+		fmt.Fprintf(w, "%s%s\n", headingPrefix, title)
+		printHorizontalRule(w, "-")
 	}
 
 	titleBar(colors.Bold(appName))
+
+	printAppInfo(w, appInfo)
+
+	fmt.Fprintln(w, "")
+	printHorizontalRule(w, "=")
+
+	printInstanceInfo(w, headingPrefix, appInfo.ActualInstances)
+	w.Flush()
+}
+
+func printAppInfo(w io.Writer, appInfo app_examiner.AppInfo) {
 
 	fmt.Fprintf(w, "%s\t%s\n", "Instances", colorInstances(appInfo))
 	fmt.Fprintf(w, "%s\t%s\n", "Stack", appInfo.Stack)
@@ -153,22 +165,22 @@ func (cmd *appExaminerCommand) appStatus(context *cli.Context) {
 	fmt.Fprintf(w, "%s\t%s\n", "LogSource", appInfo.LogSource)
 	fmt.Fprintf(w, "%s\t%s\n", "Annotation", appInfo.Annotation)
 
-	horizontalRule("-")
+	printHorizontalRule(w, "-")
 	var envVars string
 	for _, envVar := range appInfo.EnvironmentVariables {
 		envVars += envVar.Name + `="` + envVar.Value + `" ` + "\n"
 	}
 	fmt.Fprintf(w, "%s\n\n%s", "Environment", envVars)
 
-	fmt.Fprintln(w, "")
-	horizontalRule("=")
+}
 
+func printInstanceInfo(w io.Writer, headingPrefix string, actualInstances []app_examiner.InstanceInfo) {
 	instanceBar := func(index, state string) {
-		fmt.Fprintf(w, "%sInstance %s  [%s]\n", headingIndentation, index, state)
-		horizontalRule("-")
+		fmt.Fprintf(w, "%sInstance %s  [%s]\n", headingPrefix, index, state)
+		printHorizontalRule(w, "-")
 	}
 
-	for _, instance := range appInfo.ActualInstances {
+	for _, instance := range actualInstances {
 		instanceBar(fmt.Sprint(instance.Index), presentation.ColorInstanceState(instance.State))
 
 		fmt.Fprintf(w, "%s\t%s\n", "InstanceGuid", instance.InstanceGuid)
@@ -183,10 +195,9 @@ func (cmd *appExaminerCommand) appStatus(context *cli.Context) {
 
 		fmt.Fprintf(w, "%s\t%s\n", "Since", fmt.Sprint(instance.Since))
 
-		horizontalRule("-")
+		printHorizontalRule(w, "-")
 	}
 
-	w.Flush()
 }
 
 func (cmd *appExaminerCommand) visualizeCells(context *cli.Context) {
