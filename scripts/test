@@ -1,2 +1,4 @@
 #!/bin/bash
-ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race
+pushd $(dirname $(dirname $0)) > /dev/null
+    ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race
+popd > /dev/null
