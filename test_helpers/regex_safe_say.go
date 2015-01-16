@@ -12,6 +12,10 @@ func Say(expected string, args ...interface{}) types.GomegaMatcher {
 	return gbytes.Say(regexSafe(expected))
 }
 
+func SayIncorrectUsage() types.GomegaMatcher {
+	return gbytes.Say(regexSafe("Incorrect Usage"))
+}
+
 func SayNewLine() types.GomegaMatcher {
 	return Say("\n")
 }

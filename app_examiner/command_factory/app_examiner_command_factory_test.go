@@ -186,6 +186,138 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 	})
+
+	Describe("StatusCommand", func() {
+		var statusCommand cli.Command
+
+		BeforeEach(func() {
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), timeProvider, exitHandler)
+			statusCommand = commandFactory.MakeStatusCommand()
+		})
+
+		It("emits a pretty representation of the DesiredLRP", func() {
+			appExaminer.AppStatusReturns(
+				app_examiner.AppInfo{
+					ProcessGuid:            "wompy-app",
+					DesiredInstances:       12,
+					ActualRunningInstances: 1,
+					Stack: "lucid64",
+					EnvironmentVariables: []app_examiner.EnvironmentVariable{
+						app_examiner.EnvironmentVariable{Name: "WOMPY_APP_PASSWORD", Value: "seekreet pass"},
+						app_examiner.EnvironmentVariable{Name: "WOMPY_APP_USERNAME", Value: "mrbigglesworth54"},
+					},
+					StartTimeout: 600,
+					DiskMB:       2048,
+					MemoryMB:     256,
+					CPUWeight:    100,
+					Ports:        []uint32{8887, 9000},
+					Routes:       []string{"wompy-app.my-fun-domain.com", "wompy-app.my-exuberant-domain.org"},
+					LogGuid:      "a9s8dfa99023r",
+					LogSource:    "wompy-app-logz",
+					Annotation:   "I love this app. So wompy.",
+					ActualInstances: []app_examiner.InstanceInfo{
+						app_examiner.InstanceInfo{
+							InstanceGuid: "a0s9f-u9a8sf-aasdioasdjoi",
+							CellID:       "cell-12",
+							Index:        3,
+							Ip:           "10.85.12.100",
+							Ports: []app_examiner.PortMapping{
+								app_examiner.PortMapping{
+									HostPort:      1234,
+									ContainerPort: 3000,
+								},
+								app_examiner.PortMapping{
+									HostPort:      5555,
+									ContainerPort: 6666,
+								},
+							},
+							State: "RUNNING",
+							Since: 1992,
+						},
+					},
+				}, nil)
+
+			test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+			Expect(appExaminer.AppStatusCallCount()).To(Equal(1))
+			Expect(appExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+
+			Expect(outputBuffer).To(test_helpers.Say("wompy-app"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Instances"))
+			Expect(outputBuffer).To(test_helpers.Say("1/12"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Stack"))
+			Expect(outputBuffer).To(test_helpers.Say("lucid64"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Start Timeout"))
+			Expect(outputBuffer).To(test_helpers.Say("600"))
+
+			Expect(outputBuffer).To(test_helpers.Say("DiskMB"))
+			Expect(outputBuffer).To(test_helpers.Say("2048"))
+
+			Expect(outputBuffer).To(test_helpers.Say("MemoryMB"))
+			Expect(outputBuffer).To(test_helpers.Say("256"))
+
+			Expect(outputBuffer).To(test_helpers.Say("CPUWeight"))
+			Expect(outputBuffer).To(test_helpers.Say("100"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Ports"))
+			Expect(outputBuffer).To(test_helpers.Say("8887"))
+			Expect(outputBuffer).To(test_helpers.Say("9000"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Routes"))
+			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com"))
+			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-exuberant-domain.org"))
+
+			Expect(outputBuffer).To(test_helpers.Say("LogGuid"))
+			Expect(outputBuffer).To(test_helpers.Say("a9s8dfa99023r"))
+
+			Expect(outputBuffer).To(test_helpers.Say("LogSource"))
+			Expect(outputBuffer).To(test_helpers.Say("wompy-app-logz"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Annotation"))
+			Expect(outputBuffer).To(test_helpers.Say("I love this app. So wompy."))
+
+			Expect(outputBuffer).To(test_helpers.Say("Environment"))
+			Expect(outputBuffer).To(test_helpers.Say(`WOMPY_APP_PASSWORD="seekreet pass"`))
+			Expect(outputBuffer).To(test_helpers.Say(`WOMPY_APP_USERNAME="mrbigglesworth54"`))
+
+			Expect(outputBuffer).To(test_helpers.Say("Instance 3"))
+			Expect(outputBuffer).To(test_helpers.Say("RUNNING"))
+
+			Expect(outputBuffer).To(test_helpers.Say("InstanceGuid"))
+			Expect(outputBuffer).To(test_helpers.Say("a0s9f-u9a8sf-aasdioasdjoi"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Cell ID"))
+			Expect(outputBuffer).To(test_helpers.Say("cell-12"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Ip"))
+			Expect(outputBuffer).To(test_helpers.Say("10.85.12.100"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Ports"))
+			Expect(outputBuffer).To(test_helpers.Say("1234:3000"))
+			Expect(outputBuffer).To(test_helpers.Say("5555:6666"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Since"))
+			Expect(outputBuffer).To(test_helpers.Say("1992"))
+		})
+
+		Context("When no appName is specified", func() {
+			It("Prints usage information", func() {
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{})
+				Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
+			})
+		})
+
+		It("prints any errors from app examiner", func() {
+			appExaminer.AppStatusReturns(app_examiner.AppInfo{}, errors.New("You want the status?? ...YOU CAN'T HANDLE THE STATUS!!!"))
+
+			test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"zany-app"})
+
+			Expect(outputBuffer).To(test_helpers.Say("You want the status?? ...YOU CAN'T HANDLE THE STATUS!!!"))
+		})
+	})
 })
 
 type fakeExitHandler struct {

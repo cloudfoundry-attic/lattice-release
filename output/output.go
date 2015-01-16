@@ -16,6 +16,10 @@ func (o *Output) Say(message string) {
 	o.Write([]byte(message))
 }
 
+func (o *Output) SayLine(message string) {
+	o.Write([]byte(message + "\n"))
+}
+
 func (o *Output) IncorrectUsage(message string) {
 	if len(message) > 0 {
 		o.Say("Incorrect Usage: " + message)

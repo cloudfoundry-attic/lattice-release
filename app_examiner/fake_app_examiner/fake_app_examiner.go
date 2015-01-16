@@ -22,6 +22,15 @@ type FakeAppExaminer struct {
 		result1 []app_examiner.CellInfo
 		result2 error
 	}
+	AppStatusStub        func(appName string) (app_examiner.AppInfo, error)
+	appStatusMutex       sync.RWMutex
+	appStatusArgsForCall []struct {
+		appName string
+	}
+	appStatusReturns struct {
+		result1 app_examiner.AppInfo
+		result2 error
+	}
 }
 
 func (fake *FakeAppExaminer) ListApps() ([]app_examiner.AppInfo, error) {
@@ -70,6 +79,39 @@ func (fake *FakeAppExaminer) ListCellsReturns(result1 []app_examiner.CellInfo, r
 	fake.ListCellsStub = nil
 	fake.listCellsReturns = struct {
 		result1 []app_examiner.CellInfo
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeAppExaminer) AppStatus(appName string) (app_examiner.AppInfo, error) {
+	fake.appStatusMutex.Lock()
+	fake.appStatusArgsForCall = append(fake.appStatusArgsForCall, struct {
+		appName string
+	}{appName})
+	fake.appStatusMutex.Unlock()
+	if fake.AppStatusStub != nil {
+		return fake.AppStatusStub(appName)
+	} else {
+		return fake.appStatusReturns.result1, fake.appStatusReturns.result2
+	}
+}
+
+func (fake *FakeAppExaminer) AppStatusCallCount() int {
+	fake.appStatusMutex.RLock()
+	defer fake.appStatusMutex.RUnlock()
+	return len(fake.appStatusArgsForCall)
+}
+
+func (fake *FakeAppExaminer) AppStatusArgsForCall(i int) string {
+	fake.appStatusMutex.RLock()
+	defer fake.appStatusMutex.RUnlock()
+	return fake.appStatusArgsForCall[i].appName
+}
+
+func (fake *FakeAppExaminer) AppStatusReturns(result1 app_examiner.AppInfo, result2 error) {
+	fake.AppStatusStub = nil
+	fake.appStatusReturns = struct {
+		result1 app_examiner.AppInfo
 		result2 error
 	}{result1, result2}
 }

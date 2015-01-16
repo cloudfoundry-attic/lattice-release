@@ -100,6 +100,7 @@ func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config, l
 		logsCommandFactory.MakeLogsCommand(),
 		configCommandFactory.MakeTargetCommand(),
 		appExaminerCommandFactory.MakeListAppCommand(),
+		appExaminerCommandFactory.MakeStatusCommand(),
 		appExaminerCommandFactory.MakeVisualizeCommand(),
 	}
 }
