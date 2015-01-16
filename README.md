@@ -1,41 +1,122 @@
 [![Build Status](https://travis-ci.org/pivotal-cf-experimental/lattice-cli.svg?branch=master)](https://travis-ci.org/pivotal-cf-experimental/lattice-cli)
 
-lattice-cli
-==============
+# Lattice CLI (ltc)
 
-Lattice CLI
+`ltc` provides an easy-to-use command line interface for [Lattice](https://github.com/pivotal-cf-experimental/lattice)
+
+With `ltc` you can:
+
+- `target` a Lattice deployment
+- `start`, `scale`, `stop` and `remove` Dockerimage-based applications
+- tail `logs` for your running applications
+- `list` all running applications and `visualize` their distributions across the Lattice cluster
+- fetch detail `status` information for a running application
 
 ##Setup:
 
 Download the appropriate binary for your architecture:
 
-    (MacOS) https://s3-us-west-2.amazonaws.com/lattice/latest/darwin-amd64/ltc
-    (Linux) https://s3-us-west-2.amazonaws.com/lattice/latest/linux-amd64/ltc
+Platform | Architecture | Link
+-------------------------------
+MacOS | amd64 | [https://lattice.s3.amazonaws.com/latest/darwin-amd64/ltc](https://lattice.s3.amazonaws.com/latest/darwin-amd64/ltc)
+Linux | amd64 | [https://lattice.s3.amazonaws.com/latest/linux-amd64/ltc](https://lattice.s3.amazonaws.com/latest/linux-amd64/ltc)
 
-Make the file executable:
+Here's a simple installation script.  It assumes `$HOME/bin` is on your $PATH
 
-    chmod a+x ltc
+**Mac**:
+```bash
+  mkdir -p $HOME/bin
+  pushd $HOME/bin
+  wget https://lattice.s3.amazonaws.com/latest/darwin-amd64/ltc
+  chmod +x ./ltc
+  popd
+```
 
-And copy the file into your path (e.g., /usr/local/bin) or run it directly with ```./ltc```
+**Linux**:
+```bash
+  mkdir -p $HOME/bin
+  pushd $HOME/bin
+  wget https://lattice.s3.amazonaws.com/latest/linux-amd64/ltc
+  chmod +x ./ltc
+  popd
+```
 
-##Commands:
+#### Installing From Source
 
-###Target a Lattice domain:
+You must have [Go](https://golang.org) 1.4+ installed and set up correctly.
 
-    ltc target LATTICE_DOMAIN
+```
+go get github.com/pivotal-cf-experimental/lattice-cli/ltc
+```
 
-###Start a docker app on Lattice:
+## Usage:
 
-    ltc start APP_NAME -i DOCKER_IMAGE -- START_COMMAND [APP_ARG1 APP_ARG2...]
+`ltc` includes a number of subcommands.  To learn about them:
 
-###Tail an app's logs on Lattice:
+```
+ltc help
+ltc help SUBCOMMAND
+```
 
-    ltc logs APP_NAME
+Here are a few key subcommands.
 
-###Example Usage with Lattice on Vagrant [Lattice](https://github.com/pivotal-cf-experimental/lattice):
+### Target a Lattice cluster:
+
+```
+ltc target LATTICE_TARGET
+```
+
+When running Lattice locally with Vagrant the default `LATTICE_TARGET` is `192.168.11.11.xip.io`
+When deployed to a cloud provider using Terraform you can inspect the resulting `tfstate` file to fetch the `LATTICE_TARGET`
+
+### Start a docker-based app:
+
+```
+ltc start APP_NAME -i DOCKER_IMAGE
+```
+
+will start a Dockerimage-based application on Lattice.
+
+We have a simple demo-application that you can play with:
+
+```
+ltc start lattice-app -i docker:///cloudfoundry/lattice-app
+```
+
+`ltc help start` documents a number of useful options for starting your application.
+
+### Tail an app's logs:
+
+```
+ltc logs APP_NAME
+```
+
+will start streaming logs emanating from all instances of `APP_NAME`
+
+### See what's running:
+
+```
+ltc list
+```
+
+Will print out a list of all running applications.
+
+```
+ltc status APP_NAME
+```
+
+Will print out detailed information about an application.
+
+```
+ltc visualize
+```
+
+Will print an ascii-art representation of the distribution of containers across the Lattice cluster.
+
+### Example Usage:
 
     ltc target 192.168.11.11.xip.io
-    ltc start lattice-app -i "docker:///cloudfoundry/lattice-app" -- /lattice-app --message="hello"
+    ltc start lattice-app -i "docker:///cloudfoundry/lattice-app"
     ltc logs lattice-app
 
 To view the app in a browser visit http://lattice-app.192.168.11.11.xip.io/
