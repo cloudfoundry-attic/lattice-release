@@ -1,12 +1,46 @@
-#Vagrant
+# Lattice: run containerized workloads on a cluster with ease
 
-##Running the box
+Lattice is an open source project for running containerized workloads on a cluster. Lattice bundles up http load-balancing, a cluster scheduler, log aggregation/streaming and health management into an easy-to-deploy and easy-to-use package.
+
+Lattice is based on a number of open source [Cloud Foundry](https://cloudfoundry.org) components:
+
+- [Diego](https://github.com/cloudfoundry-incubator/diego-design-notes) schedules and monitors containerized workloads
+- [Doppler](https://github.com/cloudfoundry/loggregator) aggregates and streams application logs
+- [Gorouter](https://github.com/cloudfoundry/gorouter) provides http load-balancing
+
+## Deploy Lattice
+
+A [local deployment](#local-deployment) of Lattice can be launched with Vagrant.
+
+A scalable [cluster deployment](#clustered-deployment) of Lattice can be launched with Terraform.  We currently support [AWS](#amazon-web-services), [DigitalOcean](#digitalocean), and [Google Cloud](#google-cloud)
+
+## Use Lattice
+
+The [Lattice CLI `ltc`](https://github.com/pivotal-cf-experimental/lattice-cli) provides a command line interface for launching docker-based applications.  
+
+More complex workloads can be constructed and submitted directly to Lattice's Receptor API which is fully documented [here](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/README.md).
+
+# Local Deployment
+
+## Launching with Vagrant
+
+Make sure you have [Vagrant](https://vagrantup.com/) installed, then:
 
     $ git clone git@github.com:pivotal-cf-experimental/lattice.git
     $ cd lattice
     $ vagrant up
 
-Vagrant up spins up a virtual hardware environment that is accessible at 192.168.11.11. You can do this with either VMware Fusion or VirtualBox:. You can specify your preferred provider with the --provider flag.
+This spins up a virtual environment that is accessible at `192.168.11.11`.
+
+Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli) to target Lattice:
+
+```
+ltc target 192.168.11.11.xip.io
+```
+
+## Using Different Providers
+
+You can do this with either VMware Fusion or VirtualBox:
 
 Virtualbox:
 
@@ -16,8 +50,9 @@ VMware Fusion:
 
      $ vagrant up --provider vmware_fusion
 
-## Networking Conflicts
-If you are trying to run both the Virtual Box and VMWare providers on the same machine, 
+### Networking Conflicts
+
+If you are trying to run both the VirtualBox and VMWare providers on the same machine, 
 you'll need to run them on different private networks (subnets) that do not conflict.
 
 Set the System IP to an address that does not conflict with the host networking configuration by passing the
@@ -25,60 +60,39 @@ LATTICE_SYSTEM_IP environment variable to the vagrant up command:
 
 ```
 LATTICE_SYSTEM_IP=192.168.80.100 vagrant up
+ltc target 192.168.80.100.xip.io
 ```
 
-The output from vagrant up will provide instructions on how to target Lattice. 
+## Updating
 
-Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli) to target Lattice.
-
-##Example Usage
-
-     $ vagrant up
-     
-     Bringing machine 'default' up with 'vmware_fusion' provider...
-     ...
-     ...
-     Lattice is now installed and running. You may target it with the Lattice cli via:
-     192.168.194.130.xip.io
-     
-     $ ltc target 192.168.194.130.xip.io 
-     
-
-##Updating
-
-Currently, Lattice does not support updating via provision.
-So to update, you have to destroy the box and bring it back up as shown below:
+Currently, Lattice does not support updating via provision. So to update, you have to destroy the box and bring it back up:
 
      vagrant destroy --force
      git pull
      vagrant up
   
-##Troubleshooting
+## Troubleshooting
+
 -  xip.io is sometimes flaky, resulting in no such host errors.
 -  The alternative that we have found is to use dnsmasq configured to resolve all xip.io addresses to 192.168.11.11.
 -  This also requires creating a /etc/resolvers/io file that points to 127.0.0.1. See further instructions [here] (http://passingcuriosity.com/2013/dnsmasq-dev-osx/). 
 
-##Running Vagrant with a custom lattice tar
+## Running Vagrant with a custom Lattice tar
 
-    VAGRANT_LATTICE_TAR_PATH=/vagrant/lattice.tgz vagrant up
+By default, `vagrant up` will fetch the latest Lattice binary tarball.  To use a particular tarball:
 
-#Terraform Deployment
+    VAGRANT_LATTICE_TAR_PATH=/path/to/lattice.tgz vagrant up
 
+# Clustered Deployment
 
-This project contains several [Terraform](https://www.terraform.io/) templates to help you deploy
-[Lattice](https://github.com/pivotal-cf-experimental/lattice) on your choice of IaaS.
-They are located under the terraform directory.
+This repository contains several [Terraform](https://www.terraform.io/) templates to help you deploy on your choice of IaaS.  To deploy Lattice in this way you will need:
 
-## Usage
+- [Terraform](https://www.terraform.io/intro/getting-started/install.html) installed on your machine
+- Credentials for your choice of IaaS
 
-### Prerequisites
+## Bootstrapping a Clustered Deployment
 
-* [Terraform](https://www.terraform.io/intro/getting-started/install.html) installed on your machine
-* Credentials for your choice of IaaS
-
-### Configure
-
-#### [Amazon Web Services](http://aws.amazon.com/):
+### [Amazon Web Services](http://aws.amazon.com/):
 
 Create a `lattice.tf` file by downloading the [AWS example file](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/aws/lattice.tf.example):
 
@@ -88,7 +102,7 @@ wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/m
 
 Update the downloaded file filling the variables according to the [AWS README](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/aws/README.md) file.
 
-#### [DigitalOcean](https://www.digitalocean.com):
+### [DigitalOcean](https://www.digitalocean.com):
 
 Create a `lattice.tf` file by downloading the [DigitalOcean example file](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/digitalocean/lattice.tf.example):
 
@@ -98,7 +112,7 @@ wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/m
 
 Update the downloaded file filling the variables according to the [DigitalOcean README](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/digitalocean/README.md) file.
 
-#### [Google Cloud](https://cloud.google.com/):
+### [Google Cloud](https://cloud.google.com/):
 
 Create a `lattice.tf` file downloading the [Google Cloud example file](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/google/lattice.tf.example):
 
@@ -107,16 +121,18 @@ wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/l
 ```
 Update the downloaded file filling the variables according to the [Google Cloud README](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/google/README.md) file.
 
-### Deploy
+## Deploying
 
-Get the templates and deploy the cluster:
+Once your `lattice.tf` file is configured:
 
 ```
 terraform get -update
 terraform apply
 ```
 
-After the cluster has been successfully, terraform will print the Lattice domain:
+will deploy the cluster.
+
+Upon success, terraform will print the Lattice target:
 
 ```
 Outputs:
@@ -126,27 +142,17 @@ Outputs:
   lattice_password = xxxxxxxx
 ```
 
+which you can use with the Lattice CLI to `ltc target x.x.x.x.xip.io`.
 
+Terraform will generate a `lattice.tfstate` file.  This file describes the cluster that was built - keep it around in order to modify/tear down the cluster.
 
-## Destroy
+## Destroying
 
-Destroy the cluster:
+To destroy the cluster:
 
 ```
 terraform destroy
 ```
-
-
-
-#Testing the Lattice Box
-
- Follow the [whetstone instructions](https://github.com/pivotal-cf-experimental/whetstone) for lattice
-
-#Using Lattice
-
- Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli).
-
-
 
 # Contributing
 
