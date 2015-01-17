@@ -24,7 +24,7 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 	var logsCommand = cli.Command{
 		Name:        "logs",
 		ShortName:   "l",
-		Description: "stream logs from an app",
+		Description: "Stream logs from the specified application",
 		Usage:       "ltc logs APP_NAME",
 		Action:      factory.cmd.tailLogs,
 		Flags:       []cli.Flag{},

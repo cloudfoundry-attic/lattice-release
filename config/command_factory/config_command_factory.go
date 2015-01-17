@@ -21,24 +21,15 @@ func NewConfigCommandFactory(config *config.Config, targetVerifier target_verifi
 }
 
 func (c *commandFactory) MakeTargetCommand() cli.Command {
-	var targetFlags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "username, u",
-			Usage: "lattice username",
-		},
-		cli.StringFlag{
-			Name:  "password, pw, p",
-			Usage: "lattice password",
-		},
-	}
-
 	var startCommand = cli.Command{
-		Name:        "target",
-		ShortName:   "t",
-		Description: "set a target lattice location",
-		Usage:       "ltc target LATTICE_DOMAIN [--username USERNAME --password PASSWORD]",
-		Action:      c.cmd.target,
-		Flags:       targetFlags,
+		Name:      "target",
+		ShortName: "t",
+		Description: `Set a target lattice location.
+
+   For a Vagrant deployed Lattice:
+   ltc target 192.168.11.11.xip.io`,
+		Usage:  "ltc target LATTICE_TARGET",
+		Action: c.cmd.target,
 	}
 
 	return startCommand

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"io"
+
 	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
@@ -13,7 +15,6 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/output/cursor"
-	"io"
 )
 
 type AppExaminerCommandFactory struct {
@@ -33,7 +34,7 @@ func (commandFactory *AppExaminerCommandFactory) MakeListAppCommand() cli.Comman
 	var startCommand = cli.Command{
 		Name:        "list",
 		ShortName:   "li",
-		Description: "List all apps on lattice.",
+		Description: "List all applications running on Lattice",
 		Usage:       "ltc list",
 		Action:      commandFactory.appExaminerCommand.listApps,
 		Flags:       []cli.Flag{},
@@ -53,7 +54,7 @@ func (commandFactory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Comm
 
 	var startCommand = cli.Command{
 		Name:        "visualize",
-		Description: "Visualize Lattice Cells",
+		Description: "Visualize the workload distribution across the Lattice Cells",
 		Usage:       "ltc visualize",
 		Action:      commandFactory.appExaminerCommand.visualizeCells,
 		Flags:       visualizeFlags,
@@ -65,8 +66,8 @@ func (commandFactory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Comm
 func (commandFactory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
 	return cli.Command{
 		Name:        "status",
-		Description: "Displays detailed status information about the app and its instances",
-		Usage:       "ltc status",
+		Description: "Displays detailed status information about the given application and its instances",
+		Usage:       "ltc status APP_NAME",
 		Action:      commandFactory.appExaminerCommand.appStatus,
 		Flags:       []cli.Flag{},
 	}

@@ -42,12 +42,12 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 		},
 		cli.StringFlag{
 			Name:  "working-dir, w",
-			Usage: "directory where lattice will run the start command",
+			Usage: "working directory to assign to the running process",
 			Value: "/",
 		},
 		cli.BoolFlag{
 			Name:  "run-as-root, r",
-			Usage: "run app as privileged user",
+			Usage: "run process as a privileged user (root)",
 		},
 		cli.StringSliceFlag{
 			Name:  "env, e",
@@ -56,33 +56,44 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 		},
 		cli.IntFlag{
 			Name:  "memory-mb, m",
-			Usage: "amount of memory in MB to provide for the docker app",
+			Usage: "container memory limit in MB",
 			Value: 128,
 		},
 		cli.IntFlag{
 			Name:  "disk-mb, d",
-			Usage: "amount of disk memory in MB to provide for the docker app",
+			Usage: "container disk limit in MB",
 			Value: 1024,
 		},
 		cli.IntFlag{
 			Name:  "port, p",
-			Usage: "port that the docker app listens on",
+			Usage: "port that the running process will listen on",
 			Value: 8080,
 		},
 		cli.IntFlag{
 			Name:  "instances",
-			Usage: "number of app instances",
+			Usage: "number of container instances to launch",
 			Value: 1,
 		},
 	}
 
 	var startCommand = cli.Command{
-		Name:        "start",
-		ShortName:   "s",
-		Description: "Start a docker app on lattice",
-		Usage:       "ltc start APP_NAME -i DOCKER_IMAGE -e NAME[=VALUE] -- START_COMMAND [APP_ARG1 APP_ARG2...]",
-		Action:      commandFactory.appRunnerCommand.startApp,
-		Flags:       startFlags,
+		Name:      "start",
+		ShortName: "s",
+		Usage:     "ltc start APP_NAME -i DOCKER_IMAGE",
+		Description: `Start a docker app on lattice
+   
+   APP_NAME is required and must be unique across the Lattice cluster
+   DOCKER_IMAGE is required and must match the format (e.g.)
+   docker:///cloudfoundry/lattice-app
+
+   ltc will fetch the command associated with your Docker image.
+   To provide a custom command:
+   ltc start APP_NAME -i DOCKER_IMAGE -- START_COMMAND APP_ARG1 APP_ARG2 ...
+
+   To specify environment variables:
+   ltc start APP_NAME -i DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE`,
+		Action: commandFactory.appRunnerCommand.startApp,
+		Flags:  startFlags,
 	}
 
 	return startCommand
@@ -100,7 +111,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command
 	var scaleCommand = cli.Command{
 		Name:        "scale",
 		Description: "Scale a docker app on lattice",
-		Usage:       "ltc scale APP_NAME --instances NUM_INSTANCES ",
+		Usage:       "ltc scale APP_NAME --instances NUM_INSTANCES",
 		Action:      commandFactory.appRunnerCommand.scaleApp,
 		Flags:       scaleFlags,
 	}
@@ -111,10 +122,12 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command
 func (commandFactory *AppRunnerCommandFactory) MakeStopAppCommand() cli.Command {
 
 	var stopCommand = cli.Command{
-		Name:        "stop",
-		Description: "Stop a docker app on lattice",
-		Usage:       "ltc stop APP_NAME ",
-		Action:      commandFactory.appRunnerCommand.stopApp,
+		Name: "stop",
+		Description: `Stop a docker app on lattice
+
+   The application can be restarted with ltc scale`,
+		Usage:  "ltc stop APP_NAME",
+		Action: commandFactory.appRunnerCommand.stopApp,
 	}
 
 	return stopCommand
@@ -124,7 +137,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Comman
 
 	var removeCommand = cli.Command{
 		Name:        "remove",
-		Description: "Remove a docker app from lattice",
+		Description: "Stop and remove a docker app from lattice",
 		Usage:       "ltc remove APP_NAME",
 		Action:      commandFactory.appRunnerCommand.removeApp,
 	}
