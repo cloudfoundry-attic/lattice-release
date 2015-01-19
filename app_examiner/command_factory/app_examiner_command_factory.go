@@ -250,8 +250,12 @@ func (cmd *appExaminerCommand) printDistribution() int {
 		}
 		cmd.output.Say(": ")
 
-		cmd.output.Say(colors.Green(strings.Repeat("•", cell.RunningInstances)))
-		cmd.output.Say(colors.Yellow(strings.Repeat("•", cell.ClaimedInstances)))
+		if cell.RunningInstances == 0 && cell.ClaimedInstances == 0 && !cell.Missing {
+			cmd.output.Say(colors.Red("empty"))
+		} else {
+			cmd.output.Say(colors.Green(strings.Repeat("•", cell.RunningInstances)))
+			cmd.output.Say(colors.Yellow(strings.Repeat("•", cell.ClaimedInstances)))
+		}
 		cmd.output.Say(cursor.ClearToEndOfLine())
 		cmd.output.NewLine()
 	}

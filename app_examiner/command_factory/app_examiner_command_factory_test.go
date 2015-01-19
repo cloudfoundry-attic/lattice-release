@@ -113,7 +113,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Distribution\n")))
 			Expect(outputBuffer).To(test_helpers.Say("cell-1: " + colors.Green("•••") + colors.Yellow("••") + cursor.ClearToEndOfLine() + "\n"))
 			Expect(outputBuffer).To(test_helpers.Say("cell-2: " + colors.Green("••") + colors.Yellow("•") + cursor.ClearToEndOfLine() + "\n"))
-			Expect(outputBuffer).To(test_helpers.Say("cell-3: "))
+			Expect(outputBuffer).To(test_helpers.Say("cell-3: " + colors.Red("empty")))
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
 		})
 
@@ -137,7 +137,7 @@ var _ = Describe("CommandFactory", func() {
 
 				closeChan = test_helpers.AsyncExecuteCommandWithArgs(visualizeCommand, []string{"-rate", "2s"})
 
-				Eventually(outputBuffer).Should(test_helpers.Say("cell-0: " + cursor.ClearToEndOfLine() + "\n"))
+				Eventually(outputBuffer).Should(test_helpers.Say("cell-0: " + colors.Red("empty") + cursor.ClearToEndOfLine() + "\n"))
 				Eventually(outputBuffer).Should(test_helpers.Say("cell-1" + colors.Red("[MISSING]") + ": " + cursor.ClearToEndOfLine() + "\n"))
 
 				setNumberOfRunningInstances(2)
