@@ -50,7 +50,7 @@ func (commandFactory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Comm
 	var visualizeFlags = []cli.Flag{
 		cli.DurationFlag{
 			Name:  "rate, r",
-			Usage: "The rate in seconds at which to refresh the visualization.",
+			Usage: "The rate at which to refresh the visualization.\n\te.g. -r=\".5s\"\n\te.g. -r=\"1000ns\"",
 		},
 	}
 
