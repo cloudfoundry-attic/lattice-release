@@ -1,5 +1,7 @@
 package docker_metadata_fetcher
 
+//go:generate counterfeiter -o fake_docker_metadata_fetcher/fake_docker_metadata_fetcher.go . DockerMetadataFetcher
+
 import (
 	"fmt"
 

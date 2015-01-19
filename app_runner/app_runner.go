@@ -1,5 +1,7 @@
 package app_runner
 
+//go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
+
 import (
 	"fmt"
 

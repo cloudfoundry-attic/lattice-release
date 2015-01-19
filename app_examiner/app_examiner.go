@@ -1,5 +1,7 @@
 package app_examiner
 
+//go:generate counterfeiter -o fake_app_examiner/fake_app_examiner.go . AppExaminer
+
 import (
 	"sort"
 
