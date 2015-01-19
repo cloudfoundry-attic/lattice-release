@@ -87,8 +87,8 @@ By default, `vagrant up` will fetch the latest Lattice binary tarball.  To use a
 
 This repository contains several [Terraform](https://www.terraform.io/) templates to help you deploy on your choice of IaaS.  To deploy Lattice in this way you will need:
 
-- [Terraform](https://www.terraform.io/intro/getting-started/install.html) installed on your machine
-- Credentials for your choice of IaaS
+* [Terraform](https://www.terraform.io/intro/getting-started/install.html) >= 0.3.6 installed on your machine
+* Credentials for your choice of IaaS
 
 ## Bootstrapping a Clustered Deployment
 
