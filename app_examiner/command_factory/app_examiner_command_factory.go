@@ -2,11 +2,11 @@ package command_factory
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"text/tabwriter"
-
-	"io"
+	"time"
 
 	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/codegangsta/cli"
@@ -16,6 +16,8 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/output/cursor"
 )
+
+const TimestampDisplayLayout = "2006-01-02 15:04:05 (MST)"
 
 type AppExaminerCommandFactory struct {
 	appExaminerCommand *appExaminerCommand
@@ -162,9 +164,9 @@ func printAppInfo(w io.Writer, appInfo app_examiner.AppInfo) {
 
 	fmt.Fprintf(w, "%s\t%s\n", "Ports", strings.Join(portStrings, ","))
 	fmt.Fprintf(w, "%s\t%s\n", "Routes", strings.Join(appInfo.Routes, " "))
-	fmt.Fprintf(w, "%s\t%s\n", "LogGuid", appInfo.LogGuid)
-	fmt.Fprintf(w, "%s\t%s\n", "LogSource", appInfo.LogSource)
-	fmt.Fprintf(w, "%s\t%s\n", "Annotation", appInfo.Annotation)
+	if appInfo.Annotation != "" {
+		fmt.Fprintf(w, "%s\t%s\n", "Annotation", appInfo.Annotation)
+	}
 
 	printHorizontalRule(w, "-")
 	var envVars string
@@ -194,7 +196,7 @@ func printInstanceInfo(w io.Writer, headingPrefix string, actualInstances []app_
 		}
 		fmt.Fprintf(w, "%s\t%s\n", "Ports", strings.Join(portMappingStrings, ";"))
 
-		fmt.Fprintf(w, "%s\t%s\n", "Since", fmt.Sprint(instance.Since))
+		fmt.Fprintf(w, "%s\t%s\n", "Since", fmt.Sprint(time.Unix(0, instance.Since).Format(TimestampDisplayLayout)))
 
 		printHorizontalRule(w, "-")
 	}

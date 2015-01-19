@@ -232,7 +232,7 @@ var _ = Describe("CommandFactory", func() {
 								},
 							},
 							State: "RUNNING",
-							Since: 1992,
+							Since: 401120627 * 1e9,
 						},
 					},
 				}, nil)
@@ -270,12 +270,6 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com"))
 			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-exuberant-domain.org"))
 
-			Expect(outputBuffer).To(test_helpers.Say("LogGuid"))
-			Expect(outputBuffer).To(test_helpers.Say("a9s8dfa99023r"))
-
-			Expect(outputBuffer).To(test_helpers.Say("LogSource"))
-			Expect(outputBuffer).To(test_helpers.Say("wompy-app-logz"))
-
 			Expect(outputBuffer).To(test_helpers.Say("Annotation"))
 			Expect(outputBuffer).To(test_helpers.Say("I love this app. So wompy."))
 
@@ -300,7 +294,9 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("5555:6666"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Since"))
-			Expect(outputBuffer).To(test_helpers.Say("1992"))
+
+			prettyTimestamp := time.Unix(0, 401120627*1e9).Format(command_factory.TimestampDisplayLayout)
+			Expect(outputBuffer).To(test_helpers.Say(prettyTimestamp))
 		})
 
 		Context("When no appName is specified", func() {
@@ -316,6 +312,16 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"zany-app"})
 
 			Expect(outputBuffer).To(test_helpers.Say("You want the status?? ...YOU CAN'T HANDLE THE STATUS!!!"))
+		})
+
+		Context("When Annotation is empty", func() {
+			It("omits Annotation from the output", func() {
+				appExaminer.AppStatusReturns(app_examiner.AppInfo{ProcessGuid: "jumpy-app"}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"jumpy-app"})
+
+				Expect(outputBuffer).NotTo(test_helpers.Say("Annotation"))
+			})
 		})
 	})
 })
