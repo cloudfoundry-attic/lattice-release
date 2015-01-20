@@ -71,7 +71,6 @@ var _ = Describe("CommandFactory", func() {
 				"--disk-mb=12",
 				"--port=3000",
 				"--working-dir=/applications",
-				"--docker-image=fun/app",
 				"--run-as-root=true",
 				"--instances=22",
 				"--env=TIMEZONE=CST",
@@ -79,6 +78,7 @@ var _ = Describe("CommandFactory", func() {
 				"--env=COLOR",
 				"--env=UNSET",
 				"cool-web-app",
+				"fun/app",
 				"--",
 				"/start-me-please",
 				"AppArg0",
@@ -110,8 +110,8 @@ var _ = Describe("CommandFactory", func() {
 
 		It("starts a Docker based app with sensible defaults and checks for metadata to know the image exists", func() {
 			args := []string{
-				"--docker-image=fun/app",
 				"cool-web-app",
+				"fun/app",
 				"--",
 				"/start-me-please",
 			}
@@ -134,8 +134,8 @@ var _ = Describe("CommandFactory", func() {
 
 		It("exposes errors from trying to fetch the Docker metadata", func() {
 			args := []string{
-				"--docker-image=fun/app",
 				"cool-web-app",
+				"fun/app",
 				"--",
 				"/start-me-please",
 			}
@@ -150,8 +150,8 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("when no start command is provided", func() {
 			var args = []string{
-				"--docker-image=fun-org/app",
 				"cool-web-app",
+				"fun-org/app",
 			}
 
 			BeforeEach(func() {
@@ -196,9 +196,9 @@ var _ = Describe("CommandFactory", func() {
 
 		It("polls for the app to start with correct number of instances", func() {
 			args := []string{
-				"--docker-image=fun/app",
 				"--instances=10",
 				"cool-web-app",
+				"fun/app",
 				"--",
 				"/start-me-please",
 			}
@@ -231,8 +231,8 @@ var _ = Describe("CommandFactory", func() {
 
 		It("alerts the user if the app does not start", func() {
 			args := []string{
-				"--docker-image=fun/app",
 				"cool-web-app",
+				"fun/app",
 				"--",
 				"/start-me-please",
 			}
@@ -251,9 +251,11 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
 		})
 
-		It("validates that the name is passed in", func() {
+		It("validates that the name and dockerImage are passed in", func() {
+			//TODO: combine this test and the one after it into one
 			args := []string{
-				"--docker-image=fun/app",
+				"",
+				"fun/app",
 			}
 
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
@@ -277,8 +279,8 @@ var _ = Describe("CommandFactory", func() {
 
 		It("validates that the terminator -- is passed in when a start command is specified", func() {
 			args := []string{
-				"--docker-image=fun/app",
 				"cool-web-app",
+				"fun/app",
 				"not-the-terminator",
 				"start-me-up",
 			}
@@ -290,8 +292,8 @@ var _ = Describe("CommandFactory", func() {
 
 		It("outputs error messages", func() {
 			args := []string{
-				"--docker-image=fun/app",
 				"cool-web-app",
+				"fun/app",
 				"--",
 				"/start-me-please",
 			}
@@ -305,7 +307,6 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("ScaleAppCommand", func() {
-
 		var scaleCommand cli.Command
 		BeforeEach(func() {
 			timeProvider = faketimeprovider.New(time.Now())
@@ -327,8 +328,8 @@ var _ = Describe("CommandFactory", func() {
 
 		It("scales an with the specified number of instances", func() {
 			args := []string{
-				"--instances=22",
 				"cool-web-app",
+				"22",
 			}
 
 			appRunner.NumOfRunningAppInstancesReturns(22, nil)
@@ -346,8 +347,8 @@ var _ = Describe("CommandFactory", func() {
 
 		It("polls until the required number of instances are running", func() {
 			args := []string{
-				"--instances=22",
 				"cool-web-app",
+				"22",
 			}
 
 			appRunner.NumOfRunningAppInstancesReturns(1, nil)
@@ -377,8 +378,8 @@ var _ = Describe("CommandFactory", func() {
 			appRunner.NumOfRunningAppInstancesReturns(1, nil)
 
 			args := []string{
-				"--instances=22",
 				"cool-web-app",
+				"22",
 			}
 
 			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
@@ -393,6 +394,18 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to scale.")))
 		})
 
+		It("outputs error messages", func() {
+			args := []string{
+				"cool-web-app",
+				"22",
+			}
+
+			appRunner.ScaleAppReturns(errors.New("Major Fault"))
+			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+
+			Expect(outputBuffer).To(test_helpers.Say("Error Scaling App to 22 instances: Major Fault"))
+		})
+
 		It("validates that the name is passed in", func() {
 			args := []string{
 				"",
@@ -404,19 +417,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
 		})
 
-		It("outputs error messages", func() {
-			args := []string{
-				"--instances=22",
-				"cool-web-app",
-			}
-
-			appRunner.ScaleAppReturns(errors.New("Major Fault"))
-			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
-
-			Expect(outputBuffer).To(test_helpers.Say("Error Scaling App to 22 instances: Major Fault"))
-		})
-
-		It("returns an error if instances is not set", func() {
+		It("validates that the number of instances is passed in", func() {
 			args := []string{
 				"cool-web-app",
 			}
@@ -427,6 +428,17 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
 		})
 
+		It("validates that the number of instances is an integer", func() {
+			args := []string{
+				"cool-web-app",
+				"twenty-two",
+			}
+
+			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+
+			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Number of Instances must be an integer"))
+			Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+		})
 	})
 
 	Describe("StopAppCommand", func() {

@@ -2,6 +2,7 @@ package command_factory
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -36,10 +37,6 @@ func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunner
 func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command {
 
 	var startFlags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "docker-image, i",
-			Usage: "docker image to run",
-		},
 		cli.StringFlag{
 			Name:  "working-dir, w",
 			Usage: "working directory to assign to the running process",
@@ -79,7 +76,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 	var startCommand = cli.Command{
 		Name:      "start",
 		ShortName: "s",
-		Usage:     "ltc start APP_NAME -i DOCKER_IMAGE",
+		Usage:     "ltc start APP_NAME DOCKER_IMAGE",
 		Description: `Start a docker app on lattice
    
    APP_NAME is required and must be unique across the Lattice cluster
@@ -88,10 +85,10 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 
    ltc will fetch the command associated with your Docker image.
    To provide a custom command:
-   ltc start APP_NAME -i DOCKER_IMAGE -- START_COMMAND APP_ARG1 APP_ARG2 ...
+   ltc start APP_NAME DOCKER_IMAGE <optional flags> -- START_COMMAND APP_ARG1 APP_ARG2 ...
 
    To specify environment variables:
-   ltc start APP_NAME -i DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE`,
+   ltc start APP_NAME DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE`,
 		Action: commandFactory.appRunnerCommand.startApp,
 		Flags:  startFlags,
 	}
@@ -100,20 +97,11 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
-
-	var scaleFlags = []cli.Flag{
-		cli.IntFlag{
-			Name:  "instances, i",
-			Usage: "the number of instances to scale to",
-		},
-	}
-
 	var scaleCommand = cli.Command{
 		Name:        "scale",
 		Description: "Scale a docker app on lattice",
-		Usage:       "ltc scale APP_NAME --instances NUM_INSTANCES",
+		Usage:       "ltc scale APP_NAME NUM_INSTANCES",
 		Action:      commandFactory.appRunnerCommand.scaleApp,
-		Flags:       scaleFlags,
 	}
 
 	return scaleCommand
@@ -134,7 +122,6 @@ func (commandFactory *AppRunnerCommandFactory) MakeStopAppCommand() cli.Command 
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
-
 	var removeCommand = cli.Command{
 		Name:        "remove",
 		Description: "Stop and remove a docker app from lattice",
@@ -156,7 +143,6 @@ type appRunnerCommand struct {
 }
 
 func (cmd *appRunnerCommand) startApp(context *cli.Context) {
-	dockerImage := context.String("docker-image")
 	workingDir := context.String("working-dir")
 	envVars := context.StringSlice("env")
 	privileged := context.Bool("run-as-root")
@@ -165,8 +151,9 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	diskMB := context.Int("disk-mb")
 	port := context.Int("port")
 	name := context.Args().Get(0)
-	terminator := context.Args().Get(1)
-	startCommand := context.Args().Get(2)
+	dockerImage := context.Args().Get(1)
+	terminator := context.Args().Get(2)
+	startCommand := context.Args().Get(3)
 
 	var appArgs []string
 
@@ -174,14 +161,14 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	case name == "":
 		cmd.output.IncorrectUsage("App Name required")
 		return
-	case dockerImage == "":
+	case dockerImage == "" || dockerImage == "--":
 		cmd.output.IncorrectUsage("Docker Image required")
 		return
 	case startCommand != "" && terminator != "--":
 		cmd.output.IncorrectUsage("'--' Required before start command")
 		return
-	case len(context.Args()) > 3:
-		appArgs = context.Args()[3:]
+	case len(context.Args()) > 4:
+		appArgs = context.Args()[4:]
 	}
 
 	imageMetadata, err := cmd.dockerMetadataFetcher.FetchMetadata(dockerImage, "latest")
@@ -243,13 +230,20 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 
 func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 	appName := c.Args().First()
-	instances := c.Int("instances")
+	instancesArg := c.Args().Get(1)
 
-	if appName == "" {
+	switch {
+	case appName == "":
 		cmd.output.IncorrectUsage("App Name required")
 		return
-	} else if !c.IsSet("instances") {
+	case instancesArg == "":
 		cmd.output.IncorrectUsage("Number of Instances Required")
+		return
+	}
+
+	instances, err := strconv.Atoi(instancesArg)
+	if err != nil {
+		cmd.output.IncorrectUsage("Number of Instances must be an integer")
 		return
 	}
 
