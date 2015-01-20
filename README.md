@@ -8,7 +8,7 @@ Integration tests for Lattice
 ##Setup
 
      go get github.com/pivotal-cf-experimental/whetstone
-     go get github.com/pivotal-cf-experimental/lattice-cli
+     go get github.com/pivotal-cf-experimental/lattice-cli/ltc
      go get -v -t ./...
 
      go get github.com/onsi/ginkgo/ginkgo
