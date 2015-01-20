@@ -33,7 +33,8 @@ check_if_cli_needs_bump() {
 bump_cli_version() {
     get_previous_cli_version
     pushd lattice-cli
-        new_cli_version="v$((previous_cli_version+1))" &&
+        previous_cli_version_number=${previous_cli_version:1}
+        new_cli_version="v$((previous_cli_version_number+1))" &&
         git tag -a "$new_cli_version" -m "$(date)" &&
         git push origin --tags
     popd
