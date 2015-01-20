@@ -158,11 +158,8 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	var appArgs []string
 
 	switch {
-	case name == "":
-		cmd.output.IncorrectUsage("App Name required")
-		return
-	case dockerImage == "" || dockerImage == "--":
-		cmd.output.IncorrectUsage("Docker Image required")
+	case len(context.Args()) < 2:
+		cmd.output.IncorrectUsage("APP_NAME and DOCKER_IMAGE are required")
 		return
 	case startCommand != "" && terminator != "--":
 		cmd.output.IncorrectUsage("'--' Required before start command")

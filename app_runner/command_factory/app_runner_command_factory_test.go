@@ -252,28 +252,13 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		It("validates that the name and dockerImage are passed in", func() {
-			//TODO: combine this test and the one after it into one
 			args := []string{
-				"",
-				"fun/app",
+				"justonearg",
 			}
 
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
-			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
-			Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
-		})
-
-		It("validates that the dockerImage is passed in", func() {
-			args := []string{
-				"cool-web-app",
-				"--",
-				"/start-me-please",
-			}
-
-			test_helpers.ExecuteCommandWithArgs(startCommand, args)
-
-			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Docker Image required"))
+			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: APP_NAME and DOCKER_IMAGE are required"))
 			Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
 		})
 
