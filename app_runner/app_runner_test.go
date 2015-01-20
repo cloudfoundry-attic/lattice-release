@@ -36,7 +36,7 @@ var _ = Describe("AppRunner", func() {
 			err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
 				Name:                 "americano-app",
 				StartCommand:         "/app-run-statement",
-				DockerImagePath:      "docker://runtest/runner",
+				DockerImagePath:      "runtest/runner",
 				AppArgs:              args,
 				EnvironmentVariables: envs,
 				Privileged:           privileged,
@@ -52,7 +52,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0)).To(Equal(receptor.DesiredLRPCreateRequest{
 				ProcessGuid:          "americano-app",
 				Domain:               "lattice",
-				RootFSPath:           "docker://runtest/runner",
+				RootFSPath:           "docker:///runtest/runner",
 				Instances:            22,
 				Stack:                "lucid64",
 				EnvironmentVariables: []receptor.EnvironmentVariable{receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"}, receptor.EnvironmentVariable{Name: "PORT", Value: "2000"}},
@@ -86,7 +86,7 @@ var _ = Describe("AppRunner", func() {
 
 			err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
 				Name:                 "app-already-desired",
-				StartCommand:         "docker://faily/boom",
+				StartCommand:         "faily/boom",
 				DockerImagePath:      "/app-bork-statement",
 				AppArgs:              []string{},
 				EnvironmentVariables: map[string]string{},
@@ -102,6 +102,26 @@ var _ = Describe("AppRunner", func() {
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
 
+		Context("when the docker repo url is malformed", func() {
+			It("Returns an error", func() {
+				err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
+					Name:                 "nescafe-app",
+					StartCommand:         "/app",
+					DockerImagePath:      "¥¥¥Bad-Docker¥¥¥",
+					AppArgs:              []string{},
+					EnvironmentVariables: map[string]string{},
+					Privileged:           false,
+					Instances:            1,
+					MemoryMB:             128,
+					DiskMB:               1024,
+					Port:                 8080,
+				})
+
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("Invalid repository name (¥¥¥Bad-Docker¥¥¥), only [a-z0-9-_.] are allowed"))
+			})
+		})
+
 		Describe("returning errors from the receptor", func() {
 			It("returns desiring lrp errors", func() {
 				receptorError := errors.New("error - Desiring an LRP")
@@ -109,8 +129,8 @@ var _ = Describe("AppRunner", func() {
 
 				err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
 					Name:                 "nescafe-app",
-					StartCommand:         "docker://faily/boom",
-					DockerImagePath:      "/app-bork-statement",
+					StartCommand:         "faily/boom",
+					DockerImagePath:      "borked_app",
 					AppArgs:              []string{},
 					EnvironmentVariables: map[string]string{},
 					Privileged:           false,
@@ -129,7 +149,7 @@ var _ = Describe("AppRunner", func() {
 
 				err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
 					Name:                 "nescafe-app",
-					StartCommand:         "docker://faily/boom",
+					StartCommand:         "faily/boom",
 					DockerImagePath:      "/app-bork-statement",
 					AppArgs:              []string{},
 					EnvironmentVariables: map[string]string{},

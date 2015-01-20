@@ -3,11 +3,10 @@ package docker_metadata_fetcher
 //go:generate counterfeiter -o fake_docker_metadata_fetcher/fake_docker_metadata_fetcher.go . DockerMetadataFetcher
 
 import (
-	"fmt"
-
 	"github.com/docker/docker/image"
-	"github.com/docker/docker/registry"
-	"github.com/docker/docker/utils"
+	//	"github.com/docker/docker/registry"
+	//	"github.com/docker/docker/utils"
+	"fmt"
 )
 
 type ImageMetadata struct {
@@ -20,25 +19,18 @@ type DockerMetadataFetcher interface {
 }
 
 type dockerMetadataFetcher struct {
+	dockerSessionFactory DockerSessionFactory
 }
 
-func New() DockerMetadataFetcher {
-	return &dockerMetadataFetcher{}
+func New(sessionFactory DockerSessionFactory) DockerMetadataFetcher {
+	return &dockerMetadataFetcher{
+		dockerSessionFactory: sessionFactory,
+	}
 }
 
 func (fetcher *dockerMetadataFetcher) FetchMetadata(repoName string, tag string) (*ImageMetadata, error) {
-	hostname, repoName, err := registry.ResolveRepositoryName(repoName)
-	if err != nil {
-		return nil, err
-	}
 
-	endpoint, err := registry.NewEndpoint(hostname, []string{"127.0.0.1/32"})
-	if err != nil {
-		return nil, err
-	}
-
-	authConfig := &registry.AuthConfig{}
-	session, err := registry.NewSession(authConfig, utils.NewHTTPRequestFactory(), endpoint, true)
+	session, err := fetcher.dockerSessionFactory.MakeSession(repoName)
 	if err != nil {
 		return nil, err
 	}
@@ -59,14 +51,15 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(repoName string, tag string)
 	}
 
 	var img *image.Image
-	for _, endpoint := range repoData.Endpoints {
-		imgJSON, _, err := session.GetRemoteImageJSON(imgID, endpoint, repoData.Tokens)
-		if err == nil {
-			img, err = image.NewImgJSON(imgJSON)
-			if err != nil {
-				return nil, err
-			}
-		}
+	endpoint := repoData.Endpoints[0]
+	imgJSON, _, err := session.GetRemoteImageJSON(imgID, endpoint, repoData.Tokens)
+	if err != nil {
+		return nil, err
+	}
+
+	img, err = image.NewImgJSON(imgJSON)
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing remote image json for specified docker image:\n%s", err.Error())
 	}
 
 	if img.Config == nil {

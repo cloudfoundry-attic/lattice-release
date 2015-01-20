@@ -72,7 +72,7 @@ func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config, l
 
 	appRunnerCommandFactoryConfig := app_runner_command_factory.AppRunnerCommandFactoryConfig{
 		AppRunner:             appRunner,
-		DockerMetadataFetcher: docker_metadata_fetcher.New(),
+		DockerMetadataFetcher: docker_metadata_fetcher.New(docker_metadata_fetcher.NewDockerSessionFactory()),
 		Output:                output,
 		Timeout:               timeout(),
 		Domain:                config.Target(),

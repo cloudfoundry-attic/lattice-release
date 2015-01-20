@@ -71,7 +71,7 @@ var _ = Describe("CommandFactory", func() {
 				"--disk-mb=12",
 				"--port=3000",
 				"--working-dir=/applications",
-				"--docker-image=docker:///fun/app",
+				"--docker-image=fun/app",
 				"--run-as-root=true",
 				"--instances=22",
 				"--env=TIMEZONE=CST",
@@ -93,7 +93,7 @@ var _ = Describe("CommandFactory", func() {
 			startDockerAppParameters := appRunner.StartDockerAppArgsForCall(0)
 			Expect(startDockerAppParameters.Name).To(Equal("cool-web-app"))
 			Expect(startDockerAppParameters.StartCommand).To(Equal("/start-me-please"))
-			Expect(startDockerAppParameters.DockerImagePath).To(Equal("docker:///fun/app"))
+			Expect(startDockerAppParameters.DockerImagePath).To(Equal("fun/app"))
 			Expect(startDockerAppParameters.AppArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
 			Expect(startDockerAppParameters.Instances).To(Equal(22))
 			Expect(startDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "COLOR": "Blue", "UNSET": ""}))
@@ -108,15 +108,16 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
 		})
 
-		It("starts a Docker based app with sensible defaults", func() {
+		It("starts a Docker based app with sensible defaults and checks for metadata to know the image exists", func() {
 			args := []string{
-				"--docker-image=docker:///fun/app",
+				"--docker-image=fun/app",
 				"cool-web-app",
 				"--",
 				"/start-me-please",
 			}
 
 			appRunner.NumOfRunningAppInstancesReturns(1, nil)
+			dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
@@ -131,9 +132,25 @@ var _ = Describe("CommandFactory", func() {
 			Expect(startDockerAppParamters.WorkingDir).To(Equal("/"))
 		})
 
+		It("exposes errors from trying to fetch the Docker metadata", func() {
+			args := []string{
+				"--docker-image=fun/app",
+				"cool-web-app",
+				"--",
+				"/start-me-please",
+			}
+			dockerMetadataFetcher.FetchMetadataReturns(nil, errors.New("Docker Says No."))
+
+			test_helpers.ExecuteCommandWithArgs(startCommand, args)
+
+			Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
+
+			Expect(outputBuffer).To(test_helpers.Say("Error fetching metadata: Docker Says No."))
+		})
+
 		Context("when no start command is provided", func() {
 			var args = []string{
-				"--docker-image=docker:///fun-org/app",
+				"--docker-image=fun-org/app",
 				"cool-web-app",
 			}
 
@@ -157,7 +174,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(startDockerAppParameters.StartCommand).To(Equal("/fetch-start"))
 				Expect(startDockerAppParameters.AppArgs).To(Equal([]string{"arg1", "arg2"}))
-				Expect(startDockerAppParameters.DockerImagePath).To(Equal("docker:///fun-org/app"))
+				Expect(startDockerAppParameters.DockerImagePath).To(Equal("fun-org/app"))
 				Expect(startDockerAppParameters.WorkingDir).To(Equal("/this/directory/right/here"))
 
 				Expect(outputBuffer).To(test_helpers.Say("No start command specified, fetching metadata from the Dockerimage...\n"))
@@ -166,16 +183,6 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.Say("Working directory is:\n"))
 				Expect(outputBuffer).To(test_helpers.Say("/this/directory/right/here\n"))
-			})
-
-			It("starts a Docker app with the start command retrieved from the docker image metadata", func() {
-				dockerMetadataFetcher.FetchMetadataReturns(nil, errors.New("Docker Says No."))
-
-				test_helpers.ExecuteCommandWithArgs(startCommand, args)
-
-				Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
-
-				Expect(outputBuffer).To(test_helpers.Say("Error Fetching metadata: Docker Says No."))
 			})
 
 			It("does not ouput the working directory if it is not set", func() {
@@ -189,7 +196,7 @@ var _ = Describe("CommandFactory", func() {
 
 		It("polls for the app to start with correct number of instances", func() {
 			args := []string{
-				"--docker-image=docker:///fun/app",
+				"--docker-image=fun/app",
 				"--instances=10",
 				"cool-web-app",
 				"--",
@@ -224,7 +231,7 @@ var _ = Describe("CommandFactory", func() {
 
 		It("alerts the user if the app does not start", func() {
 			args := []string{
-				"--docker-image=docker:///fun/app",
+				"--docker-image=fun/app",
 				"cool-web-app",
 				"--",
 				"/start-me-please",
@@ -246,7 +253,7 @@ var _ = Describe("CommandFactory", func() {
 
 		It("validates that the name is passed in", func() {
 			args := []string{
-				"--docker-image=docker:///fun/app",
+				"--docker-image=fun/app",
 			}
 
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
@@ -270,7 +277,7 @@ var _ = Describe("CommandFactory", func() {
 
 		It("validates that the terminator -- is passed in when a start command is specified", func() {
 			args := []string{
-				"--docker-image=docker:///fun/app",
+				"--docker-image=fun/app",
 				"cool-web-app",
 				"not-the-terminator",
 				"start-me-up",
@@ -281,22 +288,9 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
 		})
 
-		It("validates that the full docker path is passed in", func() {
-			args := []string{
-				"--docker-image=fun/app",
-				"cool-web-app",
-				"--",
-				"start-me-please",
-			}
-			test_helpers.ExecuteCommandWithArgs(startCommand, args)
-
-			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Docker Image should begin with: docker:///"))
-			Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
-		})
-
 		It("outputs error messages", func() {
 			args := []string{
-				"--docker-image=docker:///fun/app",
+				"--docker-image=fun/app",
 				"cool-web-app",
 				"--",
 				"/start-me-please",

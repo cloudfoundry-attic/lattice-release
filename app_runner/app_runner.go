@@ -7,6 +7,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_repository_name_formatter"
 )
 
 type AppRunner interface {
@@ -120,10 +121,14 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 }
 
 func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
-	err := appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
+	dockerImageUrl, err := docker_repository_name_formatter.FormatForReceptor(params.DockerImagePath)
+	if err != nil {
+		return err
+	}
+	err = appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
 		Domain:               "lattice",
-		RootFSPath:           params.DockerImagePath,
+		RootFSPath:           dockerImageUrl,
 		Instances:            params.Instances,
 		Stack:                "lucid64",
 		Routes:               []string{fmt.Sprintf("%s.%s", params.Name, appRunner.domain)},

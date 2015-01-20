@@ -84,7 +84,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
    
    APP_NAME is required and must be unique across the Lattice cluster
    DOCKER_IMAGE is required and must match the format (e.g.)
-   docker:///cloudfoundry/lattice-app
+   "cloudfoundry/lattice-app" or "redis" (for official images)
 
    ltc will fetch the command associated with your Docker image.
    To provide a custom command:
@@ -177,23 +177,21 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	case dockerImage == "":
 		cmd.output.IncorrectUsage("Docker Image required")
 		return
-	case !strings.HasPrefix(dockerImage, "docker:///"):
-		cmd.output.IncorrectUsage("Docker Image should begin with: docker:///")
-		return
 	case startCommand != "" && terminator != "--":
 		cmd.output.IncorrectUsage("'--' Required before start command")
 		return
 	case len(context.Args()) > 3:
 		appArgs = context.Args()[3:]
-	case startCommand == "":
-		cmd.output.Say("No start command specified, fetching metadata from the Dockerimage...\n")
+	}
 
-		repoName := strings.Split(dockerImage, "docker:///")[1]
-		imageMetadata, err := cmd.dockerMetadataFetcher.FetchMetadata(repoName, "latest")
-		if err != nil {
-			cmd.output.Say(fmt.Sprintf("Error Fetching metadata: %s", err))
-			return
-		}
+	imageMetadata, err := cmd.dockerMetadataFetcher.FetchMetadata(dockerImage, "latest")
+	if err != nil {
+		cmd.output.Say(fmt.Sprintf("Error fetching metadata: %s", err))
+		return
+	}
+
+	if startCommand == "" {
+		cmd.output.Say("No start command specified, fetching metadata from the Dockerimage...\n")
 
 		startCommand = imageMetadata.StartCommand[0]
 		cmd.output.Say("Start command is:\n")
@@ -208,7 +206,7 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		appArgs = imageMetadata.StartCommand[1:]
 	}
 
-	err := cmd.appRunner.StartDockerApp(app_runner.StartDockerAppParams{
+	err = cmd.appRunner.StartDockerApp(app_runner.StartDockerAppParams{
 		Name:                 name,
 		DockerImagePath:      dockerImage,
 		StartCommand:         startCommand,
