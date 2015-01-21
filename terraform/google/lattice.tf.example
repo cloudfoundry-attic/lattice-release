@@ -1,4 +1,4 @@
-module "lattice" {
+module "lattice-google" {
     source = "github.com/pivotal-cf-experimental/lattice/terraform/google"
 
     # Path to the JSON file used to describe your account credentials, downloaded from Google Cloud Console

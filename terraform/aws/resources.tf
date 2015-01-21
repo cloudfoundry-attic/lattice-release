@@ -1,4 +1,4 @@
-resource "aws_vpc" "lattice-aws" {
+resource "aws_vpc" "lattice-network" {
     cidr_block = "${var.aws_vpc_cidr_block}"
     enable_dns_support = true
     enable_dns_hostnames = true
@@ -7,8 +7,8 @@ resource "aws_vpc" "lattice-aws" {
     }
 }
 
-resource "aws_subnet" "lattice-aws" {
-    vpc_id = "${aws_vpc.lattice-aws.id}"
+resource "aws_subnet" "lattice-network" {
+    vpc_id = "${aws_vpc.lattice-network.id}"
     cidr_block = "${var.aws_subnet_cidr_block}"
     map_public_ip_on_launch = true
     tags {
@@ -16,27 +16,27 @@ resource "aws_subnet" "lattice-aws" {
     }
 }
 
-resource "aws_internet_gateway" "lattice-aws" {
-    vpc_id = "${aws_vpc.lattice-aws.id}"
+resource "aws_internet_gateway" "lattice-network" {
+    vpc_id = "${aws_vpc.lattice-network.id}"
 }
 
-resource "aws_route_table" "lattice-aws" {
-    vpc_id = "${aws_vpc.lattice-aws.id}"
+resource "aws_route_table" "lattice-network" {
+    vpc_id = "${aws_vpc.lattice-network.id}"
     route {
         cidr_block = "0.0.0.0/0"
-        gateway_id = "${aws_internet_gateway.lattice-aws.id}"
+        gateway_id = "${aws_internet_gateway.lattice-network.id}"
     }
 }
 
-resource "aws_route_table_association" "lattice-aws" {
-    subnet_id = "${aws_subnet.lattice-aws.id}"
-    route_table_id = "${aws_route_table.lattice-aws.id}"
+resource "aws_route_table_association" "lattice-network" {
+    subnet_id = "${aws_subnet.lattice-network.id}"
+    route_table_id = "${aws_route_table.lattice-network.id}"
 }
 
-resource "aws_security_group" "lattice-aws" {
+resource "aws_security_group" "lattice-network" {
     name = "lattice"
     description = "lattice security group"
-    vpc_id = "${aws_vpc.lattice-aws.id}"
+    vpc_id = "${aws_vpc.lattice-network.id}"
     ingress {
         protocol = "tcp"
         from_port = 1
@@ -58,9 +58,9 @@ resource "aws_instance" "lattice-coordinator" {
     ami = "${lookup(var.aws_image, var.aws_region)}"
     instance_type = "${var.aws_instance_type_coordinator}"
     key_name = "${var.aws_key_name}"
-    subnet_id = "${aws_subnet.lattice-aws.id}"
+    subnet_id = "${aws_subnet.lattice-network.id}"
     security_groups = [
-      "${aws_security_group.lattice-aws.id}",
+      "${aws_security_group.lattice-network.id}",
     ]
     tags {
         Name = "lattice-coordinator"
@@ -114,9 +114,9 @@ resource "aws_instance" "lattice-cell" {
     ami = "${lookup(var.aws_image, var.aws_region)}"
     instance_type = "${var.aws_instance_type_cell}"
     key_name = "${var.aws_key_name}"
-    subnet_id = "${aws_subnet.lattice-aws.id}"
+    subnet_id = "${aws_subnet.lattice-network.id}"
     security_groups = [
-      "${aws_security_group.lattice-aws.id}",
+      "${aws_security_group.lattice-network.id}",
     ]
     tags {
         Name = "lattice-cell-${count.index}"

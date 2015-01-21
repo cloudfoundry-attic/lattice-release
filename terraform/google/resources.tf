@@ -1,11 +1,11 @@
-resource "google_compute_network" "lattice" {
+resource "google_compute_network" "lattice-network" {
     name = "lattice"
     ipv4_range = "${var.gce_ipv4_range}"
 }
 
-resource "google_compute_firewall" "lattice" {
+resource "google_compute_firewall" "lattice-network" {
     name = "lattice"
-    network = "${google_compute_network.lattice-google.name}"
+    network = "${google_compute_network.lattice-network.name}"
     source_ranges = ["0.0.0.0/0"]
     allow {
         protocol = "tcp"
@@ -33,7 +33,7 @@ resource "google_compute_instance" "lattice-coordinator" {
         auto_delete = true
     }
     network {
-        source = "${google_compute_network.lattice-google.name}"
+        source = "${google_compute_network.lattice-network.name}"
         address = "${google_compute_address.lattice-coordinator.address}"
     }
 
@@ -92,7 +92,7 @@ resource "google_compute_instance" "lattice-cell" {
         auto_delete = true
     }
     network {
-        source = "${google_compute_network.lattice-google.name}"
+        source = "${google_compute_network.lattice-network.name}"
     }
 
     connection {
