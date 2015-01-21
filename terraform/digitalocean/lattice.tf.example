@@ -24,3 +24,15 @@ module "lattice-digitalocean" {
     # Digital Ocean region
     # do_region = "<CHANGE-ME>"
 }
+
+output "lattice_target" {
+    value = "${module.lattice-digitalocean.lattice_target}"
+}
+
+output "lattice_username" {
+    value = "${module.lattice-digitalocean.lattice_username}"
+}
+
+output "lattice_password" {
+    value = "${module.lattice-digitalocean.lattice_password}"
+}

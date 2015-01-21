@@ -30,3 +30,15 @@ module "lattice-google" {
     # Google Compute Engine zone
     # gce_zone = "<CHANGE-ME>"
 }
+
+output "lattice_target" {
+    value = "${module.lattice-google.lattice_target}"
+}
+
+output "lattice_username" {
+    value = "${module.lattice-google.lattice_username}"
+}
+
+output "lattice_password" {
+    value = "${module.lattice-google.lattice_password}"
+}

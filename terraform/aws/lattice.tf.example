@@ -27,3 +27,15 @@ module "lattice-aws" {
     # AWS region (e.g., us-west-1)
     # aws_region = "<CHANGE-ME>"
 }
+
+output "lattice_target" {
+    value = "${module.lattice-aws.lattice_target}"
+}
+
+output "lattice_username" {
+    value = "${module.lattice-aws.lattice_username}"
+}
+
+output "lattice_password" {
+    value = "${module.lattice-aws.lattice_password}"
+}
