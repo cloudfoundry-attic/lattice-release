@@ -17,10 +17,17 @@ RUN \
     python-dev \
     python-pip \
     wget \
+    unzip \
     jq; \
   add-apt-repository ppa:git-core/ppa -y; \
   apt-get update; \
   apt-get -y install git
+
+RUN \
+  wget --quiet https://dl.bintray.com/mitchellh/terraform/terraform_0.3.6_linux_amd64.zip && \
+  unzip terraform_0.3.6_linux_amd64.zip -d /usr/local/terraform; \
+  rm -v terraform_0.3.6_linux_amd64.zip; \
+  cd /usr/local/bin && ln -sv /usr/local/terraform/* .
 
 RUN \
   bash -l -c "pip install awscli";
