@@ -80,8 +80,10 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 		Description: `Start a docker app on lattice
    
    APP_NAME is required and must be unique across the Lattice cluster
-   DOCKER_IMAGE is required and must match the format (e.g.)
-   "cloudfoundry/lattice-app" or "redis" (for official images)
+   DOCKER_IMAGE is required and must match the standard docker image format
+   e.g.
+   		1. "cloudfoundry/lattice-app"
+   		2. "redis" - for official images; resolves to library/redis
 
    ltc will fetch the command associated with your Docker image.
    To provide a custom command:
