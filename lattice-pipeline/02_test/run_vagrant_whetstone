@@ -24,6 +24,14 @@ cleanup(){
     cleanup_vagrant
 }
 
+start_lattice_vagrant(){
+    cp $LATTICE_TAR_PATH lattice
+    pushd $WORKSPACE_DIR/lattice
+        vagrant up --provider=virtualbox
+        export $(cat .lattice-environment)
+    popd
+}
+
 assert_that_vtx_is_enabled_if_linux(){
     if [ -a /proc/cpuinfo ]; then
         set +e
@@ -42,32 +50,14 @@ assert_that_vtx_is_enabled_if_linux
 
 export DIEGO_RELEASE_PATH=$1
 export LATTICE_TAR_PATH=$2
-WORKSPACE_DIR=`pwd`
-
-cp $LATTICE_TAR_PATH lattice
 export VAGRANT_LATTICE_TAR_PATH=/vagrant/$(basename $LATTICE_TAR_PATH)
+WORKSPACE_DIR=`pwd`
 
 trap cleanup EXIT
 
-pushd $WORKSPACE_DIR/lattice
-    vagrant up --provider=virtualbox
-    export $(cat .lattice-environment)
-popd
+start_lattice_vagrant
 
-export GOPATH=$DIEGO_RELEASE_PATH
-
-rm -rf $GOPATH/pkg/*
-
-mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
-
-cp -r $WORKSPACE_DIR/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/
-cp -r $WORKSPACE_DIR/lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental/
-
-go get github.com/onsi/ginkgo/ginkgo
-go get github.com/onsi/gomega
-go get -v -t github.com/pivotal-cf-experimental/...
-
-rm -rfv $GOPATH/src/github.com/codegangsta/cli
-go get -v -u -t github.com/codegangsta/cli
+source $(dirname $0)/helpers/setup_whetstone
+setup_whetstone
 
 PATH=$PATH:$GOPATH/bin ginkgo -noColor -v $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- -domain=$SYSTEM_DOMAIN -timeout=300

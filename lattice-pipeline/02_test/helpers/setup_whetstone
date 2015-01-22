@@ -1,0 +1,19 @@
+#!/bin/bash
+
+setup_whetstone(){
+    export GOPATH=$DIEGO_RELEASE_PATH
+
+    rm -rf $GOPATH/pkg/*
+
+    mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
+
+    cp -r $WORKSPACE_DIR/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/
+    cp -r $WORKSPACE_DIR/lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental/
+
+    go get github.com/onsi/ginkgo/ginkgo
+    go get github.com/onsi/gomega
+    go get -v -t github.com/pivotal-cf-experimental/...
+
+    rm -rfv $GOPATH/src/github.com/codegangsta/cli
+    go get -v -u -t github.com/codegangsta/cli
+}
