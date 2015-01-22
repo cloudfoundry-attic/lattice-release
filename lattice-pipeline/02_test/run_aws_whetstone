@@ -92,7 +92,7 @@ source $(dirname $0)/helpers/setup_whetstone
 setup_whetstone
 
 PATH=$PATH:$GOPATH/bin ginkgo -noColor -v $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- \
-    -domain=$(terraform output lattice_target) \
+    -domain=$(cd $TF_WORKING_DIR && terraform output lattice_target) \
     -timeout=300 \
-    -username=$(terraform output lattice_username) \
-    -password=$(terraform output lattice_password)
+    -username=$(cd $TF_WORKING_DIR && terraform output lattice_username) \
+    -password=$(cd $TF_WORKING_DIR && terraform output lattice_password)
