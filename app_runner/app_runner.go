@@ -34,15 +34,16 @@ type StartDockerAppParams struct {
 
 const (
 	spyDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz"
+	lrpDomain      string = "lattice"
 )
 
 type appRunner struct {
 	receptorClient receptor.Client
-	domain         string
+	systemDomain   string
 }
 
-func New(receptorClient receptor.Client, domain string) AppRunner {
-	return &appRunner{receptorClient, domain}
+func New(receptorClient receptor.Client, systemDomain string) AppRunner {
+	return &appRunner{receptorClient, systemDomain}
 }
 
 func (appRunner *appRunner) StartDockerApp(params StartDockerAppParams) error {
@@ -51,6 +52,11 @@ func (appRunner *appRunner) StartDockerApp(params StartDockerAppParams) error {
 	} else if exists {
 		return newExistingAppError(params.Name)
 	}
+
+	if err := appRunner.receptorClient.UpsertDomain(lrpDomain, 0); err != nil {
+		return err
+	}
+
 	return appRunner.desireLrp(params)
 }
 
@@ -127,11 +133,11 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	}
 	err = appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
-		Domain:               "lattice",
+		Domain:               lrpDomain,
 		RootFSPath:           dockerImageUrl,
 		Instances:            params.Instances,
 		Stack:                "lucid64",
-		Routes:               []string{fmt.Sprintf("%s.%s", params.Name, appRunner.domain)},
+		Routes:               []string{fmt.Sprintf("%s.%s", params.Name, appRunner.systemDomain)},
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
 		Ports:                []uint32{uint32(params.Port)},

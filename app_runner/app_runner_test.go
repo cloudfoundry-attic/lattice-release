@@ -10,7 +10,8 @@ import (
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 
-	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
+	app_runner "github.com/pivotal-cf-experimental/lattice-cli/app_runner"
+	"time"
 )
 
 var _ = Describe("AppRunner", func() {
@@ -27,7 +28,7 @@ var _ = Describe("AppRunner", func() {
 	})
 
 	Describe("StartDockerApp", func() {
-		It("Starts a Docker App", func() {
+		It("Upserts lattice domain so that it is always fresh, then starts the Docker App", func() {
 			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 
 			args := []string{"app", "arg1", "--app", "arg 2"}
@@ -47,6 +48,10 @@ var _ = Describe("AppRunner", func() {
 				WorkingDir:           "/user/web/myappdir",
 			})
 			Expect(err).To(BeNil())
+			Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(1))
+			domain, ttl := fakeReceptorClient.UpsertDomainArgsForCall(0)
+			Expect(domain).To(Equal("lattice"))
+			Expect(ttl).To(Equal(time.Duration(0)))
 
 			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
 			Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0)).To(Equal(receptor.DesiredLRPCreateRequest{
@@ -123,6 +128,27 @@ var _ = Describe("AppRunner", func() {
 		})
 
 		Describe("returning errors from the receptor", func() {
+			It("returns upsert domain errors", func() {
+				upsertError := errors.New("You're not that fresh, buddy.")
+				fakeReceptorClient.UpsertDomainReturns(upsertError)
+
+				err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
+					Name:                 "nescafe-app",
+					StartCommand:         "faily/boom",
+					DockerImagePath:      "borked_app",
+					AppArgs:              []string{},
+					EnvironmentVariables: map[string]string{},
+					Privileged:           false,
+					Instances:            1,
+					MemoryMB:             128,
+					DiskMB:               1024,
+					Port:                 8080,
+				})
+
+				Expect(err).To(Equal(upsertError))
+
+			})
+
 			It("returns desiring lrp errors", func() {
 				receptorError := errors.New("error - Desiring an LRP")
 				fakeReceptorClient.CreateDesiredLRPReturns(receptorError)
