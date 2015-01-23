@@ -122,14 +122,14 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
 			Expect(appRunner.StartDockerAppCallCount()).To(Equal(1))
-			startDockerAppParamters := appRunner.StartDockerAppArgsForCall(0)
+			startDockerAppParameters := appRunner.StartDockerAppArgsForCall(0)
 
-			Expect(startDockerAppParamters.Privileged).To(Equal(false))
-			Expect(startDockerAppParamters.MemoryMB).To(Equal(128))
-			Expect(startDockerAppParamters.DiskMB).To(Equal(1024))
-			Expect(startDockerAppParamters.Port).To(Equal(8080))
-			Expect(startDockerAppParamters.Instances).To(Equal(1))
-			Expect(startDockerAppParamters.WorkingDir).To(Equal("/"))
+			Expect(startDockerAppParameters.Privileged).To(Equal(false))
+			Expect(startDockerAppParameters.MemoryMB).To(Equal(128))
+			Expect(startDockerAppParameters.DiskMB).To(Equal(1024))
+			Expect(startDockerAppParameters.Port).To(Equal(8080))
+			Expect(startDockerAppParameters.Instances).To(Equal(1))
+			Expect(startDockerAppParameters.WorkingDir).To(Equal("/"))
 		})
 
 		It("exposes errors from trying to fetch the Docker metadata", func() {
@@ -145,7 +145,25 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
 
-			Expect(outputBuffer).To(test_helpers.Say("Error fetching metadata: Docker Says No."))
+			Expect(outputBuffer).To(test_helpers.Say("Error fetching image metadata: Docker Says No."))
+		})
+
+		Context("when no working dir is provided, but the metadata has a working dir", func() {
+			It("sets the working dir from the Docker metadata", func() {
+				args := []string{
+					"cool-web-app",
+					"fun/app",
+					"--",
+					"/start-me-please",
+				}
+				appRunner.NumOfRunningAppInstancesReturns(1, nil)
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{WorkingDir: "/work/it"}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(startCommand, args)
+				startDockerAppParameters := appRunner.StartDockerAppArgsForCall(0)
+
+				Expect(startDockerAppParameters.WorkingDir).To(Equal("/work/it"))
+			})
 		})
 
 		Context("when no start command is provided", func() {
@@ -177,12 +195,14 @@ var _ = Describe("CommandFactory", func() {
 				Expect(startDockerAppParameters.DockerImagePath).To(Equal("fun-org/app"))
 				Expect(startDockerAppParameters.WorkingDir).To(Equal("/this/directory/right/here"))
 
-				Expect(outputBuffer).To(test_helpers.Say("No start command specified, fetching metadata from the Dockerimage...\n"))
+				Expect(outputBuffer).To(test_helpers.Say("No working directory specified, using working directory from the image metadata...\n"))
+				Expect(outputBuffer).To(test_helpers.Say("Working directory is:\n"))
+				Expect(outputBuffer).To(test_helpers.Say("/this/directory/right/here\n"))
+
+				Expect(outputBuffer).To(test_helpers.Say("No start command specified, using start command from the image metadata...\n"))
 				Expect(outputBuffer).To(test_helpers.Say("Start command is:\n"))
 				Expect(outputBuffer).To(test_helpers.Say("/fetch-start arg1 arg2\n"))
 
-				Expect(outputBuffer).To(test_helpers.Say("Working directory is:\n"))
-				Expect(outputBuffer).To(test_helpers.Say("/this/directory/right/here\n"))
 			})
 
 			It("does not ouput the working directory if it is not set", func() {
@@ -203,6 +223,7 @@ var _ = Describe("CommandFactory", func() {
 				"/start-me-please",
 			}
 
+			dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 			appRunner.NumOfRunningAppInstancesReturns(0, nil)
 
 			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(startCommand, args)
@@ -237,6 +258,7 @@ var _ = Describe("CommandFactory", func() {
 				"/start-me-please",
 			}
 
+			dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 			appRunner.NumOfRunningAppInstancesReturns(0, nil)
 
 			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(startCommand, args)
@@ -283,6 +305,7 @@ var _ = Describe("CommandFactory", func() {
 				"/start-me-please",
 			}
 
+			dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 			appRunner.StartDockerAppReturns(errors.New("Major Fault"))
 
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
@@ -367,6 +390,7 @@ var _ = Describe("CommandFactory", func() {
 				"22",
 			}
 
+			dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
 			Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))

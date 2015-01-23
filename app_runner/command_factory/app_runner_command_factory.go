@@ -39,8 +39,8 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 	var startFlags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "working-dir, w",
-			Usage: "working directory to assign to the running process",
-			Value: "/",
+			Usage: "working directory to assign to the running process.",
+			Value: "",
 		},
 		cli.BoolFlag{
 			Name:  "run-as-root, r",
@@ -88,6 +88,11 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
    ltc will fetch the command associated with your Docker image.
    To provide a custom command:
    ltc start APP_NAME DOCKER_IMAGE <optional flags> -- START_COMMAND APP_ARG1 APP_ARG2 ...
+
+   ltc will also fetch the working directory associated with your Docker image.
+   If the image does not specify a working directory, ltc will default the working directory to "/"
+   To provide a custom working directory:
+   ltc start APP_NAME DOCKER_IMAGE --working-dir=/foo/app-folder -- START_COMMAND APP_ARG1 APP_ARG2 ...
 
    To specify environment variables:
    ltc start APP_NAME DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE`,
@@ -172,22 +177,27 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 
 	imageMetadata, err := cmd.dockerMetadataFetcher.FetchMetadata(dockerImage, "latest")
 	if err != nil {
-		cmd.output.Say(fmt.Sprintf("Error fetching metadata: %s", err))
+		cmd.output.Say(fmt.Sprintf("Error fetching image metadata: %s", err))
 		return
 	}
 
+	if workingDir == "" {
+		cmd.output.Say("No working directory specified, using working directory from the image metadata...\n")
+		if imageMetadata.WorkingDir != "" {
+			workingDir = imageMetadata.WorkingDir
+			cmd.output.Say("Working directory is:\n")
+			cmd.output.Say(workingDir + "\n")
+		} else {
+			workingDir = "/"
+		}
+	}
+
 	if startCommand == "" {
-		cmd.output.Say("No start command specified, fetching metadata from the Dockerimage...\n")
+		cmd.output.Say("No start command specified, using start command from the image metadata...\n")
 
 		startCommand = imageMetadata.StartCommand[0]
 		cmd.output.Say("Start command is:\n")
 		cmd.output.Say(strings.Join(imageMetadata.StartCommand, " ") + "\n")
-
-		workingDir = imageMetadata.WorkingDir
-		if workingDir != "" {
-			cmd.output.Say("Working directory is:\n")
-			cmd.output.Say(workingDir + "\n")
-		}
 
 		appArgs = imageMetadata.StartCommand[1:]
 	}
