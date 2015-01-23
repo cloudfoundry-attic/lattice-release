@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-generate_terraform_configuration_file(){
+print_provider_specific_terraform_configuration(){
     if [ "$1" == "--without-outputs" ]; then
         terraform_outputs=""
     else
@@ -34,68 +34,12 @@ generate_terraform_configuration_file(){
             }' \
             "$WORKSPACE_DIR/lattice/terraform/aws" "$LATTICE_TAR_PATH" \
             "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" "$TF_WORKING_DIR" \
-            "$terraform_outputs" \
-            > $TF_WORKING_DIR/lattice-aws.tf
-    sync
-
-    echo "== lattice-aws.tf =="
-    cat  $TF_WORKING_DIR/lattice-aws.tf
-    echo "===="
+            "$terraform_outputs"
 }
 
-deploy_lattice() {
-    pushd $TF_WORKING_DIR
-        terraform get -update
-        terraform apply
-    popd
-}
-
-download_aws_private_key_file(){
+download_provider_specific_credentials(){
     aws s3 cp s3://lattice-gocd/credentials/ec2-west-1.pem $TF_WORKING_DIR/ec2-west-1.pem
     chmod 600 $TF_WORKING_DIR/ec2-west-1.pem
 }
 
-cleanup(){
-    set +e
-    echo "Cleaning up terraform and related artifacts"
-    pushd $TF_WORKING_DIR
-        #Terraform has a bug in it where it sees output variables as dependent on resources, but does not destroy them
-        #in the correct order. see: https://github.com/hashicorp/terraform/issues/522 . The work-around is to
-        #remove the outputs from the local copy of the lattice module and the dependent outputs from the lattice.tf configuration file.
-        find -L ./.terraform/modules/ -name "outputs.tf" -exec rm -- {} +
-        generate_terraform_configuration_file --without-outputs
-        echo "Destroying once (should delete the instances, but fail to delete vpc resources)..."
-        terraform destroy -force
-        echo "Destroying one more time to get rid of the remaining vpc resources..."
-        terraform destroy -force
-    popd
-
-    rm -rfv $TF_WORKING_DIR
-}
-
-export DIEGO_RELEASE_PATH=$1
-export LATTICE_TAR_PATH=$2
-WORKSPACE_DIR=`pwd`
-
-TF_WORKING_DIR=/var/tf-working #This is NOT within the shared folder mounted by docker, so that it goes away every run
-mkdir -pv $TF_WORKING_DIR
-
-trap cleanup EXIT
-
-download_aws_private_key_file
-
-generate_terraform_configuration_file
-
-deploy_lattice
-
-source $(dirname $0)/helpers/setup_whetstone
-setup_whetstone
-
-echo "================================== Whetstone ==================================\n"
-PATH=$PATH:$GOPATH/bin ginkgo -noColor -v $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- \
-    -domain=$(cd $TF_WORKING_DIR && terraform output lattice_target) \
-    -timeout=300 \
-    -username=$(cd $TF_WORKING_DIR && terraform output lattice_username) \
-    -password=$(terraform output lattice_password)
-
-echo "===============================================================================\n"
+source $(dirname $0)/helpers/run_terraform_whetstone

@@ -1,0 +1,67 @@
+#!/bin/bash
+set -e
+
+deploy_lattice() {
+    pushd $TF_WORKING_DIR
+        terraform get -update
+        terraform apply
+    popd
+}
+
+cleanup(){
+    set +e
+    echo "Cleaning up terraform and related artifacts"
+    pushd $TF_WORKING_DIR
+        echo "Removing output configuration from local copy of terraform modules, and deleting them from lattice.tf to work around terraform bug"
+        #Terraform has a bug in it where it sees output variables as dependent on resources, but does not destroy them
+        #in the correct order. see: https://github.com/hashicorp/terraform/issues/522 . The work-around is to
+        #remove the outputs from the local copy of the lattice module and the dependent outputs from the lattice.tf configuration file.
+        find -L ./.terraform/modules/ -name "outputs.tf" -exec rm -- {} +
+        generate_terraform_configuration_file --without-outputs
+        echo "Destroying once (should delete the instances, but fail to delete vpc resources)..."
+        terraform destroy -force
+        echo "Destroying one more time to get rid of the remaining vpc resources..."
+        terraform destroy -force
+    popd
+
+    rm -rfv $TF_WORKING_DIR
+}
+
+setup_and_run_whetstone(){
+    source $(dirname $0)/setup_whetstone
+    setup_whetstone
+
+    echo "================================== Whetstone ==================================\n"
+    PATH=$PATH:$GOPATH/bin ginkgo -noColor -v $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- \
+        -domain=$(cd $TF_WORKING_DIR && terraform output lattice_target) \
+        -timeout=300 \
+        -username=$(cd $TF_WORKING_DIR && terraform output lattice_username) \
+        -password=$(terraform output lattice_password)
+
+    echo "===============================================================================\n"
+}
+
+generate_terraform_configuration_file(){
+    print_provider_specific_terraform_configuration "$@" > "$TF_WORKING_DIR"/lattice.tf #defined in provider specific script that this file is sourced into
+    sync
+}
+
+export DIEGO_RELEASE_PATH=$1
+export LATTICE_TAR_PATH=$2
+WORKSPACE_DIR=`pwd`
+export TF_WORKING_DIR=/var/tf-working #This is NOT within the shared folder mounted by docker, so that it goes away every run
+
+mkdir -pv $TF_WORKING_DIR
+
+trap cleanup EXIT
+
+download_provider_specific_credentials #defined in provider specific script that this file is sourced into
+
+generate_terraform_configuration_file
+echo "== lattice.tf =="
+    cat  $TF_WORKING_DIR/lattice.tf
+echo "===="
+
+deploy_lattice
+
+setup_and_run_whetstone
