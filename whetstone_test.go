@@ -55,7 +55,7 @@ var _ = Describe("Lattice", func() {
 		})
 
 		It("eventually runs a docker app", func() {
-			startDockerApp(appName, "cloudfoundry/lattice-app", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Whetstone", "--quiet")
+			startDockerApp(appName, "cloudfoundry/lattice-app", "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Whetstone", "--quiet")
 
 			Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
