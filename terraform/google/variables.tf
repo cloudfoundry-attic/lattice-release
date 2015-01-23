@@ -50,7 +50,7 @@ variable "gce_machine_type_cell" {
 
 variable "num_cells" {
     description = "The number of Lattice Cells to launch."
-    default = "3"
+    default = "1"
 }
 
 variable "lattice_username" {
