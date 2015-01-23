@@ -36,7 +36,7 @@ setup_and_run_whetstone(){
         -domain=$(cd $TF_WORKING_DIR && terraform output lattice_target) \
         -timeout=300 \
         -username=$(cd $TF_WORKING_DIR && terraform output lattice_username) \
-        -password=$(terraform output lattice_password)
+        -password=$(cd $TF_WORKING_DIR && terraform output lattice_password)
 
     echo "===============================================================================\n"
 }
