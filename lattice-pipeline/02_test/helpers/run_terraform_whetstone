@@ -4,7 +4,7 @@ set -e
 deploy_lattice() {
     pushd $TF_WORKING_DIR
         terraform get -update
-        terraform apply || { echo "=====>First terraform apply failed. Retrying...\n"; terraform apply; }
+        terraform apply || { echo "=====>First terraform apply failed. Retrying..."; terraform apply; }
     popd
 }
 
@@ -24,7 +24,7 @@ cleanup(){
         terraform destroy -force
     popd
 
-    rm -rfv $TF_WORKING_DIR
+    cp -fv $TF_WORKING_DIR/terraform.tfstate $WORKSPACE_DIR/
 }
 
 setup_and_run_whetstone(){
