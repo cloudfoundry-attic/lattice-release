@@ -71,6 +71,10 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 			Usage: "number of container instances to launch",
 			Value: 1,
 		},
+		cli.BoolFlag{
+			Name:  "no-monitor",
+			Usage: "if set, lattice will not monitor that the app is listening on its port, and thus will not know if an app is running.",
+		},
 	}
 
 	var startCommand = cli.Command{
@@ -152,7 +156,6 @@ type appRunnerCommand struct {
 func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	workingDir := context.String("working-dir")
 	envVars := context.StringSlice("env")
-	privileged := context.Bool("run-as-root")
 	instances := context.Int("instances")
 	memoryMB := context.Int("memory-mb")
 	diskMB := context.Int("disk-mb")
@@ -208,7 +211,8 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		StartCommand:         startCommand,
 		AppArgs:              appArgs,
 		EnvironmentVariables: cmd.buildEnvironment(envVars),
-		Privileged:           privileged,
+		Privileged:           context.Bool("run-as-root"),
+		Monitor:              !context.Bool("no-monitor"),
 		Instances:            instances,
 		MemoryMB:             memoryMB,
 		DiskMB:               diskMB,

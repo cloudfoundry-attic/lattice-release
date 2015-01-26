@@ -25,6 +25,7 @@ type StartDockerAppParams struct {
 	AppArgs              []string
 	EnvironmentVariables map[string]string
 	Privileged           bool
+	Monitor              bool
 	Instances            int
 	MemoryMB             int
 	DiskMB               int
@@ -131,7 +132,8 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	if err != nil {
 		return err
 	}
-	err = appRunner.receptorClient.CreateDesiredLRP(receptor.DesiredLRPCreateRequest{
+
+	req := receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
 		Domain:               lrpDomain,
 		RootFSPath:           dockerImageUrl,
@@ -154,12 +156,16 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 			Privileged: params.Privileged,
 			Dir:        params.WorkingDir,
 		},
-		Monitor: &models.RunAction{
+	}
+
+	if params.Monitor {
+		req.Monitor = &models.RunAction{
 			Path:      "/tmp/spy",
 			Args:      []string{"-addr", fmt.Sprintf(":%d", params.Port)},
 			LogSource: "HEALTH",
-		},
-	})
+		}
+	}
+	err = appRunner.receptorClient.CreateDesiredLRP(req)
 
 	return err
 }

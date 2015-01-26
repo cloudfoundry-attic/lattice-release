@@ -2,6 +2,7 @@ package app_runner_test
 
 import (
 	"errors"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -9,9 +10,9 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 
 	app_runner "github.com/pivotal-cf-experimental/lattice-cli/app_runner"
-	"time"
 )
 
 var _ = Describe("AppRunner", func() {
@@ -33,14 +34,14 @@ var _ = Describe("AppRunner", func() {
 
 			args := []string{"app", "arg1", "--app", "arg 2"}
 			envs := map[string]string{"APPROOT": "/root/env/path"}
-			privileged := true
 			err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
 				Name:                 "americano-app",
 				StartCommand:         "/app-run-statement",
 				DockerImagePath:      "runtest/runner",
 				AppArgs:              args,
 				EnvironmentVariables: envs,
-				Privileged:           privileged,
+				Privileged:           true,
+				Monitor:              true,
 				Instances:            22,
 				MemoryMB:             128,
 				DiskMB:               1024,
@@ -83,6 +84,24 @@ var _ = Describe("AppRunner", func() {
 					LogSource: "HEALTH",
 				},
 			}))
+		})
+
+		Context("when Monitor is false", func() {
+			It("Does not pass a monitor action", func() {
+				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
+
+				err := appRunner.StartDockerApp(app_runner.StartDockerAppParams{
+					Name:            "americano-app",
+					StartCommand:    "/app-run-statement",
+					DockerImagePath: "runtest/runner",
+					AppArgs:         []string{},
+					Monitor:         false,
+				})
+				Expect(err).To(BeNil())
+
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Monitor).To(test_helpers.BeExactlyNil())
+			})
 		})
 
 		It("returns errors if the app is already desired", func() {

@@ -100,6 +100,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(startDockerAppParameters.Privileged).To(Equal(true))
 			Expect(startDockerAppParameters.MemoryMB).To(Equal(12))
 			Expect(startDockerAppParameters.DiskMB).To(Equal(12))
+			Expect(startDockerAppParameters.Monitor).To(Equal(true))
 			Expect(startDockerAppParameters.Port).To(Equal(3000))
 			Expect(startDockerAppParameters.WorkingDir).To(Equal("/applications"))
 
@@ -163,6 +164,25 @@ var _ = Describe("CommandFactory", func() {
 				startDockerAppParameters := appRunner.StartDockerAppArgsForCall(0)
 
 				Expect(startDockerAppParameters.WorkingDir).To(Equal("/work/it"))
+			})
+		})
+
+		Context("when the --no-monitor flag is passed", func() {
+			It("sets the working dir from the Docker metadata", func() {
+				args := []string{
+					"cool-web-app",
+					"fun/app",
+					"--no-monitor",
+					"--",
+					"/start-me-please",
+				}
+				appRunner.NumOfRunningAppInstancesReturns(1, nil)
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{WorkingDir: "/work/it"}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(startCommand, args)
+				startDockerAppParameters := appRunner.StartDockerAppArgsForCall(0)
+
+				Expect(startDockerAppParameters.Monitor).To(Equal(false))
 			})
 		})
 
