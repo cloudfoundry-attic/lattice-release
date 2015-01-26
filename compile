@@ -61,6 +61,8 @@ compile_lattice-cell() {
         go install github.com/cloudfoundry-incubator/converger/cmd/converger
     popd
 
+    rm -rf $GOPATH/pkg/*
+
     compile_garden_linux
     compile_lattice_cell_loggregator
 
@@ -86,6 +88,8 @@ compile_coordinator() {
             cp bin/etcd $GOBIN
         popd
     popd
+
+    rm -rf $GOPATH/pkg
 
     compile_gorouter
     compile_coordinator_loggregator
