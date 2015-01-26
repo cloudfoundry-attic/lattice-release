@@ -22,6 +22,7 @@ install_dependencies() {
 #In collocated, Consul should run only in server mode and not use the lattice-cell consul upstart which is client-only mode
 cp -nv $lattice_cell_build_path/upstart/* /etc/init
 cp -nv $lattice_cell_build_path/bin/* /usr/local/bin
+cp -av $lattice_cell_build_path/cell_health_check /var/lattice
 
 mkdir -pv /var/lattice/garden
 mkdir -pv /var/lattice/garden/depot
