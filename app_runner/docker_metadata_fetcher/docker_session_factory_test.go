@@ -59,7 +59,7 @@ var _ = Describe("DockerSessionFactory", func() {
 		Context("when creating a new endpoint fails", func() {
 			It("returns an error", func() {
 				sessionFactory := docker_metadata_fetcher.NewDockerSessionFactory()
-				_, err := sessionFactory.MakeSession(registryHost + "/lattice-mappppppppppppappapapa")
+				_, err := sessionFactory.MakeSession("nonexistantregistry.example.com/lattice-mappppppppppppappapapa")
 
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(MatchRegexp("Error Connecting to Docker registry:\nInvalid registry endpoint"))
