@@ -12,7 +12,14 @@ setup_whetstone(){
 
     go get github.com/onsi/ginkgo/ginkgo
     go get github.com/onsi/gomega
-    go get -v -t github.com/pivotal-cf-experimental/...
+
+    pushd $GOPATH/src/github.com/pivotal-cf-experimental/lattice-cli
+        go get ./...
+    popd
+
+    pushd $GOPATH/src/github.com/pivotal-cf-experimental/whetstone
+        go get ./...
+    popd
 
     rm -rfv $GOPATH/src/github.com/codegangsta/cli
     go get -v -u -t github.com/codegangsta/cli

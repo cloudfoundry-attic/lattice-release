@@ -15,13 +15,9 @@ nats:
 
 logging:
   file: /var/lattice/log/gorouter.log
-
-#  syslog: vcap.gorouter
-
+  metron_address: 127.0.0.1:3457
   level: info
-
   loggregator_enabled: true
-
 
 
 #loggregatorConfig:
