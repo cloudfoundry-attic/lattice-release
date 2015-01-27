@@ -161,7 +161,7 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	if params.Monitor {
 		req.Monitor = &models.RunAction{
 			Path:      "/tmp/spy",
-			Args:      []string{"-addr", fmt.Sprintf(":%d", params.Port)},
+			Args:      []string{"-port", fmt.Sprintf("%d", params.Port)},
 			LogSource: "HEALTH",
 		}
 	}
