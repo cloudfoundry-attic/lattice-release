@@ -8,13 +8,13 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner/command_factory/presentation"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/output/cursor"
+	"github.com/pivotal-golang/clock"
 )
 
 const TimestampDisplayLayout = "2006-01-02 15:04:05 (MST)"
@@ -27,8 +27,8 @@ type exitHandler interface {
 	OnExit(func())
 }
 
-func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, output *output.Output, timeProvider timeprovider.TimeProvider, exitHandler exitHandler) *AppExaminerCommandFactory {
-	return &AppExaminerCommandFactory{&appExaminerCommand{appExaminer, output, timeProvider, exitHandler}}
+func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, output *output.Output, clock clock.Clock, exitHandler exitHandler) *AppExaminerCommandFactory {
+	return &AppExaminerCommandFactory{&appExaminerCommand{appExaminer, output, clock, exitHandler}}
 }
 
 func (commandFactory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
@@ -76,10 +76,10 @@ func (commandFactory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command
 }
 
 type appExaminerCommand struct {
-	appExaminer  app_examiner.AppExaminer
-	output       *output.Output
-	timeProvider timeprovider.TimeProvider
-	exitHandler  exitHandler
+	appExaminer app_examiner.AppExaminer
+	output      *output.Output
+	clock       clock.Clock
+	exitHandler exitHandler
 }
 
 func (cmd *appExaminerCommand) listApps(context *cli.Context) {
@@ -225,7 +225,7 @@ func (cmd *appExaminerCommand) visualizeCells(context *cli.Context) {
 		select {
 		case <-closeChan:
 			return
-		case <-cmd.timeProvider.NewTimer(rate).C():
+		case <-cmd.clock.NewTimer(rate).C():
 			cmd.output.Say(cursor.Up(linesWritten))
 			linesWritten = cmd.printDistribution()
 		}

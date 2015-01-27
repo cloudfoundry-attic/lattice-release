@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
+	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 )
 
@@ -26,12 +26,12 @@ type AppRunnerCommandFactoryConfig struct {
 	Timeout               time.Duration
 	Domain                string
 	Env                   []string
-	TimeProvider          timeprovider.TimeProvider
+	Clock                 clock.Clock
 	Logger                lager.Logger
 }
 
 func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunnerCommandFactory {
-	return &AppRunnerCommandFactory{&appRunnerCommand{config.AppRunner, config.DockerMetadataFetcher, config.Output, config.Timeout, config.Domain, config.Env, config.TimeProvider}}
+	return &AppRunnerCommandFactory{&appRunnerCommand{config.AppRunner, config.DockerMetadataFetcher, config.Output, config.Timeout, config.Domain, config.Env, config.Clock}}
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command {
@@ -150,7 +150,7 @@ type appRunnerCommand struct {
 	timeout               time.Duration
 	domain                string
 	env                   []string
-	timeProvider          timeprovider.TimeProvider
+	clock                 clock.Clock
 }
 
 func (cmd *appRunnerCommand) startApp(context *cli.Context) {
@@ -323,15 +323,15 @@ func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
 }
 
 func (cmd *appRunnerCommand) pollUntilSuccess(pollingFunc func() bool) (ok bool) {
-	startingTime := cmd.timeProvider.Now()
-	for startingTime.Add(cmd.timeout).After(cmd.timeProvider.Now()) {
+	startingTime := cmd.clock.Now()
+	for startingTime.Add(cmd.timeout).After(cmd.clock.Now()) {
 		if result := pollingFunc(); result {
 			cmd.output.NewLine()
 			return true
 		} else {
 			cmd.output.Dot()
 		}
-		cmd.timeProvider.Sleep(1 * time.Second)
+		cmd.clock.Sleep(1 * time.Second)
 	}
 	cmd.output.NewLine()
 	return false

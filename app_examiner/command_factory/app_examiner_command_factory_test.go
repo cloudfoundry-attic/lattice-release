@@ -8,7 +8,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/cloudfoundry/gunk/timeprovider/faketimeprovider"
 	"github.com/codegangsta/cli"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
@@ -17,6 +16,7 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/output/cursor"
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
+	"github.com/pivotal-golang/clock/fakeclock"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -28,7 +28,7 @@ var _ = Describe("CommandFactory", func() {
 	var (
 		appExaminer  *fake_app_examiner.FakeAppExaminer
 		outputBuffer *gbytes.Buffer
-		timeProvider *faketimeprovider.FakeTimeProvider
+		clock        *fakeclock.FakeClock
 		osSignalChan chan os.Signal
 		exitHandler  *fakeExitHandler
 	)
@@ -37,7 +37,7 @@ var _ = Describe("CommandFactory", func() {
 		appExaminer = &fake_app_examiner.FakeAppExaminer{}
 		outputBuffer = gbytes.NewBuffer()
 		osSignalChan = make(chan os.Signal, 1)
-		timeProvider = faketimeprovider.New(time.Now())
+		clock = fakeclock.NewFakeClock(time.Now())
 		exitHandler = &fakeExitHandler{}
 	})
 
@@ -45,7 +45,7 @@ var _ = Describe("CommandFactory", func() {
 		var listAppsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), timeProvider, exitHandler)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), clock, exitHandler)
 			listAppsCommand = commandFactory.MakeListAppCommand()
 		})
 
@@ -96,7 +96,7 @@ var _ = Describe("CommandFactory", func() {
 		var visualizeCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), timeProvider, exitHandler)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), clock, exitHandler)
 			visualizeCommand = commandFactory.MakeVisualizeCommand()
 		})
 
@@ -142,11 +142,11 @@ var _ = Describe("CommandFactory", func() {
 
 				setNumberOfRunningInstances(2)
 
-				timeProvider.IncrementBySeconds(1)
+				clock.IncrementBySeconds(1)
 
 				Consistently(outputBuffer).ShouldNot(test_helpers.Say("cell: \n"))
 
-				timeProvider.IncrementBySeconds(1)
+				clock.IncrementBySeconds(1)
 
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(2)))
@@ -162,7 +162,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Error visualizing: Spilled the Paint" + cursor.ClearToEndOfLine() + "\n"))
 
-				timeProvider.IncrementBySeconds(1)
+				clock.IncrementBySeconds(1)
 
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(1)))
 				Eventually(outputBuffer).Should(test_helpers.Say("Error visualizing: Spilled the Paint" + cursor.ClearToEndOfLine() + "\n"))
@@ -191,7 +191,7 @@ var _ = Describe("CommandFactory", func() {
 		var statusCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), timeProvider, exitHandler)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), clock, exitHandler)
 			statusCommand = commandFactory.MakeStatusCommand()
 		})
 

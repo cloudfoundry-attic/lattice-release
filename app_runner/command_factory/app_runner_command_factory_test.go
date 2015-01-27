@@ -4,11 +4,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/cloudfoundry/gunk/timeprovider/faketimeprovider"
 	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
+	"github.com/pivotal-golang/clock/fakeclock"
 	"github.com/pivotal-golang/lager"
 
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
@@ -28,7 +28,7 @@ var _ = Describe("CommandFactory", func() {
 		outputBuffer                  *gbytes.Buffer
 		timeout                       time.Duration = 10 * time.Second
 		domain                        string        = "192.168.11.11.xip.io"
-		timeProvider                  *faketimeprovider.FakeTimeProvider
+		clock                         *fakeclock.FakeClock
 		dockerMetadataFetcher         *fake_docker_metadata_fetcher.FakeDockerMetadataFetcher
 		appRunnerCommandFactoryConfig command_factory.AppRunnerCommandFactoryConfig
 		logger                        lager.Logger
@@ -48,7 +48,7 @@ var _ = Describe("CommandFactory", func() {
 		BeforeEach(func() {
 			env := []string{"SHELL=/bin/bash", "COLOR=Blue"}
 
-			timeProvider = faketimeprovider.New(time.Now())
+			clock = fakeclock.NewFakeClock(time.Now())
 
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
 				AppRunner:             appRunner,
@@ -57,7 +57,7 @@ var _ = Describe("CommandFactory", func() {
 				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   env,
-				TimeProvider:          timeProvider,
+				Clock:                 clock,
 				Logger:                logger,
 			}
 
@@ -253,16 +253,16 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.NumOfRunningAppInstancesCallCount()).To(Equal(1))
 			Expect(appRunner.NumOfRunningAppInstancesArgsForCall(0)).To(Equal("cool-web-app"))
 
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 			Eventually(outputBuffer, 10).Should(test_helpers.Say("."))
 
 			appRunner.NumOfRunningAppInstancesReturns(9, nil)
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 			Eventually(outputBuffer, 10).Should(test_helpers.Say("."))
 			Expect(commandFinishChan).ShouldNot(BeClosed())
 
 			appRunner.NumOfRunningAppInstancesReturns(10, nil)
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 
 			Eventually(commandFinishChan).Should(BeClosed())
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
@@ -285,7 +285,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Eventually(outputBuffer).Should(test_helpers.Say("Starting App: cool-web-app"))
 
-			timeProvider.IncrementBySeconds(10)
+			clock.IncrementBySeconds(10)
 
 			Eventually(commandFinishChan).Should(BeClosed())
 
@@ -337,7 +337,7 @@ var _ = Describe("CommandFactory", func() {
 	Describe("ScaleAppCommand", func() {
 		var scaleCommand cli.Command
 		BeforeEach(func() {
-			timeProvider = faketimeprovider.New(time.Now())
+			clock = fakeclock.NewFakeClock(time.Now())
 
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
 				AppRunner:             appRunner,
@@ -346,7 +346,7 @@ var _ = Describe("CommandFactory", func() {
 				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   []string{},
-				TimeProvider:          timeProvider,
+				Clock:                 clock,
 				Logger:                logger,
 			}
 
@@ -388,13 +388,13 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.NumOfRunningAppInstancesCallCount()).To(Equal(1))
 			Expect(appRunner.NumOfRunningAppInstancesArgsForCall(0)).To(Equal("cool-web-app"))
 
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 			Eventually(outputBuffer).Should(test_helpers.Say("."))
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 			Eventually(outputBuffer).Should(test_helpers.Say("."))
 
 			appRunner.NumOfRunningAppInstancesReturns(22, nil)
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 
 			Eventually(commandFinishChan).Should(BeClosed())
 
@@ -415,7 +415,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
 
-			timeProvider.IncrementBySeconds(10)
+			clock.IncrementBySeconds(10)
 
 			Eventually(commandFinishChan).Should(BeClosed())
 
@@ -473,7 +473,7 @@ var _ = Describe("CommandFactory", func() {
 	Describe("StopAppCommand", func() {
 		var stopCommand cli.Command
 		BeforeEach(func() {
-			timeProvider = faketimeprovider.New(time.Now())
+			clock = fakeclock.NewFakeClock(time.Now())
 
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
 				AppRunner:             appRunner,
@@ -482,7 +482,7 @@ var _ = Describe("CommandFactory", func() {
 				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   []string{},
-				TimeProvider:          timeProvider,
+				Clock:                 clock,
 				Logger:                logger,
 			}
 
@@ -522,13 +522,13 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.NumOfRunningAppInstancesCallCount()).To(Equal(1))
 			Expect(appRunner.NumOfRunningAppInstancesArgsForCall(0)).To(Equal("cool-web-app"))
 
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 			Eventually(outputBuffer).Should(test_helpers.Say("."))
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 			Eventually(outputBuffer).Should(test_helpers.Say("."))
 
 			appRunner.NumOfRunningAppInstancesReturns(0, nil)
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 
 			Eventually(commandFinishChan).Should(BeClosed())
 
@@ -563,7 +563,7 @@ var _ = Describe("CommandFactory", func() {
 		var removeCommand cli.Command
 
 		BeforeEach(func() {
-			timeProvider = faketimeprovider.New(time.Now())
+			clock = fakeclock.NewFakeClock(time.Now())
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
 				AppRunner:             appRunner,
 				DockerMetadataFetcher: dockerMetadataFetcher,
@@ -571,7 +571,7 @@ var _ = Describe("CommandFactory", func() {
 				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   []string{},
-				TimeProvider:          timeProvider,
+				Clock:                 clock,
 				Logger:                logger,
 			}
 
@@ -609,13 +609,13 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.AppExistsCallCount()).To(Equal(1))
 			Expect(appRunner.AppExistsArgsForCall(0)).To(Equal("cool"))
 
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 			Eventually(outputBuffer).Should(test_helpers.Say("."))
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 			Eventually(outputBuffer).Should(test_helpers.Say("."))
 
 			appRunner.AppExistsReturns(false, nil)
-			timeProvider.IncrementBySeconds(1)
+			clock.IncrementBySeconds(1)
 
 			Eventually(commandFinishChan).Should(BeClosed())
 
@@ -634,7 +634,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Eventually(outputBuffer).Should(test_helpers.Say("Removing cool-web-app"))
 
-			timeProvider.IncrementBySeconds(10)
+			clock.IncrementBySeconds(10)
 
 			Eventually(commandFinishChan).Should(BeClosed())
 
@@ -652,7 +652,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Eventually(outputBuffer).Should(test_helpers.Say("Removing cool-web-app"))
 
-			timeProvider.IncrementBySeconds(10)
+			clock.IncrementBySeconds(10)
 
 			Eventually(commandFinishChan).Should(BeClosed())
 			Expect(outputBuffer).To(test_helpers.Say(colors.Red("Failed to remove cool-web-app.")))

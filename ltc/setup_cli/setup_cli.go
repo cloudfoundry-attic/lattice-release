@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/cloudfoundry/gunk/timeprovider"
 	"github.com/cloudfoundry/noaa"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
@@ -21,6 +20,7 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/logs"
 	"github.com/pivotal-cf-experimental/lattice-cli/ltc/setup_cli/setup_cli_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
+	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 
 	app_examiner_command_factory "github.com/pivotal-cf-experimental/lattice-cli/app_examiner/command_factory"
@@ -68,7 +68,7 @@ func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config, l
 	receptorClient := receptor.NewClient(config.Receptor())
 	appRunner := app_runner.New(receptorClient, config.Target())
 
-	timeprovider := timeprovider.NewTimeProvider()
+	clock := clock.NewClock()
 
 	appRunnerCommandFactoryConfig := app_runner_command_factory.AppRunnerCommandFactoryConfig{
 		AppRunner:             appRunner,
@@ -77,7 +77,7 @@ func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config, l
 		Timeout:               timeout(),
 		Domain:                config.Target(),
 		Env:                   os.Environ(),
-		TimeProvider:          timeprovider,
+		Clock:                 clock,
 		Logger:                logger,
 	}
 
@@ -90,7 +90,7 @@ func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config, l
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, targetVerifier, input, output)
 
 	appExaminer := app_examiner.New(receptorClient)
-	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, output, timeprovider, exitHandler)
+	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, output, clock, exitHandler)
 
 	return []cli.Command{
 		appRunnerCommandFactory.MakeStartAppCommand(),
