@@ -7,7 +7,7 @@ import (
 
 func FormatForReceptor(dockerRepositoryName string) (string, error) {
 
-	_, _, err := registry.ResolveRepositoryName(dockerRepositoryName)
+	_, err := registry.ParseRepositoryInfo(dockerRepositoryName)
 	if err != nil {
 		return "", err
 	}

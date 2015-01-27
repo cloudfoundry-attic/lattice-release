@@ -3,10 +3,8 @@ package docker_metadata_fetcher
 //go:generate counterfeiter -o fake_docker_metadata_fetcher/fake_docker_metadata_fetcher.go . DockerMetadataFetcher
 
 import (
-	"github.com/docker/docker/image"
-	//	"github.com/docker/docker/registry"
-	//	"github.com/docker/docker/utils"
 	"fmt"
+	"github.com/docker/docker/image"
 )
 
 type ImageMetadata struct {

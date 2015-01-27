@@ -30,6 +30,7 @@ var _ = Describe("DockerSessionFactory", func() {
 				registryHost = parts.Host
 
 				dockerRegistryServer.RouteToHandler("GET", "/v1/_ping", ghttp.VerifyRequest("GET", "/v1/_ping"))
+				dockerRegistryServer.RouteToHandler("GET", "/v2/", ghttp.VerifyRequest("GET", "/v2/"))
 			})
 
 			It("creates a registry session for the given repo", func() {
@@ -51,7 +52,7 @@ var _ = Describe("DockerSessionFactory", func() {
 				_, err := sessionFactory.MakeSession("¥Not-A-Valid-Repo-Name¥" + "/lattice-mappppppppppppappapapa")
 
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Error resolving Docker repository name:\nInvalid namespace name (¥Not-A-Valid-Repo-Name¥), only [a-z0-9_] are allowed, size between 4 and 30"))
+				Expect(err.Error()).To(MatchRegexp("Error resolving Docker repository name:\nInvalid namespace name"))
 
 			})
 		})
@@ -62,7 +63,7 @@ var _ = Describe("DockerSessionFactory", func() {
 				_, err := sessionFactory.MakeSession("nonexistantregistry.example.com/lattice-mappppppppppppappapapa")
 
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(MatchRegexp("Error Connecting to Docker registry:\nInvalid registry endpoint"))
+				Expect(err.Error()).To(MatchRegexp("Error Connecting to Docker registry:\ninvalid registry endpoint"))
 			})
 		})
 

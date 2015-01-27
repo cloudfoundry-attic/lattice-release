@@ -26,12 +26,13 @@ func NewDockerSessionFactory() *dockerSessionFactory {
 }
 
 func (factory *dockerSessionFactory) MakeSession(repoName string) (DockerSession, error) {
-	hostname, repoName, err := registry.ResolveRepositoryName(repoName)
+	repositoryInfo, err := registry.ParseRepositoryInfo(repoName)
+
 	if err != nil {
 		return nil, fmt.Errorf("Error resolving Docker repository name:\n" + err.Error())
 	}
 
-	endpoint, err := registry.NewEndpoint(hostname, []string{"127.0.0.1/32"})
+	endpoint, err := registry.NewEndpoint(repositoryInfo.Index)
 	if err != nil {
 		return nil, fmt.Errorf("Error Connecting to Docker registry:\n" + err.Error())
 	}
