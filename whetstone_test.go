@@ -80,6 +80,7 @@ var _ = Describe("Lattice", func() {
 })
 
 func startDockerApp(appName string, args ...string) {
+	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to start %s\n", appName)
 	startArgs := append([]string{"start", appName}, args...)
 	command := command(cli, startArgs...)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
@@ -88,9 +89,11 @@ func startDockerApp(appName string, args ...string) {
 	expectExit(session)
 
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
+	fmt.Fprintf(GinkgoWriter, "Yay! Whetstone started %s\n", appName)
 }
 
 func streamLogs(appName string) *gexec.Session {
+	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to stream logs from %s\n", appName)
 	command := command(cli, "logs", appName)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 	Expect(err).ToNot(HaveOccurred())
@@ -99,6 +102,7 @@ func streamLogs(appName string) *gexec.Session {
 }
 
 func scaleApp(appName string) {
+	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to scale %s\n", appName)
 	command := command(cli, "scale", appName, "3")
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
@@ -107,6 +111,7 @@ func scaleApp(appName string) {
 }
 
 func removeApp(appName string) {
+	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to remove %s\n", appName)
 	command := command(cli, "remove", appName)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
@@ -115,6 +120,7 @@ func removeApp(appName string) {
 }
 
 func targetLattice(domain, username, password string) {
+	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to target %s with username:'%s' ; password:'%s'\n", domain, username, password)
 	stdinReader, stdinWriter := io.Pipe()
 
 	command := command(cli, "target", domain)
@@ -147,7 +153,9 @@ func command(name string, arg ...string) *exec.Cmd {
 }
 
 func errorCheckForRoute(route string) func() error {
+	fmt.Fprintf(GinkgoWriter, "Whetstone is polling for the route %s\n", route)
 	return func() error {
+		fmt.Fprint(GinkgoWriter, ".")
 		response, err := makeGetRequestToRoute(route)
 		if err != nil {
 			return err
