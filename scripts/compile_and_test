@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 export GOPATH=/workspace/diego-release
