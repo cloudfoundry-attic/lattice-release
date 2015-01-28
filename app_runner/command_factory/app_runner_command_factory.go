@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/codegangsta/cli"
-	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
@@ -20,7 +20,7 @@ type AppRunnerCommandFactory struct {
 }
 
 type AppRunnerCommandFactoryConfig struct {
-	AppRunner             app_runner.AppRunner
+	AppRunner             docker_app_runner.AppRunner
 	DockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
 	Output                *output.Output
 	Timeout               time.Duration
@@ -144,7 +144,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Comman
 }
 
 type appRunnerCommand struct {
-	appRunner             app_runner.AppRunner
+	appRunner             docker_app_runner.AppRunner
 	dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
 	output                *output.Output
 	timeout               time.Duration
@@ -205,7 +205,7 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		appArgs = imageMetadata.StartCommand[1:]
 	}
 
-	err = cmd.appRunner.StartDockerApp(app_runner.StartDockerAppParams{
+	err = cmd.appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
 		Name:                 name,
 		DockerImagePath:      dockerImage,
 		StartCommand:         startCommand,

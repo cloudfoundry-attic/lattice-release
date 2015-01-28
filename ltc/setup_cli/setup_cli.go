@@ -9,7 +9,7 @@ import (
 	"github.com/cloudfoundry/noaa"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
-	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/config_helpers"
@@ -66,7 +66,7 @@ func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config, l
 	output := output.New(os.Stdout)
 
 	receptorClient := receptor.NewClient(config.Receptor())
-	appRunner := app_runner.New(receptorClient, config.Target())
+	appRunner := docker_app_runner.New(receptorClient, config.Target())
 
 	clock := clock.NewClock()
 

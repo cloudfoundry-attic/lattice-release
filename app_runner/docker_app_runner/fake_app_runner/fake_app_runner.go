@@ -4,14 +4,14 @@ package fake_app_runner
 import (
 	"sync"
 
-	"github.com/pivotal-cf-experimental/lattice-cli/app_runner"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
 )
 
 type FakeAppRunner struct {
-	StartDockerAppStub        func(params app_runner.StartDockerAppParams) error
+	StartDockerAppStub        func(params docker_app_runner.StartDockerAppParams) error
 	startDockerAppMutex       sync.RWMutex
 	startDockerAppArgsForCall []struct {
-		params app_runner.StartDockerAppParams
+		params docker_app_runner.StartDockerAppParams
 	}
 	startDockerAppReturns struct {
 		result1 error
@@ -53,10 +53,10 @@ type FakeAppRunner struct {
 	}
 }
 
-func (fake *FakeAppRunner) StartDockerApp(params app_runner.StartDockerAppParams) error {
+func (fake *FakeAppRunner) StartDockerApp(params docker_app_runner.StartDockerAppParams) error {
 	fake.startDockerAppMutex.Lock()
 	fake.startDockerAppArgsForCall = append(fake.startDockerAppArgsForCall, struct {
-		params app_runner.StartDockerAppParams
+		params docker_app_runner.StartDockerAppParams
 	}{params})
 	fake.startDockerAppMutex.Unlock()
 	if fake.StartDockerAppStub != nil {
@@ -72,7 +72,7 @@ func (fake *FakeAppRunner) StartDockerAppCallCount() int {
 	return len(fake.startDockerAppArgsForCall)
 }
 
-func (fake *FakeAppRunner) StartDockerAppArgsForCall(i int) app_runner.StartDockerAppParams {
+func (fake *FakeAppRunner) StartDockerAppArgsForCall(i int) docker_app_runner.StartDockerAppParams {
 	fake.startDockerAppMutex.RLock()
 	defer fake.startDockerAppMutex.RUnlock()
 	return fake.startDockerAppArgsForCall[i].params
@@ -216,4 +216,4 @@ func (fake *FakeAppRunner) NumOfRunningAppInstancesReturns(result1 int, result2 
 	}{result1, result2}
 }
 
-var _ app_runner.AppRunner = new(FakeAppRunner)
+var _ docker_app_runner.AppRunner = new(FakeAppRunner)

@@ -1,6 +1,4 @@
-package app_runner
-
-//go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
+package docker_app_runner
 
 import (
 	"fmt"
@@ -9,6 +7,8 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_repository_name_formatter"
 )
+
+//go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 
 type AppRunner interface {
 	StartDockerApp(params StartDockerAppParams) error

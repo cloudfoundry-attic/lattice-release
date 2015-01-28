@@ -11,9 +11,9 @@ import (
 	"github.com/pivotal-golang/clock/fakeclock"
 	"github.com/pivotal-golang/lager"
 
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner/fake_app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher/fake_docker_metadata_fetcher"
-	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/fake_app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"

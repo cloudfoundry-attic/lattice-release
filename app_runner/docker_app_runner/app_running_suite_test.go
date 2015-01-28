@@ -1,4 +1,4 @@
-package app_runner_test
+package docker_app_runner_test
 
 import (
 	. "github.com/onsi/ginkgo"
