@@ -17,7 +17,6 @@ import (
 )
 
 var (
-	cli    string
 	tmpDir string
 )
 
@@ -25,7 +24,11 @@ var _ = BeforeSuite(func() {
 	tmpDir = os.TempDir()
 
 	var err error
-	cli, err = gexec.Build("github.com/pivotal-cf-experimental/lattice-cli/ltc")
+	if latticeCliPath == "" {
+		fmt.Fprintln(GinkgoWriter, "lattice-cli-path not set, will attempt to compile the ltc cli")
+		latticeCliPath, err = gexec.Build("github.com/pivotal-cf-experimental/lattice-cli/ltc")
+	}
+
 	Expect(err).ToNot(HaveOccurred())
 })
 
@@ -82,7 +85,7 @@ var _ = Describe("Lattice", func() {
 func startDockerApp(appName string, args ...string) {
 	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to start %s\n", appName)
 	startArgs := append([]string{"start", appName}, args...)
-	command := command(cli, startArgs...)
+	command := command(latticeCliPath, startArgs...)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
@@ -94,7 +97,7 @@ func startDockerApp(appName string, args ...string) {
 
 func streamLogs(appName string) *gexec.Session {
 	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to stream logs from %s\n", appName)
-	command := command(cli, "logs", appName)
+	command := command(latticeCliPath, "logs", appName)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -103,7 +106,7 @@ func streamLogs(appName string) *gexec.Session {
 
 func scaleApp(appName string) {
 	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to scale %s\n", appName)
-	command := command(cli, "scale", appName, "3")
+	command := command(latticeCliPath, "scale", appName, "3")
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
@@ -112,7 +115,7 @@ func scaleApp(appName string) {
 
 func removeApp(appName string) {
 	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to remove %s\n", appName)
-	command := command(cli, "remove", appName)
+	command := command(latticeCliPath, "remove", appName)
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
@@ -123,7 +126,7 @@ func targetLattice(domain, username, password string) {
 	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to target %s with username:'%s' ; password:'%s'\n", domain, username, password)
 	stdinReader, stdinWriter := io.Pipe()
 
-	command := command(cli, "target", domain)
+	command := command(latticeCliPath, "target", domain)
 	command.Stdin = stdinReader
 
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)

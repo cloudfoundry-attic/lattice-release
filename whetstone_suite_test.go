@@ -12,11 +12,12 @@ import (
 )
 
 var (
-	domain   string
-	username string
-	password string
-	timeout  int
-	numCpu   int
+	domain         string
+	username       string
+	password       string
+	latticeCliPath string
+	timeout        int
+	numCpu         int
 )
 
 func init() {
@@ -27,6 +28,7 @@ func init() {
 	flag.StringVar(&username, "username", "", "Username for Lattice")
 	flag.StringVar(&password, "password", "", "Password for Lattice")
 	flag.IntVar(&timeout, "timeout", 30, "How long whetstone will wait for docker apps to start")
+	flag.StringVar(&latticeCliPath, "lattice-cli-path", "", "The path to the lattice-cli that whetstone should run against. If blank, whetstone will attempt to compile the cli.")
 }
 
 func TestWhetstone(t *testing.T) {
