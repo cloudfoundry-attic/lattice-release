@@ -7,8 +7,8 @@ setup_whetstone(){
 
     mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
 
-    ln -sv $WORKSPACE_DIR/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/whetstone
-    ln -sv $WORKSPACE_DIR/lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental/lattice-cli
+    echo $(cp -r $WORKSPACE_DIR/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/)
+    echo $(cp -r $WORKSPACE_DIR/lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental/)
 
     echo "=====================================>>>>>>getting ginkgo!!!"
     go get github.com/onsi/ginkgo/ginkgo
