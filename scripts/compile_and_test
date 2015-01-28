@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+
+export GOPATH=/workspace/diego-release
+go get -u -v github.com/onsi/ginkgo/ginkgo
+go get -u -v github.com/onsi/gomega
+
+export PATH="$PATH:$GOPATH/bin"
+
+echo $GOPATH
+
+export GOPATH=/workspace/diego-release
+mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
+echo $(cp -rv lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental) #so that we can run locally without clobbering our lattice-cli repo
+go get -v -t github.com/pivotal-cf-experimental/lattice-cli/...
+
+echo "Running lattice-cli tests..."
+./lattice-cli/scripts/test
+echo "Tests Passed!!!"
+
+OUTDIR="/workspace/compiled-binaries"
+mkdir -p $OUTDIR
+export GOBIN="$OUTDIR"
+rm -rf $GOPATH/pkg/*
+
+echo "Compiling cli..."
+GOARCH=amd64 GOOS=linux go build -o $OUTDIR/ltc-linux-amd64 github.com/pivotal-cf-experimental/lattice-cli/ltc
+echo "Compilation Succeeded!!!"
+
+#TODO: cross-compile darwin, tar it up, use that as the artifact.

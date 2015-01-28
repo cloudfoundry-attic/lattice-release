@@ -1,4 +1,10 @@
 #!/bin/bash
+set +e
+
 pushd $(dirname $(dirname $0)) > /dev/null
-    ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race
+
+ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race
+TEST_RESULT=$?
+
 popd > /dev/null
+exit $TEST_RESULT
