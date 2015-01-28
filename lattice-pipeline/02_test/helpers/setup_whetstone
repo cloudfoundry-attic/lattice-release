@@ -10,17 +10,22 @@ setup_whetstone(){
     cp -r $WORKSPACE_DIR/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/
     cp -r $WORKSPACE_DIR/lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental/
 
+    echo "=====================================>>>>>>getting ginkgo!!!"
     go get github.com/onsi/ginkgo/ginkgo
+    echo "=====================================>>>>>>getting gomega!!!"
     go get github.com/onsi/gomega
 
-    pushd $GOPATH/src/github.com/pivotal-cf-experimental/lattice-cli
-        go get ./...
+    pushd $GOPATH/src/github.com/pivotal-cf-experimental/lattice-cli/ltc
+    echo "go get in lattice-cli .=====================================>>>>>>lattice-cli!!!"
+        go get .
     popd
 
     pushd $GOPATH/src/github.com/pivotal-cf-experimental/whetstone
-        go get ./...
+    echo "go get in whetstone .=====================================>>>>>>whetstone!!!"
+        go get .
     popd
 
+    echo "gettin' gangsta =====================================>>>>>>!!!gangsta"
     rm -rfv $GOPATH/src/github.com/codegangsta/cli
     go get -v -u -t github.com/codegangsta/cli
 }
