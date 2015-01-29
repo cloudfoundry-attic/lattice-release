@@ -12,6 +12,9 @@ echo "go getting cli dependencies..."
 go get -v -t github.com/pivotal-cf-experimental/lattice-cli/...
 echo "gotten!"
 
+go get github.com/onsi/ginkgo/ginkgo
+go get github.com/onsi/gomega
+
 echo "Running lattice-cli tests..."
 ./lattice-cli/scripts/test
 echo "Tests Passed!!!"
