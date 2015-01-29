@@ -2,17 +2,15 @@
 set -e
 
 export GOPATH=/workspace/diego-release
-go get -u -v github.com/onsi/ginkgo/ginkgo
-go get -u -v github.com/onsi/gomega
-
 export PATH="$PATH:$GOPATH/bin"
-
-echo $GOPATH
 
 export GOPATH=/workspace/diego-release
 mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
 echo $(cp -rv lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental) #so that we can run locally without clobbering our lattice-cli repo
+
+echo "go getting cli dependencies..."
 go get -v -t github.com/pivotal-cf-experimental/lattice-cli/...
+echo "gotten!"
 
 echo "Running lattice-cli tests..."
 ./lattice-cli/scripts/test
