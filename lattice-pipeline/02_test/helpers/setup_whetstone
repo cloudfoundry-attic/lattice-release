@@ -3,29 +3,24 @@
 setup_whetstone(){
     export GOPATH=$DIEGO_RELEASE_PATH
 
+    if [ -n "$GO_PIPELINE_NAME" ]; then #If we are running in CI, get the linux ltc binary from the build artifact.
+        tar xvzf ltc.tar.gz ltc-linux-amd64 -C /usr/local/bin && mv -v /usr/local/bin/ltc-linux-amd64 /usr/local/bin/ltc
+    fi
+
     rm -rf $GOPATH/pkg/*
 
     mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
 
-    echo $(cp -r $WORKSPACE_DIR/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/)
-    echo $(cp -r $WORKSPACE_DIR/lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental/)
+    echo "$(cp -rv $WORKSPACE_DIR/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/)"
+    echo "$(cp -rv $WORKSPACE_DIR/lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental/)"
 
     echo "=====================================>>>>>>getting ginkgo!!!"
     go get github.com/onsi/ginkgo/ginkgo
     echo "=====================================>>>>>>getting gomega!!!"
     go get github.com/onsi/gomega
 
-    pushd $GOPATH/src/github.com/pivotal-cf-experimental/lattice-cli/ltc
-    echo "go get in lattice-cli .=====================================>>>>>>lattice-cli!!!"
-        go get -v .
-    popd
-
     pushd $GOPATH/src/github.com/pivotal-cf-experimental/whetstone
     echo "go get in whetstone .=====================================>>>>>>whetstone!!!"
         go get -v .
     popd
-
-    echo "gettin' gangsta =====================================>>>>>>!!!gangsta"
-    rm -rfv $GOPATH/src/github.com/codegangsta/cli
-    go get -v -u -t github.com/codegangsta/cli
 }
