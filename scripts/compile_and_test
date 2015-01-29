@@ -29,8 +29,9 @@ GOARCH=amd64 GOOS=linux go build -o $OUTDIR/ltc-linux-amd64 github.com/pivotal-c
 GOARCH=amd64 GOOS=darwin go build -o $OUTDIR/ltc-darwin-amd64 github.com/pivotal-cf-experimental/lattice-cli/ltc
 
 echo "generating ltc-checksum file"
-
-git rev-parse HEAD > ltc-checksum
+pushd lattice-cli > /dev/null
+    git rev-parse HEAD > $OUTDIR/ltc-checksum
+popd > /dev/null
 
 echo "Compilation Succeeded!!! Building tar..."
 
