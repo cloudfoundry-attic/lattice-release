@@ -47,17 +47,17 @@ bump_cli_version() {
 }
 
 compile_and_publish_cli() {
-    mkdir -pv $OUTDIR
+    mkdir -pv ltc-binaries
 
-    tar xvzf ltc.tar.gz -C $OUTDIR
+    tar xvzf ltc.tar.gz -C ltc-binaries
 
-    aws s3 cp $OUTDIR/ltc-darwin-amd64 "s3://lattice/latest/darwin-amd64/ltc"
-    aws s3 cp $OUTDIR/ltc-linux-amd64 "s3://lattice/latest/linux-amd64/ltc"
-    aws s3 cp $OUTDIR/ltc-checksum "s3://lattice/latest/ltc-checksum"
+    aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/latest/darwin-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/latest/linux-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-checksum "s3://lattice/latest/ltc-checksum"
 
-    aws s3 cp $OUTDIR/ltc-darwin-amd64 "s3://lattice/${new_cli_version}/darwin-amd64/ltc"
-    aws s3 cp $OUTDIR/ltc-linux-amd64 "s3://lattice/${new_cli_version}/linux-amd64/ltc"
-    aws s3 cp $OUTDIR/ltc-checksum "s3://lattice/${new_cli_version}/ltc-checksum"
+    aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/${new_cli_version}/darwin-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/${new_cli_version}/linux-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-checksum "s3://lattice/${new_cli_version}/ltc-checksum"
 
     echo "Successfully uploaded to s3"
 }
