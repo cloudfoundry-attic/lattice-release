@@ -4,7 +4,7 @@ setup_whetstone(){
     export GOPATH=$DIEGO_RELEASE_PATH
 
     if [ -n "$GO_PIPELINE_NAME" ]; then #If we are running in CI, get the linux ltc binary from the build artifact.
-        tar xvzf ltc.tar.gz ltc-linux-amd64 -C /usr/local/bin && mv -v /usr/local/bin/ltc-linux-amd64 /usr/local/bin/ltc
+        tar xvzf ltc.tar.gz ltc-linux-amd64 -C $GOPATH/bin && mv -v $GOPATH/bin/ltc-linux-amd64 $GOPATH/bin/ltc
     fi
 
     rm -rf $GOPATH/pkg/*
