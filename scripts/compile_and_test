@@ -25,9 +25,12 @@ export GOBIN="$OUTDIR"
 rm -rf $GOPATH/pkg/*
 
 echo "Compiling cli..."
-GOARCH=amd64 GOOS=linux go build -o $OUTDIR/ltc github.com/pivotal-cf-experimental/lattice-cli/ltc
-echo "Compilation Succeeded!!!"
+GOARCH=amd64 GOOS=linux go build -o $OUTDIR/ltc-linux-amd64 github.com/pivotal-cf-experimental/lattice-cli/ltc
+GOARCH=amd64 GOOS=darwin go build -o $OUTDIR/ltc-darwin-amd64 github.com/pivotal-cf-experimental/lattice-cli/ltc
 
-ls -lR /workspace/compiled-binaries
+echo "Compilation Succeeded!!! Building tar..."
 
-#TODO: cross-compile darwin, tar it up, use that as the artifact.
+pushd $OUTDIR > /dev/null
+    tar cvzf /workspace/ltc.tar.gz ltc*
+popd > /dev/null
+echo "tar built!"
