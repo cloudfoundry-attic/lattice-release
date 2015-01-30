@@ -34,8 +34,8 @@ type StartDockerAppParams struct {
 }
 
 const (
-	spyDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"
-	lrpDomain      string = "lattice"
+	healthcheckDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"
+	lrpDomain              string = "lattice"
 )
 
 type appRunner struct {
@@ -147,7 +147,7 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 		LogSource:            "APP",
 		EnvironmentVariables: buildEnvironmentVariables(params.EnvironmentVariables, params.Port),
 		Setup: &models.DownloadAction{
-			From: spyDownloadUrl,
+			From: healthcheckDownloadUrl,
 			To:   "/tmp",
 		},
 		Action: &models.RunAction{
@@ -160,7 +160,7 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 
 	if params.Monitor {
 		req.Monitor = &models.RunAction{
-			Path:      "/tmp/spy",
+			Path:      "/tmp/healthcheck",
 			Args:      []string{"-port", fmt.Sprintf("%d", params.Port)},
 			LogSource: "HEALTH",
 		}

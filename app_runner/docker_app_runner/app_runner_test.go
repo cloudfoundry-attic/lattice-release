@@ -79,7 +79,7 @@ var _ = Describe("AppRunner", func() {
 					Dir:        "/user/web/myappdir",
 				},
 				Monitor: &models.RunAction{
-					Path:      "/tmp/spy",
+					Path:      "/tmp/healthcheck",
 					Args:      []string{"-port", "2000"},
 					LogSource: "HEALTH",
 				},
