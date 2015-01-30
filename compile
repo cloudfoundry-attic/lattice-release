@@ -4,9 +4,14 @@ set -e
 
 compile_garden_linux() {
     mkdir -p $OUTPUT_DIR/lattice-cell/garden
+    rm -rf $GOPATH/pkg/*
+
+    rm -rf $GOPATH/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace/pkg/*
 
     GOPATH=$GOPATH/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace:$GOPATH
-    go install -tags daemon github.com/cloudfoundry-incubator/garden-linux
+    echo "GOPATH=$GOPATH"
+
+    go install -v -tags daemon github.com/cloudfoundry-incubator/garden-linux
     GOPATH=$DIEGO_RELEASE_PATH
 
     pushd $DIEGO_RELEASE_PATH/src/github.com/cloudfoundry-incubator/garden-linux/old
@@ -15,6 +20,8 @@ compile_garden_linux() {
         cp -a linux_backend/bin $OUTPUT_DIR/lattice-cell/garden/garden-bin
         cp -a linux_backend/skeleton $OUTPUT_DIR/lattice-cell/garden/skeleton
     popd
+
+    rm -rf $GOPATH/pkg/*
 }
 
 compile_gorouter() {
@@ -25,6 +32,7 @@ compile_gorouter() {
         REPO_NAME=github.com/cloudfoundry/gorouter
         cp -fr gorouter $GOPATH/src/$REPO_NAME
 
+        rm -rf $GOPATH/src/${REPO_NAME}/Godeps/_workspace/pkg
         GOPATH=$GOPATH/src/${REPO_NAME}/Godeps/_workspace:$GOPATH
         go install github.com/cloudfoundry/gorouter
         rm -rf $GOPATH
@@ -53,6 +61,7 @@ compile_lattice_cell_loggregator() {
 
 compile_lattice-cell() {
     export GOBIN=$OUTPUT_DIR/lattice-cell/bin
+    compile_garden_linux
 
     pushd $GOPATH
         go install github.com/cloudfoundry-incubator/rep/cmd/rep
@@ -63,7 +72,6 @@ compile_lattice-cell() {
 
     rm -rf $GOPATH/pkg/*
 
-    compile_garden_linux
     compile_lattice_cell_loggregator
 
     CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
@@ -129,3 +137,6 @@ cp -av $LATTICE_PATH/common/* $OUTPUT_DIR/common/
 
 compile_lattice-cell
 compile_coordinator
+
+rm -rf $GOPATH/pkg/*
+rm -rf $GOPATH/bin/*
