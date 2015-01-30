@@ -10,10 +10,10 @@ cp -v $lattice_coordinator_path/upstart/* /etc/init
 cp -v $lattice_coordinator_path/bin/* /usr/local/bin
 cp -av $lattice_coordinator_path/coordinator_health_check /var/lattice 
 
-mkdir -pv /var/lattice/static-files/buildpack_app_lifecycle
+mkdir -pv /var/lattice/static-files
 
 pushd $lattice_coordinator_path/bin > /dev/null
-    tar -czf /var/lattice/static-files/healthcheck.tgz buildpack_app_lifecycle/healthcheck
+    tar -cvzf /var/lattice/static-files/healthcheck.tgz healthcheck
 popd > /dev/null
 
 mkdir -pv /var/lattice/config
