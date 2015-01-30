@@ -34,7 +34,7 @@ type StartDockerAppParams struct {
 }
 
 const (
-	spyDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/docker-circus/docker-circus.tgz"
+	spyDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"
 	lrpDomain      string = "lattice"
 )
 
