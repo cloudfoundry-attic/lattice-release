@@ -22,7 +22,7 @@ module "lattice-aws" {
 
     #If you wish to use your own lattice release instead of the latest version, uncomment the variable assignment below
     #and set it to your own lattice tar's path.
-    # local_lattice_tar_path = ~/lattice.tgz
+    # local_lattice_tar_path = "~/lattice.tgz"
 
     # AWS region (e.g., us-west-1)
     # aws_region = "<CHANGE-ME>"
