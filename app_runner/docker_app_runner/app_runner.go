@@ -155,6 +155,9 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 		return err
 	}
 
+	envVars := buildEnvironmentVariables(params.EnvironmentVariables)
+	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", params.Ports.Monitored)})
+
 	req := receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
 		Domain:               lrpDomain,
@@ -167,7 +170,7 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 		Ports:                params.Ports.Exposed,
 		LogGuid:              params.Name,
 		LogSource:            "APP",
-		EnvironmentVariables: buildEnvironmentVariables(params.EnvironmentVariables, params.Ports.Monitored),
+		EnvironmentVariables: envVars,
 		Setup: &models.DownloadAction{
 			From: healthcheckDownloadUrl,
 			To:   "/tmp",
@@ -192,12 +195,12 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	return err
 }
 
-func buildEnvironmentVariables(environmentVariables map[string]string, port uint32) []receptor.EnvironmentVariable {
+func buildEnvironmentVariables(environmentVariables map[string]string) []receptor.EnvironmentVariable {
 	appEnvVars := make([]receptor.EnvironmentVariable, 0, len(environmentVariables)+1)
 	for name, value := range environmentVariables {
 		appEnvVars = append(appEnvVars, receptor.EnvironmentVariable{Name: name, Value: value})
 	}
-	return append(appEnvVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", port)})
+	return appEnvVars
 }
 
 func (appRunner *appRunner) updateLrp(name string, instances int) error {
