@@ -13,6 +13,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       echo "CONSUL_SERVER_IP=#{system_ip}" >> /var/lattice/setup/lattice-environment
       echo "SYSTEM_DOMAIN=#{system_ip}.xip.io" >> /var/lattice/setup/lattice-environment
       echo "LATTICE_CELL_ID=lattice-cell-01" >> /var/lattice/setup/lattice-environment
+      echo "GARDEN_EXTERNAL_IP=#{system_ip}" >> /var/lattice/setup/lattice-environment
     SCRIPT
 
     s.inline = populate_lattice_env_file_script
