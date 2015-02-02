@@ -4,11 +4,16 @@ package docker_metadata_fetcher
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/docker/docker/image"
+	"github.com/docker/docker/nat"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
 )
 
 type ImageMetadata struct {
 	WorkingDir   string
+	Ports        docker_app_runner.PortConfig
 	StartCommand []string
 }
 
@@ -51,6 +56,7 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(repoName string, tag string)
 	var img *image.Image
 	endpoint := repoData.Endpoints[0]
 	imgJSON, _, err := session.GetRemoteImageJSON(imgID, endpoint, repoData.Tokens)
+
 	if err != nil {
 		return nil, err
 	}
@@ -65,5 +71,36 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(repoName string, tag string)
 	}
 
 	startCommand := append(img.Config.Entrypoint, img.Config.Cmd...)
-	return &ImageMetadata{WorkingDir: img.Config.WorkingDir, StartCommand: startCommand}, nil
+
+	uintExposedPorts := sortPorts(img.ContainerConfig.ExposedPorts)
+	var monitoredPort uint32
+
+	if len(uintExposedPorts) > 0 {
+		monitoredPort = uintExposedPorts[0]
+	}
+
+	return &ImageMetadata{
+		WorkingDir:   img.Config.WorkingDir,
+		StartCommand: startCommand,
+		Ports: docker_app_runner.PortConfig{
+			Monitored: monitoredPort,
+			Exposed:   uintExposedPorts,
+		},
+	}, nil
+}
+
+func sortPorts(dockerExposedPorts map[nat.Port]struct{}) []uint32 {
+	intPorts := make([]int, 0)
+	for natPort, _ := range dockerExposedPorts {
+		if natPort.Proto() == "tcp" {
+			intPorts = append(intPorts, natPort.Int())
+		}
+	}
+	sort.IntSlice(intPorts).Sort()
+
+	uintExposedPorts := make([]uint32, 0)
+	for _, port := range intPorts {
+		uintExposedPorts = append(uintExposedPorts, uint32(port))
+	}
+	return uintExposedPorts
 }

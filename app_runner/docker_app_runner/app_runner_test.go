@@ -45,7 +45,7 @@ var _ = Describe("AppRunner", func() {
 				Instances:            22,
 				MemoryMB:             128,
 				DiskMB:               1024,
-				Port:                 2000,
+				Ports:                docker_app_runner.PortConfig{Exposed: []uint32{2000, 4000}, Monitored: 2000},
 				WorkingDir:           "/user/web/myappdir",
 			})
 			Expect(err).To(BeNil())
@@ -65,7 +65,7 @@ var _ = Describe("AppRunner", func() {
 				Routes:               []string{"americano-app.myDiegoInstall.com"},
 				MemoryMB:             128,
 				DiskMB:               1024,
-				Ports:                []uint32{2000},
+				Ports:                []uint32{2000, 4000},
 				LogGuid:              "americano-app",
 				LogSource:            "APP",
 				Setup: &models.DownloadAction{
@@ -86,6 +86,32 @@ var _ = Describe("AppRunner", func() {
 			}))
 		})
 
+		Describe("Opening up/Monitoring ports", func() {
+			Context("when Monitor is true and the Monitored Port is not in the ExposedPorts", func() {
+				It("returns an error", func() {
+					desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{}}
+					fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+
+					err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
+						Name:                 "lovely-app",
+						StartCommand:         "faily/boom",
+						DockerImagePath:      "lovely/lovely_image",
+						AppArgs:              []string{},
+						EnvironmentVariables: map[string]string{},
+						Privileged:           false,
+						Instances:            1,
+						MemoryMB:             128,
+						Monitor:              true,
+						DiskMB:               1024,
+						Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 6682},
+					})
+
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(Equal("Monitored Port must be in the Exposed Ports."))
+				})
+			})
+		})
+
 		Context("when Monitor is false", func() {
 			It("Does not pass a monitor action", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
@@ -97,7 +123,7 @@ var _ = Describe("AppRunner", func() {
 					AppArgs:         []string{},
 					Monitor:         false,
 				})
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Monitor).To(test_helpers.BeExactlyNil())
@@ -118,10 +144,10 @@ var _ = Describe("AppRunner", func() {
 				Instances:            1,
 				MemoryMB:             128,
 				DiskMB:               1024,
-				Port:                 8080,
+				Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 8080},
 			})
 
-			Expect(err).ToNot(BeNil())
+			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("App app-already-desired, is already running"))
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
@@ -138,7 +164,7 @@ var _ = Describe("AppRunner", func() {
 					Instances:            1,
 					MemoryMB:             128,
 					DiskMB:               1024,
-					Port:                 8080,
+					Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 8080},
 				})
 
 				Expect(err).To(HaveOccurred())
@@ -161,7 +187,7 @@ var _ = Describe("AppRunner", func() {
 					Instances:            1,
 					MemoryMB:             128,
 					DiskMB:               1024,
-					Port:                 8080,
+					Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 8080},
 				})
 
 				Expect(err).To(Equal(upsertError))
@@ -182,7 +208,7 @@ var _ = Describe("AppRunner", func() {
 					Instances:            1,
 					MemoryMB:             128,
 					DiskMB:               1024,
-					Port:                 8080,
+					Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 8080},
 				})
 
 				Expect(err).To(Equal(receptorError))
@@ -202,7 +228,7 @@ var _ = Describe("AppRunner", func() {
 					Instances:            1,
 					MemoryMB:             128,
 					DiskMB:               1024,
-					Port:                 8080,
+					Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 8080},
 				})
 
 				Expect(err).To(Equal(receptorError))
@@ -234,7 +260,7 @@ var _ = Describe("AppRunner", func() {
 
 			err := appRunner.ScaleApp("app-not-running", 15)
 
-			Expect(err).ToNot(BeNil())
+			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("app-not-running, is not started. Please start an app first"))
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
@@ -269,7 +295,7 @@ var _ = Describe("AppRunner", func() {
 			fakeReceptorClient.DeleteDesiredLRPReturns(nil)
 
 			err := appRunner.RemoveApp("americano-app")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(fakeReceptorClient.DeleteDesiredLRPCallCount()).To(Equal(1))
 			Expect(fakeReceptorClient.DeleteDesiredLRPArgsForCall(0)).To(Equal("americano-app"))
@@ -281,7 +307,7 @@ var _ = Describe("AppRunner", func() {
 
 			err := appRunner.RemoveApp("app-not-running")
 
-			Expect(err).ToNot(BeNil())
+			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("app-not-running, is not started. Please start an app first"))
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 
@@ -321,7 +347,7 @@ var _ = Describe("AppRunner", func() {
 			fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
 
 			count, err := appRunner.NumOfRunningAppInstances("americano-app")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(count).To(Equal(2))
 
 			Expect(fakeReceptorClient.ActualLRPsByProcessGuidCallCount()).To(Equal(1))
@@ -344,7 +370,7 @@ var _ = Describe("AppRunner", func() {
 			fakeReceptorClient.ActualLRPsReturns(actualLRPs, nil)
 
 			exists, err := appRunner.AppExists("americano-app")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(exists).To(Equal(true))
 		})
 
@@ -353,7 +379,7 @@ var _ = Describe("AppRunner", func() {
 			fakeReceptorClient.ActualLRPsReturns(actualLRPs, nil)
 
 			exists, err := appRunner.AppExists("americano-app")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(exists).To(Equal(false))
 		})
 
@@ -363,7 +389,7 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.ActualLRPsReturns(actualLRPs, errors.New("Something Bad"))
 
 				exists, err := appRunner.AppExists("americano-app")
-				Expect(err).ToNot(BeNil())
+				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(Equal("Something Bad"))
 				Expect(exists).To(Equal(false))
 			})

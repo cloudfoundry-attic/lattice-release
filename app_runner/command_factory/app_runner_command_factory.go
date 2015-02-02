@@ -64,7 +64,6 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 		cli.IntFlag{
 			Name:  "port, p",
 			Usage: "port that the running process will listen on",
-			Value: 8080,
 		},
 		cli.IntFlag{
 			Name:  "instances",
@@ -159,7 +158,8 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	instances := context.Int("instances")
 	memoryMB := context.Int("memory-mb")
 	diskMB := context.Int("disk-mb")
-	port := context.Int("port")
+	portFlag := context.Int("port")
+	noMonitor := context.Bool("no-monitor")
 	name := context.Args().Get(0)
 	dockerImage := context.Args().Get(1)
 	terminator := context.Args().Get(2)
@@ -182,6 +182,26 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	if err != nil {
 		cmd.output.Say(fmt.Sprintf("Error fetching image metadata: %s", err))
 		return
+	}
+
+	var portConfig docker_app_runner.PortConfig
+	if portFlag == 0 && !imageMetadata.Ports.IsEmpty() {
+		cmd.output.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata, and monitoring the app on port %d...\n", imageMetadata.Ports.Monitored))
+		portConfig = imageMetadata.Ports
+	} else if portFlag == 0 && imageMetadata.Ports.IsEmpty() && noMonitor {
+		portConfig = docker_app_runner.PortConfig{
+			Exposed: []uint32{8080},
+		}
+	} else if portFlag == 0 && imageMetadata.Ports.IsEmpty() {
+		portConfig = docker_app_runner.PortConfig{
+			Monitored: 8080,
+			Exposed:   []uint32{8080},
+		}
+	} else {
+		portConfig = docker_app_runner.PortConfig{
+			Monitored: uint32(portFlag),
+			Exposed:   []uint32{uint32(portFlag)},
+		}
 	}
 
 	if workingDir == "" {
@@ -212,11 +232,11 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		AppArgs:              appArgs,
 		EnvironmentVariables: cmd.buildEnvironment(envVars),
 		Privileged:           context.Bool("run-as-root"),
-		Monitor:              !context.Bool("no-monitor"),
+		Monitor:              !noMonitor,
 		Instances:            instances,
 		MemoryMB:             memoryMB,
 		DiskMB:               diskMB,
-		Port:                 port,
+		Ports:                portConfig,
 		WorkingDir:           workingDir,
 	})
 

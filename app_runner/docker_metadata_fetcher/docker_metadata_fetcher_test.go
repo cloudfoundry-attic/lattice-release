@@ -25,7 +25,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 	})
 
 	Describe("FetchMetadata", func() {
-		It("returns the ImageMetadata with the WorkingDir and StartCommand", func() {
+		It("returns the ImageMetadata with the WorkingDir, StartCommand, and PortConfig, taking the lowest tcp port as the monitored port", func() {
 			dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
 
 			imageList := map[string]*registry.ImgData{
@@ -46,7 +46,14 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 			fakeDockerSession.GetRemoteTagsReturns(map[string]string{"latest": "29d531509fb"}, nil)
 
 			fakeDockerSession.GetRemoteImageJSONReturns(
-				[]byte(`{"config":{"WorkingDir":"/home/app","Entrypoint":["/lattice-app"],"Cmd":["--enableAwesomeMode=true","iloveargs"]}}`),
+				[]byte(`{
+					"container_config":{ "ExposedPorts":{"28321/tcp":{}, "6923/udp":{}, "27017/tcp":{}} },
+				 	"config":{
+				 				"WorkingDir":"/home/app",
+				 				"Entrypoint":["/lattice-app"],
+				 				"Cmd":["--enableAwesomeMode=true","iloveargs"]
+							}
+						}`),
 				0,
 				nil)
 
@@ -74,6 +81,51 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
 			Expect(imageMetadata.StartCommand).To(Equal([]string{"/lattice-app", "--enableAwesomeMode=true", "iloveargs"}))
+			Expect(imageMetadata.Ports.Monitored).To(Equal(uint32(27017)))
+			Expect(imageMetadata.Ports.Exposed).To(Equal([]uint32{uint32(27017), uint32(28321)}))
+		})
+
+		Context("when exposed ports are null in the docker metadata", func() {
+			It("doesn't blow up, and returns zero values", func() {
+
+				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
+
+				imageList := map[string]*registry.ImgData{
+					"29d531509fb": &registry.ImgData{
+						ID:              "29d531509fb",
+						Checksum:        "dsflksdfjlkj",
+						ChecksumPayload: "sdflksdjfkl",
+						Tag:             "latest",
+					},
+				}
+				fakeDockerSession.GetRepositoryDataReturns(
+					&registry.RepositoryData{
+						ImgList:   imageList,
+						Endpoints: []string{"https://registry-1.docker.io/v1/"},
+						Tokens:    []string{"signature=abc,repository=\"cloudfoundry/lattice-app\",access=read"},
+					}, nil)
+
+				fakeDockerSession.GetRemoteTagsReturns(map[string]string{"latest": "29d531509fb"}, nil)
+
+				fakeDockerSession.GetRemoteImageJSONReturns(
+					[]byte(`{
+					"container_config":{ "ExposedPorts":null },
+				 	"config":{
+				 				"WorkingDir":"/home/app",
+				 				"Entrypoint":["/lattice-app"],
+				 				"Cmd":["--enableAwesomeMode=true","iloveargs"]
+							}
+						}`),
+					0,
+					nil)
+
+				repoName := "cool_user123/sweetApp"
+				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(repoName, "latest")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(imageMetadata.Ports.Monitored).To(Equal(uint32(0)))
+				Expect(imageMetadata.Ports.Exposed).To(Equal([]uint32{}))
+
+			})
 		})
 
 		Context("when there is an error making the session", func() {

@@ -1,14 +1,15 @@
 package docker_app_runner
 
+//go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
+
 import (
 	"fmt"
 
+	"errors"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_repository_name_formatter"
 )
-
-//go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 
 type AppRunner interface {
 	StartDockerApp(params StartDockerAppParams) error
@@ -16,6 +17,15 @@ type AppRunner interface {
 	RemoveApp(name string) error
 	AppExists(name string) (bool, error)
 	NumOfRunningAppInstances(name string) (int, error)
+}
+
+type PortConfig struct {
+	Monitored uint32
+	Exposed   []uint32
+}
+
+func (portConfig PortConfig) IsEmpty() bool {
+	return portConfig.Monitored == 0 && len(portConfig.Exposed) == 0
 }
 
 type StartDockerAppParams struct {
@@ -29,7 +39,7 @@ type StartDockerAppParams struct {
 	Instances            int
 	MemoryMB             int
 	DiskMB               int
-	Port                 int
+	Ports                PortConfig
 	WorkingDir           string
 }
 
@@ -48,6 +58,18 @@ func New(receptorClient receptor.Client, systemDomain string) AppRunner {
 }
 
 func (appRunner *appRunner) StartDockerApp(params StartDockerAppParams) error {
+	exposedContainsMonitored := false
+	for _, port := range params.Ports.Exposed {
+		if port == params.Ports.Monitored {
+			exposedContainsMonitored = true
+			break
+		}
+	}
+
+	if params.Monitor && !exposedContainsMonitored {
+		return errors.New("Monitored Port must be in the Exposed Ports.")
+	}
+
 	if exists, err := appRunner.desiredLRPExists(params.Name); err != nil {
 		return err
 	} else if exists {
@@ -142,10 +164,10 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 		Routes:               []string{fmt.Sprintf("%s.%s", params.Name, appRunner.systemDomain)},
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
-		Ports:                []uint32{uint32(params.Port)},
+		Ports:                params.Ports.Exposed,
 		LogGuid:              params.Name,
 		LogSource:            "APP",
-		EnvironmentVariables: buildEnvironmentVariables(params.EnvironmentVariables, params.Port),
+		EnvironmentVariables: buildEnvironmentVariables(params.EnvironmentVariables, params.Ports.Monitored),
 		Setup: &models.DownloadAction{
 			From: healthcheckDownloadUrl,
 			To:   "/tmp",
@@ -161,7 +183,7 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	if params.Monitor {
 		req.Monitor = &models.RunAction{
 			Path:      "/tmp/healthcheck",
-			Args:      []string{"-port", fmt.Sprintf("%d", params.Port)},
+			Args:      []string{"-port", fmt.Sprintf("%d", params.Ports.Monitored)},
 			LogSource: "HEALTH",
 		}
 	}
@@ -170,7 +192,7 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	return err
 }
 
-func buildEnvironmentVariables(environmentVariables map[string]string, port int) []receptor.EnvironmentVariable {
+func buildEnvironmentVariables(environmentVariables map[string]string, port uint32) []receptor.EnvironmentVariable {
 	appEnvVars := make([]receptor.EnvironmentVariable, 0, len(environmentVariables)+1)
 	for name, value := range environmentVariables {
 		appEnvVars = append(appEnvVars, receptor.EnvironmentVariable{Name: name, Value: value})
