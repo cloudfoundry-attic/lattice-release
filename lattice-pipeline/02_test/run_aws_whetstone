@@ -24,6 +24,7 @@ print_provider_specific_terraform_configuration(){
                     "lattice-aws":{
                         "source":"%s",
                         "local_lattice_tar_path": "%s",
+                        "num_cells": "1",
                         "aws_access_key": "%s",
                         "aws_secret_key": "%s",
                         "aws_region": "us-west-1",
