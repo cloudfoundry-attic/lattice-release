@@ -72,7 +72,6 @@ resource "google_compute_instance" "lattice-coordinator" {
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${google_compute_address.lattice-coordinator.address}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"SYSTEM_DOMAIN=${google_compute_address.lattice-coordinator.address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -i)\" >> /var/lattice/setup/lattice-environment'",
         ]
     }
 
@@ -132,6 +131,7 @@ resource "google_compute_instance" "lattice-cell" {
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${google_compute_address.lattice-coordinator.address}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"SYSTEM_DOMAIN=${google_compute_address.lattice-coordinator.address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_CELL_ID=lattice-cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -i)\" >> /var/lattice/setup/lattice-environment'",
         ]
     }
 
