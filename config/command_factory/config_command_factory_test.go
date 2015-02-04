@@ -15,16 +15,19 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 
 	"github.com/pivotal-cf-experimental/lattice-cli/config/command_factory"
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler/exit_codes"
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler/fake_exit_handler"
 )
 
 var _ = Describe("CommandFactory", func() {
 	var (
-		stdinReader    *io.PipeReader
-		stdinWriter    *io.PipeWriter
-		outputBuffer   *gbytes.Buffer
-		targetCommand  cli.Command
-		config         *config_package.Config
-		targetVerifier *fake_target_verifier.FakeTargetVerifier
+		stdinReader     *io.PipeReader
+		stdinWriter     *io.PipeWriter
+		outputBuffer    *gbytes.Buffer
+		targetCommand   cli.Command
+		config          *config_package.Config
+		targetVerifier  *fake_target_verifier.FakeTargetVerifier
+		fakeExitHandler *fake_exit_handler.FakeExitHandler
 	)
 
 	BeforeEach(func() {
@@ -32,9 +35,11 @@ var _ = Describe("CommandFactory", func() {
 		outputBuffer = gbytes.NewBuffer()
 		targetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 
+		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
+
 		config = config_package.New(persister.NewMemPersister())
 
-		commandFactory := command_factory.NewConfigCommandFactory(config, targetVerifier, stdinReader, output.New(outputBuffer))
+		commandFactory := command_factory.NewConfigCommandFactory(config, targetVerifier, stdinReader, output.New(outputBuffer), fakeExitHandler)
 		targetCommand = commandFactory.MakeTargetCommand()
 	})
 
@@ -98,7 +103,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("bubbles up errors from setting the target", func() {
-				commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("FAILURE setting api")), targetVerifier, stdinReader, output.New(outputBuffer))
+				commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("FAILURE setting api")), targetVerifier, stdinReader, output.New(outputBuffer), fakeExitHandler)
 				targetCommand = commandFactory.MakeTargetCommand()
 
 				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
@@ -145,9 +150,12 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Could not authorize target."))
 
 				verifyOldTargetStillSet()
+				Expect(fakeExitHandler.ExitCallCount()).To(Equal(1))
+				Expect(fakeExitHandler.ExitArgsForCall(0)).To(Equal(exit_codes.BadTarget))
+
 			})
 
-			It("does not save the config if the receptor is never authorized", func() {
+			It("does not save the config if there is an error connecting to the receptor after prompting", func() {
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
@@ -161,6 +169,8 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
 
 				verifyOldTargetStillSet()
+				Expect(fakeExitHandler.ExitCallCount()).To(Equal(1))
+				Expect(fakeExitHandler.ExitArgsForCall(0)).To(Equal(exit_codes.BadTarget))
 			})
 		})
 
@@ -173,6 +183,8 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
 
 				verifyOldTargetStillSet()
+				Expect(fakeExitHandler.ExitCallCount()).To(Equal(1))
+				Expect(fakeExitHandler.ExitArgsForCall(0)).To(Equal(exit_codes.BadTarget))
 			})
 		})
 	})

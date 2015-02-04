@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"syscall"
-	"time"
 
 	"github.com/onsi/gomega/gbytes"
 
@@ -43,10 +42,34 @@ var _ = Describe("ExitHandler", func() {
 
 		signalChan <- os.Interrupt
 
-		time.Sleep(1 * time.Second)
-
 		Eventually(buffer).Should(gbytes.Say("handler1"))
 		Eventually(buffer).Should(gbytes.Say("handler2"))
 		Eventually(buffer).Should(gbytes.Say("Exit-Code=130"))
+	})
+
+	Describe("Exit", func() {
+		It("triggers a system exit after calling all the exit funcs ", func() {
+			exitFunc := func(code int) {
+				buffer.Write([]byte(fmt.Sprintf("Exit-Code=%d", code)))
+			}
+
+			signalChan := make(chan os.Signal)
+			exitHandler := exit_handler.New(signalChan, exitFunc)
+			go exitHandler.Run()
+
+			exitHandler.OnExit(func() {
+				buffer.Write([]byte("handler1"))
+			})
+
+			exitHandler.OnExit(func() {
+				buffer.Write([]byte("handler2"))
+			})
+
+			exitHandler.Exit(222)
+
+			Eventually(buffer).Should(gbytes.Say("handler1"))
+			Eventually(buffer).Should(gbytes.Say("handler2"))
+			Eventually(buffer).Should(gbytes.Say("Exit-Code=222"))
+		})
 	})
 })

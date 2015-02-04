@@ -9,6 +9,8 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier"
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler"
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler/exit_codes"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 )
 
@@ -18,8 +20,8 @@ type commandFactory struct {
 	cmd *configCommand
 }
 
-func NewConfigCommandFactory(config *config.Config, targetVerifier target_verifier.TargetVerifier, input io.Reader, output *output.Output) *commandFactory {
-	return &commandFactory{&configCommand{config, input, output, targetVerifier}}
+func NewConfigCommandFactory(config *config.Config, targetVerifier target_verifier.TargetVerifier, input io.Reader, output *output.Output, exitHandler exit_handler.ExitHandler) *commandFactory {
+	return &commandFactory{&configCommand{config, input, output, targetVerifier, exitHandler}}
 }
 
 func (c *commandFactory) MakeTargetCommand() cli.Command {
@@ -42,6 +44,7 @@ type configCommand struct {
 	input          io.Reader
 	output         *output.Output
 	targetVerifier target_verifier.TargetVerifier
+	exitHandler    exit_handler.ExitHandler
 }
 
 func (cmd *configCommand) target(context *cli.Context) {
@@ -57,6 +60,7 @@ func (cmd *configCommand) target(context *cli.Context) {
 
 	if _, authorized, err := cmd.targetVerifier.VerifyTarget(cmd.config.Receptor()); err != nil {
 		cmd.output.Say("Error verifying target: " + err.Error())
+		cmd.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	} else if authorized {
 		cmd.save()
@@ -69,9 +73,11 @@ func (cmd *configCommand) target(context *cli.Context) {
 	cmd.config.SetLogin(username, password)
 	if _, authorized, err := cmd.targetVerifier.VerifyTarget(cmd.config.Receptor()); err != nil {
 		cmd.output.Say("Error verifying target: " + err.Error())
+		cmd.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	} else if !authorized {
 		cmd.output.Say("Could not authorize target.")
+		cmd.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	}
 

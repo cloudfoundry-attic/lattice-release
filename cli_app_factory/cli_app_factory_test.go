@@ -1,21 +1,23 @@
 package cli_app_factory_test
 
 import (
+	"errors"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"errors"
 	"github.com/codegangsta/cli"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-cf-experimental/lattice-cli/cli_app_factory"
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
-	config_command_factory "github.com/pivotal-cf-experimental/lattice-cli/config/command_factory"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier/fake_target_verifier"
-	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler"
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler/fake_exit_handler"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 	"github.com/pivotal-golang/lager"
+
+	config_command_factory "github.com/pivotal-cf-experimental/lattice-cli/config/command_factory"
 )
 
 var _ = Describe("CliAppFactory", func() {
@@ -32,7 +34,7 @@ var _ = Describe("CliAppFactory", func() {
 		outputBuffer = gbytes.NewBuffer()
 		cliConfig = config.New(memPersister)
 		cliApp = cli_app_factory.MakeCliApp(
-			&exit_handler.ExitHandler{},
+			&fake_exit_handler.FakeExitHandler{},
 			cliConfig,
 			lager.NewLogger("test"),
 			fakeTargetVerifier,

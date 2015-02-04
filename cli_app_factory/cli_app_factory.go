@@ -37,7 +37,7 @@ const (
 	AppName  = "ltc"
 )
 
-func MakeCliApp(exitHandler *exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) *cli.App {
+func MakeCliApp(exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) *cli.App {
 	config.Load()
 	app := cli.NewApp()
 	app.Name = AppName
@@ -70,7 +70,7 @@ func MakeCliApp(exitHandler *exit_handler.ExitHandler, config *config.Config, lo
 	return app
 }
 
-func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) []cli.Command {
+func cliCommands(exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) []cli.Command {
 	input := os.Stdin
 
 	receptorClient := receptor.NewClient(config.Receptor())
@@ -94,7 +94,7 @@ func cliCommands(exitHandler *exit_handler.ExitHandler, config *config.Config, l
 	logReader := logs.NewLogReader(noaa.NewConsumer(setup_cli_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, output)
 
-	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, targetVerifier, input, output)
+	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, targetVerifier, input, output, exitHandler)
 
 	appExaminer := app_examiner.New(receptorClient)
 	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, output, clock, exitHandler)
