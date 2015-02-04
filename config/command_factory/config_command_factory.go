@@ -12,6 +12,8 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 )
 
+const TargetCommandName = "target"
+
 type commandFactory struct {
 	cmd *configCommand
 }
@@ -22,7 +24,7 @@ func NewConfigCommandFactory(config *config.Config, targetVerifier target_verifi
 
 func (c *commandFactory) MakeTargetCommand() cli.Command {
 	var startCommand = cli.Command{
-		Name:      "target",
+		Name:      TargetCommandName,
 		ShortName: "t",
 		Description: `Set a target lattice location.
 
@@ -53,10 +55,10 @@ func (cmd *configCommand) target(context *cli.Context) {
 	cmd.config.SetTarget(target)
 	cmd.config.SetLogin("", "")
 
-	if ok, err := cmd.targetVerifier.ValidateAuthorization(cmd.config.Receptor()); err != nil {
+	if _, authorized, err := cmd.targetVerifier.VerifyTarget(cmd.config.Receptor()); err != nil {
 		cmd.output.Say("Error verifying target: " + err.Error())
 		return
-	} else if ok {
+	} else if authorized {
 		cmd.save()
 		return
 	}
@@ -65,10 +67,10 @@ func (cmd *configCommand) target(context *cli.Context) {
 	password := cmd.prompt("Password: ")
 
 	cmd.config.SetLogin(username, password)
-	if ok, err := cmd.targetVerifier.ValidateAuthorization(cmd.config.Receptor()); err != nil {
+	if _, authorized, err := cmd.targetVerifier.VerifyTarget(cmd.config.Receptor()); err != nil {
 		cmd.output.Say("Error verifying target: " + err.Error())
 		return
-	} else if !ok {
+	} else if !authorized {
 		cmd.output.Say("Could not authorize target.")
 		return
 	}

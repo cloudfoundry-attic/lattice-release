@@ -76,7 +76,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("setting target without auth", func() {
 			BeforeEach(func() {
-				targetVerifier.ValidateAuthorizationReturns(true, nil)
+				targetVerifier.VerifyTargetReturns(true, true, nil)
 			})
 
 			It("saves the new target", func() {
@@ -84,8 +84,8 @@ var _ = Describe("CommandFactory", func() {
 
 				Eventually(commandFinishChan).Should(BeClosed())
 
-				Expect(targetVerifier.ValidateAuthorizationCallCount()).To(Equal(1))
-				Expect(targetVerifier.ValidateAuthorizationArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
+				Expect(targetVerifier.VerifyTargetCallCount()).To(Equal(1))
+				Expect(targetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
 
 				Expect(config.Receptor()).To(Equal("http://receptor.myapi.com"))
 			})
@@ -93,8 +93,8 @@ var _ = Describe("CommandFactory", func() {
 			It("clears out existing saved target credentials", func() {
 				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
-				Expect(targetVerifier.ValidateAuthorizationCallCount()).To(Equal(1))
-				Expect(targetVerifier.ValidateAuthorizationArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
+				Expect(targetVerifier.VerifyTargetCallCount()).To(Equal(1))
+				Expect(targetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
 			})
 
 			It("bubbles up errors from setting the target", func() {
@@ -109,7 +109,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("setting target that requiries auth", func() {
 			BeforeEach(func() {
-				targetVerifier.ValidateAuthorizationReturns(false, nil)
+				targetVerifier.VerifyTargetReturns(true, false, nil)
 			})
 
 			It("sets the api, username, password from the target specified", func() {
@@ -119,7 +119,7 @@ var _ = Describe("CommandFactory", func() {
 				stdinWriter.Write([]byte("testusername\n"))
 				Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
 
-				targetVerifier.ValidateAuthorizationReturns(true, nil)
+				targetVerifier.VerifyTargetReturns(true, true, nil)
 				stdinWriter.Write([]byte("testpassword\n"))
 
 				Eventually(commandFinishChan).Should(BeClosed())
@@ -128,9 +128,9 @@ var _ = Describe("CommandFactory", func() {
 				Expect(config.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
 				Expect(outputBuffer).To(test_helpers.Say("Api Location Set"))
 
-				Expect(targetVerifier.ValidateAuthorizationCallCount()).To(Equal(2))
-				Expect(targetVerifier.ValidateAuthorizationArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
-				Expect(targetVerifier.ValidateAuthorizationArgsForCall(1)).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
+				Expect(targetVerifier.VerifyTargetCallCount()).To(Equal(2))
+				Expect(targetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
+				Expect(targetVerifier.VerifyTargetArgsForCall(1)).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
 			})
 
 			It("does not save the config if the receptor is never authorized", func() {
@@ -154,7 +154,7 @@ var _ = Describe("CommandFactory", func() {
 				stdinWriter.Write([]byte("notgood\n"))
 				Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
 
-				targetVerifier.ValidateAuthorizationReturns(false, errors.New("Unknown Error"))
+				targetVerifier.VerifyTargetReturns(true, false, errors.New("Unknown Error"))
 				stdinWriter.Write([]byte("evenworse\n"))
 
 				Eventually(commandFinishChan).Should(BeClosed())
@@ -166,7 +166,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("setting an invalid target", func() {
 			It("does not save the config if the target verifier returns an error", func() {
-				targetVerifier.ValidateAuthorizationReturns(false, errors.New("Unknown Error"))
+				targetVerifier.VerifyTargetReturns(true, false, errors.New("Unknown Error"))
 
 				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
 

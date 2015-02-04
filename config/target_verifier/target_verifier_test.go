@@ -12,14 +12,6 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier"
 )
 
-type fakereceptorClientBuilder struct {
-	receptorClient receptor.Client
-}
-
-func (f *fakereceptorClientBuilder) Build(target string) receptor.Client {
-	return f.receptorClient
-}
-
 var _ = Describe("targetVerifier", func() {
 	Describe("ValidateAuthorization", func() {
 		var fakeReceptorClient *fake_receptor.FakeClient
@@ -35,31 +27,54 @@ var _ = Describe("targetVerifier", func() {
 			targets = []string{}
 		})
 
-		It("returns true if the receptor does not return an error", func() {
+		It("returns receptorUp=true, authorized=true if the receptor does not return an error", func() {
 			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 			targetVerifier := target_verifier.New(fakeReceptorClientFactory)
 
-			ok, err := targetVerifier.ValidateAuthorization("http://receptor.mylattice.com")
-			Expect(ok).To(BeTrue())
+			receptorUp, authorized, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
+			Expect(receptorUp).To(BeTrue())
+			Expect(authorized).To(BeTrue())
 			Expect(err).ToNot(HaveOccurred())
 			Expect(targets).To(Equal([]string{"http://receptor.mylattice.com"}))
 		})
 
-		It("returns false if the receptor returns an authorization error", func() {
-			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, errors.New(receptor.Unauthorized))
+		It("returns receptorUp=true, authorized=false if the receptor returns an authorization error", func() {
+			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptor.Error{
+				Type:    receptor.Unauthorized,
+				Message: "Go home. You're not welcome here.",
+			})
 			targetVerifier := target_verifier.New(fakeReceptorClientFactory)
 
-			ok, err := targetVerifier.ValidateAuthorization("http://receptor.mylattice.com")
-			Expect(ok).To(BeFalse())
+			receptorUp, authorized, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
+			Expect(receptorUp).To(BeTrue())
+			Expect(authorized).To(BeFalse())
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("returns an error if the receptor returns an error other than unauthorized", func() {
-			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, errors.New(receptor.UnknownError))
+		It("returns receptorUp=true, authorized=false, err=(the bubbled up error) if there is a receptor error other than unauthorized", func() {
+			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptor.Error{
+				Type:    receptor.UnknownError,
+				Message: "It all happened so fast... I just dunno what went wrong.",
+			})
 			targetVerifier := target_verifier.New(fakeReceptorClientFactory)
 
-			_, err := targetVerifier.ValidateAuthorization("http://receptor.mylattice.com")
+			receptorUp, authorized, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
+			Expect(receptorUp).To(BeTrue())
+			Expect(authorized).To(BeFalse())
 			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("It all happened so fast... I just dunno what went wrong."))
+		})
+
+		It("returns receptorUp=false, authorized=false, err=(the bubbled up error) if there is a non-receptor error", func() {
+			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, errors.New("Couldn't connect to the receptor."))
+			targetVerifier := target_verifier.New(fakeReceptorClientFactory)
+
+			receptorUp, authorized, err := targetVerifier.VerifyTarget("http://receptor.my-borked-lattice.com")
+			Expect(receptorUp).To(BeFalse())
+			Expect(authorized).To(BeFalse())
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("Couldn't connect to the receptor."))
+
 		})
 	})
 })
