@@ -92,6 +92,8 @@ Diego, the runtime component of Lattice is not in production yet with Cloud Foun
 
 The Router and Loggregator components of Lattice have been in production with Cloud Foundry for over a year and we consider them production-ready.
 
+The deployment strategy employed by Lattice emphasizes convenience and simplicity.  When deployed with Terraform none of the Lattice VMs are monitored - should a VM fail it will not be recreated.  Moreover, Lattice minimizes overhead by running single instances of several components.  These constitute single-points of failure and should not be relied upon in a production setting.  If you'd like to set up a productionized deployment of Lattice we recommend deploying CF + Diego with BOSH.  Instructions for this are available on the [Diego-Release GitHub repository](https://github.com/cloudfoundry-incubator/diego-release).
+
 ## What Operating Systems are supported?
 
 Lattice currently is developed and tested using Ubuntu Trusty 14.04 LTS.
