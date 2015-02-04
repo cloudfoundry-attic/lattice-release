@@ -52,6 +52,10 @@ Lattice includes Cloud Foundry components [Diego](https://github.com/cloudfoundr
 
 [Diego](https://github.com/cloudfoundry-incubator/diego-design-notes) is Cloud Foundry's next generation elastic runtime.  Lattice is essentially a stripped down distribution of Diego that eschews most of Cloud Foundry's enterprise features.  Lattice is built to let you deploy and interact with Diego with ease.  New features that make their way into Diego will be available on Lattice almost immediately.
 
+## What is the relationship between Lattice and Docker?
+
+Lattice supports Dockerimages as a format for distributing container root filesystems.  Currently, Docker images must be publicly hosted on the [Docker Hub Registry](https://registry.hub.docker.com).  Lattice uses Docker's libraries to faithfully fetch Dockerimage metadata and image layers, but it does *not* use the Docker runtime to run and manage containers.  Instead, Lattice uses [Garden](https://github.com/cloudfoundry-incubator/garden).  Garden provides a *platform-agnostic* API for launching and managing containers and is built to be consumed by a distributed container scheduler like Diego.  [Garden-Linux](https://github.com/cloudfoundry-incubator/garden-linux) is an implementation of the Garden API that provides containers on the Linux platform using kernel namespaces and cgroups - the same technologies that undergird Docker.
+
 ## What about Cloud Foundry Elastic Runtime, Kubernetes, Mesos and other clustered Docker projects?
 
 - **Cloud Foundry**: for the individual developer use cases, a complete Cloud Foundry deployment can be difficult to get started with and requires a footprint that does not fit on most developer laptops. We also wanted to make it possible to use Cloud Foundry components like the Router on their own and experiment more easily with new ideas before graduating them to full Cloud Foundry.  Lattice reuses Diego, Cloud Foundry’s next generation Elastic Runtime.
