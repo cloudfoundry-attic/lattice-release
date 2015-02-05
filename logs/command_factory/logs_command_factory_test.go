@@ -1,29 +1,35 @@
 package command_factory_test
 
 import (
-	"errors"
-	"fmt"
+	"os"
 	"time"
 
-	"github.com/cloudfoundry/noaa/events"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler"
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler/fake_exit_handler"
+	"github.com/pivotal-cf-experimental/lattice-cli/logs/command_factory"
+	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
-
-	"github.com/pivotal-cf-experimental/lattice-cli/logs/command_factory"
 )
 
 var _ = Describe("CommandFactory", func() {
 	Describe("logsCommand", func() {
 		var (
-			outputBuffer *gbytes.Buffer
+			outputBuffer            *gbytes.Buffer
+			fakeTailedLogsOutputter *fake_tailed_logs_outputter.FakeTailedLogsOutputter
+			signalChan              chan os.Signal
+			exitHandler             exit_handler.ExitHandler
 		)
 
 		BeforeEach(func() {
 			outputBuffer = gbytes.NewBuffer()
+			fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
+			signalChan = make(chan os.Signal)
+			exitHandler = &fake_exit_handler.FakeExitHandler{}
 		})
 
 		It("Tails logs", func() {
@@ -31,71 +37,29 @@ var _ = Describe("CommandFactory", func() {
 				"my-app-guid",
 			}
 
-			appGuidChan := make(chan string)
-			logReader := &fakeLogReader{appGuidChan: appGuidChan}
-			commandFactory := command_factory.NewLogsCommandFactory(logReader, output.New(outputBuffer))
+			commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
 			tailLogsCommand := commandFactory.MakeLogsCommand()
-
-			time := time.Now()
-			sourceType := "RTR"
-			sourceInstance := "1"
-
-			unixTime := time.UnixNano()
-			logReader.addLog(&events.LogMessage{
-				Message:        []byte("First log"),
-				Timestamp:      &unixTime,
-				SourceType:     &sourceType,
-				SourceInstance: &sourceInstance,
-			})
-			logReader.addError(errors.New("First Error"))
 
 			test_helpers.AsyncExecuteCommandWithArgs(tailLogsCommand, args)
 
-			Eventually(appGuidChan).Should(Receive(Equal("my-app-guid")))
+			time.Sleep(1 * time.Second)
+			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).Should(Equal(1))
+			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("my-app-guid"))
 
-			logoutputBufferString := fmt.Sprintf("%s [%s|%s] First log\n", colors.Cyan(time.Format("02 Jan 15:04")), colors.Yellow(sourceType), colors.Yellow(sourceInstance))
-			Eventually(outputBuffer).Should(test_helpers.Say(logoutputBufferString))
-
-			Eventually(outputBuffer).Should(test_helpers.Say("First Error\n"))
 		})
 
 		It("Handles invalid appguids", func() {
 			args := []string{}
 
-			logReader := &fakeLogReader{}
-			commandFactory := command_factory.NewLogsCommandFactory(logReader, output.New(outputBuffer))
+			commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
 			tailLogsCommand := commandFactory.MakeLogsCommand()
 
 			test_helpers.ExecuteCommandWithArgs(tailLogsCommand, args)
 
 			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage"))
+			Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(Equal(0))
+
 		})
 
 	})
 })
-
-type fakeLogReader struct {
-	appGuidChan chan string
-	logs        []*events.LogMessage
-	errors      []error
-}
-
-func (f *fakeLogReader) TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error)) {
-	for _, log := range f.logs {
-		logCallback(log)
-	}
-
-	for _, err := range f.errors {
-		errorCallback(err)
-	}
-
-	f.appGuidChan <- appGuid
-}
-
-func (f *fakeLogReader) addLog(log *events.LogMessage) {
-	f.logs = append(f.logs, log)
-}
-
-func (f *fakeLogReader) addError(err error) {
-	f.errors = append(f.errors, err)
-}

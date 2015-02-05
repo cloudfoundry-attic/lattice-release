@@ -25,6 +25,7 @@ import (
 	app_runner_command_factory "github.com/pivotal-cf-experimental/lattice-cli/app_runner/command_factory"
 	config_command_factory "github.com/pivotal-cf-experimental/lattice-cli/config/command_factory"
 	logs_command_factory "github.com/pivotal-cf-experimental/lattice-cli/logs/command_factory"
+	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter"
 )
 
 var nonTargetVerifiedCommandNames = map[string]struct{}{
@@ -78,6 +79,9 @@ func cliCommands(exitHandler exit_handler.ExitHandler, config *config.Config, lo
 
 	clock := clock.NewClock()
 
+	logReader := logs.NewLogReader(noaa.NewConsumer(setup_cli_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
+	tailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(output, logReader)
+
 	appRunnerCommandFactoryConfig := app_runner_command_factory.AppRunnerCommandFactoryConfig{
 		AppRunner:             appRunner,
 		DockerMetadataFetcher: docker_metadata_fetcher.New(docker_metadata_fetcher.NewDockerSessionFactory()),
@@ -87,12 +91,12 @@ func cliCommands(exitHandler exit_handler.ExitHandler, config *config.Config, lo
 		Env:                   os.Environ(),
 		Clock:                 clock,
 		Logger:                logger,
+		TailedLogsOutputter:   tailedLogsOutputter,
 	}
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 
-	logReader := logs.NewLogReader(noaa.NewConsumer(setup_cli_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
-	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(logReader, output)
+	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(output, tailedLogsOutputter, exitHandler)
 
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, targetVerifier, input, output, exitHandler)
 

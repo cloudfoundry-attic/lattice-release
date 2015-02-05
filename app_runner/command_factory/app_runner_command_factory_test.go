@@ -20,6 +20,7 @@ import (
 
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/command_factory"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
+	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
 )
 
 var _ = Describe("CommandFactory", func() {
@@ -33,6 +34,7 @@ var _ = Describe("CommandFactory", func() {
 		dockerMetadataFetcher         *fake_docker_metadata_fetcher.FakeDockerMetadataFetcher
 		appRunnerCommandFactoryConfig command_factory.AppRunnerCommandFactoryConfig
 		logger                        lager.Logger
+		fakeTailedLogsOutputter       *fake_tailed_logs_outputter.FakeTailedLogsOutputter
 	)
 
 	BeforeEach(func() {
@@ -40,6 +42,7 @@ var _ = Describe("CommandFactory", func() {
 		outputBuffer = gbytes.NewBuffer()
 		dockerMetadataFetcher = &fake_docker_metadata_fetcher.FakeDockerMetadataFetcher{}
 		logger = lager.NewLogger("ltc-test")
+		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
 	})
 
 	Describe("StartAppCommand", func() {
@@ -60,6 +63,7 @@ var _ = Describe("CommandFactory", func() {
 				Env:                   env,
 				Clock:                 clock,
 				Logger:                logger,
+				TailedLogsOutputter:   fakeTailedLogsOutputter,
 			}
 
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
@@ -293,7 +297,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
-		It("polls for the app to start with correct number of instances", func() {
+		It("polls for the app to start with correct number of instances, outputting logs while the app starts", func() {
 			args := []string{
 				"--instances=10",
 				"cool-web-app",
@@ -309,21 +313,25 @@ var _ = Describe("CommandFactory", func() {
 
 			Eventually(outputBuffer).Should(test_helpers.Say("Starting App: cool-web-app"))
 
+			Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(Equal(1))
+			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("cool-web-app"))
+
 			Expect(appRunner.NumOfRunningAppInstancesCallCount()).To(Equal(1))
 			Expect(appRunner.NumOfRunningAppInstancesArgsForCall(0)).To(Equal("cool-web-app"))
 
 			clock.IncrementBySeconds(1)
-			Eventually(outputBuffer, 10).Should(test_helpers.Say("."))
+			Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
 			appRunner.NumOfRunningAppInstancesReturns(9, nil)
 			clock.IncrementBySeconds(1)
-			Eventually(outputBuffer, 10).Should(test_helpers.Say("."))
 			Expect(commandFinishChan).ShouldNot(BeClosed())
+			Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
 			appRunner.NumOfRunningAppInstancesReturns(10, nil)
 			clock.IncrementBySeconds(1)
 
 			Eventually(commandFinishChan).Should(BeClosed())
+			Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))

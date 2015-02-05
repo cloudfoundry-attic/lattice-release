@@ -150,8 +150,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Could not authorize target."))
 
 				verifyOldTargetStillSet()
-				Expect(fakeExitHandler.ExitCallCount()).To(Equal(1))
-				Expect(fakeExitHandler.ExitArgsForCall(0)).To(Equal(exit_codes.BadTarget))
+				Expect(fakeExitHandler.ExitCalledWith[0]).To(Equal(exit_codes.BadTarget))
 
 			})
 
@@ -169,8 +168,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
 
 				verifyOldTargetStillSet()
-				Expect(fakeExitHandler.ExitCallCount()).To(Equal(1))
-				Expect(fakeExitHandler.ExitArgsForCall(0)).To(Equal(exit_codes.BadTarget))
+				Expect(fakeExitHandler.ExitCalledWith[0]).To(Equal(exit_codes.BadTarget))
 			})
 		})
 
@@ -183,8 +181,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
 
 				verifyOldTargetStillSet()
-				Expect(fakeExitHandler.ExitCallCount()).To(Equal(1))
-				Expect(fakeExitHandler.ExitArgsForCall(0)).To(Equal(exit_codes.BadTarget))
+				Expect(fakeExitHandler.ExitCalledWith[0]).To(Equal(exit_codes.BadTarget))
 			})
 		})
 	})

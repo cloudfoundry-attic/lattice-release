@@ -2,6 +2,7 @@ package logs_test
 
 import (
 	"errors"
+	"sync"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -10,67 +11,138 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/logs"
 )
 
+func NewFakeConsumer() *fakeConsumer {
+	return &fakeConsumer{
+		inboundLogStream:   make(chan *events.LogMessage),
+		inboundErrorStream: make(chan error),
+	}
+}
+
 type fakeConsumer struct {
-	pendingLogs   []*events.LogMessage
-	pendingErrors []error
+	inboundLogStream   chan *events.LogMessage
+	inboundErrorStream chan error
 }
 
 func (consumer *fakeConsumer) TailingLogs(appGuid string, authToken string, outputChan chan<- *events.LogMessage, errorChan chan<- error, stopChan chan struct{}) {
-	for _, logMessage := range consumer.pendingLogs {
-		outputChan <- logMessage
+	for {
+		select {
+		case <-stopChan:
+			defer close(errorChan)
+			return
+		case err := <-consumer.inboundErrorStream:
+			errorChan <- err
+		case logMessage := <-consumer.inboundLogStream:
+			outputChan <- logMessage
+		}
 	}
-
-	for _, err := range consumer.pendingErrors {
-		errorChan <- err
-	}
-	close(errorChan)
 }
 
-func (consumer *fakeConsumer) addToPendingLogs(logMessage *events.LogMessage) {
-	consumer.pendingLogs = append(consumer.pendingLogs, logMessage)
+func (consumer *fakeConsumer) sendToInboundLogStream(logMessage *events.LogMessage) {
+	consumer.inboundLogStream <- logMessage
 }
 
-func (consumer *fakeConsumer) addToPendingErrors(err error) {
-	consumer.pendingErrors = append(consumer.pendingErrors, err)
+func (consumer *fakeConsumer) sendToInboundErrorStream(err error) {
+	consumer.inboundErrorStream <- err
+}
+
+type MessageReceiver struct {
+	sync.RWMutex
+	receivedMessages []*events.LogMessage
+}
+
+func (mr *MessageReceiver) AppendMessage(logMessage *events.LogMessage) {
+	defer mr.Unlock()
+	mr.Lock()
+	mr.receivedMessages = append(mr.receivedMessages, logMessage)
+}
+
+func (mr *MessageReceiver) GetMessages() []*events.LogMessage {
+	defer mr.RUnlock()
+	mr.RLock()
+	return mr.receivedMessages
+}
+
+type ErrorReceiver struct {
+	sync.RWMutex
+	receivedErrors []error
+}
+
+func (e *ErrorReceiver) AppendError(err error) {
+	defer e.Unlock()
+	e.Lock()
+	e.receivedErrors = append(e.receivedErrors, err)
+}
+
+func (e *ErrorReceiver) GetErrors() []error {
+	defer e.RUnlock()
+	e.RLock()
+	return e.receivedErrors
 }
 
 var _ = Describe("logs", func() {
-	Describe("tailing logs", func() {
-		It("uses the logMessage callback", func() {
-			consumer := &fakeConsumer{pendingLogs: []*events.LogMessage{}, pendingErrors: []error{}}
-			logReader := logs.NewLogReader(consumer)
+	Describe("TailLogs", func() {
+		var (
+			consumer  *fakeConsumer
+			logReader logs.LogReader
+			stopChan  chan struct{}
+		)
+		BeforeEach(func() {
+			consumer = NewFakeConsumer()
+			logReader = logs.NewLogReader(consumer)
+			stopChan = make(chan struct{})
 
-			logMessageOne := &events.LogMessage{Message: []byte("Message 1")}
-			consumer.addToPendingLogs(logMessageOne)
-
-			logMessageTwo := &events.LogMessage{Message: []byte("Message 2")}
-			consumer.addToPendingLogs(logMessageTwo)
-
-			receivedLogs := []*events.LogMessage{}
-			responseFunc := func(log *events.LogMessage) {
-				receivedLogs = append(receivedLogs, log)
-			}
-
-			logReader.TailLogs("app-guid", responseFunc, nil)
-
-			Expect(receivedLogs).To(Equal([]*events.LogMessage{logMessageOne, logMessageTwo}))
 		})
 
-		It("uses the logMessage callback", func() {
-			consumer := &fakeConsumer{pendingErrors: []error{}}
-			logReader := logs.NewLogReader(consumer)
+		It("provides the logCallback with logs until there is a write to stopChan", func() {
+			messageReceiver := &MessageReceiver{}
 
-			consumer.addToPendingErrors(errors.New("error 1"))
-			consumer.addToPendingErrors(errors.New("error 2"))
-
-			errorsFromCallback := []error{}
-			errorFunc := func(err error) {
-				errorsFromCallback = append(errorsFromCallback, err)
+			responseFunc := func(logMessage *events.LogMessage) {
+				messageReceiver.AppendMessage(logMessage)
 			}
 
-			logReader.TailLogs("app-guid", nil, errorFunc)
+			go logReader.TailLogs("app-guid", responseFunc, nil, stopChan)
 
-			Expect(errorsFromCallback).To(Equal([]error{errors.New("error 1"), errors.New("error 2")}))
+			logMessageOne := &events.LogMessage{Message: []byte("Message 1")}
+			go consumer.sendToInboundLogStream(logMessageOne)
+
+			Eventually(messageReceiver.GetMessages, 3).Should(Equal([]*events.LogMessage{logMessageOne}))
+
+			logMessageTwo := &events.LogMessage{Message: []byte("Message 2")}
+			go consumer.sendToInboundLogStream(logMessageTwo)
+
+			Eventually(messageReceiver.GetMessages).Should(Equal([]*events.LogMessage{logMessageOne, logMessageTwo}))
+
+			stopChan <- struct{}{}
+
+			logMessageThree := &events.LogMessage{Message: []byte("Message 3")}
+			go consumer.sendToInboundLogStream(logMessageThree)
+
+			Consistently(messageReceiver.GetMessages).ShouldNot(ContainElement(logMessageThree))
+
+		})
+
+		It("provides the errorCallback with the pending errors.", func() {
+
+			errorReceiver := &ErrorReceiver{}
+
+			errorFunc := func(err error) {
+				errorReceiver.AppendError(err)
+			}
+
+			go logReader.TailLogs("app-guid", nil, errorFunc, stopChan)
+
+			go consumer.sendToInboundErrorStream(errors.New("error 1"))
+			Eventually(errorReceiver.GetErrors).Should(Equal([]error{errors.New("error 1")}))
+
+			go consumer.sendToInboundErrorStream(errors.New("error 2"))
+
+			Eventually(errorReceiver.GetErrors).Should(Equal([]error{errors.New("error 1"), errors.New("error 2")}))
+
+			stopChan <- struct{}{}
+
+			errorThree := errors.New("error 3")
+			go consumer.sendToInboundErrorStream(errorThree)
+			Consistently(errorReceiver.GetErrors).ShouldNot(ContainElement(errorThree))
 		})
 	})
 

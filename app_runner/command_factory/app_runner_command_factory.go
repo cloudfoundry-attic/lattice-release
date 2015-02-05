@@ -10,6 +10,7 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
@@ -28,10 +29,22 @@ type AppRunnerCommandFactoryConfig struct {
 	Env                   []string
 	Clock                 clock.Clock
 	Logger                lager.Logger
+	TailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
 }
 
 func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunnerCommandFactory {
-	return &AppRunnerCommandFactory{&appRunnerCommand{config.AppRunner, config.DockerMetadataFetcher, config.Output, config.Timeout, config.Domain, config.Env, config.Clock}}
+	return &AppRunnerCommandFactory{
+		&appRunnerCommand{
+			appRunner:             config.AppRunner,
+			dockerMetadataFetcher: config.DockerMetadataFetcher,
+			output:                config.Output,
+			timeout:               config.Timeout,
+			domain:                config.Domain,
+			env:                   config.Env,
+			clock:                 config.Clock,
+			tailedLogsOutputter:   config.TailedLogsOutputter,
+		},
+	}
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command {
@@ -150,6 +163,7 @@ type appRunnerCommand struct {
 	domain                string
 	env                   []string
 	clock                 clock.Clock
+	tailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
 }
 
 func (cmd *appRunnerCommand) startApp(context *cli.Context) {
@@ -258,13 +272,16 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		return
 	}
 
-	cmd.output.Say("Starting App: " + name)
+	cmd.output.Say("Starting App: " + name + "\n")
+
+	go cmd.tailedLogsOutputter.OutputTailedLogs(name)
 
 	ok := cmd.pollUntilSuccess(func() bool {
 		numberOfRunningInstances, _ := cmd.appRunner.NumOfRunningAppInstances(name)
 		return numberOfRunningInstances == instances
-	})
+	}, false)
 
+	cmd.tailedLogsOutputter.StopOutputting()
 	if ok {
 		cmd.output.Say(colors.Green(name + " is now running.\n"))
 		cmd.output.Say(colors.Green(cmd.urlForApp(name)))
@@ -320,7 +337,7 @@ func (cmd *appRunnerCommand) setAppInstances(appName string, instances int) {
 	ok := cmd.pollUntilSuccess(func() bool {
 		numRunning, _ := cmd.appRunner.NumOfRunningAppInstances(appName)
 		return numRunning == instances
-	})
+	}, true)
 
 	if ok {
 		cmd.output.Say(colors.Green("App Scaled Successfully"))
@@ -346,7 +363,7 @@ func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
 	ok := cmd.pollUntilSuccess(func() bool {
 		appExists, err := cmd.appRunner.AppExists(appName)
 		return err == nil && !appExists
-	})
+	}, true)
 
 	if ok {
 		cmd.output.Say(colors.Green("Successfully Removed " + appName + "."))
@@ -355,15 +372,16 @@ func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
 	}
 }
 
-func (cmd *appRunnerCommand) pollUntilSuccess(pollingFunc func() bool) (ok bool) {
+func (cmd *appRunnerCommand) pollUntilSuccess(pollingFunc func() bool, outputProgress bool) (ok bool) {
 	startingTime := cmd.clock.Now()
 	for startingTime.Add(cmd.timeout).After(cmd.clock.Now()) {
 		if result := pollingFunc(); result {
 			cmd.output.NewLine()
 			return true
-		} else {
-			cmd.output.Dot()
+		} else if outputProgress {
+			cmd.output.Say(".")
 		}
+
 		cmd.clock.Sleep(1 * time.Second)
 	}
 	cmd.output.NewLine()

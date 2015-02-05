@@ -4,23 +4,24 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sync"
 	"text/tabwriter"
 	"time"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"github.com/codegangsta/cli"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner/command_factory"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner/fake_app_examiner"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler/exit_codes"
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler/fake_exit_handler"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/output/cursor"
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 	"github.com/pivotal-golang/clock/fakeclock"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner/command_factory"
 )
 
 var _ = Describe("CommandFactory", func() {
@@ -30,7 +31,7 @@ var _ = Describe("CommandFactory", func() {
 		outputBuffer *gbytes.Buffer
 		clock        *fakeclock.FakeClock
 		osSignalChan chan os.Signal
-		exitHandler  *fakeExitHandler
+		exitHandler  *fake_exit_handler.FakeExitHandler
 	)
 
 	BeforeEach(func() {
@@ -38,7 +39,7 @@ var _ = Describe("CommandFactory", func() {
 		outputBuffer = gbytes.NewBuffer()
 		osSignalChan = make(chan os.Signal, 1)
 		clock = fakeclock.NewFakeClock(time.Now())
-		exitHandler = &fakeExitHandler{}
+		exitHandler = &fake_exit_handler.FakeExitHandler{}
 	})
 
 	Describe("ListAppsCommand", func() {
@@ -174,13 +175,13 @@ var _ = Describe("CommandFactory", func() {
 
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 
-				exitHandler.SimulateExit()
+				exitHandler.Exit(exit_codes.SigInt)
 
 				Expect(outputBuffer).Should(test_helpers.Say(cursor.Show()))
 			})
 
 			AfterEach(func() {
-				go exitHandler.SimulateExit()
+				go exitHandler.Exit(exit_codes.SigInt)
 				Eventually(closeChan).Should(BeClosed())
 			})
 		})
@@ -325,22 +326,3 @@ var _ = Describe("CommandFactory", func() {
 		})
 	})
 })
-
-type fakeExitHandler struct {
-	sync.RWMutex
-	exitFunc func()
-}
-
-func (f *fakeExitHandler) OnExit(exitHandler func()) {
-	f.Lock()
-	defer f.Unlock()
-	f.exitFunc = exitHandler
-}
-
-func (f *fakeExitHandler) SimulateExit() {
-	f.Lock()
-	defer f.Unlock()
-	if f.exitFunc != nil {
-		f.exitFunc()
-	}
-}

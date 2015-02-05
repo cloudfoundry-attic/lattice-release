@@ -1,13 +1,9 @@
 package command_factory
 
 import (
-	"fmt"
-	"time"
-
-	"github.com/cloudfoundry/noaa/events"
 	"github.com/codegangsta/cli"
-	"github.com/pivotal-cf-experimental/lattice-cli/colors"
-	"github.com/pivotal-cf-experimental/lattice-cli/logs"
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler"
+	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 )
 
@@ -15,9 +11,14 @@ type logsCommandFactory struct {
 	cmd *logsCommand
 }
 
-func NewLogsCommandFactory(logReader logs.LogReader, output *output.Output) *logsCommandFactory {
-	outputChan := make(chan string, 10)
-	return &logsCommandFactory{&logsCommand{logReader, output, outputChan}}
+func NewLogsCommandFactory(output *output.Output, tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter, exitHandler exit_handler.ExitHandler) *logsCommandFactory {
+	return &logsCommandFactory{
+		&logsCommand{
+			output:              output,
+			tailedLogsOutputter: tailedLogsOutputter,
+			exitHandler:         exitHandler,
+		},
+	}
 }
 
 func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
@@ -34,9 +35,9 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 }
 
 type logsCommand struct {
-	logReader  logs.LogReader
-	output     *output.Output
-	outputChan chan string
+	output              *output.Output
+	tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter
+	exitHandler         exit_handler.ExitHandler
 }
 
 func (cmd *logsCommand) tailLogs(context *cli.Context) {
@@ -47,19 +48,5 @@ func (cmd *logsCommand) tailLogs(context *cli.Context) {
 		return
 	}
 
-	go cmd.logReader.TailLogs(appGuid, cmd.logCallback, cmd.errorCallback)
-
-	for log := range cmd.outputChan {
-		cmd.output.Say(log + "\n")
-	}
-}
-
-func (cmd *logsCommand) logCallback(log *events.LogMessage) {
-	timeString := time.Unix(0, log.GetTimestamp()).Format("02 Jan 15:04")
-	logOutput := fmt.Sprintf("%s [%s|%s] %s", colors.Cyan(timeString), colors.Yellow(log.GetSourceType()), colors.Yellow(log.GetSourceInstance()), log.GetMessage())
-	cmd.outputChan <- logOutput
-}
-
-func (cmd *logsCommand) errorCallback(err error) {
-	cmd.outputChan <- err.Error()
+	cmd.tailedLogsOutputter.OutputTailedLogs(appGuid)
 }

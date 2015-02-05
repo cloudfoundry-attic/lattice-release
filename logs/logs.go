@@ -5,7 +5,7 @@ import (
 )
 
 type LogReader interface {
-	TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error))
+	TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error), stopChan chan struct{})
 }
 
 type logConsumer interface {
@@ -20,11 +20,11 @@ func NewLogReader(consumer logConsumer) LogReader {
 	return &logReader{consumer: consumer}
 }
 
-func (l *logReader) TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error)) {
+func (l *logReader) TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error), stopChan chan struct{}) {
 	outputChan := make(chan *events.LogMessage, 10)
 	errorChan := make(chan error, 10)
 
-	go l.consumer.TailingLogs(appGuid, "", outputChan, errorChan, nil)
+	go l.consumer.TailingLogs(appGuid, "", outputChan, errorChan, stopChan)
 
 	go func() {
 		readErrorChannel(errorChan, errorCallback)

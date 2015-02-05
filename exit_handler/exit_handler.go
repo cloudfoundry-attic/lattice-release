@@ -15,7 +15,6 @@ func New(signalChan chan os.Signal, systemExit func(code int)) ExitHandler {
 	}
 }
 
-//go:generate counterfeiter -o fake_exit_handler/fake_exit_handler.go . ExitHandler
 type ExitHandler interface {
 	Run()
 	OnExit(exitFunc func())
