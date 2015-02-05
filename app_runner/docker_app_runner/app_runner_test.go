@@ -113,7 +113,7 @@ var _ = Describe("AppRunner", func() {
 		})
 
 		Context("when Monitor is false", func() {
-			It("Does not pass a monitor action", func() {
+			It("Does not pass a monitor action, regardless of whether or not a monitor port is passed", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 
 				err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
@@ -122,6 +122,7 @@ var _ = Describe("AppRunner", func() {
 					DockerImagePath: "runtest/runner",
 					AppArgs:         []string{},
 					Monitor:         false,
+					Ports:           docker_app_runner.PortConfig{Monitored: 1234, Exposed: []uint32{1234}},
 				})
 				Expect(err).ToNot(HaveOccurred())
 
@@ -144,7 +145,7 @@ var _ = Describe("AppRunner", func() {
 				Instances:            1,
 				MemoryMB:             128,
 				DiskMB:               1024,
-				Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 8080},
+				Ports:                docker_app_runner.PortConfig{Monitored: 8080, Exposed: []uint32{8080}},
 			})
 
 			Expect(err).To(HaveOccurred())

@@ -186,13 +186,20 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 
 	var portConfig docker_app_runner.PortConfig
 	if portFlag == 0 && !imageMetadata.Ports.IsEmpty() {
-		cmd.output.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata, and monitoring the app on port %d...\n", imageMetadata.Ports.Monitored))
+		portStrs := make([]string, 0)
+		for _, port := range imageMetadata.Ports.Exposed {
+			portStrs = append(portStrs, strconv.Itoa(int(port)))
+		}
+
+		cmd.output.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s\n", strings.Join(portStrs, ", ")))
 		portConfig = imageMetadata.Ports
 	} else if portFlag == 0 && imageMetadata.Ports.IsEmpty() && noMonitor {
 		portConfig = docker_app_runner.PortConfig{
-			Exposed: []uint32{8080},
+			Monitored: 0,
+			Exposed:   []uint32{8080},
 		}
 	} else if portFlag == 0 && imageMetadata.Ports.IsEmpty() {
+		cmd.output.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
 		portConfig = docker_app_runner.PortConfig{
 			Monitored: 8080,
 			Exposed:   []uint32{8080},
@@ -213,6 +220,12 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		} else {
 			workingDir = "/"
 		}
+	}
+
+	if !noMonitor {
+		cmd.output.Say(fmt.Sprintf("Monitoring the app on port %d...\n", portConfig.Monitored))
+	} else {
+		cmd.output.Say("No ports will be monitored.\n")
 	}
 
 	if startCommand == "" {

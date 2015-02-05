@@ -25,7 +25,7 @@ type PortConfig struct {
 }
 
 func (portConfig PortConfig) IsEmpty() bool {
-	return portConfig.Monitored == 0 && len(portConfig.Exposed) == 0
+	return len(portConfig.Exposed) == 0
 }
 
 type StartDockerAppParams struct {
