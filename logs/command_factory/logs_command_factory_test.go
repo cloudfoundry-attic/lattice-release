@@ -2,7 +2,6 @@ package command_factory_test
 
 import (
 	"os"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -42,8 +41,7 @@ var _ = Describe("CommandFactory", func() {
 
 			test_helpers.AsyncExecuteCommandWithArgs(tailLogsCommand, args)
 
-			time.Sleep(1 * time.Second)
-			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).Should(Equal(1))
+			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
 			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("my-app-guid"))
 
 		})
