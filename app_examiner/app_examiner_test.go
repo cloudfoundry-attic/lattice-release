@@ -295,6 +295,11 @@ var _ = Describe("AppRunner", func() {
 						},
 						State: "RUNNING",
 						Since: 2002,
+					}, receptor.ActualLRPResponse{
+						ProcessGuid:    "peekaboo-app",
+						Index:          2,
+						State:          "UNCLAIMED",
+						PlacementError: "not enough resources. eek.",
 					},
 				}
 			})
@@ -365,6 +370,12 @@ var _ = Describe("AppRunner", func() {
 							State: "CLAIMED",
 							Since: 1982,
 						},
+						app_examiner.InstanceInfo{
+							Index:          2,
+							State:          "UNCLAIMED",
+							Ports:          []app_examiner.PortMapping{},
+							PlacementError: "not enough resources. eek.",
+						},
 					},
 				}))
 			})
@@ -415,6 +426,12 @@ var _ = Describe("AppRunner", func() {
 								},
 								State: "CLAIMED",
 								Since: 1982,
+							},
+							app_examiner.InstanceInfo{
+								Index:          2,
+								State:          "UNCLAIMED",
+								Ports:          []app_examiner.PortMapping{},
+								PlacementError: "not enough resources. eek.",
 							},
 						},
 					}))

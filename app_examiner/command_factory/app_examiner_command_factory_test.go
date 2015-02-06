@@ -235,6 +235,11 @@ var _ = Describe("CommandFactory", func() {
 							State: "RUNNING",
 							Since: 401120627 * 1e9,
 						},
+						app_examiner.InstanceInfo{
+							Index:          4,
+							State:          "UNCLAIMED",
+							PlacementError: "insufficient resources.",
+						},
 					},
 				}, nil)
 
@@ -290,7 +295,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("Ip"))
 			Expect(outputBuffer).To(test_helpers.Say("10.85.12.100"))
 
-			Expect(outputBuffer).To(test_helpers.Say("Ports"))
+			Expect(outputBuffer).To(test_helpers.Say("Port Mapping"))
 			Expect(outputBuffer).To(test_helpers.Say("1234:3000"))
 			Expect(outputBuffer).To(test_helpers.Say("5555:6666"))
 
@@ -298,6 +303,39 @@ var _ = Describe("CommandFactory", func() {
 
 			prettyTimestamp := time.Unix(0, 401120627*1e9).Format(command_factory.TimestampDisplayLayout)
 			Expect(outputBuffer).To(test_helpers.Say(prettyTimestamp))
+
+			Expect(outputBuffer).To(test_helpers.Say("Placement Error"))
+			Expect(outputBuffer).To(test_helpers.Say("insufficient resources."))
+		})
+
+		Context("when there is a placement error on an actualLRP", func() {
+			It("Displays UNCLAIMED in red, and outputs only the placement error", func() {
+				appExaminer.AppStatusReturns(
+					app_examiner.AppInfo{
+						ActualInstances: []app_examiner.InstanceInfo{
+							app_examiner.InstanceInfo{
+								Index:          7,
+								State:          "UNCLAIMED",
+								PlacementError: "insufficient resources.",
+							},
+						},
+					}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"swanky-app"})
+
+				Expect(outputBuffer).To(test_helpers.Say("Instance 7"))
+				Expect(outputBuffer).To(test_helpers.Say("UNCLAIMED"))
+
+				Expect(outputBuffer).ToNot(test_helpers.Say("InstanceGuid"))
+				Expect(outputBuffer).ToNot(test_helpers.Say("Cell ID"))
+				Expect(outputBuffer).ToNot(test_helpers.Say("Ip"))
+				Expect(outputBuffer).ToNot(test_helpers.Say("Port Mapping"))
+				Expect(outputBuffer).ToNot(test_helpers.Say("Since"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Placement Error"))
+				Expect(outputBuffer).To(test_helpers.Say("insufficient resources."))
+
+			})
 		})
 
 		Context("When no appName is specified", func() {

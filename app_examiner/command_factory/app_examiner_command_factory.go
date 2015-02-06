@@ -184,20 +184,23 @@ func printInstanceInfo(w io.Writer, headingPrefix string, actualInstances []app_
 	}
 
 	for _, instance := range actualInstances {
-		instanceBar(fmt.Sprint(instance.Index), presentation.ColorInstanceState(instance.State))
+		instanceBar(fmt.Sprint(instance.Index), presentation.ColorInstanceState(instance))
 
-		fmt.Fprintf(w, "%s\t%s\n", "InstanceGuid", instance.InstanceGuid)
-		fmt.Fprintf(w, "%s\t%s\n", "Cell ID", instance.CellID)
-		fmt.Fprintf(w, "%s\t%s\n", "Ip", instance.Ip)
+		if instance.PlacementError == "" {
+			fmt.Fprintf(w, "%s\t%s\n", "InstanceGuid", instance.InstanceGuid)
+			fmt.Fprintf(w, "%s\t%s\n", "Cell ID", instance.CellID)
+			fmt.Fprintf(w, "%s\t%s\n", "Ip", instance.Ip)
 
-		portMappingStrings := make([]string, 0)
-		for _, portMapping := range instance.Ports {
-			portMappingStrings = append(portMappingStrings, fmt.Sprintf("%d:%d", portMapping.HostPort, portMapping.ContainerPort))
+			portMappingStrings := make([]string, 0)
+			for _, portMapping := range instance.Ports {
+				portMappingStrings = append(portMappingStrings, fmt.Sprintf("%d:%d", portMapping.HostPort, portMapping.ContainerPort))
+			}
+			fmt.Fprintf(w, "%s\t%s\n", "Port Mapping", strings.Join(portMappingStrings, ";"))
+
+			fmt.Fprintf(w, "%s\t%s\n", "Since", fmt.Sprint(time.Unix(0, instance.Since).Format(TimestampDisplayLayout)))
+		} else {
+			fmt.Fprintf(w, "%s\t%s\n", "Placement Error:", instance.PlacementError)
 		}
-		fmt.Fprintf(w, "%s\t%s\n", "Ports", strings.Join(portMappingStrings, ";"))
-
-		fmt.Fprintf(w, "%s\t%s\n", "Since", fmt.Sprint(time.Unix(0, instance.Since).Format(TimestampDisplayLayout)))
-
 		printHorizontalRule(w, "-")
 	}
 

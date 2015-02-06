@@ -40,13 +40,14 @@ type PortMapping struct {
 }
 
 type InstanceInfo struct {
-	InstanceGuid string
-	CellID       string
-	Index        int
-	Ip           string
-	Ports        []PortMapping
-	State        string
-	Since        int64
+	InstanceGuid   string
+	CellID         string
+	Index          int
+	Ip             string
+	Ports          []PortMapping
+	State          string
+	Since          int64
+	PlacementError string
 }
 
 type instanceInfoSortableByIndex []InstanceInfo
@@ -200,13 +201,14 @@ func mergeDesiredActualLRPs(desiredLRPs []receptor.DesiredLRPResponse, actualLRP
 			instancePorts = append(instancePorts, PortMapping{HostPort: respPorts.HostPort, ContainerPort: respPorts.ContainerPort})
 		}
 		instanceInfo := InstanceInfo{
-			InstanceGuid: actualLRP.InstanceGuid,
-			CellID:       actualLRP.CellID,
-			Index:        actualLRP.Index,
-			Ip:           actualLRP.Address,
-			Ports:        instancePorts,
-			State:        string(actualLRP.State),
-			Since:        actualLRP.Since,
+			InstanceGuid:   actualLRP.InstanceGuid,
+			CellID:         actualLRP.CellID,
+			Index:          actualLRP.Index,
+			Ip:             actualLRP.Address,
+			Ports:          instancePorts,
+			State:          string(actualLRP.State),
+			Since:          actualLRP.Since,
+			PlacementError: actualLRP.PlacementError,
 		}
 
 		appMap[actualLRP.ProcessGuid].ActualInstances = append(appMap[actualLRP.ProcessGuid].ActualInstances, instanceInfo)
