@@ -167,6 +167,7 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 		Routes:               []string{fmt.Sprintf("%s.%s", params.Name, appRunner.systemDomain)},
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
+		Privileged:           true,
 		Ports:                params.Ports.Exposed,
 		LogGuid:              params.Name,
 		LogSource:            "APP",

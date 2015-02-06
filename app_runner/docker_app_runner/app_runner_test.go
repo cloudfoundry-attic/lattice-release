@@ -65,6 +65,7 @@ var _ = Describe("AppRunner", func() {
 				Routes:               []string{"americano-app.myDiegoInstall.com"},
 				MemoryMB:             128,
 				DiskMB:               1024,
+				Privileged:           true,
 				Ports:                []uint32{2000, 4000},
 				LogGuid:              "americano-app",
 				LogSource:            "APP",
