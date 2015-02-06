@@ -5,7 +5,8 @@ import (
 )
 
 type LogReader interface {
-	TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error), stopChan chan struct{})
+	TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error))
+	StopTailing()
 }
 
 type logConsumer interface {
@@ -14,34 +15,42 @@ type logConsumer interface {
 
 type logReader struct {
 	consumer logConsumer
+	stopChan chan struct{}
 }
 
 func NewLogReader(consumer logConsumer) LogReader {
-	return &logReader{consumer: consumer}
-}
-
-func (l *logReader) TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error), stopChan chan struct{}) {
-	outputChan := make(chan *events.LogMessage, 10)
-	errorChan := make(chan error, 10)
-
-	go l.consumer.TailingLogs(appGuid, "", outputChan, errorChan, stopChan)
-
-	go func() {
-		readErrorChannel(errorChan, errorCallback)
-		close(outputChan)
-	}()
-
-	readOutputChannel(outputChan, logCallback)
-}
-
-func readOutputChannel(outputChan <-chan *events.LogMessage, callback func(*events.LogMessage)) {
-	for logMessage := range outputChan {
-		callback(logMessage)
+	return &logReader{
+		consumer: consumer,
+		stopChan: make(chan struct{}),
 	}
 }
 
-func readErrorChannel(errorChan <-chan error, callback func(error)) {
-	for err := range errorChan {
-		callback(err)
+func (l *logReader) TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error)) {
+	outputChan := make(chan *events.LogMessage, 10)
+	errorChan := make(chan error, 10)
+
+	go l.consumer.TailingLogs(appGuid, "", outputChan, errorChan, l.stopChan)
+
+	l.readChannels(outputChan, errorChan, logCallback, errorCallback)
+
+	close(l.stopChan)
+	close(errorChan)
+	close(outputChan)
+}
+
+func (l *logReader) StopTailing() {
+	l.stopChan <- struct{}{}
+}
+
+func (l *logReader) readChannels(outputChan <-chan *events.LogMessage, errorChan <-chan error, logCallback func(*events.LogMessage), errorCallback func(error)) {
+	for {
+		select {
+		case <-l.stopChan:
+			return
+		case err := <-errorChan:
+			errorCallback(err)
+		case logMessage := <-outputChan:
+			logCallback(logMessage)
+		}
 	}
 }

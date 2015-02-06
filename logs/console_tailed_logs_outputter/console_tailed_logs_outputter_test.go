@@ -27,7 +27,7 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 	})
 	Describe("OutputTailedLogs", func() {
 		It("Tails logs", func() {
-			logReader := &fake_log_reader.FakeLogReader{}
+			logReader := fake_log_reader.NewFakeLogReader()
 			consoleTailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(output.New(outputBuffer), logReader)
 
 			time := time.Now()
@@ -56,9 +56,7 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 
 	Describe("StopOutputting", func() {
 		It("stops outputting logs", func() {
-			stopChan := make(chan struct{})
-
-			logReader := &fake_log_reader.FakeLogReader{StopChan: stopChan}
+			logReader := fake_log_reader.NewFakeLogReader()
 			consoleTailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(output.New(outputBuffer), logReader)
 
 			go consoleTailedLogsOutputter.OutputTailedLogs("my-app-guid")

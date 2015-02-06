@@ -93,14 +93,14 @@ var _ = Describe("logs", func() {
 
 		})
 
-		It("provides the logCallback with logs until there is a write to stopChan", func() {
+		It("provides the logCallback with logs until StopTailing is called", func() {
 			messageReceiver := &MessageReceiver{}
 
 			responseFunc := func(logMessage *events.LogMessage) {
 				messageReceiver.AppendMessage(logMessage)
 			}
 
-			go logReader.TailLogs("app-guid", responseFunc, nil, stopChan)
+			go logReader.TailLogs("app-guid", responseFunc, func(error) {})
 
 			logMessageOne := &events.LogMessage{Message: []byte("Message 1")}
 			go consumer.sendToInboundLogStream(logMessageOne)
@@ -112,7 +112,7 @@ var _ = Describe("logs", func() {
 
 			Eventually(messageReceiver.GetMessages).Should(Equal([]*events.LogMessage{logMessageOne, logMessageTwo}))
 
-			stopChan <- struct{}{}
+			logReader.StopTailing()
 
 			logMessageThree := &events.LogMessage{Message: []byte("Message 3")}
 			go consumer.sendToInboundLogStream(logMessageThree)
@@ -121,7 +121,7 @@ var _ = Describe("logs", func() {
 
 		})
 
-		It("provides the errorCallback with the pending errors.", func() {
+		It("provides the errorCallback with the pending errors until StopTailing is called.", func() {
 
 			errorReceiver := &ErrorReceiver{}
 
@@ -129,7 +129,7 @@ var _ = Describe("logs", func() {
 				errorReceiver.AppendError(err)
 			}
 
-			go logReader.TailLogs("app-guid", nil, errorFunc, stopChan)
+			go logReader.TailLogs("app-guid", func(*events.LogMessage) {}, errorFunc)
 
 			go consumer.sendToInboundErrorStream(errors.New("error 1"))
 			Eventually(errorReceiver.GetErrors).Should(Equal([]error{errors.New("error 1")}))
@@ -138,7 +138,7 @@ var _ = Describe("logs", func() {
 
 			Eventually(errorReceiver.GetErrors).Should(Equal([]error{errors.New("error 1"), errors.New("error 2")}))
 
-			stopChan <- struct{}{}
+			logReader.StopTailing()
 
 			errorThree := errors.New("error 3")
 			go consumer.sendToInboundErrorStream(errorThree)

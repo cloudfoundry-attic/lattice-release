@@ -16,7 +16,6 @@ type TailedLogsOutputter interface {
 }
 
 type ConsoleTailedLogsOutputter struct {
-	stopChan   chan struct{}
 	outputChan chan string
 	output     *output.Output
 	logReader  logs.LogReader
@@ -27,13 +26,12 @@ func NewConsoleTailedLogsOutputter(output *output.Output, logReader logs.LogRead
 		outputChan: make(chan string, 10),
 		output:     output,
 		logReader:  logReader,
-		stopChan:   make(chan struct{}),
 	}
 
 }
 
 func (ctlo *ConsoleTailedLogsOutputter) OutputTailedLogs(appGuid string) {
-	go ctlo.logReader.TailLogs(appGuid, ctlo.logCallback, ctlo.errorCallback, ctlo.stopChan)
+	go ctlo.logReader.TailLogs(appGuid, ctlo.logCallback, ctlo.errorCallback)
 
 	for log := range ctlo.outputChan {
 		ctlo.output.Say(log + "\n")
@@ -41,7 +39,7 @@ func (ctlo *ConsoleTailedLogsOutputter) OutputTailedLogs(appGuid string) {
 }
 
 func (ctlo *ConsoleTailedLogsOutputter) StopOutputting() {
-	ctlo.stopChan <- struct{}{}
+	ctlo.logReader.StopTailing()
 }
 
 func (ctlo *ConsoleTailedLogsOutputter) logCallback(log *events.LogMessage) {

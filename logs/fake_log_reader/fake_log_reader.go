@@ -7,14 +7,20 @@ import (
 
 type FakeLogReader struct {
 	sync.RWMutex
-	StopChan       chan struct{}
+	stopChan       chan struct{}
 	logs           []*events.LogMessage
 	errors         []error
 	logTailStopped bool
 	appGuid        string
 }
 
-func (f *FakeLogReader) TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error), stopChan chan struct{}) {
+func NewFakeLogReader() *FakeLogReader {
+	return &FakeLogReader{
+		stopChan: make(chan struct{}),
+	}
+}
+
+func (f *FakeLogReader) TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error)) {
 	for _, log := range f.logs {
 		logCallback(log)
 	}
@@ -29,13 +35,18 @@ func (f *FakeLogReader) TailLogs(appGuid string, logCallback func(*events.LogMes
 
 	go func() {
 		select {
-		case <-stopChan:
+		case <-f.stopChan:
 			f.Lock()
 			defer f.Unlock()
 			f.logTailStopped = true
 			return
 		}
 	}()
+}
+
+func (f *FakeLogReader) StopTailing() {
+	f.stopChan <- struct{}{}
+	close(f.stopChan)
 }
 
 func (f *FakeLogReader) GetAppGuid() string {
