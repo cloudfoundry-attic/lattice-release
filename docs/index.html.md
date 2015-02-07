@@ -10,7 +10,7 @@ doc_subnav: true
 
 Lattice is an open source project for running containerized workloads on a cluster.
 
-Lattice includes built-in http load-balancing, a cluster scheduler, log aggregation with log streaming and health management. 
+Lattice includes built-in http load-balancing, a cluster scheduler, log aggregation with log streaming and health management.
 
 Lattice containers are described as long-running processes or temporary tasks. Lattice includes support for Linux Containers expressed either as Docker Images or by composing applications as binary code on top of a root file system. Lattice's container pluggability will enable other backends such as [Windows](https://www.youtube.com/watch?v=S4U_YyzC5z4) or [Rocket](http://blog.pivotal.io/cloud-foundry-pivotal/news-2/launching-rockets-collaborating-on-next-level-linux-containers) in the future.
 
@@ -60,7 +60,7 @@ To build a deep understanding of how Lattice works you'll need to learn about Di
 
 ## What is the relationship between Lattice and Docker?
 
-Lattice supports Docker images as a format for distributing container root filesystems.  Currently, Docker images must be publicly hosted on the [Docker Hub Registry](https://registry.hub.docker.com).  Lattice uses Docker's libraries to faithfully fetch Docker image metadata and image layers, but it does *not* use the Docker runtime to run and manage containers.  Instead, Lattice uses [Garden](https://github.com/cloudfoundry-incubator/garden).  Garden provides a *platform-agnostic* API for launching and managing containers and is built to be consumed by a distributed container scheduler like Diego.  [Garden-Linux](https://github.com/cloudfoundry-incubator/garden-linux) is an implementation of the Garden API that provides containers on the Linux platform using kernel namespaces and cgroups - the same technologies that undergird Docker.
+Lattice supports Docker images as a format for distributing container root filesystems.  Currently, Docker images must be publicly hosted on the [Docker Hub Registry](https://registry.hub.docker.com) and we are planning to [support private Docker registries](https://www.pivotaltracker.com/n/projects/1158420/stories/77226688) soon.  Lattice uses Docker's libraries to fetch Docker image metadata and image layers, but it does *not* use the Docker daemon to run and manage containers.  Instead, Lattice uses [Garden](https://github.com/cloudfoundry-incubator/garden).  Garden provides a *platform-agnostic* API for launching and managing containers and is built to be consumed by a distributed container scheduler like Diego.  [Garden-Linux](https://github.com/cloudfoundry-incubator/garden-linux) is an implementation of the Garden API that provides containers on the Linux platform using kernel namespaces and cgroups - the same technologies used by Docker, LXC and Rocket.
 
 More details about how Lattice works with Docker images can be found [here](/docs/troubleshooting.html#how-does-lattice-work-with-docker-images).
 
@@ -100,7 +100,7 @@ See the public Pivotal Tracker project for [Lattice](https://www.pivotaltracker.
 
 ## Is Lattice ready for production?
 
-Diego, the runtime component of Lattice is not in production yet with Cloud Foundry. Diego is planned for production use sometime late in Q1 of 2015. 
+Diego, the runtime component of Lattice is not in production yet with Cloud Foundry. Diego is planned for production use sometime late in Q1 of 2015.
 
 The Router and Loggregator components of Lattice have been in production with Cloud Foundry for over a year and we consider them production-ready.
 
@@ -108,7 +108,7 @@ The deployment strategy employed by Lattice emphasizes convenience and simplicit
 
 ## How secure is Lattice?
 
-Security is not Lattice's primary concern.  Lattice is intended to provide a cluster root experience with minimal barriers to entry.  Multi-tenant workloads are not in scope.  Additionally, no effort is made to prevent containers from communicating with other components within a Lattice cluster.  Also, no effort is made to protect log streams behind an authentication layer - they are, effectively, publicly accessible.
+Security is not Lattice's primary concern.  Lattice is intended to provide a cluster root experience with minimal barriers to entry.  Multi-tenant workloads are not in scope.  Additionally, no effort is made to prevent containers from communicating with other components within a Lattice cluster.  Also, no effort is made to protect log streams behind an authentication layer - they are accessible to clients with network access to Lattice servers.
 
 If you would like to explore a secure deployment of Lattice we recommend BOSH deploying CF + Diego.  Instructions for this are available on the [Diego-Release GitHub repository](https://github.com/cloudfoundry-incubator/diego-release).
 
