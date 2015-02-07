@@ -6,3 +6,138 @@ doc_subnav: true
 
 # Getting Started
 
+You can run Lattice easily on your laptop with a [Vagrant VM](https://github.com/pivotal-lattice/lattice#local-deployment) or deploy a [cluster of machines](https://github.com/pivotal-lattice/lattice#clustered-deployment) with [AWS](https://github.com/pivotal-lattice/lattice#amazon-web-services), [Digital Ocean](https://github.com/pivotal-lattice/lattice#digitalocean) or [Google Compute Engine](https://github.com/pivotal-lattice/lattice#google-cloud).
+
+This tutorial walks you through the Vagrant VM flow and using Lattice to start applications based on a docker image, scale them up and down and retrieve logs.
+
+## Pre-Requisites for the Vagrant VM
+
+- [Vagrant](https://www.vagrantup.com)
+- [VirtualBox](https://www.virtualbox.org) or VMWare Fusion
+- [git](https://git-scm.com)
+
+## Starting the Lattice Vagrant VM
+
+First, clone the Lattice repository:
+
+    git clone https://github.com/pivotal-lattice/lattice.git
+    cd lattice
+
+Then bring up the Vagrant box:
+
+**Virtualbox**:
+
+    vagrant up --provider virtualbox
+
+**VMWare Fusion**:
+
+    vagrant up --provider vmware_fusion
+
+
+The VM should download and start.
+
+> By default the Lattice VM will be reachable at `192.168.11.11`. You can set the `LATTICE_SYSTEM_IP` environment variable when running `vagrant up` to modify this
+
+> Learn more about deploying Lattice at the GitHub [README](https://github.com/pivotal-lattice/lattice)
+
+## Fetching `ltc` - the Lattice CLI
+
+Visit the [Download](/downloads.html) page to fetch the latest version of the CLI.  Make sure its on your `PATH`.
+
+Alternatively you can use these installation scripts.  They assume `$HOME/bin` is on your `PATH`.
+
+For Mac:
+
+    mkdir -p $HOME/bin
+    pushd $HOME/bin
+    rm ltc
+    wget https://s3-us-west-2.amazonaws.com/lattice/latest/darwin-amd64/ltc
+    chmod +x ./ltc
+    popd
+
+For Linux:
+
+    mkdir -p $HOME/bin
+    pushd $HOME/bin
+    rm ltc
+    wget https://s3-us-west-2.amazonaws.com/lattice/latest/linux-amd64/ltc
+    chmod +x ./ltc
+    popd
+
+## Targetting Lattice
+
+You need to tell `ltc` how to connect to your Lattice deployment.  The target domain should be printed out when you `vagrant up`.  If you have not changed the default settings you can:
+
+    ltc target 192.168.11.11.xip.io
+
+## Launching and Routing to a Dockerimage
+
+We have a simple Go-based demo web application hosted on the Docker registry at [`cloudfoundry/lattice-app`](https://registry.hub.docker.com/cloudfoundry/lattice-app).  You can launch this image by running:
+
+    ltc start lattice-app cloudfoundry/lattice-app
+
+Once the application is running, `ltc` will emit the route you can use to access the application:
+
+    Starting App: lattice-app...
+    lattice-app is now running.
+    http://lattice-app.192.168.11.11.xip.io
+
+You should be able to visit `lattice-app.192.168.11.11.xip.io` in your browser.
+
+The `lattice-app` has three endpoints:
+
+- `/` is a pretty landing page that includes the instance's index and uptime
+- `/env` prints out the instance's environment
+- `/exit` causes the instance to crash
+
+## Tailing Logs
+
+To stream logs from your running `lattice-app`:
+
+    ltc logs lattice-app
+
+Visiting `lattice-app.192.168.11.11.xip.io` will emit log messages that should be visible in your terminal.
+
+## Listing Applications
+
+To view a list of all running applications:
+
+    ltc list
+
+## Scaling Applications
+
+To scale `lattice-app` to 3 instances:
+
+    ltc scale lattice-app 3
+
+Now `ltc list` should show that `3/3` instances are running and `ltc logs lattice-app` will aggregate logs from all three instances.
+
+Visiting `lattice-app.192.168.11.11.xip.io` should cycle through the different instances that are running.  Each instance will have a unique index.
+
+## Getting Application Details
+
+To view detailed information about your running instances:
+
+    ltc status lattice-app
+
+## Visualizing Containers
+
+To visualize the distribution of containers on your lattice cluster:
+
+    ltc visualize
+
+If you deploy a cluster of Lattice cells `ltc visualize` will show you the distribution of instances across the cluster.
+
+## Crash Recovery Demo
+
+Visit `lattice-app.192.168.11.11.xip.io/exit`
+
+This will cause one of the `lattice-app` instances to exit.  Lattice will immediately restart the instance.
+
+If you cause an instance of `lattice-app` to exit repeatedly Lattice will eventually start applying a backoff policy and restart the instance only after increasing intervals of time (30s, 60s, etc...)
+
+## Where to go from here:
+
+- push your own Dockerimage
+- learn more about [`ltc`](/docs/ltc.html)
+- learn more about the RESTful [`Lattice API`](/docs/lattice-api.html).  This allows you to launch one off tasks in addition to long running processes.

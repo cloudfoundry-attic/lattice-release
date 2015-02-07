@@ -38,6 +38,10 @@ You can follow along with the [getting-started tutorial](/docs/getting-started.h
 
 Lattice provides an [HTTP API](/docs/lattice-api.html) for scheduling and monitoring work.  [`ltc` - the Lattice-CLI](/docs/ltc.html) - wraps this API and provides basic access to Lattice’s feature-set.
 
+## I'm having trouble launching my Docker image - help!
+
+Check out the [troubleshooting section](/docs/troubleshooting.html).
+
 ## Is Lattice intended for multi-tenant deployments?
 
 No.  While built on top of a tech stack that supports secure multi-tenancy, Lattice is geared towards the developer who wants to explore and play with cluster-based computing.  Lattice gives you "root access" to your cluster and minimizes as many barriers to entry as possible - including security barriers!
@@ -46,15 +50,19 @@ No.  While built on top of a tech stack that supports secure multi-tenancy, Latt
 
 Lattice components are primarily written in Go.
 
-Lattice includes Cloud Foundry components [Diego](https://github.com/cloudfoundry-incubator/diego-design-notes), [Loggregator](https://github.com/cloudfoundry/loggregator) and [Router](https://github.com/cloudfoundry/gorouter).  Diego is responsible for scheduling and running containerized workloads.  Loggregator is responsible for streaming logs out of running containers.  The Router is responsible for load balancing HTTP traffic across running containers.  The Lattice architecture is outlined [here](/docs/lattice-architecture.html).
+Lattice includes Cloud Foundry components [Diego](https://github.com/cloudfoundry-incubator/diego-design-notes), [Loggregator](https://github.com/cloudfoundry/loggregator) and [Router](https://github.com/cloudfoundry/gorouter).  Diego is responsible for scheduling and running containerized workloads.  Loggregator is responsible for streaming logs out of running containers.  The Router is responsible for load balancing HTTP traffic across running containers.
 
 ## What is the relationship between Lattice and Diego?
 
 [Diego](https://github.com/cloudfoundry-incubator/diego-design-notes) is Cloud Foundry's next generation elastic runtime.  Lattice is essentially a stripped down distribution of Diego that eschews most of Cloud Foundry's enterprise features.  Lattice is built to let you deploy and interact with Diego with ease.  New features that make their way into Diego will be available on Lattice almost immediately.
 
+To build a deep understanding of how Lattice works you'll need to learn about Diego.  The [design notes](https://github.com/cloudfoundry-incubator/diego-design-notes) are a good starting point for building a mental model of what is going on under the hood.
+
 ## What is the relationship between Lattice and Docker?
 
-Lattice supports Dockerimages as a format for distributing container root filesystems.  Currently, Docker images must be publicly hosted on the [Docker Hub Registry](https://registry.hub.docker.com).  Lattice uses Docker's libraries to faithfully fetch Dockerimage metadata and image layers, but it does *not* use the Docker runtime to run and manage containers.  Instead, Lattice uses [Garden](https://github.com/cloudfoundry-incubator/garden).  Garden provides a *platform-agnostic* API for launching and managing containers and is built to be consumed by a distributed container scheduler like Diego.  [Garden-Linux](https://github.com/cloudfoundry-incubator/garden-linux) is an implementation of the Garden API that provides containers on the Linux platform using kernel namespaces and cgroups - the same technologies that undergird Docker.
+Lattice supports Docker images as a format for distributing container root filesystems.  Currently, Docker images must be publicly hosted on the [Docker Hub Registry](https://registry.hub.docker.com).  Lattice uses Docker's libraries to faithfully fetch Docker image metadata and image layers, but it does *not* use the Docker runtime to run and manage containers.  Instead, Lattice uses [Garden](https://github.com/cloudfoundry-incubator/garden).  Garden provides a *platform-agnostic* API for launching and managing containers and is built to be consumed by a distributed container scheduler like Diego.  [Garden-Linux](https://github.com/cloudfoundry-incubator/garden-linux) is an implementation of the Garden API that provides containers on the Linux platform using kernel namespaces and cgroups - the same technologies that undergird Docker.
+
+More details about how Lattice works with Docker images can be found [here](/docs/troubleshooting.html#how-does-lattice-work-with-docker-images).
 
 ## What about Cloud Foundry Elastic Runtime, Kubernetes, Mesos and other clustered Docker projects?
 
@@ -97,6 +105,12 @@ Diego, the runtime component of Lattice is not in production yet with Cloud Foun
 The Router and Loggregator components of Lattice have been in production with Cloud Foundry for over a year and we consider them production-ready.
 
 The deployment strategy employed by Lattice emphasizes convenience and simplicity.  When deployed with Terraform none of the Lattice VMs are monitored - should a VM fail it will not be recreated.  Moreover, Lattice minimizes overhead by running single instances of several components.  These constitute single-points of failure and should not be relied upon in a production setting.  If you'd like to set up a productionized deployment of Lattice we recommend deploying CF + Diego with BOSH.  Instructions for this are available on the [Diego-Release GitHub repository](https://github.com/cloudfoundry-incubator/diego-release).
+
+## How secure is Lattice?
+
+Security is not Lattice's primary concern.  Lattice is intended to provide a cluster root experience with minimal barriers to entry.  Multi-tenant workloads are not in scope.  Additionally, no effort is made to prevent containers from communicating with other components within a Lattice cluster.  Also, no effort is made to protect log streams behind an authentication layer - they are, effectively, publicly accessible.
+
+If you would like to explore a secure deployment of Lattice we recommend BOSH deploying CF + Diego.  Instructions for this are available on the [Diego-Release GitHub repository](https://github.com/cloudfoundry-incubator/diego-release).
 
 ## What Operating Systems are supported?
 
