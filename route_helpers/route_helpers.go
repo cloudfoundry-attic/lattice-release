@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const AppRouter = "lattice-router"
+const AppRouter = "cf-router"
 
 type AppRoutes []AppRoute
 
