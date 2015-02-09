@@ -3,9 +3,10 @@ package docker_app_runner
 //go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 
 import (
-	"fmt"
-
 	"errors"
+	"fmt"
+	"strconv"
+
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_repository_name_formatter"
@@ -160,17 +161,12 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", params.Ports.Monitored)})
 
 	req := receptor.DesiredLRPCreateRequest{
-		ProcessGuid: params.Name,
-		Domain:      lrpDomain,
-		RootFSPath:  dockerImageUrl,
-		Instances:   params.Instances,
-		Stack:       "lucid64",
-		Routes: route_helpers.AppRoutes{
-			route_helpers.AppRoute{
-				Hostnames: []string{fmt.Sprintf("%s.%s", params.Name, appRunner.systemDomain)},
-				Port:      params.Ports.Monitored,
-			},
-		}.RoutingInfo(),
+		ProcessGuid:          params.Name,
+		Domain:               lrpDomain,
+		RootFSPath:           dockerImageUrl,
+		Instances:            params.Instances,
+		Stack:                "lucid64",
+		Routes:               appRunner.buildRoutingInfo(params.Name, params.Ports),
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
 		Privileged:           true,
@@ -202,14 +198,6 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	return err
 }
 
-func buildEnvironmentVariables(environmentVariables map[string]string) []receptor.EnvironmentVariable {
-	appEnvVars := make([]receptor.EnvironmentVariable, 0, len(environmentVariables)+1)
-	for name, value := range environmentVariables {
-		appEnvVars = append(appEnvVars, receptor.EnvironmentVariable{Name: name, Value: value})
-	}
-	return appEnvVars
-}
-
 func (appRunner *appRunner) updateLrp(name string, instances int) error {
 	err := appRunner.receptorClient.UpdateDesiredLRP(
 		name,
@@ -219,4 +207,30 @@ func (appRunner *appRunner) updateLrp(name string, instances int) error {
 	)
 
 	return err
+}
+
+func (appRunner *appRunner) buildRoutingInfo(appName string, portConfig PortConfig) receptor.RoutingInfo {
+	appRoutes := route_helpers.AppRoutes{}
+
+	appRoutes = append(appRoutes, route_helpers.AppRoute{
+		Hostnames: []string{fmt.Sprintf("%s.%s", appName, appRunner.systemDomain)},
+		Port:      portConfig.Monitored,
+	})
+
+	for _, port := range portConfig.Exposed {
+		appRoutes = append(appRoutes, route_helpers.AppRoute{
+			Hostnames: []string{fmt.Sprintf("%s-%s.%s", appName, strconv.Itoa(int(port)), appRunner.systemDomain)},
+			Port:      port,
+		})
+	}
+
+	return appRoutes.RoutingInfo()
+}
+
+func buildEnvironmentVariables(environmentVariables map[string]string) []receptor.EnvironmentVariable {
+	appEnvVars := make([]receptor.EnvironmentVariable, 0, len(environmentVariables)+1)
+	for name, value := range environmentVariables {
+		appEnvVars = append(appEnvVars, receptor.EnvironmentVariable{Name: name, Value: value})
+	}
+	return appEnvVars
 }

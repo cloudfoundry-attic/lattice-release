@@ -15,7 +15,7 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/output/cursor"
 	"github.com/pivotal-golang/clock"
-)
+    "github.com/pivotal-cf-experimental/lattice-cli/exit_handler")
 
 const TimestampDisplayLayout = "2006-01-02 15:04:05 (MST)"
 
@@ -23,11 +23,7 @@ type AppExaminerCommandFactory struct {
 	appExaminerCommand *appExaminerCommand
 }
 
-type exitHandler interface {
-	OnExit(func())
-}
-
-func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, output *output.Output, clock clock.Clock, exitHandler exitHandler) *AppExaminerCommandFactory {
+func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, output *output.Output, clock clock.Clock, exitHandler exit_handler.ExitHandler) *AppExaminerCommandFactory {
 	return &AppExaminerCommandFactory{&appExaminerCommand{appExaminer, output, clock, exitHandler}}
 }
 
@@ -79,7 +75,7 @@ type appExaminerCommand struct {
 	appExaminer app_examiner.AppExaminer
 	output      *output.Output
 	clock       clock.Clock
-	exitHandler exitHandler
+	exitHandler exit_handler.ExitHandler
 }
 
 func (cmd *appExaminerCommand) listApps(context *cli.Context) {
