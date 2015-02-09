@@ -73,7 +73,7 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(repoName string, tag string)
 	startCommand := append(img.Config.Entrypoint, img.Config.Cmd...)
 
 	uintExposedPorts := sortPorts(img.ContainerConfig.ExposedPorts)
-	var monitoredPort uint32
+	var monitoredPort uint16
 
 	if len(uintExposedPorts) > 0 {
 		monitoredPort = uintExposedPorts[0]
@@ -89,7 +89,7 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(repoName string, tag string)
 	}, nil
 }
 
-func sortPorts(dockerExposedPorts map[nat.Port]struct{}) []uint32 {
+func sortPorts(dockerExposedPorts map[nat.Port]struct{}) []uint16 {
 	intPorts := make([]int, 0)
 	for natPort, _ := range dockerExposedPorts {
 		if natPort.Proto() == "tcp" {
@@ -98,9 +98,9 @@ func sortPorts(dockerExposedPorts map[nat.Port]struct{}) []uint32 {
 	}
 	sort.IntSlice(intPorts).Sort()
 
-	uintExposedPorts := make([]uint32, 0)
+	uintExposedPorts := make([]uint16, 0)
 	for _, port := range intPorts {
-		uintExposedPorts = append(uintExposedPorts, uint32(port))
+		uintExposedPorts = append(uintExposedPorts, uint16(port))
 	}
 	return uintExposedPorts
 }

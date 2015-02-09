@@ -81,8 +81,8 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
 			Expect(imageMetadata.StartCommand).To(Equal([]string{"/lattice-app", "--enableAwesomeMode=true", "iloveargs"}))
-			Expect(imageMetadata.Ports.Monitored).To(Equal(uint32(27017)))
-			Expect(imageMetadata.Ports.Exposed).To(Equal([]uint32{uint32(27017), uint32(28321)}))
+			Expect(imageMetadata.Ports.Monitored).To(Equal(uint16(27017)))
+			Expect(imageMetadata.Ports.Exposed).To(Equal([]uint16{uint16(27017), uint16(28321)}))
 		})
 
 		Context("when exposed ports are null in the docker metadata", func() {
@@ -122,8 +122,8 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				repoName := "cool_user123/sweetApp"
 				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(repoName, "latest")
 				Expect(err).NotTo(HaveOccurred())
-				Expect(imageMetadata.Ports.Monitored).To(Equal(uint32(0)))
-				Expect(imageMetadata.Ports.Exposed).To(Equal([]uint32{}))
+				Expect(imageMetadata.Ports.Monitored).To(Equal(uint16(0)))
+				Expect(imageMetadata.Ports.Exposed).To(Equal([]uint16{}))
 
 			})
 		})

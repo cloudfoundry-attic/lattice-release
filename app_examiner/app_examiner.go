@@ -7,6 +7,7 @@ import (
 
 	"errors"
 	"github.com/cloudfoundry-incubator/receptor"
+	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
 )
 
 const AppNotFoundErrorMessage = "App not found."
@@ -17,7 +18,7 @@ type EnvironmentVariable struct {
 }
 
 type AppInfo struct {
-	ProcessGuid            string //TODO: Should be name??
+	ProcessGuid            string
 	DesiredInstances       int
 	ActualRunningInstances int
 	Stack                  string
@@ -26,8 +27,8 @@ type AppInfo struct {
 	DiskMB                 int
 	MemoryMB               int
 	CPUWeight              uint
-	Ports                  []uint32
-	Routes                 []string
+	Ports                  []uint16
+	Routes                 route_helpers.AppRoutes
 	LogGuid                string
 	LogSource              string
 	Annotation             string
@@ -35,8 +36,8 @@ type AppInfo struct {
 }
 
 type PortMapping struct {
-	HostPort      uint32
-	ContainerPort uint32
+	HostPort      uint16
+	ContainerPort uint16
 }
 
 type InstanceInfo struct {
@@ -177,7 +178,7 @@ func mergeDesiredActualLRPs(desiredLRPs []receptor.DesiredLRPResponse, actualLRP
 			MemoryMB:             desiredLRP.MemoryMB,
 			CPUWeight:            desiredLRP.CPUWeight,
 			Ports:                desiredLRP.Ports,
-			Routes:               desiredLRP.Routes,
+			Routes:               route_helpers.AppRoutesFromRoutingInfo(desiredLRP.Routes),
 			LogGuid:              desiredLRP.LogGuid,
 			LogSource:            desiredLRP.LogSource,
 			Annotation:           desiredLRP.Annotation,

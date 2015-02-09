@@ -13,6 +13,7 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 
 	docker_app_runner "github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
+	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
 )
 
 var _ = Describe("AppRunner", func() {
@@ -45,7 +46,7 @@ var _ = Describe("AppRunner", func() {
 				Instances:            22,
 				MemoryMB:             128,
 				DiskMB:               1024,
-				Ports:                docker_app_runner.PortConfig{Exposed: []uint32{2000, 4000}, Monitored: 2000},
+				Ports:                docker_app_runner.PortConfig{Exposed: []uint16{2000, 4000}, Monitored: 2000},
 				WorkingDir:           "/user/web/myappdir",
 			})
 			Expect(err).To(BeNil())
@@ -62,11 +63,11 @@ var _ = Describe("AppRunner", func() {
 				Instances:            22,
 				Stack:                "lucid64",
 				EnvironmentVariables: []receptor.EnvironmentVariable{receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"}, receptor.EnvironmentVariable{Name: "PORT", Value: "2000"}},
-				Routes:               []string{"americano-app.myDiegoInstall.com"},
+				Routes:               route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"americano-app.myDiegoInstall.com"}, Port: 2000}}.RoutingInfo(),
 				MemoryMB:             128,
 				DiskMB:               1024,
 				Privileged:           true,
-				Ports:                []uint32{2000, 4000},
+				Ports:                []uint16{2000, 4000},
 				LogGuid:              "americano-app",
 				LogSource:            "APP",
 				Setup: &models.DownloadAction{
@@ -104,7 +105,7 @@ var _ = Describe("AppRunner", func() {
 						MemoryMB:             128,
 						Monitor:              true,
 						DiskMB:               1024,
-						Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 6682},
+						Ports:                docker_app_runner.PortConfig{Exposed: []uint16{8080}, Monitored: 6682},
 					})
 
 					Expect(err).To(HaveOccurred())
@@ -123,7 +124,7 @@ var _ = Describe("AppRunner", func() {
 					DockerImagePath: "runtest/runner",
 					AppArgs:         []string{},
 					Monitor:         false,
-					Ports:           docker_app_runner.PortConfig{Monitored: 1234, Exposed: []uint32{1234}},
+					Ports:           docker_app_runner.PortConfig{Monitored: 1234, Exposed: []uint16{1234}},
 				})
 				Expect(err).ToNot(HaveOccurred())
 
@@ -146,7 +147,7 @@ var _ = Describe("AppRunner", func() {
 				Instances:            1,
 				MemoryMB:             128,
 				DiskMB:               1024,
-				Ports:                docker_app_runner.PortConfig{Monitored: 8080, Exposed: []uint32{8080}},
+				Ports:                docker_app_runner.PortConfig{Monitored: 8080, Exposed: []uint16{8080}},
 			})
 
 			Expect(err).To(HaveOccurred())
@@ -166,7 +167,7 @@ var _ = Describe("AppRunner", func() {
 					Instances:            1,
 					MemoryMB:             128,
 					DiskMB:               1024,
-					Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 8080},
+					Ports:                docker_app_runner.PortConfig{Exposed: []uint16{8080}, Monitored: 8080},
 				})
 
 				Expect(err).To(HaveOccurred())
@@ -189,7 +190,7 @@ var _ = Describe("AppRunner", func() {
 					Instances:            1,
 					MemoryMB:             128,
 					DiskMB:               1024,
-					Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 8080},
+					Ports:                docker_app_runner.PortConfig{Exposed: []uint16{8080}, Monitored: 8080},
 				})
 
 				Expect(err).To(Equal(upsertError))
@@ -210,7 +211,7 @@ var _ = Describe("AppRunner", func() {
 					Instances:            1,
 					MemoryMB:             128,
 					DiskMB:               1024,
-					Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 8080},
+					Ports:                docker_app_runner.PortConfig{Exposed: []uint16{8080}, Monitored: 8080},
 				})
 
 				Expect(err).To(Equal(receptorError))
@@ -230,7 +231,7 @@ var _ = Describe("AppRunner", func() {
 					Instances:            1,
 					MemoryMB:             128,
 					DiskMB:               1024,
-					Ports:                docker_app_runner.PortConfig{Exposed: []uint32{8080}, Monitored: 8080},
+					Ports:                docker_app_runner.PortConfig{Exposed: []uint16{8080}, Monitored: 8080},
 				})
 
 				Expect(err).To(Equal(receptorError))

@@ -99,9 +99,7 @@ func (cmd *appExaminerCommand) listApps(context *cli.Context) {
 	fmt.Fprintln(w, header)
 
 	for _, appInfo := range appList {
-		routes := strings.Join(appInfo.Routes, " ")
-
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold(appInfo.ProcessGuid), colorInstances(appInfo), colors.NoColor(strconv.Itoa(appInfo.DiskMB)), colors.NoColor(strconv.Itoa(appInfo.MemoryMB)), colors.Cyan(routes))
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold(appInfo.ProcessGuid), colorInstances(appInfo), colors.NoColor(strconv.Itoa(appInfo.DiskMB)), colors.NoColor(strconv.Itoa(appInfo.MemoryMB)), colors.Cyan(appInfo.Routes.String()))
 	}
 	w.Flush()
 }
@@ -163,7 +161,7 @@ func printAppInfo(w io.Writer, appInfo app_examiner.AppInfo) {
 	}
 
 	fmt.Fprintf(w, "%s\t%s\n", "Ports", strings.Join(portStrings, ","))
-	fmt.Fprintf(w, "%s\t%s\n", "Routes", strings.Join(appInfo.Routes, " "))
+	fmt.Fprintf(w, "%s\t%s\n", "Routes", appInfo.Routes)
 	if appInfo.Annotation != "" {
 		fmt.Fprintf(w, "%s\t%s\n", "Annotation", appInfo.Annotation)
 	}

@@ -3,13 +3,13 @@ package app_examiner_test
 import (
 	"errors"
 
-	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/cloudfoundry-incubator/receptor"
+	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
+	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
 )
 
 var _ = Describe("AppRunner", func() {
@@ -34,19 +34,19 @@ var _ = Describe("AppRunner", func() {
 						Instances:   0,
 						DiskMB:      564,
 						MemoryMB:    200,
-						Routes:      []string{"ren", "stimpy"},
+						Routes:      route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}}}.RoutingInfo(),
 					},
 					receptor.DesiredLRPResponse{
 						ProcessGuid:          "process1-scalingUp",
 						Instances:            2,
 						DiskMB:               256,
 						MemoryMB:             100,
-						Routes:               []string{"happy", "joy"},
+						Routes:               route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}}}.RoutingInfo(),
 						Stack:                "hardy64",
 						EnvironmentVariables: []receptor.EnvironmentVariable{},
 						StartTimeout:         30,
 						CPUWeight:            94,
-						Ports:                []uint32{2378, 67},
+						Ports:                []uint16{2378, 67},
 						LogGuid:              "asdf-ojf93-9sdcsdk",
 						LogSource:            "proc1-log",
 						Annotation:           "Best process this side o' the Mississippi.",
@@ -75,12 +75,12 @@ var _ = Describe("AppRunner", func() {
 				Expect(process1.ActualRunningInstances).To(Equal(1))
 				Expect(process1.DiskMB).To(Equal(256))
 				Expect(process1.MemoryMB).To(Equal(100))
-				Expect(process1.Routes).To(Equal([]string{"happy", "joy"}))
+				Expect(process1.Routes).To(Equal(route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}}}))
 				Expect(process1.Stack).To(Equal("hardy64"))
 				Expect(process1.EnvironmentVariables).To(Equal([]app_examiner.EnvironmentVariable{}))
 				Expect(process1.StartTimeout).To(Equal(uint(30)))
 				Expect(process1.CPUWeight).To(Equal(uint(94)))
-				Expect(process1.Ports).To(Equal([]uint32{2378, 67}))
+				Expect(process1.Ports).To(Equal([]uint16{2378, 67}))
 				Expect(process1.LogGuid).To(Equal("asdf-ojf93-9sdcsdk"))
 				Expect(process1.LogSource).To(Equal("proc1-log"))
 				Expect(process1.Annotation).To(Equal("Best process this side o' the Mississippi."))
@@ -91,7 +91,7 @@ var _ = Describe("AppRunner", func() {
 				Expect(process2.ActualRunningInstances).To(Equal(1))
 				Expect(process2.DiskMB).To(Equal(564))
 				Expect(process2.MemoryMB).To(Equal(200))
-				Expect(process2.Routes).To(Equal([]string{"ren", "stimpy"}))
+				Expect(process2.Routes).To(Equal(route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}}}))
 
 				process3 := appList[2]
 				Expect(process3.ProcessGuid).To(Equal("process3-stopping"))
@@ -101,7 +101,6 @@ var _ = Describe("AppRunner", func() {
 				Expect(process3.MemoryMB).To(Equal(0))
 				Expect(process3.Routes).To(BeEmpty())
 			})
-
 		})
 
 		Context("when the receptor returns errors", func() {
@@ -263,8 +262,8 @@ var _ = Describe("AppRunner", func() {
 					DiskMB:       256,
 					MemoryMB:     128,
 					CPUWeight:    77,
-					Ports:        []uint32{8765, 2300},
-					Routes:       []string{"peekaboo-one.example.com", "peekaboo-too.example.com"},
+					Ports:        []uint16{8765, 2300},
+					Routes:       route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}}}.RoutingInfo(),
 					LogGuid:      "9832-ur98j-idsckl",
 					LogSource:    "peekaboo-lawgz",
 					Annotation:   "best. game. ever.",
@@ -336,8 +335,8 @@ var _ = Describe("AppRunner", func() {
 					DiskMB:       256,
 					MemoryMB:     128,
 					CPUWeight:    77,
-					Ports:        []uint32{8765, 2300},
-					Routes:       []string{"peekaboo-one.example.com", "peekaboo-too.example.com"},
+					Ports:        []uint16{8765, 2300},
+					Routes:       route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}}},
 					LogGuid:      "9832-ur98j-idsckl",
 					LogSource:    "peekaboo-lawgz",
 					Annotation:   "best. game. ever.",

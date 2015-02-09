@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_repository_name_formatter"
+	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
 )
 
 type AppRunner interface {
@@ -20,8 +21,8 @@ type AppRunner interface {
 }
 
 type PortConfig struct {
-	Monitored uint32
-	Exposed   []uint32
+	Monitored uint16
+	Exposed   []uint16
 }
 
 func (portConfig PortConfig) IsEmpty() bool {
@@ -159,12 +160,17 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", params.Ports.Monitored)})
 
 	req := receptor.DesiredLRPCreateRequest{
-		ProcessGuid:          params.Name,
-		Domain:               lrpDomain,
-		RootFSPath:           dockerImageUrl,
-		Instances:            params.Instances,
-		Stack:                "lucid64",
-		Routes:               []string{fmt.Sprintf("%s.%s", params.Name, appRunner.systemDomain)},
+		ProcessGuid: params.Name,
+		Domain:      lrpDomain,
+		RootFSPath:  dockerImageUrl,
+		Instances:   params.Instances,
+		Stack:       "lucid64",
+		Routes: route_helpers.AppRoutes{
+			route_helpers.AppRoute{
+				Hostnames: []string{fmt.Sprintf("%s.%s", params.Name, appRunner.systemDomain)},
+				Port:      params.Ports.Monitored,
+			},
+		}.RoutingInfo(),
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
 		Privileged:           true,

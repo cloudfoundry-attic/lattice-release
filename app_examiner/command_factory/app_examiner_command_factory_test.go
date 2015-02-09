@@ -2,9 +2,7 @@ package command_factory_test
 
 import (
 	"errors"
-	"fmt"
 	"os"
-	"text/tabwriter"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -20,6 +18,7 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler/fake_exit_handler"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/output/cursor"
+	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 	"github.com/pivotal-golang/clock/fakeclock"
 )
@@ -52,26 +51,45 @@ var _ = Describe("CommandFactory", func() {
 
 		It("displays all the existing apps, making sure output spacing is correct", func() {
 			listApps := []app_examiner.AppInfo{
-				app_examiner.AppInfo{ProcessGuid: "process1", DesiredInstances: 21, ActualRunningInstances: 0, DiskMB: 100, MemoryMB: 50, Routes: []string{"alldaylong.com"}},
-				app_examiner.AppInfo{ProcessGuid: "process2", DesiredInstances: 8, ActualRunningInstances: 9, DiskMB: 400, MemoryMB: 30, Routes: []string{"never.io"}},
-				app_examiner.AppInfo{ProcessGuid: "process3", DesiredInstances: 5, ActualRunningInstances: 5, DiskMB: 600, MemoryMB: 90, Routes: []string{"allthetime.com", "herewego.org"}},
-				app_examiner.AppInfo{ProcessGuid: "process4", DesiredInstances: 0, ActualRunningInstances: 0, DiskMB: 10, MemoryMB: 10, Routes: []string{}},
+				app_examiner.AppInfo{ProcessGuid: "process1", DesiredInstances: 21, ActualRunningInstances: 0, DiskMB: 100, MemoryMB: 50, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"alldaylong.com"}}}},
+				app_examiner.AppInfo{ProcessGuid: "process2", DesiredInstances: 8, ActualRunningInstances: 9, DiskMB: 400, MemoryMB: 30, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"never.io"}}}},
+				app_examiner.AppInfo{ProcessGuid: "process3", DesiredInstances: 5, ActualRunningInstances: 5, DiskMB: 600, MemoryMB: 90, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"allthetime.com", "herewego.org"}}}},
+				app_examiner.AppInfo{ProcessGuid: "process4", DesiredInstances: 0, ActualRunningInstances: 0, DiskMB: 10, MemoryMB: 10, Routes: route_helpers.AppRoutes{}},
 			}
 			appExaminer.ListAppsReturns(listApps, nil)
 
-			expectedOutput := gbytes.NewBuffer()
-			w := new(tabwriter.Writer)
-			w.Init(expectedOutput, 10+colors.ColorCodeLength, 8, 1, '\t', 0)
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("App Name"), colors.Bold("Instances"), colors.Bold("DiskMB"), colors.Bold("MemoryMB"), colors.Bold("Routes"))
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process1"), colors.Red("0/21"), colors.NoColor("100"), colors.NoColor("50"), colors.Cyan("alldaylong.com"))
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process2"), colors.Yellow("9/8"), colors.NoColor("400"), colors.NoColor("30"), colors.Cyan("never.io"))
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process3"), colors.Green("5/5"), colors.NoColor("600"), colors.NoColor("90"), colors.Cyan("allthetime.com herewego.org"))
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold("process4"), colors.Green("0/0"), colors.NoColor("10"), colors.NoColor("10"), colors.Cyan(""))
-			w.Flush()
-
 			test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
 
-			Expect(outputBuffer.Contents()).To(Equal(expectedOutput.Contents()))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("App Name")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Instances")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("DiskMB")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("MemoryMB")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Routes")))
+
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process1")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Red("0/21")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("100")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("50")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Cyan("alldaylong.com")))
+
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process2")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Yellow("9/8")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("400")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("30")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Cyan("never.io")))
+
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process3")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("5/5")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("600")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("90")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Cyan("allthetime.com, herewego.org")))
+
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process4")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("0/0")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("10")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("10")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Cyan("")))
+
 		})
 
 		It("alerts the user if there are no apps", func() {
@@ -211,8 +229,8 @@ var _ = Describe("CommandFactory", func() {
 					DiskMB:       2048,
 					MemoryMB:     256,
 					CPUWeight:    100,
-					Ports:        []uint32{8887, 9000},
-					Routes:       []string{"wompy-app.my-fun-domain.com", "wompy-app.my-exuberant-domain.org"},
+					Ports:        []uint16{8887, 9000},
+					Routes:       route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"wompy-app.my-fun-domain.com", "wompy-app.my-exuberant-domain.org"}}},
 					LogGuid:      "a9s8dfa99023r",
 					LogSource:    "wompy-app-logz",
 					Annotation:   "I love this app. So wompy.",
@@ -273,7 +291,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("9000"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Routes"))
-			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com"))
+			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com,"))
 			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-exuberant-domain.org"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Annotation"))

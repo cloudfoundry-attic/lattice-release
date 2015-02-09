@@ -106,8 +106,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(startDockerAppParameters.MemoryMB).To(Equal(12))
 			Expect(startDockerAppParameters.DiskMB).To(Equal(12))
 			Expect(startDockerAppParameters.Monitor).To(Equal(true))
-			Expect(startDockerAppParameters.Ports.Monitored).To(Equal(uint32(3000)))
-			Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint32{3000}))
+			Expect(startDockerAppParameters.Ports.Monitored).To(Equal(uint16(3000)))
+			Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint16{3000}))
 			Expect(startDockerAppParameters.WorkingDir).To(Equal("/applications"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Starting App: cool-web-app\n"))
@@ -135,8 +135,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(startDockerAppParameters.Privileged).To(Equal(false))
 			Expect(startDockerAppParameters.MemoryMB).To(Equal(128))
 			Expect(startDockerAppParameters.DiskMB).To(Equal(1024))
-			Expect(startDockerAppParameters.Ports.Monitored).To(Equal(uint32(8080)))
-			Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint32{8080}))
+			Expect(startDockerAppParameters.Ports.Monitored).To(Equal(uint16(8080)))
+			Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint16{8080}))
 			Expect(startDockerAppParameters.Instances).To(Equal(1))
 			Expect(startDockerAppParameters.WorkingDir).To(Equal("/"))
 		})
@@ -187,7 +187,7 @@ var _ = Describe("CommandFactory", func() {
 				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{
 					Ports: docker_app_runner.PortConfig{
 						Monitored: 2701,
-						Exposed:   []uint32{1200, 2701, 4302},
+						Exposed:   []uint16{1200, 2701, 4302},
 					},
 				}, nil)
 
@@ -196,8 +196,8 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.Say("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: 1200, 2701, 4302\n"))
 				Expect(outputBuffer).To(test_helpers.Say("Monitoring the app on port 2701...\n"))
-				Expect(startDockerAppParameters.Ports.Monitored).To(Equal(uint32(2701)))
-				Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint32{1200, 2701, 4302}))
+				Expect(startDockerAppParameters.Ports.Monitored).To(Equal(uint16(2701)))
+				Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint16{1200, 2701, 4302}))
 			})
 		})
 
@@ -218,7 +218,7 @@ var _ = Describe("CommandFactory", func() {
 					startDockerAppParameters := appRunner.StartDockerAppArgsForCall(0)
 
 					Expect(startDockerAppParameters.Monitor).To(Equal(false))
-					Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint32{8080}))
+					Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint16{8080}))
 				})
 			})
 
@@ -235,14 +235,14 @@ var _ = Describe("CommandFactory", func() {
 					dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{
 						Ports: docker_app_runner.PortConfig{
 							Monitored: 1200,
-							Exposed:   []uint32{1200, 2701, 4302},
+							Exposed:   []uint16{1200, 2701, 4302},
 						}}, nil)
 
 					test_helpers.ExecuteCommandWithArgs(startCommand, args)
 					startDockerAppParameters := appRunner.StartDockerAppArgsForCall(0)
 
 					Expect(startDockerAppParameters.Monitor).To(Equal(false))
-					Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint32{1200, 2701, 4302}))
+					Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint16{1200, 2701, 4302}))
 					Expect(outputBuffer).To(test_helpers.Say("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: 1200, 2701, 4302\n"))
 					Expect(outputBuffer).To(test_helpers.Say("No ports will be monitored."))
 				})

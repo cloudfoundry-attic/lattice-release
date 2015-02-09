@@ -210,18 +210,18 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	} else if portFlag == 0 && imageMetadata.Ports.IsEmpty() && noMonitor {
 		portConfig = docker_app_runner.PortConfig{
 			Monitored: 0,
-			Exposed:   []uint32{8080},
+			Exposed:   []uint16{8080},
 		}
 	} else if portFlag == 0 && imageMetadata.Ports.IsEmpty() {
 		cmd.output.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
 		portConfig = docker_app_runner.PortConfig{
 			Monitored: 8080,
-			Exposed:   []uint32{8080},
+			Exposed:   []uint16{8080},
 		}
 	} else {
 		portConfig = docker_app_runner.PortConfig{
-			Monitored: uint32(portFlag),
-			Exposed:   []uint32{uint32(portFlag)},
+			Monitored: uint16(portFlag),
+			Exposed:   []uint16{uint16(portFlag)},
 		}
 	}
 
