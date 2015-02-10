@@ -10,17 +10,39 @@ import (
 var _ = Describe("FormatForReceptor", func() {
 
 	Context("With a well-formed docker repo name", func() {
-		It("Formats a fully qualified docker repo name as a url that the receptor can use as a rootfs", func() {
-			formattedName, err := docker_repository_name_formatter.FormatForReceptor("jimbo/my-docker-app")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(formattedName).To(Equal("docker:///jimbo/my-docker-app"))
+
+		Context("with a fully qualified docker repo name", func() {
+			It("Formats it as a url that the receptor can use as a rootfs", func() {
+				formattedName, err := docker_repository_name_formatter.FormatForReceptor("jimbo/my-docker-app")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(formattedName).To(Equal("docker:///jimbo/my-docker-app#latest"))
+			})
+
+			Context("when a tag is specified", func() {
+
+				It("Converts it to a tagged url that receptor can use as a rootfs", func() {
+					formattedName, err := docker_repository_name_formatter.FormatForReceptor("jimbo/my-docker-app:test")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(formattedName).To(Equal("docker:///jimbo/my-docker-app#test"))
+				})
+			})
+
 		})
 
-		It("Formats a shortened official docker repo name as a url that the receptor can use as a rootfs", func() {
-			formattedName, err := docker_repository_name_formatter.FormatForReceptor("ubuntu")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(formattedName).To(Equal("docker:///library/ubuntu"))
+		Context("With a shortened official docker repo name", func() {
+			It("Formats it as a url that the receptor can use as a rootfs", func() {
+				formattedName, err := docker_repository_name_formatter.FormatForReceptor("ubuntu")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(formattedName).To(Equal("docker:///library/ubuntu#latest"))
+			})
+
+			It("Converts it to a tagged url that receptor can use as a rootfs", func() {
+				formattedName, err := docker_repository_name_formatter.FormatForReceptor("ubuntu:test")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(formattedName).To(Equal("docker:///library/ubuntu#test"))
+			})
 		})
+
 	})
 
 	Context("With a malformed docker repo name", func() {

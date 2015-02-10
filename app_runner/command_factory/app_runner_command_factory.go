@@ -9,8 +9,10 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_metadata_fetcher"
+	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_repository_name_formatter"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter"
+
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
@@ -192,7 +194,9 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		appArgs = context.Args()[4:]
 	}
 
-	imageMetadata, err := cmd.dockerMetadataFetcher.FetchMetadata(dockerImage, "latest")
+	repoName, tag := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImage)
+	imageMetadata, err := cmd.dockerMetadataFetcher.FetchMetadata(repoName, tag)
+
 	if err != nil {
 		cmd.output.Say(fmt.Sprintf("Error fetching image metadata: %s", err))
 		return

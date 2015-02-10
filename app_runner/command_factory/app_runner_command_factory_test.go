@@ -83,7 +83,7 @@ var _ = Describe("CommandFactory", func() {
 				"--env=COLOR",
 				"--env=UNSET",
 				"cool-web-app",
-				"fun/app",
+				"fun/app:mycooltag",
 				"--",
 				"/start-me-please",
 				"AppArg0",
@@ -94,11 +94,16 @@ var _ = Describe("CommandFactory", func() {
 
 			test_helpers.ExecuteCommandWithArgs(startCommand, args)
 
+			Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
+			repoName, tag := dockerMetadataFetcher.FetchMetadataArgsForCall(0)
+			Expect(repoName).To(Equal("fun/app"))
+			Expect(tag).To(Equal("mycooltag"))
+
 			Expect(appRunner.StartDockerAppCallCount()).To(Equal(1))
 			startDockerAppParameters := appRunner.StartDockerAppArgsForCall(0)
 			Expect(startDockerAppParameters.Name).To(Equal("cool-web-app"))
 			Expect(startDockerAppParameters.StartCommand).To(Equal("/start-me-please"))
-			Expect(startDockerAppParameters.DockerImagePath).To(Equal("fun/app"))
+			Expect(startDockerAppParameters.DockerImagePath).To(Equal("fun/app:mycooltag"))
 			Expect(startDockerAppParameters.AppArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
 			Expect(startDockerAppParameters.Instances).To(Equal(22))
 			Expect(startDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "COLOR": "Blue", "UNSET": ""}))

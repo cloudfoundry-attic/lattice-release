@@ -5,7 +5,8 @@ import (
 	"strings"
 )
 
-func FormatForReceptor(dockerRepositoryName string) (string, error) {
+func FormatForReceptor(dockerImageReference string) (string, error) {
+	dockerRepositoryName, tag := ParseRepoNameAndTagFromImageReference(dockerImageReference)
 
 	_, err := registry.ParseRepositoryInfo(dockerRepositoryName)
 	if err != nil {
@@ -13,8 +14,19 @@ func FormatForReceptor(dockerRepositoryName string) (string, error) {
 	}
 
 	if strings.Contains(dockerRepositoryName, "/") {
-		return "docker:///" + dockerRepositoryName, nil
+		return "docker:///" + dockerRepositoryName + "#" + tag, nil
 	} else {
-		return "docker:///library/" + dockerRepositoryName, nil
+		return "docker:///library/" + dockerRepositoryName + "#" + tag, nil
 	}
+}
+
+func ParseRepoNameAndTagFromImageReference(dockerImageReference string) (string, string) {
+	imageWithTag := strings.Split(dockerImageReference, ":")
+	dockerRepositoryName := imageWithTag[0]
+
+	tag := "latest"
+	if len(imageWithTag) > 1 {
+		tag = imageWithTag[1]
+	}
+	return dockerRepositoryName, tag
 }

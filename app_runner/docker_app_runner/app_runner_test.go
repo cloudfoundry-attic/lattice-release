@@ -59,7 +59,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0)).To(Equal(receptor.DesiredLRPCreateRequest{
 				ProcessGuid:          "americano-app",
 				Domain:               "lattice",
-				RootFSPath:           "docker:///runtest/runner",
+				RootFSPath:           "docker:///runtest/runner#latest",
 				Instances:            22,
 				Stack:                "lucid64",
 				EnvironmentVariables: []receptor.EnvironmentVariable{receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"}, receptor.EnvironmentVariable{Name: "PORT", Value: "2000"}},
