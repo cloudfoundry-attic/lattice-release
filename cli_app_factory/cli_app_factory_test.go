@@ -2,6 +2,7 @@ package cli_app_factory_test
 
 import (
 	"errors"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -211,4 +212,26 @@ var _ = Describe("CliAppFactory", func() {
 		})
 
 	})
+
+	Describe("Timeout", func() {
+		It("returns the timeout in seconds", func() {
+			Expect(cli_app_factory.Timeout("25")).To(Equal(25 * time.Second))
+		})
+
+		It("returns one minute for an empty string", func() {
+			Expect(cli_app_factory.Timeout("")).To(Equal(time.Minute))
+		})
+
+		It("returns one minute for an invalid string", func() {
+			Expect(cli_app_factory.Timeout("CANNOT PARSE")).To(Equal(time.Minute))
+		})
+	})
+
+	Describe("LoggregatorUrl", func() {
+		It("returns loggregator url with the websocket scheme added", func() {
+			loggregatorUrl := cli_app_factory.LoggregatorUrl("doppler.diego.io")
+			Expect(loggregatorUrl).To(Equal("ws://doppler.diego.io"))
+		})
+	})
+
 })

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/cloudfoundry-incubator/receptor"
@@ -18,7 +19,6 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/integration_test"
 	"github.com/pivotal-cf-experimental/lattice-cli/logs"
 	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter"
-	"github.com/pivotal-cf-experimental/lattice-cli/ltc/setup_cli/setup_cli_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
@@ -36,8 +36,9 @@ var nonTargetVerifiedCommandNames = map[string]struct{}{
 }
 
 const (
-	LtcUsage = "Command line interface for Lattice."
-	AppName  = "ltc"
+	LtcUsage   = "Command line interface for Lattice."
+	AppName    = "ltc"
+	timeoutVar = "LATTICE_CLI_TIMEOUT"
 )
 
 func MakeCliApp(exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) *cli.App {
@@ -81,14 +82,14 @@ func cliCommands(exitHandler exit_handler.ExitHandler, config *config.Config, lo
 
 	clock := clock.NewClock()
 
-	logReader := logs.NewLogReader(noaa.NewConsumer(setup_cli_helpers.LoggregatorUrl(config.Loggregator()), nil, nil))
+	logReader := logs.NewLogReader(noaa.NewConsumer(LoggregatorUrl(config.Loggregator()), nil, nil))
 	tailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(output, logReader)
 
 	appRunnerCommandFactoryConfig := app_runner_command_factory.AppRunnerCommandFactoryConfig{
 		AppRunner:             appRunner,
 		DockerMetadataFetcher: docker_metadata_fetcher.New(docker_metadata_fetcher.NewDockerSessionFactory()),
 		Output:                output,
-		Timeout:               timeout(),
+		Timeout:               Timeout(timeoutVar),
 		Domain:                config.Target(),
 		Env:                   os.Environ(),
 		Clock:                 clock,
@@ -120,9 +121,16 @@ func cliCommands(exitHandler exit_handler.ExitHandler, config *config.Config, lo
 		appExaminerCommandFactory.MakeVisualizeCommand(),
 		integrationTestCommandFactory.MakeIntegrationTestCommand(),
 	}
-
 }
 
-func timeout() time.Duration {
-	return setup_cli_helpers.Timeout(os.Getenv("LATTICE_CLI_TIMEOUT"))
+func Timeout(timeoutEnv string) time.Duration {
+	if timeout, err := strconv.Atoi(timeoutEnv); err == nil {
+		return time.Second * time.Duration(timeout)
+	}
+
+	return time.Minute
+}
+
+func LoggregatorUrl(loggregatorTarget string) string {
+	return "ws://" + loggregatorTarget
 }
