@@ -198,14 +198,11 @@ func printInstanceInfo(w io.Writer, headingPrefix string, actualInstances []app_
 			fmt.Fprintf(w, "%s\t%s\n", "Since", fmt.Sprint(time.Unix(0, instance.Since).Format(TimestampDisplayLayout)))
 
 		} else if instance.State != "CRASHED" {
-			fmt.Fprintf(w, "%s\t%s\n", "Placement Error:", instance.PlacementError)
+			fmt.Fprintf(w, "%s\t%s\n", "Placement Error", instance.PlacementError)
 		}
-		if instance.CrashCount > 0 {
-			fmt.Fprintf(w, "%s \t%d \n", "Crash Count", instance.CrashCount)
-		}
+		fmt.Fprintf(w, "%s \t%d \n", "Crash Count", instance.CrashCount)
 		printHorizontalRule(w, "-")
 	}
-
 }
 
 func (cmd *appExaminerCommand) visualizeCells(context *cli.Context) {

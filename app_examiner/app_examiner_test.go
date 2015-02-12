@@ -280,8 +280,9 @@ var _ = Describe("AppRunner", func() {
 						Ports: []receptor.PortMapping{
 							receptor.PortMapping{HostPort: 2983, ContainerPort: 2001},
 						},
-						State: "CLAIMED",
-						Since: 1982,
+						State:      "CLAIMED",
+						Since:      1982,
+						CrashCount: 3,
 					}, receptor.ActualLRPResponse{
 						ProcessGuid:  "peekaboo-app",
 						InstanceGuid: "98s98a-xcvcx4-93isl",
@@ -358,9 +359,8 @@ var _ = Describe("AppRunner", func() {
 									ContainerPort: 2020,
 								},
 							},
-							State:      "RUNNING",
-							Since:      2002,
-							CrashCount: 0,
+							State: "RUNNING",
+							Since: 2002,
 						},
 						app_examiner.InstanceInfo{
 							InstanceGuid: "aisu-8dfy8-9dhu",
@@ -375,14 +375,13 @@ var _ = Describe("AppRunner", func() {
 							},
 							State:      "CLAIMED",
 							Since:      1982,
-							CrashCount: 0,
+							CrashCount: 3,
 						},
 						app_examiner.InstanceInfo{
 							Index:          2,
 							State:          "UNCLAIMED",
 							Ports:          []app_examiner.PortMapping{},
 							PlacementError: "not enough resources. eek.",
-							CrashCount:     0,
 						},
 						app_examiner.InstanceInfo{
 							Index:      3,
@@ -424,9 +423,8 @@ var _ = Describe("AppRunner", func() {
 										ContainerPort: 2020,
 									},
 								},
-								State:      "RUNNING",
-								Since:      2002,
-								CrashCount: 0,
+								State: "RUNNING",
+								Since: 2002,
 							},
 							app_examiner.InstanceInfo{
 								InstanceGuid: "aisu-8dfy8-9dhu",
@@ -441,14 +439,13 @@ var _ = Describe("AppRunner", func() {
 								},
 								State:      "CLAIMED",
 								Since:      1982,
-								CrashCount: 0,
+								CrashCount: 3,
 							},
 							app_examiner.InstanceInfo{
 								Index:          2,
 								State:          "UNCLAIMED",
 								Ports:          []app_examiner.PortMapping{},
 								PlacementError: "not enough resources. eek.",
-								CrashCount:     0,
 							},
 							app_examiner.InstanceInfo{
 								Index:      3,
