@@ -34,7 +34,6 @@ func (l *logReader) TailLogs(appGuid string, logCallback func(*events.LogMessage
 	l.readChannels(outputChan, errorChan, logCallback, errorCallback)
 
 	close(l.stopChan)
-	close(errorChan)
 	close(outputChan)
 }
 
