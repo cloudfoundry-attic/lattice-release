@@ -89,7 +89,7 @@ func cliCommands(exitHandler exit_handler.ExitHandler, config *config.Config, lo
 		AppRunner:             appRunner,
 		DockerMetadataFetcher: docker_metadata_fetcher.New(docker_metadata_fetcher.NewDockerSessionFactory()),
 		Output:                output,
-		Timeout:               Timeout(timeoutVar),
+		Timeout:               Timeout(os.Getenv(timeoutVar)),
 		Domain:                config.Target(),
 		Env:                   os.Environ(),
 		Clock:                 clock,
