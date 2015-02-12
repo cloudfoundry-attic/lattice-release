@@ -41,6 +41,10 @@ var _ = Describe("Presentation", func() {
 			instanceInfo := app_examiner.InstanceInfo{State: string(receptor.ActualLRPStateInvalid)}
 			Expect(presentation.ColorInstanceState(instanceInfo)).To(Equal(colors.Red(string(receptor.ActualLRPStateInvalid))))
 		})
+		It("colors CRASHED red", func() {
+			instanceInfo := app_examiner.InstanceInfo{State: string(receptor.ActualLRPStateCrashed)}
+			Expect(presentation.ColorInstanceState(instanceInfo)).To(Equal(colors.Red(string(receptor.ActualLRPStateCrashed))))
+		})
 
 	})
 })

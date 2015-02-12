@@ -21,6 +21,8 @@ func ColorInstanceState(instanceInfo app_examiner.InstanceInfo) string {
 		colorFunc = colors.Red
 	case state == receptor.ActualLRPStateInvalid:
 		colorFunc = colors.Red
+	case state == receptor.ActualLRPStateCrashed:
+		colorFunc = colors.Red
 	}
 
 	return colorFunc(string(instanceInfo.State))

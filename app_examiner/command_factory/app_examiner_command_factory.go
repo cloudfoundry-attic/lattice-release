@@ -184,7 +184,7 @@ func printInstanceInfo(w io.Writer, headingPrefix string, actualInstances []app_
 	for _, instance := range actualInstances {
 		instanceBar(fmt.Sprint(instance.Index), presentation.ColorInstanceState(instance))
 
-		if instance.PlacementError == "" {
+		if instance.PlacementError == "" && instance.State != "CRASHED" {
 			fmt.Fprintf(w, "%s\t%s\n", "InstanceGuid", instance.InstanceGuid)
 			fmt.Fprintf(w, "%s\t%s\n", "Cell ID", instance.CellID)
 			fmt.Fprintf(w, "%s\t%s\n", "Ip", instance.Ip)
@@ -196,8 +196,12 @@ func printInstanceInfo(w io.Writer, headingPrefix string, actualInstances []app_
 			fmt.Fprintf(w, "%s\t%s\n", "Port Mapping", strings.Join(portMappingStrings, ";"))
 
 			fmt.Fprintf(w, "%s\t%s\n", "Since", fmt.Sprint(time.Unix(0, instance.Since).Format(TimestampDisplayLayout)))
-		} else {
+
+		} else if instance.State != "CRASHED" {
 			fmt.Fprintf(w, "%s\t%s\n", "Placement Error:", instance.PlacementError)
+		}
+		if instance.CrashCount > 0 {
+			fmt.Fprintf(w, "%s \t%d \n", "Crash Count", instance.CrashCount)
 		}
 		printHorizontalRule(w, "-")
 	}

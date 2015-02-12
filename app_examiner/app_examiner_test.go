@@ -246,7 +246,7 @@ var _ = Describe("AppRunner", func() {
 					ProcessGuid: "peekaboo-app",
 					Domain:      "welp.org",
 					RootFSPath:  "/var/root-fs",
-					Instances:   3,
+					Instances:   4,
 					Stack:       "lucid99",
 					EnvironmentVariables: []receptor.EnvironmentVariable{
 						receptor.EnvironmentVariable{
@@ -300,6 +300,12 @@ var _ = Describe("AppRunner", func() {
 						State:          "UNCLAIMED",
 						PlacementError: "not enough resources. eek.",
 					},
+					receptor.ActualLRPResponse{
+						ProcessGuid: "peekaboo-app",
+						Index:       3,
+						State:       "CRASHED",
+						CrashCount:  7,
+					},
 				}
 			})
 
@@ -318,7 +324,7 @@ var _ = Describe("AppRunner", func() {
 
 				Expect(result).To(Equal(app_examiner.AppInfo{
 					ProcessGuid:            "peekaboo-app",
-					DesiredInstances:       3,
+					DesiredInstances:       4,
 					ActualRunningInstances: 1,
 					Stack: "lucid99",
 					EnvironmentVariables: []app_examiner.EnvironmentVariable{
@@ -352,8 +358,9 @@ var _ = Describe("AppRunner", func() {
 									ContainerPort: 2020,
 								},
 							},
-							State: "RUNNING",
-							Since: 2002,
+							State:      "RUNNING",
+							Since:      2002,
+							CrashCount: 0,
 						},
 						app_examiner.InstanceInfo{
 							InstanceGuid: "aisu-8dfy8-9dhu",
@@ -366,14 +373,22 @@ var _ = Describe("AppRunner", func() {
 									ContainerPort: 2001,
 								},
 							},
-							State: "CLAIMED",
-							Since: 1982,
+							State:      "CLAIMED",
+							Since:      1982,
+							CrashCount: 0,
 						},
 						app_examiner.InstanceInfo{
 							Index:          2,
 							State:          "UNCLAIMED",
 							Ports:          []app_examiner.PortMapping{},
 							PlacementError: "not enough resources. eek.",
+							CrashCount:     0,
+						},
+						app_examiner.InstanceInfo{
+							Index:      3,
+							State:      "CRASHED",
+							Ports:      []app_examiner.PortMapping{},
+							CrashCount: 7,
 						},
 					},
 				}))
@@ -409,8 +424,9 @@ var _ = Describe("AppRunner", func() {
 										ContainerPort: 2020,
 									},
 								},
-								State: "RUNNING",
-								Since: 2002,
+								State:      "RUNNING",
+								Since:      2002,
+								CrashCount: 0,
 							},
 							app_examiner.InstanceInfo{
 								InstanceGuid: "aisu-8dfy8-9dhu",
@@ -423,14 +439,22 @@ var _ = Describe("AppRunner", func() {
 										ContainerPort: 2001,
 									},
 								},
-								State: "CLAIMED",
-								Since: 1982,
+								State:      "CLAIMED",
+								Since:      1982,
+								CrashCount: 0,
 							},
 							app_examiner.InstanceInfo{
 								Index:          2,
 								State:          "UNCLAIMED",
 								Ports:          []app_examiner.PortMapping{},
 								PlacementError: "not enough resources. eek.",
+								CrashCount:     0,
+							},
+							app_examiner.InstanceInfo{
+								Index:      3,
+								State:      "CRASHED",
+								Ports:      []app_examiner.PortMapping{},
+								CrashCount: 7,
 							},
 						},
 					}))

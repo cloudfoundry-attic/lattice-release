@@ -49,6 +49,7 @@ type InstanceInfo struct {
 	State          string
 	Since          int64
 	PlacementError string
+	CrashCount     int
 }
 
 type instanceInfoSortableByIndex []InstanceInfo
@@ -210,6 +211,7 @@ func mergeDesiredActualLRPs(desiredLRPs []receptor.DesiredLRPResponse, actualLRP
 			State:          string(actualLRP.State),
 			Since:          actualLRP.Since,
 			PlacementError: actualLRP.PlacementError,
+			CrashCount:     actualLRP.CrashCount,
 		}
 
 		appMap[actualLRP.ProcessGuid].ActualInstances = append(appMap[actualLRP.ProcessGuid].ActualInstances, instanceInfo)

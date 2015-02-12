@@ -257,6 +257,12 @@ var _ = Describe("CommandFactory", func() {
 							Index:          4,
 							State:          "UNCLAIMED",
 							PlacementError: "insufficient resources.",
+							CrashCount:     2,
+						},
+						app_examiner.InstanceInfo{
+							Index:      5,
+							State:      "CRASHED",
+							CrashCount: 7,
 						},
 					},
 				}, nil)
@@ -322,8 +328,22 @@ var _ = Describe("CommandFactory", func() {
 			prettyTimestamp := time.Unix(0, 401120627*1e9).Format(command_factory.TimestampDisplayLayout)
 			Expect(outputBuffer).To(test_helpers.Say(prettyTimestamp))
 
+			Expect(outputBuffer).To(test_helpers.Say("Instance 4"))
+			Expect(outputBuffer).To(test_helpers.Say("UNCLAIMED"))
+
+			Expect(outputBuffer).NotTo(test_helpers.Say("InstanceGuid"))
 			Expect(outputBuffer).To(test_helpers.Say("Placement Error"))
 			Expect(outputBuffer).To(test_helpers.Say("insufficient resources."))
+			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
+			Expect(outputBuffer).To(test_helpers.Say("2"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Instance 5"))
+			Expect(outputBuffer).To(test_helpers.Say("CRASHED"))
+
+			Expect(outputBuffer).NotTo(test_helpers.Say("InstanceGuid"))
+			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
+			Expect(outputBuffer).To(test_helpers.Say("7"))
+
 		})
 
 		Context("when there is a placement error on an actualLRP", func() {
