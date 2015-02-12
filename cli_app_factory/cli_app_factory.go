@@ -15,7 +15,9 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
 	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier"
 	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler"
+	"github.com/pivotal-cf-experimental/lattice-cli/integration_test"
 	"github.com/pivotal-cf-experimental/lattice-cli/logs"
+	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter"
 	"github.com/pivotal-cf-experimental/lattice-cli/ltc/setup_cli/setup_cli_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-golang/clock"
@@ -24,8 +26,8 @@ import (
 	app_examiner_command_factory "github.com/pivotal-cf-experimental/lattice-cli/app_examiner/command_factory"
 	app_runner_command_factory "github.com/pivotal-cf-experimental/lattice-cli/app_runner/command_factory"
 	config_command_factory "github.com/pivotal-cf-experimental/lattice-cli/config/command_factory"
+	integration_test_command_factory "github.com/pivotal-cf-experimental/lattice-cli/integration_test/command_factory"
 	logs_command_factory "github.com/pivotal-cf-experimental/lattice-cli/logs/command_factory"
-	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter"
 )
 
 var nonTargetVerifiedCommandNames = map[string]struct{}{
@@ -103,6 +105,9 @@ func cliCommands(exitHandler exit_handler.ExitHandler, config *config.Config, lo
 	appExaminer := app_examiner.New(receptorClient)
 	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, output, clock, exitHandler)
 
+	testRunner := integration_test.NewIntegrationTestRunner(output, config)
+	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner, output)
+
 	return []cli.Command{
 		appRunnerCommandFactory.MakeStartAppCommand(),
 		appRunnerCommandFactory.MakeScaleAppCommand(),
@@ -113,6 +118,7 @@ func cliCommands(exitHandler exit_handler.ExitHandler, config *config.Config, lo
 		appExaminerCommandFactory.MakeListAppCommand(),
 		appExaminerCommandFactory.MakeStatusCommand(),
 		appExaminerCommandFactory.MakeVisualizeCommand(),
+		integrationTestCommandFactory.MakeIntegrationTestCommand(),
 	}
 
 }
