@@ -1,7 +1,5 @@
 package docker_app_runner
 
-//go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
-
 import (
 	"errors"
 	"fmt"
@@ -13,6 +11,7 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
 )
 
+//go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 type AppRunner interface {
 	StartDockerApp(params StartDockerAppParams) error
 	ScaleApp(name string, instances int) error
@@ -212,14 +211,15 @@ func (appRunner *appRunner) updateLrp(name string, instances int) error {
 func (appRunner *appRunner) buildRoutingInfo(appName string, portConfig PortConfig) receptor.RoutingInfo {
 	appRoutes := route_helpers.AppRoutes{}
 
-	appRoutes = append(appRoutes, route_helpers.AppRoute{
-		Hostnames: []string{fmt.Sprintf("%s.%s", appName, appRunner.systemDomain)},
-		Port:      portConfig.Monitored,
-	})
-
 	for _, port := range portConfig.Exposed {
+		hostnames := []string{}
+		if port == portConfig.Monitored {
+			hostnames = append(hostnames, fmt.Sprintf("%s.%s", appName, appRunner.systemDomain))
+		}
+
+		hostnames = append(hostnames, fmt.Sprintf("%s-%s.%s", appName, strconv.Itoa(int(port)), appRunner.systemDomain))
 		appRoutes = append(appRoutes, route_helpers.AppRoute{
-			Hostnames: []string{fmt.Sprintf("%s-%s.%s", appName, strconv.Itoa(int(port)), appRunner.systemDomain)},
+			Hostnames: hostnames,
 			Port:      port,
 		})
 	}

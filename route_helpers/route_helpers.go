@@ -2,9 +2,9 @@ package route_helpers
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/cloudfoundry-incubator/receptor"
-	"strings"
 )
 
 const AppRouter = "cf-router"
@@ -24,14 +24,14 @@ func (l AppRoutes) RoutingInfo() receptor.RoutingInfo {
 	}
 }
 
-func (l AppRoutes) String() string {
+func (l AppRoutes) RouteStrings() []string {
 
 	routeStrings := []string{}
 	for _, route := range l {
 		routeStrings = append(routeStrings, route.String())
 	}
 
-	return strings.Join(routeStrings, "| ")
+	return routeStrings
 }
 
 func (r AppRoute) String() string {

@@ -12,10 +12,11 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner/command_factory/presentation"
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 	"github.com/pivotal-cf-experimental/lattice-cli/output/cursor"
 	"github.com/pivotal-golang/clock"
-    "github.com/pivotal-cf-experimental/lattice-cli/exit_handler")
+)
 
 const TimestampDisplayLayout = "2006-01-02 15:04:05 (MST)"
 
@@ -91,12 +92,18 @@ func (cmd *appExaminerCommand) listApps(context *cli.Context) {
 	w := &tabwriter.Writer{}
 	w.Init(cmd.output, 10+colors.ColorCodeLength, 8, 1, '\t', 0)
 
-	header := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", colors.Bold("App Name"), colors.Bold("Instances"), colors.Bold("DiskMB"), colors.Bold("MemoryMB"), colors.Bold("Routes"))
+	header := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", colors.Bold("App Name"), colors.Bold("Instances"), colors.Bold("DiskMB"), colors.Bold("MemoryMB"), colors.Bold("Route"))
 	fmt.Fprintln(w, header)
 
 	for _, appInfo := range appList {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold(appInfo.ProcessGuid), colorInstances(appInfo), colors.NoColor(strconv.Itoa(appInfo.DiskMB)), colors.NoColor(strconv.Itoa(appInfo.MemoryMB)), colors.Cyan(appInfo.Routes.String()))
+		var displayedRoute string
+		if appInfo.Routes != nil && len(appInfo.Routes) > 0 {
+			displayedRoute = appInfo.Routes.RouteStrings()[0]
+		}
+
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold(appInfo.ProcessGuid), colorInstances(appInfo), colors.NoColor(strconv.Itoa(appInfo.DiskMB)), colors.NoColor(strconv.Itoa(appInfo.MemoryMB)), colors.Cyan(displayedRoute))
 	}
+
 	w.Flush()
 }
 
@@ -157,7 +164,19 @@ func printAppInfo(w io.Writer, appInfo app_examiner.AppInfo) {
 	}
 
 	fmt.Fprintf(w, "%s\t%s\n", "Ports", strings.Join(portStrings, ","))
-	fmt.Fprintf(w, "%s\t%s\n", "Routes", appInfo.Routes)
+
+	var displayedRoute string
+	if appInfo.Routes != nil && len(appInfo.Routes) > 0 {
+		displayedRoute = appInfo.Routes.RouteStrings()[0]
+	}
+	fmt.Fprintf(w, "%s\t%s\n", "Routes", colors.Cyan(displayedRoute))
+
+	if appInfo.Routes != nil && len(appInfo.Routes) > 1 {
+		for _, routeStr := range appInfo.Routes.RouteStrings()[1:] {
+			fmt.Fprintf(w, "\t%s\n", colors.Cyan(routeStr))
+		}
+	}
+
 	if appInfo.Annotation != "" {
 		fmt.Fprintf(w, "%s\t%s\n", "Annotation", appInfo.Annotation)
 	}

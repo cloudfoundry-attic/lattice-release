@@ -10,10 +10,10 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 
 	docker_app_runner "github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
-	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
 )
 
 var _ = Describe("AppRunner", func() {
@@ -64,8 +64,7 @@ var _ = Describe("AppRunner", func() {
 				Stack:                "lucid64",
 				EnvironmentVariables: []receptor.EnvironmentVariable{receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"}, receptor.EnvironmentVariable{Name: "PORT", Value: "2000"}},
 				Routes: route_helpers.AppRoutes{
-					route_helpers.AppRoute{Hostnames: []string{"americano-app.myDiegoInstall.com"}, Port: 2000},
-					route_helpers.AppRoute{Hostnames: []string{"americano-app-2000.myDiegoInstall.com"}, Port: 2000},
+					route_helpers.AppRoute{Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"}, Port: 2000},
 					route_helpers.AppRoute{Hostnames: []string{"americano-app-4000.myDiegoInstall.com"}, Port: 4000},
 				}.RoutingInfo(),
 				MemoryMB:   128,

@@ -64,7 +64,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Instances")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("DiskMB")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("MemoryMB")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Routes")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Route")))
 
 			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process1")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Red("0/21")))
