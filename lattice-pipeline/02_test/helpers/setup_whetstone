@@ -2,26 +2,12 @@
 
 setup_whetstone(){
     export GOPATH=$DIEGO_RELEASE_PATH
+    export LATTICE_CLI_HOME=$WORKSPACE_DIR
 
     if [ -n "$GO_PIPELINE_NAME" ]; then #If we are running in CI, get the linux ltc binary from the build artifact.
         mkdir -pv $GOPATH/bin
         tar xvzf ltc.tar.gz -C $GOPATH/bin ltc-linux-amd64 && mv -v $GOPATH/bin/ltc-linux-amd64 $GOPATH/bin/ltc
     fi
 
-    rm -rf $GOPATH/pkg/*
-
-    mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
-
-    echo "$(cp -rv $WORKSPACE_DIR/whetstone $GOPATH/src/github.com/pivotal-cf-experimental/)"
-    echo "$(cp -rv $WORKSPACE_DIR/lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental/)"
-
-    echo "=====================================>>>>>>getting ginkgo!!!"
-    go get github.com/onsi/ginkgo/ginkgo
-    echo "=====================================>>>>>>getting gomega!!!"
-    go get github.com/onsi/gomega
-
-    pushd $GOPATH/src/github.com/pivotal-cf-experimental/whetstone
-    echo "go get in whetstone .=====================================>>>>>>whetstone!!!"
-        go get -v .
-    popd
+    mkdir -pv $LATTICE_CLI_HOME/.lattice
 }
