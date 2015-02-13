@@ -179,8 +179,7 @@ func (runner *integrationTestRunner) command(timeout time.Duration, arg ...strin
 	command := exec.Command(runner.ltcExecutablePath, arg...)
 	appName := "APP_NAME=LATTICE-TEST-APP"
 	cliHome := fmt.Sprintf("LATTICE_CLI_HOME=%s", runner.latticeCliHome)
-	cliTimeout := fmt.Sprintf("LATTICE_CLI_TIMEOUT=%d", timeout.Seconds())
-
+	cliTimeout := fmt.Sprintf("LATTICE_CLI_TIMEOUT=%d", int(timeout.Seconds()))
 	command.Env = []string{cliHome, appName, cliTimeout}
 	return command
 }
