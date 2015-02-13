@@ -31,13 +31,16 @@ setup_and_run_whetstone(){
     source $WORKSPACE_DIR/lattice/lattice-pipeline/02_test/helpers/setup_whetstone
     setup_whetstone
 
-    echo "================================== Whetstone ==================================\n"
-    PATH=$PATH:$GOPATH/bin ginkgo -noColor -v $GOPATH/src/github.com/pivotal-cf-experimental/whetstone -- \
-        -domain=$(cd $TF_WORKING_DIR && terraform output lattice_target) \
-        -timeout=300 \
-        -username=$(cd $TF_WORKING_DIR && terraform output lattice_username) \
-        -password=$(cd $TF_WORKING_DIR && terraform output lattice_password) \
-        -lattice-cli-path="ltc"
+    echo "=========================Lattice Integration Tests=============================\n"
+
+    printf "{\"Target\":\"%s\",\"Username\":\"%s\",\"Password\":\"%s\"}" \
+        "$(cd $TF_WORKING_DIR && terraform output lattice_target)" \
+        "$(cd $TF_WORKING_DIR && terraform output lattice_username)" \
+        "$(cd $TF_WORKING_DIR && terraform output lattice_password)" | json_pp \
+        > $LATTICE_CLI_HOME/.lattice/config.json
+    sync
+
+    ltc test -v --timeout=5m
 
     echo "===============================================================================\n"
 }

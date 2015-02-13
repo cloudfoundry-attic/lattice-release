@@ -60,9 +60,12 @@ start_lattice_vagrant
 source $(dirname $0)/helpers/setup_whetstone
 setup_whetstone
 
-PATH=$PATH:$GOPATH/bin ginkgo -noColor -v $GOPATH/src/github.com/pivotal-cf-experimental/whetstone \
-    -- \
-    -domain=$SYSTEM_DOMAIN \
-    -timeout=300 \
-    -lattice-cli-path="ltc"
+printf "{\"Target\":\"%s\",\"Username\":\"%s\",\"Password\":\"%s\"}" \
+    "$SYSTEM_DOMAIN" \
+    "" \
+    "" | json_pp \
+    > $LATTICE_CLI_HOME/.lattice/config.json
+sync
+
+ltc test -v --timeout=5m
 
