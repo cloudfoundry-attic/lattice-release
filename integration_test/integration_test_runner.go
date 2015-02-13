@@ -7,32 +7,40 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
+	"time"
 
-	"github.com/cloudfoundry-incubator/runtime-schema/models/factories"
 	. "github.com/onsi/ginkgo"
 	ginkgo_config "github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
+
+	"github.com/cloudfoundry-incubator/runtime-schema/models/factories"
+	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/config"
-	"runtime"
-	"time"
 )
 
 var (
-	numCpu                                     int
-	domain, username, password, latticeCliPath string
+	numCpu int
 )
+
+func init() {
+	numCpu = runtime.NumCPU()
+	runtime.GOMAXPROCS(numCpu)
+}
 
 type IntegrationTestRunner interface {
 	Run(timeout time.Duration, verbose bool)
 }
 
 type integrationTestRunner struct {
-	t                GinkgoTestingT
-	testOutputWriter io.Writer
-	config           *config.Config
+	t                 GinkgoTestingT
+	testOutputWriter  io.Writer
+	config            *config.Config
+	latticeCliHome    string
+	ltcExecutablePath string
 }
 
 type ginkgoTestingT struct{}
@@ -41,35 +49,35 @@ func (g *ginkgoTestingT) Fail() {
 	os.Exit(1)
 }
 
-func NewIntegrationTestRunner(outputWriter io.Writer, config *config.Config) IntegrationTestRunner {
+func NewIntegrationTestRunner(outputWriter io.Writer, config *config.Config, latticeCliHome string) IntegrationTestRunner {
 	t := &ginkgoTestingT{}
-	return &integrationTestRunner{testOutputWriter: outputWriter, config: config, t: t}
+	return &integrationTestRunner{testOutputWriter: outputWriter,
+		config:            config,
+		t:                 t,
+		latticeCliHome:    latticeCliHome,
+		ltcExecutablePath: os.Args[0],
+	}
+
 }
 
 func (runner *integrationTestRunner) Run(timeout time.Duration, verbose bool) {
 	ginkgo_config.DefaultReporterConfig.Verbose = verbose
+	ginkgo_config.DefaultReporterConfig.SlowSpecThreshold = float64(20)
 	defineTheGinkgoTests(runner, timeout)
 	RegisterFailHandler(Fail)
 	RunSpecs(runner.t, "Lattice Integration Tests")
 }
 
-var (
-	tmpDir string
-)
-
 func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) {
 
 	var _ = BeforeSuite(func() {
-		tmpDir = os.TempDir()
 
 		err := runner.config.Load()
-		domain = runner.config.Target()
 		if err != nil {
 			fmt.Fprintf(GinkgoWriter, "Error loading config")
 			return
 		}
 
-		latticeCliPath = os.Args[0]
 	})
 
 	var _ = AfterSuite(func() {
@@ -85,27 +93,27 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 			)
 
 			BeforeEach(func() {
-				appName = fmt.Sprintf("whetstone-%s", factories.GenerateGuid())
-				route = fmt.Sprintf("%s.%s", appName, domain)
+				appName = fmt.Sprintf("lattice-test-app-%s", factories.GenerateGuid())
+				route = fmt.Sprintf("%s.%s", appName, runner.config.Target())
 			})
 
 			AfterEach(func() {
-				removeApp(timeout, latticeCliPath, appName)
+				runner.removeApp(timeout, appName)
 
 				Eventually(errorCheckForRoute(route), timeout, 1).Should(HaveOccurred())
 			})
 
 			It("eventually runs a docker app", func() {
-				startDockerApp(timeout, latticeCliPath, appName, "cloudfoundry/lattice-app", "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Whetstone", "--quiet")
+				runner.startDockerApp(timeout, appName, "cloudfoundry/lattice-app", "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Lattice User", "--quiet")
 
 				Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
-				logsStream := streamLogs(timeout, latticeCliPath, appName)
+				logsStream := runner.streamLogs(timeout, appName)
 				defer func() { logsStream.Terminate().Wait() }()
 
-				Eventually(logsStream.Out, timeout).Should(gbytes.Say("WHETSTONE-TEST-APP. Says Hello Whetstone."))
+				Eventually(logsStream.Out, timeout).Should(gbytes.Say("LATTICE-TEST-APP. Says Hello Lattice User."))
 
-				scaleApp(timeout, latticeCliPath, appName)
+				runner.scaleApp(timeout, appName)
 
 				instanceCountChan := make(chan int, numCpu)
 				go countInstances(route, instanceCountChan)
@@ -114,7 +122,7 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 			})
 
 			It("eventually runs a docker app with metadata from Docker Hub", func() {
-				startDockerApp(timeout, latticeCliPath, appName, "cloudfoundry/lattice-app")
+				runner.startDockerApp(timeout, appName, "cloudfoundry/lattice-app")
 
 				Eventually(errorCheckForRoute(route), timeout, .5).ShouldNot(HaveOccurred())
 			})
@@ -122,11 +130,11 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 	})
 }
 
-func startDockerApp(timeout time.Duration, latticeCliPath, appName string, args ...string) {
+func (runner *integrationTestRunner) startDockerApp(timeout time.Duration, appName string, args ...string) {
 
-	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to start %s\n", appName)
+	fmt.Fprintf(GinkgoWriter, colors.PurpleUnderline(fmt.Sprintf("Attempting to start %s\n", appName)))
 	startArgs := append([]string{"start", appName}, args...)
-	command := command(timeout, latticeCliPath, startArgs...)
+	command := runner.command(timeout, startArgs...)
 
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
@@ -134,12 +142,12 @@ func startDockerApp(timeout time.Duration, latticeCliPath, appName string, args 
 	expectExit(timeout, session)
 
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
-	fmt.Fprintf(GinkgoWriter, "Yay! Whetstone started %s\n", appName)
+	fmt.Fprintf(GinkgoWriter, "Yay! Started %s\n", appName)
 }
 
-func streamLogs(timeout time.Duration, latticeCliPath, appName string) *gexec.Session {
-	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to stream logs from %s\n", appName)
-	command := command(timeout, latticeCliPath, "logs", appName)
+func (runner *integrationTestRunner) streamLogs(timeout time.Duration, appName string) *gexec.Session {
+	fmt.Fprintf(GinkgoWriter, colors.PurpleUnderline(fmt.Sprintf("Attempting to stream logs from %s\n", appName)))
+	command := runner.command(timeout, "logs", appName)
 
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 	Expect(err).ToNot(HaveOccurred())
@@ -147,18 +155,18 @@ func streamLogs(timeout time.Duration, latticeCliPath, appName string) *gexec.Se
 	return session
 }
 
-func scaleApp(timeout time.Duration, latticeCliPath, appName string) {
-	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to scale %s\n", appName)
-	command := command(timeout, latticeCliPath, "scale", appName, "3")
+func (runner *integrationTestRunner) scaleApp(timeout time.Duration, appName string) {
+	fmt.Fprintf(GinkgoWriter, colors.PurpleUnderline(fmt.Sprintf("Attempting to scale %s\n", appName)))
+	command := runner.command(timeout, "scale", appName, "3")
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 	Expect(err).ToNot(HaveOccurred())
 	expectExit(timeout, session)
 }
 
-func removeApp(timeout time.Duration, latticeCliPath, appName string) {
-	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to remove %s\n", appName)
-	command := command(timeout, latticeCliPath, "remove", appName)
+func (runner *integrationTestRunner) removeApp(timeout time.Duration, appName string) {
+	fmt.Fprintf(GinkgoWriter, colors.PurpleUnderline(fmt.Sprintf("Attempting to remove %s\n", appName)))
+	command := runner.command(timeout, "remove", appName)
 
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
@@ -166,32 +174,11 @@ func removeApp(timeout time.Duration, latticeCliPath, appName string) {
 	expectExit(timeout, session)
 }
 
-func targetLattice(timeout time.Duration, latticeCliPath, domain, username, password string) {
-	fmt.Fprintf(GinkgoWriter, "Whetstone is attempting to target %s with username:'%s' ; password:'%s'\n", domain, username, password)
-	stdinReader, stdinWriter := io.Pipe()
-
-	command := command(timeout, latticeCliPath, "target", domain)
-	command.Stdin = stdinReader
-
-	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-	Expect(err).ToNot(HaveOccurred())
-
-	if username != "" || password != "" {
-		Eventually(session.Out).Should(gbytes.Say("Username: "))
-		stdinWriter.Write([]byte(username + "\n"))
-
-		Eventually(session.Out).Should(gbytes.Say("Password: "))
-		stdinWriter.Write([]byte(password + "\n"))
-	}
-
-	stdinWriter.Close()
-	expectExit(timeout, session)
-}
-
-func command(timeout time.Duration, name string, arg ...string) *exec.Cmd {
-	command := exec.Command(name, arg...)
-	appName := "APP_NAME=WHETSTONE-TEST-APP"
-	cliHome := fmt.Sprintf("LATTICE_CLI_HOME=%s", tmpDir)
+//TODO: add subcommand string param
+func (runner *integrationTestRunner) command(timeout time.Duration, arg ...string) *exec.Cmd {
+	command := exec.Command(runner.ltcExecutablePath, arg...)
+	appName := "APP_NAME=LATTICE-TEST-APP"
+	cliHome := fmt.Sprintf("LATTICE_CLI_HOME=%s", runner.latticeCliHome)
 	cliTimeout := fmt.Sprintf("LATTICE_CLI_TIMEOUT=%d", timeout.Seconds())
 
 	command.Env = []string{cliHome, appName, cliTimeout}
@@ -199,9 +186,8 @@ func command(timeout time.Duration, name string, arg ...string) *exec.Cmd {
 }
 
 func errorCheckForRoute(route string) func() error {
-	fmt.Fprintf(GinkgoWriter, "Whetstone is polling for the route %s\n", route)
+	fmt.Fprintf(GinkgoWriter, "Polling for the route %s\n", route)
 	return func() error {
-		fmt.Fprint(GinkgoWriter, ".")
 		response, err := makeGetRequestToRoute(route)
 		if err != nil {
 			return err
@@ -265,14 +251,7 @@ func makeGetRequestToRoute(route string) (*http.Response, error) {
 }
 
 func expectExit(timeout time.Duration, session *gexec.Session) {
-	fmt.Printf("\nsession=%#v\nTIMEOUT=%d\n", session, timeout)
 	Eventually(session, timeout).Should(gexec.Exit(0))
 	Expect(string(session.Out.Contents())).To(HaveSuffix("\n"))
 
-}
-
-func init() {
-	numCpu = runtime.NumCPU()
-	runtime.GOMAXPROCS(numCpu)
-	tmpDir = os.TempDir()
 }

@@ -26,7 +26,7 @@ func (commandFactory *IntegrationTestCommandFactory) MakeIntegrationTestCommand(
 	testFlags := []cli.Flag{
 		cli.DurationFlag{
 			Name:  "timeout",
-			Usage: "How long whetstone will wait for docker apps to start",
+			Usage: "How long tests will wait for docker apps to start",
 			Value: time.Second * 30,
 		},
 		cli.BoolFlag{
@@ -38,8 +38,8 @@ func (commandFactory *IntegrationTestCommandFactory) MakeIntegrationTestCommand(
 	cliCommand := cli.Command{
 		Name:        "test",
 		ShortName:   "t",
-		Usage:       "ltc test --domain=DOMAIN",
-		Description: "The app formerly known as WHETSTONE",
+		Usage:       "ltc test",
+		Description: `ltc test verifies that the targeted lattice deployment is up and running.`,
 		Action:      commandFactory.integrationTestRunnerCommand.runIntegrationTests,
 		Flags:       testFlags,
 	}
@@ -47,6 +47,6 @@ func (commandFactory *IntegrationTestCommandFactory) MakeIntegrationTestCommand(
 	return cliCommand
 }
 
-func (cmd *runIntegrationTestCommand) runIntegrationTests(ctx *cli.Context) {
-	cmd.integrationTestRunner.Run(ctx.Duration("timeout"), ctx.Bool("verbose"))
+func (cmd *runIntegrationTestCommand) runIntegrationTests(context *cli.Context) {
+	cmd.integrationTestRunner.Run(context.Duration("timeout"), context.Bool("verbose"))
 }

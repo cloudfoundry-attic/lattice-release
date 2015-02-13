@@ -17,8 +17,13 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
 )
 
+const (
+	latticeCliHomeVar = "LATTICE_CLI_HOME"
+	timeoutVar        = "LATTICE_CLI_TIMEOUT"
+)
+
 func NewCliApp() *cli.App {
-	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(userHome())))
+	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(ltcConfigRoot())))
 
 	signalChan := make(chan os.Signal)
 	signal.Notify(signalChan, os.Interrupt)
@@ -26,7 +31,7 @@ func NewCliApp() *cli.App {
 	go exitHandler.Run()
 
 	targetVerifier := target_verifier.New(receptor_client_factory.MakeReceptorClient)
-	app := cli_app_factory.MakeCliApp(exitHandler, config, logger(), targetVerifier, output.New(os.Stdout))
+	app := cli_app_factory.MakeCliApp(os.Getenv(timeoutVar), ltcConfigRoot(), exitHandler, config, logger(), targetVerifier, output.New(os.Stdout))
 	return app
 }
 
@@ -44,9 +49,9 @@ func logger() lager.Logger {
 	return logger
 }
 
-func userHome() string {
-	if os.Getenv("LATTICE_CLI_HOME") != "" {
-		return os.Getenv("LATTICE_CLI_HOME")
+func ltcConfigRoot() string {
+	if os.Getenv(latticeCliHomeVar) != "" {
+		return os.Getenv(latticeCliHomeVar)
 	}
 
 	return os.Getenv("HOME")

@@ -57,6 +57,14 @@ var _ = Describe("colors", func() {
 		itShouldNotColorizeWhitespace(colors.Bold)
 	})
 
+	Describe("PurpleUnderline", func() {
+		It("adds the purple underlined color code", func() {
+			Expect(colors.PurpleUnderline("PURPLE UNDERLINE")).To(Equal("\x1b[35;4mPURPLE UNDERLINE\x1b[0m"))
+		})
+
+		itShouldNotColorizeWhitespace(colors.PurpleUnderline)
+	})
+
 	Describe("NoColor", func() {
 		It("adds the yellow color code", func() {
 			Expect(colors.NoColor("None")).To(Equal("\x1b[0mNone\x1b[0m"))

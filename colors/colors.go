@@ -8,12 +8,13 @@ import (
 var ColorCodeLength = len(red) + len(defaultStyle)
 
 const (
-	red          string = "\x1b[91m"
-	cyan         string = "\x1b[36m"
-	green        string = "\x1b[32m"
-	yellow       string = "\x1b[33m"
-	defaultStyle string = "\x1b[0m"
-	boldStyle    string = "\x1b[1m"
+	red             string = "\x1b[91m"
+	cyan            string = "\x1b[36m"
+	green           string = "\x1b[32m"
+	yellow          string = "\x1b[33m"
+	purpleUnderline string = "\x1b[35;4m"
+	defaultStyle    string = "\x1b[0m"
+	boldStyle       string = "\x1b[1m"
 )
 
 func Red(output string) string {
@@ -38,6 +39,10 @@ func NoColor(output string) string {
 
 func Bold(output string) string {
 	return colorize(output, boldStyle)
+}
+
+func PurpleUnderline(output string) string {
+	return colorize(output, purpleUnderline)
 }
 
 func colorize(output string, color string) string {

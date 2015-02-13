@@ -11,14 +11,14 @@ type FakeAppExaminer struct {
 	ListAppsStub        func() ([]app_examiner.AppInfo, error)
 	listAppsMutex       sync.RWMutex
 	listAppsArgsForCall []struct{}
-	listAppsReturns struct {
+	listAppsReturns     struct {
 		result1 []app_examiner.AppInfo
 		result2 error
 	}
 	ListCellsStub        func() ([]app_examiner.CellInfo, error)
 	listCellsMutex       sync.RWMutex
 	listCellsArgsForCall []struct{}
-	listCellsReturns struct {
+	listCellsReturns     struct {
 		result1 []app_examiner.CellInfo
 		result2 error
 	}

@@ -35,6 +35,8 @@ var _ = Describe("CliAppFactory", func() {
 		outputBuffer = gbytes.NewBuffer()
 		cliConfig = config.New(memPersister)
 		cliApp = cli_app_factory.MakeCliApp(
+			"30",
+			"~/",
 			&fake_exit_handler.FakeExitHandler{},
 			cliConfig,
 			lager.NewLogger("test"),

@@ -36,18 +36,19 @@ var nonTargetVerifiedCommandNames = map[string]struct{}{
 }
 
 const (
-	LtcUsage   = "Command line interface for Lattice."
-	AppName    = "ltc"
-	timeoutVar = "LATTICE_CLI_TIMEOUT"
+	LtcUsage = "Command line interface for Lattice."
+	AppName  = "ltc"
+
+	latticeCliHomeVar = "LATTICE_CLI_HOME"
 )
 
-func MakeCliApp(exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) *cli.App {
+func MakeCliApp(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) *cli.App {
 	config.Load()
 	app := cli.NewApp()
 	app.Name = AppName
 	app.Author = "Pivotal"
 	app.Usage = LtcUsage
-	app.Commands = cliCommands(exitHandler, config, logger, targetVerifier, output)
+	app.Commands = cliCommands(timeoutStr, ltcConfigRoot, exitHandler, config, logger, targetVerifier, output)
 
 	app.Before = func(context *cli.Context) error {
 		args := context.Args()
@@ -74,7 +75,7 @@ func MakeCliApp(exitHandler exit_handler.ExitHandler, config *config.Config, log
 	return app
 }
 
-func cliCommands(exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) []cli.Command {
+func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) []cli.Command {
 	input := os.Stdin
 
 	receptorClient := receptor.NewClient(config.Receptor())
@@ -89,7 +90,7 @@ func cliCommands(exitHandler exit_handler.ExitHandler, config *config.Config, lo
 		AppRunner:             appRunner,
 		DockerMetadataFetcher: docker_metadata_fetcher.New(docker_metadata_fetcher.NewDockerSessionFactory()),
 		Output:                output,
-		Timeout:               Timeout(os.Getenv(timeoutVar)),
+		Timeout:               Timeout(timeoutStr),
 		Domain:                config.Target(),
 		Env:                   os.Environ(),
 		Clock:                 clock,
@@ -106,7 +107,7 @@ func cliCommands(exitHandler exit_handler.ExitHandler, config *config.Config, lo
 	appExaminer := app_examiner.New(receptorClient)
 	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, output, clock, exitHandler)
 
-	testRunner := integration_test.NewIntegrationTestRunner(output, config)
+	testRunner := integration_test.NewIntegrationTestRunner(output, config, ltcConfigRoot)
 	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner, output)
 
 	return []cli.Command{
