@@ -10,4 +10,5 @@ setup_whetstone(){
     fi
 
     mkdir -pv $LATTICE_CLI_HOME/.lattice
+    export PATH=$PATH:$GOPATH/bin
 }
