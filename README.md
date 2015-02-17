@@ -10,7 +10,7 @@ Lattice is based on a number of open source [Cloud Foundry](https://cloudfoundry
 
 ## Deploy Lattice
 
-A [local deployment](#local-deployment) of Lattice can be launched with Vagrant.
+A [local deployment](#local-deployment) of Lattice can be launched with VirtualBox and either Vagrant or VMware Fusion.
 
 A scalable [cluster deployment](#clustered-deployment) of Lattice can be launched with Terraform.  We currently support [AWS](#amazon-web-services), [DigitalOcean](#digitalocean), and [Google Cloud](#google-cloud)
 
@@ -24,11 +24,13 @@ More complex workloads can be constructed and submitted directly to Lattice's Re
 
 ## Launching with Vagrant
 
-Make sure you have [Vagrant](https://vagrantup.com/) installed, then:
+Make sure you have [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and either [Vagrant](http://vagrantup.com/) or VMware Fusion installed, then:
 
-    $ git clone git@github.com:pivotal-cf-experimental/lattice.git
+    $ git clone https://github.com/pivotal-cf-experimental/lattice.git
     $ cd lattice
     $ vagrant up
+
+You will need at least 3GB of available disk space, and approximately 1GB of available RAM.
 
 This spins up a virtual environment that is accessible at `192.168.11.11`.
 
@@ -36,6 +38,14 @@ Use the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli) to
 
 ```
 ltc target 192.168.11.11.xip.io
+```
+
+Now you are ready to start interacting with your local deployment via the [Lattice Cli](https://github.com/pivotal-cf-experimental/lattice-cli). Please refer to the README of that project for next steps.
+
+In particular, you can now deploy the demo application that is bundled with Lattice:
+
+```
+ltc start lattice-app docker:///cloudfoundry/lattice-app
 ```
 
 ## Using Different Providers
