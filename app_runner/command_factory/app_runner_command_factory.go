@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"sort"
 
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
@@ -17,6 +18,8 @@ import (
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 )
+
+const InvalidPortErrorMessage string = "Invalid port specified. Ports must be a comma-delimited list of integers."
 
 type AppRunnerCommandFactory struct {
 	appRunnerCommand *appRunnerCommand
@@ -76,10 +79,14 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 			Usage: "container disk limit in MB",
 			Value: 1024,
 		},
-		cli.IntFlag{
-			Name:  "port, p",
-			Usage: "port that the running process will listen on",
+		cli.StringFlag{
+			Name:  "ports, p",
+			Usage: "ports that the running process will listen on",
 		},
+        cli.IntFlag{
+            Name: "monitored-port",
+            Usage: "the port that lattice will monitor to ensure the app is up and running. Required if specifying multiple exposed ports.",
+        },
 		cli.IntFlag{
 			Name:  "instances",
 			Usage: "number of container instances to launch",
@@ -174,7 +181,8 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	instances := context.Int("instances")
 	memoryMB := context.Int("memory-mb")
 	diskMB := context.Int("disk-mb")
-	portFlag := context.Int("port")
+	portFlag := context.String("ports")
+    monitoredPortFlag := context.Int("monitored-port")
 	noMonitor := context.Bool("no-monitor")
 	name := context.Args().Get(0)
 	dockerImage := context.Args().Get(1)
@@ -203,7 +211,7 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	}
 
 	var portConfig docker_app_runner.PortConfig
-	if portFlag == 0 && !imageMetadata.Ports.IsEmpty() {
+	if portFlag == "" && !imageMetadata.Ports.IsEmpty() {
 		portStrs := make([]string, 0)
 		for _, port := range imageMetadata.Ports.Exposed {
 			portStrs = append(portStrs, strconv.Itoa(int(port)))
@@ -211,21 +219,47 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 
 		cmd.output.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s\n", strings.Join(portStrs, ", ")))
 		portConfig = imageMetadata.Ports
-	} else if portFlag == 0 && imageMetadata.Ports.IsEmpty() && noMonitor {
+	} else if portFlag == "" && imageMetadata.Ports.IsEmpty() && noMonitor {
 		portConfig = docker_app_runner.PortConfig{
 			Monitored: 0,
 			Exposed:   []uint16{8080},
 		}
-	} else if portFlag == 0 && imageMetadata.Ports.IsEmpty() {
+	} else if portFlag == "" && imageMetadata.Ports.IsEmpty() {
 		cmd.output.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
 		portConfig = docker_app_runner.PortConfig{
 			Monitored: 8080,
 			Exposed:   []uint16{8080},
 		}
 	} else {
-		portConfig = docker_app_runner.PortConfig{
-			Monitored: uint16(portFlag),
-			Exposed:   []uint16{uint16(portFlag)},
+        portStrings := strings.Split(portFlag, ",")
+        if len(portStrings) > 1 && monitoredPortFlag == 0 {
+            cmd.output.Say("Must set monitored-port when specifying multiple exposed ports.")
+            return
+        }
+
+        sort.Strings(portStrings)
+
+        convertedPorts := []uint16{}
+
+        for _ , p := range portStrings {
+            intPort, err := strconv.Atoi(p)
+            if err != nil{
+                cmd.output.Say(InvalidPortErrorMessage)
+                return
+            }
+            convertedPorts = append(convertedPorts, uint16(intPort))
+        }
+
+        var monitoredPort uint16
+        if len(portStrings) > 1 {
+            monitoredPort = uint16(monitoredPortFlag)
+        } else {
+            monitoredPort = convertedPorts[0]
+        }
+
+        portConfig = docker_app_runner.PortConfig{
+			Monitored: monitoredPort,
+			Exposed:   convertedPorts,
 		}
 	}
 

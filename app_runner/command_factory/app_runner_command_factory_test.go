@@ -70,11 +70,12 @@ var _ = Describe("CommandFactory", func() {
 			startCommand = commandFactory.MakeStartAppCommand()
 		})
 
-		It("starts a Docker based  app as specified in the command via the AppRunner", func() {
+		It("starts a Docker based app as specified in the command via the AppRunner", func() {
 			args := []string{
 				"--memory-mb=12",
 				"--disk-mb=12",
-				"--port=3000",
+				"--ports=3000,2000",
+				"--monitored-port=3000",
 				"--working-dir=/applications",
 				"--run-as-root=true",
 				"--instances=22",
@@ -112,13 +113,14 @@ var _ = Describe("CommandFactory", func() {
 			Expect(startDockerAppParameters.DiskMB).To(Equal(12))
 			Expect(startDockerAppParameters.Monitor).To(Equal(true))
 			Expect(startDockerAppParameters.Ports.Monitored).To(Equal(uint16(3000)))
-			Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint16{3000}))
+			Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint16{2000, 3000}))
 			Expect(startDockerAppParameters.WorkingDir).To(Equal("/applications"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Starting App: cool-web-app\n"))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
 		})
+
 
 		It("starts a Docker based app with sensible defaults and checks for metadata to know the image exists", func() {
 			args := []string{
@@ -162,7 +164,90 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("Error fetching image metadata: Docker Says No."))
 		})
 
-		Context("when no working dir is provided, but the metadata has a working dir", func() {
+        Describe("exposed/monitored port behavior", func(){
+            It("blows up when you pass bad port strings", func(){
+                args := []string{
+                    "--ports=1000,98feh34",
+                    "--monitored-port=1000",
+                    "cool-web-app",
+                    "fun/app:mycooltag",
+                    "--",
+                    "/start-me-please",
+                }
+
+                dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+
+                test_helpers.ExecuteCommandWithArgs(startCommand, args)
+
+                Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
+
+                Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
+
+            })
+
+            It("is an error when the user does not pass a monitored port", func(){
+                args := []string{
+                    "--ports=1000,1234",
+                    "cool-web-app",
+                    "fun/app:mycooltag",
+                    "--",
+                    "/start-me-please",
+                }
+
+                dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+
+                test_helpers.ExecuteCommandWithArgs(startCommand, args)
+
+                Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
+
+                Expect(outputBuffer).To(test_helpers.Say("Must set monitored-port when specifying multiple exposed ports."))
+
+            })
+
+            PIt("exit nonzero when the new behavior blows up", func(){
+
+            })
+
+            It("defaults the monitored port if the user only specifies one exposed port", func(){
+                args := []string{
+                    "--ports=1234",
+                    "cool-web-app",
+                    "fun/app:mycooltag",
+                    "--",
+                    "/start-me-please",
+                }
+
+                dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+                appRunner.NumOfRunningAppInstancesReturns(1, nil)
+
+                test_helpers.ExecuteCommandWithArgs(startCommand, args)
+
+                Expect(appRunner.StartDockerAppCallCount()).To(Equal(1))
+                startDockerAppParameters := appRunner.StartDockerAppArgsForCall(0)
+                Expect(startDockerAppParameters.Ports.Monitored).To(Equal(uint16(1234)))
+            })
+
+            PIt("is an error when specified monitored port does not match any of the exposed ports", func(){
+                args := []string{
+                    "--ports=1234,1823",
+                    "--monitored-port=9999",
+                    "cool-web-app",
+                    "fun/app:mycooltag",
+                    "--",
+                    "/start-me-please",
+                }
+
+                dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+
+                test_helpers.ExecuteCommandWithArgs(startCommand, args)
+
+                Expect(appRunner.StartDockerAppCallCount()).To(Equal(0))
+                Expect(outputBuffer).To(test_helpers.Say("Monitored port must be one of the exposed ports.")) //TODO: talk to onsi about whether or not this makes sense!
+            })
+
+        })
+
+        Context("when no working dir is provided, but the metadata has a working dir", func() {
 			It("sets the working dir from the Docker metadata", func() {
 				args := []string{
 					"cool-web-app",
