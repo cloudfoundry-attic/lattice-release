@@ -19,7 +19,7 @@ git log $GO_FROM_REVISION_LATTICE..$GO_TO_REVISION_LATTICE | \
 }
 
 bump_and_push_lattice() {
-    pushd ../diego-release
+    pushd diego-release
         diego_release_git_sha="$(git rev-parse HEAD)" && echo "diego_release_git_sha=${diego_release_git_sha}"
     popd
 
