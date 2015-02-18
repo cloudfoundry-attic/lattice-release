@@ -19,16 +19,30 @@ git log $GO_FROM_REVISION_LATTICE..$GO_TO_REVISION_LATTICE | \
 }
 
 bump_and_push_lattice() {
+    pushd ../diego-release
+        diego_release_git_sha="$(git rev-parse HEAD)" && echo "diego_release_git_sha=${diego_release_git_sha}"
+    popd
+
+    if [ "$diego_release_git_sha" != "$GO_REVISION_DIEGO_RELEASE" ]; then
+        echo "Mismatch on diego-release SHA (git/gocd) :: ${diego_release_git_sha}/${GO_REVISION_DIEGO_RELEASE}"
+    fi
+
     pushd lattice
-        previous_lattice_version=`cat Version`
+        previous_lattice_version=$(cat Version)
         new_lattice_version=$((previous_lattice_version+1))
-        echo $new_lattice_version > Version
+        echo "$new_lattice_version" > Version
         echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
 
+        echo "${diego_release_git_sha}" > DIEGO_VERSION
+
+        git add Version
+        git add DIEGO_VERSION
 
         deliver_stories_message=$(extract_deliver_stories_message)
-        git add Version
+
         git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
+
+        Diego Release Git SHA: ${diego_release_git_sha}
 
         $deliver_stories_message
 
