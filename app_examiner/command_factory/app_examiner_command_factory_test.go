@@ -51,9 +51,9 @@ var _ = Describe("CommandFactory", func() {
 
 		It("displays all the existing apps, making sure output spacing is correct", func() {
 			listApps := []app_examiner.AppInfo{
-				app_examiner.AppInfo{ProcessGuid: "process1", DesiredInstances: 21, ActualRunningInstances: 0, DiskMB: 100, MemoryMB: 50, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"alldaylong.com"}}}},
-				app_examiner.AppInfo{ProcessGuid: "process2", DesiredInstances: 8, ActualRunningInstances: 9, DiskMB: 400, MemoryMB: 30, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"never.io"}}}},
-				app_examiner.AppInfo{ProcessGuid: "process3", DesiredInstances: 5, ActualRunningInstances: 5, DiskMB: 600, MemoryMB: 90, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"allthetime.com", "herewego.org"}}}},
+				app_examiner.AppInfo{ProcessGuid: "process1", DesiredInstances: 21, ActualRunningInstances: 0, DiskMB: 100, MemoryMB: 50, Ports: []uint16{54321}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"alldaylong.com"}, Port: 54321}}},
+				app_examiner.AppInfo{ProcessGuid: "process2", DesiredInstances: 8, ActualRunningInstances: 9, DiskMB: 400, MemoryMB: 30, Ports: []uint16{1234}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"never.io"}, Port: 1234}}},
+				app_examiner.AppInfo{ProcessGuid: "process3", DesiredInstances: 5, ActualRunningInstances: 5, DiskMB: 600, MemoryMB: 90, Ports: []uint16{1234}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"allthetime.com", "herewego.org"}, Port: 1234}}},
 				app_examiner.AppInfo{ProcessGuid: "process4", DesiredInstances: 0, ActualRunningInstances: 0, DiskMB: 10, MemoryMB: 10, Routes: route_helpers.AppRoutes{}},
 			}
 			appExaminer.ListAppsReturns(listApps, nil)
@@ -70,25 +70,24 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Red("0/21")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("100")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("50")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Cyan("alldaylong.com")))
+			Expect(outputBuffer).To(test_helpers.Say("alldaylong.com => 54321"))
 
 			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process2")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Yellow("9/8")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("400")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("30")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Cyan("never.io")))
+			Expect(outputBuffer).To(test_helpers.Say("never.io => 1234"))
 
 			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process3")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("5/5")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("600")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("90")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Cyan("allthetime.com, herewego.org")))
+			Expect(outputBuffer).To(test_helpers.Say("allthetime.com, herewego.org => 1234"))
 
 			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process4")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("0/0")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("10")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("10")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Cyan("")))
 
 		})
 
@@ -230,7 +229,7 @@ var _ = Describe("CommandFactory", func() {
 					MemoryMB:     256,
 					CPUWeight:    100,
 					Ports:        []uint16{8887, 9000},
-					Routes:       route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"wompy-app.my-fun-domain.com", "wompy-app.my-exuberant-domain.org"}}},
+					Routes:       route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"wompy-app.my-fun-domain.com", "cranky-app.my-fun-domain.com"}, Port: 8080}},
 					LogGuid:      "a9s8dfa99023r",
 					LogSource:    "wompy-app-logz",
 					Annotation:   "I love this app. So wompy.",
@@ -297,8 +296,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("9000"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Routes"))
-			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com,"))
-			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-exuberant-domain.org"))
+			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com => 8080"))
+			Expect(outputBuffer).To(test_helpers.Say("cranky-app.my-fun-domain.com => 8080"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Annotation"))
 			Expect(outputBuffer).To(test_helpers.Say("I love this app. So wompy."))

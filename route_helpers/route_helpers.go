@@ -2,7 +2,6 @@ package route_helpers
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/cloudfoundry-incubator/receptor"
 )
@@ -24,18 +23,14 @@ func (l AppRoutes) RoutingInfo() receptor.RoutingInfo {
 	}
 }
 
-func (l AppRoutes) RouteStrings() []string {
+func (l AppRoutes) HostnamesByPort() map[uint16][]string {
+	routesByPort := make(map[uint16][]string)
 
-	routeStrings := []string{}
 	for _, route := range l {
-		routeStrings = append(routeStrings, route.String())
+		routesByPort[route.Port] = route.Hostnames
 	}
 
-	return routeStrings
-}
-
-func (r AppRoute) String() string {
-	return strings.Join(r.Hostnames, ", ")
+	return routesByPort
 }
 
 func AppRoutesFromRoutingInfo(routingInfo receptor.RoutingInfo) AppRoutes {

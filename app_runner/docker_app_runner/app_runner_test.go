@@ -6,9 +6,9 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-    . "github.com/pivotal-cf-experimental/lattice-cli/test_helpers/matchers"
+	. "github.com/pivotal-cf-experimental/lattice-cli/test_helpers/matchers"
 
-    "github.com/cloudfoundry-incubator/receptor"
+	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
@@ -91,29 +91,28 @@ var _ = Describe("AppRunner", func() {
 			}))
 		})
 
-		Describe("Opening up/Monitoring ports", func() {
-			Context("when Monitor is true and the Monitored Port is not in the ExposedPorts", func() {
-				It("returns an error", func() {
-					desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{}}
-					fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+		Context("when overrideRoutes is not empty", func() {
+			It("uses the override Routes instead of the defaults", func() {
+				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 
-					err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
-						Name:                 "lovely-app",
-						StartCommand:         "faily/boom",
-						DockerImagePath:      "lovely/lovely_image",
-						AppArgs:              []string{},
-						EnvironmentVariables: map[string]string{},
-						Privileged:           false,
-						Instances:            1,
-						MemoryMB:             128,
-						Monitor:              true,
-						DiskMB:               1024,
-						Ports:                docker_app_runner.PortConfig{Exposed: []uint16{8080}, Monitored: 6682},
-					})
-
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(Equal("Monitored Port must be in the Exposed Ports."))
+				err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
+					Name:            "americano-app",
+					StartCommand:    "/app-run-statement",
+					DockerImagePath: "runtest/runner",
+					AppArgs:         []string{},
+					Ports:           docker_app_runner.PortConfig{Exposed: []uint16{2000, 3000, 4000}, Monitored: 2000},
+					RouteOverrides: docker_app_runner.RouteOverrides{
+						docker_app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
+						docker_app_runner.RouteOverride{HostnamePrefix: "swang", Port: 2000},
+						docker_app_runner.RouteOverride{HostnamePrefix: "shuffle", Port: 4000},
+					},
 				})
+				Expect(err).To(BeNil())
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+				Expect(route_helpers.AppRoutesFromRoutingInfo(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes)).To(ContainExactly(route_helpers.AppRoutes{
+					route_helpers.AppRoute{Hostnames: []string{"wiggle.myDiegoInstall.com", "swang.myDiegoInstall.com"}, Port: 2000},
+					route_helpers.AppRoute{Hostnames: []string{"shuffle.myDiegoInstall.com"}, Port: 4000},
+				}))
 			})
 		})
 

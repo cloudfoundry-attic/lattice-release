@@ -10,6 +10,8 @@ type woohoo struct {
 	Flag bool
 }
 
+type woomap map[woohoo]string
+
 var _ = Describe("ContainExactlyMatcher", func() {
 	It("matches if the array contains exactly the elements in the expected array, but is order independent.", func() {
 
@@ -25,6 +27,10 @@ var _ = Describe("ContainExactlyMatcher", func() {
 
 		Expect([]woohoo{woohoo{Flag: false}}).ToNot(matchers.ContainExactly([]woohoo{woohoo{Flag: true}}))
 		Expect([]woohoo{woohoo{Flag: false}, woohoo{Flag: false}}).ToNot(matchers.ContainExactly([]woohoo{woohoo{Flag: true}, woohoo{Flag: false}}))
+	})
+
+	It("handles map types", func() {
+		Expect(woomap{woohoo{true}: "fun", woohoo{false}: "not fun"}).To(matchers.ContainExactly(woomap{woohoo{false}: "not fun", woohoo{true}: "fun"}))
 	})
 
 	It("handles duplicate elements", func() {

@@ -1,7 +1,6 @@
 package docker_app_runner
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -25,6 +24,13 @@ type PortConfig struct {
 	Exposed   []uint16
 }
 
+type RouteOverrides []RouteOverride
+
+type RouteOverride struct {
+	HostnamePrefix string
+	Port           uint16
+}
+
 func (portConfig PortConfig) IsEmpty() bool {
 	return len(portConfig.Exposed) == 0
 }
@@ -42,7 +48,7 @@ type StartDockerAppParams struct {
 	DiskMB               int
 	Ports                PortConfig
 	WorkingDir           string
-	OverrideRoutes       route_helpers.AppRoutes
+	RouteOverrides       RouteOverrides
 }
 
 const (
@@ -60,18 +66,6 @@ func New(receptorClient receptor.Client, systemDomain string) AppRunner {
 }
 
 func (appRunner *appRunner) StartDockerApp(params StartDockerAppParams) error {
-	exposedContainsMonitored := false
-	for _, port := range params.Ports.Exposed {
-		if port == params.Ports.Monitored {
-			exposedContainsMonitored = true
-			break
-		}
-	}
-
-	if params.Monitor && !exposedContainsMonitored {
-		return errors.New("Monitored Port must be in the Exposed Ports.")
-	}
-
 	if exists, err := appRunner.desiredLRPExists(params.Name); err != nil {
 		return err
 	} else if exists {
@@ -160,13 +154,30 @@ func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
 	envVars := buildEnvironmentVariables(params.EnvironmentVariables)
 	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", params.Ports.Monitored)})
 
+	var appRoutes route_helpers.AppRoutes
+
+	if len(params.RouteOverrides) > 0 {
+		routeMap := make(map[uint16][]string)
+		for _, override := range params.RouteOverrides {
+			routeMap[override.Port] = append(routeMap[override.Port], fmt.Sprintf("%s.%s", override.HostnamePrefix, appRunner.systemDomain))
+		}
+		for port, hostnames := range routeMap {
+			appRoutes = append(appRoutes, route_helpers.AppRoute{
+				Hostnames: hostnames,
+				Port:      port,
+			})
+		}
+	} else {
+		appRoutes = appRunner.buildRoutingInfo(params.Name, params.Ports)
+	}
+
 	req := receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
 		Domain:               lrpDomain,
 		RootFSPath:           dockerImageUrl,
 		Instances:            params.Instances,
 		Stack:                "lucid64",
-		Routes:               appRunner.buildRoutingInfo(params.Name, params.Ports),
+		Routes:               appRoutes.RoutingInfo(),
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
 		Privileged:           true,
@@ -209,7 +220,7 @@ func (appRunner *appRunner) updateLrp(name string, instances int) error {
 	return err
 }
 
-func (appRunner *appRunner) buildRoutingInfo(appName string, portConfig PortConfig) receptor.RoutingInfo {
+func (appRunner *appRunner) buildRoutingInfo(appName string, portConfig PortConfig) route_helpers.AppRoutes {
 	appRoutes := route_helpers.AppRoutes{}
 
 	for _, port := range portConfig.Exposed {
@@ -225,7 +236,7 @@ func (appRunner *appRunner) buildRoutingInfo(appName string, portConfig PortConf
 		})
 	}
 
-	return appRoutes.RoutingInfo()
+	return appRoutes
 }
 
 func buildEnvironmentVariables(environmentVariables map[string]string) []receptor.EnvironmentVariable {

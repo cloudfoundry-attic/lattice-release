@@ -15,7 +15,6 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter"
 
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
-	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 )
@@ -303,8 +302,8 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		appArgs = imageMetadata.StartCommand[1:]
 	}
 
-	var overrideRoutes route_helpers.AppRoutes
-	routeMap := make(map[uint16][]string)
+	var routeOverrides docker_app_runner.RouteOverrides
+
 	for _, routeStr := range strings.Split(routesFlag, ",") {
 		if routeStr == "" {
 			continue
@@ -317,15 +316,8 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		}
 
 		port := uint16(maybePort)
-		hostname := routeArr[1]
-		routeMap[port] = append(routeMap[port], hostname)
-	}
-
-	for port, hostnames := range routeMap {
-		overrideRoutes = append(overrideRoutes, route_helpers.AppRoute{
-			Hostnames: hostnames,
-			Port:      port,
-		})
+		hostnamePrefix := routeArr[1]
+		routeOverrides = append(routeOverrides, docker_app_runner.RouteOverride{HostnamePrefix: hostnamePrefix, Port: port})
 	}
 
 	err = cmd.appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
@@ -341,7 +333,7 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		DiskMB:               diskMBFlag,
 		Ports:                portConfig,
 		WorkingDir:           workingDirFlag,
-		OverrideRoutes:       overrideRoutes,
+		RouteOverrides:       routeOverrides,
 	})
 
 	if err != nil {

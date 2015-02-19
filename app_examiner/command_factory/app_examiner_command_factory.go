@@ -98,7 +98,8 @@ func (cmd *appExaminerCommand) listApps(context *cli.Context) {
 	for _, appInfo := range appList {
 		var displayedRoute string
 		if appInfo.Routes != nil && len(appInfo.Routes) > 0 {
-			displayedRoute = appInfo.Routes.RouteStrings()[0]
+			arbitraryPort := appInfo.Ports[0]
+			displayedRoute = fmt.Sprintf("%s => %d", strings.Join(appInfo.Routes.HostnamesByPort()[arbitraryPort], ", "), arbitraryPort)
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold(appInfo.ProcessGuid), colorInstances(appInfo), colors.NoColor(strconv.Itoa(appInfo.DiskMB)), colors.NoColor(strconv.Itoa(appInfo.MemoryMB)), colors.Cyan(displayedRoute))
@@ -165,16 +166,26 @@ func printAppInfo(w io.Writer, appInfo app_examiner.AppInfo) {
 
 	fmt.Fprintf(w, "%s\t%s\n", "Ports", strings.Join(portStrings, ","))
 
-	var displayedRoute string
-	if appInfo.Routes != nil && len(appInfo.Routes) > 0 {
-		displayedRoute = appInfo.Routes.RouteStrings()[0]
+	formatRoute := func(hostname string, port uint16) string {
+		return colors.Cyan(fmt.Sprintf("%s => %d", hostname, port))
 	}
-	fmt.Fprintf(w, "%s\t%s\n", "Routes", colors.Cyan(displayedRoute))
 
-	if appInfo.Routes != nil && len(appInfo.Routes) > 1 {
-		for _, routeStr := range appInfo.Routes.RouteStrings()[1:] {
-			fmt.Fprintf(w, "\t%s\n", colors.Cyan(routeStr))
+	routeStringsByPort := appInfo.Routes.HostnamesByPort()
+	var i int
+	for port, routeStrs := range routeStringsByPort {
+		if i == 0 {
+			fmt.Fprintf(w, "%s\t%s\n", "Routes", formatRoute(routeStrs[0], port))
+			if len(routeStrs) > 1 {
+				for _, routeStr := range routeStrs[1:] {
+					fmt.Fprintf(w, "\t%s\n", formatRoute(routeStr, port))
+				}
+			}
+		} else {
+			for _, routeStr := range routeStrs {
+				fmt.Fprintf(w, "\t%s\n", formatRoute(routeStr, port))
+			}
 		}
+		i++
 	}
 
 	if appInfo.Annotation != "" {

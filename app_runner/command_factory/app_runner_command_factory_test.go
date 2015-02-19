@@ -4,11 +4,11 @@ import (
 	"errors"
 	"time"
 
-	. "github.com/pivotal-cf-experimental/lattice-cli/test_helpers/matchers"
+	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/codegangsta/cli"
 	"github.com/onsi/gomega/gbytes"
+	. "github.com/pivotal-cf-experimental/lattice-cli/test_helpers/matchers"
 	"github.com/pivotal-golang/clock/fakeclock"
 	"github.com/pivotal-golang/lager"
 
@@ -20,7 +20,6 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/colors"
 	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
-	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
 	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 )
 
@@ -117,9 +116,10 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(startDockerAppParameters.Ports.Monitored).To(Equal(uint16(3000)))
 			Expect(startDockerAppParameters.Ports.Exposed).To(Equal([]uint16{1111, 2000, 3000}))
-			Expect(startDockerAppParameters.OverrideRoutes).To(ContainExactly(route_helpers.AppRoutes{
-				route_helpers.AppRoute{Hostnames: []string{"route-3000-yay"}, Port: 3000},
-				route_helpers.AppRoute{Hostnames: []string{"route-1111-wahoo", "route-1111-me-too"}, Port: 1111},
+			Expect(startDockerAppParameters.RouteOverrides).To(ContainExactly(docker_app_runner.RouteOverrides{
+				docker_app_runner.RouteOverride{HostnamePrefix: "route-3000-yay", Port: 3000},
+				docker_app_runner.RouteOverride{HostnamePrefix: "route-1111-wahoo", Port: 1111},
+				docker_app_runner.RouteOverride{HostnamePrefix: "route-1111-me-too", Port: 1111},
 			}))
 			Expect(startDockerAppParameters.WorkingDir).To(Equal("/applications"))
 
