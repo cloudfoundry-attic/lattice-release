@@ -1,0 +1,14 @@
+#!/bin/bash
+set +e
+
+pushd $(dirname $(dirname $0)) > /dev/null
+
+if [ -z "$GO_PIPELINE_NAME" ]; then #Locally run with color.
+    ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race
+else
+    ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race --noColor
+fi
+TEST_RESULT=$?
+
+popd > /dev/null
+exit $TEST_RESULT
