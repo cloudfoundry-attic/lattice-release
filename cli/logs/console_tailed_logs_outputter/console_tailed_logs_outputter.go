@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/noaa/events"
-	"github.com/pivotal-cf-experimental/lattice-cli/colors"
-	"github.com/pivotal-cf-experimental/lattice-cli/logs"
-	"github.com/pivotal-cf-experimental/lattice-cli/output"
+	"github.com/cloudfoundry-incubator/lattice/cli/colors"
+	"github.com/cloudfoundry-incubator/lattice/cli/logs"
+	"github.com/cloudfoundry-incubator/lattice/cli/output"
 )
 
 type TailedLogsOutputter interface {

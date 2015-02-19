@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
+	"github.com/cloudfoundry-incubator/lattice/cli/config/persister"
 )
 
 type Data struct {

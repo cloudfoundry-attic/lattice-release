@@ -4,7 +4,7 @@ package fake_app_examiner
 import (
 	"sync"
 
-	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
+	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner"
 )
 
 type FakeAppExaminer struct {

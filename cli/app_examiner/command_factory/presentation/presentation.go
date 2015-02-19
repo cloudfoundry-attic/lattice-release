@@ -2,8 +2,8 @@ package presentation
 
 import (
 	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
-	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner"
+	"github.com/cloudfoundry-incubator/lattice/cli/colors"
 )
 
 func ColorInstanceState(instanceInfo app_examiner.InstanceInfo) string {

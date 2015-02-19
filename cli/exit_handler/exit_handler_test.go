@@ -9,7 +9,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
 )
 
 var _ = Describe("ExitHandler", func() {

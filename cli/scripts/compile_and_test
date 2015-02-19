@@ -9,7 +9,7 @@ mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
 echo "$(cp -rv lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental)" #so that we can run locally without clobbering our lattice-cli repo
 
 echo "go getting cli dependencies..."
-go get -v -t github.com/pivotal-cf-experimental/lattice-cli/...
+go get -v -t github.com/cloudfoundry-incubator/lattice/cli/...
 echo "gotten!"
 
 go get github.com/onsi/ginkgo/ginkgo
@@ -25,8 +25,8 @@ export GOBIN="$OUTDIR"
 rm -rf $GOPATH/pkg/*
 
 echo "Compiling cli..."
-GOARCH=amd64 GOOS=linux go build -o $OUTDIR/ltc-linux-amd64 github.com/pivotal-cf-experimental/lattice-cli/ltc
-GOARCH=amd64 GOOS=darwin go build -o $OUTDIR/ltc-darwin-amd64 github.com/pivotal-cf-experimental/lattice-cli/ltc
+GOARCH=amd64 GOOS=linux go build -o $OUTDIR/ltc-linux-amd64 github.com/cloudfoundry-incubator/lattice/cli/ltc
+GOARCH=amd64 GOOS=darwin go build -o $OUTDIR/ltc-darwin-amd64 github.com/cloudfoundry-incubator/lattice/cli/ltc
 
 echo "generating ltc-checksum file"
 pushd lattice-cli > /dev/null

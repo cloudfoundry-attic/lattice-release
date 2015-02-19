@@ -93,7 +93,7 @@ Outputs:
 
 ### Use
 
-Refer to the [Lattice CLI](https://github.com/pivotal-cf-experimental/lattice-cli#lattice-cli) documentation.
+Refer to the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/cli#lattice-cli) documentation.
 
 ### Destroy
 

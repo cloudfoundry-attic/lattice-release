@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry/noaa/events"
-	"github.com/pivotal-cf-experimental/lattice-cli/logs"
+	"github.com/cloudfoundry-incubator/lattice/cli/logs"
 )
 
 func NewFakeConsumer() *fakeConsumer {

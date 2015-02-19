@@ -18,8 +18,8 @@ import (
 	"github.com/onsi/gomega/gexec"
 
 	"github.com/cloudfoundry-incubator/runtime-schema/models/factories"
-	"github.com/pivotal-cf-experimental/lattice-cli/colors"
-	"github.com/pivotal-cf-experimental/lattice-cli/config"
+	"github.com/cloudfoundry-incubator/lattice/cli/colors"
+	"github.com/cloudfoundry-incubator/lattice/cli/config"
 )
 
 var (

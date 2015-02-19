@@ -6,8 +6,8 @@ import (
 
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
-	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_repository_name_formatter"
-	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
+	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_repository_name_formatter"
+	"github.com/cloudfoundry-incubator/lattice/cli/route_helpers"
 )
 
 //go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner

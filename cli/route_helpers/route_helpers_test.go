@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
+	"github.com/cloudfoundry-incubator/lattice/cli/route_helpers"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

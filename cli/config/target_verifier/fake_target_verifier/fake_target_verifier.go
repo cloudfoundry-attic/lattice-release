@@ -4,7 +4,7 @@ package fake_target_verifier
 import (
 	"sync"
 
-	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier"
+	"github.com/cloudfoundry-incubator/lattice/cli/config/target_verifier"
 )
 
 type FakeTargetVerifier struct {

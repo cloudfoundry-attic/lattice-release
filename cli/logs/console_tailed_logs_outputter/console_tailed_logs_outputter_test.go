@@ -10,11 +10,11 @@ import (
 	"github.com/onsi/gomega/gbytes"
 
 	"github.com/cloudfoundry/noaa/events"
-	"github.com/pivotal-cf-experimental/lattice-cli/colors"
-	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter"
-	"github.com/pivotal-cf-experimental/lattice-cli/logs/fake_log_reader"
-	"github.com/pivotal-cf-experimental/lattice-cli/output"
-	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
+	"github.com/cloudfoundry-incubator/lattice/cli/colors"
+	"github.com/cloudfoundry-incubator/lattice/cli/logs/console_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/cli/logs/fake_log_reader"
+	"github.com/cloudfoundry-incubator/lattice/cli/output"
+	"github.com/cloudfoundry-incubator/lattice/cli/test_helpers"
 )
 
 var _ = Describe("ConsoleTailedLogsOutputter", func() {

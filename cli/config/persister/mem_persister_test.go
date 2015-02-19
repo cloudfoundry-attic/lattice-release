@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
+	"github.com/cloudfoundry-incubator/lattice/cli/config/persister"
 )
 
 var _ = Describe("memPersister", func() {

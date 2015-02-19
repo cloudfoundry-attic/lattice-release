@@ -8,10 +8,10 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/onsi/gomega/gbytes"
-	"github.com/pivotal-cf-experimental/lattice-cli/integration_test/command_factory"
-	"github.com/pivotal-cf-experimental/lattice-cli/integration_test/fake_integration_test_runner"
-	"github.com/pivotal-cf-experimental/lattice-cli/output"
-	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
+	"github.com/cloudfoundry-incubator/lattice/cli/integration_test/command_factory"
+	"github.com/cloudfoundry-incubator/lattice/cli/integration_test/fake_integration_test_runner"
+	"github.com/cloudfoundry-incubator/lattice/cli/output"
+	"github.com/cloudfoundry-incubator/lattice/cli/test_helpers"
 )
 
 var _ = Describe("IntegrationTestCommandFactory", func() {

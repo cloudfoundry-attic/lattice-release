@@ -5,9 +5,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner"
-	"github.com/pivotal-cf-experimental/lattice-cli/app_examiner/command_factory/presentation"
-	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner"
+	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner/command_factory/presentation"
+	"github.com/cloudfoundry-incubator/lattice/cli/colors"
 )
 
 var _ = Describe("Presentation", func() {

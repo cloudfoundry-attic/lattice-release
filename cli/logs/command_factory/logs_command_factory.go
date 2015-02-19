@@ -2,9 +2,9 @@ package command_factory
 
 import (
 	"github.com/codegangsta/cli"
-	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler"
-	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter"
-	"github.com/pivotal-cf-experimental/lattice-cli/output"
+	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/cli/logs/console_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/cli/output"
 )
 
 type logsCommandFactory struct {

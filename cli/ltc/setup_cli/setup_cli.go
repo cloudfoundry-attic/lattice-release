@@ -5,16 +5,16 @@ import (
 	"os/signal"
 
 	"github.com/codegangsta/cli"
-	"github.com/pivotal-cf-experimental/lattice-cli/config"
-	"github.com/pivotal-cf-experimental/lattice-cli/config/config_helpers"
-	"github.com/pivotal-cf-experimental/lattice-cli/config/persister"
-	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/cli/config"
+	"github.com/cloudfoundry-incubator/lattice/cli/config/config_helpers"
+	"github.com/cloudfoundry-incubator/lattice/cli/config/persister"
+	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
 	"github.com/pivotal-golang/lager"
 
-	"github.com/pivotal-cf-experimental/lattice-cli/cli_app_factory"
-	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier"
-	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier/receptor_client_factory"
-	"github.com/pivotal-cf-experimental/lattice-cli/output"
+	"github.com/cloudfoundry-incubator/lattice/cli/cli_app_factory"
+	"github.com/cloudfoundry-incubator/lattice/cli/config/target_verifier"
+	"github.com/cloudfoundry-incubator/lattice/cli/config/target_verifier/receptor_client_factory"
+	"github.com/cloudfoundry-incubator/lattice/cli/output"
 )
 
 const (

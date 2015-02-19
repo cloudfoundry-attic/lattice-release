@@ -3,7 +3,7 @@ package colors_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-cf-experimental/lattice-cli/colors"
+	"github.com/cloudfoundry-incubator/lattice/cli/colors"
 )
 
 var _ = Describe("colors", func() {

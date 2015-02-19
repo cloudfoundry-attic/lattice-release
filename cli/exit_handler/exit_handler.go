@@ -1,7 +1,7 @@
 package exit_handler
 
 import (
-	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler/exit_codes"
+	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler/exit_codes"
 	"os"
 )
 

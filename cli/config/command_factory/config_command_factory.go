@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/codegangsta/cli"
-	"github.com/pivotal-cf-experimental/lattice-cli/config"
-	"github.com/pivotal-cf-experimental/lattice-cli/config/target_verifier"
-	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler"
-	"github.com/pivotal-cf-experimental/lattice-cli/exit_handler/exit_codes"
-	"github.com/pivotal-cf-experimental/lattice-cli/output"
+	"github.com/cloudfoundry-incubator/lattice/cli/config"
+	"github.com/cloudfoundry-incubator/lattice/cli/config/target_verifier"
+	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler/exit_codes"
+	"github.com/cloudfoundry-incubator/lattice/cli/output"
 )
 
 const TargetCommandName = "target"
