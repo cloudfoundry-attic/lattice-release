@@ -3,10 +3,8 @@ set -e
 
 export GOPATH=/workspace/diego-release
 export PATH="$PATH:$GOPATH/bin"
-
-export GOPATH=/workspace/diego-release
-mkdir -p $GOPATH/src/github.com/pivotal-cf-experimental
-echo "$(cp -rv lattice-cli $GOPATH/src/github.com/pivotal-cf-experimental)" #so that we can run locally without clobbering our lattice-cli repo
+mkdir -p $GOPATH/src/github.com/cloudfoundry-incubator/lattice
+echo "$(cp -rv lattice/cli $GOPATH/src/github.com/cloudfoundry-incubator/lattice)" #so that we can run locally without clobbering our lattice-cli repo
 
 echo "go getting cli dependencies..."
 go get -v -t github.com/cloudfoundry-incubator/lattice/cli/...
@@ -16,7 +14,7 @@ go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
 
 echo "Running lattice-cli tests..."
-./lattice-cli/scripts/test
+$GOPATH/src/github.com/cloudfoundry-incubator/lattice/cli/scripts/test
 echo "Tests Passed!!!"
 
 OUTDIR="/workspace/compiled-binaries"
@@ -29,8 +27,8 @@ GOARCH=amd64 GOOS=linux go build -o $OUTDIR/ltc-linux-amd64 github.com/cloudfoun
 GOARCH=amd64 GOOS=darwin go build -o $OUTDIR/ltc-darwin-amd64 github.com/cloudfoundry-incubator/lattice/cli/ltc
 
 echo "generating ltc-checksum file"
-pushd lattice-cli > /dev/null
-    git rev-parse HEAD > $OUTDIR/ltc-checksum
+pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/cli > /dev/null
+    git rev-parse HEAD > $OUTDIR/ltc-checksum #TODO: Do we even use the ltc-checksum anymore?
 popd > /dev/null
 
 echo "Compilation Succeeded!!! Building tar..."
