@@ -2,10 +2,10 @@ package command_factory
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
-	"sort"
 
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
@@ -15,11 +15,16 @@ import (
 	"github.com/pivotal-cf-experimental/lattice-cli/logs/console_tailed_logs_outputter"
 
 	"github.com/pivotal-cf-experimental/lattice-cli/output"
+	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 )
 
-const InvalidPortErrorMessage string = "Invalid port specified. Ports must be a comma-delimited list of integers."
+const (
+	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a comma-delimited list of integers between 0-65535."
+	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format route:port"
+	MustSetMonitoredPortErrorMessage = "Must set monitored-port when specifying multiple exposed ports unless --no-monitor is set."
+)
 
 type AppRunnerCommandFactory struct {
 	appRunnerCommand *appRunnerCommand
@@ -83,10 +88,17 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 			Name:  "ports, p",
 			Usage: "ports that the running process will listen on",
 		},
-        cli.IntFlag{
-            Name: "monitored-port",
-            Usage: "the port that lattice will monitor to ensure the app is up and running. Required if specifying multiple exposed ports.",
-        },
+		cli.IntFlag{
+			Name:  "monitored-port",
+			Usage: "the port that lattice will monitor to ensure the app is up and running. Required if specifying multiple exposed ports.",
+		},
+		cli.StringFlag{
+			Name: "routes",
+			Usage: `mapping of port to hostname. If specified, lattice will not generate any default routes.
+                    eg routes=8080:foo,443:bar
+                    will generate routes foo.<SystemIp>.xip.io => container port 8080 and bar.<SystemIp>.xip.io => container port 443
+            `,
+		},
 		cli.IntFlag{
 			Name:  "instances",
 			Usage: "number of container instances to launch",
@@ -176,14 +188,15 @@ type appRunnerCommand struct {
 }
 
 func (cmd *appRunnerCommand) startApp(context *cli.Context) {
-	workingDir := context.String("working-dir")
-	envVars := context.StringSlice("env")
-	instances := context.Int("instances")
-	memoryMB := context.Int("memory-mb")
-	diskMB := context.Int("disk-mb")
-	portFlag := context.String("ports")
-    monitoredPortFlag := context.Int("monitored-port")
-	noMonitor := context.Bool("no-monitor")
+	workingDirFlag := context.String("working-dir")
+	envVarsFlag := context.StringSlice("env")
+	instancesFlag := context.Int("instances")
+	memoryMBFlag := context.Int("memory-mb")
+	diskMBFlag := context.Int("disk-mb")
+	portsFlag := context.String("ports")
+	monitoredPortFlag := context.Int("monitored-port")
+	routesFlag := context.String("routes")
+	noMonitorFlag := context.Bool("no-monitor")
 	name := context.Args().Get(0)
 	dockerImage := context.Args().Get(1)
 	terminator := context.Args().Get(2)
@@ -211,7 +224,7 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	}
 
 	var portConfig docker_app_runner.PortConfig
-	if portFlag == "" && !imageMetadata.Ports.IsEmpty() {
+	if portsFlag == "" && !imageMetadata.Ports.IsEmpty() {
 		portStrs := make([]string, 0)
 		for _, port := range imageMetadata.Ports.Exposed {
 			portStrs = append(portStrs, strconv.Itoa(int(port)))
@@ -219,62 +232,62 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 
 		cmd.output.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s\n", strings.Join(portStrs, ", ")))
 		portConfig = imageMetadata.Ports
-	} else if portFlag == "" && imageMetadata.Ports.IsEmpty() && noMonitor {
+	} else if portsFlag == "" && imageMetadata.Ports.IsEmpty() && noMonitorFlag {
 		portConfig = docker_app_runner.PortConfig{
 			Monitored: 0,
 			Exposed:   []uint16{8080},
 		}
-	} else if portFlag == "" && imageMetadata.Ports.IsEmpty() {
+	} else if portsFlag == "" && imageMetadata.Ports.IsEmpty() {
 		cmd.output.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
 		portConfig = docker_app_runner.PortConfig{
 			Monitored: 8080,
 			Exposed:   []uint16{8080},
 		}
 	} else {
-        portStrings := strings.Split(portFlag, ",")
-        if len(portStrings) > 1 && monitoredPortFlag == 0 {
-            cmd.output.Say("Must set monitored-port when specifying multiple exposed ports.")
-            return
-        }
+		portStrings := strings.Split(portsFlag, ",")
+		if len(portStrings) > 1 && monitoredPortFlag == 0 && !noMonitorFlag {
+			cmd.output.Say(MustSetMonitoredPortErrorMessage)
+			return
+		}
 
-        sort.Strings(portStrings)
+		sort.Strings(portStrings)
 
-        convertedPorts := []uint16{}
+		convertedPorts := []uint16{}
 
-        for _ , p := range portStrings {
-            intPort, err := strconv.Atoi(p)
-            if err != nil{
-                cmd.output.Say(InvalidPortErrorMessage)
-                return
-            }
-            convertedPorts = append(convertedPorts, uint16(intPort))
-        }
+		for _, p := range portStrings {
+			intPort, err := strconv.Atoi(p)
+			if err != nil || intPort > 65535 {
+				cmd.output.Say(InvalidPortErrorMessage)
+				return
+			}
+			convertedPorts = append(convertedPorts, uint16(intPort))
+		}
 
-        var monitoredPort uint16
-        if len(portStrings) > 1 {
-            monitoredPort = uint16(monitoredPortFlag)
-        } else {
-            monitoredPort = convertedPorts[0]
-        }
+		var monitoredPort uint16
+		if len(portStrings) > 1 {
+			monitoredPort = uint16(monitoredPortFlag)
+		} else {
+			monitoredPort = convertedPorts[0]
+		}
 
-        portConfig = docker_app_runner.PortConfig{
+		portConfig = docker_app_runner.PortConfig{
 			Monitored: monitoredPort,
 			Exposed:   convertedPorts,
 		}
 	}
 
-	if workingDir == "" {
+	if workingDirFlag == "" {
 		cmd.output.Say("No working directory specified, using working directory from the image metadata...\n")
 		if imageMetadata.WorkingDir != "" {
-			workingDir = imageMetadata.WorkingDir
+			workingDirFlag = imageMetadata.WorkingDir
 			cmd.output.Say("Working directory is:\n")
-			cmd.output.Say(workingDir + "\n")
+			cmd.output.Say(workingDirFlag + "\n")
 		} else {
-			workingDir = "/"
+			workingDirFlag = "/"
 		}
 	}
 
-	if !noMonitor {
+	if !noMonitorFlag {
 		cmd.output.Say(fmt.Sprintf("Monitoring the app on port %d...\n", portConfig.Monitored))
 	} else {
 		cmd.output.Say("No ports will be monitored.\n")
@@ -290,19 +303,45 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		appArgs = imageMetadata.StartCommand[1:]
 	}
 
+	var overrideRoutes route_helpers.AppRoutes
+	routeMap := make(map[uint16][]string)
+	for _, routeStr := range strings.Split(routesFlag, ",") {
+		if routeStr == "" {
+			continue
+		}
+		routeArr := strings.Split(routeStr, ":")
+		maybePort, err := strconv.Atoi(routeArr[0])
+		if err != nil || len(routeArr) < 2 {
+			cmd.output.Say(MalformedRouteErrorMessage)
+			return
+		}
+
+		port := uint16(maybePort)
+		hostname := routeArr[1]
+		routeMap[port] = append(routeMap[port], hostname)
+	}
+
+	for port, hostnames := range routeMap {
+		overrideRoutes = append(overrideRoutes, route_helpers.AppRoute{
+			Hostnames: hostnames,
+			Port:      port,
+		})
+	}
+
 	err = cmd.appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
 		Name:                 name,
 		DockerImagePath:      dockerImage,
 		StartCommand:         startCommand,
 		AppArgs:              appArgs,
-		EnvironmentVariables: cmd.buildEnvironment(envVars),
+		EnvironmentVariables: cmd.buildEnvironment(envVarsFlag),
 		Privileged:           context.Bool("run-as-root"),
-		Monitor:              !noMonitor,
-		Instances:            instances,
-		MemoryMB:             memoryMB,
-		DiskMB:               diskMB,
+		Monitor:              !noMonitorFlag,
+		Instances:            instancesFlag,
+		MemoryMB:             memoryMBFlag,
+		DiskMB:               diskMBFlag,
 		Ports:                portConfig,
-		WorkingDir:           workingDir,
+		WorkingDir:           workingDirFlag,
+		OverrideRoutes:       overrideRoutes,
 	})
 
 	if err != nil {
@@ -316,7 +355,7 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 
 	ok := cmd.pollUntilSuccess(func() bool {
 		numberOfRunningInstances, _ := cmd.appRunner.NumOfRunningAppInstances(name)
-		return numberOfRunningInstances == instances
+		return numberOfRunningInstances == instancesFlag
 	}, false)
 
 	cmd.tailedLogsOutputter.StopOutputting()

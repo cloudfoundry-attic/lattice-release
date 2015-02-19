@@ -6,12 +6,12 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+    . "github.com/pivotal-cf-experimental/lattice-cli/test_helpers/matchers"
 
-	"github.com/cloudfoundry-incubator/receptor"
+    "github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-cf-experimental/lattice-cli/route_helpers"
-	"github.com/pivotal-cf-experimental/lattice-cli/test_helpers"
 
 	docker_app_runner "github.com/pivotal-cf-experimental/lattice-cli/app_runner/docker_app_runner"
 )
@@ -132,7 +132,7 @@ var _ = Describe("AppRunner", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Monitor).To(test_helpers.BeExactlyNil())
+				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Monitor).To(BeExactlyNil())
 			})
 		})
 

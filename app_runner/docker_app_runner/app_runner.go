@@ -42,6 +42,7 @@ type StartDockerAppParams struct {
 	DiskMB               int
 	Ports                PortConfig
 	WorkingDir           string
+	OverrideRoutes       route_helpers.AppRoutes
 }
 
 const (
