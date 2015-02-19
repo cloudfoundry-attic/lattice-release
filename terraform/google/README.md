@@ -1,7 +1,7 @@
 # Lattice Terraform templates for Google Cloud
 
 This project contains [Terraform](https://www.terraform.io/) templates to help you deploy
-[Lattice](https://github.com/pivotal-cf-experimental/lattice) on
+[Lattice](https://github.com/cloudfoundry-incubator/lattice) on
 [Google Cloud](https://cloud.google.com/).
 
 ## Usage
@@ -15,11 +15,11 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 
 ### Configure
 
-Create a `lattice.tf` file (or use the provided [example](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/google/lattice.tf.example)) and add the following contents updating the variables properly:
+Create a `lattice.tf` file (or use the provided [example](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/lattice.tf.example)) and add the following contents updating the variables properly:
 
 ```
 module "lattice" {
-    source = "github.com/pivotal-cf-experimental/lattice/terraform/google"
+    source = "github.com/cloudfoundry-incubator/lattice/terraform/google"
 
     # Path to the JSON file used to describe your account credentials, downloaded from Google Cloud Console
     gce_account_file = "<CHANGE-ME>"
@@ -105,5 +105,5 @@ terraform destroy
 
 ## Copyright
 
-See [LICENSE](https://github.com/pivotal-cf-experimental/lattice/blob/master/LICENSE) for details.
+See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).

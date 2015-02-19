@@ -1,7 +1,7 @@
 # Lattice Terraform templates for Amazon Web Services
 
 This project contains [Terraform](https://www.terraform.io/) templates to help you deploy
-[Lattice](https://github.com/pivotal-cf-experimental/lattice) on
+[Lattice](https://github.com/cloudfoundry-incubator/lattice) on
 [Amazon Web Services](http://aws.amazon.com/).
 
 ## Usage
@@ -14,11 +14,11 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 
 ### Configure
 
-Create a `lattice.tf` file (or use the provided [example](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/aws/lattice.tf.example)) and add the following contents updating the variables properly:
+Create a `lattice.tf` file (or use the provided [example](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/lattice.tf.example)) and add the following contents updating the variables properly:
 
 ```
 module "lattice-aws" {
-    source = "github.com/pivotal-cf-experimental/lattice/terraform/aws"
+    source = "github.com/cloudfoundry-incubator/lattice/terraform/aws"
 
     # AWS access key
     aws_access_key = "<CHANGE-ME>"
@@ -101,5 +101,5 @@ terraform destroy
 
 ## Copyright
 
-See [LICENSE](https://github.com/pivotal-cf-experimental/lattice/blob/master/LICENSE) for details.
+See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).

@@ -53,7 +53,7 @@ bump_and_push_lattice() {
         git pull origin develop
         git checkout master
         echo "merging master into develop"
-        git merge develop -m "Merge branch 'master' of github.com:pivotal-cf-experimental/lattice into develop
+        git merge develop -m "Merge branch 'master' of github.com:cloudfoundry-incubator/lattice into develop
 
         +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME , Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME"
 

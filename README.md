@@ -26,7 +26,7 @@ More complex workloads can be constructed and submitted directly to Lattice's Re
 
 Make sure you have [Vagrant](https://vagrantup.com/) installed, then:
 
-    $ git clone git@github.com:pivotal-cf-experimental/lattice.git
+    $ git clone git@github.com:cloudfoundry-incubator/lattice.git
     $ cd lattice
     $ vagrant up
 
@@ -94,32 +94,32 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 
 ### [Amazon Web Services](http://aws.amazon.com/):
 
-Create a `lattice.tf` file by downloading the [AWS example file](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/aws/lattice.tf.example):
+Create a `lattice.tf` file by downloading the [AWS example file](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/lattice.tf.example):
 
 ``` bash
-wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/aws/lattice.tf.example -O lattice.tf
+wget --quiet https://raw.githubusercontent.com/cloudfoundry-incubator/lattice/master/terraform/aws/lattice.tf.example -O lattice.tf
 ```
 
-Update the downloaded file filling the variables according to the [AWS README](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/aws/README.md) file.
+Update the downloaded file filling the variables according to the [AWS README](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md) file.
 
 ### [DigitalOcean](https://www.digitalocean.com):
 
-Create a `lattice.tf` file by downloading the [DigitalOcean example file](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/digitalocean/lattice.tf.example):
+Create a `lattice.tf` file by downloading the [DigitalOcean example file](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/lattice.tf.example):
 
 ``` bash
-wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/master/terraform/digitalocean/lattice.tf.example -O lattice.tf
+wget --quiet https://raw.githubusercontent.com/cloudfoundry-incubator/lattice/master/terraform/digitalocean/lattice.tf.example -O lattice.tf
 ```
 
-Update the downloaded file filling the variables according to the [DigitalOcean README](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/digitalocean/README.md) file.
+Update the downloaded file filling the variables according to the [DigitalOcean README](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md) file.
 
 ### [Google Cloud](https://cloud.google.com/):
 
-Create a `lattice.tf` file downloading the [Google Cloud example file](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/google/lattice.tf.example):
+Create a `lattice.tf` file downloading the [Google Cloud example file](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/lattice.tf.example):
 
 ``` bash
-wget --quiet https://raw.githubusercontent.com/pivotal-cf-experimental/lattice/lattice-terraform/master/google/lattice.tf.example -O lattice.tf
+wget --quiet https://raw.githubusercontent.com/cloudfoundry-incubator/lattice/lattice-terraform/master/google/lattice.tf.example -O lattice.tf
 ```
-Update the downloaded file filling the variables according to the [Google Cloud README](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/google/README.md) file.
+Update the downloaded file filling the variables according to the [Google Cloud README](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md) file.
 
 ## Deploying
 
@@ -167,7 +167,7 @@ Here are some ways *you* can contribute:
 * by writing specifications
 * by writing code (**no patch is too small**: fix typos, add comments, clean up inconsistent whitespace)
 * by refactoring code
-* by closing [issues](https://github.com/pivotal-cf-experimental/lattice/issues)
+* by closing [issues](https://github.com/cloudfoundry-incubator/lattice/issues)
 * by reviewing patches
 
 ##Development Workflow
@@ -176,7 +176,7 @@ Development work should be done on the develop branch.
 As a general rule, only CI should commit to master.
 
 ## Submitting an Issue
-We use the [GitHub issue tracker](https://github.com/pivotal-cf-experimental/lattice/issues) to track bugs and features.
+We use the [GitHub issue tracker](https://github.com/cloudfoundry-incubator/lattice/issues) to track bugs and features.
 Before submitting a bug report or feature request, check to make sure it hasn't already been submitted.
 You can indicate support for an existing issue by voting it up.
 When submitting a bug report, please include a [Gist](http://gist.github.com/) that includes a stack trace and any
@@ -193,5 +193,5 @@ Ideally, a bug report should include a pull request with failing specs.
 
 # Copyright
 
-See [LICENSE](https://github.com/pivotal-cf-experimental/lattice/blob/master/LICENSE) for details.
+See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).

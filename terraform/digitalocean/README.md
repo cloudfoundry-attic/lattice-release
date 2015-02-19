@@ -1,7 +1,7 @@
 # Lattice Terraform templates for DigitalOcean
 
 This project contains [Terraform](https://www.terraform.io/) templates to help you deploy
-[Lattice](https://github.com/pivotal-cf-experimental/lattice) on
+[Lattice](https://github.com/cloudfoundry-incubator/lattice) on
 [DigitalOcean](https://www.digitalocean.com).
 
 ## Usage
@@ -15,11 +15,11 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 
 ### Configure
 
-Create a `lattice.tf` file (or use the provided [example](https://github.com/pivotal-cf-experimental/lattice/blob/master/terraform/digitalocean/lattice.tf.example)) and add the following contents updating the variables properly:
+Create a `lattice.tf` file (or use the provided [example](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/lattice.tf.example)) and add the following contents updating the variables properly:
 
 ```
 module "lattice-digitalocean" {
-    source = "github.com/pivotal-cf-experimental/lattice/terraform/digitalocean"
+    source = "github.com/cloudfoundry-incubator/lattice/terraform/digitalocean"
 
     # Digital Ocean API token
     do_token = "<CHANGE-ME>"
@@ -121,5 +121,5 @@ from scratch.
 
 ## Copyright
 
-See [LICENSE](https://github.com/pivotal-cf-experimental/lattice/blob/master/LICENSE) for details.
+See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).
