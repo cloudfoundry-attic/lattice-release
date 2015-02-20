@@ -27,7 +27,7 @@ bump_and_push_lattice() {
         echo "Mismatch on diego-release SHA (git/gocd) :: ${diego_release_git_sha}/${GO_REVISION_DIEGO_RELEASE}"
     fi
 
-    pushd lattice
+    pushd diego-release/src/github.com/cloudfoundry-incubator/lattice
         previous_lattice_version=$(cat Version)
         new_lattice_version=$((previous_lattice_version+1))
         echo "$new_lattice_version" > Version
@@ -91,4 +91,4 @@ bump_and_push_lattice
 
 upload_lattice_to_s3
 
-./lattice/lattice-pipeline/03_promote_and_publish/helpers/publish_cli_if_changed
+./diego-release/src/github.com/cloudfoundry-incubator/lattice/lattice-pipeline/03_promote_and_publish/helpers/publish_cli_if_changed

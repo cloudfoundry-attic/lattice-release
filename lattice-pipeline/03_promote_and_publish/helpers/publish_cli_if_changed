@@ -3,7 +3,7 @@
 set -e
 
 get_previous_cli_version() {
-    pushd lattice-cli
+    pushd diego-release/src/github.com/cloudfoundry-incubator/lattice
         previous_cli_version=$(git tag -l --sort "-version:refname" "v[0-9]*" | head -1)
         previous_cli_sha=$(git rev-parse $previous_cli_version)
         echo "Previous cli version: $previous_cli_version"
@@ -11,7 +11,7 @@ get_previous_cli_version() {
 }
 
 sync_up_cli_tags_off_remote() {
-    pushd lattice-cli
+    pushd diego-release/src/github.com/cloudfoundry-incubator/lattice
         git tag -l | xargs git tag -d
         git fetch --tags
     popd
@@ -34,10 +34,10 @@ check_if_cli_needs_bump() {
 
 bump_cli_version() {
     get_previous_cli_version
-    pushd lattice-cli
+    pushd diego-release/src/github.com/cloudfoundry-incubator/lattice
         previous_cli_version_number=${previous_cli_version:1} #get rid of the v
-        new_cli_version="v$((previous_cli_version_number+1))" &&
-        git tag -a "$new_cli_version" -m "$(date)" $current_cli_sha &&
+        new_cli_version="v$((previous_cli_version_number+1))"
+        git tag -a "$new_cli_version" -m "$(date)" $current_cli_sha
         git push origin --tags
     popd
 
