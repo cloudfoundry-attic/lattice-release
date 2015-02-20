@@ -2,15 +2,15 @@
 
 set -e
 
-pushd cf-release/src/loggregator
+pushd /workspace/cf-release/src/loggregator
    git submodule update --init --recursive
 popd
 
-lattice/lattice-pipeline/helpers/run_with_docker \
- lattice/compile \
+./diego-release/src/github.com/cloudfoundry-incubator/lattice/compile \
     /workspace/lattice-build \
     /workspace/diego-release \
     /workspace/cf-release \
-    /workspace/lattice
+    /workspace/diego-release/src/github.com/cloudfoundry-incubator/lattice
 
-tar -czf lattice.tgz lattice-build
+echo "Creating lattice.tgz"
+tar cvzf lattice.tgz lattice-build
