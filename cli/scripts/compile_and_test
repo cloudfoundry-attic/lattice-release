@@ -3,8 +3,6 @@ set -e
 
 export GOPATH=/workspace/diego-release
 export PATH="$PATH:$GOPATH/bin"
-mkdir -p $GOPATH/src/github.com/cloudfoundry-incubator/lattice
-echo "$(cp -rv lattice/cli $GOPATH/src/github.com/cloudfoundry-incubator/lattice)" #so that we can run locally without clobbering our lattice-cli repo
 
 echo "go getting cli dependencies..."
 go get -v -t github.com/cloudfoundry-incubator/lattice/cli/...
