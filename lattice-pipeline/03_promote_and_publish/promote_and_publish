@@ -6,7 +6,7 @@ upload_lattice_to_s3() {
     echo "upload to s3"
     aws s3 cp $lattice_tar_path "s3://lattice/lattice-latest.tgz"
     aws s3 cp $lattice_tar_path "s3://lattice/lattice-${new_lattice_version}.tgz"
-    aws s3 cp lattice/Version "s3://lattice/Version"
+    aws s3 cp diego-release/src/github.com/cloudfoundry-incubator/lattice/Version "s3://lattice/Version"
 
     lattice_s3_url="http://lattice.s3.amazonaws.com/lattice-latest.tgz"
     echo $lattice_s3_url
