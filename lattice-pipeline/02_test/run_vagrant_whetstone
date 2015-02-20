@@ -4,7 +4,7 @@ set -e
 save_logs() {
     echo "save logs"
 
-    pushd $WORKSPACE_DIR/lattice
+    pushd $WORKSPACE_DIR/diego-release/src/github.com/cloudfoundry-incubator/lattice
         vagrant ssh -c "sudo tar -czf /vagrant/vagrant_upstart_logs.tgz /var/log/upstart /var/lattice/log"
     popd
 
@@ -13,7 +13,7 @@ save_logs() {
 
 cleanup_vagrant() {
     echo "cleaning up vagrant"
-    pushd $WORKSPACE_DIR/lattice
+    pushd $WORKSPACE_DIR/diego-release/src/github.com/cloudfoundry-incubator/lattice
         vagrant destroy --force
     popd
 }
@@ -26,7 +26,7 @@ cleanup(){
 
 start_lattice_vagrant(){
     cp $LATTICE_TAR_PATH lattice
-    pushd $WORKSPACE_DIR/lattice
+    pushd $WORKSPACE_DIR/diego-release/src/github.com/cloudfoundry-incubator/lattice
         vagrant up --provider=virtualbox
         export $(cat .lattice-environment)
     popd

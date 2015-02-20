@@ -28,7 +28,7 @@ cleanup(){
 }
 
 setup_and_run_whetstone(){
-    source $WORKSPACE_DIR/lattice/lattice-pipeline/02_test/helpers/setup_whetstone
+    source $WORKSPACE_DIR/diego-release/src/github.com/cloudfoundry-incubator/lattice/lattice-pipeline/02_test/helpers/setup_whetstone
     setup_whetstone
 
     echo "=========================Lattice Integration Tests=============================\n"
@@ -52,7 +52,7 @@ generate_terraform_configuration_file(){
 
 export DIEGO_RELEASE_PATH=$1
 export LATTICE_TAR_PATH=$2
-WORKSPACE_DIR=`pwd`
+WORKSPACE_DIR=/workspace
 export TF_WORKING_DIR=/var/tf-working #This is NOT within the shared folder mounted by docker, so that it goes away every run
 
 mkdir -pv $TF_WORKING_DIR
