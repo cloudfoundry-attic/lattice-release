@@ -4,11 +4,11 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/codegangsta/cli"
 	"github.com/cloudfoundry-incubator/lattice/cli/config"
 	"github.com/cloudfoundry-incubator/lattice/cli/config/config_helpers"
 	"github.com/cloudfoundry-incubator/lattice/cli/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
+	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/lager"
 
 	"github.com/cloudfoundry-incubator/lattice/cli/cli_app_factory"
@@ -22,6 +22,10 @@ const (
 	timeoutVar        = "LATTICE_CLI_TIMEOUT"
 )
 
+var (
+	latticeVersion string // provided by linker argument at compile-time
+)
+
 func NewCliApp() *cli.App {
 	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(ltcConfigRoot())))
 
@@ -31,7 +35,7 @@ func NewCliApp() *cli.App {
 	go exitHandler.Run()
 
 	targetVerifier := target_verifier.New(receptor_client_factory.MakeReceptorClient)
-	app := cli_app_factory.MakeCliApp(os.Getenv(timeoutVar), ltcConfigRoot(), exitHandler, config, logger(), targetVerifier, output.New(os.Stdout))
+	app := cli_app_factory.MakeCliApp(os.Getenv(timeoutVar), latticeVersion, ltcConfigRoot(), exitHandler, config, logger(), targetVerifier, output.New(os.Stdout))
 	return app
 }
 

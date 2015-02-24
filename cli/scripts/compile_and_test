@@ -20,9 +20,21 @@ mkdir -p $OUTDIR
 export GOBIN="$OUTDIR"
 rm -rf $GOPATH/pkg/*
 
-echo "Compiling cli..."
-GOARCH=amd64 GOOS=linux go build -o $OUTDIR/ltc-linux-amd64 github.com/cloudfoundry-incubator/lattice/cli/ltc
-GOARCH=amd64 GOOS=darwin go build -o $OUTDIR/ltc-darwin-amd64 github.com/cloudfoundry-incubator/lattice/cli/ltc
+pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice > /dev/null
+    version_from_file=$(<LATTICE_VERSION)
+popd > /dev/null
+
+echo "Compiling cli ($version_from_file)..."
+
+GOARCH=amd64 GOOS=linux go build \
+    -ldflags "-X github.com/cloudfoundry-incubator/lattice/cli/ltc/setup_cli.latticeVersion $version_from_file" \
+    -o $OUTDIR/ltc-linux-amd64 \
+    github.com/cloudfoundry-incubator/lattice/cli/ltc
+
+GOARCH=amd64 GOOS=darwin go build \
+    -ldflags "-X github.com/cloudfoundry-incubator/lattice/cli/ltc/setup_cli.latticeVersion $version_from_file" \
+    -o $OUTDIR/ltc-darwin-amd64 \
+    github.com/cloudfoundry-incubator/lattice/cli/ltc
 
 echo "generating ltc-checksum file"
 pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/cli > /dev/null

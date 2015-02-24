@@ -7,9 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/cloudfoundry/noaa"
-	"github.com/codegangsta/cli"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_metadata_fetcher"
@@ -20,6 +17,9 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/cli/logs"
 	"github.com/cloudfoundry-incubator/lattice/cli/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/cli/output"
+	"github.com/cloudfoundry-incubator/receptor"
+	"github.com/cloudfoundry/noaa"
+	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 
@@ -36,17 +36,18 @@ var nonTargetVerifiedCommandNames = map[string]struct{}{
 }
 
 const (
-	LtcUsage = "Command line interface for Lattice."
-	AppName  = "ltc"
-
+	LtcUsage          = "Command line interface for Lattice."
+	AppName           = "ltc"
+	latticeCliAuthor  = "Pivotal"
 	latticeCliHomeVar = "LATTICE_CLI_HOME"
 )
 
-func MakeCliApp(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) *cli.App {
+func MakeCliApp(timeoutStr, latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) *cli.App {
 	config.Load()
 	app := cli.NewApp()
 	app.Name = AppName
-	app.Author = "Pivotal"
+	app.Author = latticeCliAuthor
+	app.Version = defaultVersion(latticeVersion)
 	app.Usage = LtcUsage
 	app.Commands = cliCommands(timeoutStr, ltcConfigRoot, exitHandler, config, logger, targetVerifier, output)
 
@@ -134,4 +135,11 @@ func Timeout(timeoutEnv string) time.Duration {
 
 func LoggregatorUrl(loggregatorTarget string) string {
 	return "ws://" + loggregatorTarget
+}
+
+func defaultVersion(latticeVersion string) string {
+	if latticeVersion == "" {
+		return "development (not versioned)"
+	}
+	return latticeVersion
 }

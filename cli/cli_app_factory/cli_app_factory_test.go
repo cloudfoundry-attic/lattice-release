@@ -6,9 +6,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"github.com/codegangsta/cli"
 	"github.com/onsi/gomega/gbytes"
+
 	"github.com/cloudfoundry-incubator/lattice/cli/cli_app_factory"
 	"github.com/cloudfoundry-incubator/lattice/cli/config"
 	"github.com/cloudfoundry-incubator/lattice/cli/config/persister"
@@ -16,6 +15,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/cli/output"
 	"github.com/cloudfoundry-incubator/lattice/cli/test_helpers"
+	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/lager"
 
 	config_command_factory "github.com/cloudfoundry-incubator/lattice/cli/config/command_factory"
@@ -28,32 +28,53 @@ var _ = Describe("CliAppFactory", func() {
 		outputBuffer       *gbytes.Buffer
 		cliApp             *cli.App
 		cliConfig          *config.Config
+		latticeVersion     string
 	)
+
 	BeforeEach(func() {
 		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 		memPersister = persister.NewMemPersister()
 		outputBuffer = gbytes.NewBuffer()
 		cliConfig = config.New(memPersister)
-		cliApp = cli_app_factory.MakeCliApp(
-			"30",
-			"~/",
-			&fake_exit_handler.FakeExitHandler{},
-			cliConfig,
-			lager.NewLogger("test"),
-			fakeTargetVerifier,
-			output.New(outputBuffer),
-		)
+		latticeVersion = "v0.2.Test"
 	})
+
+    JustBeforeEach(func() {
+        cliApp = cli_app_factory.MakeCliApp(
+        "30",
+        latticeVersion,
+        "~/",
+        &fake_exit_handler.FakeExitHandler{},
+        cliConfig,
+        lager.NewLogger("test"),
+        fakeTargetVerifier,
+        output.New(outputBuffer),
+        )
+    })
 
 	Describe("MakeCliApp", func() {
 		It("makes an app", func() {
 			Expect(cliApp).ToNot(BeNil())
 			Expect(cliApp.Name).To(Equal("ltc"))
+			Expect(cliApp.Author).To(Equal("Pivotal"))
+			Expect(cliApp.Version).To(Equal("v0.2.Test"))
 			Expect(cliApp.Usage).To(Equal(cli_app_factory.LtcUsage))
 			Expect(cliApp.Commands).NotTo(BeEmpty())
 		})
 
-		Describe("App's before Action", func() {
+		Context("when invoked with empty version", func() {
+
+			BeforeEach(func() {
+				latticeVersion = ""
+			})
+
+			It("defaults the version", func() {
+				Expect(cliApp).ToNot(BeNil())
+				Expect(cliApp.Version).To(Equal("development (not versioned)"))
+			})
+		})
+
+		Describe("App's Before Action", func() {
 			Context("when running the target command", func() {
 				It("does not verify the current target", func() {
 					cliConfig.SetTarget("my-lattice.example.com")
@@ -105,6 +126,7 @@ var _ = Describe("CliAppFactory", func() {
 					Expect(commandRan).To(Equal(true))
 				})
 			})
+
 			Context("when running the bare ltc command", func() {
 				It("does not verify the current target", func() {
 					cliConfig.SetTarget("my-lattice.example.com")
