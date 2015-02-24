@@ -12,7 +12,7 @@ import (
 
 //go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 type AppRunner interface {
-	StartDockerApp(params StartDockerAppParams) error
+	CreateDockerApp(params CreateDockerAppParams) error
 	ScaleApp(name string, instances int) error
 	RemoveApp(name string) error
 	AppExists(name string) (bool, error)
@@ -35,9 +35,9 @@ func (portConfig PortConfig) IsEmpty() bool {
 	return len(portConfig.Exposed) == 0
 }
 
-type StartDockerAppParams struct {
+type CreateDockerAppParams struct {
 	Name                 string
-	StartCommand         string
+	StartCommand        string
 	DockerImagePath      string
 	AppArgs              []string
 	EnvironmentVariables map[string]string
@@ -65,7 +65,7 @@ func New(receptorClient receptor.Client, systemDomain string) AppRunner {
 	return &appRunner{receptorClient, systemDomain}
 }
 
-func (appRunner *appRunner) StartDockerApp(params StartDockerAppParams) error {
+func (appRunner *appRunner) CreateDockerApp(params CreateDockerAppParams) error {
 	if exists, err := appRunner.desiredLRPExists(params.Name); err != nil {
 		return err
 	} else if exists {
@@ -145,7 +145,7 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 	return false, nil
 }
 
-func (appRunner *appRunner) desireLrp(params StartDockerAppParams) error {
+func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 	dockerImageUrl, err := docker_repository_name_formatter.FormatForReceptor(params.DockerImagePath)
 	if err != nil {
 		return err

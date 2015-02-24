@@ -29,13 +29,13 @@ var _ = Describe("AppRunner", func() {
 
 	})
 
-	Describe("StartDockerApp", func() {
+	Describe("CreateDockerApp", func() {
 		It("Upserts lattice domain so that it is always fresh, then starts the Docker App", func() {
 			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 
 			args := []string{"app", "arg1", "--app", "arg 2"}
 			envs := map[string]string{"APPROOT": "/root/env/path"}
-			err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
+			err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 				Name:                 "americano-app",
 				StartCommand:         "/app-run-statement",
 				DockerImagePath:      "runtest/runner",
@@ -95,7 +95,7 @@ var _ = Describe("AppRunner", func() {
 			It("uses the override Routes instead of the defaults", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 
-				err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
+				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 					Name:            "americano-app",
 					StartCommand:    "/app-run-statement",
 					DockerImagePath: "runtest/runner",
@@ -120,7 +120,7 @@ var _ = Describe("AppRunner", func() {
 			It("Does not pass a monitor action, regardless of whether or not a monitor port is passed", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 
-				err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
+				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 					Name:            "americano-app",
 					StartCommand:    "/app-run-statement",
 					DockerImagePath: "runtest/runner",
@@ -139,7 +139,7 @@ var _ = Describe("AppRunner", func() {
 			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "app-already-desired", Instances: 1}}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 
-			err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
+			err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 				Name:                 "app-already-desired",
 				StartCommand:         "faily/boom",
 				DockerImagePath:      "/app-bork-statement",
@@ -159,7 +159,7 @@ var _ = Describe("AppRunner", func() {
 
 		Context("when the docker repo url is malformed", func() {
 			It("Returns an error", func() {
-				err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
+				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 					Name:                 "nescafe-app",
 					StartCommand:         "/app",
 					DockerImagePath:      "¥¥¥Bad-Docker¥¥¥",
@@ -182,7 +182,7 @@ var _ = Describe("AppRunner", func() {
 				upsertError := errors.New("You're not that fresh, buddy.")
 				fakeReceptorClient.UpsertDomainReturns(upsertError)
 
-				err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
+				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 					Name:                 "nescafe-app",
 					StartCommand:         "faily/boom",
 					DockerImagePath:      "borked_app",
@@ -203,7 +203,7 @@ var _ = Describe("AppRunner", func() {
 				receptorError := errors.New("error - Desiring an LRP")
 				fakeReceptorClient.CreateDesiredLRPReturns(receptorError)
 
-				err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
+				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 					Name:                 "nescafe-app",
 					StartCommand:         "faily/boom",
 					DockerImagePath:      "borked_app",
@@ -223,7 +223,7 @@ var _ = Describe("AppRunner", func() {
 				receptorError := errors.New("error - Existing Count")
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
 
-				err := appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
+				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 					Name:                 "nescafe-app",
 					StartCommand:         "faily/boom",
 					DockerImagePath:      "/app-bork-statement",

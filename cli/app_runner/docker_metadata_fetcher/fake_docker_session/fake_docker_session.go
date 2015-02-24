@@ -4,8 +4,8 @@ package fake_docker_session
 import (
 	"sync"
 
-	"github.com/docker/docker/registry"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_metadata_fetcher"
+	"github.com/docker/docker/registry"
 )
 
 type FakeDockerSession struct {

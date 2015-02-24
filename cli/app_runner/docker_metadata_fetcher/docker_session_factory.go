@@ -1,20 +1,19 @@
 package docker_metadata_fetcher
 
-//go:generate counterfeiter -o fake_docker_session/fake_docker_session.go . DockerSession
-//go:generate counterfeiter -o fake_docker_session/fake_docker_session_factory.go . DockerSessionFactory
-
 import (
 	"fmt"
 	"github.com/docker/docker/registry"
 	"github.com/docker/docker/utils"
 )
 
+//go:generate counterfeiter -o fake_docker_session/fake_docker_session.go . DockerSession
 type DockerSession interface {
 	GetRepositoryData(remote string) (*registry.RepositoryData, error)
 	GetRemoteTags(registries []string, repository string, token []string) (map[string]string, error)
 	GetRemoteImageJSON(imgID, registry string, token []string) ([]byte, int, error)
 }
 
+//go:generate counterfeiter -o fake_docker_session/fake_docker_session_factory.go . DockerSessionFactory
 type DockerSessionFactory interface {
 	MakeSession(repoName string) (DockerSession, error)
 }

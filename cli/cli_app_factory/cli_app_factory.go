@@ -112,7 +112,7 @@ func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.Exit
 	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner, output)
 
 	return []cli.Command{
-		appRunnerCommandFactory.MakeStartAppCommand(),
+		appRunnerCommandFactory.MakeCreateAppCommand(),
 		appRunnerCommandFactory.MakeScaleAppCommand(),
 		appRunnerCommandFactory.MakeStopAppCommand(),
 		appRunnerCommandFactory.MakeRemoveAppCommand(),

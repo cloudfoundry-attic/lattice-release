@@ -1,6 +1,5 @@
 package docker_metadata_fetcher
 
-//go:generate counterfeiter -o fake_docker_metadata_fetcher/fake_docker_metadata_fetcher.go . DockerMetadataFetcher
 
 import (
 	"fmt"
@@ -17,6 +16,7 @@ type ImageMetadata struct {
 	StartCommand []string
 }
 
+//go:generate counterfeiter -o fake_docker_metadata_fetcher/fake_docker_metadata_fetcher.go . DockerMetadataFetcher
 type DockerMetadataFetcher interface {
 	FetchMetadata(repoName string, tag string) (*ImageMetadata, error)
 }

@@ -56,9 +56,9 @@ func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunner
 	}
 }
 
-func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command {
+func (commandFactory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 
-	var startFlags = []cli.Flag{
+	var createFlags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "working-dir, w",
 			Usage: "working directory to assign to the running process.",
@@ -109,11 +109,11 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 		},
 	}
 
-	var startCommand = cli.Command{
-		Name:      "start",
-		ShortName: "s",
-		Usage:     "ltc start APP_NAME DOCKER_IMAGE",
-		Description: `Start a docker app on lattice
+	var createCommand = cli.Command{
+		Name:      "create",
+		ShortName: "c",
+		Usage:     "ltc create APP_NAME DOCKER_IMAGE",
+		Description: `Create a docker app on lattice
    
    APP_NAME is required and must be unique across the Lattice cluster
    DOCKER_IMAGE is required and must match the standard docker image format
@@ -123,20 +123,20 @@ func (commandFactory *AppRunnerCommandFactory) MakeStartAppCommand() cli.Command
 
    ltc will fetch the command associated with your Docker image.
    To provide a custom command:
-   ltc start APP_NAME DOCKER_IMAGE <optional flags> -- START_COMMAND APP_ARG1 APP_ARG2 ...
+   ltc create APP_NAME DOCKER_IMAGE <optional flags> -- START_COMMAND APP_ARG1 APP_ARG2 ...
 
    ltc will also fetch the working directory associated with your Docker image.
    If the image does not specify a working directory, ltc will default the working directory to "/"
    To provide a custom working directory:
-   ltc start APP_NAME DOCKER_IMAGE --working-dir=/foo/app-folder -- START_COMMAND APP_ARG1 APP_ARG2 ...
+   ltc create APP_NAME DOCKER_IMAGE --working-dir=/foo/app-folder -- START_COMMAND APP_ARG1 APP_ARG2 ...
 
    To specify environment variables:
-   ltc start APP_NAME DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE`,
-		Action: commandFactory.appRunnerCommand.startApp,
-		Flags:  startFlags,
+   ltc create APP_NAME DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE`,
+		Action: commandFactory.appRunnerCommand.createApp,
+		Flags:  createFlags,
 	}
 
-	return startCommand
+	return createCommand
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
@@ -151,6 +151,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeStopAppCommand() cli.Command {
+
 
 	var stopCommand = cli.Command{
 		Name: "stop",
@@ -186,7 +187,7 @@ type appRunnerCommand struct {
 	tailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
 }
 
-func (cmd *appRunnerCommand) startApp(context *cli.Context) {
+func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 	workingDirFlag := context.String("working-dir")
 	envVarsFlag := context.StringSlice("env")
 	instancesFlag := context.Int("instances")
@@ -320,10 +321,10 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 		routeOverrides = append(routeOverrides, docker_app_runner.RouteOverride{HostnamePrefix: hostnamePrefix, Port: port})
 	}
 
-	err = cmd.appRunner.StartDockerApp(docker_app_runner.StartDockerAppParams{
+	err = cmd.appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 		Name:                 name,
 		DockerImagePath:      dockerImage,
-		StartCommand:         startCommand,
+		StartCommand:        startCommand,
 		AppArgs:              appArgs,
 		EnvironmentVariables: cmd.buildEnvironment(envVarsFlag),
 		Privileged:           context.Bool("run-as-root"),
@@ -337,11 +338,11 @@ func (cmd *appRunnerCommand) startApp(context *cli.Context) {
 	})
 
 	if err != nil {
-		cmd.output.Say(fmt.Sprintf("Error Starting App: %s", err))
+		cmd.output.Say(fmt.Sprintf("Error Creating App: %s", err))
 		return
 	}
 
-	cmd.output.Say("Starting App: " + name + "\n")
+	cmd.output.Say("Creating App: " + name + "\n")
 
 	go cmd.tailedLogsOutputter.OutputTailedLogs(name)
 

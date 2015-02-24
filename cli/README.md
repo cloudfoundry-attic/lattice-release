@@ -7,7 +7,7 @@
 With `ltc` you can:
 
 - `target` a Lattice deployment
-- `start`, `scale`, `stop` and `remove` Dockerimage-based applications
+- `create`, `scale`, `stop` and `remove` Dockerimage-based applications
 - tail `logs` for your running applications
 - `list` all running applications and `visualize` their distributions across the Lattice cluster
 - fetch detail `status` information for a running application
@@ -72,7 +72,7 @@ When deployed to a cloud provider using Terraform you can inspect the resulting 
 ### Start a docker-based app:
 
 ```
-ltc start APP_NAME DOCKER_IMAGE
+ltc create APP_NAME DOCKER_IMAGE
 ```
 
 will start a Dockerimage-based application on Lattice.
@@ -80,10 +80,10 @@ will start a Dockerimage-based application on Lattice.
 We have a simple demo-application that you can play with:
 
 ```
-ltc start lattice-app cloudfoundry/lattice-app
+ltc create lattice-app cloudfoundry/lattice-app
 ```
 
-`ltc help start` documents a number of useful options for starting your application.
+`ltc help create` documents a number of useful options for starting your application.
 
 ### Tail an app's logs:
 
@@ -116,7 +116,7 @@ Will print an ascii-art representation of the distribution of containers across 
 ### Example Usage:
 
     ltc target 192.168.11.11.xip.io
-    ltc start lattice-app cloudfoundry/lattice-app
+    ltc create lattice-app cloudfoundry/lattice-app
     ltc logs lattice-app
 
 To view the app in a browser visit http://lattice-app.192.168.11.11.xip.io/

@@ -104,7 +104,7 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 			})
 
 			It("eventually runs a docker app", func() {
-				runner.startDockerApp(timeout, appName, "cloudfoundry/lattice-app", "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Lattice User", "--quiet")
+				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app", "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Lattice User", "--quiet")
 
 				Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
@@ -122,7 +122,7 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 			})
 
 			It("eventually runs a docker app with metadata from Docker Hub", func() {
-				runner.startDockerApp(timeout, appName, "cloudfoundry/lattice-app")
+				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app")
 
 				Eventually(errorCheckForRoute(route), timeout, .5).ShouldNot(HaveOccurred())
 			})
@@ -130,11 +130,11 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 	})
 }
 
-func (runner *integrationTestRunner) startDockerApp(timeout time.Duration, appName string, args ...string) {
+func (runner *integrationTestRunner) createDockerApp(timeout time.Duration, appName string, args ...string) {
 
-	fmt.Fprintf(GinkgoWriter, colors.PurpleUnderline(fmt.Sprintf("Attempting to start %s\n", appName)))
-	startArgs := append([]string{"start", appName}, args...)
-	command := runner.command(timeout, startArgs...)
+	fmt.Fprintf(GinkgoWriter, colors.PurpleUnderline(fmt.Sprintf("Attempting to create %s\n", appName)))
+	createArgs := append([]string{"create", appName}, args...)
+	command := runner.command(timeout, createArgs...)
 
 	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
@@ -142,7 +142,7 @@ func (runner *integrationTestRunner) startDockerApp(timeout time.Duration, appNa
 	expectExit(timeout, session)
 
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
-	fmt.Fprintf(GinkgoWriter, "Yay! Started %s\n", appName)
+	fmt.Fprintf(GinkgoWriter, "Yay! Created %s\n", appName)
 }
 
 func (runner *integrationTestRunner) streamLogs(timeout time.Duration, appName string) *gexec.Session {

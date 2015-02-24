@@ -8,12 +8,12 @@ import (
 )
 
 type FakeAppRunner struct {
-	StartDockerAppStub        func(params docker_app_runner.StartDockerAppParams) error
-	startDockerAppMutex       sync.RWMutex
-	startDockerAppArgsForCall []struct {
-		params docker_app_runner.StartDockerAppParams
+	CreateDockerAppStub        func(params docker_app_runner.CreateDockerAppParams) error
+	createDockerAppMutex       sync.RWMutex
+	createDockerAppArgsForCall []struct {
+		params docker_app_runner.CreateDockerAppParams
 	}
-	startDockerAppReturns struct {
+	createDockerAppReturns struct {
 		result1 error
 	}
 	ScaleAppStub        func(name string, instances int) error
@@ -53,34 +53,34 @@ type FakeAppRunner struct {
 	}
 }
 
-func (fake *FakeAppRunner) StartDockerApp(params docker_app_runner.StartDockerAppParams) error {
-	fake.startDockerAppMutex.Lock()
-	fake.startDockerAppArgsForCall = append(fake.startDockerAppArgsForCall, struct {
-		params docker_app_runner.StartDockerAppParams
+func (fake *FakeAppRunner) CreateDockerApp(params docker_app_runner.CreateDockerAppParams) error {
+	fake.createDockerAppMutex.Lock()
+	fake.createDockerAppArgsForCall = append(fake.createDockerAppArgsForCall, struct {
+		params docker_app_runner.CreateDockerAppParams
 	}{params})
-	fake.startDockerAppMutex.Unlock()
-	if fake.StartDockerAppStub != nil {
-		return fake.StartDockerAppStub(params)
+	fake.createDockerAppMutex.Unlock()
+	if fake.CreateDockerAppStub != nil {
+		return fake.CreateDockerAppStub(params)
 	} else {
-		return fake.startDockerAppReturns.result1
+		return fake.createDockerAppReturns.result1
 	}
 }
 
-func (fake *FakeAppRunner) StartDockerAppCallCount() int {
-	fake.startDockerAppMutex.RLock()
-	defer fake.startDockerAppMutex.RUnlock()
-	return len(fake.startDockerAppArgsForCall)
+func (fake *FakeAppRunner) CreateDockerAppCallCount() int {
+	fake.createDockerAppMutex.RLock()
+	defer fake.createDockerAppMutex.RUnlock()
+	return len(fake.createDockerAppArgsForCall)
 }
 
-func (fake *FakeAppRunner) StartDockerAppArgsForCall(i int) docker_app_runner.StartDockerAppParams {
-	fake.startDockerAppMutex.RLock()
-	defer fake.startDockerAppMutex.RUnlock()
-	return fake.startDockerAppArgsForCall[i].params
+func (fake *FakeAppRunner) CreateDockerAppArgsForCall(i int) docker_app_runner.CreateDockerAppParams {
+	fake.createDockerAppMutex.RLock()
+	defer fake.createDockerAppMutex.RUnlock()
+	return fake.createDockerAppArgsForCall[i].params
 }
 
-func (fake *FakeAppRunner) StartDockerAppReturns(result1 error) {
-	fake.StartDockerAppStub = nil
-	fake.startDockerAppReturns = struct {
+func (fake *FakeAppRunner) CreateDockerAppReturns(result1 error) {
+	fake.CreateDockerAppStub = nil
+	fake.createDockerAppReturns = struct {
 		result1 error
 	}{result1}
 }
