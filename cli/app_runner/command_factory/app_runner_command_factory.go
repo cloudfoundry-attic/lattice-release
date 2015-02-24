@@ -150,20 +150,6 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command
 	return scaleCommand
 }
 
-func (commandFactory *AppRunnerCommandFactory) MakeStopAppCommand() cli.Command {
-
-	var stopCommand = cli.Command{
-		Name: "stop",
-		Description: `Stop a docker app on lattice
-
-   The application can be restarted with ltc scale`,
-		Usage:  "ltc stop APP_NAME",
-		Action: commandFactory.appRunnerCommand.stopApp,
-	}
-
-	return stopCommand
-}
-
 func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	var removeCommand = cli.Command{
 		Name:        "remove",
@@ -380,17 +366,6 @@ func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 	}
 
 	cmd.setAppInstances(appName, instances)
-}
-
-func (cmd *appRunnerCommand) stopApp(c *cli.Context) {
-	appName := c.Args().First()
-
-	if appName == "" {
-		cmd.output.IncorrectUsage("App Name required")
-		return
-	}
-
-	cmd.setAppInstances(appName, 0)
 }
 
 func (cmd *appRunnerCommand) setAppInstances(appName string, instances int) {

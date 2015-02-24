@@ -7,7 +7,7 @@
 With `ltc` you can:
 
 - `target` a Lattice deployment
-- `create`, `scale`, `stop` and `remove` Dockerimage-based applications
+- `create`, `scale` and `remove` Dockerimage-based applications
 - tail `logs` for your running applications
 - `list` all running applications and `visualize` their distributions across the Lattice cluster
 - fetch detail `status` information for a running application
