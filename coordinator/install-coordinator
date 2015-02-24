@@ -2,7 +2,9 @@
 
 set -e
 
-echo "Installing Lattice - Coordinator"
+lattice_version=$(< /var/lattice/LATTICE_VERSION)
+
+echo "Installing Lattice ($lattice_version) - Coordinator"
 
 lattice_coordinator_path=/tmp/lattice-build/coordinator
 
@@ -29,7 +31,5 @@ start bootstrap &>> /var/lattice/log/coordinator-bootstrap.log
 
 export $(cat /var/lattice/setup/lattice-environment)
 
-echo "Finished!
-Lattice is now installed and running. You may target it with the Lattice cli via:
-ltc target $SYSTEM_DOMAIN"
+echo "Finished Installing Lattice Coordinator ($lattice_version)!"
 

@@ -135,6 +135,8 @@ rm -rf $GOPATH/pkg/*
 mkdir -pv $OUTPUT_DIR/common/
 cp -av $LATTICE_PATH/common/* $OUTPUT_DIR/common/
 
+cp -v $LATTICE_PATH/LATTICE_VERSION $OUTPUT_DIR/common/
+
 compile_lattice-cell
 compile_coordinator
 

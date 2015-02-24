@@ -2,7 +2,10 @@
 
 set -e
 
-echo "Installing Lattice Cell"
+lattice_version=$(< /var/lattice/LATTICE_VERSION)
+
+echo "Installing Lattice ($lattice_version) - Lattice Cell"
+
 lattice_cell_build_path=/tmp/lattice-build/lattice-cell
 
 install_dependencies() {
@@ -47,4 +50,4 @@ mkdir -pv /var/lattice/log
 install_dependencies &> /var/lattice/log/lattice-cell-install.log
 start bootstrap
 
-echo "Finished Installing Lattice Cell!"
+echo "Finished Installing Lattice Cell ($lattice_version)!" 
