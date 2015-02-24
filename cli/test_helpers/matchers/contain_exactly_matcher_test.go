@@ -1,9 +1,9 @@
 package matchers_test
 
 import (
+	"github.com/cloudfoundry-incubator/lattice/cli/test_helpers/matchers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/cloudfoundry-incubator/lattice/cli/test_helpers/matchers"
 )
 
 type woohoo struct {

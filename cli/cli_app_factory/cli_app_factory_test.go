@@ -39,18 +39,18 @@ var _ = Describe("CliAppFactory", func() {
 		latticeVersion = "v0.2.Test"
 	})
 
-    JustBeforeEach(func() {
-        cliApp = cli_app_factory.MakeCliApp(
-        "30",
-        latticeVersion,
-        "~/",
-        &fake_exit_handler.FakeExitHandler{},
-        cliConfig,
-        lager.NewLogger("test"),
-        fakeTargetVerifier,
-        output.New(outputBuffer),
-        )
-    })
+	JustBeforeEach(func() {
+		cliApp = cli_app_factory.MakeCliApp(
+			"30",
+			latticeVersion,
+			"~/",
+			&fake_exit_handler.FakeExitHandler{},
+			cliConfig,
+			lager.NewLogger("test"),
+			fakeTargetVerifier,
+			output.New(outputBuffer),
+		)
+	})
 
 	Describe("MakeCliApp", func() {
 		It("makes an app", func() {

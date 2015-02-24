@@ -4,10 +4,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner/command_factory/presentation"
 	"github.com/cloudfoundry-incubator/lattice/cli/colors"
+	"github.com/cloudfoundry-incubator/receptor"
 )
 
 var _ = Describe("Presentation", func() {

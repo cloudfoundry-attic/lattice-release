@@ -4,11 +4,11 @@ import (
 	"errors"
 	"time"
 
+	. "github.com/cloudfoundry-incubator/lattice/cli/test_helpers/matchers"
 	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	. "github.com/cloudfoundry-incubator/lattice/cli/test_helpers/matchers"
 	"github.com/pivotal-golang/clock/fakeclock"
 	"github.com/pivotal-golang/lager"
 

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/cloudfoundry/noaa/events"
 	"github.com/cloudfoundry-incubator/lattice/cli/colors"
 	"github.com/cloudfoundry-incubator/lattice/cli/logs"
 	"github.com/cloudfoundry-incubator/lattice/cli/output"
+	"github.com/cloudfoundry/noaa/events"
 )
 
 type TailedLogsOutputter interface {

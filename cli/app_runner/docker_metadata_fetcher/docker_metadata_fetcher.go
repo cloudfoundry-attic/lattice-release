@@ -1,13 +1,12 @@
 package docker_metadata_fetcher
 
-
 import (
 	"fmt"
 	"sort"
 
+	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_app_runner"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/nat"
-	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_app_runner"
 )
 
 type ImageMetadata struct {

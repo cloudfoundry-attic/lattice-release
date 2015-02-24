@@ -6,9 +6,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/docker/docker/registry"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_metadata_fetcher/fake_docker_session"
+	"github.com/docker/docker/registry"
 )
 
 var _ = Describe("DockerMetaDataFetcher", func() {

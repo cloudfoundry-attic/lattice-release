@@ -1,9 +1,9 @@
 package colors_test
 
 import (
+	"github.com/cloudfoundry-incubator/lattice/cli/colors"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/cloudfoundry-incubator/lattice/cli/colors"
 )
 
 var _ = Describe("colors", func() {

@@ -7,9 +7,9 @@ import (
 
 	"github.com/onsi/gomega/gbytes"
 
+	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
 )
 
 var _ = Describe("ExitHandler", func() {

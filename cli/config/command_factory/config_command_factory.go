@@ -6,12 +6,12 @@ import (
 	"io"
 	"strings"
 
-	"github.com/codegangsta/cli"
 	"github.com/cloudfoundry-incubator/lattice/cli/config"
 	"github.com/cloudfoundry-incubator/lattice/cli/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/cli/output"
+	"github.com/codegangsta/cli"
 )
 
 const TargetCommandName = "target"

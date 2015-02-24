@@ -7,8 +7,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
-	"github.com/docker/docker/registry"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_metadata_fetcher"
+	"github.com/docker/docker/registry"
 )
 
 var _ = Describe("DockerSessionFactory", func() {

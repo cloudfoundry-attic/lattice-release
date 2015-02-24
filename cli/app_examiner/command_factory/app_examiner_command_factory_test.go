@@ -8,8 +8,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/codegangsta/cli"
-	"github.com/onsi/gomega/gbytes"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner/fake_app_examiner"
@@ -20,6 +18,8 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/cli/output/cursor"
 	"github.com/cloudfoundry-incubator/lattice/cli/route_helpers"
 	"github.com/cloudfoundry-incubator/lattice/cli/test_helpers"
+	"github.com/codegangsta/cli"
+	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-golang/clock/fakeclock"
 )
 

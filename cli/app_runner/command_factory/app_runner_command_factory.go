@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codegangsta/cli"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_repository_name_formatter"
 	"github.com/cloudfoundry-incubator/lattice/cli/colors"
 	"github.com/cloudfoundry-incubator/lattice/cli/logs/console_tailed_logs_outputter"
+	"github.com/codegangsta/cli"
 
 	"github.com/cloudfoundry-incubator/lattice/cli/output"
 	"github.com/pivotal-golang/clock"
@@ -151,7 +151,6 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command
 }
 
 func (commandFactory *AppRunnerCommandFactory) MakeStopAppCommand() cli.Command {
-
 
 	var stopCommand = cli.Command{
 		Name: "stop",
@@ -324,7 +323,7 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 	err = cmd.appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 		Name:                 name,
 		DockerImagePath:      dockerImage,
-		StartCommand:        startCommand,
+		StartCommand:         startCommand,
 		AppArgs:              appArgs,
 		EnvironmentVariables: cmd.buildEnvironment(envVarsFlag),
 		Privileged:           context.Bool("run-as-root"),

@@ -8,13 +8,13 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/codegangsta/cli"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner/command_factory/presentation"
 	"github.com/cloudfoundry-incubator/lattice/cli/colors"
 	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/cli/output"
 	"github.com/cloudfoundry-incubator/lattice/cli/output/cursor"
+	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock"
 )
 

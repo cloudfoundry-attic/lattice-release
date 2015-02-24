@@ -3,9 +3,9 @@ package command_factory
 import (
 	"time"
 
-	"github.com/codegangsta/cli"
 	"github.com/cloudfoundry-incubator/lattice/cli/integration_test"
 	"github.com/cloudfoundry-incubator/lattice/cli/output"
+	"github.com/codegangsta/cli"
 )
 
 type IntegrationTestCommandFactory struct {

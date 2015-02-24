@@ -9,12 +9,12 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
-	"github.com/cloudfoundry/noaa/events"
 	"github.com/cloudfoundry-incubator/lattice/cli/colors"
 	"github.com/cloudfoundry-incubator/lattice/cli/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/cli/logs/fake_log_reader"
 	"github.com/cloudfoundry-incubator/lattice/cli/output"
 	"github.com/cloudfoundry-incubator/lattice/cli/test_helpers"
+	"github.com/cloudfoundry/noaa/events"
 )
 
 var _ = Describe("ConsoleTailedLogsOutputter", func() {

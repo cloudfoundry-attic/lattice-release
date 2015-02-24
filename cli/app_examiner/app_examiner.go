@@ -6,8 +6,8 @@ import (
 	"sort"
 
 	"errors"
-	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/lattice/cli/route_helpers"
+	"github.com/cloudfoundry-incubator/receptor"
 )
 
 const AppNotFoundErrorMessage = "App not found."
