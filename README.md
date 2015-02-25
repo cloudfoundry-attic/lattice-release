@@ -16,7 +16,7 @@ A scalable [cluster deployment](#clustered-deployment) of Lattice can be launche
 
 ## Use Lattice
 
-The [Lattice CLI `ltc`](https://github.com/cloudfoundry-incubator/lattice/cli) provides a command line interface for launching docker-based applications.
+The [Lattice CLI `ltc`](https://github.com/cloudfoundry-incubator/lattice/tree/master/cli) provides a command line interface for launching docker-based applications.
 
 More complex workloads can be constructed and submitted directly to Lattice's Receptor API which is fully documented [here](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/README.md).
 
