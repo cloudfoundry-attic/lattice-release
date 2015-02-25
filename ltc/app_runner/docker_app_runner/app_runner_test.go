@@ -4,16 +4,16 @@ import (
 	"errors"
 	"time"
 
-	. "github.com/cloudfoundry-incubator/lattice/cli/test_helpers/matchers"
+	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/route_helpers"
+	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 
-	docker_app_runner "github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_app_runner"
+	docker_app_runner "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 )
 
 var _ = Describe("AppRunner", func() {

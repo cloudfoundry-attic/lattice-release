@@ -1,8 +1,8 @@
 package presentation
 
 import (
-	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner"
-	"github.com/cloudfoundry-incubator/lattice/cli/colors"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
 	"github.com/cloudfoundry-incubator/receptor"
 )
 

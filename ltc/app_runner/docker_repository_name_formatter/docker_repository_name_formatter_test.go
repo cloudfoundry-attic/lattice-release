@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_repository_name_formatter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
 )
 
 var _ = Describe("FormatForReceptor", func() {

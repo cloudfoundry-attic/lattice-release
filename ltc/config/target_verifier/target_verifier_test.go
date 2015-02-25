@@ -9,7 +9,7 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/config/target_verifier"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 )
 
 var _ = Describe("targetVerifier", func() {

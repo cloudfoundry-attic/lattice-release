@@ -5,14 +5,14 @@ export GOPATH=/workspace/diego-release
 export PATH="$PATH:$GOPATH/bin"
 
 echo "go getting cli dependencies..."
-go get -v -t github.com/cloudfoundry-incubator/lattice/cli/...
+go get -v -t github.com/cloudfoundry-incubator/lattice/ltc/...
 echo "gotten!"
 
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega
 
 echo "Running lattice-cli tests..."
-$GOPATH/src/github.com/cloudfoundry-incubator/lattice/cli/scripts/test
+$GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/scripts/test
 echo "Tests Passed!!!"
 
 OUTDIR="/workspace/compiled-binaries"
@@ -27,17 +27,17 @@ popd > /dev/null
 echo "Compiling cli ($version_from_file)..."
 
 GOARCH=amd64 GOOS=linux go build \
-    -ldflags "-X github.com/cloudfoundry-incubator/lattice/cli/ltc/setup_cli.latticeVersion $version_from_file" \
+    -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $version_from_file" \
     -o $OUTDIR/ltc-linux-amd64 \
-    github.com/cloudfoundry-incubator/lattice/cli/ltc
+    github.com/cloudfoundry-incubator/lattice/ltc
 
 GOARCH=amd64 GOOS=darwin go build \
-    -ldflags "-X github.com/cloudfoundry-incubator/lattice/cli/ltc/setup_cli.latticeVersion $version_from_file" \
+    -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $version_from_file" \
     -o $OUTDIR/ltc-darwin-amd64 \
-    github.com/cloudfoundry-incubator/lattice/cli/ltc
+    github.com/cloudfoundry-incubator/lattice/ltc
 
 echo "generating ltc-checksum file"
-pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/cli > /dev/null
+pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
     git rev-parse HEAD > $OUTDIR/ltc-checksum #TODO: Do we even use the ltc-checksum anymore?
 popd > /dev/null
 

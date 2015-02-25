@@ -7,12 +7,12 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
-	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler/fake_exit_handler"
-	"github.com/cloudfoundry-incubator/lattice/cli/logs/command_factory"
-	"github.com/cloudfoundry-incubator/lattice/cli/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
-	"github.com/cloudfoundry-incubator/lattice/cli/output"
-	"github.com/cloudfoundry-incubator/lattice/cli/test_helpers"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 )
 
 var _ = Describe("CommandFactory", func() {

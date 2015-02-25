@@ -7,14 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_app_runner"
-	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_metadata_fetcher"
-	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_repository_name_formatter"
-	"github.com/cloudfoundry-incubator/lattice/cli/colors"
-	"github.com/cloudfoundry-incubator/lattice/cli/logs/console_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/codegangsta/cli"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 )

@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/config/persister"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 )
 
 var _ = Describe("filePersister", func() {

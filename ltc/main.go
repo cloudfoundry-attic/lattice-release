@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/ltc/setup_cli"
+	"github.com/cloudfoundry-incubator/lattice/ltc/setup_cli"
 )
 
 func main() {

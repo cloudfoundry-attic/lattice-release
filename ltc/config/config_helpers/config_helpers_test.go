@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/config/config_helpers"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/config_helpers"
 )
 
 var _ = Describe("config_helpers", func() {

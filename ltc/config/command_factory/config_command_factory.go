@@ -6,11 +6,11 @@ import (
 	"io"
 	"strings"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/config"
-	"github.com/cloudfoundry-incubator/lattice/cli/config/target_verifier"
-	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
-	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler/exit_codes"
-	"github.com/cloudfoundry-incubator/lattice/cli/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
+	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/codegangsta/cli"
 )
 

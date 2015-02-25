@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/logs"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
 	"github.com/cloudfoundry/noaa/events"
 )
 

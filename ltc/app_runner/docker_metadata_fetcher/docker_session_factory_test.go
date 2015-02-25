@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_metadata_fetcher"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
 	"github.com/docker/docker/registry"
 )
 

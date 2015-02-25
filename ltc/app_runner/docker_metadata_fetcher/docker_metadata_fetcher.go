@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/nat"
 )

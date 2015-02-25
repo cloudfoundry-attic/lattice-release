@@ -4,19 +4,19 @@ import (
 	"errors"
 	"io"
 
-	config_package "github.com/cloudfoundry-incubator/lattice/cli/config"
-	"github.com/cloudfoundry-incubator/lattice/cli/config/persister"
-	"github.com/cloudfoundry-incubator/lattice/cli/config/target_verifier/fake_target_verifier"
-	"github.com/cloudfoundry-incubator/lattice/cli/output"
-	"github.com/cloudfoundry-incubator/lattice/cli/test_helpers"
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
+	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/config/command_factory"
-	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler/exit_codes"
-	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler/fake_exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 )
 
 var _ = Describe("CommandFactory", func() {

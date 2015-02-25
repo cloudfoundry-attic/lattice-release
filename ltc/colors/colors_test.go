@@ -1,7 +1,7 @@
 package colors_test
 
 import (
-	"github.com/cloudfoundry-incubator/lattice/cli/colors"
+	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

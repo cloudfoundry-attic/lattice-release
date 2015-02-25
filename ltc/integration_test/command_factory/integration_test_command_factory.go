@@ -3,8 +3,8 @@ package command_factory
 import (
 	"time"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/integration_test"
-	"github.com/cloudfoundry-incubator/lattice/cli/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test"
+	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/codegangsta/cli"
 )
 

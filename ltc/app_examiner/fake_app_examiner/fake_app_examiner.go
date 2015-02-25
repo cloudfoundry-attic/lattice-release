@@ -4,7 +4,7 @@ package fake_app_examiner
 import (
 	"sync"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/app_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 )
 
 type FakeAppExaminer struct {

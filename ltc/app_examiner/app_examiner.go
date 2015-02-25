@@ -6,7 +6,7 @@ import (
 	"sort"
 
 	"errors"
-	"github.com/cloudfoundry-incubator/lattice/cli/route_helpers"
+	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 )
 

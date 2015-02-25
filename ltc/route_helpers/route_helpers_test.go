@@ -3,7 +3,7 @@ package route_helpers_test
 import (
 	"encoding/json"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/route_helpers"
+	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 
 	. "github.com/onsi/ginkgo"

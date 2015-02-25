@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
 var _ = Describe("config", func() {

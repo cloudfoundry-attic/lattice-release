@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/output/cursor"
+	"github.com/cloudfoundry-incubator/lattice/ltc/output/cursor"
 )
 
 var _ = Describe("cursor", func() {

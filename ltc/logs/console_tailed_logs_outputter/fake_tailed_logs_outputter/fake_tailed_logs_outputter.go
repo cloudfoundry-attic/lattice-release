@@ -4,7 +4,7 @@ package fake_tailed_logs_outputter
 import (
 	"sync"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/logs/console_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 )
 
 func NewFakeTailedLogsOutputter() *FakeTailedLogsOutputter {

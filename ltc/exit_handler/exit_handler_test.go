@@ -7,7 +7,7 @@ import (
 
 	"github.com/onsi/gomega/gbytes"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

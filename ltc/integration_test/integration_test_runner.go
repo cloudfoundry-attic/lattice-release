@@ -17,8 +17,8 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/colors"
-	"github.com/cloudfoundry-incubator/lattice/cli/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/runtime-schema/models/factories"
 )
 

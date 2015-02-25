@@ -6,10 +6,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/integration_test/command_factory"
-	"github.com/cloudfoundry-incubator/lattice/cli/integration_test/fake_integration_test_runner"
-	"github.com/cloudfoundry-incubator/lattice/cli/output"
-	"github.com/cloudfoundry-incubator/lattice/cli/test_helpers"
+	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test/command_factory"
+	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test/fake_integration_test_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
 	"github.com/onsi/gomega/gbytes"
 )

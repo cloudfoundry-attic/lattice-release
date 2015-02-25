@@ -4,7 +4,7 @@ package fake_docker_metadata_fetcher
 import (
 	"sync"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_metadata_fetcher"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
 )
 
 type FakeDockerMetadataFetcher struct {

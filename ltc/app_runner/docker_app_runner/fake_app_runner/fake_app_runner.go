@@ -4,7 +4,7 @@ package fake_app_runner
 import (
 	"sync"
 
-	"github.com/cloudfoundry-incubator/lattice/cli/app_runner/docker_app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 )
 
 type FakeAppRunner struct {
