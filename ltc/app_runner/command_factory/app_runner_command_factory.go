@@ -1,6 +1,7 @@
 package command_factory
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -288,22 +289,10 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 		appArgs = imageMetadata.StartCommand[1:]
 	}
 
-	var routeOverrides docker_app_runner.RouteOverrides
-
-	for _, routeStr := range strings.Split(routesFlag, ",") {
-		if routeStr == "" {
-			continue
-		}
-		routeArr := strings.Split(routeStr, ":")
-		maybePort, err := strconv.Atoi(routeArr[0])
-		if err != nil || len(routeArr) < 2 {
-			cmd.output.Say(MalformedRouteErrorMessage)
-			return
-		}
-
-		port := uint16(maybePort)
-		hostnamePrefix := routeArr[1]
-		routeOverrides = append(routeOverrides, docker_app_runner.RouteOverride{HostnamePrefix: hostnamePrefix, Port: port})
+	routeOverrides, err := parseRouteOverrides(routesFlag)
+	if err != nil {
+		cmd.output.Say(err.Error())
+		return
 	}
 
 	err = cmd.appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
@@ -321,7 +310,6 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 		WorkingDir:           workingDirFlag,
 		RouteOverrides:       routeOverrides,
 	})
-
 	if err != nil {
 		cmd.output.Say(fmt.Sprintf("Error Creating App: %s", err))
 		return
@@ -459,6 +447,27 @@ func (cmd *appRunnerCommand) grabVarFromEnv(name string) string {
 		}
 	}
 	return ""
+}
+
+func parseRouteOverrides(routes string) (docker_app_runner.RouteOverrides, error) {
+	var routeOverrides docker_app_runner.RouteOverrides
+
+	for _, route := range strings.Split(routes, ",") {
+		if route == "" {
+			continue
+		}
+		routeArr := strings.Split(route, ":")
+		maybePort, err := strconv.Atoi(routeArr[0])
+		if err != nil || len(routeArr) < 2 {
+			return nil, errors.New(MalformedRouteErrorMessage)
+		}
+
+		port := uint16(maybePort)
+		hostnamePrefix := routeArr[1]
+		routeOverrides = append(routeOverrides, docker_app_runner.RouteOverride{HostnamePrefix: hostnamePrefix, Port: port})
+	}
+
+	return routeOverrides, nil
 }
 
 func parseEnvVarPair(envVarPair string) (name, value string) {
