@@ -49,6 +49,7 @@ func MakeCliApp(timeoutStr, latticeVersion, ltcConfigRoot string, exitHandler ex
 	app.Author = latticeCliAuthor
 	app.Version = defaultVersion(latticeVersion)
 	app.Usage = LtcUsage
+    app.Email = "lattice@cloudfoundry.org"
 	app.Commands = cliCommands(timeoutStr, ltcConfigRoot, exitHandler, config, logger, targetVerifier, output)
 
 	app.Before = func(context *cli.Context) error {

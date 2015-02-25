@@ -58,6 +58,7 @@ var _ = Describe("CliAppFactory", func() {
 			Expect(cliApp.Name).To(Equal("ltc"))
 			Expect(cliApp.Author).To(Equal("Pivotal"))
 			Expect(cliApp.Version).To(Equal("v0.2.Test"))
+            Expect(cliApp.Email).To(Equal("lattice@cloudfoundry.org"))
 			Expect(cliApp.Usage).To(Equal(cli_app_factory.LtcUsage))
 			Expect(cliApp.Commands).NotTo(BeEmpty())
 		})
