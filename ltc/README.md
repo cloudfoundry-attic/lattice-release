@@ -46,7 +46,7 @@ Here's a simple installation script.  It assumes `$HOME/bin` is on your $PATH
 You must have [Go](https://golang.org) 1.4+ installed and set up correctly.
 
 ```
-go get github.com/cloudfoundry-incubator/lattice/cli/ltc
+go get github.com/cloudfoundry-incubator/lattice/ltc
 ```
 
 ## Usage:
