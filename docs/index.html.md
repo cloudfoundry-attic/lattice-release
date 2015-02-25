@@ -8,7 +8,7 @@ doc_subnav: true
 
 ## What is Lattice?
 
-Lattice is an open source project for running containerized workloads on a cluster.
+Lattice is an open source project for running containerized workloads on a cluster.  A Lattice cluster is comprised of a number of Lattice Cells (VMs that run containers) and a Lattice Coordinator that monitors the Cells.
 
 Lattice includes built-in http load-balancing, a cluster scheduler, log aggregation with log streaming and health management.
 

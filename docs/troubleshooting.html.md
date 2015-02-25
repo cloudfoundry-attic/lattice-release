@@ -8,30 +8,71 @@ doc_subnav: true
 
 ## How does Lattice manage applications?
 
-//mental model
+A helpful step when debugging is to have an accurate mental model of the system in question.
+
+Lattice is founded upon the notions of eventual consistency.  In particular, Lattice is constantly working to reconcile *desired* state with *actual* state.
+
+When you issue commands via the `ltc` CLI (or the Lattice API) you are modifying Lattice's *desired* state.  Typically, you are informing Lattice about a desire to run some number of instances of an application.  Lattice updates this desired state **synchronously**.
+
+The *actual* state (i.e. the set of running instances), however, is updated **asynchronously** as the Lattice cluster works to reconcile the current *actual* state with the *desired* state.
+
+Typically, when the user updates *desired* state Lattice immediately takes actions to perform this reconciliation.  Should an action fail (perhaps a network partition occurs) or a running instance be lost (perhaps a Cell explodes) Lattice will eventually attempt to reconcile actual and desired state again (this happens every 30 seconds - though Lattice can detect a missing Cell within ~5 seconds).
 
 ## How does Lattice work with Docker images?
 
-//docker metadata, ltc, etc...
+A Docker image consists of two things: a collection of layers to download and mount (the raw bits that form the file system) and metadata that describes what command should be launched (the `ENTRYPOINT` and `CMD` directives, among others, specified in the Dockerfile).
+
+Lattice uses [Garden-Linux](https://github.com/cloudfoundry-incubator/garden-Linux) to construct Linux containers.  These containers are built on the same Linux kernel technologies that power all Linux containers: namespaces and cgroups.  When a container is created a file system must be mounted as the root file system of the container.  Garden-Linux supports mounting Docker images as root file systems for the containers it constructs.  Garden-Linux takes care of fetching and caching the individual layers associated with the Docker image and combining and mounting them as the root file system - it does this using the same libraries that power Docker.
+
+This yields a container with contents that exactly match the contents of the associated Docker image.
+
+Once a container is created Lattice is responsible for running and monitoring processes in the container.  The Lattice API allows the user to define exactly which commands to run within the container; in particular, it is possible to run, monitor, and route to *multiple* processes within a single container.
+
+When launching a Docker image, `ltc` directs Lattice to create a container backed by the Docker image's root fs, and to run the command encoded in the Docker image's metadata.  It does this by fetching the metadata associated with the Docker image (using the same libraries that power Docker) and making the appropriate Lattice API calls.  `ltc` allows users to easily override the values it pulls out of the Docker image metadata.  This is outlined in detail in the [`ltc` documentation](/docs/ltc.html#ltc-start).
 
 ## I can't run my Docker image.  Help!
 
-- memory and disk limits
-- logs
-- run-as-root
-- no-monitor
-- vagrant ssh => logs on box
+Here are a few pointers to help you debug and fix some common issues:
 
-## How do I get network access to my containers?
+### Increase Memory and Disk Limits
 
-- how do I get network access to my containers
-    + AWS: VPC => ELB
-    + DO/Vagrant: you got it
+By default, `ltc` applies a memory limit of 128MB and a disk limit of 1024MB to the container.  If your process is exiting prematurely it may be attempting to consume more than 128MB of memory.  You can increase the limit using the `--memory-mb` flag.  To turn off memory and disk limits set `--memory-mb` and `--disk-mb` to `0`.
 
-## I don't want to go through the router.  How do I get direct access?
+### Check the Application Logs
+
+`ltc logs APP_NAME` will aggregate and stream application logs.  These may point you in the right direction.  In particular, if you see issues related to file permissions or a health check failing, read on...
+
+### Run as Root
+
+Lattice runs the process in your Docker image as an unprivileged user.  Sometimes this user does not have privileges to execue the requested process - you can try using the `--run-as-root` flag to get around this limitation.
+
+> We have plans to build more robust support for specifying hte user/uid to run the container as.
+
+### Disable Health Monitoring
+
+By default, `ltc` requests that Lattice perform a periodic health check agains the running application.  This health check verifies that the application is listening on a port.  For applications that do not listen on ports (e.g. a worker that does not expose an endpoint) you can disable the health check via the `--no-monitor` flag.
+
+### Fetch Lattice Logs
+
+If you're still stuck you can try sshing onto the Lattice box and looking through the logs when you launch your application.
+
+```
+vagrant ssh
+tail -f *.log
+```
+
+## How do I communicate with my containers over TCP?
+
+THe Lattice router only supports HTTP communication at this time.  If you would like to use TCP instead you will need to communicate with the container by IP and port, which you can get via `ltc status`.  For a local vagrant deployed Lattice, the containers can be reached at `192.168.11.11`.  On AWS, you will need to configure your ELB to route traffic to the Cells in your VPC.
 
 ## How do I communicate between containers?
 
+Lattice does not apply any firewall rules between containers.  Any container can freely communicate with any other container.  All you need is to identfiy the IP and Port.
+
 ## How do I do service discovery?
 
+Outside of the HTTP router, Lattice does not ship with a service discovery solution.  It is relatively straightforward, however, to build a solution on top of the Receptor API.  We have plans to explore this space soon after release.
+
 ## How do I upgrade Lattice?
+
+Lattice [does not support rolling upgrades](index.html#is-Lattice-ready-for-production).
