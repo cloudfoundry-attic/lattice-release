@@ -32,7 +32,7 @@ Make sure you have [Vagrant](https://vagrantup.com/) installed, then:
 
 This spins up a virtual environment that is accessible at `192.168.11.11`.
 
-Use the [Lattice Cli](https://github.com/cloudfoundry-incubator/lattice/cli) to target Lattice:
+Use the [Lattice Cli](https://github.com/cloudfoundry-incubator/lattice/tree/master/cli) to target Lattice:
 
 ```
 ltc target 192.168.11.11.xip.io
