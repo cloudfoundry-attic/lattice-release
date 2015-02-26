@@ -21,6 +21,8 @@ echo "Running command with $@"
 
 docker run -a stdout -a stderr -w /workspace \
   -v ${WORKSPACE_DIR:-~/workspace/}:/workspace \
+  -e LATTICE_CLI_SRC_PATH \
+  -e DIEGO_RELEASE_PATH \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
   -e GO_FROM_REVISION_DIEGO_RELEASE \
