@@ -39,11 +39,15 @@ RUN \
     git config --global user.name "Lattice Continuous Deployment"
 
 RUN \
-     wget https://storage.googleapis.com/golang/go1.4.src.tar.gz  -O - | tar -xzf - -C /usr/local && \
+     wget https://storage.googleapis.com/golang/go1.4.2.src.tar.gz  -O - | tar -xzf - -C /usr/local && \
      cd /usr/local/go/src && \
      GOOS=linux GOARCH=amd64 CGO_ENABLED=1 ./make.bash --no-clean && \
      GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 ./make.bash --no-clean
 
+RUN \
+    mkdir -p ~/go/src; \
+    GOBIN=/usr/local/bin GOPATH=~/go go get -v github.com/dajulia3/godep; \
+    rm -rf ~/go
 
 RUN \
     echo "Host github.com" > /etc/ssh/ssh_config
