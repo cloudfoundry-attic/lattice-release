@@ -20,7 +20,7 @@ command_with_args="$@"
 echo "Running command with $@"
 
 docker run -a stdout -a stderr -w /workspace \
-  -v ${WORKSPACE_DIR:-~/workspace/}:/workspace \
+  -v ${DOCKER_WORKSPACE_MOUNT_DIR:-~/workspace/}:/workspace \
   -e LATTICE_SRC_PATH \
   -e DIEGO_RELEASE_PATH \
   -e AWS_ACCESS_KEY_ID \
