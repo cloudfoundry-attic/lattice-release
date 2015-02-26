@@ -16,7 +16,7 @@ A scalable [cluster deployment](#clustered-deployment) of Lattice can be launche
 
 ## Use Lattice
 
-The [Lattice CLI `ltc`](https://github.com/cloudfoundry-incubator/lattice/tree/master/cli) provides a command line interface for launching docker-based applications.
+The [Lattice CLI `ltc`](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) provides a command line interface for launching docker-based applications.
 
 More complex workloads can be constructed and submitted directly to Lattice's Receptor API which is fully documented [here](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/README.md).
 
@@ -32,7 +32,7 @@ Make sure you have [Vagrant](https://vagrantup.com/) installed, then:
 
 This spins up a virtual environment that is accessible at `192.168.11.11`.
 
-Use the [Lattice Cli](https://github.com/cloudfoundry-incubator/lattice/tree/master/cli) to target Lattice:
+Use the [Lattice Cli](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) to target Lattice:
 
 ```
 ltc target 192.168.11.11.xip.io
