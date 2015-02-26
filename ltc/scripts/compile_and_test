@@ -33,7 +33,7 @@ go install github.com/onsi/ginkgo/ginkgo
 echo "Running ltc unit tests..."
 $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/scripts/test
 
-pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice > /dev/null
+pushd $LATTICE_CLI_SRC_PATH/.. > /dev/null
     version_from_file=$(<LATTICE_VERSION)
 popd > /dev/null
 
