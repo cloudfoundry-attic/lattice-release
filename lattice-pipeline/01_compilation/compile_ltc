@@ -11,6 +11,10 @@ if [ -z "$DIEGO_RELEASE_PATH" ]; then
     exit 1
 fi
 
+mkdir ~/go
+export GOPATH=~/go
+export PATH="$PATH:$GOPATH/bin"
+
 $LATTICE_SRC_PATH/lattice-pipeline/helpers/restore_gopath
 
 go install github.com/onsi/ginkgo/ginkgo

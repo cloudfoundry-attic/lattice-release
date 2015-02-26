@@ -97,6 +97,10 @@ fi
 
 lattice_tar_path=$1
 
+mkdir ~/go
+export GOPATH=~/go
+export PATH="$PATH:$GOPATH/bin"
+
 setup_ssh_access_to_github
 
 bump_and_push_lattice
