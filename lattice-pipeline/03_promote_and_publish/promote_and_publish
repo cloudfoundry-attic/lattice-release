@@ -46,16 +46,28 @@ bump_and_push_lattice() {
 
         $deliver_stories_message
 
-        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME , Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
         "
 
         git pull origin master
         git pull origin develop
         git checkout master
         echo "merging master into develop"
-        git merge develop -m "Merge branch 'master' of github.com:cloudfoundry-incubator/lattice into develop
+        git merge develop -m "Merge branch 'develop' of github.com:cloudfoundry-incubator/lattice into master
 
-        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME , Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME"
+        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME"
+
+        $LATTICE_SRC_PATH/lattice-pipeline/helpers/restore_gopath
+        rm -rf $LATTICE_SRC_PATH/ltc/Godeps
+        godep save
+
+        git add $LATTICE_SRC_PATH/ltc/Godeps
+        git commit -m "Update ltc Godeps
+
+        Diego Release Git SHA: ${diego_release_git_sha}
+
+        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+        "
 
         echo "pushing local master to origin/master"
         git push origin master

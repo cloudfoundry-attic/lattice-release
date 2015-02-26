@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-if [ -z "$LATTICE_CLI_SRC_PATH" ]; then
-    echo "Must set LATTICE_CLI_SRC_PATH"
+if [ -z "$LATTICE_SRC_PATH" ]; then
+    echo "Must set LATTICE_SRC_PATH"
     exit 1
 fi
 
@@ -11,29 +11,14 @@ if [ -z "$DIEGO_RELEASE_PATH" ]; then
     exit 1
 fi
 
-mkdir ~/go
-export GOPATH=~/go
-export PATH="$PATH:$GOPATH/bin"
-
-mkdir -p $GOPATH/src/github.com/cloudfoundry-incubator/lattice/
-echo -n "Copying $LATTICE_CLI_SRC_PATH into compilation GOPATH .."
-cp -rf $LATTICE_CLI_SRC_PATH $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ && echo "DONE!"
-pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
-    #godep restore is screwy, so we manually copy our godeps back into the GOPATH.
-    echo -n "Copying $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/Godeps/_workspace/src/* into compilation GOPATH (Homegrown Godep restore) .."
-    cp -rf Godeps/_workspace/src/* $GOPATH/src/ && echo "DONE!"
-popd > /dev/null
-
-echo -n "Copying $DIEGO_RELEASE_PATH/src/* into compilation GOPATH (Prefer Diego-Release dependencies over ltc's Godeps) .."
-## locally, this copies all of lattice again because we usually develop lattice using diego-release as the GOPATH
-cp -rf $DIEGO_RELEASE_PATH/src/* $GOPATH/src/ && echo "DONE!"
+$LATTICE_SRC_PATH/lattice-pipeline/helpers/restore_gopath
 
 go install github.com/onsi/ginkgo/ginkgo
 
 echo "Running ltc unit tests..."
 $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/scripts/test
 
-pushd $LATTICE_CLI_SRC_PATH/.. > /dev/null
+pushd $LATTICE_SRC_PATH > /dev/null
     version_from_file=$(<LATTICE_VERSION)
 popd > /dev/null
 
@@ -55,7 +40,7 @@ GOARCH=amd64 GOOS=darwin go build \
 echo "DONE!"
 
 echo -n "Generating ltc-checksum = "
-pushd $LATTICE_CLI_SRC_PATH > /dev/null
+pushd $LATTICE_SRC_PATH > /dev/null
     git rev-parse HEAD | tee $OUTDIR/ltc-checksum  #TODO: Do we even use the ltc-checksum anymore?
 popd > /dev/null
 sync
