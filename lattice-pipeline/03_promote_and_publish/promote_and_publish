@@ -55,7 +55,8 @@ bump_and_push_lattice() {
         echo "merging develop into master"
         git merge develop -m "Merge branch 'develop' of github.com:cloudfoundry-incubator/lattice into master
 
-        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME"
+        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+        "
 
         sync
 
@@ -65,21 +66,26 @@ bump_and_push_lattice() {
         echo -n "Saving off ltc Godeps from constructed GOPATH .."
         pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
             godep save
-            cp -a Godeps $LATTICE_SRC_PATH/ltc/
+            sync
+            cp -av Godeps $LATTICE_SRC_PATH/ltc/
         popd > /dev/null
         echo "DONE!"
+
+        sync
 
         echo "== Godeps Json - BEGIN =="
         cat $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/Godeps/Godeps.json
         echo "== Godeps Json - END =="
 
-        git add $LATTICE_SRC_PATH/ltc/Godeps
-        git commit -m "Update ltc Godeps
+        pushd $LATTICE_SRC_PATH/ltc > /dev/null
+            git add Godeps
+            git commit -m "Update ltc Godeps
 
-        Diego Release Git SHA: ${diego_release_git_sha}
+            Diego Release Git SHA: ${diego_release_git_sha}
 
-        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
-        "
+            +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+            "
+        popd > /dev/null
 
         echo "pushing local master to origin/master"
         git push origin master
