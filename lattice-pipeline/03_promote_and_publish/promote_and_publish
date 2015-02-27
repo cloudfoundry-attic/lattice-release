@@ -69,7 +69,7 @@ bump_and_push_lattice() {
 
         echo "== Godeps Json - BEGIN =="
         cat $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/Godeps/Godeps.json
-        echo "== Godeps Json - END ==
+        echo "== Godeps Json - END =="
 
         git add $LATTICE_SRC_PATH/ltc/Godeps
         git commit -m "Update ltc Godeps
