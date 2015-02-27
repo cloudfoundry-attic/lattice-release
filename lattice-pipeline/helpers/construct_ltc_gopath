@@ -28,3 +28,5 @@ cp -af $DIEGO_RELEASE_PATH/src/ $GOPATH/ && echo "DONE!"
 echo -n "Copying over git modules for later godeps saves from constructed path .."
 mkdir -p $GOPATH/.git/modules
 cp -afv $DIEGO_RELEASE_PATH/.git* $GOPATH/ && echo "DONE!"
+
+sync
