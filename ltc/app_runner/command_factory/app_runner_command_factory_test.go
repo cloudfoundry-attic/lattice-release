@@ -660,7 +660,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'"))
 				Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
 			})
 
@@ -671,7 +671,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Number of Instances Required"))
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'"))
 				Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
 			})
 
@@ -763,7 +763,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES'"))
 				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 			})
 
@@ -774,7 +774,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: New Routes Required"))
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES'"))
 				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 			})
 		})

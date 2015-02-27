@@ -349,13 +349,9 @@ func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 	appName := c.Args().First()
 	instancesArg := c.Args().Get(1)
 
-	switch {
-	case appName == "":
-		cmd.output.IncorrectUsage("App Name required")
-		return
-	case instancesArg == "":
-		cmd.output.IncorrectUsage("Number of Instances Required")
-		return
+	if appName == "" || instancesArg == "" {
+		cmd.output.IncorrectUsage("Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'")
+        return
 	}
 
 	instances, err := strconv.Atoi(instancesArg)
@@ -371,12 +367,8 @@ func (cmd *appRunnerCommand) updateAppRoutes(c *cli.Context) {
 	appName := c.Args().First()
 	userDefinedRoutes := c.Args().Get(1)
 
-	switch {
-	case appName == "":
-		cmd.output.IncorrectUsage("App Name required")
-		return
-	case userDefinedRoutes == "":
-		cmd.output.IncorrectUsage("New Routes Required")
+	if appName == "" || userDefinedRoutes == "" {
+		cmd.output.IncorrectUsage("Please enter 'ltc update-routes APP_NAME NEW_ROUTES'")
 		return
 	}
 
