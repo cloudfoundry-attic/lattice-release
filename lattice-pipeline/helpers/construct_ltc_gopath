@@ -18,15 +18,25 @@ cp -af $LATTICE_SRC_PATH/ltc $GOPATH/src/github.com/cloudfoundry-incubator/latti
 pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
     #godep restore is funky, so we manually copy our godeps back into the GOPATH.
     echo -n "Copying $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/Godeps/_workspace/src/* into compilation GOPATH (Homegrown Godep restore) .."
-    cp -af Godeps/_workspace/src/* $GOPATH/src/ && echo "DONE!"
+    #    cp -af Godeps/_workspace/src/* $GOPATH/src/ && echo "DONE!"
+    set +e
+    #TODO: go get docker/docker separately and unpack its vendored deps.
+    go get -d -v ./...
+    cp -avf Godeps/_workspace/src/github.com/docker/docker/vendor/src/* $GOPATH/src/
+    godep restore
+    set -e
+    echo "DONE!"
 popd > /dev/null
 
 echo -n "Copying $DIEGO_RELEASE_PATH/src/* into compilation GOPATH (Prefer Diego-Release dependencies over ltc's Godeps) .."
+pushd $GOPATH
+    grep submodule $DIEGO_RELEASE_PATH/.gitmodules | awk -F\" '{ print $2"/.git" }' | xargs rm -rfv
+popd
+
 ## locally, this copies all of lattice again because we usually develop lattice using diego-release as the GOPATH
 cp -af $DIEGO_RELEASE_PATH/src/ $GOPATH/ && echo "DONE!"
 
 echo -n "Copying over git modules for later godeps saves from constructed path .."
-mkdir -p $GOPATH/.git/modules
 cp -afv $DIEGO_RELEASE_PATH/.git* $GOPATH/ && echo "DONE!"
 
 sync

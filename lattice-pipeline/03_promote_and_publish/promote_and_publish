@@ -57,6 +57,8 @@ bump_and_push_lattice() {
 
         +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME"
 
+        sync
+
         $LATTICE_SRC_PATH/lattice-pipeline/helpers/construct_ltc_gopath
         rm -rf $LATTICE_SRC_PATH/ltc/Godeps
 
