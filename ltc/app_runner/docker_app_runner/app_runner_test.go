@@ -270,7 +270,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
 
-		Describe("returning errors from the receptor", func() {
+		Context("returning errors from the receptor", func() {
 			It("returns desiring lrp errors", func() {
 				desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
 				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
@@ -292,6 +292,83 @@ var _ = Describe("AppRunner", func() {
 		})
 
 	})
+
+	Describe("UpdateRoutes", func() {
+
+		It("Updates the Routes", func() {
+			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app"}}
+			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+
+			expectedRouteOverrides := docker_app_runner.RouteOverrides{
+				docker_app_runner.RouteOverride{
+					HostnamePrefix: "foo.com",
+					Port:           8080,
+				},
+				docker_app_runner.RouteOverride{
+					HostnamePrefix: "bar.com",
+					Port:           9090,
+				},
+			}
+
+			err := appRunner.UpdateAppRoutes("americano-app", expectedRouteOverrides)
+			Expect(err).To(BeNil())
+
+			Expect(fakeReceptorClient.UpdateDesiredLRPCallCount()).To(Equal(1))
+			processGuid, updateRequest := fakeReceptorClient.UpdateDesiredLRPArgsForCall(0)
+			Expect(processGuid).To(Equal("americano-app"))
+
+			expectedRoutes := route_helpers.AppRoutes{
+				route_helpers.AppRoute{Hostnames: []string{"foo.com.myDiegoInstall.com"}, Port: 8080},
+				route_helpers.AppRoute{Hostnames: []string{"bar.com.myDiegoInstall.com"}, Port: 9090},
+			}
+
+			Expect(route_helpers.AppRoutesFromRoutingInfo(updateRequest.Routes)).To(ContainExactly(expectedRoutes))
+		})
+
+        It("returns errors if the app is NOT already started", func() {
+            expectedRouteOverrides := docker_app_runner.RouteOverrides{
+                docker_app_runner.RouteOverride{
+                    HostnamePrefix: "foo.com",
+                    Port:           8080,
+                },
+                docker_app_runner.RouteOverride{
+                    HostnamePrefix: "bar.com",
+                    Port:           9090,
+                },
+            }
+
+            desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app"}}
+            fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+
+            err := appRunner.UpdateAppRoutes("app-not-running", expectedRouteOverrides)
+
+            Expect(err).To(HaveOccurred())
+            Expect(err.Error()).To(Equal("app-not-running, is not started. Please start an app first"))
+            Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
+        })
+
+        Context("returning errors from the receptor", func() {
+            It("returns desiring lrp errors", func() {
+                desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
+                fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+
+                receptorError := errors.New("error - Updating an LRP")
+                fakeReceptorClient.UpdateDesiredLRPReturns(receptorError)
+
+                err := appRunner.ScaleApp("americano-app", 17)
+                Expect(err).To(Equal(receptorError))
+            })
+
+            It("returns errors fetching the existing lrp count", func() {
+                receptorError := errors.New("error - Existing Count")
+                fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
+
+                err := appRunner.UpdateAppRoutes("nescafe-app", nil)
+                Expect(err).To(Equal(receptorError))
+            })
+        })
+
+    })
 
 	Describe("RemoveApp", func() {
 		It("Removes a Docker App", func() {

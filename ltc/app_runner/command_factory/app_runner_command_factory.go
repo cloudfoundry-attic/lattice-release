@@ -151,6 +151,17 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command
 	return scaleCommand
 }
 
+func (commandFactory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
+	var updateRoutesCommand = cli.Command{
+		Name:        "update-routes",
+		Description: "Updates the routes for a running app",
+		Usage:       "ltc update-routes APP_NAME ROUTE,OTHER_ROUTE...", // TODO: route format?
+		Action:      commandFactory.appRunnerCommand.updateAppRoutes,
+	}
+
+	return updateRoutesCommand
+}
+
 func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	var removeCommand = cli.Command{
 		Name:        "remove",
@@ -354,6 +365,34 @@ func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 	}
 
 	cmd.setAppInstances(appName, instances)
+}
+
+func (cmd *appRunnerCommand) updateAppRoutes(c *cli.Context) {
+	appName := c.Args().First()
+	userDefinedRoutes := c.Args().Get(1)
+
+	switch {
+	case appName == "":
+		cmd.output.IncorrectUsage("App Name required")
+		return
+	case userDefinedRoutes == "":
+		cmd.output.IncorrectUsage("New Routes Required")
+		return
+	}
+
+	desiredRoutes, err := parseRouteOverrides(userDefinedRoutes)
+	if err != nil {
+		cmd.output.Say(err.Error())
+		return
+	}
+
+	err = cmd.appRunner.UpdateAppRoutes(appName, desiredRoutes)
+	if err != nil {
+		cmd.output.Say(fmt.Sprintf("Error updating routes: %s", err))
+		return
+	}
+
+	cmd.output.Say(fmt.Sprintf("Updating %s routes. You can check this app's current routes by running 'ltc status %s'", appName, appName))
 }
 
 func (cmd *appRunnerCommand) setAppInstances(appName string, instances int) {

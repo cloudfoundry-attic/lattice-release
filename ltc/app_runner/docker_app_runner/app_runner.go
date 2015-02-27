@@ -14,6 +14,7 @@ import (
 type AppRunner interface {
 	CreateDockerApp(params CreateDockerAppParams) error
 	ScaleApp(name string, instances int) error
+	UpdateAppRoutes(name string, routes RouteOverrides) error
 	RemoveApp(name string) error
 	AppExists(name string) (bool, error)
 	NumOfRunningAppInstances(name string) (int, error)
@@ -86,7 +87,17 @@ func (appRunner *appRunner) ScaleApp(name string, instances int) error {
 		return newAppNotStartedError(name)
 	}
 
-	return appRunner.updateLrp(name, instances)
+	return appRunner.updateLrpInstances(name, instances)
+}
+
+func (appRunner *appRunner) UpdateAppRoutes(name string, routes RouteOverrides) error {
+    if exists, err := appRunner.desiredLRPExists(name); err != nil {
+        return err
+    } else if !exists {
+        return newAppNotStartedError(name)
+    }
+
+    return appRunner.updateLrpRoutes(name, routes)
 }
 
 func (appRunner *appRunner) RemoveApp(name string) error {
@@ -209,11 +220,35 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 	return err
 }
 
-func (appRunner *appRunner) updateLrp(name string, instances int) error {
+func (appRunner *appRunner) updateLrpInstances(name string, instances int) error {
 	err := appRunner.receptorClient.UpdateDesiredLRP(
 		name,
 		receptor.DesiredLRPUpdateRequest{
 			Instances: &instances,
+		},
+	)
+
+	return err
+}
+
+func (appRunner *appRunner) updateLrpRoutes(name string, routes RouteOverrides) error {
+	var appRoutes route_helpers.AppRoutes
+
+	routeMap := make(map[uint16][]string)
+	for _, override := range routes {
+		routeMap[override.Port] = append(routeMap[override.Port], fmt.Sprintf("%s.%s", override.HostnamePrefix, appRunner.systemDomain))
+	}
+	for port, hostnames := range routeMap {
+		appRoutes = append(appRoutes, route_helpers.AppRoute{
+			Hostnames: hostnames,
+			Port:      port,
+		})
+	}
+
+	err := appRunner.receptorClient.UpdateDesiredLRP(
+		name,
+		receptor.DesiredLRPUpdateRequest{
+			Routes: appRoutes.RoutingInfo(),
 		},
 	)
 

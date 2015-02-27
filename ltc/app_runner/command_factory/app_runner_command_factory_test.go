@@ -638,51 +638,174 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to scale.")))
 		})
 
-		It("outputs error messages", func() {
+		Context("when the receptor returns errors", func() {
+			It("outputs error messages", func() {
+				args := []string{
+					"cool-web-app",
+					"22",
+				}
+
+				appRunner.ScaleAppReturns(errors.New("Major Fault"))
+				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Error Scaling App to 22 instances: Major Fault"))
+			})
+		})
+
+		Context("invalid syntax", func() {
+			It("validates that the name is passed in", func() {
+				args := []string{
+					"",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
+				Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+			})
+
+			It("validates that the number of instances is passed in", func() {
+				args := []string{
+					"cool-web-app",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Number of Instances Required"))
+				Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+			})
+
+			It("validates that the number of instances is an integer", func() {
+				args := []string{
+					"cool-web-app",
+					"twenty-two",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Number of Instances must be an integer"))
+				Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+			})
+		})
+	})
+
+	Describe("UpdateRoutesCommand", func() {
+		var updateRoutesCommand cli.Command
+
+		BeforeEach(func() {
+			clock = fakeclock.NewFakeClock(time.Now())
+
+			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:             appRunner,
+				DockerMetadataFetcher: dockerMetadataFetcher,
+				Output:                output.New(outputBuffer),
+				Timeout:               timeout,
+				Domain:                domain,
+				Env:                   []string{},
+				Clock:                 clock,
+				Logger:                logger,
+			}
+
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
+			updateRoutesCommand = commandFactory.MakeUpdateRoutesCommand()
+		})
+
+		It("updates the routes", func() {
 			args := []string{
 				"cool-web-app",
-				"22",
+				"8080:foo.com,9090:bar.com",
 			}
 
-			appRunner.ScaleAppReturns(errors.New("Major Fault"))
-			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+            expectedRouteOverrides := docker_app_runner.RouteOverrides{
+                docker_app_runner.RouteOverride{
+                    HostnamePrefix: "foo.com",
+                    Port:           8080,
+                },
+                docker_app_runner.RouteOverride{
+                    HostnamePrefix: "bar.com",
+                    Port:           9090,
+                },
+            }
 
-			Expect(outputBuffer).To(test_helpers.Say("Error Scaling App to 22 instances: Major Fault"))
+            appRunner.ActualRoutesMatchDesiredReturns(true)
+			test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
+
+			Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+
+			Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(1))
+
+            name, routeOverrides := appRunner.UpdateAppRoutesArgsForCall(0)
+
+			Expect(name).To(Equal("cool-web-app"))
+			Expect(routeOverrides).To(Equal(expectedRouteOverrides))
 		})
 
-		It("validates that the name is passed in", func() {
-			args := []string{
-				"",
-			}
+		Context("when the receptor returns errors", func() {
+			It("outputs error messages", func() {
+				args := []string{
+					"cool-web-app",
+					"8080:foo.com",
+				}
 
-			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+				appRunner.UpdateAppRoutesReturns(errors.New("Major Fault"))
+				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
-			Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say("Error updating routes: Major Fault"))
+				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(1))
+			})
 		})
 
-		It("validates that the number of instances is passed in", func() {
-			args := []string{
-				"cool-web-app",
-			}
+		Context("invalid syntax", func() {
+			It("validates that the name is passed in", func() {
+				args := []string{
+					"",
+				}
 
-			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Number of Instances Required"))
-			Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
+				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
+			})
+
+			It("validates that the routes are passed in", func() {
+				args := []string{
+					"cool-web-app",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: New Routes Required"))
+				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
+			})
 		})
 
-		It("validates that the number of instances is an integer", func() {
-			args := []string{
-				"cool-web-app",
-				"twenty-two",
-			}
+		Context("malformed route", func() {
+			It("errors out when the port is not an int", func() {
+				args := []string{
+					"cool-web-app",
+					"woo:aahh",
+				}
 
-			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
+				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Number of Instances must be an integer"))
-			Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
+
+			})
+
+			It("errors out when there is no colon", func() {
+				args := []string{
+					"cool-web-app",
+					"8888",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
+
+				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
+			})
 		})
+
 	})
 
 	Describe("RemoveAppCommand", func() {
@@ -806,4 +929,5 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("Error Stopping App: Major Fault"))
 		})
 	})
+
 })
