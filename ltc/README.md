@@ -19,6 +19,7 @@ Download the appropriate binary for your architecture:
 Platform | Architecture | Link
 -------------------------------
 MacOS | amd64 | [https://lattice.s3.amazonaws.com/latest/darwin-amd64/ltc](https://lattice.s3.amazonaws.com/latest/darwin-amd64/ltc)
+
 Linux | amd64 | [https://lattice.s3.amazonaws.com/latest/linux-amd64/ltc](https://lattice.s3.amazonaws.com/latest/linux-amd64/ltc)
 
 Here's a simple installation script.  It assumes `$HOME/bin` is on your $PATH
