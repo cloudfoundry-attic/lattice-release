@@ -59,7 +59,10 @@ bump_and_push_lattice() {
 
         $LATTICE_SRC_PATH/lattice-pipeline/helpers/restore_gopath
         rm -rf $LATTICE_SRC_PATH/ltc/Godeps
-        godep save
+
+        pushd ltc > /dev/null
+            godep save
+        popd > /dev/null
 
         git add $LATTICE_SRC_PATH/ltc/Godeps
         git commit -m "Update ltc Godeps
