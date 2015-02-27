@@ -57,13 +57,19 @@ bump_and_push_lattice() {
 
         +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME"
 
-        $LATTICE_SRC_PATH/lattice-pipeline/helpers/restore_gopath
+        $LATTICE_SRC_PATH/lattice-pipeline/helpers/construct_ltc_gopath
         rm -rf $LATTICE_SRC_PATH/ltc/Godeps
 
+        echo -n "Saving off ltc Godeps from constructed GOPATH .."
         pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
             godep save
             cp -a Godeps $LATTICE_SRC_PATH/ltc/
         popd > /dev/null
+        echo "DONE!"
+
+        echo "== Godeps Json - BEGIN =="
+        cat $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/Godeps/Godeps.json
+        echo "== Godeps Json - END ==
 
         git add $LATTICE_SRC_PATH/ltc/Godeps
         git commit -m "Update ltc Godeps

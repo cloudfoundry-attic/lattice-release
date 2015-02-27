@@ -25,6 +25,6 @@ echo -n "Copying $DIEGO_RELEASE_PATH/src/* into compilation GOPATH (Prefer Diego
 ## locally, this copies all of lattice again because we usually develop lattice using diego-release as the GOPATH
 cp -af $DIEGO_RELEASE_PATH/src/ $GOPATH/ && echo "DONE!"
 
-echo -n "Copying over git modules for later godeps saves from restored path .."
+echo -n "Copying over git modules for later godeps saves from constructed path .."
 mkdir -p $GOPATH/.git/modules
-cp -af $DIEGO_RELEASE_PATH/.git/modules/* $GOPATH/.git/modules/ && echo "DONE!"
+cp -afv $DIEGO_RELEASE_PATH/.git* $GOPATH/ && echo "DONE!"

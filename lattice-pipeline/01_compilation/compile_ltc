@@ -15,7 +15,7 @@ mkdir ~/go
 export GOPATH=~/go
 export PATH="$PATH:$GOPATH/bin"
 
-$LATTICE_SRC_PATH/lattice-pipeline/helpers/restore_gopath
+$LATTICE_SRC_PATH/lattice-pipeline/helpers/construct_ltc_gopath
 
 go install github.com/onsi/ginkgo/ginkgo
 
