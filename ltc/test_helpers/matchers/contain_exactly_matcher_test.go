@@ -22,6 +22,7 @@ var _ = Describe("ContainExactlyMatcher", func() {
 
 		Expect([]string{"hi there", "ho there", "hallo"}).ToNot(matchers.ContainExactly([]string{"hi there", "bye bye"}))
 		Expect([]string{"hi there", "ho there", "hallo"}).ToNot(matchers.ContainExactly([]string{"ho there", "hi there"}))
+		Expect([]string{"ho there", "hallo"}).ToNot(matchers.ContainExactly([]string{"ho there", "hi there", "hallo"}))
 		Expect([]string{"hi there", "ho there", "hallo"}).ToNot(matchers.ContainExactly([]string{"buhbye"}))
 		Expect([]string{"hi there", "ho there", "hallo"}).ToNot(matchers.ContainExactly([]string{}))
 
