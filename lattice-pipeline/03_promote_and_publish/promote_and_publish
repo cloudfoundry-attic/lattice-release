@@ -52,7 +52,7 @@ bump_and_push_lattice() {
         git pull origin master
         git pull origin develop
         git checkout master
-        echo "merging master into develop"
+        echo "merging develop into master"
         git merge develop -m "Merge branch 'develop' of github.com:cloudfoundry-incubator/lattice into master
 
         +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME"
@@ -60,8 +60,9 @@ bump_and_push_lattice() {
         $LATTICE_SRC_PATH/lattice-pipeline/helpers/restore_gopath
         rm -rf $LATTICE_SRC_PATH/ltc/Godeps
 
-        pushd ltc > /dev/null
+        pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
             godep save
+            cp -a Godeps $LATTICE_SRC_PATH/ltc/
         popd > /dev/null
 
         git add $LATTICE_SRC_PATH/ltc/Godeps
