@@ -6,10 +6,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
+    "github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
+    "github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 )
 
 var _ = Describe("AppRunner", func() {

@@ -428,8 +428,9 @@ var _ = Describe("AppRunner", func() {
 			}
 			fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
 
-			count, err := appRunner.NumOfRunningAppInstances("americano-app")
-			Expect(err).ToNot(HaveOccurred())
+			count, placementError, err := appRunner.NumOfRunningAppInstances("americano-app")
+            Expect(placementError).To(Equal(false))
+            Expect(err).ToNot(HaveOccurred())
 			Expect(count).To(Equal(2))
 
 			Expect(fakeReceptorClient.ActualLRPsByProcessGuidCallCount()).To(Equal(1))
@@ -440,10 +441,26 @@ var _ = Describe("AppRunner", func() {
 			receptorError := errors.New("receptor did not like that requeset")
 			fakeReceptorClient.ActualLRPsByProcessGuidReturns([]receptor.ActualLRPResponse{}, receptorError)
 
-			_, err := appRunner.NumOfRunningAppInstances("nescafe-app")
+			_, _, err := appRunner.NumOfRunningAppInstances("nescafe-app")
 
 			Expect(err).To(Equal(receptorError))
 		})
+
+        Context("when there are placement errors on an instance", func() {
+            It("returns true for placementError", func() {
+                actualLrpsResponse := []receptor.ActualLRPResponse{
+                    receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 1},
+                    receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateUnclaimed, Index: 2, PlacementError: "could not place!"},
+                    receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 3},
+                }
+                fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
+
+                count, placementError, err := appRunner.NumOfRunningAppInstances("americano-app")
+                Expect(placementError).To(Equal(true))
+                Expect(err).ToNot(HaveOccurred())
+                Expect(count).To(Equal(2))
+            })
+        })
 	})
 
 	Describe("AppExists", func() {

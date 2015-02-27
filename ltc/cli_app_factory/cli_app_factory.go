@@ -98,6 +98,7 @@ func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.Exit
 		Clock:                 clock,
 		Logger:                logger,
 		TailedLogsOutputter:   tailedLogsOutputter,
+        ExitHandler:           exitHandler,
 	}
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)

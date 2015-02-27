@@ -51,22 +51,15 @@ type FakeAppRunner struct {
 		result1 bool
 		result2 error
 	}
-	NumOfRunningAppInstancesStub        func(name string) (int, error)
+	NumOfRunningAppInstancesStub        func(name string) (int, bool, error)
 	numOfRunningAppInstancesMutex       sync.RWMutex
 	numOfRunningAppInstancesArgsForCall []struct {
 		name string
 	}
 	numOfRunningAppInstancesReturns struct {
 		result1 int
-		result2 error
-	}
-	ActualRoutesMatchDesiredStub        func(name string) bool
-	actualRoutesMatchDesiredMutex       sync.RWMutex
-	actualRoutesMatchDesiredArgsForCall []struct {
-		name string
-	}
-	actualRoutesMatchDesiredReturns struct {
-		result1 bool
+		result2 bool
+		result3 error
 	}
 }
 
@@ -233,7 +226,7 @@ func (fake *FakeAppRunner) AppExistsReturns(result1 bool, result2 error) {
 	}{result1, result2}
 }
 
-func (fake *FakeAppRunner) NumOfRunningAppInstances(name string) (int, error) {
+func (fake *FakeAppRunner) NumOfRunningAppInstances(name string) (int, bool, error) {
 	fake.numOfRunningAppInstancesMutex.Lock()
 	fake.numOfRunningAppInstancesArgsForCall = append(fake.numOfRunningAppInstancesArgsForCall, struct {
 		name string
@@ -242,7 +235,7 @@ func (fake *FakeAppRunner) NumOfRunningAppInstances(name string) (int, error) {
 	if fake.NumOfRunningAppInstancesStub != nil {
 		return fake.NumOfRunningAppInstancesStub(name)
 	} else {
-		return fake.numOfRunningAppInstancesReturns.result1, fake.numOfRunningAppInstancesReturns.result2
+		return fake.numOfRunningAppInstancesReturns.result1, fake.numOfRunningAppInstancesReturns.result2, fake.numOfRunningAppInstancesReturns.result3
 	}
 }
 
@@ -258,44 +251,13 @@ func (fake *FakeAppRunner) NumOfRunningAppInstancesArgsForCall(i int) string {
 	return fake.numOfRunningAppInstancesArgsForCall[i].name
 }
 
-func (fake *FakeAppRunner) NumOfRunningAppInstancesReturns(result1 int, result2 error) {
+func (fake *FakeAppRunner) NumOfRunningAppInstancesReturns(result1 int, result2 bool, result3 error) {
 	fake.NumOfRunningAppInstancesStub = nil
 	fake.numOfRunningAppInstancesReturns = struct {
 		result1 int
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeAppRunner) ActualRoutesMatchDesired(name string) bool {
-	fake.actualRoutesMatchDesiredMutex.Lock()
-	fake.actualRoutesMatchDesiredArgsForCall = append(fake.actualRoutesMatchDesiredArgsForCall, struct {
-		name string
-	}{name})
-	fake.actualRoutesMatchDesiredMutex.Unlock()
-	if fake.ActualRoutesMatchDesiredStub != nil {
-		return fake.ActualRoutesMatchDesiredStub(name)
-	} else {
-		return fake.actualRoutesMatchDesiredReturns.result1
-	}
-}
-
-func (fake *FakeAppRunner) ActualRoutesMatchDesiredCallCount() int {
-	fake.actualRoutesMatchDesiredMutex.RLock()
-	defer fake.actualRoutesMatchDesiredMutex.RUnlock()
-	return len(fake.actualRoutesMatchDesiredArgsForCall)
-}
-
-func (fake *FakeAppRunner) ActualRoutesMatchDesiredArgsForCall(i int) string {
-	fake.actualRoutesMatchDesiredMutex.RLock()
-	defer fake.actualRoutesMatchDesiredMutex.RUnlock()
-	return fake.actualRoutesMatchDesiredArgsForCall[i].name
-}
-
-func (fake *FakeAppRunner) ActualRoutesMatchDesiredReturns(result1 bool) {
-	fake.ActualRoutesMatchDesiredStub = nil
-	fake.actualRoutesMatchDesiredReturns = struct {
-		result1 bool
-	}{result1}
+		result2 bool
+		result3 error
+	}{result1, result2, result3}
 }
 
 var _ docker_app_runner.AppRunner = new(FakeAppRunner)

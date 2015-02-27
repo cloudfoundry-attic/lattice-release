@@ -18,6 +18,8 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
+    "github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
+    "github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 )
 
 const (
@@ -40,6 +42,7 @@ type AppRunnerCommandFactoryConfig struct {
 	Clock                 clock.Clock
 	Logger                lager.Logger
 	TailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
+    ExitHandler           exit_handler.ExitHandler
 }
 
 func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunnerCommandFactory {
@@ -53,6 +56,7 @@ func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunner
 			env:                   config.Env,
 			clock:                 config.Clock,
 			tailedLogsOutputter:   config.TailedLogsOutputter,
+            exitHandler:           config.ExitHandler,
 		},
 	}
 }
@@ -182,6 +186,7 @@ type appRunnerCommand struct {
 	env                   []string
 	clock                 clock.Clock
 	tailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
+    exitHandler           exit_handler.ExitHandler
 }
 
 func (cmd *appRunnerCommand) createApp(context *cli.Context) {
@@ -330,13 +335,25 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 
 	go cmd.tailedLogsOutputter.OutputTailedLogs(name)
 
-	ok := cmd.pollUntilSuccess(func() bool {
-		numberOfRunningInstances, _ := cmd.appRunner.NumOfRunningAppInstances(name)
+    placementErrorOccurred := false
+    ok := cmd.pollUntilSuccess(func() bool {
+        numberOfRunningInstances, placementError, _ := cmd.appRunner.NumOfRunningAppInstances(name)
+        if placementError {
+            cmd.output.Say(colors.Red("Error, could not place all instances."))
+            placementErrorOccurred = true
+            return true
+        }
 		return numberOfRunningInstances == instancesFlag
 	}, false)
 
 	cmd.tailedLogsOutputter.StopOutputting()
-	if ok {
+
+    if placementErrorOccurred {
+        cmd.exitHandler.Exit(exit_codes.PlacementError)
+        return
+    }
+
+    if ok {
 		cmd.output.Say(colors.Green(name + " is now running.\n"))
 		cmd.output.Say(colors.Green(cmd.urlForApp(name)))
 	} else {
@@ -395,14 +412,27 @@ func (cmd *appRunnerCommand) setAppInstances(appName string, instances int) {
 		return
 	}
 
-	cmd.output.Say(fmt.Sprintf("Scaling %s to %d instances", appName, instances))
+	cmd.output.Say(fmt.Sprintf("Scaling %s to %d instances \n", appName, instances))
 
-	ok := cmd.pollUntilSuccess(func() bool {
-		numRunning, _ := cmd.appRunner.NumOfRunningAppInstances(appName)
-		return numRunning == instances
+    placementErrorOccurred := false
+    ok := cmd.pollUntilSuccess(func() bool {
+        numberOfRunningInstances, placementError, _ := cmd.appRunner.NumOfRunningAppInstances(appName)
+        if placementError {
+            cmd.output.Say(colors.Red("Error, could not place all instances."))
+            placementErrorOccurred = true
+            return true
+        }
+		return numberOfRunningInstances == instances
 	}, true)
 
-	if ok {
+    cmd.tailedLogsOutputter.StopOutputting()
+
+    if placementErrorOccurred {
+        cmd.exitHandler.Exit(exit_codes.PlacementError)
+        return
+    }
+
+    if ok {
 		cmd.output.Say(colors.Green("App Scaled Successfully"))
 	} else {
 		cmd.output.Say(colors.Red(appName + " took too long to scale."))
