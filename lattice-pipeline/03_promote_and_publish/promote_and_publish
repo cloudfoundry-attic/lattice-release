@@ -61,31 +61,44 @@ bump_and_push_lattice() {
         sync
 
         $LATTICE_SRC_PATH/lattice-pipeline/helpers/construct_ltc_gopath
+
+        echo "Removing $LATTICE_SRC_PATH/ltc/Godeps folder"
         rm -rf $LATTICE_SRC_PATH/ltc/Godeps
 
-        echo -n "Saving off ltc Godeps from constructed GOPATH .."
-        pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
-            godep save
+        echo "Saving off ltc Godeps from constructed GOPATH .."
+        pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc
+            godep save && echo "godep saved"
             sync
+
+            echo "Copying ltc/Godeps from $(pwd) to $LATTICE_SRC_PATH"
             cp -av Godeps $LATTICE_SRC_PATH/ltc/
-        popd > /dev/null
+        popd
         echo "DONE!"
 
         sync
 
         echo "== Godeps Json - BEGIN =="
-        cat $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/Godeps/Godeps.json
+        cat $LATTICE_SRC_PATH/ltc/Godeps/Godeps.json
         echo "== Godeps Json - END =="
 
-        pushd $LATTICE_SRC_PATH/ltc > /dev/null
+        pushd $LATTICE_SRC_PATH/ltc
+            echo "git status"
+            git status
+
+            echo "git add Godeps"
             git add Godeps
+
+            echo "git status"
+            git status
+
+            echo "git commit Godeps"
             git commit -m "Update ltc Godeps
 
             Diego Release Git SHA: ${diego_release_git_sha}
 
             +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
             "
-        popd > /dev/null
+        popd
 
         echo "pushing local master to origin/master"
         git push origin master
