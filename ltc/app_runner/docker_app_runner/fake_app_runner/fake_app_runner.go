@@ -51,12 +51,12 @@ type FakeAppRunner struct {
 		result1 bool
 		result2 error
 	}
-	NumOfRunningAppInstancesStub        func(name string) (int, bool, error)
-	numOfRunningAppInstancesMutex       sync.RWMutex
-	numOfRunningAppInstancesArgsForCall []struct {
+	RunningAppInstancesInfoStub        func(name string) (int, bool, error)
+	runningAppInstancesInfoMutex       sync.RWMutex
+	runningAppInstancesInfoArgsForCall []struct {
 		name string
 	}
-	numOfRunningAppInstancesReturns struct {
+	runningAppInstancesInfoReturns struct {
 		result1 int
 		result2 bool
 		result3 error
@@ -226,34 +226,34 @@ func (fake *FakeAppRunner) AppExistsReturns(result1 bool, result2 error) {
 	}{result1, result2}
 }
 
-func (fake *FakeAppRunner) NumOfRunningAppInstances(name string) (int, bool, error) {
-	fake.numOfRunningAppInstancesMutex.Lock()
-	fake.numOfRunningAppInstancesArgsForCall = append(fake.numOfRunningAppInstancesArgsForCall, struct {
+func (fake *FakeAppRunner) RunningAppInstancesInfo(name string) (int, bool, error) {
+	fake.runningAppInstancesInfoMutex.Lock()
+	fake.runningAppInstancesInfoArgsForCall = append(fake.runningAppInstancesInfoArgsForCall, struct {
 		name string
 	}{name})
-	fake.numOfRunningAppInstancesMutex.Unlock()
-	if fake.NumOfRunningAppInstancesStub != nil {
-		return fake.NumOfRunningAppInstancesStub(name)
+	fake.runningAppInstancesInfoMutex.Unlock()
+	if fake.RunningAppInstancesInfoStub != nil {
+		return fake.RunningAppInstancesInfoStub(name)
 	} else {
-		return fake.numOfRunningAppInstancesReturns.result1, fake.numOfRunningAppInstancesReturns.result2, fake.numOfRunningAppInstancesReturns.result3
+		return fake.runningAppInstancesInfoReturns.result1, fake.runningAppInstancesInfoReturns.result2, fake.runningAppInstancesInfoReturns.result3
 	}
 }
 
-func (fake *FakeAppRunner) NumOfRunningAppInstancesCallCount() int {
-	fake.numOfRunningAppInstancesMutex.RLock()
-	defer fake.numOfRunningAppInstancesMutex.RUnlock()
-	return len(fake.numOfRunningAppInstancesArgsForCall)
+func (fake *FakeAppRunner) RunningAppInstancesInfoCallCount() int {
+	fake.runningAppInstancesInfoMutex.RLock()
+	defer fake.runningAppInstancesInfoMutex.RUnlock()
+	return len(fake.runningAppInstancesInfoArgsForCall)
 }
 
-func (fake *FakeAppRunner) NumOfRunningAppInstancesArgsForCall(i int) string {
-	fake.numOfRunningAppInstancesMutex.RLock()
-	defer fake.numOfRunningAppInstancesMutex.RUnlock()
-	return fake.numOfRunningAppInstancesArgsForCall[i].name
+func (fake *FakeAppRunner) RunningAppInstancesInfoArgsForCall(i int) string {
+	fake.runningAppInstancesInfoMutex.RLock()
+	defer fake.runningAppInstancesInfoMutex.RUnlock()
+	return fake.runningAppInstancesInfoArgsForCall[i].name
 }
 
-func (fake *FakeAppRunner) NumOfRunningAppInstancesReturns(result1 int, result2 bool, result3 error) {
-	fake.NumOfRunningAppInstancesStub = nil
-	fake.numOfRunningAppInstancesReturns = struct {
+func (fake *FakeAppRunner) RunningAppInstancesInfoReturns(result1 int, result2 bool, result3 error) {
+	fake.RunningAppInstancesInfoStub = nil
+	fake.runningAppInstancesInfoReturns = struct {
 		result1 int
 		result2 bool
 		result3 error

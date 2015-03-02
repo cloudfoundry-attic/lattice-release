@@ -17,7 +17,7 @@ type AppRunner interface {
 	UpdateAppRoutes(name string, routes RouteOverrides) error
 	RemoveApp(name string) error
 	AppExists(name string) (bool, error)
-	NumOfRunningAppInstances(name string) (int, bool, error)
+	RunningAppInstancesInfo(name string) (int, bool, error)
 }
 
 type PortConfig struct {
@@ -125,7 +125,7 @@ func (appRunner *appRunner) AppExists(name string) (bool, error) {
 	return false, nil
 }
 
-func (appRunner *appRunner) NumOfRunningAppInstances(name string) (count int, placementError bool, err error) {
+func (appRunner *appRunner) RunningAppInstancesInfo(name string) (count int, placementError bool, err error) {
 	runningInstances := 0
     placementErrorOccurred := false
 	instances, err := appRunner.receptorClient.ActualLRPsByProcessGuid(name)

@@ -15,11 +15,11 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/codegangsta/cli"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
-    "github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
-    "github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 )
 
 const (
@@ -42,7 +42,7 @@ type AppRunnerCommandFactoryConfig struct {
 	Clock                 clock.Clock
 	Logger                lager.Logger
 	TailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
-    ExitHandler           exit_handler.ExitHandler
+	ExitHandler           exit_handler.ExitHandler
 }
 
 func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunnerCommandFactory {
@@ -56,7 +56,7 @@ func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunner
 			env:                   config.Env,
 			clock:                 config.Clock,
 			tailedLogsOutputter:   config.TailedLogsOutputter,
-            exitHandler:           config.ExitHandler,
+			exitHandler:           config.ExitHandler,
 		},
 	}
 }
@@ -186,7 +186,7 @@ type appRunnerCommand struct {
 	env                   []string
 	clock                 clock.Clock
 	tailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
-    exitHandler           exit_handler.ExitHandler
+	exitHandler           exit_handler.ExitHandler
 }
 
 func (cmd *appRunnerCommand) createApp(context *cli.Context) {
@@ -334,26 +334,11 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 	cmd.output.Say("Creating App: " + name + "\n")
 
 	go cmd.tailedLogsOutputter.OutputTailedLogs(name)
+	defer cmd.tailedLogsOutputter.StopOutputting()
 
-    placementErrorOccurred := false
-    ok := cmd.pollUntilSuccess(func() bool {
-        numberOfRunningInstances, placementError, _ := cmd.appRunner.NumOfRunningAppInstances(name)
-        if placementError {
-            cmd.output.Say(colors.Red("Error, could not place all instances."))
-            placementErrorOccurred = true
-            return true
-        }
-		return numberOfRunningInstances == instancesFlag
-	}, false)
+	ok := cmd.pollUntilAllInstancesRunning(name, instancesFlag)
 
-	cmd.tailedLogsOutputter.StopOutputting()
-
-    if placementErrorOccurred {
-        cmd.exitHandler.Exit(exit_codes.PlacementError)
-        return
-    }
-
-    if ok {
+	if ok {
 		cmd.output.Say(colors.Green(name + " is now running.\n"))
 		cmd.output.Say(colors.Green(cmd.urlForApp(name)))
 	} else {
@@ -368,7 +353,7 @@ func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
 
 	if appName == "" || instancesArg == "" {
 		cmd.output.IncorrectUsage("Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'")
-        return
+		return
 	}
 
 	instances, err := strconv.Atoi(instancesArg)
@@ -414,28 +399,32 @@ func (cmd *appRunnerCommand) setAppInstances(appName string, instances int) {
 
 	cmd.output.Say(fmt.Sprintf("Scaling %s to %d instances \n", appName, instances))
 
-    placementErrorOccurred := false
-    ok := cmd.pollUntilSuccess(func() bool {
-        numberOfRunningInstances, placementError, _ := cmd.appRunner.NumOfRunningAppInstances(appName)
-        if placementError {
-            cmd.output.Say(colors.Red("Error, could not place all instances."))
-            placementErrorOccurred = true
-            return true
-        }
-		return numberOfRunningInstances == instances
-	}, true)
+	ok := cmd.pollUntilAllInstancesRunning(appName, instances)
 
-    cmd.tailedLogsOutputter.StopOutputting()
-
-    if placementErrorOccurred {
-        cmd.exitHandler.Exit(exit_codes.PlacementError)
-        return
-    }
-
-    if ok {
+	if ok {
 		cmd.output.Say(colors.Green("App Scaled Successfully"))
 	} else {
 		cmd.output.Say(colors.Red(appName + " took too long to scale."))
+	}
+}
+
+func (cmd *appRunnerCommand) pollUntilAllInstancesRunning(appName string, instances int) bool {
+	placementErrorOccurred := false
+	ok := cmd.pollUntilSuccess(func() bool {
+		numberOfRunningInstances, placementError, _ := cmd.appRunner.RunningAppInstancesInfo(appName)
+		if placementError {
+			cmd.output.Say(colors.Red("Error, could not place all instances."))
+			placementErrorOccurred = true
+			return true
+		}
+		return numberOfRunningInstances == instances
+	}, true)
+
+	if placementErrorOccurred {
+		cmd.exitHandler.Exit(exit_codes.PlacementError)
+		return false
+	} else {
+		return ok
 	}
 }
 

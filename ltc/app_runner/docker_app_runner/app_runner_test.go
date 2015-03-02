@@ -428,7 +428,7 @@ var _ = Describe("AppRunner", func() {
 			}
 			fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
 
-			count, placementError, err := appRunner.NumOfRunningAppInstances("americano-app")
+			count, placementError, err := appRunner.RunningAppInstancesInfo("americano-app")
             Expect(placementError).To(Equal(false))
             Expect(err).ToNot(HaveOccurred())
 			Expect(count).To(Equal(2))
@@ -441,7 +441,7 @@ var _ = Describe("AppRunner", func() {
 			receptorError := errors.New("receptor did not like that requeset")
 			fakeReceptorClient.ActualLRPsByProcessGuidReturns([]receptor.ActualLRPResponse{}, receptorError)
 
-			_, _, err := appRunner.NumOfRunningAppInstances("nescafe-app")
+			_, _, err := appRunner.RunningAppInstancesInfo("nescafe-app")
 
 			Expect(err).To(Equal(receptorError))
 		})
@@ -455,7 +455,7 @@ var _ = Describe("AppRunner", func() {
                 }
                 fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
 
-                count, placementError, err := appRunner.NumOfRunningAppInstances("americano-app")
+                count, placementError, err := appRunner.RunningAppInstancesInfo("americano-app")
                 Expect(placementError).To(Equal(true))
                 Expect(err).ToNot(HaveOccurred())
                 Expect(count).To(Equal(2))
