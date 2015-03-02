@@ -27,7 +27,7 @@ pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
     go get -d -v ./...
 
     ## TODO: go get docker/docker separately and unpack its vendored deps.
-    cp -avf Godeps/_workspace/src/github.com/docker/docker/vendor/src/* $GOPATH/src/
+    cp -af Godeps/_workspace/src/github.com/docker/docker/vendor/src/* $GOPATH/src/
 
     godep restore && echo "godep restored"
 
@@ -39,15 +39,15 @@ popd > /dev/null
 
 echo -n "Deleting .git folders that are diego-release submodules .."
 pushd $GOPATH
-    grep submodule $DIEGO_RELEASE_PATH/.gitmodules | awk -F\" '{ print $2"/.git" }' | xargs rm -rfv
+    grep submodule $DIEGO_RELEASE_PATH/.gitmodules | awk -F\" '{ print $2"/.git" }' | xargs rm -rf
 popd
 echo "DONE!"
 
 echo -n "Copying $DIEGO_RELEASE_PATH/src/* into compilation GOPATH (Prefer Diego-Release dependencies over ltc's Godeps) .."
 ## locally, this copies all of lattice again because we usually develop lattice using diego-release as the GOPATH
-cp -afv $DIEGO_RELEASE_PATH/src/ $GOPATH/ && echo "DONE!"
+cp -af $DIEGO_RELEASE_PATH/src/ $GOPATH/ && echo "DONE!"
 
 echo "Copying over git modules for later godeps saves from constructed path .."
-cp -afv $DIEGO_RELEASE_PATH/.git* $GOPATH/ && echo "DONE!"
+cp -af $DIEGO_RELEASE_PATH/.git* $GOPATH/ && echo "DONE!"
 
 sync

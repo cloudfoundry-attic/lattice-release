@@ -71,7 +71,7 @@ bump_and_push_lattice() {
             sync
 
             echo "Copying ltc/Godeps from $(pwd) to $LATTICE_SRC_PATH"
-            cp -av Godeps $LATTICE_SRC_PATH/ltc/
+            cp -a Godeps $LATTICE_SRC_PATH/ltc/
         popd
         echo "DONE!"
 
@@ -82,31 +82,16 @@ bump_and_push_lattice() {
         echo "== Godeps Json - END =="
 
         pushd $LATTICE_SRC_PATH/ltc
-            echo "git status"
-            git status
-
-            echo "git add Godeps"
             git add Godeps
 
-            echo "git status"
-            git status
+            if [ $(git diff --cached --numstat -- Godeps/ | wc -l)  -gt 0 ]; then
+                git commit -m "Update ltc Godeps
 
-            ## suppress errors - in case commit is empty
-            set +e
+                Diego Release Git SHA: ${diego_release_git_sha}
 
-            echo "git commit Godeps"
-            git commit -m "Update ltc Godeps
-
-            Diego Release Git SHA: ${diego_release_git_sha}
-
-            +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
-            "
-            if [ "$?" != "0" ]; then
-                echo ">> No Godeps to commit <<"
+                +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+                "
             fi
-
-            ## unsuppress errors
-            set -e
         popd
 
         echo "pushing local master to origin/master"
