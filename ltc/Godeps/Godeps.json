@@ -33,8 +33,8 @@
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-64-ge1712f3",
-			"Rev": "e1712f381785e32046927f64a7c86fe569203196"
+			"Comment": "1.2.0-74-g50c77ec",
+			"Rev": "50c77ecec0068c9aef9d90ae0fd0fdf410041da3"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/api",
