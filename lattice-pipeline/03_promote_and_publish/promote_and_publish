@@ -13,7 +13,7 @@ upload_lattice_to_s3() {
 }
 
 extract_deliver_stories_message() {
-git log $GO_FROM_REVISION_LATTICE..$GO_TO_REVISION_LATTICE | \
+git log origin/master..$GO_TO_REVISION_LATTICE | \
     egrep -io "\[\s*(?:Finishes|Fixes)\s*(#(\d+)\s*)+\]" | \
     perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi'
 }
