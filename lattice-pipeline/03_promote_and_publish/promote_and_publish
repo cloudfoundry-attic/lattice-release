@@ -18,6 +18,70 @@ git log origin/master..$GO_TO_REVISION_LATTICE | \
     perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi'
 }
 
+bump_version(){
+    previous_lattice_version=$(cat Version)
+    new_lattice_version=$((previous_lattice_version+1))
+
+    echo "$new_lattice_version" > Version
+    echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
+
+    echo "${diego_release_git_sha}" > DIEGO_VERSION
+
+    git add Version
+    git add DIEGO_VERSION
+    deliver_stories_message=$(extract_deliver_stories_message)
+
+    git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
+
+    Diego Release Git SHA: ${diego_release_git_sha}
+
+    $deliver_stories_message
+
+    +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+    "
+
+}
+
+update_godeps(){
+    mkdir ~/go
+    export GOPATH=~/go
+    export PATH="$PATH:$GOPATH/bin"
+
+    $LATTICE_SRC_PATH/lattice-pipeline/helpers/construct_ltc_gopath
+
+    echo "Removing $LATTICE_SRC_PATH/ltc/Godeps folder"
+    rm -rf $LATTICE_SRC_PATH/ltc/Godeps
+
+    echo "Saving off ltc Godeps from constructed GOPATH .."
+    pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc
+        godep save && echo "godep saved"
+        sync
+
+        echo "Copying ltc/Godeps from $(pwd) to $LATTICE_SRC_PATH"
+        cp -a Godeps $LATTICE_SRC_PATH/ltc/
+    popd
+    echo "DONE!"
+
+    sync
+
+    echo "== Godeps Json - BEGIN =="
+    cat $LATTICE_SRC_PATH/ltc/Godeps/Godeps.json
+    echo "== Godeps Json - END =="
+
+    pushd $LATTICE_SRC_PATH/ltc
+        git add Godeps
+
+        if [ $(git diff --cached --numstat -- Godeps/ | wc -l)  -gt 0 ]; then
+            git commit -m "Update ltc Godeps
+
+            Diego Release Git SHA: ${diego_release_git_sha}
+
+            +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+            "
+        fi
+    popd
+}
+
 bump_and_push_lattice() {
     pushd diego-release
         diego_release_git_sha="$(git rev-parse HEAD)" && echo "diego_release_git_sha=${diego_release_git_sha}"
@@ -28,71 +92,35 @@ bump_and_push_lattice() {
     fi
 
     pushd diego-release/src/github.com/cloudfoundry-incubator/lattice
-        previous_lattice_version=$(cat Version)
-        new_lattice_version=$((previous_lattice_version+1))
-        echo "$new_lattice_version" > Version
-        echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
-
-        echo "${diego_release_git_sha}" > DIEGO_VERSION
-
-        git add Version
-        git add DIEGO_VERSION
-
-        deliver_stories_message=$(extract_deliver_stories_message)
-
-        git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
-
-        Diego Release Git SHA: ${diego_release_git_sha}
-
-        $deliver_stories_message
-
-        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
-        "
-
         git pull origin master
-        git pull origin develop
         git checkout master
+
+        # Most of the time this will be a ff-only merge.
+        # It won't be if there is a change to master, eg a README change or a PR merged directly into master
+        # that hasn't made it back to develop yet.
         echo "merging develop into master"
         git merge develop -m "Merge branch 'develop' of github.com:cloudfoundry-incubator/lattice into master
 
         +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
         "
 
+        update_godeps
+        bump_version
+
+        git checkout develop
+
+        echo "merging master into develop"
+
+        git merge master -m "Merge branch 'master' of github.com:cloudfoundry-incubator/lattice into develop
+
+        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+        "
+
+        #Rebase in case there have been changes to origin/develop since the beginning of this pipeline run.
+        #we want to get our godeps bump and merge commit stuff merged back into develop on top of external changes.
+        git pull --rebase origin develop
+        git push origin master develop
         sync
-
-        $LATTICE_SRC_PATH/lattice-pipeline/helpers/construct_ltc_gopath
-
-        echo "Removing $LATTICE_SRC_PATH/ltc/Godeps folder"
-        rm -rf $LATTICE_SRC_PATH/ltc/Godeps
-
-        echo "Saving off ltc Godeps from constructed GOPATH .."
-        pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc
-            godep save && echo "godep saved"
-            sync
-
-            echo "Copying ltc/Godeps from $(pwd) to $LATTICE_SRC_PATH"
-            cp -a Godeps $LATTICE_SRC_PATH/ltc/
-        popd
-        echo "DONE!"
-
-        sync
-
-        echo "== Godeps Json - BEGIN =="
-        cat $LATTICE_SRC_PATH/ltc/Godeps/Godeps.json
-        echo "== Godeps Json - END =="
-
-        pushd $LATTICE_SRC_PATH/ltc
-            git add Godeps
-
-            if [ $(git diff --cached --numstat -- Godeps/ | wc -l)  -gt 0 ]; then
-                git commit -m "Update ltc Godeps
-
-                Diego Release Git SHA: ${diego_release_git_sha}
-
-                +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
-                "
-            fi
-        popd
 
         echo "pushing local master to origin/master"
         git push origin master
@@ -121,10 +149,6 @@ if [ ${GO_FROM_REVISION_DIEGO_RELEASE} == ${GO_TO_REVISION_DIEGO_RELEASE} ] &&
 fi
 
 lattice_tar_path=$1
-
-mkdir ~/go
-export GOPATH=~/go
-export PATH="$PATH:$GOPATH/bin"
 
 setup_ssh_access_to_github
 
