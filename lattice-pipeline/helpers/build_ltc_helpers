@@ -65,7 +65,8 @@ construct_ltc_gopath() {
 }
 
 run_unit_tests() {
-    go install github.com/onsi/ginkgo/ginkgo
+    go get -v -u github.com/onsi/ginkgo/ginkgo
+#    go install github.com/onsi/ginkgo/ginkgo
 
     echo "Running ltc unit tests..."
     $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/scripts/test
