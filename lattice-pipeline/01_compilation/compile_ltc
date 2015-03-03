@@ -1,13 +1,6 @@
 #!/bin/bash
 set -e
 
-sync_up_tags_off_remote() {
-    pushd $LATTICE_SRC_PATH > /dev/null
-        git tag -l | xargs git tag -d
-        git fetch --tags > /dev/null
-    popd > /dev/null
-}
-
 if [ -z "$LATTICE_SRC_PATH" ]; then
     echo "Must set LATTICE_SRC_PATH"
     exit 1
@@ -29,7 +22,6 @@ go install github.com/onsi/ginkgo/ginkgo
 echo "Running ltc unit tests..."
 $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/scripts/test
 
-sync_up_tags_off_remote
 pushd $LATTICE_SRC_PATH > /dev/null
     version_from_file=$(git describe --always)
 popd > /dev/null
