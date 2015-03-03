@@ -2,22 +2,103 @@
 
 set -e
 
-upload_lattice_to_s3() {
-    echo "upload to s3"
-    aws s3 cp $lattice_tar_path "s3://lattice/lattice-latest.tgz"
-    aws s3 cp $lattice_tar_path "s3://lattice/lattice-${new_lattice_version}.tgz"
-    aws s3 cp diego-release/src/github.com/cloudfoundry-incubator/lattice/Version "s3://lattice/Version"
+setup_ssh_access_to_github() {
+    echo "Running ssh-agent"
+    eval `ssh-agent`
+    aws s3 cp s3://lattice-gocd/credentials/ci_key ci_key
+    chmod 600 ci_key
+    ssh-add ci_key
+}
 
-    lattice_s3_url="http://lattice.s3.amazonaws.com/lattice-latest.tgz"
-    echo $lattice_s3_url
+sync_up_tags_off_remote() {
+    pushd $LATTICE_SRC_PATH > /dev/null
+        git tag -l | xargs git tag -d
+        git fetch --tags
+    popd > /dev/null
+}
+
+git_describe_lattice_version() {
+    pushd $LATTICE_SRC_PATH > /dev/null
+        lattice_version=$(git describe --always)
+    popd > /dev/null
+    echo "lattice_version=${lattice_version}"
+}
+
+upload_lattice_tar_to_s3() {
+    aws s3 cp $lattice_tar_path "s3://lattice/unstable/latest/lattice.tgz"
+    aws s3 cp $lattice_tar_path "s3://lattice/unstable/${lattice_version}/lattice.tgz"
+    echo "lattice.tgz uploaded to s3"
+}
+
+upload_ltc_binaries_to_s3() {
+    rm -rf ltc-binaries
+    mkdir -p ltc-binaries
+    tar xzf ltc.tar.gz -C ltc-binaries
+    ltc_checksum=$(cat ltc-binaries/ltc-checksum)
+    echo "Unpacked ltc.tar.gz with ltc-checksum (git sha) = ${ltc_checksum}"
+
+    if [ "${ltc_checksum}" != "${GO_REVISION_LATTICE}" ]; then
+        echo "Mismatch on ltc-checksum SHA (ltc.tar.gz/gocd) :: ${ltc_checksum}/${GO_REVISION_LATTICE}"
+    fi
+
+    sync
+
+    aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/unstable/latest/darwin-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/unstable/latest/linux-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-checksum "s3://lattice/unstable/latest/ltc-checksum"
+
+    aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/unstable/${lattice_version}/darwin-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/unstable/${lattice_version}/linux-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-checksum "s3://lattice/unstable/${lattice_version}/ltc-checksum"
+    ## TODO: What do we do with the ltc-checksum now?
+
+    echo "ltc binaries uploaded to s3"
+}
+
+update_godeps(){
+    mkdir ~/go
+    export GOPATH=~/go
+    export PATH="$PATH:$GOPATH/bin"
+
+    $LATTICE_SRC_PATH/lattice-pipeline/helpers/construct_ltc_gopath
+
+    echo "Removing $LATTICE_SRC_PATH/ltc/Godeps folder"
+    rm -rf $LATTICE_SRC_PATH/ltc/Godeps
+
+    echo "Saving off ltc Godeps from constructed GOPATH .."
+    pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
+        godep save && echo "godep saved"
+        sync
+
+        echo -n "Copying ltc/Godeps from $(pwd) to $LATTICE_SRC_PATH/ltc .."
+        cp -a Godeps $LATTICE_SRC_PATH/ltc/ && echo "DONE!"
+    popd > /dev/null
+
+    echo "== Godeps Json - BEGIN =="
+    cat $LATTICE_SRC_PATH/ltc/Godeps/Godeps.json
+    echo "== Godeps Json - END =="
+
+    pushd $LATTICE_SRC_PATH/ltc > /dev/null
+        git add Godeps
+
+        if [ $(git diff --cached --numstat -- Godeps/ | wc -l)  -gt 0 ]; then
+            git commit -m "Update ltc Godeps
+
+            Diego Release Git SHA: ${diego_release_git_sha}
+
+            +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+            "
+        fi
+    popd > /dev/null
 }
 
 extract_deliver_stories_message() {
-git log origin/master..$GO_TO_REVISION_LATTICE | \
+git log origin/master..$GO_REVISION_LATTICE | \
     egrep -io "\[\s*(?:Finishes|Fixes)\s*(#(\d+)\s*)+\]" | \
     perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi'
 }
 
+## assumes master branch checked out
 bump_version(){
     previous_lattice_version=$(cat Version)
     new_lattice_version=$((previous_lattice_version+1))
@@ -42,56 +123,16 @@ bump_version(){
 
 }
 
-update_godeps(){
-    mkdir ~/go
-    export GOPATH=~/go
-    export PATH="$PATH:$GOPATH/bin"
-
-    $LATTICE_SRC_PATH/lattice-pipeline/helpers/construct_ltc_gopath
-
-    echo "Removing $LATTICE_SRC_PATH/ltc/Godeps folder"
-    rm -rf $LATTICE_SRC_PATH/ltc/Godeps
-
-    echo "Saving off ltc Godeps from constructed GOPATH .."
-    pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc
-        godep save && echo "godep saved"
-        sync
-
-        echo "Copying ltc/Godeps from $(pwd) to $LATTICE_SRC_PATH"
-        cp -a Godeps $LATTICE_SRC_PATH/ltc/
-    popd
-    echo "DONE!"
-
-    sync
-
-    echo "== Godeps Json - BEGIN =="
-    cat $LATTICE_SRC_PATH/ltc/Godeps/Godeps.json
-    echo "== Godeps Json - END =="
-
-    pushd $LATTICE_SRC_PATH/ltc
-        git add Godeps
-
-        if [ $(git diff --cached --numstat -- Godeps/ | wc -l)  -gt 0 ]; then
-            git commit -m "Update ltc Godeps
-
-            Diego Release Git SHA: ${diego_release_git_sha}
-
-            +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
-            "
-        fi
-    popd
-}
-
 bump_and_push_lattice() {
-    pushd diego-release
+    pushd diego-release > /dev/null
         diego_release_git_sha="$(git rev-parse HEAD)" && echo "diego_release_git_sha=${diego_release_git_sha}"
-    popd
+    popd > /dev/null
 
     if [ "$diego_release_git_sha" != "$GO_REVISION_DIEGO_RELEASE" ]; then
         echo "Mismatch on diego-release SHA (git/gocd) :: ${diego_release_git_sha}/${GO_REVISION_DIEGO_RELEASE}"
     fi
 
-    pushd diego-release/src/github.com/cloudfoundry-incubator/lattice
+    pushd diego-release/src/github.com/cloudfoundry-incubator/lattice > /dev/null
         git pull origin master
         git checkout master
 
@@ -116,30 +157,16 @@ bump_and_push_lattice() {
         +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
         "
 
-        #Rebase in case there have been changes to origin/develop since the beginning of this pipeline run.
-        #we want to get our godeps bump and merge commit stuff merged back into develop on top of external changes.
+        # Rebase in case there have been changes to origin/develop since the beginning of this pipeline run.
+        # we want to get our godeps bump and merge commit stuff merged back into develop on top of external changes.
         git pull --rebase origin develop
         git push origin master develop
-        sync
 
-        echo "pushing local master to origin/master"
-        git push origin master
-        echo "Successfully pushed updates to origin/master"
-
-        echo "pushing local develop to origin/develop"
-        git pull --rebase origin develop
-        git push origin develop
-        echo "Successfully pushed updates to origin/develop"
-    popd
+        echo "Successfully pushed updates to origin/master & origin/develop"
+    popd > /dev/null
 }
 
-setup_ssh_access_to_github() {
-    echo "Running ssh-agent"
-    eval `ssh-agent`
-    aws s3 cp s3://lattice-gocd/credentials/ci_key ci_key
-    chmod 600 ci_key
-    ssh-add ci_key
-}
+
 
 if [ ${GO_FROM_REVISION_DIEGO_RELEASE} == ${GO_TO_REVISION_DIEGO_RELEASE} ] &&
     [ ${GO_FROM_REVISION_CF_RELEASE_RUNTIME_PASSED} == ${GO_TO_REVISION_CF_RELEASE_RUNTIME_PASSED} ] &&
@@ -152,8 +179,12 @@ lattice_tar_path=$1
 
 setup_ssh_access_to_github
 
-bump_and_push_lattice
+sync_up_tags_off_remote
+git_describe_lattice_version
 
 upload_lattice_to_s3
+upload_ltc_binaries_to_s3
+
+bump_and_push_lattice
 
 ./diego-release/src/github.com/cloudfoundry-incubator/lattice/lattice-pipeline/03_promote_and_publish/helpers/publish_cli_if_changed
