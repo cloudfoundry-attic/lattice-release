@@ -1,10 +1,10 @@
-package.box
 
 Vagrantfile-e
 .vagrant
 .idea
 bin/linux_amd64/*
 lattice.tgz
+ltc.tar.gz
 .system-domain
 .lattice-environment
 *.box
