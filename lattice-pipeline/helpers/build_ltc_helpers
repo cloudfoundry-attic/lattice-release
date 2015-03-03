@@ -1,0 +1,105 @@
+#!/bin/bash
+set -e
+
+setup_go_env() {
+    mkdir ~/go
+    export GOPATH=~/go
+    export PATH="$PATH:$GOPATH/bin"
+
+    OUTDIR="$HOME/compiled-binaries"
+    mkdir -p $OUTDIR && sync
+    export GOBIN="$OUTDIR"
+}
+
+copy_ltc_source_into_gopath() {
+    mkdir -pv $GOPATH/src/github.com/cloudfoundry-incubator/lattice/
+    echo -n "Copying $LATTICE_SRC_PATH/ltc into compilation GOPATH .."
+    cp -af $LATTICE_SRC_PATH/ltc $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ && echo "DONE!"
+}
+
+get_lattice_version() {
+    if [ -z "${LATTICE_RELEASE_VERSION}" ]; then
+        pushd $LATTICE_SRC_PATH > /dev/null
+            lattice_version=$(git describe --always)
+        popd > /dev/null
+    else
+        lattice_version="${LATTICE_RELEASE_VERSION}"
+    fi
+}
+
+construct_ltc_gopath() {
+
+    if [[ -z "$LATTICE_SRC_PATH" ]] || [[ -z "$DIEGO_RELEASE_PATH" ]]; then
+        echo "Must set LATTICE_SRC_PATH and DIEGO_RELEASE_PATH"
+        exit 1
+    fi
+
+    copy_ltc_source_into_gopath
+
+    pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
+        set +e      # continue on error
+            echo "go getting ./... from $(pwd)"
+            go get -d -v ./...
+
+            ## TODO: go get docker/docker separately and unpack its vendored deps.
+            cp -af Godeps/_workspace/src/github.com/docker/docker/vendor/src/* $GOPATH/src/
+
+            godep restore && echo "godep restored"
+        set -e      # abort on error
+    popd > /dev/null
+
+    echo -n "Deleting .git folders that are diego-release submodules .."
+    pushd $GOPATH
+        grep submodule $DIEGO_RELEASE_PATH/.gitmodules | awk -F\" '{ print $2"/.git" }' | xargs rm -rf
+    popd
+    echo "DONE!"
+
+    echo -n "Copying $DIEGO_RELEASE_PATH/src/* into compilation GOPATH (Prefer Diego-Release dependencies over ltc's Godeps) .."
+    ## locally, this copies all of lattice again because we usually develop lattice using diego-release as the GOPATH
+    cp -af $DIEGO_RELEASE_PATH/src/ $GOPATH/ && echo "DONE!"
+
+    echo "Copying over git modules for later godeps saves from constructed path .."
+    cp -af $DIEGO_RELEASE_PATH/.git* $GOPATH/ && echo "DONE!"
+
+    sync
+}
+
+run_unit_tests() {
+    go install github.com/onsi/ginkgo/ginkgo
+
+    echo "Running ltc unit tests..."
+    $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/scripts/test
+}
+
+go_build_ltc() {
+
+    echo -n "Compiling cli ($lattice_version) .."
+
+    GOARCH=amd64 GOOS=linux go build \
+        -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
+        -o $OUTDIR/ltc-linux-amd64 \
+        github.com/cloudfoundry-incubator/lattice/ltc
+
+    GOARCH=amd64 GOOS=darwin go build \
+        -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
+        -o $OUTDIR/ltc-darwin-amd64 \
+        github.com/cloudfoundry-incubator/lattice/ltc
+
+    echo "DONE!"
+}
+
+generate_ltc_tarball() {
+    echo -n "Generating ltc-checksum = "
+    pushd $LATTICE_SRC_PATH > /dev/null
+        git rev-parse HEAD | tee $OUTDIR/ltc-checksum  #TODO: Do we even use the ltc-checksum anymore?
+    popd > /dev/null
+    sync
+
+    echo -n "Creating ltc ($lattice_version) tarball .."
+    pushd $OUTDIR > /dev/null
+        rm -f /workspace/ltc.tar.gz
+        tar czf /workspace/ltc.tar.gz ltc* && echo "SUCCESS!"
+    popd > /dev/null
+}
+
+

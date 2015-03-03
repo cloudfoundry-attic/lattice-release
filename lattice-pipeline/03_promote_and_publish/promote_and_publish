@@ -17,13 +17,6 @@ sync_up_tags_off_remote() {
     popd > /dev/null
 }
 
-git_describe_lattice_version() {
-    pushd $LATTICE_SRC_PATH > /dev/null
-        lattice_version=$(git describe --always)
-    popd > /dev/null
-    echo "lattice_version=${lattice_version}"
-}
-
 upload_lattice_tar_to_s3() {
     aws s3 cp $lattice_tar_path "s3://lattice/unstable/latest/lattice.tgz"
     aws s3 cp $lattice_tar_path "s3://lattice/unstable/${lattice_version}/lattice.tgz"
@@ -56,11 +49,9 @@ upload_ltc_binaries_to_s3() {
 }
 
 update_godeps(){
-    mkdir ~/go
-    export GOPATH=~/go
-    export PATH="$PATH:$GOPATH/bin"
+    setup_go_env
 
-    $LATTICE_SRC_PATH/lattice-pipeline/helpers/construct_ltc_gopath
+    construct_ltc_gopath
 
     echo "Removing $LATTICE_SRC_PATH/ltc/Godeps folder"
     rm -rf $LATTICE_SRC_PATH/ltc/Godeps
@@ -93,9 +84,9 @@ update_godeps(){
 }
 
 extract_deliver_stories_message() {
-git log origin/master..$GO_REVISION_LATTICE | \
-    egrep -io "\[\s*(?:Finishes|Fixes)\s*(#(\d+)\s*)+\]" | \
-    perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi'
+    git log origin/master..$GO_REVISION_LATTICE | \
+        egrep -io "\[\s*(?:Finishes|Fixes)\s*(#(\d+)\s*)+\]" | \
+        perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi'
 }
 
 ## assumes master branch checked out
@@ -166,21 +157,14 @@ bump_and_push_lattice() {
     popd > /dev/null
 }
 
-
-
-if [ ${GO_FROM_REVISION_DIEGO_RELEASE} == ${GO_TO_REVISION_DIEGO_RELEASE} ] &&
-    [ ${GO_FROM_REVISION_CF_RELEASE_RUNTIME_PASSED} == ${GO_TO_REVISION_CF_RELEASE_RUNTIME_PASSED} ] &&
-    [ ${GO_FROM_REVISION_LATTICE} == ${GO_TO_REVISION_LATTICE} ] &&
-    [ ${GO_TRIGGER_USER} == "changes" ]; then
-    echo "No change in Lattice or its source code dependencies detected."
-fi
+source $(dirname $0)/../helpers/build_ltc_helpers
 
 lattice_tar_path=$1
 
 setup_ssh_access_to_github
 
 sync_up_tags_off_remote
-git_describe_lattice_version
+get_lattice_version
 
 upload_lattice_tar_to_s3
 upload_ltc_binaries_to_s3
