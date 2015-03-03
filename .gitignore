@@ -10,6 +10,7 @@ lattice.tgz
 *.box
 *.iso
 
+*playground
 lattice.tf
 terraform.tfvars
 terraform.tfstate
