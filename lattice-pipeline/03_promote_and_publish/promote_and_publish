@@ -10,13 +10,6 @@ setup_ssh_access_to_github() {
     ssh-add ci_key
 }
 
-sync_up_tags_off_remote() {
-    pushd $LATTICE_SRC_PATH > /dev/null
-        git tag -l | xargs git tag -d
-        git fetch --tags
-    popd > /dev/null
-}
-
 git_describe_lattice_version() {
     pushd $LATTICE_SRC_PATH > /dev/null
         lattice_version=$(git describe --always)
@@ -81,7 +74,7 @@ update_godeps(){
     pushd $LATTICE_SRC_PATH/ltc > /dev/null
         git add Godeps
 
-        if [ $(git diff --cached --numstat -- Godeps/ | wc -l)  -gt 0 ]; then
+        if [ $(git diff --cached --numstat -- Godeps/ | wc -l) -gt 0 ]; then
             git commit -m "Update ltc Godeps
 
             Diego Release Git SHA: ${diego_release_git_sha}
@@ -179,7 +172,6 @@ lattice_tar_path=$1
 
 setup_ssh_access_to_github
 
-sync_up_tags_off_remote
 git_describe_lattice_version
 
 upload_lattice_tar_to_s3
