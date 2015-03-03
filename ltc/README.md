@@ -17,9 +17,8 @@ With `ltc` you can:
 Download the appropriate binary for your architecture:
 
 Platform | Architecture | Link
--------------------------------
+---------|--------------|--------
 MacOS | amd64 | [https://lattice.s3.amazonaws.com/latest/darwin-amd64/ltc](https://lattice.s3.amazonaws.com/latest/darwin-amd64/ltc)
-
 Linux | amd64 | [https://lattice.s3.amazonaws.com/latest/linux-amd64/ltc](https://lattice.s3.amazonaws.com/latest/linux-amd64/ltc)
 
 Here's a simple installation script.  It assumes `$HOME/bin` is on your $PATH
@@ -27,19 +26,15 @@ Here's a simple installation script.  It assumes `$HOME/bin` is on your $PATH
 **Mac**:
 ```bash
   mkdir -p $HOME/bin
-  pushd $HOME/bin
-  wget https://lattice.s3.amazonaws.com/latest/darwin-amd64/ltc
-  chmod +x ./ltc
-  popd
+  wget https://lattice.s3.amazonaws.com/latest/darwin-amd64/ltc -O $HOME/bin/ltc
+  chmod +x $HOME/bin/ltc
 ```
 
 **Linux**:
 ```bash
   mkdir -p $HOME/bin
-  pushd $HOME/bin
-  wget https://lattice.s3.amazonaws.com/latest/linux-amd64/ltc
-  chmod +x ./ltc
-  popd
+  wget https://lattice.s3.amazonaws.com/latest/linux-amd64/ltc -O $HOME/bin/ltc
+  chmod +x $HOME/bin/ltc
 ```
 
 #### Installing From Source
