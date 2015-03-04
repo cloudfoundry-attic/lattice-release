@@ -103,19 +103,15 @@ generate_ltc_tarball() {
 }
 
 ## assumes master branch checked out
-bump_release_or_unstable_version() {
+## assumes get_lattice_version already set $lattice_version
+bump_lattice_version() {
     previous_lattice_version=$(cat Version)
-
-    if [ -z "${LATTICE_RELEASE_VERSION}" ]; then
-        new_lattice_version=$(git describe)
-    else
-        new_lattice_version="${LATTICE_RELEASE_VERSION}"
-    fi
+    new_lattice_version="$lattice_version"
 
     echo "$new_lattice_version" > Version
     echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
 
-    echo "${diego_release_git_sha}" > DIEGO_VERSION
+    echo "$diego_release_git_sha" > DIEGO_VERSION
 
     git add Version
     git add DIEGO_VERSION
@@ -123,7 +119,7 @@ bump_release_or_unstable_version() {
 
     git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
 
-    Diego Release Git SHA: ${diego_release_git_sha}
+    Diego Release Git SHA: $diego_release_git_sha
 
     $deliver_stories_message
 

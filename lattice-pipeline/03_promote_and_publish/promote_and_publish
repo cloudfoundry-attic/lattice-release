@@ -112,7 +112,7 @@ bump_and_push_lattice() {
         "
 
         update_godeps
-        bump_release_or_unstable_version
+        bump_lattice_version
 
         git checkout develop
 
