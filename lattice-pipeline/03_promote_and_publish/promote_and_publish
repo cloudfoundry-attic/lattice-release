@@ -89,31 +89,6 @@ extract_deliver_stories_message() {
         perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi'
 }
 
-## assumes master branch checked out
-bump_version(){
-    previous_lattice_version=$(cat Version)
-    new_lattice_version=$((previous_lattice_version+1))
-
-    echo "$new_lattice_version" > Version
-    echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
-
-    echo "${diego_release_git_sha}" > DIEGO_VERSION
-
-    git add Version
-    git add DIEGO_VERSION
-    deliver_stories_message=$(extract_deliver_stories_message)
-
-    git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
-
-    Diego Release Git SHA: ${diego_release_git_sha}
-
-    $deliver_stories_message
-
-    +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
-    "
-
-}
-
 bump_and_push_lattice() {
     pushd diego-release > /dev/null
         diego_release_git_sha="$(git rev-parse HEAD)" && echo "diego_release_git_sha=${diego_release_git_sha}"
@@ -137,7 +112,7 @@ bump_and_push_lattice() {
         "
 
         update_godeps
-        bump_version
+        bump_release_or_unstable_version
 
         git checkout develop
 
