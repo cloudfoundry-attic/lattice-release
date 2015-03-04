@@ -23,14 +23,21 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     s.inline = "cp /var/lattice/setup/lattice-environment /vagrant/.lattice-environment"
   end
 
+  lattice_tar_version=File.read("Version").chomp
+  system 'git show-ref --tags --quiet --verify -- "refs/tags/' + "#{lattice_tar_version}" + '"'
+  if $? == 0
+    lattice_tar_url="https://s3-us-west-2.amazonaws.com/lattice/releases/#{lattice_tar_version}/lattice.tgz"
+  else
+    lattice_tar_url="https://s3-us-west-2.amazonaws.com/lattice/unstable/#{lattice_tar_version}/lattice.tgz"
+  end
+
   config.vm.provision "shell" do |s|
     s.path = "install_from_tar"
-    s.args = ["collocated", ENV["VAGRANT_LATTICE_TAR_PATH"].to_s]
+    s.args = ["collocated", ENV["VAGRANT_LATTICE_TAR_PATH"].to_s, lattice_tar_url]
   end
 
   config.vm.provision "shell" do |s|
     s.inline = "export $(cat /var/lattice/setup/lattice-environment) && echo \"Lattice is now installed and running. You may target it with the Lattice cli via: $SYSTEM_DOMAIN\""
   end
-
 
 end
