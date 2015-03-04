@@ -573,9 +573,10 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
-				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances.")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
 				Expect(outputBuffer).ToNot(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-			})
+                Expect(outputBuffer).ToNot(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
+            })
 		})
 
 		It("alerts the user if the app does not start", func() {
@@ -811,8 +812,9 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.PlacementError}))
 
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
-				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances.")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
 				Expect(outputBuffer).ToNot(test_helpers.Say(colors.Green("App Scaled Successfully.")))
+				Expect(outputBuffer).ToNot(test_helpers.Say(colors.Red("cool-web-app took too long to scale.")))
 			})
 		})
 	})

@@ -336,15 +336,12 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 	go cmd.tailedLogsOutputter.OutputTailedLogs(name)
 	defer cmd.tailedLogsOutputter.StopOutputting()
 
-	ok := cmd.pollUntilAllInstancesRunning(name, instancesFlag)
+	ok := cmd.pollUntilAllInstancesRunning(name, instancesFlag, "start")
 
 	if ok {
 		cmd.output.Say(colors.Green(name + " is now running.\n"))
 		cmd.output.Say(colors.Green(cmd.urlForApp(name)))
-	} else {
-		cmd.output.Say(colors.Red(name + " took too long to start."))
 	}
-
 }
 
 func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
@@ -399,21 +396,19 @@ func (cmd *appRunnerCommand) setAppInstances(appName string, instances int) {
 
 	cmd.output.Say(fmt.Sprintf("Scaling %s to %d instances \n", appName, instances))
 
-	ok := cmd.pollUntilAllInstancesRunning(appName, instances)
+	ok := cmd.pollUntilAllInstancesRunning(appName, instances, "scale")
 
 	if ok {
 		cmd.output.Say(colors.Green("App Scaled Successfully"))
-	} else {
-		cmd.output.Say(colors.Red(appName + " took too long to scale."))
-	}
+    }
 }
 
-func (cmd *appRunnerCommand) pollUntilAllInstancesRunning(appName string, instances int) bool {
+func (cmd *appRunnerCommand) pollUntilAllInstancesRunning(appName string, instances int, action string) bool {
 	placementErrorOccurred := false
 	ok := cmd.pollUntilSuccess(func() bool {
 		numberOfRunningInstances, placementError, _ := cmd.appRunner.RunningAppInstancesInfo(appName)
 		if placementError {
-			cmd.output.Say(colors.Red("Error, could not place all instances."))
+			cmd.output.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
 			placementErrorOccurred = true
 			return true
 		}
@@ -423,9 +418,11 @@ func (cmd *appRunnerCommand) pollUntilAllInstancesRunning(appName string, instan
 	if placementErrorOccurred {
 		cmd.exitHandler.Exit(exit_codes.PlacementError)
 		return false
-	} else {
-		return ok
+	} else if !ok {
+        cmd.output.Say(colors.Red(appName + " took too long to " + action + "."))
 	}
+    return ok
+
 }
 
 func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
