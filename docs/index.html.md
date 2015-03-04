@@ -34,7 +34,7 @@ You can launch a local developer-friendly version of Lattice using a Vagrant VM.
 
 ## How do I use Lattice?
 
-You can follow along with the [getting-started tutorial](/docs/getting-started.html) for a brief introduction.
+Start with the [getting-started tutorial](/docs/getting-started.html) for a brief introduction.
 
 Lattice provides an [HTTP API](/docs/lattice-api.html) for scheduling and monitoring work.  [`ltc` - the Lattice-CLI](/docs/ltc.html) - wraps this API and provides basic access to Lattice’s feature-set.
 
@@ -68,9 +68,9 @@ More details about how Lattice works with Docker images can be found [here](/doc
 
 - **Cloud Foundry**: for the individual developer use cases, a complete Cloud Foundry deployment can be difficult to get started with and requires a footprint that does not fit on most developer laptops. We also wanted to make it possible to use Cloud Foundry components like the Router on their own and experiment more easily with new ideas before graduating them to full Cloud Foundry.  Lattice reuses Diego, Cloud Foundry’s next generation Elastic Runtime.
 
-- **Kubernetes**: Kubernetes is a credible project with a strong point of view. Kubernetes requires complicated overlay networking and is missing features we believe are very important that are already available in Cloud Foundry like DNS load balancing and aggregated logging. Kubernetes only includes simple cluster scheduling in open source and does not use the cluster scheduler Google uses for production workloads. Kubernetes also requires awareness and implementations of concepts specific to Kubernetes like pods, replicaControllers and services that do not fit the simple user experience we envision.
+- **Kubernetes**: Kubernetes is a credible project with a strong point of view. Kubernetes requires overlay networking and does not include features we believe are very important that are already available in Cloud Foundry like DNS load balancing and aggregated logging. Kubernetes only includes simple cluster scheduling in open source and does not use the cluster scheduler Google uses for production workloads. Kubernetes also requires awareness and implementations of concepts specific to Kubernetes like pods, replicaControllers and services that do not fit the simple user experience we envision.
 
-- **Mesos**: Mesos is also a credible project optimized for efficiently using compute resources. Mesos is targeted more at lower level concepts in the data center and requires the use of frameworks built on top of Mesos to target specific use cases. Some frameworks like Marathon provide higher level abstractions, but are missing features we wanted and do not have the simple developer and operator experience we are targeting.
+- **Mesos**: Mesos is also a credible project optimized for efficiently using compute resources. Mesos is targeted more at lower level concepts in the data center and requires the use of frameworks built on top of Mesos to target specific use cases. Some frameworks like Marathon provide higher level abstractions, but do not include features we wanted and do not fit the simpler developer and operator experience we are targeting.
 
 - **Other clustered Docker projects**: most of the clustered Docker projects are very Docker-centric, missing features we wanted and do not have a pluggable container solution that would easily accommodate Windows or Rocket.
 
