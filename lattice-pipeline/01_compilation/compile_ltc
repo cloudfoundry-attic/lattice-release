@@ -18,7 +18,5 @@ get_lattice_version
 
 go_build_ltc
 
-generate_ltc_checksum
-
 generate_ltc_tarball
 

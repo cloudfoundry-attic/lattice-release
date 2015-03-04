@@ -8,11 +8,10 @@ setup_go_env() {
 
     OUTDIR="$HOME/compiled-binaries"
     mkdir -p $OUTDIR && sync
-    export GOBIN="$OUTDIR"
 }
 
 copy_ltc_source_into_gopath() {
-    mkdir -pv $GOPATH/src/github.com/cloudfoundry-incubator/lattice/
+    mkdir -p $GOPATH/src/github.com/cloudfoundry-incubator/lattice/
     echo -n "Copying $LATTICE_SRC_PATH/ltc into compilation GOPATH .."
     cp -af $LATTICE_SRC_PATH/ltc $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ && echo "DONE!"
 }
@@ -49,9 +48,9 @@ construct_ltc_gopath() {
     popd > /dev/null
 
     echo -n "Deleting .git folders that are diego-release submodules .."
-    pushd $GOPATH
+    pushd $GOPATH > /dev/null
         grep submodule $DIEGO_RELEASE_PATH/.gitmodules | awk -F\" '{ print $2"/.git" }' | xargs rm -rf
-    popd
+    popd > /dev/null
     echo "DONE!"
 
     echo -n "Copying $DIEGO_RELEASE_PATH/src/* into compilation GOPATH (Prefer Diego-Release dependencies over ltc's Godeps) .."
@@ -65,17 +64,16 @@ construct_ltc_gopath() {
 }
 
 run_unit_tests() {
-    go get -v -u github.com/onsi/ginkgo/ginkgo
-#    go install github.com/onsi/ginkgo/ginkgo
+    go get -v github.com/onsi/ginkgo/ginkgo
 
     echo "Running ltc unit tests..."
     $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/scripts/test
 }
 
 go_build_ltc() {
+    export GOBIN="$OUTDIR"
 
     echo -n "Compiling cli ($lattice_version) .."
-
     GOARCH=amd64 GOOS=linux go build \
         -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
         -o $OUTDIR/ltc-linux-amd64 \
@@ -85,8 +83,9 @@ go_build_ltc() {
         -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
         -o $OUTDIR/ltc-darwin-amd64 \
         github.com/cloudfoundry-incubator/lattice/ltc
-
     echo "DONE!"
+
+    unset GOBIN
 }
 
 generate_ltc_tarball() {
