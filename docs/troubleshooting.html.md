@@ -46,7 +46,7 @@ By default, `ltc` applies a memory limit of 128MB and a disk limit of 1024MB to 
 
 Lattice runs the process in your Docker image as an unprivileged user.  Sometimes this user does not have privileges to execue the requested process - you can try using the `--run-as-root` flag to get around this limitation.
 
-> We have plans to build more robust support for specifying hte user/uid to run the container as.
+> We have plans to build more robust support for specifying the user/uid to run the container as.
 
 ### Disable Health Monitoring
 
