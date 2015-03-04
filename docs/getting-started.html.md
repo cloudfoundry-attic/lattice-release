@@ -6,7 +6,7 @@ doc_subnav: true
 
 # Getting Started
 
-You can run Lattice easily on your laptop with a [Vagrant VM](https://github.com/pivotal-lattice/lattice#local-deployment) or deploy a [cluster of machines](https://github.com/pivotal-lattice/lattice#clustered-deployment) with [AWS](https://github.com/pivotal-lattice/lattice#amazon-web-services), [Digital Ocean](https://github.com/pivotal-lattice/lattice#digitalocean) or [Google Compute Engine](https://github.com/pivotal-lattice/lattice#google-cloud).
+You can run Lattice easily on your laptop with a [Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#local-deployment) or deploy a [cluster of machines](https://github.com/cloudfoundry-incubator/lattice#clustered-deployment) with [AWS](https://github.com/cloudfoundry-incubator/lattice#amazon-web-services), [Digital Ocean](https://github.com/cloudfoundry-incubator/lattice#digitalocean) or [Google Compute Engine](https://github.com/cloudfoundry-incubator/lattice#google-cloud).
 
 This tutorial walks you through the Vagrant VM flow and using Lattice to start applications based on a docker image, scale them up and down and retrieve logs.
 
@@ -20,7 +20,7 @@ This tutorial walks you through the Vagrant VM flow and using Lattice to start a
 
 First, clone the Lattice repository:
 
-    git clone https://github.com/pivotal-lattice/lattice.git
+    git clone https://github.com/cloudfoundry-incubator/lattice.git
     cd lattice
 
 Then bring up the Vagrant box:
@@ -38,7 +38,7 @@ The VM should download and start.
 
 > By default the Lattice VM will be reachable at `192.168.11.11`. You can set the `LATTICE_SYSTEM_IP` environment variable when running `vagrant up` to modify this
 
-> Learn more about deploying Lattice at the GitHub [README](https://github.com/pivotal-lattice/lattice)
+> Learn more about deploying Lattice at the GitHub [README](https://github.com/cloudfoundry-incubator/lattice)
 
 ## Fetching `ltc` - the Lattice CLI
 
@@ -49,20 +49,16 @@ Alternatively you can use these installation scripts.  They assume `$HOME/bin` i
 For Mac:
 
     mkdir -p $HOME/bin
-    pushd $HOME/bin
-    rm ltc
-    wget https://s3-us-west-2.amazonaws.com/lattice/latest/darwin-amd64/ltc
-    chmod +x ./ltc
-    popd
+    wget https://lattice.s3.amazonaws.com/latest/darwin-amd64/ltc -O $HOME/bin/ltc
+    chmod +x $HOME/bin/ltc
 
 For Linux:
 
     mkdir -p $HOME/bin
-    pushd $HOME/bin
-    rm ltc
-    wget https://s3-us-west-2.amazonaws.com/lattice/latest/linux-amd64/ltc
-    chmod +x ./ltc
-    popd
+    wget https://lattice.s3.amazonaws.com/latest/linux-amd64/ltc -O $HOME/bin/ltc
+    chmod +x $HOME/bin/ltc
+
+Further instructions can be found [here](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc).
 
 ## Targetting Lattice
 
@@ -74,7 +70,7 @@ You need to tell `ltc` how to connect to your Lattice deployment.  The target do
 
 We have a simple Go-based demo web application hosted on the Docker registry at [`cloudfoundry/lattice-app`](https://registry.hub.docker.com/cloudfoundry/lattice-app).  You can launch this image by running:
 
-    ltc start lattice-app cloudfoundry/lattice-app
+    ltc create lattice-app cloudfoundry/lattice-app
 
 Once the application is running, `ltc` will emit the route you can use to access the application:
 

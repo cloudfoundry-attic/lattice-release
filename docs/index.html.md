@@ -24,7 +24,7 @@ We have a strong point-of-view on the developer and operator experience for scal
 
 Lattice lives up to these principles.
 
-- **Simple**: a [small Vagrant VM](https://github.com/pivotal-lattice/lattice#vagrant) easily fits on most laptops. [Terraform scripts](https://github.com/pivotal-cf-experimental/lattice#terraform-deployment) enable you to easily start a Lattice cluster on your cloud of choice. Very few new concepts are required to use Lattice and you can [get started in minutes](/docs/getting-started.html).
+- **Simple**: a [small Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#vagrant) easily fits on most laptops. [Terraform scripts](https://github.com/pivotal-cf-experimental/lattice#terraform-deployment) enable you to easily start a Lattice cluster on your cloud of choice. Very few new concepts are required to use Lattice and you can [get started in minutes](/docs/getting-started.html).
 - **Comprehensive**: Lattice currently includes load balancing, aggregated logs, health management, and cluster scheduling.
 - **Extensible**: Docker is very popular and we are supporting Docker Images. We also believe in a [pluggable container backend](https://github.com/cloudfoundry-incubator/garden) so there are options to support [Windows](https://www.youtube.com/watch?v=S4U_YyzC5z4), [Rocket](http://blog.pivotal.io/cloud-foundry-pivotal/news-2/launching-rockets-collaborating-on-next-level-linux-containers) or other backends.
 
@@ -92,7 +92,7 @@ No. Lattice and Cloud Foundry Elastic Runtime serve different purposes with some
 
 - Review the public [Lattice](https://www.pivotaltracker.com/n/projects/1183596) and [Diego](https://www.pivotaltracker.com/n/projects/1003146) Pivotal Tracker projects
 - Get involved on the mailing list **(TODO: coming soon)**
-- Open issues on the GitHub repository for [Lattice](https://github.com/pivotal-lattice/lattice)
+- Open issues on the GitHub repository for [Lattice](https://github.com/cloudfoundry-incubator/lattice)
 
 ## What is the Lattice roadmap?
 

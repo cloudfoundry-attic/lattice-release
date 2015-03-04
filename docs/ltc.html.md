@@ -77,6 +77,12 @@ You can modify all of this behavior from the command line:
 
 `ltc scale APP_NAME NUM_INSTANCES` modifies the number of running instances of an application.
 
+### `ltc update-routes`
+
+`ltc update-routes APP_NAME PORT:ROUTE,PORT:ROUTE,...` allows you to update the routes associated with an application *after* it has been deployed.  The format is identical to the `--routes` option on `ltc create`.
+
+The set of routes passed into `ltc update-routes` will *override* the existing set of routes - these modification will start working shortly after the call to `update-routes`.
+
 ## Streaming Logs
 
 ### `ltc logs`
