@@ -150,7 +150,8 @@ bump_and_push_lattice() {
 
         # Rebase in case there have been changes to origin/develop since the beginning of this pipeline run.
         # we want to get our godeps bump and merge commit stuff merged back into develop on top of external changes.
-        git pull --rebase origin develop
+        git fetch origin develop
+        git rebase origin/master --preserve-merges
         git push origin master develop
 
         echo "Successfully pushed updates to origin/master & origin/develop"
