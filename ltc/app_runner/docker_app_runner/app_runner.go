@@ -9,10 +9,10 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
     "errors"
+    "github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 )
 const (
-    attemptedToCreateLatticeDebugErrorMessage ="lattice-debug is a reserved app name. It is used internally to stream debug logs for lattice components."
-    latticeDebugStreamId = "lattice-debug"
+    AttemptedToCreateLatticeDebugErrorMessage =reserved_app_ids.LatticeDebugLogStreamAppId + " is a reserved app name. It is used internally to stream debug logs for lattice components."
 )
 //go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 type AppRunner interface {
@@ -71,8 +71,8 @@ func New(receptorClient receptor.Client, systemDomain string) AppRunner {
 }
 
 func (appRunner *appRunner) CreateDockerApp(params CreateDockerAppParams) error {
-    if params.Name == latticeDebugStreamId{
-        return errors.New("lattice-debug is a reserved app name. It is used internally to stream debug logs for lattice components.")
+    if params.Name == reserved_app_ids.LatticeDebugLogStreamAppId {
+        return errors.New(AttemptedToCreateLatticeDebugErrorMessage)
     }
 	if exists, err := appRunner.desiredLRPExists(params.Name); err != nil {
 		return err

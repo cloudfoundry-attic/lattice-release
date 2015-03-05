@@ -5,6 +5,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/codegangsta/cli"
+    "github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 )
 
 type logsCommandFactory struct {
@@ -34,6 +35,15 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 	return logsCommand
 }
 
+func (factory *logsCommandFactory) MakeDebugLogsCommand() cli.Command{
+    return cli.Command{
+        Name: "debug-logs",
+        Description: "Stream logs from the executor, rep, and garden-linux lattice components",
+        Usage: "ltc debug-logs",
+        Action: factory.cmd.tailDebugLogs,
+    }
+}
+
 type logsCommand struct {
 	output              *output.Output
 	tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter
@@ -49,4 +59,8 @@ func (cmd *logsCommand) tailLogs(context *cli.Context) {
 	}
 
 	cmd.tailedLogsOutputter.OutputTailedLogs(appGuid)
+}
+
+func (cmd *logsCommand) tailDebugLogs(context *cli.Context) {
+	cmd.tailedLogsOutputter.OutputTailedLogs(reserved_app_ids.LatticeDebugLogStreamAppId)
 }

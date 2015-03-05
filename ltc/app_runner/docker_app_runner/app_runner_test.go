@@ -14,6 +14,7 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 
 	docker_app_runner "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
+    "github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 )
 
 var _ = Describe("AppRunner", func() {
@@ -94,13 +95,13 @@ var _ = Describe("AppRunner", func() {
         Context("when 'lattice-debug' is passed as the appId", func(){
             It("is an error because that id is reserved for the lattice-debug log stream", func(){
                 err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
-                    Name:            "lattice-debug",
+                    Name:            reserved_app_ids.LatticeDebugLogStreamAppId,
                     StartCommand:    "/app-run-statement",
                     DockerImagePath: "runtest/runner",
                     AppArgs:         []string{},
                 })
 
-                Expect(err.Error()).To(Equal("lattice-debug is a reserved app name. It is used internally to stream debug logs for lattice components."))
+                Expect(err.Error()).To(Equal(docker_app_runner.AttemptedToCreateLatticeDebugErrorMessage))
             })
         })
 
