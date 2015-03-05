@@ -94,7 +94,7 @@ Outputs:
 
 ### Use
 
-Refer to the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/master/cli) documentation.
+Refer to the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) documentation.
 
 ### Destroy
 
