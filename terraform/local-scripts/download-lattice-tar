@@ -7,7 +7,15 @@ else
   echo "Downloading latest Lattice Release tar to `pwd`/.lattice/lattice.tgz"
   mkdir -p .lattice
 
-  LATTICE_LATEST=https://s3-us-west-2.amazonaws.com/lattice/lattice-latest.tgz
-  wget --quiet $LATTICE_LATEST -O .lattice/lattice.tgz
+
+  lattice_tar_version=$(cat $LATTICE_VERSION_FILE_PATH)
+
+  if grep "-" $LATTICE_VERSION_FILE_PATH; then #it's unstable, released versions have hyphenless tag names as the git describe.
+    lattice_download_url="https://s3-us-west-2.amazonaws.com/lattice/unstable/$lattice_tar_version/lattice.tgz"
+  else
+    lattice_download_url="https://s3-us-west-2.amazonaws.com/lattice/releases/$lattice_tar_version/lattice.tgz"
+  fi
+
+  wget --quiet $lattice_download_url -O .lattice/lattice.tgz
   echo "Download complete"
 fi

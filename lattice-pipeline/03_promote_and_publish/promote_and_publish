@@ -98,7 +98,7 @@ bump_and_push_lattice() {
         echo "Mismatch on diego-release SHA (git/gocd) :: ${diego_release_git_sha}/${GO_REVISION_DIEGO_RELEASE}"
     fi
 
-    pushd diego-release/src/github.com/cloudfoundry-incubator/lattice > /dev/null
+    pushd $LATTICE_SRC_PATH > /dev/null
         git pull origin master
         git checkout master
 
@@ -112,6 +112,9 @@ bump_and_push_lattice() {
         "
 
         update_godeps
+
+        update_terraform
+
         bump_lattice_version
 
         git checkout develop
