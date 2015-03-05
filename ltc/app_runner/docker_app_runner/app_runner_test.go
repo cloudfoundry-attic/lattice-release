@@ -91,6 +91,19 @@ var _ = Describe("AppRunner", func() {
 			}))
 		})
 
+        Context("when 'lattice-debug' is passed as the appId", func(){
+            It("is an error because that id is reserved for the lattice-debug log stream", func(){
+                err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
+                    Name:            "lattice-debug",
+                    StartCommand:    "/app-run-statement",
+                    DockerImagePath: "runtest/runner",
+                    AppArgs:         []string{},
+                })
+
+                Expect(err.Error()).To(Equal("lattice-debug is a reserved app name. It is used internally to stream debug logs for lattice components."))
+            })
+        })
+
 		Context("when overrideRoutes is not empty", func() {
 			It("uses the override Routes instead of the defaults", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)

@@ -8,8 +8,12 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
+    "errors"
 )
-
+const (
+    attemptedToCreateLatticeDebugErrorMessage ="lattice-debug is a reserved app name. It is used internally to stream debug logs for lattice components."
+    latticeDebugStreamId = "lattice-debug"
+)
 //go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 type AppRunner interface {
 	CreateDockerApp(params CreateDockerAppParams) error
@@ -67,6 +71,9 @@ func New(receptorClient receptor.Client, systemDomain string) AppRunner {
 }
 
 func (appRunner *appRunner) CreateDockerApp(params CreateDockerAppParams) error {
+    if params.Name == latticeDebugStreamId{
+        return errors.New("lattice-debug is a reserved app name. It is used internally to stream debug logs for lattice components.")
+    }
 	if exists, err := appRunner.desiredLRPExists(params.Name); err != nil {
 		return err
 	} else if exists {
