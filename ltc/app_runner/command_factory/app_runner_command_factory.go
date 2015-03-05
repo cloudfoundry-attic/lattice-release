@@ -334,8 +334,15 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 
 	if ok {
 		factory.output.Say(colors.Green(name + " is now running.\n"))
-		factory.output.Say(colors.Green(factory.urlForApp(name)))
 	}
+
+    if routeOverrides!=nil {
+        for _, route := range strings.Split(routesFlag, ",") {
+            factory.output.Say(colors.Green("http://" + name + "." + strings.Split(route, ":")[1] + "\n"))
+        }
+    } else {
+        factory.output.Say(colors.Green(factory.urlForApp(name)))
+    }
 }
 
 func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
