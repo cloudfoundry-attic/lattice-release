@@ -9,16 +9,16 @@ import (
 )
 
 type logsCommandFactory struct {
-	cmd *logsCommand
+    output              *output.Output
+    tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter
+    exitHandler         exit_handler.ExitHandler
 }
 
 func NewLogsCommandFactory(output *output.Output, tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter, exitHandler exit_handler.ExitHandler) *logsCommandFactory {
 	return &logsCommandFactory{
-		&logsCommand{
 			output:              output,
 			tailedLogsOutputter: tailedLogsOutputter,
 			exitHandler:         exitHandler,
-		},
 	}
 }
 
@@ -28,7 +28,7 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 		ShortName:   "l",
 		Description: "Stream logs from the specified application",
 		Usage:       "ltc logs APP_NAME",
-		Action:      factory.cmd.tailLogs,
+		Action:      factory.tailLogs,
 		Flags:       []cli.Flag{},
 	}
 
@@ -40,27 +40,21 @@ func (factory *logsCommandFactory) MakeDebugLogsCommand() cli.Command{
         Name: "debug-logs",
         Description: "Stream logs from the executor, rep, and garden-linux lattice components",
         Usage: "ltc debug-logs",
-        Action: factory.cmd.tailDebugLogs,
+        Action: factory.tailDebugLogs,
     }
 }
 
-type logsCommand struct {
-	output              *output.Output
-	tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter
-	exitHandler         exit_handler.ExitHandler
-}
-
-func (cmd *logsCommand) tailLogs(context *cli.Context) {
+func (factory *logsCommandFactory) tailLogs(context *cli.Context) {
 	appGuid := context.Args().First()
 
 	if appGuid == "" {
-		cmd.output.IncorrectUsage("")
+		factory.output.IncorrectUsage("")
 		return
 	}
 
-	cmd.tailedLogsOutputter.OutputTailedLogs(appGuid)
+	factory.tailedLogsOutputter.OutputTailedLogs(appGuid)
 }
 
-func (cmd *logsCommand) tailDebugLogs(context *cli.Context) {
-	cmd.tailedLogsOutputter.OutputTailedLogs(reserved_app_ids.LatticeDebugLogStreamAppId)
+func (factory *logsCommandFactory) tailDebugLogs(context *cli.Context) {
+	factory.tailedLogsOutputter.OutputTailedLogs(reserved_app_ids.LatticeDebugLogStreamAppId)
 }
