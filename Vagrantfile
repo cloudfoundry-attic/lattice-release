@@ -23,7 +23,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     s.inline = "cp /var/lattice/setup/lattice-environment /vagrant/.lattice-environment"
   end
 
-  lattice_tar_version=File.read("Version").chomp
+  lattice_tar_version=File.read(File.join(File.dirname(__FILE__), "Version")).chomp
   system 'git show-ref --tags --quiet --verify -- "refs/tags/' + "#{lattice_tar_version}" + '"'
   if $? == 0
     lattice_tar_url="https://s3-us-west-2.amazonaws.com/lattice/releases/#{lattice_tar_version}/lattice.tgz"
