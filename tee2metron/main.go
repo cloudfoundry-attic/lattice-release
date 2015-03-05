@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+    "fmt"
 )
 
 var dropsondeDestination, sourceInstance string
@@ -20,19 +21,34 @@ func init() {
 		"",
 		`where to stream logs to in the form of hostname:port
     eg. -dropsondeDestination=127.0.0.1:3457
-    `) //TODO: VALIDATE FLAG PASSED IN!!
+    `)
 
 	flag.StringVar(
 		&sourceInstance,
 		"sourceInstance",
 		"",
 		"The label for the log source instance that shows up when consuming the stream",
-	) //TODO: VALIDATE FLAG PASSED IN!!
+	)
 	flag.Parse()
 }
 
 func main() {
+    if dropsondeDestination == ""{
+        fmt.Println("dropsondeDestination flag is required")
+        os.Exit(1)
+    }
+    if sourceInstance == ""{
+        fmt.Println("sourceInstance flag is required")
+        os.Exit(1)
+    }
+
 	args := flag.Args()
+
+    if len(args) == 0 {
+        fmt.Println("Command not specified!")
+        fmt.Println("Usage: tee2metron -dropsondeDestionation=127.0.0.1:3457 -sourceInstance=lattice-cell-21 COMMAND")
+        os.Exit(3)
+    }
 	err := dropsonde.Initialize(dropsondeDestination, sourceInstance, args[0])
 
 	if err != nil {
@@ -52,13 +68,14 @@ func main() {
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdout = stdoutTeeWriter
 	cmd.Stderr = stderrTeeWriter
-	go logs.ScanLogStream(latticeDebugStreamId, args[0], sourceInstance, dropsondeStdoutReader) //TODO: UNIT TEST THIS, integration test won't catch appId
+	go logs.ScanLogStream(latticeDebugStreamId, args[0], sourceInstance, dropsondeStdoutReader)
 	go logs.ScanErrorLogStream(latticeDebugStreamId, args[0], sourceInstance, dropsondeStderrReader)
 
 	err = cmd.Start()
 	if err != nil {
-		panic(err) //TODO: COULD USE A UNIT TEST!
-	}
+        fmt.Println(err)
+        os.Exit(3)
+    }
 
 	cmd.Wait()
 }
