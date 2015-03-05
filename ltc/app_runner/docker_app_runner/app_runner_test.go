@@ -307,7 +307,7 @@ var _ = Describe("AppRunner", func() {
 
 	})
 
-	Describe("UpdateRoutes", func() {
+	Describe("UpdateAppRoutes", func() {
 
 		It("Updates the Routes", func() {
 			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app"}}
