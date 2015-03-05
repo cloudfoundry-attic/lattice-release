@@ -21,11 +21,14 @@ import (
 const TimestampDisplayLayout = "2006-01-02 15:04:05 (MST)"
 
 type AppExaminerCommandFactory struct {
-	appExaminerCommand *appExaminerCommand
+    appExaminer app_examiner.AppExaminer
+    output      *output.Output
+    clock       clock.Clock
+    exitHandler exit_handler.ExitHandler
 }
 
 func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, output *output.Output, clock clock.Clock, exitHandler exit_handler.ExitHandler) *AppExaminerCommandFactory {
-	return &AppExaminerCommandFactory{&appExaminerCommand{appExaminer, output, clock, exitHandler}}
+	return &AppExaminerCommandFactory{appExaminer, output, clock, exitHandler}
 }
 
 func (commandFactory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
@@ -35,7 +38,7 @@ func (commandFactory *AppExaminerCommandFactory) MakeListAppCommand() cli.Comman
 		ShortName:   "li",
 		Description: "List all applications running on Lattice",
 		Usage:       "ltc list",
-		Action:      commandFactory.appExaminerCommand.listApps,
+		Action:      commandFactory.listApps,
 		Flags:       []cli.Flag{},
 	}
 
@@ -55,7 +58,7 @@ func (commandFactory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Comm
 		Name:        "visualize",
 		Description: "Visualize the workload distribution across the Lattice Cells",
 		Usage:       "ltc visualize",
-		Action:      commandFactory.appExaminerCommand.visualizeCells,
+		Action:      commandFactory.visualizeCells,
 		Flags:       visualizeFlags,
 	}
 
@@ -67,30 +70,23 @@ func (commandFactory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command
 		Name:        "status",
 		Description: "Displays detailed status information about the given application and its instances",
 		Usage:       "ltc status APP_NAME",
-		Action:      commandFactory.appExaminerCommand.appStatus,
+		Action:      commandFactory.appStatus,
 		Flags:       []cli.Flag{},
 	}
 }
 
-type appExaminerCommand struct {
-	appExaminer app_examiner.AppExaminer
-	output      *output.Output
-	clock       clock.Clock
-	exitHandler exit_handler.ExitHandler
-}
-
-func (cmd *appExaminerCommand) listApps(context *cli.Context) {
-	appList, err := cmd.appExaminer.ListApps()
+func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
+	appList, err := factory.appExaminer.ListApps()
 	if err != nil {
-		cmd.output.Say("Error listing apps: " + err.Error())
+		factory.output.Say("Error listing apps: " + err.Error())
 		return
 	} else if len(appList) == 0 {
-		cmd.output.Say("No apps to display.")
+		factory.output.Say("No apps to display.")
 		return
 	}
 
 	w := &tabwriter.Writer{}
-	w.Init(cmd.output, 10+colors.ColorCodeLength, 8, 1, '\t', 0)
+	w.Init(factory.output, 10+colors.ColorCodeLength, 8, 1, '\t', 0)
 
 	header := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", colors.Bold("App Name"), colors.Bold("Instances"), colors.Bold("DiskMB"), colors.Bold("MemoryMB"), colors.Bold("Route"))
 	fmt.Fprintln(w, header)
@@ -113,22 +109,22 @@ func printHorizontalRule(w io.Writer, pattern string) {
 	fmt.Fprintf(w, header)
 }
 
-func (cmd *appExaminerCommand) appStatus(context *cli.Context) {
+func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 	if len(context.Args()) < 1 {
-		cmd.output.IncorrectUsage("App Name required")
+		factory.output.IncorrectUsage("App Name required")
 		return
 	}
 
 	appName := context.Args()[0]
-	appInfo, err := cmd.appExaminer.AppStatus(appName)
+	appInfo, err := factory.appExaminer.AppStatus(appName)
 
 	if err != nil {
-		cmd.output.Say(err.Error())
+		factory.output.Say(err.Error())
 		return
 	}
 
 	minColumnWidth := 13
-	w := tabwriter.NewWriter(cmd.output, minColumnWidth, 8, 1, '\t', 0)
+	w := tabwriter.NewWriter(factory.output, minColumnWidth, 8, 1, '\t', 0)
 
 	headingPrefix := strings.Repeat(" ", minColumnWidth/2)
 
@@ -231,61 +227,61 @@ func printInstanceInfo(w io.Writer, headingPrefix string, actualInstances []app_
 	}
 }
 
-func (cmd *appExaminerCommand) visualizeCells(context *cli.Context) {
+func (factory *AppExaminerCommandFactory) visualizeCells(context *cli.Context) {
 	rate := context.Duration("rate")
 
-	cmd.output.Say(colors.Bold("Distribution\n"))
-	linesWritten := cmd.printDistribution()
+	factory.output.Say(colors.Bold("Distribution\n"))
+	linesWritten := factory.printDistribution()
 
 	if rate == 0 {
 		return
 	}
 
 	closeChan := make(chan bool)
-	cmd.output.Say(cursor.Hide())
+	factory.output.Say(cursor.Hide())
 
-	cmd.exitHandler.OnExit(func() {
+	factory.exitHandler.OnExit(func() {
 		closeChan <- true
-		cmd.output.Say(cursor.Show())
+		factory.output.Say(cursor.Show())
 	})
 
 	for {
 		select {
 		case <-closeChan:
 			return
-		case <-cmd.clock.NewTimer(rate).C():
-			cmd.output.Say(cursor.Up(linesWritten))
-			linesWritten = cmd.printDistribution()
+		case <-factory.clock.NewTimer(rate).C():
+			factory.output.Say(cursor.Up(linesWritten))
+			linesWritten = factory.printDistribution()
 		}
 	}
 }
 
-func (cmd *appExaminerCommand) printDistribution() int {
-	defer cmd.output.Say(cursor.ClearToEndOfDisplay())
+func (factory *AppExaminerCommandFactory) printDistribution() int {
+	defer factory.output.Say(cursor.ClearToEndOfDisplay())
 
-	cells, err := cmd.appExaminer.ListCells()
+	cells, err := factory.appExaminer.ListCells()
 	if err != nil {
-		cmd.output.Say("Error visualizing: " + err.Error())
-		cmd.output.Say(cursor.ClearToEndOfLine())
-		cmd.output.NewLine()
+		factory.output.Say("Error visualizing: " + err.Error())
+		factory.output.Say(cursor.ClearToEndOfLine())
+		factory.output.NewLine()
 		return 1
 	}
 
 	for _, cell := range cells {
-		cmd.output.Say(cell.CellID)
+		factory.output.Say(cell.CellID)
 		if cell.Missing {
-			cmd.output.Say(colors.Red("[MISSING]"))
+			factory.output.Say(colors.Red("[MISSING]"))
 		}
-		cmd.output.Say(": ")
+		factory.output.Say(": ")
 
 		if cell.RunningInstances == 0 && cell.ClaimedInstances == 0 && !cell.Missing {
-			cmd.output.Say(colors.Red("empty"))
+			factory.output.Say(colors.Red("empty"))
 		} else {
-			cmd.output.Say(colors.Green(strings.Repeat("•", cell.RunningInstances)))
-			cmd.output.Say(colors.Yellow(strings.Repeat("•", cell.ClaimedInstances)))
+			factory.output.Say(colors.Green(strings.Repeat("•", cell.RunningInstances)))
+			factory.output.Say(colors.Yellow(strings.Repeat("•", cell.ClaimedInstances)))
 		}
-		cmd.output.Say(cursor.ClearToEndOfLine())
-		cmd.output.NewLine()
+		factory.output.Say(cursor.ClearToEndOfLine())
+		factory.output.NewLine()
 	}
 
 	return len(cells)

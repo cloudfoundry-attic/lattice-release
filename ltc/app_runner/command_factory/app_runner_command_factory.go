@@ -29,7 +29,15 @@ const (
 )
 
 type AppRunnerCommandFactory struct {
-	appRunnerCommand *appRunnerCommand
+    appRunner             docker_app_runner.AppRunner
+    dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
+    output                *output.Output
+    timeout               time.Duration
+    domain                string
+    env                   []string
+    clock                 clock.Clock
+    tailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
+    exitHandler           exit_handler.ExitHandler
 }
 
 type AppRunnerCommandFactoryConfig struct {
@@ -47,17 +55,15 @@ type AppRunnerCommandFactoryConfig struct {
 
 func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunnerCommandFactory {
 	return &AppRunnerCommandFactory{
-		&appRunnerCommand{
-			appRunner:             config.AppRunner,
-			dockerMetadataFetcher: config.DockerMetadataFetcher,
-			output:                config.Output,
-			timeout:               config.Timeout,
-			domain:                config.Domain,
-			env:                   config.Env,
-			clock:                 config.Clock,
-			tailedLogsOutputter:   config.TailedLogsOutputter,
-			exitHandler:           config.ExitHandler,
-		},
+        appRunner:             config.AppRunner,
+        dockerMetadataFetcher: config.DockerMetadataFetcher,
+        output:                config.Output,
+        timeout:               config.Timeout,
+        domain:                config.Domain,
+        env:                   config.Env,
+        clock:                 config.Clock,
+        tailedLogsOutputter:   config.TailedLogsOutputter,
+        exitHandler:           config.ExitHandler,
 	}
 }
 
@@ -137,7 +143,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Comman
 
    To specify environment variables:
    ltc create APP_NAME DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE`,
-		Action: commandFactory.appRunnerCommand.createApp,
+		Action: commandFactory.createApp,
 		Flags:  createFlags,
 	}
 
@@ -149,7 +155,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command
 		Name:        "scale",
 		Description: "Scale a docker app on lattice",
 		Usage:       "ltc scale APP_NAME NUM_INSTANCES",
-		Action:      commandFactory.appRunnerCommand.scaleApp,
+		Action:      commandFactory.scaleApp,
 	}
 
 	return scaleCommand
@@ -160,7 +166,7 @@ func (commandFactory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Com
 		Name:        "update-routes",
 		Description: "Updates the routes for a running app",
 		Usage:       "ltc update-routes APP_NAME ROUTE,OTHER_ROUTE...", // TODO: route format?
-		Action:      commandFactory.appRunnerCommand.updateAppRoutes,
+		Action:      commandFactory.updateAppRoutes,
 	}
 
 	return updateRoutesCommand
@@ -171,25 +177,13 @@ func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Comman
 		Name:        "remove",
 		Description: "Stop and remove a docker app from lattice",
 		Usage:       "ltc remove APP_NAME",
-		Action:      commandFactory.appRunnerCommand.removeApp,
+		Action:      commandFactory.removeApp,
 	}
 
 	return removeCommand
 }
 
-type appRunnerCommand struct {
-	appRunner             docker_app_runner.AppRunner
-	dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
-	output                *output.Output
-	timeout               time.Duration
-	domain                string
-	env                   []string
-	clock                 clock.Clock
-	tailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
-	exitHandler           exit_handler.ExitHandler
-}
-
-func (cmd *appRunnerCommand) createApp(context *cli.Context) {
+func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	workingDirFlag := context.String("working-dir")
 	envVarsFlag := context.StringSlice("env")
 	instancesFlag := context.Int("instances")
@@ -208,20 +202,20 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 
 	switch {
 	case len(context.Args()) < 2:
-		cmd.output.IncorrectUsage("APP_NAME and DOCKER_IMAGE are required")
+		factory.output.IncorrectUsage("APP_NAME and DOCKER_IMAGE are required")
 		return
 	case startCommand != "" && terminator != "--":
-		cmd.output.IncorrectUsage("'--' Required before start command")
+		factory.output.IncorrectUsage("'--' Required before start command")
 		return
 	case len(context.Args()) > 4:
 		appArgs = context.Args()[4:]
 	}
 
 	repoName, tag := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImage)
-	imageMetadata, err := cmd.dockerMetadataFetcher.FetchMetadata(repoName, tag)
+	imageMetadata, err := factory.dockerMetadataFetcher.FetchMetadata(repoName, tag)
 
 	if err != nil {
-		cmd.output.Say(fmt.Sprintf("Error fetching image metadata: %s", err))
+		factory.output.Say(fmt.Sprintf("Error fetching image metadata: %s", err))
 		return
 	}
 
@@ -232,7 +226,7 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 			portStrs = append(portStrs, strconv.Itoa(int(port)))
 		}
 
-		cmd.output.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s\n", strings.Join(portStrs, ", ")))
+		factory.output.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s\n", strings.Join(portStrs, ", ")))
 		portConfig = imageMetadata.Ports
 	} else if portsFlag == "" && imageMetadata.Ports.IsEmpty() && noMonitorFlag {
 		portConfig = docker_app_runner.PortConfig{
@@ -240,7 +234,7 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 			Exposed:   []uint16{8080},
 		}
 	} else if portsFlag == "" && imageMetadata.Ports.IsEmpty() {
-		cmd.output.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
+		factory.output.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
 		portConfig = docker_app_runner.PortConfig{
 			Monitored: 8080,
 			Exposed:   []uint16{8080},
@@ -248,7 +242,7 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 	} else {
 		portStrings := strings.Split(portsFlag, ",")
 		if len(portStrings) > 1 && monitoredPortFlag == 0 && !noMonitorFlag {
-			cmd.output.Say(MustSetMonitoredPortErrorMessage)
+			factory.output.Say(MustSetMonitoredPortErrorMessage)
 			return
 		}
 
@@ -259,7 +253,7 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 		for _, p := range portStrings {
 			intPort, err := strconv.Atoi(p)
 			if err != nil || intPort > 65535 {
-				cmd.output.Say(InvalidPortErrorMessage)
+				factory.output.Say(InvalidPortErrorMessage)
 				return
 			}
 			convertedPorts = append(convertedPorts, uint16(intPort))
@@ -279,44 +273,44 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 	}
 
 	if workingDirFlag == "" {
-		cmd.output.Say("No working directory specified, using working directory from the image metadata...\n")
+		factory.output.Say("No working directory specified, using working directory from the image metadata...\n")
 		if imageMetadata.WorkingDir != "" {
 			workingDirFlag = imageMetadata.WorkingDir
-			cmd.output.Say("Working directory is:\n")
-			cmd.output.Say(workingDirFlag + "\n")
+			factory.output.Say("Working directory is:\n")
+			factory.output.Say(workingDirFlag + "\n")
 		} else {
 			workingDirFlag = "/"
 		}
 	}
 
 	if !noMonitorFlag {
-		cmd.output.Say(fmt.Sprintf("Monitoring the app on port %d...\n", portConfig.Monitored))
+		factory.output.Say(fmt.Sprintf("Monitoring the app on port %d...\n", portConfig.Monitored))
 	} else {
-		cmd.output.Say("No ports will be monitored.\n")
+		factory.output.Say("No ports will be monitored.\n")
 	}
 
 	if startCommand == "" {
-		cmd.output.Say("No start command specified, using start command from the image metadata...\n")
+		factory.output.Say("No start command specified, using start command from the image metadata...\n")
 
 		startCommand = imageMetadata.StartCommand[0]
-		cmd.output.Say("Start command is:\n")
-		cmd.output.Say(strings.Join(imageMetadata.StartCommand, " ") + "\n")
+		factory.output.Say("Start command is:\n")
+		factory.output.Say(strings.Join(imageMetadata.StartCommand, " ") + "\n")
 
 		appArgs = imageMetadata.StartCommand[1:]
 	}
 
 	routeOverrides, err := parseRouteOverrides(routesFlag)
 	if err != nil {
-		cmd.output.Say(err.Error())
+		factory.output.Say(err.Error())
 		return
 	}
 
-	err = cmd.appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
+	err = factory.appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 		Name:                 name,
 		DockerImagePath:      dockerImage,
 		StartCommand:         startCommand,
 		AppArgs:              appArgs,
-		EnvironmentVariables: cmd.buildEnvironment(envVarsFlag),
+		EnvironmentVariables: factory.buildEnvironment(envVarsFlag),
 		Privileged:           context.Bool("run-as-root"),
 		Monitor:              !noMonitorFlag,
 		Instances:            instancesFlag,
@@ -327,88 +321,88 @@ func (cmd *appRunnerCommand) createApp(context *cli.Context) {
 		RouteOverrides:       routeOverrides,
 	})
 	if err != nil {
-		cmd.output.Say(fmt.Sprintf("Error Creating App: %s", err))
+		factory.output.Say(fmt.Sprintf("Error Creating App: %s", err))
 		return
 	}
 
-	cmd.output.Say("Creating App: " + name + "\n")
+	factory.output.Say("Creating App: " + name + "\n")
 
-	go cmd.tailedLogsOutputter.OutputTailedLogs(name)
-	defer cmd.tailedLogsOutputter.StopOutputting()
+	go factory.tailedLogsOutputter.OutputTailedLogs(name)
+	defer factory.tailedLogsOutputter.StopOutputting()
 
-	ok := cmd.pollUntilAllInstancesRunning(name, instancesFlag, "start")
+	ok := factory.pollUntilAllInstancesRunning(name, instancesFlag, "start")
 
 	if ok {
-		cmd.output.Say(colors.Green(name + " is now running.\n"))
-		cmd.output.Say(colors.Green(cmd.urlForApp(name)))
+		factory.output.Say(colors.Green(name + " is now running.\n"))
+		factory.output.Say(colors.Green(factory.urlForApp(name)))
 	}
 }
 
-func (cmd *appRunnerCommand) scaleApp(c *cli.Context) {
+func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
 	appName := c.Args().First()
 	instancesArg := c.Args().Get(1)
 
 	if appName == "" || instancesArg == "" {
-		cmd.output.IncorrectUsage("Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'")
+		factory.output.IncorrectUsage("Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'")
 		return
 	}
 
 	instances, err := strconv.Atoi(instancesArg)
 	if err != nil {
-		cmd.output.IncorrectUsage("Number of Instances must be an integer")
+		factory.output.IncorrectUsage("Number of Instances must be an integer")
 		return
 	}
 
-	cmd.setAppInstances(appName, instances)
+	factory.setAppInstances(appName, instances)
 }
 
-func (cmd *appRunnerCommand) updateAppRoutes(c *cli.Context) {
+func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
 	appName := c.Args().First()
 	userDefinedRoutes := c.Args().Get(1)
 
 	if appName == "" || userDefinedRoutes == "" {
-		cmd.output.IncorrectUsage("Please enter 'ltc update-routes APP_NAME NEW_ROUTES'")
+		factory.output.IncorrectUsage("Please enter 'ltc update-routes APP_NAME NEW_ROUTES'")
 		return
 	}
 
 	desiredRoutes, err := parseRouteOverrides(userDefinedRoutes)
 	if err != nil {
-		cmd.output.Say(err.Error())
+		factory.output.Say(err.Error())
 		return
 	}
 
-	err = cmd.appRunner.UpdateAppRoutes(appName, desiredRoutes)
+	err = factory.appRunner.UpdateAppRoutes(appName, desiredRoutes)
 	if err != nil {
-		cmd.output.Say(fmt.Sprintf("Error updating routes: %s", err))
+		factory.output.Say(fmt.Sprintf("Error updating routes: %s", err))
 		return
 	}
 
-	cmd.output.Say(fmt.Sprintf("Updating %s routes. You can check this app's current routes by running 'ltc status %s'", appName, appName))
+	factory.output.Say(fmt.Sprintf("Updating %s routes. You can check this app's current routes by running 'ltc status %s'", appName, appName))
 }
 
-func (cmd *appRunnerCommand) setAppInstances(appName string, instances int) {
-	err := cmd.appRunner.ScaleApp(appName, instances)
+func (factory *AppRunnerCommandFactory) setAppInstances(appName string, instances int) {
+	err := factory.appRunner.ScaleApp(appName, instances)
 
 	if err != nil {
-		cmd.output.Say(fmt.Sprintf("Error Scaling App to %d instances: %s", instances, err))
+		factory.output.Say(fmt.Sprintf("Error Scaling App to %d instances: %s", instances, err))
 		return
 	}
 
-	cmd.output.Say(fmt.Sprintf("Scaling %s to %d instances \n", appName, instances))
+	factory.output.Say(fmt.Sprintf("Scaling %s to %d instances \n", appName, instances))
 
-	ok := cmd.pollUntilAllInstancesRunning(appName, instances, "scale")
+	ok := factory.pollUntilAllInstancesRunning(appName, instances, "scale")
 
 	if ok {
-		cmd.output.Say(colors.Green("App Scaled Successfully"))
+		factory.output.Say(colors.Green("App Scaled Successfully"))
     }
 }
 
-func (cmd *appRunnerCommand) pollUntilAllInstancesRunning(appName string, instances int, action string) bool {
+func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(appName string, instances int, action string) bool {
 	placementErrorOccurred := false
-	ok := cmd.pollUntilSuccess(func() bool {
-		numberOfRunningInstances, placementError, _ := cmd.appRunner.RunningAppInstancesInfo(appName)
+	ok := factory.pollUntilSuccess(func() bool {
+		numberOfRunningInstances, placementError, _ := factory.appRunner.RunningAppInstancesInfo(appName)
 		if placementError {
-			cmd.output.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
+			factory.output.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
 			placementErrorOccurred = true
 			return true
 		}
@@ -416,69 +410,69 @@ func (cmd *appRunnerCommand) pollUntilAllInstancesRunning(appName string, instan
 	}, true)
 
 	if placementErrorOccurred {
-		cmd.exitHandler.Exit(exit_codes.PlacementError)
+		factory.exitHandler.Exit(exit_codes.PlacementError)
 		return false
 	} else if !ok {
-        cmd.output.Say(colors.Red(appName + " took too long to " + action + "."))
+        factory.output.Say(colors.Red(appName + " took too long to " + action + "."))
 	}
     return ok
 
 }
 
-func (cmd *appRunnerCommand) removeApp(c *cli.Context) {
+func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	appName := c.Args().First()
 	if appName == "" {
-		cmd.output.IncorrectUsage("App Name required")
+		factory.output.IncorrectUsage("App Name required")
 		return
 	}
 
-	err := cmd.appRunner.RemoveApp(appName)
+	err := factory.appRunner.RemoveApp(appName)
 	if err != nil {
-		cmd.output.Say(fmt.Sprintf("Error Stopping App: %s", err))
+		factory.output.Say(fmt.Sprintf("Error Stopping App: %s", err))
 		return
 	}
 
-	cmd.output.Say(fmt.Sprintf("Removing %s", appName))
-	ok := cmd.pollUntilSuccess(func() bool {
-		appExists, err := cmd.appRunner.AppExists(appName)
+	factory.output.Say(fmt.Sprintf("Removing %s", appName))
+	ok := factory.pollUntilSuccess(func() bool {
+		appExists, err := factory.appRunner.AppExists(appName)
 		return err == nil && !appExists
 	}, true)
 
 	if ok {
-		cmd.output.Say(colors.Green("Successfully Removed " + appName + "."))
+		factory.output.Say(colors.Green("Successfully Removed " + appName + "."))
 	} else {
-		cmd.output.Say(colors.Red(fmt.Sprintf("Failed to remove %s.", appName)))
+		factory.output.Say(colors.Red(fmt.Sprintf("Failed to remove %s.", appName)))
 	}
 }
 
-func (cmd *appRunnerCommand) pollUntilSuccess(pollingFunc func() bool, outputProgress bool) (ok bool) {
-	startingTime := cmd.clock.Now()
-	for startingTime.Add(cmd.timeout).After(cmd.clock.Now()) {
+func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollingFunc func() bool, outputProgress bool) (ok bool) {
+	startingTime := factory.clock.Now()
+	for startingTime.Add(factory.timeout).After(factory.clock.Now()) {
 		if result := pollingFunc(); result {
-			cmd.output.NewLine()
+			factory.output.NewLine()
 			return true
 		} else if outputProgress {
-			cmd.output.Say(".")
+			factory.output.Say(".")
 		}
 
-		cmd.clock.Sleep(1 * time.Second)
+		factory.clock.Sleep(1 * time.Second)
 	}
-	cmd.output.NewLine()
+	factory.output.NewLine()
 	return false
 }
 
-func (cmd *appRunnerCommand) urlForApp(name string) string {
-	return fmt.Sprintf("http://%s.%s", name, cmd.domain)
+func (factory *AppRunnerCommandFactory) urlForApp(name string) string {
+	return fmt.Sprintf("http://%s.%s", name, factory.domain)
 }
 
-func (cmd *appRunnerCommand) buildEnvironment(envVars []string) map[string]string {
+func (factory *AppRunnerCommandFactory) buildEnvironment(envVars []string) map[string]string {
 	environment := make(map[string]string)
 
 	for _, envVarPair := range envVars {
 		name, value := parseEnvVarPair(envVarPair)
 
 		if value == "" {
-			value = cmd.grabVarFromEnv(name)
+			value = factory.grabVarFromEnv(name)
 		}
 
 		environment[name] = value
@@ -486,8 +480,8 @@ func (cmd *appRunnerCommand) buildEnvironment(envVars []string) map[string]strin
 	return environment
 }
 
-func (cmd *appRunnerCommand) grabVarFromEnv(name string) string {
-	for _, envVarPair := range cmd.env {
+func (factory *AppRunnerCommandFactory) grabVarFromEnv(name string) string {
+	for _, envVarPair := range factory.env {
 		if strings.HasPrefix(envVarPair, name) {
 			_, value := parseEnvVarPair(envVarPair)
 			return value

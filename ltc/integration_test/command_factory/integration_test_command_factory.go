@@ -9,16 +9,12 @@ import (
 )
 
 type IntegrationTestCommandFactory struct {
-	integrationTestRunnerCommand *runIntegrationTestCommand
-}
-
-type runIntegrationTestCommand struct {
-	integrationTestRunner integration_test.IntegrationTestRunner
-	output                *output.Output
+    integrationTestRunner integration_test.IntegrationTestRunner
+    output                *output.Output
 }
 
 func NewIntegrationTestCommandFactory(testRunner integration_test.IntegrationTestRunner, output *output.Output) *IntegrationTestCommandFactory {
-	return &IntegrationTestCommandFactory{&runIntegrationTestCommand{testRunner, output}}
+	return &IntegrationTestCommandFactory{testRunner, output}
 }
 
 func (commandFactory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.Command {
@@ -40,13 +36,13 @@ func (commandFactory *IntegrationTestCommandFactory) MakeIntegrationTestCommand(
 		ShortName:   "t",
 		Usage:       "ltc test",
 		Description: `ltc test verifies that the targeted lattice deployment is up and running.`,
-		Action:      commandFactory.integrationTestRunnerCommand.runIntegrationTests,
+		Action:      commandFactory.runIntegrationTests,
 		Flags:       testFlags,
 	}
 
 	return cliCommand
 }
 
-func (cmd *runIntegrationTestCommand) runIntegrationTests(context *cli.Context) {
-	cmd.integrationTestRunner.Run(context.Duration("timeout"), context.Bool("verbose"))
+func (factory *IntegrationTestCommandFactory) runIntegrationTests(context *cli.Context) {
+    factory.integrationTestRunner.Run(context.Duration("timeout"), context.Bool("verbose"))
 }
