@@ -102,45 +102,58 @@ generate_ltc_tarball() {
     popd > /dev/null
 }
 
-## assumes master branch checked out
-## assumes get_lattice_version already set $lattice_version
 bump_lattice_version() {
-    previous_lattice_version=$(cat Version)
-    new_lattice_version="$lattice_version"
+    get_lattice_version
 
-    echo "$new_lattice_version" > Version
-    echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
+    pushd $LATTICE_SRC_PATH/lattice > /dev/null
+        previous_lattice_version=$(cat Version)
+        new_lattice_version="$lattice_version"
 
-    echo "$diego_release_git_sha" > DIEGO_VERSION
+        echo "$new_lattice_version" > Version
+        echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
 
-    git add Version
-    git add DIEGO_VERSION
-    deliver_stories_message=$(extract_deliver_stories_message)
+        echo "$diego_release_git_sha" > DIEGO_VERSION
 
-    git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
+        git add Version
+        git add DIEGO_VERSION
+        deliver_stories_message=$(extract_deliver_stories_message)
 
-    Diego Release Git SHA: $diego_release_git_sha
+        git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
 
-    $deliver_stories_message
+        + Bump Version Files
 
-    +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
-    "
+        Diego Release Git SHA: $diego_release_git_sha
+
+        $deliver_stories_message
+
+        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+        "
+    popd > /dev/null
 }
 
-## assumes get_lattice_version already set $lattice_version
-update_terraform() {
+rewrite_terraform_examples() {
+    get_lattice_version
 
-    pushd $LATTICE_SRC_PATH/terraform/aws
+    pushd $LATTICE_SRC_PATH/terraform/aws > /dev/null
         sed -i 's/source = "github\.com.*$/source = "github\.com\/cloudfoundry-incubator\/lattice\/\/terraform\/\/aws\?ref='"$lattice_version"'"/' lattice.tf.example
         git add lattice.tf.example
-    popd
-    pushd $LATTICE_SRC_PATH/terraform/digitalocean
+    popd > /dev/null
+    pushd $LATTICE_SRC_PATH/terraform/digitalocean > /dev/null
         sed -i 's/source = "github\.com.*$/source = "github\.com\/cloudfoundry-incubator\/lattice\/\/terraform\/\/digitalocean\?ref='"$lattice_version"'"/' lattice.tf.example
         git add lattice.tf.example
-    popd
-    pushd $LATTICE_SRC_PATH/terraform/google
+    popd > /dev/null
+    pushd $LATTICE_SRC_PATH/terraform/google > /dev/null
         sed -i 's/source = "github\.com.*$/source = "github\.com\/cloudfoundry-incubator\/lattice\/\/terraform\/\/google\?ref='"$lattice_version"'"/' lattice.tf.example
         git add lattice.tf.example
-    popd
+    popd > /dev/null
 
+    pushd $LATTICE_SRC_PATH > /dev/null
+        git commit -m "Bump Terraform Examples
+
+        + Update terraform example files to point to source $lattice_version
+        + Terraform now downloads Lattice $new_lattice_version
+
+        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+        "
+    popd > /dev/null
 }

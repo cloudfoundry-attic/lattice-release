@@ -113,9 +113,9 @@ bump_and_push_lattice() {
 
         update_godeps
 
-        update_terraform
-
         bump_lattice_version
+
+        rewrite_terraform_examples
 
         git checkout develop
 
@@ -143,6 +143,7 @@ lattice_tar_path=$1
 setup_ssh_access_to_github
 
 sync_up_tags_off_remote
+
 get_lattice_version
 
 upload_lattice_tar_to_s3
