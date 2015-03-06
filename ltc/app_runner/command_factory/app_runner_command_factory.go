@@ -120,7 +120,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 		},
 	}
 
-	var createCommand = cli.Command{
+	var createAppCommand = cli.Command{
 		Name:      "create",
 		ShortName: "c",
 		Usage:     "ltc create APP_NAME DOCKER_IMAGE",
@@ -147,18 +147,18 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 		Flags:  createFlags,
 	}
 
-	return createCommand
+	return createAppCommand
 }
 
 func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
-	var scaleCommand = cli.Command{
+	var scaleAppCommand = cli.Command{
 		Name:        "scale",
 		Description: "Scale a docker app on lattice",
 		Usage:       "ltc scale APP_NAME NUM_INSTANCES",
 		Action:      factory.scaleApp,
 	}
 
-	return scaleCommand
+	return scaleAppCommand
 }
 
 func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
@@ -173,14 +173,14 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 }
 
 func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
-	var removeCommand = cli.Command{
+	var removeAppCommand = cli.Command{
 		Name:        "remove",
 		Description: "Stop and remove a docker app from lattice",
 		Usage:       "ltc remove APP_NAME",
 		Action:      factory.removeApp,
 	}
 
-	return removeCommand
+	return removeAppCommand
 }
 
 func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
@@ -213,63 +213,15 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 
 	repoName, tag := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImage)
 	imageMetadata, err := factory.dockerMetadataFetcher.FetchMetadata(repoName, tag)
-
 	if err != nil {
 		factory.output.Say(fmt.Sprintf("Error fetching image metadata: %s", err))
 		return
 	}
 
-	var portConfig docker_app_runner.PortConfig
-	if portsFlag == "" && !imageMetadata.Ports.IsEmpty() {
-		portStrs := make([]string, 0)
-		for _, port := range imageMetadata.Ports.Exposed {
-			portStrs = append(portStrs, strconv.Itoa(int(port)))
-		}
-
-		factory.output.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s\n", strings.Join(portStrs, ", ")))
-		portConfig = imageMetadata.Ports
-	} else if portsFlag == "" && imageMetadata.Ports.IsEmpty() && noMonitorFlag {
-		portConfig = docker_app_runner.PortConfig{
-			Monitored: 0,
-			Exposed:   []uint16{8080},
-		}
-	} else if portsFlag == "" && imageMetadata.Ports.IsEmpty() {
-		factory.output.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
-		portConfig = docker_app_runner.PortConfig{
-			Monitored: 8080,
-			Exposed:   []uint16{8080},
-		}
-	} else {
-		portStrings := strings.Split(portsFlag, ",")
-		if len(portStrings) > 1 && monitoredPortFlag == 0 && !noMonitorFlag {
-			factory.output.Say(MustSetMonitoredPortErrorMessage)
-			return
-		}
-
-		sort.Strings(portStrings)
-
-		convertedPorts := []uint16{}
-
-		for _, p := range portStrings {
-			intPort, err := strconv.Atoi(p)
-			if err != nil || intPort > 65535 {
-				factory.output.Say(InvalidPortErrorMessage)
-				return
-			}
-			convertedPorts = append(convertedPorts, uint16(intPort))
-		}
-
-		var monitoredPort uint16
-		if len(portStrings) > 1 {
-			monitoredPort = uint16(monitoredPortFlag)
-		} else {
-			monitoredPort = convertedPorts[0]
-		}
-
-		portConfig = docker_app_runner.PortConfig{
-			Monitored: monitoredPort,
-			Exposed:   convertedPorts,
-		}
+	portConfig, err := factory.getPortConfigFromArgs(portsFlag, monitoredPortFlag, noMonitorFlag, imageMetadata)
+	if err != nil {
+		factory.output.Say(err.Error())
+		return
 	}
 
 	if workingDirFlag == "" {
@@ -495,6 +447,62 @@ func (factory *AppRunnerCommandFactory) grabVarFromEnv(name string) string {
 		}
 	}
 	return ""
+}
+
+func (factory *AppRunnerCommandFactory) getPortConfigFromArgs(portsFlag string, monitoredPortFlag int, noMonitorFlag bool, imageMetadata *docker_metadata_fetcher.ImageMetadata) (docker_app_runner.PortConfig, error) {
+
+	var portConfig docker_app_runner.PortConfig
+	if portsFlag == "" && !imageMetadata.Ports.IsEmpty() {
+		portStrs := make([]string, 0)
+		for _, port := range imageMetadata.Ports.Exposed {
+			portStrs = append(portStrs, strconv.Itoa(int(port)))
+		}
+
+		factory.output.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s\n", strings.Join(portStrs, ", ")))
+		portConfig = imageMetadata.Ports
+	} else if portsFlag == "" && imageMetadata.Ports.IsEmpty() && noMonitorFlag {
+		portConfig = docker_app_runner.PortConfig{
+			Monitored: 0,
+			Exposed:   []uint16{8080},
+		}
+	} else if portsFlag == "" && imageMetadata.Ports.IsEmpty() {
+		factory.output.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
+		portConfig = docker_app_runner.PortConfig{
+			Monitored: 8080,
+			Exposed:   []uint16{8080},
+		}
+	} else {
+		portStrings := strings.Split(portsFlag, ",")
+		if len(portStrings) > 1 && monitoredPortFlag == 0 && !noMonitorFlag {
+			return docker_app_runner.PortConfig{}, errors.New(MustSetMonitoredPortErrorMessage)
+		}
+
+		sort.Strings(portStrings)
+
+		convertedPorts := []uint16{}
+
+		for _, p := range portStrings {
+			intPort, err := strconv.Atoi(p)
+			if err != nil || intPort > 65535 {
+				return docker_app_runner.PortConfig{}, errors.New(InvalidPortErrorMessage)
+			}
+			convertedPorts = append(convertedPorts, uint16(intPort))
+		}
+
+		var monitoredPort uint16
+		if len(portStrings) > 1 {
+			monitoredPort = uint16(monitoredPortFlag)
+		} else {
+			monitoredPort = convertedPorts[0]
+		}
+
+		portConfig = docker_app_runner.PortConfig{
+			Monitored: monitoredPort,
+			Exposed:   convertedPorts,
+		}
+	}
+
+	return portConfig, nil
 }
 
 func parseRouteOverrides(routes string) (docker_app_runner.RouteOverrides, error) {
