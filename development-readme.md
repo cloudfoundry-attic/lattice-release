@@ -6,13 +6,15 @@
 These instructions assume a basic familiarity with Golang development.
 If you have not developed a golang project before, please see the [Golang docs](https://golang.org/doc/)
 
-Install:
+####Install:
+
 1. [Golang](https://golang.org/)
 1. [Terraform](http://terraform.io)
 1. [Vagrant](http://vagrantup.com) with the default Virtualbox provider
 1. [Docker](https://docs.docker.com/installation/)
 1. Setup source code dependencies, the ltc cli, and environment
-    ```bash
+
+```bash
     $ mkdir -p ~/workspace
     $ cd ~/workspace
     $ git clone git@github.com:cloudfoundry/cf-release.git --recursive
@@ -36,18 +38,22 @@ Install:
     $ $(boot2docker shellinit)
     $ docker pull cloudfoundry/lattice-pipeline
     $ docker pull cloudfoundry/lattice-app
-    ```
-1. Add our helpful aliases to your bash_profile
-    ```bash
+```
+
+#### Add our helpful aliases to your bash_profile
+
+```bash
     $ export PULL_DOCKER_IMAGE=false
     $ alias recompile-lattice="cd ~/workspace && $GOPATH/src/github.com/cloudfoundry-incubator/lattice/lattice-pipeline/helpers/run_with_docker /workspace/diego-release/src/github.com/cloudfoundry-incubator/lattice/lattice-pipeline/01_compilation/compile_lattice_tar && mv -v ./lattice.tgz $GOPATH/src/github.com/cloudfoundry-incubator/lattice/"
     $ alias remake-vagrant="cd-lattice; vagrant destroy --force; recompile-lattice && VAGRANT_LATTICE_TAR_PATH=/vagrant/lattice.tgz vagrant up --provider=virtualbox; go install github.com/cloudfoundry-incubator/lattice/ltc"
-    ```
-1. Build a vagrant vm-deployed lattice cluster, verify that it's up and running:
-    ```bash
+```
+
+#### Build a vagrant vm-deployed lattice cluster, verify that it's up and running:
+
+```bash
     $ remake-vagrant
     $ ltc test -v
-    ```
+```
 ## ltc Development
 
 If you only want to develop against ltc, but do not care to make local cluster changes,
