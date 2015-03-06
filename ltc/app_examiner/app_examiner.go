@@ -1,7 +1,5 @@
 package app_examiner
 
-//go:generate counterfeiter -o fake_app_examiner/fake_app_examiner.go . AppExaminer
-
 import (
 	"sort"
 
@@ -73,6 +71,7 @@ type CellInfo struct {
 	Missing          bool
 }
 
+//go:generate counterfeiter -o fake_app_examiner/fake_app_examiner.go . AppExaminer
 type AppExaminer interface {
 	ListApps() ([]AppInfo, error)
 	ListCells() ([]CellInfo, error)

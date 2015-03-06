@@ -36,7 +36,7 @@ type IntegrationTestRunner interface {
 }
 
 type integrationTestRunner struct {
-	t                 GinkgoTestingT
+	testingT          GinkgoTestingT
 	testOutputWriter  io.Writer
 	config            *config.Config
 	latticeCliHome    string
@@ -50,14 +50,12 @@ func (g *ginkgoTestingT) Fail() {
 }
 
 func NewIntegrationTestRunner(outputWriter io.Writer, config *config.Config, latticeCliHome string) IntegrationTestRunner {
-	t := &ginkgoTestingT{}
 	return &integrationTestRunner{testOutputWriter: outputWriter,
 		config:            config,
-		t:                 t,
+		testingT:          &ginkgoTestingT{},
 		latticeCliHome:    latticeCliHome,
 		ltcExecutablePath: os.Args[0],
 	}
-
 }
 
 func (runner *integrationTestRunner) Run(timeout time.Duration, verbose bool) {
@@ -65,19 +63,17 @@ func (runner *integrationTestRunner) Run(timeout time.Duration, verbose bool) {
 	ginkgo_config.DefaultReporterConfig.SlowSpecThreshold = float64(20)
 	defineTheGinkgoTests(runner, timeout)
 	RegisterFailHandler(Fail)
-	RunSpecs(runner.t, "Lattice Integration Tests")
+	RunSpecs(runner.testingT, "Lattice Integration Tests")
 }
 
 func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) {
 
 	var _ = BeforeSuite(func() {
-
 		err := runner.config.Load()
 		if err != nil {
 			fmt.Fprintf(GinkgoWriter, "Error loading config")
 			return
 		}
-
 	})
 
 	var _ = AfterSuite(func() {
@@ -126,7 +122,6 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 				instanceCountChan := make(chan int, numCpu)
 				go countInstances(route, instanceCountChan)
 				Eventually(instanceCountChan, timeout).Should(Receive(Equal(3)))
-
 			})
 
 			It("eventually runs a docker app with metadata from Docker Hub", func() {
@@ -139,7 +134,6 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 }
 
 func (runner *integrationTestRunner) createDockerApp(timeout time.Duration, appName string, args ...string) {
-
 	fmt.Fprintf(GinkgoWriter, colors.PurpleUnderline(fmt.Sprintf("Attempting to create %s\n", appName)))
 	createArgs := append([]string{"create", appName}, args...)
 	command := runner.command(timeout, createArgs...)
@@ -260,5 +254,4 @@ func makeGetRequestToRoute(route string) (*http.Response, error) {
 func expectExit(timeout time.Duration, session *gexec.Session) {
 	Eventually(session, timeout).Should(gexec.Exit(0))
 	Expect(string(session.Out.Contents())).To(HaveSuffix("\n"))
-
 }
