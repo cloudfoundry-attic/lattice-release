@@ -18,5 +18,5 @@ get_lattice_version
 
 go_build_ltc
 
-generate_ltc_tarball
+generate_ltc_tarball "/workspace"
 

@@ -95,10 +95,10 @@ generate_ltc_tarball() {
     popd > /dev/null
     sync
 
-    echo -n "Creating ltc ($lattice_version) tarball .."
+    echo -n "Creating ltc.tar.gz ($lattice_version) at $1 .."
     pushd $OUTDIR > /dev/null
-        rm -f /workspace/ltc.tar.gz
-        tar czf /workspace/ltc.tar.gz ltc* && echo "SUCCESS!"
+        rm -f $1/ltc.tar.gz
+        tar czf $1/ltc.tar.gz ltc* && echo "SUCCESS!"
     popd > /dev/null
 }
 

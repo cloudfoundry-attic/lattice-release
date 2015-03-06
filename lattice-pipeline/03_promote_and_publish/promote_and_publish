@@ -17,16 +17,16 @@ sync_up_tags_off_remote() {
     popd > /dev/null
 }
 
-upload_lattice_tar_to_s3() {
+upload_unstable_lattice_tar_to_s3() {
     aws s3 cp $lattice_tar_path "s3://lattice/unstable/latest/lattice.tgz"
     aws s3 cp $lattice_tar_path "s3://lattice/unstable/${lattice_version}/lattice.tgz"
     echo "lattice.tgz uploaded to s3"
 }
 
-upload_ltc_binaries_to_s3() {
+upload_unstable_ltc_binaries_to_s3() {
     rm -rf ltc-binaries
     mkdir -p ltc-binaries
-    tar xzf ltc.tar.gz -C ltc-binaries
+    tar xzf $ltc_tar_path -C ltc-binaries
     ltc_checksum=$(cat ltc-binaries/ltc-checksum)
     echo "Unpacked ltc.tar.gz with ltc-checksum (git sha) = ${ltc_checksum}"
 
@@ -136,9 +136,17 @@ bump_and_push_lattice() {
     popd > /dev/null
 }
 
+stage_pipeline_artifact() {
+    pipeline_version_artifact_path="/workspace/pipeline_published_lattice_version"
+
+    git checkout master
+    cp $LATTICE_SRC_PATH/Version $pipeline_version_artifact_path
+}
+
 source $(dirname $0)/../helpers/build_ltc_helpers
 
-lattice_tar_path=$1
+lattice_tar_path=${1:-/workspace/lattice.tgz}
+ltc_tar_path=${2:-/workspace/ltc.tar.gz}
 
 setup_ssh_access_to_github
 
@@ -146,7 +154,9 @@ sync_up_tags_off_remote
 
 get_lattice_version
 
-upload_lattice_tar_to_s3
-upload_ltc_binaries_to_s3
+upload_unstable_lattice_tar_to_s3
+upload_unstable_ltc_binaries_to_s3
 
 bump_and_push_lattice
+
+stage_pipeline_artifact
