@@ -48,6 +48,12 @@ upload_unstable_ltc_binaries_to_s3() {
     echo "ltc binaries uploaded to s3"
 }
 
+extract_deliver_stories_message() {
+    git log origin/master..$GO_REVISION_LATTICE | \
+        egrep -io "\[\s*(?:Finishes|Fixes)\s*(#(\d+)\s*)+\]" | \
+        perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi'
+}
+
 update_godeps(){
     setup_go_env
 
@@ -83,10 +89,16 @@ update_godeps(){
     popd > /dev/null
 }
 
-extract_deliver_stories_message() {
-    git log origin/master..$GO_REVISION_LATTICE | \
-        egrep -io "\[\s*(?:Finishes|Fixes)\s*(#(\d+)\s*)+\]" | \
-        perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi'
+commit_terraform_examples() {
+    pushd $LATTICE_SRC_PATH > /dev/null
+        git commit -m "Bump Terraform Examples
+
+        + Update terraform example files to point to source $lattice_version
+        + Terraform now downloads Lattice $new_lattice_version
+
+        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+        "
+    popd > /dev/null
 }
 
 bump_and_push_lattice() {
@@ -116,6 +128,7 @@ bump_and_push_lattice() {
         bump_lattice_version
 
         rewrite_terraform_examples
+        commit_terraform_examples
 
         git checkout develop
 
@@ -137,6 +150,7 @@ bump_and_push_lattice() {
 }
 
 stage_pipeline_artifact() {
+    ## TODO:  file naming
     pipeline_version_artifact_path="/workspace/pipeline_published_lattice_version"
 
     pushd $LATTICE_SRC_PATH > /dev/null

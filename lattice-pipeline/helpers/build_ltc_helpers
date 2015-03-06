@@ -146,14 +146,4 @@ rewrite_terraform_examples() {
         sed -i 's/source = "github\.com.*$/source = "github\.com\/cloudfoundry-incubator\/lattice\/\/terraform\/\/google\?ref='"$lattice_version"'"/' lattice.tf.example
         git add lattice.tf.example
     popd > /dev/null
-
-    pushd $LATTICE_SRC_PATH > /dev/null
-        git commit -m "Bump Terraform Examples
-
-        + Update terraform example files to point to source $lattice_version
-        + Terraform now downloads Lattice $new_lattice_version
-
-        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
-        "
-    popd > /dev/null
 }

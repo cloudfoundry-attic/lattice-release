@@ -1,0 +1,185 @@
+#!/bin/bash
+set -e
+
+## Expect:  LATTICE_RELEASE_VERSION environment variable
+
+setup_ssh_access_to_github() {
+    echo "Running ssh-agent"
+    eval `ssh-agent`
+    aws s3 cp s3://lattice-gocd/credentials/ci_key ci_key
+    chmod 600 ci_key
+    ssh-add ci_key
+}
+
+verify_release_tag_does_not_exist() {
+    ## TODO:  file naming
+    pipeline_version_artifact_path="/workspace/pipeline_published_lattice_version"
+    pushd $LATTICE_SRC_PATH > /dev/null
+        if [ "$(git tag -l ${LATTICE_RELEASE_VERSION} | wc -l | tr -d '[[:space:]]')" != "0" ]; then
+            echo "tag already exists for ${LATTICE_RELEASE_VERSION}"
+            exit 1
+        fi
+
+        git checkout master
+        git pull origin master
+
+        if [ "$(cat Version)" != "$(cat $pipeline_version_artifact_path)" ]; then
+            echo "It looks like origin/master has been bumped since promote_and_publish for this pipeline run (#$GO_PIPELINE_LABEL).
+            Expected origin/master to contain Version file with: '$(cat $pipeline_version_artifact_path)',
+            but it had '$(cat Version)'.
+
+            If you REALLY need to publish this pipeline run's features and don't want later features in the release, you should
+            probably revert the newer commits on develop and rerun the pipeline.
+            "
+
+            exit 1
+        fi
+
+    popd > /dev/null
+}
+
+extract_deliver_stories_message() {
+    previous_release=$(git tag -l --sort=-version:refname | head -n1)
+    git log $previous_release..origin/master | \
+        egrep -io "\[\s*(?:Finishes|Fixes)\s*(#(\d+)\s*)+\]" | \
+        perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Releases $1\]/gi'
+}
+
+repackage_release_lattice_tar() {
+    mkdir -p ~/lattice-tmp
+    mkdir -p /workspace/lattice-release
+    pushd ~/lattice-tmp > /dev/null
+        tar xzf $lattice_tar_path
+        echo "${LATTICE_RELEASE_VERSION}" > lattice-build/common/LATTICE_VERSION
+
+        tar czf lattice.tgz lattice-build
+        cp -vf lattice.tgz /workspace/lattice-release
+    popd > /dev/null
+    rm -rf ~/lattice-tmp
+}
+
+
+godep_go_build_ltc() {
+    echo -n "Compiling cli ($lattice_version) .."
+
+    export GOBIN="$OUTDIR"
+    pushd $LATTICE_SRC_PATH/ltc > /dev/null
+        GOARCH=amd64 GOOS=linux godep go build \
+            -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
+            -o $OUTDIR/ltc-linux-amd64 \
+            github.com/cloudfoundry-incubator/lattice/ltc
+
+        GOARCH=amd64 GOOS=darwin godep go build \
+            -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
+            -o $OUTDIR/ltc-darwin-amd64 \
+            github.com/cloudfoundry-incubator/lattice/ltc
+    popd > /dev/null
+    unset GOBIN
+
+    echo "DONE!"
+}
+
+recompile_release_ltc(){
+    setup_go_env
+
+    copy_ltc_source_into_gopath
+
+    get_lattice_version
+
+    godep_go_build_ltc
+
+    generate_ltc_tarball "/workspace/lattice-release"
+}
+
+tag_lattice_release() {
+    pushd $LATTICE_SRC_PATH
+        git tag -a "${LATTICE_RELEASE_VERSION}" -m "$(date)" master
+    popd
+}
+
+upload_release_lattice_tar_to_s3() {
+    aws s3 cp /workspace/lattice-release/lattice.tgz "s3://lattice/releases/latest/lattice.tgz"
+    aws s3 cp /workspace/lattice-release/lattice.tgz "s3://lattice/releases/${lattice_version}/lattice.tgz"
+    echo "lattice.tgz uploaded to s3"
+}
+
+upload_release_ltc_binaries_to_s3() {
+    rm -rf ltc-binaries
+    mkdir -p ltc-binaries
+    tar xzf /workspace/lattice-release/ltc.tar.gz -C ltc-binaries
+    ltc_checksum=$(cat ltc-binaries/ltc-checksum)
+    echo "Unpacked ltc.tar.gz with ltc-checksum (git sha) = ${ltc_checksum}"
+
+    if [ "${ltc_checksum}" != "${GO_REVISION_LATTICE}" ]; then
+        echo "Mismatch on ltc-checksum SHA (ltc.tar.gz/gocd) :: ${ltc_checksum}/${GO_REVISION_LATTICE}"
+    fi
+
+    sync
+
+    aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/releases/latest/darwin-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/releases/latest/linux-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-checksum "s3://lattice/releases/latest/ltc-checksum"
+
+    aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/releases/${lattice_version}/darwin-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/releases/${lattice_version}/linux-amd64/ltc"
+    aws s3 cp ltc-binaries/ltc-checksum "s3://lattice/releases/${lattice_version}/ltc-checksum"
+    ## TODO: What do we do with the ltc-checksum now?
+
+    echo "ltc binaries uploaded to s3"
+}
+
+
+release_bump_and_push_lattice() {
+    pushd $LATTICE_SRC_PATH > /dev/null
+        git pull origin master
+        git checkout master
+
+        rewrite_terraform_examples
+
+        bump_lattice_version
+
+        tag_lattice_release
+
+        git checkout develop
+
+        echo "merging master into develop"
+
+        git merge master -m "Merge branch 'master' of github.com:cloudfoundry-incubator/lattice into develop
+
+        +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+        "
+
+        # Rebase in case there have been changes to origin/develop since the beginning of this pipeline run.
+        # we want to get our godeps bump and merge commit stuff merged back into develop on top of external changes.
+        git fetch origin develop
+        git rebase origin/develop --preserve-merges
+        git push origin master develop "${LATTICE_RELEASE_VERSION}"
+
+        echo "Successfully pushed updates to origin/master & origin/develop"
+    popd > /dev/null
+}
+
+
+if [[ -z "$LATTICE_SRC_PATH" ]] || [[ -z "$LATTICE_RELEASE_VERSION" ]]; then
+    echo "Must set LATTICE_SRC_PATH and LATTICE_RELEASE_VERSION"
+    exit 1
+fi
+
+source $(dirname $0)/../helpers/build_ltc_helpers
+
+lattice_tar_path=${1:-/workspace/lattice.tgz}
+ltc_tar_path=${2:-/workspace/ltc.tar.gz}
+
+setup_ssh_access_to_github
+
+verify_release_tag_does_not_exist
+
+repackage_release_lattice_tar
+
+recompile_release_ltc
+
+upload_release_lattice_tar_to_s3
+upload_release_ltc_binaries_to_s3
+
+release_bump_and_push_lattice
+
