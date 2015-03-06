@@ -336,13 +336,13 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		factory.output.Say(colors.Green(name + " is now running.\n"))
 	}
 
-    if routeOverrides!=nil {
-        for _, route := range strings.Split(routesFlag, ",") {
-            factory.output.Say(colors.Green("http://" + name + "." + strings.Split(route, ":")[1] + "\n"))
-        }
-    } else {
-        factory.output.Say(colors.Green(factory.urlForApp(name)))
-    }
+	if routeOverrides != nil {
+		for _, route := range strings.Split(routesFlag, ",") {
+			factory.output.Say(colors.Green(factory.urlForApp(strings.Split(route, ":")[1])))
+		}
+	} else {
+		factory.output.Say(colors.Green(factory.urlForApp(name)))
+	}
 }
 
 func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
@@ -469,7 +469,7 @@ func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollingFunc func() bool
 }
 
 func (factory *AppRunnerCommandFactory) urlForApp(name string) string {
-	return fmt.Sprintf("http://%s.%s", name, factory.domain)
+	return fmt.Sprintf("http://%s.%s\n", name, factory.domain)
 }
 
 func (factory *AppRunnerCommandFactory) buildEnvironment(envVars []string) map[string]string {

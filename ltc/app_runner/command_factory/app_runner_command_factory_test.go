@@ -131,9 +131,9 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).To(test_helpers.Say("Creating App: cool-web-app\n"))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.route-3000-yay\n")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.route-1111-wahoo\n")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.route-1111-me-too\n")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-3000-yay.192.168.11.11.xip.io\n")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-wahoo.192.168.11.11.xip.io\n")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-me-too.192.168.11.11.xip.io\n")))
 		})
 
 		Context("malformed route", func() {
@@ -538,7 +538,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io\n")))
 		})
 
 		Context("when there is a placement error when polling for the app to start", func() {
