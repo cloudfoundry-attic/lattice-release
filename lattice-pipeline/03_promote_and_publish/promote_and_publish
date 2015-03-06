@@ -139,8 +139,10 @@ bump_and_push_lattice() {
 stage_pipeline_artifact() {
     pipeline_version_artifact_path="/workspace/pipeline_published_lattice_version"
 
-    git checkout master
-    cp $LATTICE_SRC_PATH/Version $pipeline_version_artifact_path
+    pushd $LATTICE_SRC_PATH > /dev/null
+        git checkout master
+        cp Version $pipeline_version_artifact_path
+    popd > /dev/null
 }
 
 source $(dirname $0)/../helpers/build_ltc_helpers
