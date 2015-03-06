@@ -170,6 +170,8 @@ Here are some ways *you* can contribute:
 * by closing [issues](https://github.com/cloudfoundry-incubator/lattice/issues)
 * by reviewing patches
 
+Also see the [Development Readme](https://github.com/cloudfoundry-incubator/lattice/tree/master/development-readme.md)
+
 ##Development Workflow
 
 Development work should be done on the develop branch.
