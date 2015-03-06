@@ -105,7 +105,7 @@ generate_ltc_tarball() {
 bump_lattice_version() {
     get_lattice_version
 
-    pushd $LATTICE_SRC_PATH/lattice > /dev/null
+    pushd $LATTICE_SRC_PATH > /dev/null
         previous_lattice_version=$(cat Version)
         new_lattice_version="$lattice_version"
 
