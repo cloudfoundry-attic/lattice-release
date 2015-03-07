@@ -9,5 +9,5 @@ import (
 
 func TestAppRunning(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "AppRunning Suite")
+	RunSpecs(t, "DockerAppRunner Suite")
 }
