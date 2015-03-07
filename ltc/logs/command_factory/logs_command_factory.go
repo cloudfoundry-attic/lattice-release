@@ -25,7 +25,7 @@ func NewLogsCommandFactory(output *output.Output, tailedLogsOutputter console_ta
 func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 	var logsCommand = cli.Command{
 		Name:        "logs",
-		ShortName:   "l",
+		ShortName:   "lo",
 		Description: "Stream logs from the specified application",
 		Usage:       "ltc logs APP_NAME",
 		Action:      factory.tailLogs,

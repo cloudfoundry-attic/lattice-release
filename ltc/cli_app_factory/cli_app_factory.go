@@ -115,16 +115,16 @@ func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.Exit
 
 	return []cli.Command{
 		appRunnerCommandFactory.MakeCreateAppCommand(),
-		appRunnerCommandFactory.MakeScaleAppCommand(),
-		appRunnerCommandFactory.MakeRemoveAppCommand(),
-        appRunnerCommandFactory.MakeUpdateRoutesCommand(),
-		logsCommandFactory.MakeLogsCommand(),
 		logsCommandFactory.MakeDebugLogsCommand(),
-		configCommandFactory.MakeTargetCommand(),
 		appExaminerCommandFactory.MakeListAppCommand(),
+		logsCommandFactory.MakeLogsCommand(),
+		appRunnerCommandFactory.MakeRemoveAppCommand(),
+		appRunnerCommandFactory.MakeScaleAppCommand(),
 		appExaminerCommandFactory.MakeStatusCommand(),
-		appExaminerCommandFactory.MakeVisualizeCommand(),
+		configCommandFactory.MakeTargetCommand(),
 		integrationTestCommandFactory.MakeIntegrationTestCommand(),
+        appRunnerCommandFactory.MakeUpdateRoutesCommand(),
+		appExaminerCommandFactory.MakeVisualizeCommand(),
 	}
 }
 

@@ -3,6 +3,7 @@ package cli_app_factory_test
 import (
 	"errors"
 	"time"
+    "sort"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -60,11 +61,21 @@ var _ = Describe("CliAppFactory", func() {
 			Expect(cliApp.Version).To(Equal("v0.2.Test"))
             Expect(cliApp.Email).To(Equal("lattice@cloudfoundry.org"))
 			Expect(cliApp.Usage).To(Equal(cli_app_factory.LtcUsage))
-			Expect(cliApp.Commands).NotTo(BeEmpty())
+            Expect(cliApp.Commands).NotTo(BeEmpty())
 		})
 
-		Context("when invoked with empty version", func() {
+        It("lists the subcommands in alphabetical order", func() {
+            cliCommands := cliApp.Commands
+            Expect(cliCommands).NotTo(BeEmpty())
 
+            var commandNames []string
+            for _, cmd := range cliCommands {
+                commandNames = append(commandNames, cmd.Name)
+            }
+            Expect(sort.StringsAreSorted(commandNames)).To(BeTrue())
+        })
+
+		Context("when invoked without latticeVersion set", func() {
 			BeforeEach(func() {
 				latticeVersion = ""
 			})
@@ -97,8 +108,8 @@ var _ = Describe("CliAppFactory", func() {
 					err := cliApp.Run(cliAppArgs)
 
 					Expect(err).ToNot(HaveOccurred())
-					Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(0))
-					Expect(commandRan).To(Equal(true))
+					Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(BeZero())
+					Expect(commandRan).To(BeTrue())
 				})
 			})
 
@@ -123,8 +134,8 @@ var _ = Describe("CliAppFactory", func() {
 					err := cliApp.Run(cliAppArgs)
 
 					Expect(err).ToNot(HaveOccurred())
-					Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(0))
-					Expect(commandRan).To(Equal(true))
+					Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(BeZero())
+					Expect(commandRan).To(BeTrue())
 				})
 			})
 
@@ -143,7 +154,8 @@ var _ = Describe("CliAppFactory", func() {
 					err := cliApp.Run(cliAppArgs)
 
 					Expect(err).ToNot(HaveOccurred())
-					Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(0))
+					Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(BeZero())
+                    Expect(commandRan).To(BeTrue())
 				})
 			})
 
@@ -162,7 +174,8 @@ var _ = Describe("CliAppFactory", func() {
 					err := cliApp.Run(cliAppArgs)
 
 					Expect(err).ToNot(HaveOccurred())
-					Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(0))
+					Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(BeZero())
+                    Expect(commandRan).To(BeTrue())
 				})
 			})
 
@@ -187,7 +200,6 @@ var _ = Describe("CliAppFactory", func() {
 						Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(1))
 						Expect(fakeTargetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.my-lattice.example.com"))
 						Expect(commandRan).To(BeTrue())
-
 					})
 				})
 

@@ -56,6 +56,7 @@ func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 
 	var startCommand = cli.Command{
 		Name:        "visualize",
+        ShortName:   "v",
 		Description: "Visualize the workload distribution across the Lattice Cells",
 		Usage:       "ltc visualize",
 		Action:      factory.visualizeCells,
@@ -68,6 +69,7 @@ func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 func (factory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
 	return cli.Command{
 		Name:        "status",
+        ShortName:   "st",
 		Description: "Displays detailed status information about the given application and its instances",
 		Usage:       "ltc status APP_NAME",
 		Action:      factory.appStatus,

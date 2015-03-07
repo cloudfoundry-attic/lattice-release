@@ -153,6 +153,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 	var scaleAppCommand = cli.Command{
 		Name:        "scale",
+        ShortName:   "sc",
 		Description: "Scale a docker app on lattice",
 		Usage:       "ltc scale APP_NAME NUM_INSTANCES",
 		Action:      factory.scaleApp,
@@ -175,6 +176,7 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	var removeAppCommand = cli.Command{
 		Name:        "remove",
+        ShortName:   "r",
 		Description: "Stop and remove a docker app from lattice",
 		Usage:       "ltc remove APP_NAME",
 		Action:      factory.removeApp,

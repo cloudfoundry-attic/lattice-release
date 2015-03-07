@@ -33,7 +33,6 @@ func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.C
 
 	cliCommand := cli.Command{
 		Name:        "test",
-		ShortName:   "t",
 		Usage:       "ltc test",
 		Description: `ltc test verifies that the targeted lattice deployment is up and running.`,
 		Action:      factory.runIntegrationTests,
