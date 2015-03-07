@@ -67,7 +67,7 @@ func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunner
 	}
 }
 
-func (commandFactory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
+func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 
 	var createFlags = []cli.Flag{
 		cli.StringFlag{
@@ -143,41 +143,41 @@ func (commandFactory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Comman
 
    To specify environment variables:
    ltc create APP_NAME DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE`,
-		Action: commandFactory.createApp,
+		Action: factory.createApp,
 		Flags:  createFlags,
 	}
 
 	return createCommand
 }
 
-func (commandFactory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
+func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 	var scaleCommand = cli.Command{
 		Name:        "scale",
 		Description: "Scale a docker app on lattice",
 		Usage:       "ltc scale APP_NAME NUM_INSTANCES",
-		Action:      commandFactory.scaleApp,
+		Action:      factory.scaleApp,
 	}
 
 	return scaleCommand
 }
 
-func (commandFactory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
+func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 	var updateRoutesCommand = cli.Command{
 		Name:        "update-routes",
 		Description: "Updates the routes for a running app",
 		Usage:       "ltc update-routes APP_NAME ROUTE,OTHER_ROUTE...", // TODO: route format?
-		Action:      commandFactory.updateAppRoutes,
+		Action:      factory.updateAppRoutes,
 	}
 
 	return updateRoutesCommand
 }
 
-func (commandFactory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
+func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	var removeCommand = cli.Command{
 		Name:        "remove",
 		Description: "Stop and remove a docker app from lattice",
 		Usage:       "ltc remove APP_NAME",
-		Action:      commandFactory.removeApp,
+		Action:      factory.removeApp,
 	}
 
 	return removeCommand

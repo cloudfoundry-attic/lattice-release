@@ -17,7 +17,7 @@ func NewIntegrationTestCommandFactory(testRunner integration_test.IntegrationTes
 	return &IntegrationTestCommandFactory{testRunner, output}
 }
 
-func (commandFactory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.Command {
+func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.Command {
 
 	testFlags := []cli.Flag{
 		cli.DurationFlag{
@@ -36,7 +36,7 @@ func (commandFactory *IntegrationTestCommandFactory) MakeIntegrationTestCommand(
 		ShortName:   "t",
 		Usage:       "ltc test",
 		Description: `ltc test verifies that the targeted lattice deployment is up and running.`,
-		Action:      commandFactory.runIntegrationTests,
+		Action:      factory.runIntegrationTests,
 		Flags:       testFlags,
 	}
 

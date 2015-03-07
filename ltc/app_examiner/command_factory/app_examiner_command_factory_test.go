@@ -100,14 +100,16 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("No apps to display."))
 		})
 
-		It("alerts the user if fetching the list returns an error", func() {
-			listApps := []app_examiner.AppInfo{}
-			appExaminer.ListAppsReturns(listApps, errors.New("The list was lost"))
+        Context("when the app examiner returns an error", func() {
+            It("alerts the user fetching the list returns an error", func() {
+                listApps := []app_examiner.AppInfo{}
+                appExaminer.ListAppsReturns(listApps, errors.New("The list was lost"))
 
-			test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
+                test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
 
-			Expect(outputBuffer).To(test_helpers.Say("Error listing apps: The list was lost"))
-		})
+                Expect(outputBuffer).To(test_helpers.Say("Error listing apps: The list was lost"))
+            })
+        })
 	})
 
 	Describe("VisualizeCommand", func() {
@@ -135,13 +137,15 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
 		})
 
-		It("alerts the user if fetching the cells returns an error", func() {
-			appExaminer.ListCellsReturns(nil, errors.New("The list was lost"))
+        Context("when the app examiner returns an error", func() {
+            It("alerts the user fetching the cells returns an error", func() {
+                appExaminer.ListCellsReturns(nil, errors.New("The list was lost"))
 
-			test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{})
+                test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{})
 
-			Expect(outputBuffer).To(test_helpers.Say("Error visualizing: The list was lost"))
-		})
+                Expect(outputBuffer).To(test_helpers.Say("Error visualizing: The list was lost"))
+            })
+        })
 
 		Context("When a rate flag is provided", func() {
 			var closeChan chan struct{}

@@ -17,17 +17,22 @@ import (
 var _ = Describe("IntegrationTestCommandFactory", func() {
 	var (
 		fakeIntegrationTestRunner *fake_integration_test_runner.FakeIntegrationTestRunner
-		integrationTestCommand    cli.Command
 		outputBuffer              *gbytes.Buffer
 	)
 
 	BeforeEach(func() {
 		outputBuffer = gbytes.NewBuffer()
 		fakeIntegrationTestRunner = fake_integration_test_runner.NewFakeIntegrationTestRunner(output.New(outputBuffer))
-		integrationTestCommand = command_factory.NewIntegrationTestCommandFactory(fakeIntegrationTestRunner, output.New(outputBuffer)).MakeIntegrationTestCommand()
 	})
 
 	Describe("MakeIntegrationTestCommand", func() {
+
+		var integrationTestCommand cli.Command
+
+		BeforeEach(func() {
+			commandFactory := command_factory.NewIntegrationTestCommandFactory(fakeIntegrationTestRunner, output.New(outputBuffer))
+			integrationTestCommand = commandFactory.MakeIntegrationTestCommand()
+		})
 
 		It("prints the integration test run output and args", func() {
 			test_helpers.ExecuteCommandWithArgs(integrationTestCommand, []string{"--timeout=50s", "--verbose=true"})

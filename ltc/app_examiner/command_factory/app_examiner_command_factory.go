@@ -31,21 +31,21 @@ func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, output *
 	return &AppExaminerCommandFactory{appExaminer, output, clock, exitHandler}
 }
 
-func (commandFactory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
+func (factory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
 
 	var startCommand = cli.Command{
 		Name:        "list",
 		ShortName:   "li",
 		Description: "List all applications running on Lattice",
 		Usage:       "ltc list",
-		Action:      commandFactory.listApps,
+		Action:      factory.listApps,
 		Flags:       []cli.Flag{},
 	}
 
 	return startCommand
 }
 
-func (commandFactory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
+func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 
 	var visualizeFlags = []cli.Flag{
 		cli.DurationFlag{
@@ -58,19 +58,19 @@ func (commandFactory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Comm
 		Name:        "visualize",
 		Description: "Visualize the workload distribution across the Lattice Cells",
 		Usage:       "ltc visualize",
-		Action:      commandFactory.visualizeCells,
+		Action:      factory.visualizeCells,
 		Flags:       visualizeFlags,
 	}
 
 	return startCommand
 }
 
-func (commandFactory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
+func (factory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
 	return cli.Command{
 		Name:        "status",
 		Description: "Displays detailed status information about the given application and its instances",
 		Usage:       "ltc status APP_NAME",
-		Action:      commandFactory.appStatus,
+		Action:      factory.appStatus,
 		Flags:       []cli.Flag{},
 	}
 }

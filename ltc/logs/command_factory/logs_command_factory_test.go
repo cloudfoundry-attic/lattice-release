@@ -14,6 +14,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
     "github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
+    "github.com/codegangsta/cli"
 )
 
 var _ = Describe("CommandFactory", func() {
@@ -31,42 +32,45 @@ var _ = Describe("CommandFactory", func() {
         exitHandler = &fake_exit_handler.FakeExitHandler{}
     })
 
-    Describe("logsCommand", func() {
-		It("Tails logs", func() {
+    Describe("LogsCommand", func() {
+
+        var logsCommand cli.Command
+
+        BeforeEach(func() {
+            commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
+            logsCommand = commandFactory.MakeLogsCommand()
+        })
+
+		It("tails logs", func() {
 			args := []string{
 				"my-app-guid",
 			}
 
-			commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
-			tailLogsCommand := commandFactory.MakeLogsCommand()
-
-			test_helpers.AsyncExecuteCommandWithArgs(tailLogsCommand, args)
+			test_helpers.AsyncExecuteCommandWithArgs(logsCommand, args)
 
 			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
 			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("my-app-guid"))
-
 		})
 
-		It("Handles invalid appguids", func() {
-			args := []string{}
-
-			commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
-			tailLogsCommand := commandFactory.MakeLogsCommand()
-
-			test_helpers.ExecuteCommandWithArgs(tailLogsCommand, args)
+		It("handles invalid appguids", func() {
+			test_helpers.ExecuteCommandWithArgs(logsCommand, []string{})
 
 			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage"))
 			Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(Equal(0))
-
 		})
 	})
 
-    Describe("debugLogsCommand", func(){
-        It("Tails logs from the lattice-debug stream",func(){
-            commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
-            tailLogsCommand := commandFactory.MakeDebugLogsCommand()
+    Describe("DebugLogsCommand", func(){
 
-            test_helpers.AsyncExecuteCommandWithArgs(tailLogsCommand, []string{})
+        var debugLogsCommand cli.Command
+
+        BeforeEach(func() {
+            commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
+            debugLogsCommand = commandFactory.MakeDebugLogsCommand()
+        })
+
+        It("tails logs from the lattice-debug stream",func(){
+            test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{})
 
             Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
             Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal(reserved_app_ids.LatticeDebugLogStreamAppId))
