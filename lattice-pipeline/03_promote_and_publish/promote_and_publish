@@ -27,6 +27,7 @@ upload_unstable_ltc_binaries_to_s3() {
     rm -rf ltc-binaries
     mkdir -p ltc-binaries
     tar xzf $ltc_tar_path -C ltc-binaries
+    local ltc_checksum
     ltc_checksum=$(cat ltc-binaries/ltc-checksum)
     echo "Unpacked ltc.tar.gz with ltc-checksum (git sha) = ${ltc_checksum}"
 
@@ -64,7 +65,7 @@ update_godeps(){
 
     echo "Saving off ltc Godeps from constructed GOPATH .."
     pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
-        godep save && echo "godep saved"
+        godep save && sync && echo "godep saved"
         sync
 
         echo -n "Copying ltc/Godeps from $(pwd) to $LATTICE_SRC_PATH/ltc .."
@@ -102,9 +103,7 @@ commit_terraform_examples() {
 }
 
 bump_and_push_lattice() {
-    pushd diego-release > /dev/null
-        diego_release_git_sha="$(git rev-parse HEAD)" && echo "diego_release_git_sha=${diego_release_git_sha}"
-    popd > /dev/null
+    get_diego_release_git_sha
 
     if [ "$diego_release_git_sha" != "$GO_REVISION_DIEGO_RELEASE" ]; then
         echo "Mismatch on diego-release SHA (git/gocd) :: ${diego_release_git_sha}/${GO_REVISION_DIEGO_RELEASE}"
@@ -150,12 +149,10 @@ bump_and_push_lattice() {
 }
 
 stage_pipeline_artifact() {
-    ## TODO:  file naming
-    pipeline_version_artifact_path="/workspace/pipeline_published_lattice_version"
-
+    local pipeline_version_artifact_path="/workspace/pipeline_published_lattice_version"
     pushd $LATTICE_SRC_PATH > /dev/null
         git checkout master
-        cp Version $pipeline_version_artifact_path
+        cp -v Version $pipeline_version_artifact_path
     popd > /dev/null
 }
 

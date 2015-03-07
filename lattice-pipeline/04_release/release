@@ -12,8 +12,7 @@ setup_ssh_access_to_github() {
 }
 
 verify_release_tag_does_not_exist() {
-    ## TODO:  file naming
-    pipeline_version_artifact_path="/workspace/pipeline_published_lattice_version"
+    local pipeline_version_artifact_path="/workspace/pipeline_published_lattice_version"
     pushd $LATTICE_SRC_PATH > /dev/null
         if [ "$(git tag -l ${LATTICE_RELEASE_VERSION} | wc -l | tr -d '[[:space:]]')" != "0" ]; then
             echo "tag already exists for ${LATTICE_RELEASE_VERSION}"
@@ -39,6 +38,7 @@ verify_release_tag_does_not_exist() {
 }
 
 extract_deliver_stories_message() {
+    local previous_release
     previous_release=$(git tag -l --sort=-version:refname | head -n1)
     git log $previous_release..origin/master | \
         egrep -io "\[\s*(?:Finishes|Fixes)\s*(#(\d+)\s*)+\]" | \

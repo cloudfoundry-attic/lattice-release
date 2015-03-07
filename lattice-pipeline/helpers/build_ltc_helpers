@@ -26,6 +26,12 @@ get_lattice_version() {
     fi
 }
 
+get_diego_release_git_sha() {
+    pushd $DIEGO_RELEASE_PATH > /dev/null
+        diego_release_git_sha="$(git rev-parse HEAD)" && echo "diego_release_git_sha=${diego_release_git_sha}"
+    popd > /dev/null
+}
+
 construct_ltc_gopath() {
 
     if [[ -z "$LATTICE_SRC_PATH" ]] || [[ -z "$DIEGO_RELEASE_PATH" ]]; then
@@ -112,6 +118,7 @@ bump_lattice_version() {
         echo "$new_lattice_version" > Version
         echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
 
+        get_diego_release_git_sha
         echo "$diego_release_git_sha" > DIEGO_VERSION
 
         git add Version
