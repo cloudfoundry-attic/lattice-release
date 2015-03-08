@@ -3,14 +3,6 @@ set -e
 
 ## Expect:  LATTICE_RELEASE_VERSION environment variable
 
-setup_ssh_access_to_github() {
-    echo "Running ssh-agent"
-    eval `ssh-agent`
-    aws s3 cp s3://lattice-gocd/credentials/ci_key ci_key
-    chmod 600 ci_key
-    ssh-add ci_key
-}
-
 verify_release_tag_does_not_exist() {
     local pipeline_version_artifact_path="/workspace/pipeline_published_lattice_version"
     pushd $LATTICE_SRC_PATH > /dev/null
@@ -113,8 +105,6 @@ upload_release_ltc_binaries_to_s3() {
     if [ "${ltc_checksum}" != "${GO_REVISION_LATTICE}" ]; then
         echo "Mismatch on ltc-checksum SHA (ltc.tar.gz/gocd) :: ${ltc_checksum}/${GO_REVISION_LATTICE}"
     fi
-
-    sync
 
     aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/releases/latest/darwin-amd64/ltc"
     aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/releases/latest/linux-amd64/ltc"

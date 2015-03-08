@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+setup_ssh_access_to_github() {
+    echo "Running ssh-agent"
+    eval `ssh-agent`
+    aws s3 cp s3://lattice-gocd/credentials/ci_key ci_key
+    chmod 600 ci_key
+    ssh-add ci_key
+}
+
 setup_go_env() {
     mkdir ~/go
     export GOPATH=~/go
@@ -69,8 +77,9 @@ construct_ltc_gopath() {
     sync
     sleep 10
 
-    echo "== list of files under $GOPATH/.git =="
-    find $GOPATH/.git -ls
+    #echo "== list of files under $GOPATH/.git =="
+    #find $GOPATH/.git -ls
+    ls -la $GOPATH/.git/
 }
 
 run_unit_tests() {
