@@ -7,7 +7,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 )
 
-var _ = Describe("memPersister", func() {
+var _ = Describe("MemPersister", func() {
 	type data struct {
 		Value string
 	}

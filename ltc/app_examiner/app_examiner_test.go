@@ -317,7 +317,7 @@ var _ = Describe("AppRunner", func() {
 
 				result, err := appExaminer.AppStatus("peekaboo-app")
 
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				Expect(fakeReceptorClient.GetDesiredLRPCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.ActualLRPsByProcessGuidCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.GetDesiredLRPArgsForCall(0)).To(Equal("peekaboo-app"))

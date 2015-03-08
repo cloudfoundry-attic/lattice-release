@@ -39,7 +39,7 @@ var _ = Describe("DockerSessionFactory", func() {
 
 				Expect(err).ToNot(HaveOccurred())
 				registrySession, ok := session.(*registry.Session)
-				Expect(ok).To(Equal(true))
+				Expect(ok).To(BeTrue())
 
 				Expect(*registrySession.GetAuthConfig(true)).To(Equal(registry.AuthConfig{}))
 

@@ -59,7 +59,7 @@ var _ = Describe("filePersister", func() {
 
 			err = persister.Load(&data{})
 
-			Expect(err).ToNot(BeNil())
+			Expect(err).To(HaveOccurred())
 		})
 
 		It("handles nonexistant files silently", func() {
@@ -68,7 +68,7 @@ var _ = Describe("filePersister", func() {
 
 			err := persister.Load(&data{})
 
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 
@@ -77,9 +77,9 @@ var _ = Describe("filePersister", func() {
 			persister := persister.NewFilePersister(tmpFile.Name())
 
 			persister.Save(&data{Value: "Some Value to be written in json"})
+
 			jsonBytes, err := ioutil.ReadFile(tmpFile.Name())
 			Expect(err).ToNot(HaveOccurred())
-
 			Expect(string(jsonBytes)).To(Equal(`{"Value":"Some Value to be written in json"}`))
 		})
 
@@ -97,14 +97,14 @@ var _ = Describe("filePersister", func() {
 
 			err := persister.Save(&data{"Some Value"})
 
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("Returns errors from writing the file", func() {
 			persister := persister.NewFilePersister(tmpDir)
 			err := persister.Save(&data{})
 
-			Expect(err).ToNot(BeNil())
+			Expect(err).To(HaveOccurred())
 		})
 	})
 })
