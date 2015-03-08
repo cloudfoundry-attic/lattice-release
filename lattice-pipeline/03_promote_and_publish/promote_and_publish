@@ -55,7 +55,7 @@ extract_deliver_stories_message() {
         perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi'
 }
 
-update_godeps(){
+update_godeps() {
     setup_go_env
 
     construct_ltc_gopath
@@ -63,10 +63,12 @@ update_godeps(){
     echo "Removing $LATTICE_SRC_PATH/ltc/Godeps folder"
     rm -rf $LATTICE_SRC_PATH/ltc/Godeps
 
-    echo "Saving off ltc Godeps from constructed GOPATH .."
     pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
+        echo -n "Removing $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/Godeps.."
+        rm -rf Godeps && echo "DONE!"
+
+        echo "Saving off ltc Godeps from constructed GOPATH .."
         godep save && sync && echo "godep saved"
-        sync
 
         echo -n "Copying ltc/Godeps from $(pwd) to $LATTICE_SRC_PATH/ltc .."
         cp -a Godeps $LATTICE_SRC_PATH/ltc/ && echo "DONE!"
