@@ -64,8 +64,8 @@ update_godeps() {
     rm -rf $LATTICE_SRC_PATH/ltc/Godeps
 
     pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
-        echo -n "Removing $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/Godeps.."
-        rm -rf Godeps && echo "DONE!"
+        echo -n "Removing $(pwd)/Godeps .."
+        rm -rf Godeps && sync && sleep 5 && echo "DONE!"
 
         echo "Saving off ltc Godeps from constructed GOPATH .."
         godep save && sync && echo "godep saved"

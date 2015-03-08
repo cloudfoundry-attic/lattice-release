@@ -63,10 +63,14 @@ construct_ltc_gopath() {
     ## locally, this copies all of lattice again because we usually develop lattice using diego-release as the GOPATH
     cp -af $DIEGO_RELEASE_PATH/src $GOPATH/ && echo "DONE!"
 
-    echo "Copying over git modules for later godeps saves from constructed path .."
+    echo -n "Copying over git modules for later godeps saves from constructed path .."
     cp -af $DIEGO_RELEASE_PATH/.git* $GOPATH/ && echo "DONE!"
 
     sync
+    sleep 10
+
+    echo "== list of files under $GOPATH/.git =="
+    find $GOPATH/.git -ls
 }
 
 run_unit_tests() {
