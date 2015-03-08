@@ -22,6 +22,9 @@ copy_ltc_source_into_gopath() {
     mkdir -p $GOPATH/src/github.com/cloudfoundry-incubator/lattice/
     echo -n "Copying $LATTICE_SRC_PATH/ltc into compilation GOPATH .."
     cp -af $LATTICE_SRC_PATH/ltc $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ && echo "DONE!"
+
+    echo -n "Copying $LATTICE_SRC_PATH/.git* into compilation GOPATH .."
+    cp -af $LATTICE_SRC_PATH/.git* $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ && echo "DONE!"
 }
 
 get_lattice_version() {
@@ -75,11 +78,6 @@ construct_ltc_gopath() {
     cp -af $DIEGO_RELEASE_PATH/.git* $GOPATH/ && echo "DONE!"
 
     sync
-    sleep 10
-
-    #echo "== list of files under $GOPATH/.git =="
-    #find $GOPATH/.git -ls
-    ls -la $GOPATH/.git/
 }
 
 run_unit_tests() {
