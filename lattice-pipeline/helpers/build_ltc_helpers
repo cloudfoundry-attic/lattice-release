@@ -61,7 +61,7 @@ construct_ltc_gopath() {
 
     echo -n "Copying $DIEGO_RELEASE_PATH/src/* into compilation GOPATH (Prefer Diego-Release dependencies over ltc's Godeps) .."
     ## locally, this copies all of lattice again because we usually develop lattice using diego-release as the GOPATH
-    cp -af $DIEGO_RELEASE_PATH/src/ $GOPATH/ && echo "DONE!"
+    cp -af $DIEGO_RELEASE_PATH/src $GOPATH/ && echo "DONE!"
 
     echo "Copying over git modules for later godeps saves from constructed path .."
     cp -af $DIEGO_RELEASE_PATH/.git* $GOPATH/ && echo "DONE!"
