@@ -225,7 +225,7 @@ func initializeDropsonde(logger lager.Logger) {
 func initializeReceptorBBS(logger lager.Logger) Bbs.ReceptorBBS {
 	etcdAdapter := etcdstoreadapter.NewETCDStoreAdapter(
 		strings.Split(*etcdCluster, ","),
-		workpool.NewWorkPool(10),
+		workpool.NewWorkPool(100),
 	)
 
 	err := etcdAdapter.Connect()

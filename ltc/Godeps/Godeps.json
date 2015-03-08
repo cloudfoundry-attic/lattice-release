@@ -21,11 +21,11 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/receptor",
-			"Rev": "9a91686d54d6a42df61d91654cd0c9748e0e2963"
+			"Rev": "50c2b8de1da28432d8d381078647b4eb35dba86b"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "63f4c00460796e6fa62470ada10818d7d8101a73"
+			"Rev": "94bdcf4922963e35f9bb58d115de4c1c427f1983"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
@@ -188,8 +188,8 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Comment": "v1.0-28-g8adf9e1",
-			"Rev": "8adf9e1730c55cdc590de7d49766cb2acc88d8f2"
+			"Comment": "v1.0-30-g982c859",
+			"Rev": "982c859aeeffd81ab8717403fb03c379b6c92b5f"
 		},
 		{
 			"ImportPath": "github.com/pivotal-golang/clock",

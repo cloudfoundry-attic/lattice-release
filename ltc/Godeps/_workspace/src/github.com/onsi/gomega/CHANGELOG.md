@@ -9,6 +9,10 @@ Improvements:
 - `ghttp` can now handle concurrent requests.
 - Added `Succeed` which allows one to write `Ω(MyFunction()).Should(Succeed())`.
 
+Bug Fixes:
+- gexec: `session.Wait` now uses `EventuallyWithOffset` to get the right line number in the failure.
+- `ContainElement` no longer bails if a passed-in matcher errors.
+
 ## 1.0 (8/2/2014)
 
 No changes. Dropping "beta" from the version number.

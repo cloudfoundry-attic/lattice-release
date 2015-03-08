@@ -23,11 +23,19 @@ func (fakeEvent) EventType() receptor.EventType {
 	return "fake"
 }
 
+func (fakeEvent) Key() string {
+	return "fake"
+}
+
 type unmarshalableEvent struct {
 	Fn func() `json:"fn"`
 }
 
 func (unmarshalableEvent) EventType() receptor.EventType {
+	return "unmarshalable"
+}
+
+func (unmarshalableEvent) Key() string {
 	return "unmarshalable"
 }
 

@@ -16,6 +16,10 @@ func (fakeEvent) EventType() receptor.EventType {
 	return "fake"
 }
 
+func (fakeEvent) Key() string {
+	return "fake"
+}
+
 var _ = Describe("Hub", func() {
 	var (
 		hub event.Hub

@@ -429,16 +429,20 @@ type ModificationTag struct {
 	Index uint   `json:"index"`
 }
 
-func (m *ModificationTag) SucceededBy(otherModificationTag ModificationTag) bool {
-	if m.Epoch == "" {
+func (m *ModificationTag) Equal(other ModificationTag) bool {
+	if m.Epoch == "" || other.Epoch == "" {
+		return false
+	}
+
+	return m.Epoch == other.Epoch && m.Index == other.Index
+}
+
+func (m *ModificationTag) SucceededBy(other ModificationTag) bool {
+	if m.Epoch == "" || other.Epoch == "" {
 		return true
 	}
 
-	if otherModificationTag.Epoch == "" {
-		return true
-	}
-
-	return m.Epoch != otherModificationTag.Epoch || m.Index < otherModificationTag.Index
+	return m.Epoch != other.Epoch || m.Index < other.Index
 }
 
 type CellResponse struct {
@@ -456,6 +460,7 @@ type CellCapacity struct {
 
 type Event interface {
 	EventType() EventType
+	Key() string
 }
 
 type EventType string
@@ -482,6 +487,7 @@ func NewDesiredLRPCreatedEvent(desiredLRP DesiredLRPResponse) DesiredLRPCreatedE
 }
 
 func (DesiredLRPCreatedEvent) EventType() EventType { return EventTypeDesiredLRPCreated }
+func (e DesiredLRPCreatedEvent) Key() string        { return e.DesiredLRPResponse.ProcessGuid }
 
 type DesiredLRPChangedEvent struct {
 	Before DesiredLRPResponse `json:"desired_lrp_before"`
@@ -496,6 +502,7 @@ func NewDesiredLRPChangedEvent(before, after DesiredLRPResponse) DesiredLRPChang
 }
 
 func (DesiredLRPChangedEvent) EventType() EventType { return EventTypeDesiredLRPChanged }
+func (e DesiredLRPChangedEvent) Key() string        { return e.Before.ProcessGuid }
 
 type DesiredLRPRemovedEvent struct {
 	DesiredLRPResponse DesiredLRPResponse `json:"desired_lrp"`
@@ -508,6 +515,7 @@ func NewDesiredLRPRemovedEvent(desiredLRP DesiredLRPResponse) DesiredLRPRemovedE
 }
 
 func (DesiredLRPRemovedEvent) EventType() EventType { return EventTypeDesiredLRPRemoved }
+func (e DesiredLRPRemovedEvent) Key() string        { return e.DesiredLRPResponse.ProcessGuid }
 
 type ActualLRPCreatedEvent struct {
 	ActualLRPResponse ActualLRPResponse `json:"actual_lrp"`
@@ -520,6 +528,7 @@ func NewActualLRPCreatedEvent(actualLRP ActualLRPResponse) ActualLRPCreatedEvent
 }
 
 func (ActualLRPCreatedEvent) EventType() EventType { return EventTypeActualLRPCreated }
+func (e ActualLRPCreatedEvent) Key() string        { return e.ActualLRPResponse.InstanceGuid }
 
 type ActualLRPChangedEvent struct {
 	Before ActualLRPResponse `json:"actual_lrp_before"`
@@ -534,6 +543,7 @@ func NewActualLRPChangedEvent(before, after ActualLRPResponse) ActualLRPChangedE
 }
 
 func (ActualLRPChangedEvent) EventType() EventType { return EventTypeActualLRPChanged }
+func (e ActualLRPChangedEvent) Key() string        { return e.Before.InstanceGuid }
 
 type ActualLRPRemovedEvent struct {
 	ActualLRPResponse ActualLRPResponse `json:"actual_lrp"`
@@ -546,3 +556,4 @@ func NewActualLRPRemovedEvent(actualLRP ActualLRPResponse) ActualLRPRemovedEvent
 }
 
 func (ActualLRPRemovedEvent) EventType() EventType { return EventTypeActualLRPRemoved }
+func (e ActualLRPRemovedEvent) Key() string        { return e.ActualLRPResponse.InstanceGuid }

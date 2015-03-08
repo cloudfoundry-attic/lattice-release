@@ -402,6 +402,25 @@ var _ = Describe("Resources", func() {
 		sameEpochNewerIndexTag := receptor.ModificationTag{Epoch: "abc", Index: 2}
 		sameEpochOlderIndexTag := receptor.ModificationTag{Epoch: "abc", Index: 0}
 
+		Describe("Equal", func() {
+			It("returns true when equivalent", func() {
+				Ω(currentTag.Equal(currentTag)).Should(BeTrue())
+			})
+
+			It("returns false when the indexes do not match", func() {
+				Ω(currentTag.Equal(sameEpochNewerIndexTag)).Should(BeFalse())
+				Ω(currentTag.Equal(sameEpochOlderIndexTag)).Should(BeFalse())
+			})
+
+			It("returns false when the epochs do not match", func() {
+				Ω(currentTag.Equal(differentEpochCurrentIndexTag)).Should(BeFalse())
+			})
+
+			It("returns false when epoch is empty", func() {
+				Ω(currentTag.Equal(missingEpochTag)).Should(BeFalse())
+			})
+		})
+
 		Describe("SucceededBy", func() {
 			It("returns true when the modification tag has an empty epoch", func() {
 				Ω(missingEpochTag.SucceededBy(currentTag)).Should(BeTrue())

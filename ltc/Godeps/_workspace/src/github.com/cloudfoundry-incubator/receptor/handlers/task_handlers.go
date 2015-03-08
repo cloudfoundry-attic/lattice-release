@@ -50,6 +50,8 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Debug("creating-task", lager.Data{"task-guid": task.TaskGuid})
+
 	err = h.bbs.DesireTask(log, task)
 	if err != nil {
 		log.Error("failed-to-desire-task", err)
