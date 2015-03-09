@@ -2,43 +2,6 @@
 
 set -e
 
-sync_up_tags_off_remote() {
-    pushd $LATTICE_SRC_PATH > /dev/null
-        git tag -l | xargs git tag -d
-        git fetch --tags
-    popd > /dev/null
-}
-
-upload_unstable_lattice_tar_to_s3() {
-    aws s3 cp $lattice_tar_path "s3://lattice/unstable/latest/lattice.tgz"
-    aws s3 cp $lattice_tar_path "s3://lattice/unstable/${lattice_version}/lattice.tgz"
-    echo "lattice.tgz uploaded to s3"
-}
-
-upload_unstable_ltc_binaries_to_s3() {
-    rm -rf ltc-binaries
-    mkdir -p ltc-binaries
-    tar xzf $ltc_tar_path -C ltc-binaries
-    local ltc_checksum
-    ltc_checksum=$(cat ltc-binaries/ltc-checksum)
-    echo "Unpacked ltc.tar.gz with ltc-checksum (git sha) = ${ltc_checksum}"
-
-    if [ "${ltc_checksum}" != "${GO_REVISION_LATTICE}" ]; then
-        echo "Mismatch on ltc-checksum SHA (ltc.tar.gz/gocd) :: ${ltc_checksum}/${GO_REVISION_LATTICE}"
-    fi
-
-    aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/unstable/latest/darwin-amd64/ltc"
-    aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/unstable/latest/linux-amd64/ltc"
-    aws s3 cp ltc-binaries/ltc-checksum "s3://lattice/unstable/latest/ltc-checksum"
-
-    aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/unstable/${lattice_version}/darwin-amd64/ltc"
-    aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/unstable/${lattice_version}/linux-amd64/ltc"
-    aws s3 cp ltc-binaries/ltc-checksum "s3://lattice/unstable/${lattice_version}/ltc-checksum"
-    ## TODO: What do we do with the ltc-checksum now?
-
-    echo "ltc binaries uploaded to s3"
-}
-
 extract_deliver_stories_message() {
     git log origin/master..$GO_REVISION_LATTICE | \
         egrep -io "\[\s*(?:Finishes|Fixes)\s*(#(\d+)\s*)+\]" | \
@@ -58,11 +21,6 @@ update_godeps() {
         rm -rf Godeps
         sync
         echo "DONE!"
-        sleep 5
-
-        pushd $HOME
-            tar czf /workspace/ltc_gopath.tar.gz go
-        popd
 
         echo "Saving off ltc Godeps from constructed GOPATH .."
         godep save
@@ -70,7 +28,7 @@ update_godeps() {
         echo "godep saved"
 
         echo -n "Copying ltc/Godeps from $(pwd) to $LATTICE_SRC_PATH/ltc .."
-        cp -av Godeps $LATTICE_SRC_PATH/ltc/
+        cp -af Godeps $LATTICE_SRC_PATH/ltc/
         echo "DONE!"
     popd > /dev/null
 
@@ -104,7 +62,7 @@ commit_terraform_examples() {
     popd > /dev/null
 }
 
-bump_and_push_lattice() {
+bump_unstable_lattice() {
     get_diego_release_git_sha
 
     if [ "$diego_release_git_sha" != "$GO_REVISION_DIEGO_RELEASE" ]; then
@@ -130,7 +88,63 @@ bump_and_push_lattice() {
 
         rewrite_terraform_examples
         commit_terraform_examples
+    popd > /dev/null
+}
 
+repackage_unstable_lattice_tar() {
+    get_lattice_version
+
+    mkdir -pv ~/lattice-tmp
+    pushd ~/lattice-tmp > /dev/null
+        tar xzf $lattice_tar_path
+        echo "$lattice_version" > lattice-build/common/LATTICE_VERSION
+
+        tar czf lattice.tgz lattice-build
+        cp -vf lattice.tgz $lattice_artifacts_staging_folder
+    popd > /dev/null
+    rm -rf ~/lattice-tmp
+}
+
+recompile_unstable_ltc() {
+    get_lattice_version
+
+    ## since `godep restore` was run, don't need to do godep go build
+    go_build_ltc
+
+    generate_ltc_tarball $lattice_artifacts_staging_folder
+}
+
+upload_unstable_lattice_tar_to_s3() {
+    aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz "s3://lattice/unstable/latest/lattice.tgz"
+    aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz "s3://lattice/unstable/${lattice_version}/lattice.tgz"
+
+    echo "lattice.tgz uploaded to s3"
+}
+
+upload_unstable_ltc_binaries_to_s3() {
+    pushd $lattice_artifacts_staging_folder
+        mkdir -pv ltc-binaries
+        tar xzf ltc.tar.gz -C ltc-binaries
+        local ltc_checksum
+        ltc_checksum=$(cat ltc-binaries/ltc-checksum)
+        echo "Unpacked ltc.tar.gz with ltc-checksum (git sha) = ${ltc_checksum}"
+
+        if [ "${ltc_checksum}" != "${GO_REVISION_LATTICE}" ]; then
+            echo "Mismatch on ltc-checksum SHA (ltc.tar.gz/gocd) :: ${ltc_checksum}/${GO_REVISION_LATTICE}"
+        fi
+
+        aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/unstable/latest/darwin-amd64/ltc"
+        aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/unstable/latest/linux-amd64/ltc"
+
+        aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/unstable/${lattice_version}/darwin-amd64/ltc"
+        aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/unstable/${lattice_version}/linux-amd64/ltc"
+    popd
+
+    echo "ltc binaries uploaded to s3"
+}
+
+push_unstable_lattice() {
+    pushd $LATTICE_SRC_PATH > /dev/null
         git checkout develop
 
         echo "merging master into develop"
@@ -143,11 +157,12 @@ bump_and_push_lattice() {
         # Rebase in case there have been changes to origin/develop since the beginning of this pipeline run.
         # we want to get our godeps bump and merge commit stuff merged back into develop on top of external changes.
         git fetch origin develop
-        git rebase origin/develop --preserve-merges
-        git push origin master develop
+        git rebase origin/develop --preserve-merge
 
-        echo "Successfully pushed updates to origin/master & origin/develop"
+        git push origin master develop
     popd > /dev/null
+
+    echo "Successfully pushed updates to origin/master & origin/develop"
 }
 
 stage_pipeline_artifact() {
@@ -161,17 +176,23 @@ stage_pipeline_artifact() {
 source $(dirname $0)/../helpers/build_ltc_helpers
 
 lattice_tar_path=${1:-/workspace/lattice.tgz}
-ltc_tar_path=${2:-/workspace/ltc.tar.gz}
+
+lattice_artifacts_staging_folder="/workspace/lattice-unstable"
+rm -rfv $lattice_artifacts_staging_folder
+mkdir -pv $lattice_artifacts_staging_folder
 
 setup_ssh_access_to_github
 
 sync_up_tags_off_remote
 
-get_lattice_version
+bump_unstable_lattice
+
+repackage_unstable_lattice_tar
+recompile_unstable_ltc
 
 upload_unstable_lattice_tar_to_s3
 upload_unstable_ltc_binaries_to_s3
 
-bump_and_push_lattice
+push_unstable_lattice
 
 stage_pipeline_artifact

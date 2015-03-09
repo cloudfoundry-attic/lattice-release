@@ -50,28 +50,7 @@ repackage_release_lattice_tar() {
     rm -rf ~/lattice-tmp
 }
 
-
-godep_go_build_ltc() {
-    echo -n "Compiling cli ($lattice_version) .."
-
-    export GOBIN="$OUTDIR"
-    pushd $LATTICE_SRC_PATH/ltc > /dev/null
-        GOARCH=amd64 GOOS=linux godep go build \
-            -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
-            -o $OUTDIR/ltc-linux-amd64 \
-            github.com/cloudfoundry-incubator/lattice/ltc
-
-        GOARCH=amd64 GOOS=darwin godep go build \
-            -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
-            -o $OUTDIR/ltc-darwin-amd64 \
-            github.com/cloudfoundry-incubator/lattice/ltc
-    popd > /dev/null
-    unset GOBIN
-
-    echo "DONE!"
-}
-
-recompile_release_ltc(){
+recompile_release_ltc() {
     setup_go_env
 
     copy_ltc_source_into_gopath
@@ -92,6 +71,7 @@ tag_lattice_release() {
 upload_release_lattice_tar_to_s3() {
     aws s3 cp /workspace/lattice-release/lattice.tgz "s3://lattice/releases/latest/lattice.tgz"
     aws s3 cp /workspace/lattice-release/lattice.tgz "s3://lattice/releases/${lattice_version}/lattice.tgz"
+
     echo "lattice.tgz uploaded to s3"
 }
 
@@ -108,18 +88,14 @@ upload_release_ltc_binaries_to_s3() {
 
     aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/releases/latest/darwin-amd64/ltc"
     aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/releases/latest/linux-amd64/ltc"
-    aws s3 cp ltc-binaries/ltc-checksum "s3://lattice/releases/latest/ltc-checksum"
 
     aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/releases/${lattice_version}/darwin-amd64/ltc"
     aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/releases/${lattice_version}/linux-amd64/ltc"
-    aws s3 cp ltc-binaries/ltc-checksum "s3://lattice/releases/${lattice_version}/ltc-checksum"
-    ## TODO: What do we do with the ltc-checksum now?
 
     echo "ltc binaries uploaded to s3"
 }
 
-
-release_bump_and_push_lattice() {
+bump_and_push_lattice_release() {
     pushd $LATTICE_SRC_PATH > /dev/null
         git pull origin master
         git checkout master
@@ -133,7 +109,6 @@ release_bump_and_push_lattice() {
         git checkout develop
 
         echo "merging master into develop"
-
         git merge master -m "Merge branch 'master' of github.com:cloudfoundry-incubator/lattice into develop
 
         +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
@@ -143,10 +118,11 @@ release_bump_and_push_lattice() {
         # we want to get our godeps bump and merge commit stuff merged back into develop on top of external changes.
         git fetch origin develop
         git rebase origin/develop --preserve-merges
-        git push origin master develop "${LATTICE_RELEASE_VERSION}"
 
-        echo "Successfully pushed updates to origin/master & origin/develop"
+        git push origin master develop "${LATTICE_RELEASE_VERSION}"
     popd > /dev/null
+
+    echo "Successfully pushed updates to origin/master & origin/develop"
 }
 
 
@@ -158,18 +134,19 @@ fi
 source $(dirname $0)/../helpers/build_ltc_helpers
 
 lattice_tar_path=${1:-/workspace/lattice.tgz}
-ltc_tar_path=${2:-/workspace/ltc.tar.gz}
 
 setup_ssh_access_to_github
+
+sync_up_tags_off_remote
 
 verify_release_tag_does_not_exist
 
 repackage_release_lattice_tar
-
 recompile_release_ltc
 
 upload_release_lattice_tar_to_s3
 upload_release_ltc_binaries_to_s3
 
-release_bump_and_push_lattice
+bump_and_push_lattice_release
+
 

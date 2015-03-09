@@ -14,7 +14,7 @@ construct_ltc_gopath
 
 run_unit_tests
 
-get_lattice_version
+git_describe_lattice
 
 go_build_ltc
 
