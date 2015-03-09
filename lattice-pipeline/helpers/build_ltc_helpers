@@ -188,7 +188,7 @@ bump_lattice_version() {
 }
 
 rewrite_terraform_examples() {
-    get_lattice_version
+    git_describe_lattice
 
     pushd $LATTICE_SRC_PATH/terraform/aws > /dev/null
         sed -i 's/source = "github\.com.*$/source = "github\.com\/cloudfoundry-incubator\/lattice\/\/terraform\/\/aws\?ref='"$lattice_version"'"/' lattice.tf.example
