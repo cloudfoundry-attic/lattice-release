@@ -115,8 +115,13 @@ recompile_unstable_ltc() {
 }
 
 upload_unstable_lattice_tar_to_s3() {
-    aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz "s3://lattice/unstable/latest/lattice.tgz"
-    aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz "s3://lattice/unstable/${lattice_version}/lattice.tgz"
+    if [ -z "$DRY_RUN" ]; then
+        aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz "s3://lattice/unstable/latest/lattice.tgz"
+        aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz "s3://lattice/unstable/${lattice_version}/lattice.tgz"
+    else
+        echo "aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz \"s3://lattice/unstable/latest/lattice.tgz\""
+        echo "aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz \"s3://lattice/unstable/${lattice_version}/lattice.tgz\""
+    fi
 
     echo "lattice.tgz uploaded to s3"
 }
@@ -133,11 +138,19 @@ upload_unstable_ltc_binaries_to_s3() {
             echo "Mismatch on ltc-checksum SHA (ltc.tar.gz/gocd) :: ${ltc_checksum}/${GO_REVISION_LATTICE}"
         fi
 
-        aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/unstable/latest/darwin-amd64/ltc"
-        aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/unstable/latest/linux-amd64/ltc"
+        if [ -z "$DRY_RUN" ]; then
+            aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/unstable/latest/darwin-amd64/ltc"
+            aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/unstable/latest/linux-amd64/ltc"
 
-        aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/unstable/${lattice_version}/darwin-amd64/ltc"
-        aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/unstable/${lattice_version}/linux-amd64/ltc"
+            aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/unstable/${lattice_version}/darwin-amd64/ltc"
+            aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/unstable/${lattice_version}/linux-amd64/ltc"
+        else
+            echo "aws s3 cp ltc-binaries/ltc-darwin-amd64 \"s3://lattice/unstable/latest/darwin-amd64/ltc\""
+            echo "aws s3 cp ltc-binaries/ltc-linux-amd64 \"s3://lattice/unstable/latest/linux-amd64/ltc\""
+
+            echo "aws s3 cp ltc-binaries/ltc-darwin-amd64 \"s3://lattice/unstable/${lattice_version}/darwin-amd64/ltc\""
+            echo "aws s3 cp ltc-binaries/ltc-linux-amd64 \"s3://lattice/unstable/${lattice_version}/linux-amd64/ltc\""
+        fi
     popd
 
     echo "ltc binaries uploaded to s3"
@@ -159,7 +172,11 @@ push_unstable_lattice() {
         git fetch origin develop
         git rebase origin/develop --preserve-merge
 
-        git push origin master develop
+        if [ -z "$DRY_RUN" ] ; then
+            git push origin master develop
+        else
+            git push origin master develop --dry-run
+        fi
     popd > /dev/null
 
     echo "Successfully pushed updates to origin/master & origin/develop"

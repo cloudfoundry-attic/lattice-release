@@ -69,8 +69,13 @@ tag_lattice_release() {
 }
 
 upload_release_lattice_tar_to_s3() {
-    aws s3 cp /workspace/lattice-release/lattice.tgz "s3://lattice/releases/latest/lattice.tgz"
-    aws s3 cp /workspace/lattice-release/lattice.tgz "s3://lattice/releases/${lattice_version}/lattice.tgz"
+    if [ -z "$DRY_RUN" ]; then
+        aws s3 cp /workspace/lattice-release/lattice.tgz "s3://lattice/releases/latest/lattice.tgz"
+        aws s3 cp /workspace/lattice-release/lattice.tgz "s3://lattice/releases/${lattice_version}/lattice.tgz"
+    else
+        echo "aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz \"s3://lattice/releases/latest/lattice.tgz\""
+        echo "aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz \"s3://lattice/releases/${lattice_version}/lattice.tgz\""
+    fi
 
     echo "lattice.tgz uploaded to s3"
 }
@@ -86,11 +91,19 @@ upload_release_ltc_binaries_to_s3() {
         echo "Mismatch on ltc-checksum SHA (ltc.tar.gz/gocd) :: ${ltc_checksum}/${GO_REVISION_LATTICE}"
     fi
 
-    aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/releases/latest/darwin-amd64/ltc"
-    aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/releases/latest/linux-amd64/ltc"
+    if [ -z "$DRY_RUN" ]; then
+        aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/releases/latest/darwin-amd64/ltc"
+        aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/releases/latest/linux-amd64/ltc"
 
-    aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/releases/${lattice_version}/darwin-amd64/ltc"
-    aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/releases/${lattice_version}/linux-amd64/ltc"
+        aws s3 cp ltc-binaries/ltc-darwin-amd64 "s3://lattice/releases/${lattice_version}/darwin-amd64/ltc"
+        aws s3 cp ltc-binaries/ltc-linux-amd64 "s3://lattice/releases/${lattice_version}/linux-amd64/ltc"
+    else
+        echo "aws s3 cp ltc-binaries/ltc-darwin-amd64 \"s3://lattice/releases/latest/darwin-amd64/ltc\""
+        echo "aws s3 cp ltc-binaries/ltc-linux-amd64 \"s3://lattice/releases/latest/linux-amd64/ltc\""
+
+        echo "aws s3 cp ltc-binaries/ltc-darwin-amd64 \"s3://lattice/releases/${lattice_version}/darwin-amd64/ltc\""
+        echo "aws s3 cp ltc-binaries/ltc-linux-amd64 \"s3://lattice/releases/${lattice_version}/linux-amd64/ltc\""
+    fi
 
     echo "ltc binaries uploaded to s3"
 }
@@ -119,7 +132,11 @@ bump_and_push_lattice_release() {
         git fetch origin develop
         git rebase origin/develop --preserve-merges
 
-        git push origin master develop "${LATTICE_RELEASE_VERSION}"
+        if [ -z $DRY_RUN ] ; then
+            git push origin master develop "${LATTICE_RELEASE_VERSION}"
+        else
+            git push origin master develop "${LATTICE_RELEASE_VERSION}" --dry-run
+        fi
     popd > /dev/null
 
     echo "Successfully pushed updates to origin/master & origin/develop"
