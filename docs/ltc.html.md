@@ -119,3 +119,14 @@ This indicates that instance 0 of the application has been `RUNNING` on `lattice
 
 `ltc visualize` displays the *distribution* of application instances across the targetted Lattice deployment.  Each running application is rendered as a green dot.  Starting applications are rendered as yellow dots.
 
+## Is Lattice Working?
+
+### `ltc test`
+
+`ltc test` runs a minimal integration suite to ensure that a Lattice deploy is functioning correctly.
+
+### `ltc debug-logs`
+
+`ltc debug-logs` streams back logs from some of Lattice's key components.  This is useful for debugging situations where containers fail to get created/torn down.
+
+

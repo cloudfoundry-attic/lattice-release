@@ -30,6 +30,11 @@ Once a container is created Lattice is responsible for running and monitoring pr
 
 When launching a Docker image, `ltc` directs Lattice to create a container backed by the Docker image's root fs, and to run the command encoded in the Docker image's metadata.  It does this by fetching the metadata associated with the Docker image (using the same libraries that power Docker) and making the appropriate Lattice API calls.  `ltc` allows users to easily override the values it pulls out of the Docker image metadata.  This is outlined in detail in the [`ltc` documentation](/docs/ltc.html#ltc-start).
 
+There are two remaining areas of Docker compatbility that we are working on:
+
+- Removing assumptions about container contents.  Currently, Garden-Linux makes some assumptions about what is available inside the container.  Some Docker images do not satisfy these assumptions though most do (the liteweight busybox base image, for example).
+- Supporting arbitrary UIDs and GIDs.  Currently Garden-Linux runs applications as the `vcap` user (a historical holdover).  One can side-step this with `--run-as-root` (see below) though this is suboptimal.  We intend to fully support the USER directive and (moreover) to improve our API around specifying which user should run the command.
+
 ## I can't run my Docker image.  Help!
 
 Here are a few pointers to help you debug and fix some common issues:
@@ -46,20 +51,15 @@ By default, `ltc` applies a memory limit of 128MB and a disk limit of 1024MB to 
 
 Lattice runs the process in your Docker image as an unprivileged user.  Sometimes this user does not have privileges to execue the requested process - you can try using the `--run-as-root` flag to get around this limitation.
 
-> We have plans to build more robust support for specifying the user/uid to run the container as.
+> We have plans to build more robust support for specifying the user/uid/group/gid to run the container as.
 
 ### Disable Health Monitoring
 
 By default, `ltc` requests that Lattice perform a periodic health check agains the running application.  This health check verifies that the application is listening on a port.  For applications that do not listen on ports (e.g. a worker that does not expose an endpoint) you can disable the health check via the `--no-monitor` flag.
 
-### Fetch Lattice Logs
+### Watch Lattice Component Logs
 
-If you're still stuck you can try sshing onto the Lattice box and looking through the logs when you launch your application.
-
-```
-vagrant ssh
-tail -f *.log
-```
+If you're still stuck you can try streaming the Lattice debug-logs with `ltc debug-logs` while launching your application.  
 
 ## How do I communicate with my containers over TCP?
 
@@ -67,7 +67,7 @@ THe Lattice router only supports HTTP communication at this time.  If you would 
 
 ## How do I communicate between containers?
 
-Lattice does not apply any firewall rules between containers.  Any container can freely communicate with any other container.  All you need is to identfiy the IP and Port.
+Lattice does not apply any firewall rules between containers.  Any container can freely communicate with any other container.  All you need is to identfiy the IP and Port - information available via `ltc status` or the [Receptor API](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/README.md).
 
 ## How do I do service discovery?
 
