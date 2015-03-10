@@ -49,13 +49,13 @@ Alternatively you can use these installation scripts.  They assume `$HOME/bin` i
 For Mac:
 
     mkdir -p $HOME/bin
-    wget https://lattice.s3.amazonaws.com/latest/darwin-amd64/ltc -O $HOME/bin/ltc
+    wget https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc -O $HOME/bin/ltc
     chmod +x $HOME/bin/ltc
 
 For Linux:
 
     mkdir -p $HOME/bin
-    wget https://lattice.s3.amazonaws.com/latest/linux-amd64/ltc -O $HOME/bin/ltc
+    wget https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc -O $HOME/bin/ltc
     chmod +x $HOME/bin/ltc
 
 Further instructions can be found [here](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc).

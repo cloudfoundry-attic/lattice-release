@@ -30,7 +30,7 @@ Lattice lives up to these principles.
 
 ## How do I deploy Lattice?
 
-You can launch a local developer-friendly version of Lattice using a Vagrant VM.  You can also launch a Lattice cluster on one of several supported public cloud providers.  Both techniques are documented [here](docs/deploying-lattice.html).
+You can run Lattice easily on your laptop with a [Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#local-deployment) or deploy a [cluster of machines](https://github.com/cloudfoundry-incubator/lattice#clustered-deployment) with [AWS](https://github.com/cloudfoundry-incubator/lattice#amazon-web-services), [Digital Ocean](https://github.com/cloudfoundry-incubator/lattice#digitalocean) or [Google Compute Engine](https://github.com/cloudfoundry-incubator/lattice#google-cloud).
 
 ## How do I use Lattice?
 
