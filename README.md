@@ -26,39 +26,30 @@ More complex workloads can be constructed and submitted directly to Lattice's Re
 
 Make sure you have [Vagrant](https://vagrantup.com/) installed, then:
 
+```bash
     $ git clone git@github.com:cloudfoundry-incubator/lattice.git
     $ cd lattice
     $ vagrant up
+```
 
 This spins up a virtual environment that is accessible at `192.168.11.11`.
 
 Use the [Lattice Cli](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) to target Lattice:
 
-```
+```bash
 ltc target 192.168.11.11.xip.io
 ```
 
-## Using Different Providers
-
-You can do this with either VMware Fusion or VirtualBox:
-
-Virtualbox:
-
-     $ vagrant up --provider virtualbox
-
-VMware Fusion:
-
-     $ vagrant up --provider vmware_fusion
-
 ### Networking Conflicts
 
-If you are trying to run both the VirtualBox and VMWare providers on the same machine, 
-you'll need to run them on different private networks (subnets) that do not conflict.
+If you have trouble running the VirtualBox provider due to networking conflicts (commonly encountered
+when running other Vagrant providers alongside Virtualbox on the same machine), you'll need to
+bring up the Lattice cluster on a different subnet that does not conflict.
 
 Set the System IP to an address that does not conflict with the host networking configuration by passing the
 LATTICE_SYSTEM_IP environment variable to the vagrant up command:
 
-```
+```bash
 LATTICE_SYSTEM_IP=192.168.80.100 vagrant up
 ltc target 192.168.80.100.xip.io
 ```
@@ -67,9 +58,11 @@ ltc target 192.168.80.100.xip.io
 
 Currently, Lattice does not support updating via provision. So to update, you have to destroy the box and bring it back up:
 
+```bash
      vagrant destroy --force
      git pull
      vagrant up
+```
   
 ## Troubleshooting
 
@@ -81,7 +74,9 @@ Currently, Lattice does not support updating via provision. So to update, you ha
 
 By default, `vagrant up` will fetch the latest Lattice binary tarball.  To use a particular tarball:
 
+```bash
     VAGRANT_LATTICE_TAR_PATH=/path/to/lattice.tgz vagrant up
+```
 
 # Clustered Deployment
 
@@ -96,7 +91,7 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 
 Create a `lattice.tf` file by downloading the [AWS example file](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/lattice.tf.example):
 
-``` bash
+```bash
 wget --quiet https://raw.githubusercontent.com/cloudfoundry-incubator/lattice/master/terraform/aws/lattice.tf.example -O lattice.tf
 ```
 
@@ -106,7 +101,7 @@ Update the downloaded file filling the variables according to the [AWS README](h
 
 Create a `lattice.tf` file by downloading the [DigitalOcean example file](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/lattice.tf.example):
 
-``` bash
+```bash
 wget --quiet https://raw.githubusercontent.com/cloudfoundry-incubator/lattice/master/terraform/digitalocean/lattice.tf.example -O lattice.tf
 ```
 
@@ -116,7 +111,7 @@ Update the downloaded file filling the variables according to the [DigitalOcean 
 
 Create a `lattice.tf` file downloading the [Google Cloud example file](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/lattice.tf.example):
 
-``` bash
+```bash
 wget --quiet https://raw.githubusercontent.com/cloudfoundry-incubator/lattice/lattice-terraform/master/google/lattice.tf.example -O lattice.tf
 ```
 Update the downloaded file filling the variables according to the [Google Cloud README](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md) file.
@@ -125,7 +120,7 @@ Update the downloaded file filling the variables according to the [Google Cloud 
 
 Once your `lattice.tf` file is configured:
 
-```
+```bash
 terraform get -update
 terraform apply
 ```
@@ -150,7 +145,7 @@ Terraform will generate a `lattice.tfstate` file.  This file describes the clust
 
 To destroy the cluster:
 
-```
+```bash
 terraform destroy
 ```
 
