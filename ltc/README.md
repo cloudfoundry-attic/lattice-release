@@ -14,100 +14,37 @@ With `ltc` you can:
 
 ##Setup:
 
-Download the appropriate binary for your architecture:
+Download the appropriate binary for your architecture.  These link to the *latest* version of `ltc`.  For a specific version visit the [releases](https://github.com/cloudfoundry-incubator/lattice/releases) page.
 
 Platform | Architecture | Link
 ---------|--------------|--------
-MacOS | amd64 | [https://lattice.s3.amazonaws.com/unstable/latest/darwin-amd64/ltc](https://lattice.s3.amazonaws.com/unstable/latest/darwin-amd64/ltc)
-Linux | amd64 | [https://lattice.s3.amazonaws.com/unstable/latest/linux-amd64/ltc](https://lattice.s3.amazonaws.com/unstable/latest/linux-amd64/ltc)
+MacOS | amd64 | [https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc](https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc)
+Linux | amd64 | [https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc](https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc)
 
 Here's a simple installation script.  It assumes `$HOME/bin` is on your $PATH
 
 **Mac**:
 ```bash
   mkdir -p $HOME/bin
-  wget https://lattice.s3.amazonaws.com/unstable/latest/darwin-amd64/ltc -O $HOME/bin/ltc
+  wget https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc -O $HOME/bin/ltc
   chmod +x $HOME/bin/ltc
 ```
 
 **Linux**:
 ```bash
   mkdir -p $HOME/bin
-  wget https://lattice.s3.amazonaws.com/unstable/latest/linux-amd64/ltc -O $HOME/bin/ltc
+  wget https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc -O $HOME/bin/ltc
   chmod +x $HOME/bin/ltc
 ```
 
 #### Installing From Source
 
-You must have [Go](https://golang.org) 1.4+ installed and set up correctly.
+You must have [Go](https://golang.org) 1.4+ installed and set up correctly.  `ltc` uses [Godeps](https://github.com/tools/godep) to vendor its dependencies.
 
 ```
-go get github.com/cloudfoundry-incubator/lattice/ltc
+go get -d github.com/cloudfoundry-incubator/lattice/ltc
+GOPATH=$GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/Godeps/_workspace:$GOPATH go install github.com/cloudfoundry-incubator/lattice/ltc
 ```
-
-## Usage:
-
-`ltc` includes a number of subcommands.  To learn about them:
-
-```
-ltc help
-ltc help SUBCOMMAND
-```
-
-Here are a few key subcommands.
-
-### Target a Lattice cluster:
-
-```
-ltc target LATTICE_TARGET
-```
-
-When running Lattice locally with Vagrant the default `LATTICE_TARGET` is `192.168.11.11.xip.io`
-When deployed to a cloud provider using Terraform you can inspect the resulting `tfstate` file to fetch the `LATTICE_TARGET`
-
-### Start a docker-based app:
-
-```
-ltc create APP_NAME DOCKER_IMAGE
-```
-
-will start a Dockerimage-based application on Lattice.
-
-We have a simple demo-application that you can play with:
-
-```
-ltc create lattice-app cloudfoundry/lattice-app
-```
-
-`ltc help create` documents a number of useful options for starting your application.
-
-### Tail an app's logs:
-
-```
-ltc logs APP_NAME
-```
-
-will start streaming logs emanating from all instances of `APP_NAME`
-
-### See what's running:
-
-```
-ltc list
-```
-
-Will print out a list of all running applications.
-
-```
-ltc status APP_NAME
-```
-
-Will print out detailed information about an application.
-
-```
-ltc visualize
-```
-
-Will print an ascii-art representation of the distribution of containers across the Lattice cluster.
 
 ### Example Usage:
 
