@@ -90,11 +90,7 @@ var _ = Describe("filePersister", func() {
         Context("when reading nonexistant files", func() {
             BeforeEach(func() {
                 nonExistantFile := fmt.Sprintf("%s/nonexistant/tmp_file", tmpDir)
-                if _, err := os.Stat(nonExistantFile); err != nil {
-                    Expect(os.IsNotExist(err)).To(BeTrue())
-                } else {
-                    Expect(os.Remove(nonExistantFile)).To(Succeed())
-                }
+                Expect(os.RemoveAll(nonExistantFile)).To(Succeed())
 
                 filePersister = persister.NewFilePersister(nonExistantFile)
             })
@@ -155,10 +151,11 @@ var _ = Describe("filePersister", func() {
 
         Context("when making the directory", func() {
             BeforeEach(func() {
-                Expect(os.RemoveAll(tmpFile.Name())).To(Succeed())
-                Expect(os.MkdirAll(tmpFile.Name(), 0000)).To(Succeed())
-
                 filePath := filepath.Join(tmpFile.Name(), "no_privs", "tmp_file")
+                if _, err := os.Stat(tmpFile.Name()); err != nil {
+                    Expect(os.IsNotExist(err)).To(BeFalse())
+                }
+
                 filePersister = persister.NewFilePersister(filePath)
             })
 
