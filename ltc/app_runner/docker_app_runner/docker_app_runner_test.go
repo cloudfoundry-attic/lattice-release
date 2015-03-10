@@ -8,16 +8,15 @@ import (
     . "github.com/onsi/ginkgo"
     . "github.com/onsi/gomega"
 
+    "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
+    "github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
     "github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
     "github.com/cloudfoundry-incubator/receptor"
     "github.com/cloudfoundry-incubator/receptor/fake_receptor"
     "github.com/cloudfoundry-incubator/runtime-schema/models"
-
-    docker_app_runner "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
-    "github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 )
 
-var _ = Describe("AppRunner", func() {
+var _ = Describe("DockerAppRunner", func() {
 
     var (
         fakeReceptorClient *fake_receptor.FakeClient
@@ -28,6 +27,27 @@ var _ = Describe("AppRunner", func() {
         fakeReceptorClient = &fake_receptor.FakeClient{}
         appRunner = docker_app_runner.New(fakeReceptorClient, "myDiegoInstall.com")
 
+    })
+
+    Describe("PortConfig", func() {
+        Describe("IsEmpty", func() {
+            It("returns true if the port config has no exposed ports", func() {
+                portConfig := docker_app_runner.PortConfig{
+                    Monitored:      uint16(0),
+                    Exposed:        []uint16{},
+                }
+                Expect(portConfig.IsEmpty()).To(BeTrue())
+
+            })
+
+            It("returns false if the port config has exposed ports", func() {
+                portConfig := docker_app_runner.PortConfig{
+                    Monitored:      uint16(0),
+                    Exposed:        []uint16{uint16(1234)},
+                }
+                Expect(portConfig.IsEmpty()).To(BeFalse())
+            })
+        })
     })
 
     Describe("CreateDockerApp", func() {

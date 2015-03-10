@@ -3,9 +3,8 @@ package matchers
 import (
 	"fmt"
 	"reflect"
-
-	//	"errors"
 	"errors"
+
 	"github.com/onsi/gomega/types"
 )
 
@@ -20,7 +19,7 @@ func ContainExactly(expected interface{}) types.GomegaMatcher {
 func (matcher *containExactlyMatcher) Match(actual interface{}) (success bool, err error) {
 
 	if !isArraySliceMap(matcher.expected) || !isArraySliceMap(actual) {
-		return false, errors.New("Matcher can only take an array or slice")
+		return false, errors.New("Matcher can only take an array, slice or map")
 	}
 
 	expectedValueOccurrences := calculateOccurrencesMap(matcher.expected)
@@ -71,8 +70,8 @@ func isArraySliceMap(a interface{}) bool {
 }
 
 func isMap(a interface{}) bool {
-	if a == nil {
-		return false
-	}
+//	if a == nil {
+//		return false
+//	}
 	return reflect.TypeOf(a).Kind() == reflect.Map
 }

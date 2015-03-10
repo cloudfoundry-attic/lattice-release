@@ -12,12 +12,11 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
-	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
-	"github.com/codegangsta/cli"
-
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 )

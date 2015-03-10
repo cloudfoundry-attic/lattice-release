@@ -4,17 +4,16 @@ import (
 	"os"
 	"os/signal"
 
+    "github.com/cloudfoundry-incubator/lattice/ltc/cli_app_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/config_helpers"
+    "github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
+    "github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/receptor_client_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
+    "github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/lager"
-
-	"github.com/cloudfoundry-incubator/lattice/ltc/cli_app_factory"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/receptor_client_factory"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 )
 
 const (

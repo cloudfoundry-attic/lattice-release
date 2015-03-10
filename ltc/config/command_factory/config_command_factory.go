@@ -99,14 +99,6 @@ func (factory *ConfigCommandFactory) prompt(promptText string) string {
     return strings.TrimSuffix(result, "\n")
 }
 
-func (factory *ConfigCommandFactory) incorrectUsage(message string) {
-    if len(message) > 0 {
-        factory.output.Say("Incorrect Usage: " + message)
-    } else {
-        factory.output.Say("Incorrect Usage")
-    }
-}
-
 func (factory *ConfigCommandFactory) printTarget() {
     if factory.config.Target() == "" {
         factory.output.Say("Target not set.")

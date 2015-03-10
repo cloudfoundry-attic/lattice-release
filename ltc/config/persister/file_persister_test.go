@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+    "path/filepath"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -17,94 +18,168 @@ var _ = Describe("filePersister", func() {
 	}
 
 	var (
-		tmpDir  string
-		tmpFile *os.File
+		tmpDir        string
+		tmpFile       *os.File
+        err           error
 	)
 
 	BeforeEach(func() {
-		var err error
 		tmpDir = os.TempDir()
 
 		tmpFile, err = ioutil.TempFile(tmpDir, "tmp_file")
 		Expect(err).ToNot(HaveOccurred())
 	})
 
+    AfterEach(func() {
+        Expect(os.RemoveAll(tmpFile.Name())).To(Succeed())
+    })
+
 	Describe("Load", func() {
+
+        var (
+            filePersister persister.Persister
+            dataToRead    *data
+        )
+
+        BeforeEach(func() {
+            dataToRead = &data{}
+            filePersister = persister.NewFilePersister(tmpFile.Name())
+        })
+
+        JustBeforeEach(func() {
+            err = filePersister.Load(dataToRead)
+        })
+
 		It("Loads empty data from an empty file", func() {
-			persister := persister.NewFilePersister(tmpFile.Name())
-			data := &data{}
-
-			persister.Load(data)
-
-			Expect(data.Value).To(Equal(""))
+			Expect(dataToRead.Value).To(BeEmpty())
 		})
 
-		It("Loads JSON from the file", func() {
-			err := ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value"}`), 0700)
-			Expect(err).ToNot(HaveOccurred())
+        Context("when the file already exists", func() {
+            BeforeEach(func() {
+                err := ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value"}`), 0700)
+                Expect(err).ToNot(HaveOccurred())
+            })
 
-			persister := persister.NewFilePersister(tmpFile.Name())
-			data := &data{}
+            It("Loads JSON from the file", func() {
+                Expect(dataToRead.Value).To(Equal("test value"))
+            })
+        })
 
-			persister.Load(data)
+        Context("when the file has invalid json", func() {
+            BeforeEach(func() {
+                err := ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value`), 0700)
+                Expect(err).ToNot(HaveOccurred())
+            })
 
-			Expect(data.Value).To(Equal("test value"))
-		})
+            It("returns errors from invalid JSON", func() {
+                Expect(err).To(HaveOccurred())
+            })
+        })
 
-		It("returns errors from invalid JSON", func() {
-			err := ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value`), 0700)
-			Expect(err).ToNot(HaveOccurred())
+        Context("when reading the file returns an error", func() {
+            BeforeEach(func() {
+                err := ioutil.WriteFile(tmpFile.Name(), []byte(""), 0000)
+                Expect(err).ToNot(HaveOccurred())
+            })
 
-			persister := persister.NewFilePersister(tmpFile.Name())
+            It("returns errors from reading the file", func() {
+                Expect(err).To(HaveOccurred())
+            })
+        })
 
-			err = persister.Load(&data{})
+        Context("when reading nonexistant files", func() {
+            BeforeEach(func() {
+                nonExistantFile := fmt.Sprintf("%s/nonexistant/tmp_file", tmpDir)
+                if _, err := os.Stat(nonExistantFile); err != nil {
+                    Expect(os.IsNotExist(err)).To(BeTrue())
+                } else {
+                    Expect(os.Remove(nonExistantFile)).To(Succeed())
+                }
 
-			Expect(err).To(HaveOccurred())
-		})
+                filePersister = persister.NewFilePersister(nonExistantFile)
+            })
 
-		It("handles nonexistant files silently", func() {
-			nonExistantFile := fmt.Sprintf("%s/nonexistant/tmp_file", tmpDir)
-			persister := persister.NewFilePersister(nonExistantFile)
-
-			err := persister.Load(&data{})
-
-			Expect(err).ToNot(HaveOccurred())
-		})
+            It("handles nonexistant files silently", func() {
+                Expect(err).ToNot(HaveOccurred())
+            })
+        })
 	})
 
 	Describe("Save", func() {
+
+        var (
+            filePersister persister.Persister
+            dataToSave    *data
+        )
+
+        BeforeEach(func() {
+            dataToSave = &data{Value: "Some Value to be written in json"}
+            filePersister = persister.NewFilePersister(tmpFile.Name())
+        })
+
+        JustBeforeEach(func() {
+            err = filePersister.Save(dataToSave)
+        })
+
 		It("Saves valid JSON to the filepath", func() {
-			persister := persister.NewFilePersister(tmpFile.Name())
-
-			persister.Save(&data{Value: "Some Value to be written in json"})
-
 			jsonBytes, err := ioutil.ReadFile(tmpFile.Name())
 			Expect(err).ToNot(HaveOccurred())
 			Expect(string(jsonBytes)).To(Equal(`{"Value":"Some Value to be written in json"}`))
 		})
 
 		It("Returns an error rather than save invalid JSON", func() {
-			persister := persister.NewFilePersister(tmpFile.Name())
-			err := persister.Save(func() {})
+			err := filePersister.Save(func() {})
 
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("writes to nonexistant directories", func() {
-			nonExistantFile := fmt.Sprintf("%s/nonexistant/tmp_file", tmpDir)
+        Context("when reading nonexistant files", func() {
 
-			persister := persister.NewFilePersister(nonExistantFile)
+            var nonExistantFile string
 
-			err := persister.Save(&data{"Some Value"})
+            BeforeEach(func() {
+                nonExistantFile = filepath.Join(tmpDir, "nonexistant", "tmp_file")
+                Expect(os.RemoveAll(filepath.Dir(nonExistantFile))).To(Succeed())
 
-			Expect(err).ToNot(HaveOccurred())
-		})
+                filePersister = persister.NewFilePersister(nonExistantFile)
+            })
 
-		It("Returns errors from writing the file", func() {
-			persister := persister.NewFilePersister(tmpDir)
-			err := persister.Save(&data{})
+            AfterEach(func() {
+                Expect(os.RemoveAll(filepath.Dir(nonExistantFile))).To(Succeed())
+            })
 
-			Expect(err).To(HaveOccurred())
-		})
+            It("writes to nonexistant directories", func() {
+                Expect(err).ToNot(HaveOccurred())
+            })
+        })
+
+        Context("when making the directory", func() {
+            BeforeEach(func() {
+                Expect(os.RemoveAll(tmpFile.Name())).To(Succeed())
+                Expect(os.MkdirAll(tmpFile.Name(), 0000)).To(Succeed())
+
+                filePath := filepath.Join(tmpFile.Name(), "no_privs", "tmp_file")
+                filePersister = persister.NewFilePersister(filePath)
+            })
+
+            AfterEach(func() {
+                Expect(os.RemoveAll(tmpFile.Name())).To(Succeed())
+            })
+
+            It("returns errors from making the directory", func() {
+                Expect(err).To(HaveOccurred())
+            })
+        })
+
+        Context("when writing the file returns errors", func() {
+            BeforeEach(func() {
+                filePersister = persister.NewFilePersister(tmpDir)
+            })
+
+            It("returns errors from writing the file", func() {
+                Expect(err).To(HaveOccurred())
+            })
+        })
+
 	})
 })

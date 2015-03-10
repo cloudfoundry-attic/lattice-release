@@ -1,8 +1,9 @@
 package exit_handler
 
 import (
-	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"os"
+
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 )
 
 func New(signalChan chan os.Signal, systemExit func(code int)) ExitHandler {

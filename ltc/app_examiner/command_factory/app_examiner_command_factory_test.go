@@ -7,6 +7,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory"
@@ -19,7 +20,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
-	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-golang/clock/fakeclock"
 )
 
@@ -233,7 +233,17 @@ var _ = Describe("CommandFactory", func() {
 					MemoryMB:     256,
 					CPUWeight:    100,
 					Ports:        []uint16{8887, 9000},
-					Routes:       route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"wompy-app.my-fun-domain.com", "cranky-app.my-fun-domain.com"}, Port: 8080}},
+					Routes:       route_helpers.AppRoutes{
+                        route_helpers.AppRoute{
+                            Port: 9090,
+                            Hostnames: []string{"route-me.my-fun-domain.com"},
+                        },
+                        route_helpers.AppRoute{
+                            Port: 8080,
+                            Hostnames: []string{"wompy-app.my-fun-domain.com", "cranky-app.my-fun-domain.com"},
+                        },
+
+                    },
 					LogGuid:      "a9s8dfa99023r",
 					LogSource:    "wompy-app-logz",
 					Annotation:   "I love this app. So wompy.",
@@ -302,6 +312,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("Routes"))
 			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com => 8080"))
 			Expect(outputBuffer).To(test_helpers.Say("cranky-app.my-fun-domain.com => 8080"))
+			Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9090"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Annotation"))
 			Expect(outputBuffer).To(test_helpers.Say("I love this app. So wompy."))

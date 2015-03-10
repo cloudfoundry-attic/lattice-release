@@ -2,6 +2,7 @@ package docker_metadata_fetcher
 
 import (
 	"fmt"
+
 	"github.com/docker/docker/registry"
 	"github.com/docker/docker/utils"
 )

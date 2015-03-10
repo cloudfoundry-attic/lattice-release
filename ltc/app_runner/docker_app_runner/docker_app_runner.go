@@ -3,17 +3,19 @@ package docker_app_runner
 import (
 	"fmt"
 	"strconv"
+    "errors"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
+    "github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
-    "errors"
-    "github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 )
+
 const (
     AttemptedToCreateLatticeDebugErrorMessage =reserved_app_ids.LatticeDebugLogStreamAppId + " is a reserved app name. It is used internally to stream debug logs for lattice components."
 )
+
 //go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 type AppRunner interface {
 	CreateDockerApp(params CreateDockerAppParams) error

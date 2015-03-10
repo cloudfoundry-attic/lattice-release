@@ -5,13 +5,13 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+    "github.com/onsi/gomega/gbytes"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test/fake_integration_test_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
-	"github.com/onsi/gomega/gbytes"
 )
 
 var _ = Describe("IntegrationTestCommandFactory", func() {

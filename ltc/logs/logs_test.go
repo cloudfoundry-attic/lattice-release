@@ -45,35 +45,35 @@ func (consumer *fakeConsumer) sendToInboundErrorStream(err error) {
 	consumer.inboundErrorStream <- err
 }
 
-type MessageReceiver struct {
+type messageReceiver struct {
 	sync.RWMutex
 	receivedMessages []*events.LogMessage
 }
 
-func (mr *MessageReceiver) AppendMessage(logMessage *events.LogMessage) {
+func (mr *messageReceiver) AppendMessage(logMessage *events.LogMessage) {
 	defer mr.Unlock()
 	mr.Lock()
 	mr.receivedMessages = append(mr.receivedMessages, logMessage)
 }
 
-func (mr *MessageReceiver) GetMessages() []*events.LogMessage {
+func (mr *messageReceiver) GetMessages() []*events.LogMessage {
 	defer mr.RUnlock()
 	mr.RLock()
 	return mr.receivedMessages
 }
 
-type ErrorReceiver struct {
+type errorReceiver struct {
 	sync.RWMutex
 	receivedErrors []error
 }
 
-func (e *ErrorReceiver) AppendError(err error) {
+func (e *errorReceiver) AppendError(err error) {
 	defer e.Unlock()
 	e.Lock()
 	e.receivedErrors = append(e.receivedErrors, err)
 }
 
-func (e *ErrorReceiver) GetErrors() []error {
+func (e *errorReceiver) GetErrors() []error {
 	defer e.RUnlock()
 	e.RLock()
 	return e.receivedErrors
@@ -84,17 +84,15 @@ var _ = Describe("logs", func() {
 		var (
 			consumer  *fakeConsumer
 			logReader logs.LogReader
-			stopChan  chan struct{}
 		)
+
 		BeforeEach(func() {
 			consumer = NewFakeConsumer()
 			logReader = logs.NewLogReader(consumer)
-			stopChan = make(chan struct{})
-
 		})
 
 		It("provides the logCallback with logs until StopTailing is called", func() {
-			messageReceiver := &MessageReceiver{}
+			messageReceiver := &messageReceiver{}
 
 			responseFunc := func(logMessage *events.LogMessage) {
 				messageReceiver.AppendMessage(logMessage)
@@ -123,7 +121,7 @@ var _ = Describe("logs", func() {
 
 		It("provides the errorCallback with the pending errors until StopTailing is called.", func() {
 
-			errorReceiver := &ErrorReceiver{}
+			errorReceiver := &errorReceiver{}
 
 			errorFunc := func(err error) {
 				errorReceiver.AppendError(err)
@@ -145,5 +143,31 @@ var _ = Describe("logs", func() {
 			Consistently(errorReceiver.GetErrors).ShouldNot(ContainElement(errorThree))
 		})
 	})
+
+    Describe("StopTailing", func() {
+        var (
+            consumer  *fakeConsumer
+            logReader logs.LogReader
+        )
+
+        BeforeEach(func() {
+            consumer = NewFakeConsumer()
+            logReader = logs.NewLogReader(consumer)
+        })
+
+        It("stops tailing logs when requested", func() {
+            doneChan := make(chan struct{})
+            go func() {
+                defer GinkgoRecover()
+
+                logReader.TailLogs("app-guid", func(*events.LogMessage) {}, func(error) {})
+                close(doneChan)
+            }()
+
+            logReader.StopTailing()
+
+            Expect(doneChan).To(BeClosed())
+        })
+    })
 
 })

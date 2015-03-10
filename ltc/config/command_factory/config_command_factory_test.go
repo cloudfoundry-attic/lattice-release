@@ -4,19 +4,19 @@ import (
 	"errors"
 	"io"
 
+    . "github.com/onsi/ginkgo"
+    . "github.com/onsi/gomega"
+    "github.com/onsi/gomega/gbytes"
+
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
+    "github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
+    "github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+    "github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
+    "github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
+    "github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gbytes"
-
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
-	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
-	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 )
 
 var _ = Describe("CommandFactory", func() {
@@ -34,9 +34,7 @@ var _ = Describe("CommandFactory", func() {
 		stdinReader, stdinWriter = io.Pipe()
 		outputBuffer = gbytes.NewBuffer()
 		targetVerifier = &fake_target_verifier.FakeTargetVerifier{}
-
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
-
 		config = config_package.New(persister.NewMemPersister())
 	})
 

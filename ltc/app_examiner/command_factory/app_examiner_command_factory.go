@@ -3,6 +3,7 @@ package command_factory
 import (
 	"fmt"
 	"io"
+    "sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -19,6 +20,13 @@ import (
 )
 
 const TimestampDisplayLayout = "2006-01-02 15:04:05 (MST)"
+
+// IntSlice attaches the methods of sort.Interface to []uint16, sorting in increasing order.
+type UInt16Slice []uint16
+
+func (p UInt16Slice) Len() int              { return len(p) }
+func (p UInt16Slice) Less(i, j int) bool    { return p[i] < p[j] }
+func (p UInt16Slice) Swap(i, j int)         { p[i], p[j] = p[j], p[i] }
 
 type AppExaminerCommandFactory struct {
     appExaminer app_examiner.AppExaminer
@@ -164,27 +172,7 @@ func printAppInfo(w io.Writer, appInfo app_examiner.AppInfo) {
 
 	fmt.Fprintf(w, "%s\t%s\n", "Ports", strings.Join(portStrings, ","))
 
-	formatRoute := func(hostname string, port uint16) string {
-		return colors.Cyan(fmt.Sprintf("%s => %d", hostname, port))
-	}
-
-	routeStringsByPort := appInfo.Routes.HostnamesByPort()
-	var i int
-	for port, routeStrs := range routeStringsByPort {
-		if i == 0 {
-			fmt.Fprintf(w, "%s\t%s\n", "Routes", formatRoute(routeStrs[0], port))
-			if len(routeStrs) > 1 {
-				for _, routeStr := range routeStrs[1:] {
-					fmt.Fprintf(w, "\t%s\n", formatRoute(routeStr, port))
-				}
-			}
-		} else {
-			for _, routeStr := range routeStrs {
-				fmt.Fprintf(w, "\t%s\n", formatRoute(routeStr, port))
-			}
-		}
-		i++
-	}
+	printAppRoutes(w, appInfo)
 
 	if appInfo.Annotation != "" {
 		fmt.Fprintf(w, "%s\t%s\n", "Annotation", appInfo.Annotation)
@@ -197,6 +185,30 @@ func printAppInfo(w io.Writer, appInfo app_examiner.AppInfo) {
 	}
 	fmt.Fprintf(w, "%s\n\n%s", "Environment", envVars)
 
+}
+
+func printAppRoutes(w io.Writer, appInfo app_examiner.AppInfo) {
+    formatRoute := func(hostname string, port uint16) string {
+        return colors.Cyan(fmt.Sprintf("%s => %d", hostname, port))
+    }
+
+    routeStringsByPort := appInfo.Routes.HostnamesByPort()
+    ports := make(UInt16Slice, 0, len(routeStringsByPort))
+    for port, _ := range routeStringsByPort {
+        ports = append(ports, port)
+    }
+    sort.Sort(ports)
+
+    for portIndex, port := range ports {
+        routeStrs, _ := routeStringsByPort[uint16(port)]
+        for routeIndex, routeStr := range routeStrs {
+            if routeIndex == 0 && portIndex == 0 {
+                fmt.Fprintf(w, "%s\t%s\n", "Routes", formatRoute(routeStrs[0], port))
+            } else {
+                fmt.Fprintf(w, "\t%s\n", formatRoute(routeStr, port))
+            }
+        }
+    }
 }
 
 func printInstanceInfo(w io.Writer, headingPrefix string, actualInstances []app_examiner.InstanceInfo) {

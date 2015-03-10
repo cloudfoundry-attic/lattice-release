@@ -1,8 +1,9 @@
 package fake_log_reader
 
 import (
-	"github.com/cloudfoundry/noaa/events"
 	"sync"
+
+	"github.com/cloudfoundry/noaa/events"
 )
 
 type FakeLogReader struct {

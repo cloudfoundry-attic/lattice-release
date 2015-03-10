@@ -4,13 +4,9 @@ import (
 	"errors"
 	"time"
 
-	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
-	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
-	"github.com/pivotal-golang/clock/fakeclock"
-	"github.com/pivotal-golang/lager"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
@@ -19,11 +15,14 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher/fake_docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+    "github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
+    "github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
+    "github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
-
-	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
-	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
+    . "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
+    "github.com/codegangsta/cli"
+    "github.com/pivotal-golang/clock/fakeclock"
+    "github.com/pivotal-golang/lager"
 )
 
 var _ = Describe("CommandFactory", func() {

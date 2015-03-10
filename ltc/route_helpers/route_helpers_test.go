@@ -3,11 +3,11 @@ package route_helpers_test
 import (
 	"encoding/json"
 
+    . "github.com/onsi/ginkgo"
+    . "github.com/onsi/gomega"
+
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("RoutingInfoHelpers", func() {
@@ -122,4 +122,15 @@ var _ = Describe("RoutingInfoHelpers", func() {
 		})
 	})
 
+    Describe("HostnamesByPort", func() {
+        It("returns map of ports to slice of hostnames", func() {
+            expectedHostnamesByPort := map[uint16][]string{
+                11111: []string{"foo1.example.com", "bar1.examaple.com"},
+                22222: []string{"foo2.example.com", "bar2.examaple.com"},
+                33333: []string{"foo3.example.com", "bar3.examaple.com"},
+            }
+
+            Expect(routes.HostnamesByPort()).To(Equal(expectedHostnamesByPort))
+        })
+    })
 })

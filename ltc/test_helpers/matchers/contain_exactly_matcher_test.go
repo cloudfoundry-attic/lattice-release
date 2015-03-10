@@ -1,9 +1,12 @@
 package matchers_test
 
 import (
-	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
+    "fmt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 )
 
 type woohoo struct {
@@ -45,10 +48,39 @@ var _ = Describe("ContainExactlyMatcher", func() {
 			Expect([]string{"hi there", "ho there", "hallo"}).ToNot(matchers.ContainExactly(46))
 			Expect(23).ToNot(matchers.ContainExactly([]string{"hi there", "ho there", "hallo"}))
 			Expect("woo").ToNot(matchers.ContainExactly([]woohoo{woohoo{Flag: true}, woohoo{Flag: false}}))
+			Expect([]string{"hi there", "ho there", "hallo"}).ToNot(matchers.ContainExactly(nil))
 		})
-		Expect(failures[0]).To(Equal("Matcher can only take an array or slice"))
-		Expect(failures[1]).To(Equal("Matcher can only take an array or slice"))
-		Expect(failures[2]).To(Equal("Matcher can only take an array or slice"))
+		Expect(failures[0]).To(Equal("Matcher can only take an array, slice or map"))
+		Expect(failures[1]).To(Equal("Matcher can only take an array, slice or map"))
+		Expect(failures[2]).To(Equal("Matcher can only take an array, slice or map"))
+		Expect(failures[3]).To(Equal("Matcher can only take an array, slice or map"))
 	})
+
+    Context("when the matcher assertion fails", func() {
+        var (
+            sliceA, sliceB []string
+        )
+
+        BeforeEach(func() {
+            sliceA = []string{"hi there", "ho there", "hallo"}
+            sliceB = []string{"goodbye"}
+        })
+
+        It("prints a failure message for the matcher", func() {
+            failures := InterceptGomegaFailures(func() {
+                Expect(sliceA).To(matchers.ContainExactly(sliceB))
+            })
+            Expect(failures[0]).To(Equal(fmt.Sprintf("Expected %#v\n to contain exactly: %#v\n but it did not.", sliceA, sliceB)))
+        })
+
+        It("prints a negated failure meessage for the matcher", func() {
+            failures := InterceptGomegaFailures(func() {
+                Expect(sliceA).ToNot(matchers.ContainExactly(sliceA))
+            })
+            Expect(failures[0]).To(Equal(fmt.Sprintf("Expected %#v\n not to contain exactly: %#v\n but it did!", sliceA, sliceA)))
+        })
+    })
+
+
 
 })

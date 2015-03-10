@@ -1,8 +1,9 @@
 package docker_repository_name_formatter
 
 import (
-	"github.com/docker/docker/registry"
 	"strings"
+
+	"github.com/docker/docker/registry"
 )
 
 func FormatForReceptor(dockerImageReference string) (string, error) {

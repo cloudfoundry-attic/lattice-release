@@ -1,9 +1,10 @@
 package test_helpers
 
 import (
-	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/codegangsta/cli"
 )
 
 func ExecuteCommandWithArgs(command cli.Command, commandArgs []string) {
