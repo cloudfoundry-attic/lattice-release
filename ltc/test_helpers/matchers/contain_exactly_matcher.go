@@ -1,9 +1,9 @@
 package matchers
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
-	"errors"
 
 	"github.com/onsi/gomega/types"
 )
@@ -70,8 +70,8 @@ func isArraySliceMap(a interface{}) bool {
 }
 
 func isMap(a interface{}) bool {
-//	if a == nil {
-//		return false
-//	}
+	//	if a == nil {
+	//		return false
+	//	}
 	return reflect.TypeOf(a).Kind() == reflect.Map
 }

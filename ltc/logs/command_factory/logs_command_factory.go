@@ -3,22 +3,22 @@ package command_factory
 import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/codegangsta/cli"
-    "github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 )
 
 type logsCommandFactory struct {
-    output              *output.Output
-    tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter
-    exitHandler         exit_handler.ExitHandler
+	output              *output.Output
+	tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter
+	exitHandler         exit_handler.ExitHandler
 }
 
 func NewLogsCommandFactory(output *output.Output, tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter, exitHandler exit_handler.ExitHandler) *logsCommandFactory {
 	return &logsCommandFactory{
-			output:              output,
-			tailedLogsOutputter: tailedLogsOutputter,
-			exitHandler:         exitHandler,
+		output:              output,
+		tailedLogsOutputter: tailedLogsOutputter,
+		exitHandler:         exitHandler,
 	}
 }
 
@@ -35,13 +35,13 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 	return logsCommand
 }
 
-func (factory *logsCommandFactory) MakeDebugLogsCommand() cli.Command{
-    return cli.Command{
-        Name: "debug-logs",
-        Description: "Stream logs from the executor, rep, and garden-linux lattice components",
-        Usage: "ltc debug-logs",
-        Action: factory.tailDebugLogs,
-    }
+func (factory *logsCommandFactory) MakeDebugLogsCommand() cli.Command {
+	return cli.Command{
+		Name:        "debug-logs",
+		Description: "Stream logs from the executor, rep, and garden-linux lattice components",
+		Usage:       "ltc debug-logs",
+		Action:      factory.tailDebugLogs,
+	}
 }
 
 func (factory *logsCommandFactory) tailLogs(context *cli.Context) {

@@ -9,8 +9,8 @@ import (
 )
 
 type IntegrationTestCommandFactory struct {
-    integrationTestRunner integration_test.IntegrationTestRunner
-    output                *output.Output
+	integrationTestRunner integration_test.IntegrationTestRunner
+	output                *output.Output
 }
 
 func NewIntegrationTestCommandFactory(testRunner integration_test.IntegrationTestRunner, output *output.Output) *IntegrationTestCommandFactory {
@@ -43,5 +43,5 @@ func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.C
 }
 
 func (factory *IntegrationTestCommandFactory) runIntegrationTests(context *cli.Context) {
-    factory.integrationTestRunner.Run(context.Duration("timeout"), context.Bool("verbose"))
+	factory.integrationTestRunner.Run(context.Duration("timeout"), context.Bool("verbose"))
 }

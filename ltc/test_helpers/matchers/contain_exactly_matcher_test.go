@@ -1,7 +1,7 @@
 package matchers_test
 
 import (
-    "fmt"
+	"fmt"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -56,31 +56,29 @@ var _ = Describe("ContainExactlyMatcher", func() {
 		Expect(failures[3]).To(Equal("Matcher can only take an array, slice or map"))
 	})
 
-    Context("when the matcher assertion fails", func() {
-        var (
-            sliceA, sliceB []string
-        )
+	Context("when the matcher assertion fails", func() {
+		var (
+			sliceA, sliceB []string
+		)
 
-        BeforeEach(func() {
-            sliceA = []string{"hi there", "ho there", "hallo"}
-            sliceB = []string{"goodbye"}
-        })
+		BeforeEach(func() {
+			sliceA = []string{"hi there", "ho there", "hallo"}
+			sliceB = []string{"goodbye"}
+		})
 
-        It("prints a failure message for the matcher", func() {
-            failures := InterceptGomegaFailures(func() {
-                Expect(sliceA).To(matchers.ContainExactly(sliceB))
-            })
-            Expect(failures[0]).To(Equal(fmt.Sprintf("Expected %#v\n to contain exactly: %#v\n but it did not.", sliceA, sliceB)))
-        })
+		It("prints a failure message for the matcher", func() {
+			failures := InterceptGomegaFailures(func() {
+				Expect(sliceA).To(matchers.ContainExactly(sliceB))
+			})
+			Expect(failures[0]).To(Equal(fmt.Sprintf("Expected %#v\n to contain exactly: %#v\n but it did not.", sliceA, sliceB)))
+		})
 
-        It("prints a negated failure meessage for the matcher", func() {
-            failures := InterceptGomegaFailures(func() {
-                Expect(sliceA).ToNot(matchers.ContainExactly(sliceA))
-            })
-            Expect(failures[0]).To(Equal(fmt.Sprintf("Expected %#v\n not to contain exactly: %#v\n but it did!", sliceA, sliceA)))
-        })
-    })
-
-
+		It("prints a negated failure meessage for the matcher", func() {
+			failures := InterceptGomegaFailures(func() {
+				Expect(sliceA).ToNot(matchers.ContainExactly(sliceA))
+			})
+			Expect(failures[0]).To(Equal(fmt.Sprintf("Expected %#v\n not to contain exactly: %#v\n but it did!", sliceA, sliceA)))
+		})
+	})
 
 })

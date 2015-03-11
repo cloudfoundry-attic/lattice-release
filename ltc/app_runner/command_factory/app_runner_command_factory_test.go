@@ -15,14 +15,14 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher/fake_docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
-    "github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
-    "github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
-    "github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
-    . "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
-    "github.com/codegangsta/cli"
-    "github.com/pivotal-golang/clock/fakeclock"
-    "github.com/pivotal-golang/lager"
+	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
+	"github.com/codegangsta/cli"
+	"github.com/pivotal-golang/clock/fakeclock"
+	"github.com/pivotal-golang/lager"
 )
 
 var _ = Describe("CommandFactory", func() {
@@ -190,22 +190,22 @@ var _ = Describe("CommandFactory", func() {
 			Expect(createDockerAppParameters.WorkingDir).To(Equal("/"))
 		})
 
-        Context("when the Docker metadata fetcher returns an error", func() {
-            It("exposes the error from trying to fetch the Docker metadata", func() {
-                args := []string{
-                    "cool-web-app",
-                    "fun/app",
-                    "--",
-                    "/start-me-please",
-                }
-                dockerMetadataFetcher.FetchMetadataReturns(nil, errors.New("Docker Says No."))
+		Context("when the Docker metadata fetcher returns an error", func() {
+			It("exposes the error from trying to fetch the Docker metadata", func() {
+				args := []string{
+					"cool-web-app",
+					"fun/app",
+					"--",
+					"/start-me-please",
+				}
+				dockerMetadataFetcher.FetchMetadataReturns(nil, errors.New("Docker Says No."))
 
-                test_helpers.ExecuteCommandWithArgs(createCommand, args)
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-                Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
-                Expect(outputBuffer).To(test_helpers.Say("Error fetching image metadata: Docker Says No."))
-            })
-        })
+				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say("Error fetching image metadata: Docker Says No."))
+			})
+		})
 
 		Describe("exposed/monitored port behavior", func() {
 			It("blows up when you pass bad port strings", func() {
@@ -487,152 +487,152 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
-        Context("polling for the app to start after desiring the app", func() {
-            It("polls for the app to start with correct number of instances, outputting logs while the app starts", func() {
-                args := []string{
-                    "--instances=10",
-                    "cool-web-app",
-                    "fun/app",
-                    "--",
-                    "/start-me-please",
-                }
+		Context("polling for the app to start after desiring the app", func() {
+			It("polls for the app to start with correct number of instances, outputting logs while the app starts", func() {
+				args := []string{
+					"--instances=10",
+					"cool-web-app",
+					"fun/app",
+					"--",
+					"/start-me-please",
+				}
 
-                dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-                appRunner.RunningAppInstancesInfoReturns(0, false, nil)
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+				appRunner.RunningAppInstancesInfoReturns(0, false, nil)
 
-                commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
 
-                Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
+				Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
 
-                Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(Equal(1))
-                Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("cool-web-app"))
+				Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(Equal(1))
+				Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("cool-web-app"))
 
-                Expect(appRunner.RunningAppInstancesInfoCallCount()).To(Equal(1))
-                Expect(appRunner.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
+				Expect(appRunner.RunningAppInstancesInfoCallCount()).To(Equal(1))
+				Expect(appRunner.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
 
-                clock.IncrementBySeconds(1)
-                Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
+				clock.IncrementBySeconds(1)
+				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
-                appRunner.RunningAppInstancesInfoReturns(9, false, nil)
-                clock.IncrementBySeconds(1)
-                Expect(commandFinishChan).ShouldNot(BeClosed())
-                Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
+				appRunner.RunningAppInstancesInfoReturns(9, false, nil)
+				clock.IncrementBySeconds(1)
+				Expect(commandFinishChan).ShouldNot(BeClosed())
+				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
-                appRunner.RunningAppInstancesInfoReturns(10, false, nil)
-                clock.IncrementBySeconds(1)
+				appRunner.RunningAppInstancesInfoReturns(10, false, nil)
+				clock.IncrementBySeconds(1)
 
-                Eventually(commandFinishChan).Should(BeClosed())
-                Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
-                Expect(outputBuffer).To(test_helpers.SayNewLine())
-                Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-                Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io\n")))
-            })
+				Eventually(commandFinishChan).Should(BeClosed())
+				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io\n")))
+			})
 
-            It("alerts the user if the app does not start", func() {
-                args := []string{
-                    "cool-web-app",
-                    "fun/app",
-                    "--",
-                    "/start-me-please",
-                }
-                dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-                appRunner.RunningAppInstancesInfoReturns(0, false, nil)
+			It("alerts the user if the app does not start", func() {
+				args := []string{
+					"cool-web-app",
+					"fun/app",
+					"--",
+					"/start-me-please",
+				}
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+				appRunner.RunningAppInstancesInfoReturns(0, false, nil)
 
-                commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
 
-                Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
+				Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
 
-                clock.IncrementBySeconds(10)
+				clock.IncrementBySeconds(10)
 
-                Eventually(commandFinishChan).Should(BeClosed())
+				Eventually(commandFinishChan).Should(BeClosed())
 
-                Expect(outputBuffer).To(test_helpers.SayNewLine())
-                Expect(outputBuffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
-            })
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
+			})
 
-            Context("when there is a placement error when polling for the app to start", func() {
-                It("Prints an error message and exits", func() {
-                    args := []string{
-                        "--instances=10",
-                        "--ports=3000",
-                        "--working-dir=/applications",
-                        "cool-web-app",
-                        "fun/app",
-                        "--",
-                        "/start-me-please",
-                    }
+			Context("when there is a placement error when polling for the app to start", func() {
+				It("Prints an error message and exits", func() {
+					args := []string{
+						"--instances=10",
+						"--ports=3000",
+						"--working-dir=/applications",
+						"cool-web-app",
+						"fun/app",
+						"--",
+						"/start-me-please",
+					}
 
-                    dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-                    appRunner.RunningAppInstancesInfoReturns(0, false, nil)
+					dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+					appRunner.RunningAppInstancesInfoReturns(0, false, nil)
 
-                    commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
+					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
 
-                    Eventually(outputBuffer).Should(test_helpers.Say("Monitoring the app on port 3000..."))
-                    Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
+					Eventually(outputBuffer).Should(test_helpers.Say("Monitoring the app on port 3000..."))
+					Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
 
-                    Expect(appRunner.RunningAppInstancesInfoCallCount()).To(Equal(1))
-                    Expect(appRunner.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
+					Expect(appRunner.RunningAppInstancesInfoCallCount()).To(Equal(1))
+					Expect(appRunner.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
 
-                    clock.IncrementBySeconds(1)
-                    Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
-                    Expect(fakeExitHandler.ExitCalledWith).To(BeEmpty())
+					clock.IncrementBySeconds(1)
+					Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
+					Expect(fakeExitHandler.ExitCalledWith).To(BeEmpty())
 
-                    appRunner.RunningAppInstancesInfoReturns(9, true, nil)
-                    clock.IncrementBySeconds(1)
-                    Eventually(commandFinishChan).Should(BeClosed())
-                    Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.PlacementError}))
-                    Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
+					appRunner.RunningAppInstancesInfoReturns(9, true, nil)
+					clock.IncrementBySeconds(1)
+					Eventually(commandFinishChan).Should(BeClosed())
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.PlacementError}))
+					Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 
-                    Expect(outputBuffer).To(test_helpers.SayNewLine())
-                    Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
-                    Expect(outputBuffer).ToNot(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-                    Expect(outputBuffer).ToNot(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
-                })
-            })
-        })
+					Expect(outputBuffer).To(test_helpers.SayNewLine())
+					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
+					Expect(outputBuffer).ToNot(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
+					Expect(outputBuffer).ToNot(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
+				})
+			})
+		})
 
-        Context("invalid syntax", func() {
-            It("validates that the name and dockerImage are passed in", func() {
-                args := []string{
-                    "justonearg",
-                }
+		Context("invalid syntax", func() {
+			It("validates that the name and dockerImage are passed in", func() {
+				args := []string{
+					"justonearg",
+				}
 
-                test_helpers.ExecuteCommandWithArgs(createCommand, args)
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-                Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: APP_NAME and DOCKER_IMAGE are required"))
-                Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
-            })
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: APP_NAME and DOCKER_IMAGE are required"))
+				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+			})
 
-            It("validates that the terminator -- is passed in when a start command is specified", func() {
-                args := []string{
-                    "cool-web-app",
-                    "fun/app",
-                    "not-the-terminator",
-                    "start-me-up",
-                }
-                test_helpers.ExecuteCommandWithArgs(createCommand, args)
+			It("validates that the terminator -- is passed in when a start command is specified", func() {
+				args := []string{
+					"cool-web-app",
+					"fun/app",
+					"not-the-terminator",
+					"start-me-up",
+				}
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-                Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: '--' Required before start command"))
-                Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
-            })
-        })
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: '--' Required before start command"))
+				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+			})
+		})
 
-        Context("when the app runner returns an error", func() {
-            It("outputs error messages", func() {
-                args := []string{
-                    "cool-web-app",
-                    "fun/app",
-                    "--",
-                    "/start-me-please",
-                }
-                dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-                appRunner.CreateDockerAppReturns(errors.New("Major Fault"))
+		Context("when the app runner returns an error", func() {
+			It("outputs error messages", func() {
+				args := []string{
+					"cool-web-app",
+					"fun/app",
+					"--",
+					"/start-me-please",
+				}
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+				appRunner.CreateDockerAppReturns(errors.New("Major Fault"))
 
-                test_helpers.ExecuteCommandWithArgs(createCommand, args)
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-                Expect(outputBuffer).To(test_helpers.Say("Error Creating App: Major Fault"))
-            })
-        })
+				Expect(outputBuffer).To(test_helpers.Say("Error Creating App: Major Fault"))
+			})
+		})
 	})
 
 	Describe("ScaleAppCommand", func() {

@@ -100,17 +100,17 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 			})
 
 			It("eventually runs a docker app", func() {
-                debugLogsStream := runner.streamLogs(timeout, "lattice-debug")
-                defer func() { debugLogsStream.Terminate().Wait() }()
+				debugLogsStream := runner.streamLogs(timeout, "lattice-debug")
+				defer func() { debugLogsStream.Terminate().Wait() }()
 
-                runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app", "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Lattice User", "--quiet")
+				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app", "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Lattice User", "--quiet")
 
 				Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
-                Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("\\[.*executor.*\\|.*lattice-cell-\\d+.*\\]"))
-                Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("\\[.*rep.*\\|.*lattice-cell-\\d+.*\\]"))
-                Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("\\[.*garden-linux.*\\|.*lattice-cell-\\d+.*\\]"))
-                debugLogsStream.Terminate().Wait()
+				Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("\\[.*executor.*\\|.*lattice-cell-\\d+.*\\]"))
+				Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("\\[.*rep.*\\|.*lattice-cell-\\d+.*\\]"))
+				Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("\\[.*garden-linux.*\\|.*lattice-cell-\\d+.*\\]"))
+				debugLogsStream.Terminate().Wait()
 
 				logsStream := runner.streamLogs(timeout, appName)
 				defer func() { logsStream.Terminate().Wait() }()

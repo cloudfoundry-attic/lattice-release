@@ -1,19 +1,19 @@
 package docker_app_runner
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
-    "errors"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
-    "github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 const (
-    AttemptedToCreateLatticeDebugErrorMessage =reserved_app_ids.LatticeDebugLogStreamAppId + " is a reserved app name. It is used internally to stream debug logs for lattice components."
+	AttemptedToCreateLatticeDebugErrorMessage = reserved_app_ids.LatticeDebugLogStreamAppId + " is a reserved app name. It is used internally to stream debug logs for lattice components."
 )
 
 //go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
@@ -73,9 +73,9 @@ func New(receptorClient receptor.Client, systemDomain string) AppRunner {
 }
 
 func (appRunner *appRunner) CreateDockerApp(params CreateDockerAppParams) error {
-    if params.Name == reserved_app_ids.LatticeDebugLogStreamAppId {
-        return errors.New(AttemptedToCreateLatticeDebugErrorMessage)
-    }
+	if params.Name == reserved_app_ids.LatticeDebugLogStreamAppId {
+		return errors.New(AttemptedToCreateLatticeDebugErrorMessage)
+	}
 	if exists, err := appRunner.desiredLRPExists(params.Name); err != nil {
 		return err
 	} else if exists {
@@ -100,13 +100,13 @@ func (appRunner *appRunner) ScaleApp(name string, instances int) error {
 }
 
 func (appRunner *appRunner) UpdateAppRoutes(name string, routes RouteOverrides) error {
-    if exists, err := appRunner.desiredLRPExists(name); err != nil {
-        return err
-    } else if !exists {
-        return newAppNotStartedError(name)
-    }
+	if exists, err := appRunner.desiredLRPExists(name); err != nil {
+		return err
+	} else if !exists {
+		return newAppNotStartedError(name)
+	}
 
-    return appRunner.updateLrpRoutes(name, routes)
+	return appRunner.updateLrpRoutes(name, routes)
 }
 
 func (appRunner *appRunner) RemoveApp(name string) error {
@@ -136,7 +136,7 @@ func (appRunner *appRunner) AppExists(name string) (bool, error) {
 
 func (appRunner *appRunner) RunningAppInstancesInfo(name string) (count int, placementError bool, err error) {
 	runningInstances := 0
-    placementErrorOccurred := false
+	placementErrorOccurred := false
 	instances, err := appRunner.receptorClient.ActualLRPsByProcessGuid(name)
 	if err != nil {
 		return 0, false, err
@@ -147,9 +147,9 @@ func (appRunner *appRunner) RunningAppInstancesInfo(name string) (count int, pla
 			runningInstances += 1
 		}
 
-        if instance.PlacementError != "" {
-            placementErrorOccurred = true
-        }
+		if instance.PlacementError != "" {
+			placementErrorOccurred = true
+		}
 	}
 
 	return runningInstances, placementErrorOccurred, nil

@@ -100,16 +100,16 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("No apps to display."))
 		})
 
-        Context("when the app examiner returns an error", func() {
-            It("alerts the user fetching the list returns an error", func() {
-                listApps := []app_examiner.AppInfo{}
-                appExaminer.ListAppsReturns(listApps, errors.New("The list was lost"))
+		Context("when the app examiner returns an error", func() {
+			It("alerts the user fetching the list returns an error", func() {
+				listApps := []app_examiner.AppInfo{}
+				appExaminer.ListAppsReturns(listApps, errors.New("The list was lost"))
 
-                test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
+				test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
 
-                Expect(outputBuffer).To(test_helpers.Say("Error listing apps: The list was lost"))
-            })
-        })
+				Expect(outputBuffer).To(test_helpers.Say("Error listing apps: The list was lost"))
+			})
+		})
 	})
 
 	Describe("VisualizeCommand", func() {
@@ -137,15 +137,15 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
 		})
 
-        Context("when the app examiner returns an error", func() {
-            It("alerts the user fetching the cells returns an error", func() {
-                appExaminer.ListCellsReturns(nil, errors.New("The list was lost"))
+		Context("when the app examiner returns an error", func() {
+			It("alerts the user fetching the cells returns an error", func() {
+				appExaminer.ListCellsReturns(nil, errors.New("The list was lost"))
 
-                test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{})
+				test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{})
 
-                Expect(outputBuffer).To(test_helpers.Say("Error visualizing: The list was lost"))
-            })
-        })
+				Expect(outputBuffer).To(test_helpers.Say("Error visualizing: The list was lost"))
+			})
+		})
 
 		Context("When a rate flag is provided", func() {
 			var closeChan chan struct{}
@@ -233,20 +233,19 @@ var _ = Describe("CommandFactory", func() {
 					MemoryMB:     256,
 					CPUWeight:    100,
 					Ports:        []uint16{8887, 9000},
-					Routes:       route_helpers.AppRoutes{
-                        route_helpers.AppRoute{
-                            Port: 9090,
-                            Hostnames: []string{"route-me.my-fun-domain.com"},
-                        },
-                        route_helpers.AppRoute{
-                            Port: 8080,
-                            Hostnames: []string{"wompy-app.my-fun-domain.com", "cranky-app.my-fun-domain.com"},
-                        },
-
-                    },
-					LogGuid:      "a9s8dfa99023r",
-					LogSource:    "wompy-app-logz",
-					Annotation:   "I love this app. So wompy.",
+					Routes: route_helpers.AppRoutes{
+						route_helpers.AppRoute{
+							Port:      9090,
+							Hostnames: []string{"route-me.my-fun-domain.com"},
+						},
+						route_helpers.AppRoute{
+							Port:      8080,
+							Hostnames: []string{"wompy-app.my-fun-domain.com", "cranky-app.my-fun-domain.com"},
+						},
+					},
+					LogGuid:    "a9s8dfa99023r",
+					LogSource:  "wompy-app-logz",
+					Annotation: "I love this app. So wompy.",
 					ActualInstances: []app_examiner.InstanceInfo{
 						app_examiner.InstanceInfo{
 							InstanceGuid: "a0s9f-u9a8sf-aasdioasdjoi",

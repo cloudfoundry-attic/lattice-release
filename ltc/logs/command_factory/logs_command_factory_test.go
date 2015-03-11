@@ -11,35 +11,35 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
-    "github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
-    "github.com/codegangsta/cli"
+	"github.com/codegangsta/cli"
 )
 
 var _ = Describe("CommandFactory", func() {
-    var (
-        outputBuffer            *gbytes.Buffer
-        fakeTailedLogsOutputter *fake_tailed_logs_outputter.FakeTailedLogsOutputter
-        signalChan              chan os.Signal
-        exitHandler             exit_handler.ExitHandler
-    )
+	var (
+		outputBuffer            *gbytes.Buffer
+		fakeTailedLogsOutputter *fake_tailed_logs_outputter.FakeTailedLogsOutputter
+		signalChan              chan os.Signal
+		exitHandler             exit_handler.ExitHandler
+	)
 
-    BeforeEach(func() {
-        outputBuffer = gbytes.NewBuffer()
-        fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
-        signalChan = make(chan os.Signal)
-        exitHandler = &fake_exit_handler.FakeExitHandler{}
-    })
+	BeforeEach(func() {
+		outputBuffer = gbytes.NewBuffer()
+		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
+		signalChan = make(chan os.Signal)
+		exitHandler = &fake_exit_handler.FakeExitHandler{}
+	})
 
-    Describe("LogsCommand", func() {
+	Describe("LogsCommand", func() {
 
-        var logsCommand cli.Command
+		var logsCommand cli.Command
 
-        BeforeEach(func() {
-            commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
-            logsCommand = commandFactory.MakeLogsCommand()
-        })
+		BeforeEach(func() {
+			commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
+			logsCommand = commandFactory.MakeLogsCommand()
+		})
 
 		It("tails logs", func() {
 			args := []string{
@@ -60,21 +60,21 @@ var _ = Describe("CommandFactory", func() {
 		})
 	})
 
-    Describe("DebugLogsCommand", func(){
+	Describe("DebugLogsCommand", func() {
 
-        var debugLogsCommand cli.Command
+		var debugLogsCommand cli.Command
 
-        BeforeEach(func() {
-            commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
-            debugLogsCommand = commandFactory.MakeDebugLogsCommand()
-        })
+		BeforeEach(func() {
+			commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
+			debugLogsCommand = commandFactory.MakeDebugLogsCommand()
+		})
 
-        It("tails logs from the lattice-debug stream",func(){
-            test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{})
+		It("tails logs from the lattice-debug stream", func() {
+			test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{})
 
-            Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
-            Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal(reserved_app_ids.LatticeDebugLogStreamAppId))
-        })
-    })
+			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
+			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal(reserved_app_ids.LatticeDebugLogStreamAppId))
+		})
+	})
 
 })

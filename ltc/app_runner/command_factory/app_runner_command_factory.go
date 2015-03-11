@@ -28,15 +28,15 @@ const (
 )
 
 type AppRunnerCommandFactory struct {
-    appRunner             docker_app_runner.AppRunner
-    dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
-    output                *output.Output
-    timeout               time.Duration
-    domain                string
-    env                   []string
-    clock                 clock.Clock
-    tailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
-    exitHandler           exit_handler.ExitHandler
+	appRunner             docker_app_runner.AppRunner
+	dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
+	output                *output.Output
+	timeout               time.Duration
+	domain                string
+	env                   []string
+	clock                 clock.Clock
+	tailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
+	exitHandler           exit_handler.ExitHandler
 }
 
 type AppRunnerCommandFactoryConfig struct {
@@ -54,15 +54,15 @@ type AppRunnerCommandFactoryConfig struct {
 
 func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunnerCommandFactory {
 	return &AppRunnerCommandFactory{
-        appRunner:             config.AppRunner,
-        dockerMetadataFetcher: config.DockerMetadataFetcher,
-        output:                config.Output,
-        timeout:               config.Timeout,
-        domain:                config.Domain,
-        env:                   config.Env,
-        clock:                 config.Clock,
-        tailedLogsOutputter:   config.TailedLogsOutputter,
-        exitHandler:           config.ExitHandler,
+		appRunner:             config.AppRunner,
+		dockerMetadataFetcher: config.DockerMetadataFetcher,
+		output:                config.Output,
+		timeout:               config.Timeout,
+		domain:                config.Domain,
+		env:                   config.Env,
+		clock:                 config.Clock,
+		tailedLogsOutputter:   config.TailedLogsOutputter,
+		exitHandler:           config.ExitHandler,
 	}
 }
 
@@ -152,7 +152,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 	var scaleAppCommand = cli.Command{
 		Name:        "scale",
-        ShortName:   "sc",
+		ShortName:   "sc",
 		Description: "Scale a docker app on lattice",
 		Usage:       "ltc scale APP_NAME NUM_INSTANCES",
 		Action:      factory.scaleApp,
@@ -175,7 +175,7 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	var removeAppCommand = cli.Command{
 		Name:        "remove",
-        ShortName:   "r",
+		ShortName:   "r",
 		Description: "Stop and remove a docker app from lattice",
 		Usage:       "ltc remove APP_NAME",
 		Action:      factory.removeApp,
@@ -354,7 +354,7 @@ func (factory *AppRunnerCommandFactory) setAppInstances(appName string, instance
 
 	if ok {
 		factory.output.Say(colors.Green("App Scaled Successfully"))
-    }
+	}
 }
 
 func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(appName string, instances int, action string) bool {
@@ -373,9 +373,9 @@ func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(appName str
 		factory.exitHandler.Exit(exit_codes.PlacementError)
 		return false
 	} else if !ok {
-        factory.output.Say(colors.Red(appName + " took too long to " + action + "."))
+		factory.output.Say(colors.Red(appName + " took too long to " + action + "."))
 	}
-    return ok
+	return ok
 
 }
 

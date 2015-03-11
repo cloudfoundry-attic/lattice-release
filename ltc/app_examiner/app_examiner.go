@@ -1,8 +1,8 @@
 package app_examiner
 
 import (
-	"sort"
 	"errors"
+	"sort"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"

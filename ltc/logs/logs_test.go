@@ -144,30 +144,30 @@ var _ = Describe("logs", func() {
 		})
 	})
 
-    Describe("StopTailing", func() {
-        var (
-            consumer  *fakeConsumer
-            logReader logs.LogReader
-        )
+	Describe("StopTailing", func() {
+		var (
+			consumer  *fakeConsumer
+			logReader logs.LogReader
+		)
 
-        BeforeEach(func() {
-            consumer = NewFakeConsumer()
-            logReader = logs.NewLogReader(consumer)
-        })
+		BeforeEach(func() {
+			consumer = NewFakeConsumer()
+			logReader = logs.NewLogReader(consumer)
+		})
 
-        It("stops tailing logs when requested", func() {
-            doneChan := make(chan struct{})
-            go func() {
-                defer GinkgoRecover()
+		It("stops tailing logs when requested", func() {
+			doneChan := make(chan struct{})
+			go func() {
+				defer GinkgoRecover()
 
-                logReader.TailLogs("app-guid", func(*events.LogMessage) {}, func(error) {})
-                close(doneChan)
-            }()
+				logReader.TailLogs("app-guid", func(*events.LogMessage) {}, func(error) {})
+				close(doneChan)
+			}()
 
-            logReader.StopTailing()
+			logReader.StopTailing()
 
-            Expect(doneChan).To(BeClosed())
-        })
-    })
+			Expect(doneChan).To(BeClosed())
+		})
+	})
 
 })

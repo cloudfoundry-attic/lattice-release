@@ -3,7 +3,7 @@ package command_factory
 import (
 	"fmt"
 	"io"
-    "sort"
+	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -24,15 +24,15 @@ const TimestampDisplayLayout = "2006-01-02 15:04:05 (MST)"
 // IntSlice attaches the methods of sort.Interface to []uint16, sorting in increasing order.
 type UInt16Slice []uint16
 
-func (p UInt16Slice) Len() int              { return len(p) }
-func (p UInt16Slice) Less(i, j int) bool    { return p[i] < p[j] }
-func (p UInt16Slice) Swap(i, j int)         { p[i], p[j] = p[j], p[i] }
+func (p UInt16Slice) Len() int           { return len(p) }
+func (p UInt16Slice) Less(i, j int) bool { return p[i] < p[j] }
+func (p UInt16Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 type AppExaminerCommandFactory struct {
-    appExaminer app_examiner.AppExaminer
-    output      *output.Output
-    clock       clock.Clock
-    exitHandler exit_handler.ExitHandler
+	appExaminer app_examiner.AppExaminer
+	output      *output.Output
+	clock       clock.Clock
+	exitHandler exit_handler.ExitHandler
 }
 
 func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, output *output.Output, clock clock.Clock, exitHandler exit_handler.ExitHandler) *AppExaminerCommandFactory {
@@ -64,7 +64,7 @@ func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 
 	var startCommand = cli.Command{
 		Name:        "visualize",
-        ShortName:   "v",
+		ShortName:   "v",
 		Description: "Visualize the workload distribution across the Lattice Cells",
 		Usage:       "ltc visualize",
 		Action:      factory.visualizeCells,
@@ -77,7 +77,7 @@ func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 func (factory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
 	return cli.Command{
 		Name:        "status",
-        ShortName:   "st",
+		ShortName:   "st",
 		Description: "Displays detailed status information about the given application and its instances",
 		Usage:       "ltc status APP_NAME",
 		Action:      factory.appStatus,
@@ -188,27 +188,27 @@ func printAppInfo(w io.Writer, appInfo app_examiner.AppInfo) {
 }
 
 func printAppRoutes(w io.Writer, appInfo app_examiner.AppInfo) {
-    formatRoute := func(hostname string, port uint16) string {
-        return colors.Cyan(fmt.Sprintf("%s => %d", hostname, port))
-    }
+	formatRoute := func(hostname string, port uint16) string {
+		return colors.Cyan(fmt.Sprintf("%s => %d", hostname, port))
+	}
 
-    routeStringsByPort := appInfo.Routes.HostnamesByPort()
-    ports := make(UInt16Slice, 0, len(routeStringsByPort))
-    for port, _ := range routeStringsByPort {
-        ports = append(ports, port)
-    }
-    sort.Sort(ports)
+	routeStringsByPort := appInfo.Routes.HostnamesByPort()
+	ports := make(UInt16Slice, 0, len(routeStringsByPort))
+	for port, _ := range routeStringsByPort {
+		ports = append(ports, port)
+	}
+	sort.Sort(ports)
 
-    for portIndex, port := range ports {
-        routeStrs, _ := routeStringsByPort[uint16(port)]
-        for routeIndex, routeStr := range routeStrs {
-            if routeIndex == 0 && portIndex == 0 {
-                fmt.Fprintf(w, "%s\t%s\n", "Routes", formatRoute(routeStrs[0], port))
-            } else {
-                fmt.Fprintf(w, "\t%s\n", formatRoute(routeStr, port))
-            }
-        }
-    }
+	for portIndex, port := range ports {
+		routeStrs, _ := routeStringsByPort[uint16(port)]
+		for routeIndex, routeStr := range routeStrs {
+			if routeIndex == 0 && portIndex == 0 {
+				fmt.Fprintf(w, "%s\t%s\n", "Routes", formatRoute(routeStrs[0], port))
+			} else {
+				fmt.Fprintf(w, "\t%s\n", formatRoute(routeStr, port))
+			}
+		}
+	}
 }
 
 func printInstanceInfo(w io.Writer, headingPrefix string, actualInstances []app_examiner.InstanceInfo) {

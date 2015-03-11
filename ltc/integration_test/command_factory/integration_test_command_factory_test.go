@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-    "github.com/onsi/gomega/gbytes"
+	"github.com/onsi/gomega/gbytes"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test/fake_integration_test_runner"

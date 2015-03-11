@@ -4,17 +4,17 @@ import (
 	"errors"
 	"io"
 
-    . "github.com/onsi/ginkgo"
-    . "github.com/onsi/gomega"
-    "github.com/onsi/gomega/gbytes"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
-    "github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
-    "github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
-    "github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
-    "github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
-    "github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
 )
@@ -44,10 +44,10 @@ var _ = Describe("CommandFactory", func() {
 			Expect(config.Receptor()).To(Equal("http://olduser:oldpass@receptor.oldtarget.com"))
 		}
 
-        BeforeEach(func() {
-            commandFactory := command_factory.NewConfigCommandFactory(config, targetVerifier, stdinReader, output.New(outputBuffer), fakeExitHandler)
-            targetCommand = commandFactory.MakeTargetCommand()
-        })
+		BeforeEach(func() {
+			commandFactory := command_factory.NewConfigCommandFactory(config, targetVerifier, stdinReader, output.New(outputBuffer), fakeExitHandler)
+			targetCommand = commandFactory.MakeTargetCommand()
+		})
 
 		JustBeforeEach(func() {
 			config.SetTarget("oldtarget.com")
@@ -102,19 +102,19 @@ var _ = Describe("CommandFactory", func() {
 				Expect(targetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
 			})
 
-            Context("when the persister returns errors", func() {
-                BeforeEach(func() {
-                    commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("FAILURE setting api")), targetVerifier, stdinReader, output.New(outputBuffer), fakeExitHandler)
-                    targetCommand = commandFactory.MakeTargetCommand()
-                })
+			Context("when the persister returns errors", func() {
+				BeforeEach(func() {
+					commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("FAILURE setting api")), targetVerifier, stdinReader, output.New(outputBuffer), fakeExitHandler)
+					targetCommand = commandFactory.MakeTargetCommand()
+				})
 
-                It("bubbles up errors from setting the target", func() {
-                    test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
+				It("bubbles up errors from setting the target", func() {
+					test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
-                    Eventually(outputBuffer).Should(test_helpers.Say("FAILURE setting api"))
-                    verifyOldTargetStillSet()
-                })
-            })
+					Eventually(outputBuffer).Should(test_helpers.Say("FAILURE setting api"))
+					verifyOldTargetStillSet()
+				})
+			})
 		})
 
 		Context("setting target that requiries auth", func() {
@@ -143,38 +143,38 @@ var _ = Describe("CommandFactory", func() {
 				Expect(targetVerifier.VerifyTargetArgsForCall(1)).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
 			})
 
-            Context("scenarios that should not save the config", func() {
-                AfterEach(func() {
-                    verifyOldTargetStillSet()
-                    Expect(fakeExitHandler.ExitCalledWith[0]).To(Equal(exit_codes.BadTarget))
-                })
+			Context("scenarios that should not save the config", func() {
+				AfterEach(func() {
+					verifyOldTargetStillSet()
+					Expect(fakeExitHandler.ExitCalledWith[0]).To(Equal(exit_codes.BadTarget))
+				})
 
-                It("does not save the config if the receptor is never authorized", func() {
-                    commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
+				It("does not save the config if the receptor is never authorized", func() {
+					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
 
-                    Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
-                    stdinWriter.Write([]byte("notgood\n"))
-                    Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
-                    stdinWriter.Write([]byte("evenworse\n"))
+					Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
+					stdinWriter.Write([]byte("notgood\n"))
+					Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
+					stdinWriter.Write([]byte("evenworse\n"))
 
-                    Eventually(commandFinishChan).Should(BeClosed())
-                    Expect(outputBuffer).To(test_helpers.Say("Could not authorize target."))
-                })
+					Eventually(commandFinishChan).Should(BeClosed())
+					Expect(outputBuffer).To(test_helpers.Say("Could not authorize target."))
+				})
 
-                It("does not save the config if there is an error connecting to the receptor after prompting", func() {
-                    commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
+				It("does not save the config if there is an error connecting to the receptor after prompting", func() {
+					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
 
-                    Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
-                    stdinWriter.Write([]byte("notgood\n"))
-                    Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
+					Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
+					stdinWriter.Write([]byte("notgood\n"))
+					Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
 
-                    targetVerifier.VerifyTargetReturns(true, false, errors.New("Unknown Error"))
-                    stdinWriter.Write([]byte("evenworse\n"))
+					targetVerifier.VerifyTargetReturns(true, false, errors.New("Unknown Error"))
+					stdinWriter.Write([]byte("evenworse\n"))
 
-                    Eventually(commandFinishChan).Should(BeClosed())
-                    Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
-                })
-            })
+					Eventually(commandFinishChan).Should(BeClosed())
+					Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
+				})
+			})
 		})
 
 		Context("setting an invalid target", func() {
