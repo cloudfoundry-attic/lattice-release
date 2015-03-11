@@ -88,7 +88,7 @@ var _ = Describe("CommandFactory", func() {
 				"--env=COLOR",
 				"--env=UNSET",
 				"cool-web-app",
-				"fun/app:mycooltag",
+				"superfun/app:mycooltag",
 				"--",
 				"/start-me-please",
 				"AppArg0",
@@ -99,15 +99,13 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 			Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
-			repoName, tag := dockerMetadataFetcher.FetchMetadataArgsForCall(0)
-			Expect(repoName).To(Equal("fun/app"))
-			Expect(tag).To(Equal("mycooltag"))
+			Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("superfun/app:mycooltag"))
 
 			Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
 			createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
 			Expect(createDockerAppParameters.Name).To(Equal("cool-web-app"))
 			Expect(createDockerAppParameters.StartCommand).To(Equal("/start-me-please"))
-			Expect(createDockerAppParameters.DockerImagePath).To(Equal("fun/app:mycooltag"))
+			Expect(createDockerAppParameters.DockerImagePath).To(Equal("superfun/app:mycooltag"))
 			Expect(createDockerAppParameters.AppArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
 			Expect(createDockerAppParameters.Instances).To(Equal(22))
 			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "COLOR": "Blue", "UNSET": ""}))
@@ -136,7 +134,7 @@ var _ = Describe("CommandFactory", func() {
 			It("errors out when the port is not an int", func() {
 				args := []string{
 					"cool-web-app",
-					"fun/app",
+					"superfun/app",
 					"--routes=woo:aahh",
 					"--",
 					"/start-me-please",
@@ -152,7 +150,7 @@ var _ = Describe("CommandFactory", func() {
 			It("errors out when there is no colon", func() {
 				args := []string{
 					"cool-web-app",
-					"fun/app",
+					"superfun/app",
 					"--routes=8888",
 					"--",
 					"/start-me-please",
@@ -166,44 +164,80 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
-		It("creates a Docker based app with sensible defaults and checks for metadata to know the image exists", func() {
-			args := []string{
-				"cool-web-app",
-				"fun/app",
-				"--",
-				"/start-me-please",
-			}
-			appRunner.RunningAppInstancesInfoReturns(1, false, nil)
-			dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+		Describe("interactions with the docker metadata fetcher", func() {
+			Context("when the docker image is hosted on the docker hub registry", func() {
+				It("creates a Docker based app with sensible defaults and checks for metadata to know the image exists", func() {
+					args := []string{
+						"cool-web-app",
+						"awesome/app",
+						"--",
+						"/start-me-please",
+					}
+					appRunner.RunningAppInstancesInfoReturns(1, false, nil)
+					dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 
-			test_helpers.ExecuteCommandWithArgs(createCommand, args)
+					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-			Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-			createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
-			Expect(outputBuffer).To(test_helpers.Say("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
-			Expect(createDockerAppParameters.Privileged).To(Equal(false))
-			Expect(createDockerAppParameters.MemoryMB).To(Equal(128))
-			Expect(createDockerAppParameters.DiskMB).To(Equal(1024))
-			Expect(createDockerAppParameters.Ports.Monitored).To(Equal(uint16(8080)))
-			Expect(createDockerAppParameters.Ports.Exposed).To(Equal([]uint16{8080}))
-			Expect(createDockerAppParameters.Instances).To(Equal(1))
-			Expect(createDockerAppParameters.WorkingDir).To(Equal("/"))
-		})
+					Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
+					Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("awesome/app"))
 
-		Context("when the Docker metadata fetcher returns an error", func() {
-			It("exposes the error from trying to fetch the Docker metadata", func() {
-				args := []string{
-					"cool-web-app",
-					"fun/app",
-					"--",
-					"/start-me-please",
-				}
-				dockerMetadataFetcher.FetchMetadataReturns(nil, errors.New("Docker Says No."))
+					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
+					createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+					Expect(outputBuffer).To(test_helpers.Say("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
+					Expect(createDockerAppParameters.Privileged).To(Equal(false))
+					Expect(createDockerAppParameters.MemoryMB).To(Equal(128))
+					Expect(createDockerAppParameters.DiskMB).To(Equal(1024))
+					Expect(createDockerAppParameters.Ports.Monitored).To(Equal(uint16(8080)))
+					Expect(createDockerAppParameters.Ports.Exposed).To(Equal([]uint16{8080}))
+					Expect(createDockerAppParameters.Instances).To(Equal(1))
+					Expect(createDockerAppParameters.WorkingDir).To(Equal("/"))
+				})
+			})
 
-				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+			Context("when the docker image is hosted on a custom registry", func() {
+				It("creates a docker based app with sensible defaults and checks for metadata to know the image exists", func() {
+					args := []string{
+						"cool-web-app",
+						"super.fun.time:5000/mega-app:hallo",
+						"--",
+						"/start-me-please",
+					}
+					appRunner.RunningAppInstancesInfoReturns(1, false, nil)
+					dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say("Error fetching image metadata: Docker Says No."))
+					test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+					Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
+					Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("super.fun.time:5000/mega-app:hallo"))
+
+					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
+					createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+					Expect(outputBuffer).To(test_helpers.Say("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
+					Expect(createDockerAppParameters.Privileged).To(Equal(false))
+					Expect(createDockerAppParameters.MemoryMB).To(Equal(128))
+					Expect(createDockerAppParameters.DiskMB).To(Equal(1024))
+					Expect(createDockerAppParameters.Ports.Monitored).To(Equal(uint16(8080)))
+					Expect(createDockerAppParameters.Ports.Exposed).To(Equal([]uint16{8080}))
+					Expect(createDockerAppParameters.Instances).To(Equal(1))
+					Expect(createDockerAppParameters.WorkingDir).To(Equal("/"))
+				})
+			})
+
+			Context("when the docker metadata fetcher returns an error", func() {
+				It("exposes the error from trying to fetch the Docker metadata", func() {
+					args := []string{
+						"cool-web-app",
+						"superfun/app",
+						"--",
+						"/start-me-please",
+					}
+					dockerMetadataFetcher.FetchMetadataReturns(nil, errors.New("Docker Says No."))
+
+					test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+					Expect(outputBuffer).To(test_helpers.Say("Error fetching image metadata: Docker Says No."))
+				})
 			})
 		})
 
@@ -213,7 +247,7 @@ var _ = Describe("CommandFactory", func() {
 					"--ports=1000,98feh34",
 					"--monitored-port=1000",
 					"cool-web-app",
-					"fun/app:mycooltag",
+					"superfun/app:mycooltag",
 					"--",
 					"/start-me-please",
 				}
@@ -228,7 +262,7 @@ var _ = Describe("CommandFactory", func() {
 			It("errors out when any port is > 65535 (max Linux port number)", func() {
 				args := []string{
 					"cool-web-app",
-					"fun/app",
+					"superfun/app",
 					"--ports=8080,65536",
 					"--monitored-port=8080",
 					"--",
@@ -246,7 +280,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"--ports=1000,1234",
 					"cool-web-app",
-					"fun/app:mycooltag",
+					"superfun/app:mycooltag",
 					"--",
 					"/start-me-please",
 				}
@@ -262,7 +296,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"--ports=1234",
 					"cool-web-app",
-					"fun/app:mycooltag",
+					"superfun/app:mycooltag",
 					"--",
 					"/start-me-please",
 				}
@@ -281,7 +315,7 @@ var _ = Describe("CommandFactory", func() {
 					It("still works", func() {
 						args := []string{
 							"cool-web-app",
-							"fun/app",
+							"superfun/app",
 							"--ports=8080,9090",
 							"--no-monitor",
 							"--",
@@ -303,7 +337,7 @@ var _ = Describe("CommandFactory", func() {
 					It("exposes 8080 but does not monitor it", func() {
 						args := []string{
 							"cool-web-app",
-							"fun/app",
+							"superfun/app",
 							"--no-monitor",
 							"--",
 							"/start-me-please",
@@ -318,12 +352,11 @@ var _ = Describe("CommandFactory", func() {
 						Expect(createDockerAppParameters.Ports.Exposed).To(Equal([]uint16{8080}))
 					})
 				})
-
 				Context("when the docker metadata has ports", func() {
 					It("exposes the ports from the metadata but does not monitor them", func() {
 						args := []string{
 							"cool-web-app",
-							"fun/app",
+							"superfun/app",
 							"--no-monitor",
 							"--",
 							"/start-me-please",
@@ -352,7 +385,7 @@ var _ = Describe("CommandFactory", func() {
 			It("sets the working dir from the Docker metadata", func() {
 				args := []string{
 					"cool-web-app",
-					"fun/app",
+					"superfun/app",
 					"--",
 					"/start-me-please",
 				}
@@ -370,7 +403,7 @@ var _ = Describe("CommandFactory", func() {
 			It("sets the ports from the Docker metadata", func() {
 				args := []string{
 					"cool-web-app",
-					"fun/app",
+					"superfun/app",
 					"--",
 					"/start-me-please",
 				}
@@ -397,7 +430,7 @@ var _ = Describe("CommandFactory", func() {
 				It("exposes 8080 but does not monitor it", func() {
 					args := []string{
 						"cool-web-app",
-						"fun/app",
+						"superfun/app",
 						"--no-monitor",
 						"--",
 						"/start-me-please",
@@ -417,7 +450,7 @@ var _ = Describe("CommandFactory", func() {
 				It("exposes the ports from the metadata but does not monitor them", func() {
 					args := []string{
 						"cool-web-app",
-						"fun/app",
+						"superfun/app",
 						"--no-monitor",
 						"--",
 						"/start-me-please",
@@ -456,10 +489,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
-
-				repoName, tag := dockerMetadataFetcher.FetchMetadataArgsForCall(0)
-				Expect(repoName).To(Equal("fun-org/app"))
-				Expect(tag).To(Equal("latest"))
+				Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("fun-org/app"))
 
 				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
 				createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
@@ -492,7 +522,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"--instances=10",
 					"cool-web-app",
-					"fun/app",
+					"superfun/app",
 					"--",
 					"/start-me-please",
 				}
@@ -531,7 +561,7 @@ var _ = Describe("CommandFactory", func() {
 			It("alerts the user if the app does not start", func() {
 				args := []string{
 					"cool-web-app",
-					"fun/app",
+					"superfun/app",
 					"--",
 					"/start-me-please",
 				}
@@ -557,7 +587,7 @@ var _ = Describe("CommandFactory", func() {
 						"--ports=3000",
 						"--working-dir=/applications",
 						"cool-web-app",
-						"fun/app",
+						"superfun/app",
 						"--",
 						"/start-me-please",
 					}
@@ -606,7 +636,7 @@ var _ = Describe("CommandFactory", func() {
 			It("validates that the terminator -- is passed in when a start command is specified", func() {
 				args := []string{
 					"cool-web-app",
-					"fun/app",
+					"superfun/app",
 					"not-the-terminator",
 					"start-me-up",
 				}
@@ -621,7 +651,7 @@ var _ = Describe("CommandFactory", func() {
 			It("outputs error messages", func() {
 				args := []string{
 					"cool-web-app",
-					"fun/app",
+					"superfun/app",
 					"--",
 					"/start-me-please",
 				}

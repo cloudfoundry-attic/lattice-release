@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/nat"
 )
@@ -17,7 +18,7 @@ type ImageMetadata struct {
 
 //go:generate counterfeiter -o fake_docker_metadata_fetcher/fake_docker_metadata_fetcher.go . DockerMetadataFetcher
 type DockerMetadataFetcher interface {
-	FetchMetadata(repoName string, tag string) (*ImageMetadata, error)
+	FetchMetadata(dockerImageReference string) (*ImageMetadata, error)
 }
 
 type dockerMetadataFetcher struct {
@@ -30,9 +31,21 @@ func New(sessionFactory DockerSessionFactory) DockerMetadataFetcher {
 	}
 }
 
-func (fetcher *dockerMetadataFetcher) FetchMetadata(repoName string, tag string) (*ImageMetadata, error) {
+func (fetcher *dockerMetadataFetcher) FetchMetadata(dockerImageReference string) (*ImageMetadata, error) {
 
-	session, err := fetcher.dockerSessionFactory.MakeSession(repoName)
+	var indexAndRepoName string
+	indexName, repoName, tag, err := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImageReference)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(indexName) > 0 {
+		indexAndRepoName = indexName + "/" + repoName
+	} else {
+		indexAndRepoName = repoName
+	}
+
+	session, err := fetcher.dockerSessionFactory.MakeSession(indexAndRepoName)
 	if err != nil {
 		return nil, err
 	}

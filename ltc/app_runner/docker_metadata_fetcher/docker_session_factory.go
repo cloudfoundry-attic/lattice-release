@@ -27,7 +27,6 @@ func NewDockerSessionFactory() *dockerSessionFactory {
 
 func (factory *dockerSessionFactory) MakeSession(repoName string) (DockerSession, error) {
 	repositoryInfo, err := registry.ParseRepositoryInfo(repoName)
-
 	if err != nil {
 		return nil, fmt.Errorf("Error resolving Docker repository name:\n" + err.Error())
 	}

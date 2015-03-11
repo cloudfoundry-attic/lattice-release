@@ -10,7 +10,6 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
@@ -212,8 +211,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		appArgs = context.Args()[4:]
 	}
 
-	repoName, tag := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImage)
-	imageMetadata, err := factory.dockerMetadataFetcher.FetchMetadata(repoName, tag)
+	imageMetadata, err := factory.dockerMetadataFetcher.FetchMetadata(dockerImage)
 	if err != nil {
 		factory.output.Say(fmt.Sprintf("Error fetching image metadata: %s", err))
 		return
