@@ -22,8 +22,6 @@ type AppRunner interface {
 	ScaleApp(name string, instances int) error
 	UpdateAppRoutes(name string, routes RouteOverrides) error
 	RemoveApp(name string) error
-	AppExists(name string) (bool, error)
-	RunningAppInstancesInfo(name string) (int, bool, error)
 }
 
 type PortConfig struct {
@@ -51,6 +49,7 @@ type CreateDockerAppParams struct {
 	Privileged           bool
 	Monitor              bool
 	Instances            int
+	CPUWeight            uint
 	MemoryMB             int
 	DiskMB               int
 	Ports                PortConfig
@@ -203,6 +202,7 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 		Instances:            params.Instances,
 		Stack:                "lucid64",
 		Routes:               appRoutes.RoutingInfo(),
+		CPUWeight:            params.CPUWeight,
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
 		Privileged:           true,

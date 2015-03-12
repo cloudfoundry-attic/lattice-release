@@ -83,6 +83,11 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Value: &cli.StringSlice{},
 		},
 		cli.IntFlag{
+			Name:  "cpu-weight",
+			Usage: "CPU weight to apply",
+			Value: 100,
+		},
+		cli.IntFlag{
 			Name:  "memory-mb, m",
 			Usage: "container memory limit in MB",
 			Value: 128,
@@ -187,6 +192,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	workingDirFlag := context.String("working-dir")
 	envVarsFlag := context.StringSlice("env")
 	instancesFlag := context.Int("instances")
+	cpuWeightFlag := uint(context.Int("cpu-weight"))
 	memoryMBFlag := context.Int("memory-mb")
 	diskMBFlag := context.Int("disk-mb")
 	portsFlag := context.String("ports")
@@ -209,6 +215,9 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		return
 	case len(context.Args()) > 4:
 		appArgs = context.Args()[4:]
+	case cpuWeightFlag < 1 || cpuWeightFlag > 100:
+		factory.output.IncorrectUsage("Invalid CPU Weight")
+		return
 	}
 
 	imageMetadata, err := factory.dockerMetadataFetcher.FetchMetadata(dockerImage)
@@ -265,6 +274,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		Privileged:           context.Bool("run-as-root"),
 		Monitor:              !noMonitorFlag,
 		Instances:            instancesFlag,
+		CPUWeight:            cpuWeightFlag,
 		MemoryMB:             memoryMBFlag,
 		DiskMB:               diskMBFlag,
 		Ports:                portConfig,

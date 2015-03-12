@@ -75,6 +75,7 @@ var _ = Describe("CommandFactory", func() {
 
 		It("creates a Docker based app as specified in the command via the AppRunner", func() {
 			args := []string{
+				"--cpu-weight=57",
 				"--memory-mb=12",
 				"--disk-mb=12",
 				"--ports=3000,2000,1111",
@@ -110,6 +111,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(createDockerAppParameters.Instances).To(Equal(22))
 			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "COLOR": "Blue", "UNSET": ""}))
 			Expect(createDockerAppParameters.Privileged).To(Equal(true))
+			Expect(createDockerAppParameters.CPUWeight).To(Equal(uint(57)))
 			Expect(createDockerAppParameters.MemoryMB).To(Equal(12))
 			Expect(createDockerAppParameters.DiskMB).To(Equal(12))
 			Expect(createDockerAppParameters.Monitor).To(Equal(true))
@@ -622,6 +624,19 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		Context("invalid syntax", func() {
+			It("validates the CPU weight is in 1-100", func() {
+				args := []string{
+					"cool-app",
+					"greatapp/greatapp",
+					"--cpu-weight=0",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Invalid CPU Weight"))
+				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+			})
+
 			It("validates that the name and dockerImage are passed in", func() {
 				args := []string{
 					"justonearg",
