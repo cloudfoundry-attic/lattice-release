@@ -42,6 +42,7 @@ The default behavior of `ltc create`, outlined above, can be modified via a seri
 - **`--env NAME=VALUE`** specifies environment variables. You can have multiple `--env` flags.  These are merged *on top of* the Environment variables extracted from the Docker image metadata.
 - **`--memory-mb=128`** specifies the memory limit to apply to the container.  To allow unlimited memory usage, set this to 0.
 - **`--disk-mb=1024`** specifies the disk limit to apply to the container.  This governs any writes *on top of* the root filesystem mounted into the container.  To allow unlimited disk usage, set this to 0.
+- **`--cpu-weidht=100`** specifies the relative CPU weight to apply to the container (scale 1-100).ls
 - **`--instances=1`** specifies the number of instances of the application to launch.  This can also be modified after the application is started.
 - **`--no-monitor`** disables health monitoring.  Lattice will consider the application crashed only if it exits.
 
