@@ -250,9 +250,14 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	}
 
 	if startCommand == "" {
-		factory.output.Say("No start command specified, using start command from the image metadata...\n")
+		if len(imageMetadata.StartCommand) == 0 {
+			factory.output.SayLine("Unable to determine start command from image metadata.")
+			return
+		}
 
+		factory.output.Say("No start command specified, using start command from the image metadata...\n")
 		startCommand = imageMetadata.StartCommand[0]
+
 		factory.output.Say("Start command is:\n")
 		factory.output.Say(strings.Join(imageMetadata.StartCommand, " ") + "\n")
 

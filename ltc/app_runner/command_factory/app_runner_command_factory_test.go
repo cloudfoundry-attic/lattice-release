@@ -516,6 +516,18 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).ToNot(test_helpers.Say("Working directory is:"))
+				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
+			})
+
+			Context("when the metadata also has no start command", func() {
+				It("outputs an error message and exits", func() {
+					dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+
+					test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+					Expect(outputBuffer).To(test_helpers.Say("Unable to determine start command from image metadata.\n"))
+					Expect(appRunner.CreateDockerAppCallCount()).To(BeZero())
+				})
 			})
 		})
 
