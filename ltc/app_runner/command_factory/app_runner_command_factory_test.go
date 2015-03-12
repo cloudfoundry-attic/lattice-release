@@ -573,13 +573,14 @@ var _ = Describe("CommandFactory", func() {
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
 
 				clock.IncrementBySeconds(10)
 
 				Eventually(commandFinishChan).Should(BeClosed())
 
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
 				Expect(outputBuffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
 			})
 
 			Context("when there is a placement error when polling for the app to start", func() {
@@ -618,7 +619,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
 					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
 					Expect(outputBuffer).ToNot(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-					Expect(outputBuffer).ToNot(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
+					Expect(outputBuffer).ToNot(test_helpers.Say(colors.Red("cool-web-app took too long to start.\n")))
 				})
 			})
 		})
@@ -762,13 +763,14 @@ var _ = Describe("CommandFactory", func() {
 			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
 			Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
 
 			clock.IncrementBySeconds(10)
 
 			Eventually(commandFinishChan).Should(BeClosed())
 
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
 			Expect(outputBuffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to scale.")))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
 		})
 
 		Context("when the receptor returns errors", func() {

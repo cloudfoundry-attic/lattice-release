@@ -381,7 +381,7 @@ func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(appName str
 		factory.exitHandler.Exit(exit_codes.PlacementError)
 		return false
 	} else if !ok {
-		factory.output.Say(colors.Red(appName + " took too long to " + action + "."))
+		factory.output.SayLine(colors.Red(appName + " took too long to " + action + "."))
 	}
 	return ok
 
