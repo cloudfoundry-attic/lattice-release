@@ -22,6 +22,8 @@ type AppRunner interface {
 	ScaleApp(name string, instances int) error
 	UpdateAppRoutes(name string, routes RouteOverrides) error
 	RemoveApp(name string) error
+	AppExists(name string) (bool, error)
+	RunningAppInstancesInfo(name string) (int, bool, error)
 }
 
 type PortConfig struct {
