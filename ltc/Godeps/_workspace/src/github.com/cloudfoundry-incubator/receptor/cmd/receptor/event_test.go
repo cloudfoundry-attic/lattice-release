@@ -215,7 +215,7 @@ var _ = Describe("Event", func() {
 			Ω(actualLRPChangedEvent.After).Should(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
 
 			By("evacuating the ActualLRP")
-			err = bbs.EvacuateRunningActualLRP(logger, key, containerKey, netInfo, 0)
+			_, err = bbs.EvacuateRunningActualLRP(logger, key, containerKey, netInfo, 0)
 			Ω(err).Should(Equal(bbserrors.ErrServiceUnavailable))
 
 			evacuatingLRP, err := bbs.EvacuatingActualLRPByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
@@ -238,7 +238,7 @@ var _ = Describe("Event", func() {
 			Eventually(events).Should(Receive())
 
 			evacuatingBefore := evacuatingLRP
-			err = bbs.EvacuateRunningActualLRP(logger, key, newContainerKey, netInfo, 0)
+			_, err = bbs.EvacuateRunningActualLRP(logger, key, newContainerKey, netInfo, 0)
 			Ω(err).Should(Equal(bbserrors.ErrServiceUnavailable))
 
 			evacuatingLRP, err = bbs.EvacuatingActualLRPByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)

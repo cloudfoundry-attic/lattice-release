@@ -12,25 +12,22 @@ import (
 
 var _ = Describe("CfHttp", func() {
 	Describe("NewClient", func() {
-		Context("when a default timeout has been initialized", func() {
-			var timeout time.Duration
+		var timeout time.Duration
 
-			BeforeEach(func() {
-				timeout = 1 * time.Second
-				cf_http.Initialize(timeout)
-			})
-
-			It("returns an http client with the default timeout set", func() {
-				Ω(*cf_http.NewClient()).Should(Equal(http.Client{
-					Timeout: timeout,
-				}))
-			})
+		BeforeEach(func() {
+			timeout = 1 * time.Second
 		})
 
-		Context("when nothing has been initialized", func() {
-			It("returns a DefaultClient-equivalent http client", func() {
+		It("returns an http client", func() {
+			By("Getting a client before initializaqtion", func() {
 				Ω(*cf_http.NewClient()).Should(Equal(*http.DefaultClient))
 			})
+
+			cf_http.Initialize(timeout)
+
+			Ω(*cf_http.NewClient()).Should(Equal(http.Client{
+				Timeout: timeout,
+			}))
 		})
 	})
 })

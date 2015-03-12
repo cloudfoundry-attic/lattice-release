@@ -55,7 +55,7 @@ var _ = Describe("Actual LRP API", func() {
 		evacuatingLRPKey = models.NewActualLRPKey("process-guid-0", 0, "domain-0")
 		containerKey := models.NewActualLRPContainerKey("instance-guid-0", "cell-id")
 		netInfo := models.NewActualLRPNetInfo("the-host", []models.PortMapping{{ContainerPort: 80, HostPort: 1000}})
-		err = bbs.EvacuateRunningActualLRP(logger, evacuatingLRPKey, containerKey, netInfo, 0)
+		_, err = bbs.EvacuateRunningActualLRP(logger, evacuatingLRPKey, containerKey, netInfo, 0)
 		Ω(err).Should(Equal(bbserrors.ErrServiceUnavailable))
 	})
 
