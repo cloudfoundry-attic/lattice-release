@@ -239,21 +239,21 @@ var _ = Describe("ActualLRP", func() {
 		})
 	})
 
-	Describe("ActualLRPContainerKey", func() {
+	Describe("ActualLRPInstanceKey", func() {
 		Describe("Validate", func() {
-			var actualLRPContainerKey models.ActualLRPContainerKey
+			var actualLRPInstanceKey models.ActualLRPInstanceKey
 
 			Context("when both instance guid and cell id are specified", func() {
 				It("returns nil", func() {
-					actualLRPContainerKey = models.NewActualLRPContainerKey("instance-guid", "cell-id")
-					Ω(actualLRPContainerKey.Validate()).Should(BeNil())
+					actualLRPInstanceKey = models.NewActualLRPInstanceKey("instance-guid", "cell-id")
+					Ω(actualLRPInstanceKey.Validate()).Should(BeNil())
 				})
 			})
 
 			Context("when both instance guid and cell id are empty", func() {
 				It("returns a validation error", func() {
-					actualLRPContainerKey = models.NewActualLRPContainerKey("", "")
-					Ω(actualLRPContainerKey.Validate()).Should(ConsistOf(
+					actualLRPInstanceKey = models.NewActualLRPInstanceKey("", "")
+					Ω(actualLRPInstanceKey.Validate()).Should(ConsistOf(
 						models.ErrInvalidField{"cell_id"},
 						models.ErrInvalidField{"instance_guid"},
 					))
@@ -262,15 +262,15 @@ var _ = Describe("ActualLRP", func() {
 
 			Context("when only the instance guid is specified", func() {
 				It("returns a validation error", func() {
-					actualLRPContainerKey = models.NewActualLRPContainerKey("instance-guid", "")
-					Ω(actualLRPContainerKey.Validate()).Should(ConsistOf(models.ErrInvalidField{"cell_id"}))
+					actualLRPInstanceKey = models.NewActualLRPInstanceKey("instance-guid", "")
+					Ω(actualLRPInstanceKey.Validate()).Should(ConsistOf(models.ErrInvalidField{"cell_id"}))
 				})
 			})
 
 			Context("when only the cell id is specified", func() {
 				It("returns a validation error", func() {
-					actualLRPContainerKey = models.NewActualLRPContainerKey("", "cell-id")
-					Ω(actualLRPContainerKey.Validate()).Should(ConsistOf(models.ErrInvalidField{"instance_guid"}))
+					actualLRPInstanceKey = models.NewActualLRPInstanceKey("", "cell-id")
+					Ω(actualLRPInstanceKey.Validate()).Should(ConsistOf(models.ErrInvalidField{"instance_guid"}))
 				})
 			})
 		})
@@ -417,7 +417,7 @@ var _ = Describe("ActualLRP", func() {
 	Describe("ActualLRP", func() {
 		var lrp models.ActualLRP
 		var lrpKey models.ActualLRPKey
-		var containerKey models.ActualLRPContainerKey
+		var instanceKey models.ActualLRPInstanceKey
 		var netInfo models.ActualLRPNetInfo
 
 		lrpPayload := `{
@@ -442,19 +442,19 @@ var _ = Describe("ActualLRP", func() {
 
 		BeforeEach(func() {
 			lrpKey = models.NewActualLRPKey("some-guid", 2, "some-domain")
-			containerKey = models.NewActualLRPContainerKey("some-instance-guid", "some-cell-id")
+			instanceKey = models.NewActualLRPInstanceKey("some-instance-guid", "some-cell-id")
 			netInfo = models.NewActualLRPNetInfo("1.2.3.4", []models.PortMapping{
 				{ContainerPort: 8080},
 				{ContainerPort: 8081, HostPort: 1234},
 			})
 
 			lrp = models.ActualLRP{
-				ActualLRPKey:          lrpKey,
-				ActualLRPContainerKey: containerKey,
-				ActualLRPNetInfo:      netInfo,
-				CrashCount:            1,
-				State:                 models.ActualLRPStateRunning,
-				Since:                 1138,
+				ActualLRPKey:         lrpKey,
+				ActualLRPInstanceKey: instanceKey,
+				ActualLRPNetInfo:     netInfo,
+				CrashCount:           1,
+				State:                models.ActualLRPStateRunning,
+				Since:                1138,
 				ModificationTag: models.ModificationTag{
 					Epoch: "some-guid",
 					Index: 50,
@@ -526,7 +526,7 @@ var _ = Describe("ActualLRP", func() {
 				})
 
 				It("is not allowed", func() {
-					Ω(before.AllowsTransitionTo(afterKey, before.ActualLRPContainerKey, before.State)).Should(BeFalse())
+					Ω(before.AllowsTransitionTo(afterKey, before.ActualLRPInstanceKey, before.State)).Should(BeFalse())
 				})
 			})
 
@@ -537,7 +537,7 @@ var _ = Describe("ActualLRP", func() {
 				})
 
 				It("is not allowed", func() {
-					Ω(before.AllowsTransitionTo(afterKey, before.ActualLRPContainerKey, before.State)).Should(BeFalse())
+					Ω(before.AllowsTransitionTo(afterKey, before.ActualLRPInstanceKey, before.State)).Should(BeFalse())
 				})
 			})
 
@@ -548,35 +548,35 @@ var _ = Describe("ActualLRP", func() {
 				})
 
 				It("is not allowed", func() {
-					Ω(before.AllowsTransitionTo(afterKey, before.ActualLRPContainerKey, before.State)).Should(BeFalse())
+					Ω(before.AllowsTransitionTo(afterKey, before.ActualLRPInstanceKey, before.State)).Should(BeFalse())
 				})
 			})
 
 			Context("when the ProcessGuid, Index, and Domain are equivalent", func() {
 				var (
-					emptyKey                 = models.NewActualLRPContainerKey("", "")
-					claimedKey               = models.NewActualLRPContainerKey("some-instance-guid", "some-cell-id")
-					differentInstanceGuidKey = models.NewActualLRPContainerKey("some-other-instance-guid", "some-cell-id")
-					differentCellIDKey       = models.NewActualLRPContainerKey("some-instance-guid", "some-other-cell-id")
+					emptyKey                 = models.NewActualLRPInstanceKey("", "")
+					claimedKey               = models.NewActualLRPInstanceKey("some-instance-guid", "some-cell-id")
+					differentInstanceGuidKey = models.NewActualLRPInstanceKey("some-other-instance-guid", "some-cell-id")
+					differentCellIDKey       = models.NewActualLRPInstanceKey("some-instance-guid", "some-other-cell-id")
 				)
 
 				type stateTableEntry struct {
-					BeforeState        models.ActualLRPState
-					AfterState         models.ActualLRPState
-					BeforeContainerKey models.ActualLRPContainerKey
-					AfterContainerKey  models.ActualLRPContainerKey
-					Allowed            bool
+					BeforeState       models.ActualLRPState
+					AfterState        models.ActualLRPState
+					BeforeInstanceKey models.ActualLRPInstanceKey
+					AfterInstanceKey  models.ActualLRPInstanceKey
+					Allowed           bool
 				}
 
 				var EntryToString = func(entry stateTableEntry) string {
 					return fmt.Sprintf("is %t when the before has state %s and instance guid '%s' and cell id '%s' and the after has state %s and instance guid '%s' and cell id '%s'",
 						entry.Allowed,
 						entry.BeforeState,
-						entry.BeforeContainerKey.InstanceGuid,
-						entry.BeforeContainerKey.CellID,
+						entry.BeforeInstanceKey.InstanceGuid,
+						entry.BeforeInstanceKey.CellID,
 						entry.AfterState,
-						entry.AfterContainerKey.InstanceGuid,
-						entry.AfterContainerKey.CellID,
+						entry.AfterInstanceKey.InstanceGuid,
+						entry.AfterInstanceKey.CellID,
 					)
 				}
 
@@ -604,8 +604,8 @@ var _ = Describe("ActualLRP", func() {
 					entry := entry
 					It(EntryToString(entry), func() {
 						before.State = entry.BeforeState
-						before.ActualLRPContainerKey = entry.BeforeContainerKey
-						Ω(before.AllowsTransitionTo(before.ActualLRPKey, entry.AfterContainerKey, entry.AfterState)).Should(Equal(entry.Allowed))
+						before.ActualLRPInstanceKey = entry.BeforeInstanceKey
+						Ω(before.AllowsTransitionTo(before.ActualLRPKey, entry.AfterInstanceKey, entry.AfterState)).Should(Equal(entry.Allowed))
 					})
 				}
 			})
@@ -623,7 +623,7 @@ var _ = Describe("ActualLRP", func() {
 				})
 
 				itValidatesPresenceOfTheLRPKey(&lrp)
-				itValidatesAbsenceOfTheContainerKey(&lrp)
+				itValidatesAbsenceOfTheInstanceKey(&lrp)
 				itValidatesAbsenceOfNetInfo(&lrp)
 				itValidatesPresenceOfPlacementError(&lrp)
 			})
@@ -631,15 +631,15 @@ var _ = Describe("ActualLRP", func() {
 			Context("when state is claimed", func() {
 				BeforeEach(func() {
 					lrp = models.ActualLRP{
-						ActualLRPKey:          lrpKey,
-						ActualLRPContainerKey: containerKey,
-						State: models.ActualLRPStateClaimed,
-						Since: 1138,
+						ActualLRPKey:         lrpKey,
+						ActualLRPInstanceKey: instanceKey,
+						State:                models.ActualLRPStateClaimed,
+						Since:                1138,
 					}
 				})
 
 				itValidatesPresenceOfTheLRPKey(&lrp)
-				itValidatesPresenceOfTheContainerKey(&lrp)
+				itValidatesPresenceOfTheInstanceKey(&lrp)
 				itValidatesAbsenceOfNetInfo(&lrp)
 				itValidatesAbsenceOfPlacementError(&lrp)
 			})
@@ -647,16 +647,16 @@ var _ = Describe("ActualLRP", func() {
 			Context("when state is running", func() {
 				BeforeEach(func() {
 					lrp = models.ActualLRP{
-						ActualLRPKey:          lrpKey,
-						ActualLRPContainerKey: containerKey,
-						ActualLRPNetInfo:      netInfo,
-						State:                 models.ActualLRPStateRunning,
-						Since:                 1138,
+						ActualLRPKey:         lrpKey,
+						ActualLRPInstanceKey: instanceKey,
+						ActualLRPNetInfo:     netInfo,
+						State:                models.ActualLRPStateRunning,
+						Since:                1138,
 					}
 				})
 
 				itValidatesPresenceOfTheLRPKey(&lrp)
-				itValidatesPresenceOfTheContainerKey(&lrp)
+				itValidatesPresenceOfTheInstanceKey(&lrp)
 				itValidatesPresenceOfNetInfo(&lrp)
 				itValidatesAbsenceOfPlacementError(&lrp)
 			})
@@ -704,7 +704,7 @@ var _ = Describe("ActualLRP", func() {
 				})
 
 				itValidatesPresenceOfTheLRPKey(&lrp)
-				itValidatesAbsenceOfTheContainerKey(&lrp)
+				itValidatesAbsenceOfTheInstanceKey(&lrp)
 				itValidatesAbsenceOfNetInfo(&lrp)
 				itValidatesAbsenceOfPlacementError(&lrp)
 			})
@@ -736,10 +736,10 @@ func itValidatesPresenceOfTheLRPKey(lrp *models.ActualLRP) {
 	})
 }
 
-func itValidatesPresenceOfTheContainerKey(lrp *models.ActualLRP) {
-	Context("when the container key is set", func() {
+func itValidatesPresenceOfTheInstanceKey(lrp *models.ActualLRP) {
+	Context("when the instance key is set", func() {
 		BeforeEach(func() {
-			lrp.ActualLRPContainerKey = models.NewActualLRPContainerKey("some-instance", "some-cell")
+			lrp.ActualLRPInstanceKey = models.NewActualLRPInstanceKey("some-instance", "some-cell")
 		})
 
 		It("validate does not return an error", func() {
@@ -747,9 +747,9 @@ func itValidatesPresenceOfTheContainerKey(lrp *models.ActualLRP) {
 		})
 	})
 
-	Context("when the container key is not set", func() {
+	Context("when the instance key is not set", func() {
 		BeforeEach(func() {
-			lrp.ActualLRPContainerKey = models.ActualLRPContainerKey{}
+			lrp.ActualLRPInstanceKey = models.ActualLRPInstanceKey{}
 		})
 
 		It("validate returns an error", func() {
@@ -760,22 +760,22 @@ func itValidatesPresenceOfTheContainerKey(lrp *models.ActualLRP) {
 	})
 }
 
-func itValidatesAbsenceOfTheContainerKey(lrp *models.ActualLRP) {
-	Context("when the container key is set", func() {
+func itValidatesAbsenceOfTheInstanceKey(lrp *models.ActualLRP) {
+	Context("when the instance key is set", func() {
 		BeforeEach(func() {
-			lrp.ActualLRPContainerKey = models.NewActualLRPContainerKey("some-instance", "some-cell")
+			lrp.ActualLRPInstanceKey = models.NewActualLRPInstanceKey("some-instance", "some-cell")
 		})
 
 		It("validate returns an error", func() {
 			err := lrp.Validate()
 			Ω(err).Should(HaveOccurred())
-			Ω(err.Error()).Should(ContainSubstring("container"))
+			Ω(err.Error()).Should(ContainSubstring("instance key"))
 		})
 	})
 
-	Context("when the container key is not set", func() {
+	Context("when the instance key is not set", func() {
 		BeforeEach(func() {
-			lrp.ActualLRPContainerKey = models.ActualLRPContainerKey{}
+			lrp.ActualLRPInstanceKey = models.ActualLRPInstanceKey{}
 		})
 
 		It("validate does not return an error", func() {

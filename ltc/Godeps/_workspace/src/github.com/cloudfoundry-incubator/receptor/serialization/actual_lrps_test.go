@@ -20,7 +20,7 @@ var _ = Describe("ActualLRP Serialization", func() {
 					3,
 					"some-domain",
 				),
-				ActualLRPContainerKey: models.NewActualLRPContainerKey(
+				ActualLRPInstanceKey: models.NewActualLRPInstanceKey(
 					"instance-guid-0",
 					"cell-id-0",
 				),
@@ -148,11 +148,11 @@ var _ = Describe("ActualLRP Serialization", func() {
 		It("deserializes all the fields", func() {
 			actualLRP := serialization.ActualLRPFromResponse(actualLRPResponse)
 			Ω(actualLRP).Should(Equal(models.ActualLRP{
-				ActualLRPKey:          models.NewActualLRPKey("process-guid-0", 0, "domain"),
-				ActualLRPContainerKey: models.NewActualLRPContainerKey("instance-guid", "cell-id"),
-				ActualLRPNetInfo:      models.NewActualLRPNetInfo("address", []models.PortMapping{{ContainerPort: 10000, HostPort: 10000}}),
-				State:                 models.ActualLRPStateRunning,
-				Since:                 99999999999,
+				ActualLRPKey:         models.NewActualLRPKey("process-guid-0", 0, "domain"),
+				ActualLRPInstanceKey: models.NewActualLRPInstanceKey("instance-guid", "cell-id"),
+				ActualLRPNetInfo:     models.NewActualLRPNetInfo("address", []models.PortMapping{{ContainerPort: 10000, HostPort: 10000}}),
+				State:                models.ActualLRPStateRunning,
+				Since:                99999999999,
 				ModificationTag: models.ModificationTag{
 					Epoch: "some-guid",
 					Index: 50,
@@ -185,12 +185,12 @@ var _ = Describe("ActualLRP Serialization", func() {
 			It("deserializes all the fields", func() {
 				actualLRP := serialization.ActualLRPFromResponse(actualLRPResponse)
 				Ω(actualLRP).Should(Equal(models.ActualLRP{
-					ActualLRPKey:          models.NewActualLRPKey("process-guid-0", 0, "domain"),
-					ActualLRPContainerKey: models.NewActualLRPContainerKey("instance-guid", "cell-id"),
-					ActualLRPNetInfo:      models.NewActualLRPNetInfo("address", []models.PortMapping{{ContainerPort: 10000, HostPort: 10000}}),
-					State:                 models.ActualLRPStateUnclaimed,
-					PlacementError:        diego_errors.INSUFFICIENT_RESOURCES_MESSAGE,
-					Since:                 99999999999,
+					ActualLRPKey:         models.NewActualLRPKey("process-guid-0", 0, "domain"),
+					ActualLRPInstanceKey: models.NewActualLRPInstanceKey("instance-guid", "cell-id"),
+					ActualLRPNetInfo:     models.NewActualLRPNetInfo("address", []models.PortMapping{{ContainerPort: 10000, HostPort: 10000}}),
+					State:                models.ActualLRPStateUnclaimed,
+					PlacementError:       diego_errors.INSUFFICIENT_RESOURCES_MESSAGE,
+					Since:                99999999999,
 					ModificationTag: models.ModificationTag{
 						Epoch: "some-guid",
 						Index: 50,

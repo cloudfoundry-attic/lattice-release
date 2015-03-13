@@ -25,13 +25,13 @@ func ActualLRPToResponse(actualLRP models.ActualLRP, evacuating bool) receptor.A
 
 func ActualLRPFromResponse(resp receptor.ActualLRPResponse) models.ActualLRP {
 	return models.ActualLRP{
-		ActualLRPKey:          models.NewActualLRPKey(resp.ProcessGuid, resp.Index, resp.Domain),
-		ActualLRPContainerKey: models.NewActualLRPContainerKey(resp.InstanceGuid, resp.CellID),
-		ActualLRPNetInfo:      models.NewActualLRPNetInfo(resp.Address, PortMappingToModel(resp.Ports)),
-		State:                 actualLRPStateFromResponseState(resp.State),
-		PlacementError:        resp.PlacementError,
-		Since:                 resp.Since,
-		ModificationTag:       actualLRPModificationTagFromResponseModificationTag(resp.ModificationTag),
+		ActualLRPKey:         models.NewActualLRPKey(resp.ProcessGuid, resp.Index, resp.Domain),
+		ActualLRPInstanceKey: models.NewActualLRPInstanceKey(resp.InstanceGuid, resp.CellID),
+		ActualLRPNetInfo:     models.NewActualLRPNetInfo(resp.Address, PortMappingToModel(resp.Ports)),
+		State:                actualLRPStateFromResponseState(resp.State),
+		PlacementError:       resp.PlacementError,
+		Since:                resp.Since,
+		ModificationTag:      actualLRPModificationTagFromResponseModificationTag(resp.ModificationTag),
 	}
 }
 

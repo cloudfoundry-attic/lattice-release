@@ -43,7 +43,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 				1,
 				"domain-0",
 			),
-			ActualLRPContainerKey: models.NewActualLRPContainerKey(
+			ActualLRPInstanceKey: models.NewActualLRPInstanceKey(
 				"instance-guid-0",
 				"cell-id-0",
 			),
@@ -57,7 +57,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 				2,
 				"domain-1",
 			),
-			ActualLRPContainerKey: models.NewActualLRPContainerKey(
+			ActualLRPInstanceKey: models.NewActualLRPInstanceKey(
 				"instance-guid-1",
 				"cell-id-1",
 			),

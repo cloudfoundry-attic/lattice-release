@@ -318,8 +318,8 @@ var _ = Describe("Watcher", func() {
 
 			BeforeEach(func() {
 				actualLRP = models.ActualLRP{
-					ActualLRPKey:          models.NewActualLRPKey(expectedProcessGuid, 1, "domain"),
-					ActualLRPContainerKey: models.NewActualLRPContainerKey(expectedInstanceGuid, "cell-id"),
+					ActualLRPKey:         models.NewActualLRPKey(expectedProcessGuid, 1, "domain"),
+					ActualLRPInstanceKey: models.NewActualLRPInstanceKey(expectedInstanceGuid, "cell-id"),
 				}
 			})
 

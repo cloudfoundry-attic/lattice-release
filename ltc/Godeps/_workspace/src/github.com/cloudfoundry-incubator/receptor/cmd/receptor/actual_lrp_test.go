@@ -31,12 +31,12 @@ var _ = Describe("Actual LRP API", func() {
 				i,
 				fmt.Sprintf("domain-%d", i/2),
 			)
-			containerKey := models.NewActualLRPContainerKey(
+			instanceKey := models.NewActualLRPInstanceKey(
 				"instance-guid-"+index,
 				"cell-id",
 			)
 			netInfo := models.NewActualLRPNetInfo("the-host", []models.PortMapping{{ContainerPort: 80, HostPort: uint16(1000 + i)}})
-			err := bbs.StartActualLRP(logger, lrpKey, containerKey, netInfo)
+			err := bbs.StartActualLRP(logger, lrpKey, instanceKey, netInfo)
 			Ω(err).ShouldNot(HaveOccurred())
 		}
 
@@ -53,9 +53,9 @@ var _ = Describe("Actual LRP API", func() {
 		Ω(err).ShouldNot(HaveOccurred())
 
 		evacuatingLRPKey = models.NewActualLRPKey("process-guid-0", 0, "domain-0")
-		containerKey := models.NewActualLRPContainerKey("instance-guid-0", "cell-id")
+		instanceKey := models.NewActualLRPInstanceKey("instance-guid-0", "cell-id")
 		netInfo := models.NewActualLRPNetInfo("the-host", []models.PortMapping{{ContainerPort: 80, HostPort: 1000}})
-		_, err = bbs.EvacuateRunningActualLRP(logger, evacuatingLRPKey, containerKey, netInfo, 0)
+		_, err = bbs.EvacuateRunningActualLRP(logger, evacuatingLRPKey, instanceKey, netInfo, 0)
 		Ω(err).Should(Equal(bbserrors.ErrServiceUnavailable))
 	})
 
@@ -119,9 +119,9 @@ var _ = Describe("Actual LRP API", func() {
 		It("has the correct data from the bbs", func() {
 			expectedResponses := []receptor.ActualLRPResponse{}
 
-			instanceLRP, err := bbs.ActualLRPByProcessGuidAndIndex("process-guid-1", 1)
+			instanceLRPGroup, err := bbs.ActualLRPGroupByProcessGuidAndIndex("process-guid-1", 1)
 			Ω(err).ShouldNot(HaveOccurred())
-			expectedResponses = append(expectedResponses, serialization.ActualLRPToResponse(instanceLRP, false))
+			expectedResponses = append(expectedResponses, serialization.ActualLRPToResponse(*instanceLRPGroup.Instance, false))
 
 			evacuatingLRP, err := bbs.EvacuatingActualLRPByProcessGuidAndIndex(evacuatingLRPKey.ProcessGuid, evacuatingLRPKey.Index)
 			Ω(err).ShouldNot(HaveOccurred())
@@ -170,12 +170,12 @@ var _ = Describe("Actual LRP API", func() {
 				index,
 				"domain-0",
 			)
-			containerKey := models.NewActualLRPContainerKey(
+			instanceKey := models.NewActualLRPInstanceKey(
 				"instance-guid-0",
 				"cell-id",
 			)
 			netInfo := models.NewActualLRPNetInfo("the-host", []models.PortMapping{{ContainerPort: 80, HostPort: 2345}})
-			err := bbs.StartActualLRP(logger, lrpKey, containerKey, netInfo)
+			err := bbs.StartActualLRP(logger, lrpKey, instanceKey, netInfo)
 			Ω(err).ShouldNot(HaveOccurred())
 
 			actualLRPResponse, getErr = client.ActualLRPByProcessGuidAndIndex(processGuid, index)
@@ -183,9 +183,9 @@ var _ = Describe("Actual LRP API", func() {
 		})
 
 		It("has the correct data from the bbs", func() {
-			actualLRP, err := bbs.ActualLRPByProcessGuidAndIndex(processGuid, index)
+			actualLRPGroup, err := bbs.ActualLRPGroupByProcessGuidAndIndex(processGuid, index)
 			Ω(err).ShouldNot(HaveOccurred())
-			Ω(actualLRPResponse).Should(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
+			Ω(actualLRPResponse).Should(Equal(serialization.ActualLRPToResponse(*actualLRPGroup.Instance, false)))
 		})
 	})
 })

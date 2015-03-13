@@ -158,10 +158,10 @@ var _ = Describe("Event", func() {
 		)
 
 		var (
-			key             models.ActualLRPKey
-			containerKey    models.ActualLRPContainerKey
-			newContainerKey models.ActualLRPContainerKey
-			netInfo         models.ActualLRPNetInfo
+			key            models.ActualLRPKey
+			instanceKey    models.ActualLRPInstanceKey
+			newInstanceKey models.ActualLRPInstanceKey
+			netInfo        models.ActualLRPNetInfo
 		)
 
 		BeforeEach(func() {
@@ -176,8 +176,8 @@ var _ = Describe("Event", func() {
 			}
 
 			key = models.NewActualLRPKey(processGuid, 0, domain)
-			containerKey = models.NewActualLRPContainerKey("instance-guid", "cell-id")
-			newContainerKey = models.NewActualLRPContainerKey("other-instance-guid", "other-cell-id")
+			instanceKey = models.NewActualLRPInstanceKey("instance-guid", "cell-id")
+			newInstanceKey = models.NewActualLRPInstanceKey("other-instance-guid", "other-cell-id")
 			netInfo = models.NewActualLRPNetInfo("1.1.1.1", []models.PortMapping{})
 		})
 
@@ -186,8 +186,9 @@ var _ = Describe("Event", func() {
 			err := bbs.DesireLRP(logger, desiredLRP)
 			Ω(err).ShouldNot(HaveOccurred())
 
-			actualLRP, err := bbs.ActualLRPByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
+			actualLRPGroup, err := bbs.ActualLRPGroupByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
 			Ω(err).ShouldNot(HaveOccurred())
+			actualLRP := *actualLRPGroup.Instance
 
 			// discard DesiredLRP creation event
 			Eventually(events).Should(Receive())
@@ -200,12 +201,13 @@ var _ = Describe("Event", func() {
 			Ω(actualLRPCreatedEvent.ActualLRPResponse).Should(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
 
 			By("updating the existing ActualLR")
-			err = bbs.ClaimActualLRP(logger, key, containerKey)
+			err = bbs.ClaimActualLRP(logger, key, instanceKey)
 			Ω(err).ShouldNot(HaveOccurred())
 
 			before := actualLRP
-			actualLRP, err = bbs.ActualLRPByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
+			actualLRPGroup, err = bbs.ActualLRPGroupByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
 			Ω(err).ShouldNot(HaveOccurred())
+			actualLRP = *actualLRPGroup.Instance
 
 			Eventually(events).Should(Receive(&event))
 
@@ -215,7 +217,7 @@ var _ = Describe("Event", func() {
 			Ω(actualLRPChangedEvent.After).Should(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
 
 			By("evacuating the ActualLRP")
-			_, err = bbs.EvacuateRunningActualLRP(logger, key, containerKey, netInfo, 0)
+			_, err = bbs.EvacuateRunningActualLRP(logger, key, instanceKey, netInfo, 0)
 			Ω(err).Should(Equal(bbserrors.ErrServiceUnavailable))
 
 			evacuatingLRP, err := bbs.EvacuatingActualLRPByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
@@ -231,14 +233,14 @@ var _ = Describe("Event", func() {
 			Eventually(events).Should(Receive())
 
 			By("starting and then evacuating the ActualLRP on another cell")
-			err = bbs.StartActualLRP(logger, key, newContainerKey, netInfo)
+			err = bbs.StartActualLRP(logger, key, newInstanceKey, netInfo)
 			Ω(err).ShouldNot(HaveOccurred())
 
 			// discard instance -> RUNNING
 			Eventually(events).Should(Receive())
 
 			evacuatingBefore := evacuatingLRP
-			_, err = bbs.EvacuateRunningActualLRP(logger, key, newContainerKey, netInfo, 0)
+			_, err = bbs.EvacuateRunningActualLRP(logger, key, newInstanceKey, netInfo, 0)
 			Ω(err).Should(Equal(bbserrors.ErrServiceUnavailable))
 
 			evacuatingLRP, err = bbs.EvacuatingActualLRPByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
@@ -255,10 +257,11 @@ var _ = Describe("Event", func() {
 			Eventually(events).Should(Receive())
 
 			By("removing the instance ActualLRP")
-			actualLRP, err = bbs.ActualLRPByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
+			actualLRPGroup, err = bbs.ActualLRPGroupByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
 			Ω(err).ShouldNot(HaveOccurred())
+			actualLRP = *actualLRPGroup.Instance
 
-			err = bbs.RemoveActualLRP(logger, key, models.ActualLRPContainerKey{})
+			err = bbs.RemoveActualLRP(logger, key, models.ActualLRPInstanceKey{})
 			Ω(err).ShouldNot(HaveOccurred())
 
 			Eventually(events).Should(Receive(&event))
@@ -268,7 +271,7 @@ var _ = Describe("Event", func() {
 			Ω(actualLRPRemovedEvent.ActualLRPResponse).Should(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
 
 			By("removing the evacuating ActualLRP")
-			err = bbs.RemoveEvacuatingActualLRP(logger, key, newContainerKey)
+			err = bbs.RemoveEvacuatingActualLRP(logger, key, newInstanceKey)
 			Ω(err).ShouldNot(HaveOccurred())
 
 			Eventually(events).Should(Receive(&event))
