@@ -70,7 +70,6 @@ resource "google_compute_instance" "lattice-coordinator" {
             "sudo mkdir -p /var/lattice/setup/",
             "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${google_compute_address.lattice-coordinator.address}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"SYSTEM_DOMAIN=${google_compute_address.lattice-coordinator.address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
         ]
     }
