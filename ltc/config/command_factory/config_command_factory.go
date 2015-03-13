@@ -30,14 +30,11 @@ func NewConfigCommandFactory(config *config.Config, targetVerifier target_verifi
 
 func (factory *ConfigCommandFactory) MakeTargetCommand() cli.Command {
 	var startCommand = cli.Command{
-		Name:      TargetCommandName,
-		ShortName: "t",
-		Description: `Set a target lattice location.
-
-   For a Vagrant deployed Lattice:
-   ltc target 192.168.11.11.xip.io`,
-		Usage:  "ltc target LATTICE_TARGET",
-		Action: factory.target,
+		Name:        TargetCommandName,
+		ShortName:   "t",
+		Usage:       "Targets a lattice cluster",
+		Description: "ltc target TARGET (e.g., 192.168.11.11.xip.io)",
+		Action:      factory.target,
 	}
 
 	return startCommand

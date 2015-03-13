@@ -44,8 +44,8 @@ func (factory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
 	var startCommand = cli.Command{
 		Name:        "list",
 		ShortName:   "li",
-		Description: "List all applications running on Lattice",
-		Usage:       "ltc list",
+		Usage:       "Lists applications running on lattice",
+		Description: "ltc list",
 		Action:      factory.listApps,
 		Flags:       []cli.Flag{},
 	}
@@ -58,15 +58,15 @@ func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 	var visualizeFlags = []cli.Flag{
 		cli.DurationFlag{
 			Name:  "rate, r",
-			Usage: "The rate at which to refresh the visualization.\n\te.g. -r=\".5s\"\n\te.g. -r=\"1000ns\"",
+			Usage: "Visualization refresh rate (e.g., \".5s\" or \"10ms\")",
 		},
 	}
 
 	var startCommand = cli.Command{
 		Name:        "visualize",
 		ShortName:   "v",
-		Description: "Visualize the workload distribution across the Lattice Cells",
-		Usage:       "ltc visualize",
+		Usage:       "Shows a visualization of the workload distribution across the lattice cells",
+		Description: "ltc visualize [-r=DELAY]",
 		Action:      factory.visualizeCells,
 		Flags:       visualizeFlags,
 	}
@@ -78,8 +78,8 @@ func (factory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
 	return cli.Command{
 		Name:        "status",
 		ShortName:   "st",
-		Description: "Displays detailed status information about the given application and its instances",
-		Usage:       "ltc status APP_NAME",
+		Usage:       "Shows details about a running app on lattice",
+		Description: "ltc status APP_NAME",
 		Action:      factory.appStatus,
 		Flags:       []cli.Flag{},
 	}

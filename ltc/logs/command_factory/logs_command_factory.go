@@ -26,8 +26,8 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 	var logsCommand = cli.Command{
 		Name:        "logs",
 		ShortName:   "lo",
-		Description: "Stream logs from the specified application",
-		Usage:       "ltc logs APP_NAME",
+		Usage:       "Streams logs from the specified application",
+		Description: "ltc logs APP_NAME",
 		Action:      factory.tailLogs,
 		Flags:       []cli.Flag{},
 	}
@@ -38,8 +38,8 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 func (factory *logsCommandFactory) MakeDebugLogsCommand() cli.Command {
 	return cli.Command{
 		Name:        "debug-logs",
-		Description: "Stream logs from the executor, rep, and garden-linux lattice components",
-		Usage:       "ltc debug-logs",
+		Usage:       "Streams logs from the lattice cluster components",
+		Description: "ltc debug-logs",
 		Action:      factory.tailDebugLogs,
 	}
 }

@@ -70,65 +70,63 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 	var createFlags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "working-dir, w",
-			Usage: "working directory to assign to the running process.",
+			Usage: "Working directory for container (overrides Docker metadata)",
 			Value: "",
 		},
 		cli.BoolFlag{
 			Name:  "run-as-root, r",
-			Usage: "run process as a privileged user (root)",
+			Usage: "Runs in the context of the root user",
 		},
 		cli.StringSliceFlag{
 			Name:  "env, e",
-			Usage: "environment variables to set, NAME[=VALUE]",
+			Usage: "Environment variables (can be passed multiple times)",
 			Value: &cli.StringSlice{},
 		},
 		cli.IntFlag{
 			Name:  "cpu-weight",
-			Usage: "CPU weight to apply",
+			Usage: "Relative CPU weight for the container (valid values: 1-100)",
 			Value: 100,
 		},
 		cli.IntFlag{
 			Name:  "memory-mb, m",
-			Usage: "container memory limit in MB",
+			Usage: "Memory limit for container in MB",
 			Value: 128,
 		},
 		cli.IntFlag{
 			Name:  "disk-mb, d",
-			Usage: "container disk limit in MB",
+			Usage: "Disk limit for container in MB",
 			Value: 1024,
 		},
 		cli.StringFlag{
 			Name:  "ports, p",
-			Usage: "ports that the running process will listen on",
+			Usage: "Ports to expose on the container",
 		},
 		cli.IntFlag{
 			Name:  "monitored-port",
-			Usage: "the port that lattice will monitor to ensure the app is up and running. Required if specifying multiple exposed ports.",
+			Usage: "Selects which port is used to healthcheck the app. Required for multiple exposed ports",
 		},
 		cli.StringFlag{
 			Name: "routes",
-			Usage: `mapping of port to hostname. If specified, lattice will not generate any default routes.
-                    eg routes=8080:foo,443:bar
-                    will generate routes foo.<SystemIp>.xip.io => container port 8080 and bar.<SystemIp>.xip.io => container port 443
-            `,
+			Usage: "Route mappings to exposed ports as follows:\n\t\t" +
+				"--routes=80:web,8080:api will route web to 80 and api to 8080",
 		},
 		cli.IntFlag{
 			Name:  "instances",
-			Usage: "number of container instances to launch",
+			Usage: "Number of application instances to spawn on launch",
 			Value: 1,
 		},
 		cli.BoolFlag{
 			Name:  "no-monitor",
-			Usage: "if set, lattice will not monitor that the app is listening on its port, and thus will not know if an app is running.",
+			Usage: "Disables healthchecking for the app.",
 		},
 	}
 
 	var createAppCommand = cli.Command{
 		Name:      "create",
 		ShortName: "c",
-		Usage:     "ltc create APP_NAME DOCKER_IMAGE",
-		Description: `Create a docker app on lattice
-   
+		Usage:     "Creates a docker app on lattice",
+		Description: `ltc create APP_NAME DOCKER_IMAGE
+
    APP_NAME is required and must be unique across the Lattice cluster
    DOCKER_IMAGE is required and must match the standard docker image format
    e.g.
@@ -157,8 +155,8 @@ func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 	var scaleAppCommand = cli.Command{
 		Name:        "scale",
 		ShortName:   "sc",
-		Description: "Scale a docker app on lattice",
-		Usage:       "ltc scale APP_NAME NUM_INSTANCES",
+		Usage:       "Scales a docker app on lattice",
+		Description: "ltc scale APP_NAME NUM_INSTANCES",
 		Action:      factory.scaleApp,
 	}
 
@@ -168,8 +166,8 @@ func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 	var updateRoutesCommand = cli.Command{
 		Name:        "update-routes",
-		Description: "Updates the routes for a running app",
-		Usage:       "ltc update-routes APP_NAME ROUTE,OTHER_ROUTE...", // TODO: route format?
+		Usage:       "Updates the routes for a running app",
+		Description: "ltc update-routes APP_NAME ROUTE,OTHER_ROUTE...", // TODO: route format?
 		Action:      factory.updateAppRoutes,
 	}
 
@@ -180,8 +178,8 @@ func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	var removeAppCommand = cli.Command{
 		Name:        "remove",
 		ShortName:   "r",
-		Description: "Stop and remove a docker app from lattice",
-		Usage:       "ltc remove APP_NAME",
+		Description: "ltc remove APP_NAME",
+		Usage:       "Stops and removes a docker app from lattice",
 		Action:      factory.removeApp,
 	}
 

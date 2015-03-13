@@ -22,19 +22,19 @@ func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.C
 	testFlags := []cli.Flag{
 		cli.DurationFlag{
 			Name:  "timeout",
-			Usage: "How long tests will wait for docker apps to start",
+			Usage: "Duration of time tests will wait for lattice to respond",
 			Value: time.Second * 30,
 		},
 		cli.BoolFlag{
 			Name:  "verbose, v",
-			Usage: "Whether tests should run in verbose mode",
+			Usage: "Verbose mode",
 		},
 	}
 
 	cliCommand := cli.Command{
 		Name:        "test",
-		Usage:       "ltc test",
-		Description: `ltc test verifies that the targeted lattice deployment is up and running.`,
+		Usage:       "Runs test suite against targeted lattice cluster",
+		Description: "ltc test [-v] [--timeout=TIMEOUT]",
 		Action:      factory.runIntegrationTests,
 		Flags:       testFlags,
 	}
