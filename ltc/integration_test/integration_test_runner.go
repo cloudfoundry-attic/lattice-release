@@ -71,7 +71,7 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 	var _ = BeforeSuite(func() {
 		err := runner.config.Load()
 		if err != nil {
-			fmt.Fprintf(GinkgoWriter, "Error loading config")
+			fmt.Fprintf(getStyledWriter("test"), "Error loading config")
 			return
 		}
 	})
@@ -134,43 +134,45 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 }
 
 func (runner *integrationTestRunner) createDockerApp(timeout time.Duration, appName string, args ...string) {
-	fmt.Fprintf(GinkgoWriter, colors.PurpleUnderline(fmt.Sprintf("Attempting to create %s\n", appName)))
+	fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to create %s", appName))+"\n")
 	createArgs := append([]string{"create", appName}, args...)
 	command := runner.command(timeout, createArgs...)
 
-	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+	session, err := gexec.Start(command, getStyledWriter("test"), getStyledWriter("test"))
 
 	Expect(err).ToNot(HaveOccurred())
 	expectExit(timeout, session)
 
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
-	fmt.Fprintf(GinkgoWriter, "Yay! Created %s\n", appName)
+	fmt.Fprintf(getStyledWriter("test"), "Yay! Created %s\n", appName)
 }
 
 func (runner *integrationTestRunner) streamLogs(timeout time.Duration, appName string) *gexec.Session {
-	fmt.Fprintf(GinkgoWriter, colors.PurpleUnderline(fmt.Sprintf("Attempting to stream logs from %s\n", appName)))
+	fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to stream logs from %s", appName))+"\n")
 	command := runner.command(timeout, "logs", appName)
 
-	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+	session, err := gexec.Start(command, getStyledWriter("logs"), getStyledWriter("logs"))
+
 	Expect(err).ToNot(HaveOccurred())
 
 	return session
 }
 
 func (runner *integrationTestRunner) scaleApp(timeout time.Duration, appName string) {
-	fmt.Fprintf(GinkgoWriter, colors.PurpleUnderline(fmt.Sprintf("Attempting to scale %s\n", appName)))
+	fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to scale %s", appName))+"\n")
 	command := runner.command(timeout, "scale", appName, "3")
-	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+
+	session, err := gexec.Start(command, getStyledWriter("scale"), getStyledWriter("scale"))
 
 	Expect(err).ToNot(HaveOccurred())
 	expectExit(timeout, session)
 }
 
 func (runner *integrationTestRunner) removeApp(timeout time.Duration, appName string) {
-	fmt.Fprintf(GinkgoWriter, colors.PurpleUnderline(fmt.Sprintf("Attempting to remove %s\n", appName)))
+	fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to remove %s", appName))+"\n")
 	command := runner.command(timeout, "remove", appName)
 
-	session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+	session, err := gexec.Start(command, getStyledWriter("remove"), getStyledWriter("remove"))
 
 	Expect(err).ToNot(HaveOccurred())
 	expectExit(timeout, session)
@@ -186,8 +188,12 @@ func (runner *integrationTestRunner) command(timeout time.Duration, arg ...strin
 	return command
 }
 
+func getStyledWriter(prefix string) io.Writer {
+	return gexec.NewPrefixedWriter(fmt.Sprintf("[%s] ", colors.Yellow(prefix)), GinkgoWriter)
+}
+
 func errorCheckForRoute(route string) func() error {
-	fmt.Fprintf(GinkgoWriter, "Polling for the route %s\n", route)
+	fmt.Fprintf(getStyledWriter("test"), "Polling for the route %s\n", route)
 	return func() error {
 		response, err := makeGetRequestToRoute(route)
 		if err != nil {
