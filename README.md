@@ -28,8 +28,8 @@ Make sure you have [Vagrant](https://vagrantup.com/) installed, then:
 
 ```bash
     git clone git@github.com:cloudfoundry-incubator/lattice.git
-    git checkout VERSION
     cd lattice
+    git checkout VERSION
     vagrant up
 ```
 
