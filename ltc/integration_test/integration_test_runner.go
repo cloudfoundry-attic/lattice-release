@@ -138,7 +138,7 @@ func (runner *integrationTestRunner) createDockerApp(timeout time.Duration, appN
 	createArgs := append([]string{"create", appName}, args...)
 	command := runner.command(timeout, createArgs...)
 
-	session, err := gexec.Start(command, getStyledWriter("test"), getStyledWriter("test"))
+	session, err := gexec.Start(command, getStyledWriter("create"), getStyledWriter("create"))
 
 	Expect(err).ToNot(HaveOccurred())
 	expectExit(timeout, session)
