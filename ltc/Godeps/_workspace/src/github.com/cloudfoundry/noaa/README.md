@@ -14,7 +14,7 @@ This library does not work with Go 1.3 through 1.3.3, due to a bug in the standa
 
 See the included sample applications. In order to use the samples, you will have to export the following environment variable:
 
-* `CF_ACCESS_TOKEN` - You can get this value from reading the AccessToken looking at your cf configuration file (`$ cat ~/.cf/config.json`). Example: 
+* `CF_ACCESS_TOKEN` - You can get this value by executing (`$ cf oauth-token`). Example: 
 
 ```
 export CF_ACCESS_TOKEN="bearer eyJhbGciOiJSUzI1NiJ9.eyJqdGkiOiI3YmM2MzllOC0wZGM0LTQ4YzItYTAzYS0xYjkyYzRhMWFlZTIiLCJzdWIiOiI5YTc5MTVkOS04MDc1LTQ3OTUtOTBmOS02MGM0MTU0YTJlMDkiLCJzY29wZSI6WyJzY2ltLnJlYWQiLCJjbG91ZF9jb250cm9sbGVyLmFkbWluIiwicGFzc3dvcmQud3JpdGUiLCJzY2ltLndyaXRlIiwib3BlbmlkIiwiY2xvdWRfY29udHJvbGxlci53cml0ZSIsImNsb3VkX2NvbnRyb2xsZXIucmVhZCJdLCJjbGllbnRfaWQiOiJjZiIsImNpZCI6ImNmIiwiZ3JhbnRfdHlwZSI6InBhc3N3b3JkIiwidXNlcl9pZCI6IjlhNzkxNWQ5LTgwNzUtNDc5NS05MGY5LTYwYzQxNTRhMmUwOSIsInVzZXJfbmFtZSI6ImFkbWluIiwiZW1haWwiOiJhZG1pbiIsImlhdCI6MTQwNDg0NzU3NywiZXhwIjoxNDA0ODQ4MTc3LCJpc3MiOiJodHRwczovL3VhYS4xMC4yNDQuMC4zNC54aXAuaW8vb2F1dGgvdG9rZW4iLCJhdWQiOlsic2NpbSIsIm9wZW5pZCIsImNsb3VkX2NvbnRyb2xsZXIiLCJwYXNzd29yZCJdfQ.mAaOJthCotW763lf9fysygqdES_Mz1KFQ3HneKbwY4VJx-ARuxxiLh8l_8Srx7NJBwGlyEtfYOCBcIdvyeDCiQ0wT78Zw7ZJYFjnJ5-ZkDy5NbMqHbImDFkHRnPzKFjJHip39jyjAZpkFcrZ8_pUD8XxZraqJ4zEf6LFdAHKFBM"
@@ -24,7 +24,7 @@ export CF_ACCESS_TOKEN="bearer eyJhbGciOiJSUzI1NiJ9.eyJqdGkiOiI3YmM2MzllOC0wZGM0
 
 The `sample/main.go` application streams logs for a particular app. The following environment variable needs to be set:
 
-* `APP_GUID` - You can get this value from running `$ CF_TRACE=true cf app dora | grep '"url": "/v2/apps' ` and then extracting the app guid from the request URL. Example:
+* `APP_GUID` - You can get this value from running `$ cf app dora --guid`. Example:
 
 ```
 export APP_GUID=55fdb274-d6c9-4b8c-9b1f-9b7e7f3a346c
@@ -49,6 +49,20 @@ bin/firehose_sample
 ```
 
 Multiple subscribers may connect to the firehose endpoint, each with a unique subscription_id (configurable in `main.go`). Each subscriber (in practice, a pool of clients with a common subscription_id) receives the entire stream. For each subscription_id, all data will be distributed evenly among that subscriber's client pool.
+
+
+###Container metrics
+
+The `container_metrics_sample/main.go` application streams container metrics for the specified appId.
+
+You can run the container metrics sample app like this:
+
+```
+go build -o bin/containermetrics_sample container_metrics_sample/main.go
+bin/containermetrics_sample
+```
+
+For more information to setup a test environment in order to pull container metrics look at the README.md in the container_metrics_sample.
 
 ##Development
 
