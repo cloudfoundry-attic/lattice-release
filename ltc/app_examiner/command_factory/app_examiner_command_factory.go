@@ -64,7 +64,7 @@ func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 
 	var startCommand = cli.Command{
 		Name:        "visualize",
-		ShortName:   "v",
+		ShortName:   "vz",
 		Usage:       "Shows a visualization of the workload distribution across the lattice cells",
 		Description: "ltc visualize [-r=DELAY]",
 		Action:      factory.visualizeCells,

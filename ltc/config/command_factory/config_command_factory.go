@@ -31,7 +31,7 @@ func NewConfigCommandFactory(config *config.Config, targetVerifier target_verifi
 func (factory *ConfigCommandFactory) MakeTargetCommand() cli.Command {
 	var startCommand = cli.Command{
 		Name:        TargetCommandName,
-		ShortName:   "t",
+		ShortName:   "ta",
 		Usage:       "Targets a lattice cluster",
 		Description: "ltc target TARGET (e.g., 192.168.11.11.xip.io)",
 		Action:      factory.target,

@@ -123,7 +123,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 
 	var createAppCommand = cli.Command{
 		Name:      "create",
-		ShortName: "c",
+		ShortName: "cr",
 		Usage:     "Creates a docker app on lattice",
 		Description: `ltc create APP_NAME DOCKER_IMAGE
 
@@ -166,6 +166,7 @@ func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 	var updateRoutesCommand = cli.Command{
 		Name:        "update-routes",
+		ShortName:   "ur",
 		Usage:       "Updates the routes for a running app",
 		Description: "ltc update-routes APP_NAME ROUTE,OTHER_ROUTE...", // TODO: route format?
 		Action:      factory.updateAppRoutes,
@@ -177,7 +178,7 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	var removeAppCommand = cli.Command{
 		Name:        "remove",
-		ShortName:   "r",
+		ShortName:   "rm",
 		Description: "ltc remove APP_NAME",
 		Usage:       "Stops and removes a docker app from lattice",
 		Action:      factory.removeApp,

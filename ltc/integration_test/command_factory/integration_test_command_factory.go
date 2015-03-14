@@ -33,6 +33,7 @@ func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.C
 
 	cliCommand := cli.Command{
 		Name:        "test",
+		ShortName:   "te",
 		Usage:       "Runs test suite against targeted lattice cluster",
 		Description: "ltc test [-v] [--timeout=TIMEOUT]",
 		Action:      factory.runIntegrationTests,

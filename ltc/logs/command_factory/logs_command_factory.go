@@ -38,6 +38,7 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 func (factory *logsCommandFactory) MakeDebugLogsCommand() cli.Command {
 	return cli.Command{
 		Name:        "debug-logs",
+		ShortName:   "dl",
 		Usage:       "Streams logs from the lattice cluster components",
 		Description: "ltc debug-logs",
 		Action:      factory.tailDebugLogs,
