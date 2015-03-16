@@ -49,7 +49,7 @@ By default, `ltc` applies a memory limit of 128MB and a disk limit of 1024MB to 
 
 ### Run as Root
 
-Lattice runs the process in your Docker image as an unprivileged user.  Sometimes this user does not have privileges to execue the requested process - you can try using the `--run-as-root` flag to get around this limitation.
+Lattice runs the process in your Docker image as an unprivileged user.  Sometimes this user does not have privileges to execute the requested process - you can try using the `--run-as-root` flag to get around this limitation.
 
 > We have plans to build more robust support for specifying the user/uid/group/gid to run the container as.
 
@@ -63,7 +63,7 @@ If you're still stuck you can try streaming the Lattice debug-logs with `ltc deb
 
 ## How do I communicate with my containers over TCP?
 
-THe Lattice router only supports HTTP communication at this time.  If you would like to use TCP instead you will need to communicate with the container by IP and port, which you can get via `ltc status`.  For a local vagrant deployed Lattice, the containers can be reached at `192.168.11.11`.  On AWS, you will need to configure your ELB to route traffic to the Cells in your VPC.
+The Lattice router only supports HTTP communication at this time.  If you would like to use TCP instead you will need to communicate with the container by IP and port, which you can get via `ltc status`.  For a local vagrant deployed Lattice, the containers can be reached at `192.168.11.11`.  On AWS, you will need to configure your ELB to route traffic to the Cells in your VPC.
 
 ## How do I communicate between containers?
 

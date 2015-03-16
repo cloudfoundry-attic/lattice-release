@@ -39,14 +39,14 @@ The default behavior of `ltc create`, outlined above, can be modified via a seri
 
 - **`--working-dir=/path/to/working-dir`** sets the working directory, overriding the default associated with the Docker image.
 - **`--run-as-root`** launches the command in the process as the root user.  By default, Lattice uses a non-root user created at container-creation time.  Lattice does not yet honor the Docker USER directive.  There are plans to address this soon.  For most containers `--run-as-root` is a sufficient workaround.
-- **`--env NAME=VALUE`** specifies environment variables. You can have multiple `--env` flags.  These are merged *on top of* the Environment variables extracted from the Docker image metadata.
+- **`--env NAME[=VALUE]`** specifies environment variables. You can have multiple `--env` flags.  These are merged *on top of* the Environment variables extracted from the Docker image metadata.  Passing an --env flag without explicitly setting the VALUE uses the current execution context to set the value.
 - **`--memory-mb=128`** specifies the memory limit to apply to the container.  To allow unlimited memory usage, set this to 0.
 - **`--disk-mb=1024`** specifies the disk limit to apply to the container.  This governs any writes *on top of* the root filesystem mounted into the container.  To allow unlimited disk usage, set this to 0.
-- **`--cpu-weidht=100`** specifies the relative CPU weight to apply to the container (scale 1-100).ls
+- **`--cpu-weight=100`** specifies the relative CPU weight to apply to the container (scale 1-100).
 - **`--instances=1`** specifies the number of instances of the application to launch.  This can also be modified after the application is started.
 - **`--no-monitor`** disables health monitoring.  Lattice will consider the application crashed only if it exits.
 
-Finally, one can override the default start command by specifiying a start command after a `--` separator.  For example:
+Finally, one can override the default start command by specifiying a start command after a `--` separator.  This can be followed by any arguments one wishes to pass to the app.  For example:
 
     ltc create lattice-app cloudfoundry/lattice-app -- /lattice-app -quiet=true
 
@@ -119,6 +119,8 @@ This indicates that instance 0 of the application has been `RUNNING` on `lattice
 ### `ltc visualize`
 
 `ltc visualize` displays the *distribution* of application instances across the targetted Lattice deployment.  Each running application is rendered as a green dot.  Starting applications are rendered as yellow dots.
+
+- **`--rate=1s`** refreshes the output at the specified time interval
 
 ## Is Lattice Working?
 
