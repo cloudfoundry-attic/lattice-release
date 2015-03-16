@@ -13,7 +13,7 @@ This tutorial walks you through the Vagrant VM flow and using Lattice to start a
 ## Pre-Requisites for the Vagrant VM
 
 - [Vagrant](https://www.vagrantup.com)
-- [VirtualBox](https://www.virtualbox.org) or VMWare Fusion
+- [VirtualBox](https://www.virtualbox.org)
 - [git](https://git-scm.com)
 
 ## Starting the Lattice Vagrant VM
@@ -21,18 +21,12 @@ This tutorial walks you through the Vagrant VM flow and using Lattice to start a
 First, clone the Lattice repository:
 
     git clone https://github.com/cloudfoundry-incubator/lattice.git
-    git checkout <%= version %>
     cd lattice
+    git checkout <%= version %>
 
 Then bring up the Vagrant box:
 
-**Virtualbox**:
-
     vagrant up --provider virtualbox
-
-**VMWare Fusion**:
-
-    vagrant up --provider vmware_fusion
 
 
 The VM should download and start.
@@ -43,7 +37,7 @@ The VM should download and start.
 
 ## Fetching `ltc` - the Lattice CLI
 
-Visit the [Download](/downloads.html) page to fetch the latest version of the CLI.  Make sure its on your `PATH`.
+Visit the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page to fetch the latest version of the CLI.  Make sure its on your `PATH`.
 
 Alternatively you can use these installation scripts.  They assume `$HOME/bin` is on your `PATH`.
 

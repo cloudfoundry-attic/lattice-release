@@ -39,6 +39,10 @@ There are two remaining areas of Docker compatbility that we are working on:
 
 Here are a few pointers to help you debug and fix some common issues:
 
+### Increase `ltc`'s Timeout
+
+`ltc create` will wait up to one minute for your application to start.  If this fails it may be that your Docker container is large and has not downloaded yet.  You can set the `LATTICE_CLI_TIMEOUT` environment variable (in seconds) to instruct `ltc` to wait longer.  Note that `ltc` does not remove your application when this timeout occurs, so your application may eventually start in the background.
+
 ### Increase Memory and Disk Limits
 
 By default, `ltc` applies a memory limit of 128MB and a disk limit of 1024MB to the container.  If your process is exiting prematurely it may be attempting to consume more than 128MB of memory.  You can increase the limit using the `--memory-mb` flag.  To turn off memory and disk limits set `--memory-mb` and `--disk-mb` to `0`.

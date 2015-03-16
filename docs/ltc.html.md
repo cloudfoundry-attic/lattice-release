@@ -8,6 +8,8 @@ doc_subnav: true
 
 `ltc` wraps the [Lattice API](/docs/lattice-api.html) and provides a simple interface for launching and managing applications based on Docker images.  This document is a reference detailing all of `ltc`'s subcommands and options.  You may find it helpful to also build a deeper understanding of how Lattice [manages applications](/docs/troubleshooting.html#how-does-lattice-manage-applications) and [Docker images](/docs/troubleshooting.html#how-does-lattice-work-with-docker-images).
 
+You can download the CLI from the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page.
+
 ## Targetting Lattice
 
 ### `ltc target`
@@ -72,7 +74,7 @@ You can modify all of this behavior from the command line:
 
 ### `ltc remove`
 
-`ltc remove APP_NAME` removes an application entirely from a Lattice deployment.
+`ltc remove APP_NAME` removes an application entirely from a Lattice deployment.  To stop an application without removing it, try `ltc scale APP_NAME 0`.
 
 ### `ltc scale` 
 
@@ -127,6 +129,9 @@ This indicates that instance 0 of the application has been `RUNNING` on `lattice
 ### `ltc test`
 
 `ltc test` runs a minimal integration suite to ensure that a Lattice deploy is functioning correctly.
+
+- **`-v`** verbose mode.  shows application output during test suite.
+- **`--timeout=30s`** sets the wait time for Lattice to respond.
 
 ### `ltc debug-logs`
 
