@@ -5,7 +5,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.network "private_network", ip: system_ip
 
   config.vm.box = "lattice/ubuntu-trusty-64"
-  config.vm.box_version = '0.1.4'
+  config.vm.box_version = '0.2.0'
 
   config.vm.provision "shell" do |s|
     populate_lattice_env_file_script = <<-SCRIPT
