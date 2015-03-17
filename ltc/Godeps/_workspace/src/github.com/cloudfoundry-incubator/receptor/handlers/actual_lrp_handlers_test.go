@@ -445,8 +445,8 @@ var _ = Describe("Actual LRP Handlers", func() {
 
 				It("calls the BBS to request stop LRP instances", func() {
 					Ω(fakeBBS.RetireActualLRPsCallCount()).Should(Equal(1))
-					_, actualLRPs := fakeBBS.RetireActualLRPsArgsForCall(0)
-					Ω(actualLRPs).Should(ConsistOf(actualLRP2))
+					_, actualLRPKeys := fakeBBS.RetireActualLRPsArgsForCall(0)
+					Ω(actualLRPKeys).Should(ConsistOf(actualLRP2.ActualLRPKey))
 				})
 
 				It("responds with 204 Status NO CONTENT", func() {
@@ -463,8 +463,8 @@ var _ = Describe("Actual LRP Handlers", func() {
 
 					It("calls the BBS to retire teh reconciled instance", func() {
 						Ω(fakeBBS.RetireActualLRPsCallCount()).Should(Equal(1))
-						_, actualLRPs := fakeBBS.RetireActualLRPsArgsForCall(0)
-						Ω(actualLRPs).Should(ConsistOf(evacuatingLRP2))
+						_, actualLRPKeys := fakeBBS.RetireActualLRPsArgsForCall(0)
+						Ω(actualLRPKeys).Should(ConsistOf(evacuatingLRP2.ActualLRPKey))
 					})
 				})
 			})
