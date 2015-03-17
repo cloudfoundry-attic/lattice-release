@@ -1,8 +1,16 @@
 # `ltc`: The Lattice CLI
 
-![lattice logo](../logos/lattice.jpg)
-- Website: [http://lattice.cf](http://lattice.cf)
-- Mailing List: [Google Groups](https://groups.google.com/a/cloudfoundry.org/forum/#!forum/lattice)
+<table>
+  <tr>
+    <td>
+      <a href="http://lattice.cf"><img src="https://github.com/cloudfoundry-incubator/lattice/raw/develop/logos/lattice.jpg" align="left" height="200" width="200" ></a>
+    </td>
+    <td>
+      Website: <a href="http://lattice.cf">http://lattice.cf</a><br>
+      Mailing List: <a href="https://groups.google.com/a/cloudfoundry.org/forum/#!forum/lattice">Google Groups</a>
+    </td>
+  </tr>
+</table>
 
 `ltc` provides an easy-to-use command line interface for [Lattice](https://github.com/pivotal-cf-experimental/lattice)
 

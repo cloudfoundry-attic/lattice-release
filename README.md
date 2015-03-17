@@ -1,8 +1,16 @@
 # Lattice: Run Containerized Workloads
 
-![lattice logo](logos/lattice.jpg)
-- Website: [http://lattice.cf](http://lattice.cf)
-- Mailing List: [Google Groups](https://groups.google.com/a/cloudfoundry.org/forum/#!forum/lattice)
+<table>
+  <tr>
+    <td>
+      <a href="http://lattice.cf"><img src="https://github.com/cloudfoundry-incubator/lattice/raw/develop/logos/lattice.jpg" align="left" height="200" width="200" ></a>
+    </td>
+    <td>
+      Website: <a href="http://lattice.cf">http://lattice.cf</a><br>
+      Mailing List: <a href="https://groups.google.com/a/cloudfoundry.org/forum/#!forum/lattice">Google Groups</a>
+    </td>
+  </tr>
+</table>
 
 Lattice is an open source project for running containerized workloads on a cluster. Lattice bundles up http load-balancing, a cluster scheduler, log aggregation/streaming and health management into an easy-to-deploy and easy-to-use package.
 
