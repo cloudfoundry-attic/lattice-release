@@ -39,13 +39,13 @@ More complex workloads can be constructed and submitted directly to Lattice's Re
 Make sure you have [Vagrant](https://vagrantup.com/) installed, then:
 
 ```bash
-    git clone git@github.com:cloudfoundry-incubator/lattice.git
-    cd lattice
-    git checkout VERSION
-    vagrant up
+git clone git@github.com:cloudfoundry-incubator/lattice.git
+cd lattice
+git checkout <VERSION>
+vagrant up
 ```
 
-This spins up a virtual environment that is accessible at `192.168.11.11`.  Here, `VERSION` refers to the tagged version you which to deploy.  These tagged versions are known to be stable.
+This spins up a virtual environment that is accessible at `192.168.11.11`.  Here, `VERSION` refers to the tagged version you wish to deploy.  These tagged versions are known to be stable.
 
 Use the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) to target Lattice:
 
@@ -53,11 +53,25 @@ Use the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/mas
 ltc target 192.168.11.11.xip.io
 ```
 
+## Using Different Providers
+
+You can do this with either VMware Fusion or VirtualBox:
+
+Virtualbox:
+
+```bash
+vagrant up --provider virtualbox
+```
+
+VMware Fusion:
+```bash
+vagrant up --provider vmware_fusion
+```
+
 ### Networking Conflicts
 
-If you have trouble running the VirtualBox provider due to networking conflicts (commonly encountered
-when running other Vagrant providers alongside Virtualbox on the same machine), you'll need to
-bring up the Lattice cluster on a different subnet that does not conflict.
+If you are trying to run both the VirtualBox and VMWare providers on the same machine, 
+you'll need to run them on different private networks (subnets) that do not conflict.
 
 Set the System IP to an address that does not conflict with the host networking configuration by passing the
 LATTICE_SYSTEM_IP environment variable to the vagrant up command:
@@ -72,11 +86,11 @@ ltc target 192.168.80.100.xip.io
 Currently, Lattice does not support updating via provision. So to update, you have to destroy the box and bring it back up:
 
 ```bash
-     vagrant destroy --force
-     git pull
-     vagrant up
+ vagrant destroy --force
+ git pull
+ vagrant up
 ```
-  
+
 ## Troubleshooting
 
 -  xip.io is sometimes flaky, resulting in no such host errors.
@@ -88,7 +102,7 @@ Currently, Lattice does not support updating via provision. So to update, you ha
 By default, `vagrant up` will fetch the latest Lattice binary tarball.  To use a particular tarball:
 
 ```bash
-    VAGRANT_LATTICE_TAR_PATH=/path/to/lattice.tgz vagrant up
+VAGRANT_LATTICE_TAR_PATH=/path/to/lattice.tgz vagrant up
 ```
 
 # Clustered Deployment
@@ -102,7 +116,7 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 
 First, pick a Lattice version to deploy then download the appropriate `lattice.tf.example` file for that version from GitHub.  These can be obtained from the [releases](https://github.com/cloudfoundry-incubator/lattice/releases) page or the individual pages for each supported platform outlined below.
 
-Seecond, update the downloaded `lattice.tf.example` file by filling in the variables.  Instructions for each supported platform are here:
+Second, update the downloaded `lattice.tf.example` file by filling in the variables.  Instructions for each supported platform are here:
 
 - [Amazon Web Services](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md)
 - [DigitalOcean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md)
