@@ -37,7 +37,7 @@ var _ = Describe("CommandFactory", func() {
 	BeforeEach(func() {
 		appExaminer = &fake_app_examiner.FakeAppExaminer{}
 		outputBuffer = gbytes.NewBuffer()
-		terminalUI = terminal.NewUI(nil, outputBuffer)
+		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		osSignalChan = make(chan os.Signal, 1)
 		clock = fakeclock.NewFakeClock(time.Now())
 		exitHandler = &fake_exit_handler.FakeExitHandler{}

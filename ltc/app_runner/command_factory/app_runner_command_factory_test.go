@@ -44,7 +44,7 @@ var _ = Describe("CommandFactory", func() {
 	BeforeEach(func() {
 		appRunner = &fake_app_runner.FakeAppRunner{}
 		outputBuffer = gbytes.NewBuffer()
-		terminalUI = terminal.NewUI(nil, outputBuffer)
+		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		dockerMetadataFetcher = &fake_docker_metadata_fetcher.FakeDockerMetadataFetcher{}
 		clock = fakeclock.NewFakeClock(time.Now())
 		logger = lager.NewLogger("ltc-test")

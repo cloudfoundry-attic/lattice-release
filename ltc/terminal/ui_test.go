@@ -8,22 +8,25 @@ import (
 	"github.com/onsi/gomega/gbytes"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/fake_password_reader"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 )
 
 var _ = Describe("UI", func() {
 
 	var (
-		stdinReader  *io.PipeReader
-		stdinWriter  *io.PipeWriter
-		outputBuffer *gbytes.Buffer
-		terminalUI   terminal.UI
+		stdinReader        *io.PipeReader
+		stdinWriter        *io.PipeWriter
+		outputBuffer       *gbytes.Buffer
+		fakePasswordReader *fake_password_reader.FakePasswordReader
+		terminalUI         terminal.UI
 	)
 
 	BeforeEach(func() {
 		stdinReader, stdinWriter = io.Pipe()
 		outputBuffer = gbytes.NewBuffer()
-		terminalUI = terminal.NewUI(stdinReader, outputBuffer)
+		fakePasswordReader = &fake_password_reader.FakePasswordReader{}
+		terminalUI = terminal.NewUI(stdinReader, outputBuffer, fakePasswordReader)
 	})
 
 	Describe("Instantiation", func() {
@@ -91,18 +94,25 @@ var _ = Describe("UI", func() {
 				go func() {
 					defer GinkgoRecover()
 
-                    answerChan <- terminalUI.Prompt("Nickname: ")
+					answerChan <- terminalUI.Prompt("Nickname: ")
 					close(answerChan)
 				}()
 
-                Eventually(outputBuffer).Should(test_helpers.Say("Nickname: "))
+				Eventually(outputBuffer).Should(test_helpers.Say("Nickname: "))
 				stdinWriter.Write([]byte("RockStar\n"))
 
 				Expect(<-answerChan).To(Equal("RockStar"))
-                Eventually(answerChan).Should(BeClosed())
+				Eventually(answerChan).Should(BeClosed())
 			})
 		})
 
-	})
+		Describe("PasswordReader PromptForPassword", func() {
+			It("Calls to PasswordReader, which contains untested content", func() {
+				fakePasswordReader.PromptForPassword("Password: ")
 
+				Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
+				Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
+			})
+		})
+	})
 })

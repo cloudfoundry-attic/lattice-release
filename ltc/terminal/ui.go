@@ -16,17 +16,20 @@ type UI interface {
 
 	io.Reader
 	io.Writer
+	PasswordReader
 }
 
 type terminalUI struct {
 	io.Reader
 	io.Writer
+	PasswordReader
 }
 
-func NewUI(input io.Reader, output io.Writer) UI {
+func NewUI(input io.Reader, output io.Writer, passwordReader PasswordReader) UI {
 	return &terminalUI{
 		input,
 		output,
+		passwordReader,
 	}
 }
 

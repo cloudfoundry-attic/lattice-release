@@ -57,7 +57,7 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 	}
 
 	username := factory.ui.Prompt("Username: ")
-	password := factory.ui.Prompt("Password: ")
+	password := factory.ui.PromptForPassword("Password: ")
 
 	factory.config.SetLogin(username, password)
 	if _, authorized, err := factory.targetVerifier.VerifyTarget(factory.config.Receptor()); err != nil {

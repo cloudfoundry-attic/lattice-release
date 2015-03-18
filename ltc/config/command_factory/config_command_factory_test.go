@@ -17,6 +17,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
+    "github.com/cloudfoundry-incubator/lattice/ltc/terminal/fake_password_reader"
 )
 
 var _ = Describe("CommandFactory", func() {
@@ -27,16 +28,18 @@ var _ = Describe("CommandFactory", func() {
 		terminalUI      terminal.UI
 		targetCommand   cli.Command
 		config          *config_package.Config
-		targetVerifier  *fake_target_verifier.FakeTargetVerifier
+		fakeTargetVerifier  *fake_target_verifier.FakeTargetVerifier
 		fakeExitHandler *fake_exit_handler.FakeExitHandler
+        fakePasswordReader *fake_password_reader.FakePasswordReader
 	)
 
 	BeforeEach(func() {
 		stdinReader, stdinWriter = io.Pipe()
 		outputBuffer = gbytes.NewBuffer()
-		terminalUI = terminal.NewUI(stdinReader, outputBuffer)
-		targetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
+        fakePasswordReader = &fake_password_reader.FakePasswordReader{}
+		terminalUI = terminal.NewUI(stdinReader, outputBuffer, fakePasswordReader)
+		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 		config = config_package.New(persister.NewMemPersister())
 	})
 
@@ -47,7 +50,7 @@ var _ = Describe("CommandFactory", func() {
 		}
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewConfigCommandFactory(config, terminalUI, targetVerifier, fakeExitHandler)
+			commandFactory := command_factory.NewConfigCommandFactory(config, terminalUI, fakeTargetVerifier, fakeExitHandler)
 			targetCommand = commandFactory.MakeTargetCommand()
 		})
 
@@ -83,7 +86,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("setting target without auth", func() {
 			BeforeEach(func() {
-				targetVerifier.VerifyTargetReturns(true, true, nil)
+				fakeTargetVerifier.VerifyTargetReturns(true, true, nil)
 			})
 
 			It("saves the new target", func() {
@@ -91,8 +94,8 @@ var _ = Describe("CommandFactory", func() {
 
 				Eventually(commandFinishChan).Should(BeClosed())
 
-				Expect(targetVerifier.VerifyTargetCallCount()).To(Equal(1))
-				Expect(targetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
+				Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(1))
+				Expect(fakeTargetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
 
 				Expect(config.Receptor()).To(Equal("http://receptor.myapi.com"))
 			})
@@ -100,13 +103,13 @@ var _ = Describe("CommandFactory", func() {
 			It("clears out existing saved target credentials", func() {
 				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
-				Expect(targetVerifier.VerifyTargetCallCount()).To(Equal(1))
-				Expect(targetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
+				Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(1))
+				Expect(fakeTargetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
 			})
 
 			Context("when the persister returns errors", func() {
 				BeforeEach(func() {
-					commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("FAILURE setting api")), terminalUI, targetVerifier, fakeExitHandler)
+					commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("FAILURE setting api")), terminalUI, fakeTargetVerifier, fakeExitHandler)
 					targetCommand = commandFactory.MakeTargetCommand()
 				})
 
@@ -121,18 +124,16 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("setting target that requires auth", func() {
 			BeforeEach(func() {
-				targetVerifier.VerifyTargetReturns(true, false, nil)
+				fakeTargetVerifier.VerifyTargetReturns(true, false, nil)
+                fakePasswordReader.PromptForPasswordReturns("testpassword")
 			})
 
 			It("sets the api, username, password from the target specified", func() {
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
+				fakeTargetVerifier.VerifyTargetReturns(true, true, nil)
 				stdinWriter.Write([]byte("testusername\n"))
-				Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
-
-				targetVerifier.VerifyTargetReturns(true, true, nil)
-				stdinWriter.Write([]byte("testpassword\n"))
 
 				Eventually(commandFinishChan).Should(BeClosed())
 
@@ -140,12 +141,19 @@ var _ = Describe("CommandFactory", func() {
 				Expect(config.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
 				Expect(outputBuffer).To(test_helpers.Say("Api Location Set"))
 
-				Expect(targetVerifier.VerifyTargetCallCount()).To(Equal(2))
-				Expect(targetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
-				Expect(targetVerifier.VerifyTargetArgsForCall(1)).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
+                Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
+                Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
+
+				Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(2))
+				Expect(fakeTargetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
+				Expect(fakeTargetVerifier.VerifyTargetArgsForCall(1)).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
 			})
 
 			Context("scenarios that should not save the config", func() {
+                BeforeEach(func() {
+                    fakePasswordReader.PromptForPasswordReturns("evenworse")
+                })
+
 				AfterEach(func() {
 					verifyOldTargetStillSet()
 					Expect(fakeExitHandler.ExitCalledWith[0]).To(Equal(exit_codes.BadTarget))
@@ -156,32 +164,36 @@ var _ = Describe("CommandFactory", func() {
 
 					Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
 					stdinWriter.Write([]byte("notgood\n"))
-					Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
-					stdinWriter.Write([]byte("evenworse\n"))
 
 					Eventually(commandFinishChan).Should(BeClosed())
-					Expect(outputBuffer).To(test_helpers.Say("Could not authorize target."))
+
+                    Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
+                    Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
+
+
+                    Expect(outputBuffer).To(test_helpers.Say("Could not authorize target."))
 				})
 
 				It("does not save the config if there is an error connecting to the receptor after prompting", func() {
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
+                    commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
 
 					Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
+					fakeTargetVerifier.VerifyTargetReturns(true, false, errors.New("Unknown Error"))
 					stdinWriter.Write([]byte("notgood\n"))
-					Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
-
-					targetVerifier.VerifyTargetReturns(true, false, errors.New("Unknown Error"))
-					stdinWriter.Write([]byte("evenworse\n"))
 
 					Eventually(commandFinishChan).Should(BeClosed())
-					Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
+
+                    Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
+                    Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
+
+                    Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
 				})
 			})
 		})
 
 		Context("setting an invalid target", func() {
 			It("does not save the config if the target verifier returns an error", func() {
-				targetVerifier.VerifyTargetReturns(true, false, errors.New("Unknown Error"))
+				fakeTargetVerifier.VerifyTargetReturns(true, false, errors.New("Unknown Error"))
 
 				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
 

@@ -37,7 +37,7 @@ var _ = Describe("CliAppFactory", func() {
 		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 		memPersister = persister.NewMemPersister()
 		outputBuffer = gbytes.NewBuffer()
-		terminalUI = terminal.NewUI(nil, outputBuffer)
+		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		cliConfig = config.New(memPersister)
 		latticeVersion = "v0.2.Test"
 	})

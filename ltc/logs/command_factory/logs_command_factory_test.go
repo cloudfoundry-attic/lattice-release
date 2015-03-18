@@ -28,7 +28,7 @@ var _ = Describe("CommandFactory", func() {
 
 	BeforeEach(func() {
 		outputBuffer = gbytes.NewBuffer()
-		terminalUI = terminal.NewUI(nil, outputBuffer)
+		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
 		signalChan = make(chan os.Signal)
 		exitHandler = &fake_exit_handler.FakeExitHandler{}

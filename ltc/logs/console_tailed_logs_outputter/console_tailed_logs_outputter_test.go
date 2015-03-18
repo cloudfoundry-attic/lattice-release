@@ -25,7 +25,7 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 
 	BeforeEach(func() {
 		outputBuffer = gbytes.NewBuffer()
-		terminalUI = terminal.NewUI(nil, outputBuffer)
+		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 	})
 
 	Describe("OutputTailedLogs", func() {
