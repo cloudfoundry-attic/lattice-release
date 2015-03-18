@@ -3,6 +3,7 @@ package cli_app_factory
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"time"
@@ -16,7 +17,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry/noaa"
 	"github.com/codegangsta/cli"
@@ -42,7 +43,7 @@ const (
 	latticeCliHomeVar = "LATTICE_CLI_HOME"
 )
 
-func MakeCliApp(timeoutStr, latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) *cli.App {
+func MakeCliApp(timeoutStr, latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, cliStdout io.Writer) *cli.App {
 	config.Load()
 	app := cli.NewApp()
 	app.Name = AppName
@@ -50,7 +51,10 @@ func MakeCliApp(timeoutStr, latticeVersion, ltcConfigRoot string, exitHandler ex
 	app.Version = defaultVersion(latticeVersion)
 	app.Usage = LtcUsage
 	app.Email = "lattice@cloudfoundry.org"
-	app.Commands = cliCommands(timeoutStr, ltcConfigRoot, exitHandler, config, logger, targetVerifier, output)
+
+	ui := terminal.NewUI(os.Stdin, cliStdout)
+
+	app.Commands = cliCommands(timeoutStr, ltcConfigRoot, exitHandler, config, logger, targetVerifier, ui)
 
 	app.Before = func(context *cli.Context) error {
 		args := context.Args()
@@ -65,10 +69,10 @@ func MakeCliApp(timeoutStr, latticeVersion, ltcConfigRoot string, exitHandler ex
 		}
 
 		if receptorUp, authorized, err := targetVerifier.VerifyTarget(config.Receptor()); !receptorUp {
-			output.Say(fmt.Sprintf("Error connecting to the receptor. Make sure your lattice target is set, and that lattice is up and running.\n\tUnderlying error: %s", err.Error()))
+			ui.Say(fmt.Sprintf("Error connecting to the receptor. Make sure your lattice target is set, and that lattice is up and running.\n\tUnderlying error: %s", err.Error()))
 			return err
 		} else if !authorized {
-			output.Say("Could not authenticate with the receptor. Please run ltc target with the correct credentials.")
+			ui.Say("Could not authenticate with the receptor. Please run ltc target with the correct credentials.")
 			return errors.New("Could not authenticate with the receptor.")
 		}
 		return nil
@@ -77,8 +81,7 @@ func MakeCliApp(timeoutStr, latticeVersion, ltcConfigRoot string, exitHandler ex
 	return app
 }
 
-func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, output *output.Output) []cli.Command {
-	input := os.Stdin
+func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, ui terminal.UI) []cli.Command {
 
 	receptorClient := receptor.NewClient(config.Receptor())
 	appRunner := docker_app_runner.New(receptorClient, config.Target())
@@ -86,32 +89,32 @@ func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.Exit
 	clock := clock.NewClock()
 
 	logReader := logs.NewLogReader(noaa.NewConsumer(LoggregatorUrl(config.Loggregator()), nil, nil))
-	tailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(output, logReader)
+	tailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(ui, logReader)
 
 	appRunnerCommandFactoryConfig := app_runner_command_factory.AppRunnerCommandFactoryConfig{
 		AppRunner:             appRunner,
 		DockerMetadataFetcher: docker_metadata_fetcher.New(docker_metadata_fetcher.NewDockerSessionFactory()),
-		Output:                output,
-		Timeout:               Timeout(timeoutStr),
-		Domain:                config.Target(),
-		Env:                   os.Environ(),
-		Clock:                 clock,
-		Logger:                logger,
-		TailedLogsOutputter:   tailedLogsOutputter,
-		ExitHandler:           exitHandler,
+		UI:                  ui,
+		Timeout:             Timeout(timeoutStr),
+		Domain:              config.Target(),
+		Env:                 os.Environ(),
+		Clock:               clock,
+		Logger:              logger,
+		TailedLogsOutputter: tailedLogsOutputter,
+		ExitHandler:         exitHandler,
 	}
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 
-	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(output, tailedLogsOutputter, exitHandler)
+	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(ui, tailedLogsOutputter, exitHandler)
 
-	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, targetVerifier, input, output, exitHandler)
+	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, exitHandler)
 
 	appExaminer := app_examiner.New(receptorClient)
-	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, output, clock, exitHandler)
+	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, ui, clock, exitHandler)
 
-	testRunner := integration_test.NewIntegrationTestRunner(output, config, ltcConfigRoot)
-	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner, output)
+	testRunner := integration_test.NewIntegrationTestRunner(config, ltcConfigRoot)
+	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner)
 
 	return []cli.Command{
 		appRunnerCommandFactory.MakeCreateAppCommand(),

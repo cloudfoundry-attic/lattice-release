@@ -17,7 +17,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	"github.com/codegangsta/cli"
@@ -30,6 +30,7 @@ var _ = Describe("CommandFactory", func() {
 	var (
 		appRunner                     *fake_app_runner.FakeAppRunner
 		outputBuffer                  *gbytes.Buffer
+		terminalUI                    terminal.UI
 		timeout                       time.Duration = 10 * time.Second
 		domain                        string        = "192.168.11.11.xip.io"
 		clock                         *fakeclock.FakeClock
@@ -43,23 +44,23 @@ var _ = Describe("CommandFactory", func() {
 	BeforeEach(func() {
 		appRunner = &fake_app_runner.FakeAppRunner{}
 		outputBuffer = gbytes.NewBuffer()
+		terminalUI = terminal.NewUI(nil, outputBuffer)
 		dockerMetadataFetcher = &fake_docker_metadata_fetcher.FakeDockerMetadataFetcher{}
+		clock = fakeclock.NewFakeClock(time.Now())
 		logger = lager.NewLogger("ltc-test")
 		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 	})
 
 	Describe("CreateAppCommand", func() {
-
 		var createCommand cli.Command
 
 		BeforeEach(func() {
 			env := []string{"SHELL=/bin/bash", "COLOR=Blue"}
-			clock = fakeclock.NewFakeClock(time.Now())
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:             appRunner,
+				AppRunner: appRunner,
+				UI:        terminalUI,
 				DockerMetadataFetcher: dockerMetadataFetcher,
-				Output:                output.New(outputBuffer),
 				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   env,
@@ -694,14 +695,14 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("ScaleAppCommand", func() {
-		var scaleCommand cli.Command
-		BeforeEach(func() {
-			clock = fakeclock.NewFakeClock(time.Now())
 
+		var scaleCommand cli.Command
+
+		BeforeEach(func() {
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:             appRunner,
+				AppRunner: appRunner,
+				UI:        terminalUI,
 				DockerMetadataFetcher: dockerMetadataFetcher,
-				Output:                output.New(outputBuffer),
 				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   []string{},
@@ -874,12 +875,10 @@ var _ = Describe("CommandFactory", func() {
 		var updateRoutesCommand cli.Command
 
 		BeforeEach(func() {
-			clock = fakeclock.NewFakeClock(time.Now())
-
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:             appRunner,
+				AppRunner: appRunner,
+				UI:        terminalUI,
 				DockerMetadataFetcher: dockerMetadataFetcher,
-				Output:                output.New(outputBuffer),
 				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   []string{},
@@ -992,11 +991,10 @@ var _ = Describe("CommandFactory", func() {
 		var removeCommand cli.Command
 
 		BeforeEach(func() {
-			clock = fakeclock.NewFakeClock(time.Now())
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:             appRunner,
+				AppRunner: appRunner,
+				UI:        terminalUI,
 				DockerMetadataFetcher: dockerMetadataFetcher,
-				Output:                output.New(outputBuffer),
 				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   []string{},

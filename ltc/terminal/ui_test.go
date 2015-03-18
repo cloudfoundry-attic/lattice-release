@@ -1,0 +1,108 @@
+package terminal_test
+
+import (
+	"io"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
+
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
+	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
+)
+
+var _ = Describe("UI", func() {
+
+	var (
+		stdinReader  *io.PipeReader
+		stdinWriter  *io.PipeWriter
+		outputBuffer *gbytes.Buffer
+		terminalUI   terminal.UI
+	)
+
+	BeforeEach(func() {
+		stdinReader, stdinWriter = io.Pipe()
+		outputBuffer = gbytes.NewBuffer()
+		terminalUI = terminal.NewUI(stdinReader, outputBuffer)
+	})
+
+	Describe("Instantiation", func() {
+		It("instantiates a terminal", func() {
+			Expect(terminalUI).ToNot(BeNil())
+
+			_, readerOk := terminalUI.(io.Reader)
+			Expect(readerOk).To(BeTrue())
+
+			_, writerOk := terminalUI.(io.Writer)
+			Expect(writerOk).To(BeTrue())
+		})
+	})
+
+	Describe("Output methods", func() {
+		Describe("Say", func() {
+			It("says the message to the terminal", func() {
+				terminalUI.Say("Cloudy with a chance of meatballs")
+				Expect(outputBuffer).To(test_helpers.Say("Cloudy with a chance of meatballs"))
+			})
+		})
+
+		Describe("SayLine", func() {
+			It("says the message to the terminal with a newline", func() {
+				terminalUI.SayLine("Strange Clouds")
+				Expect(outputBuffer).To(test_helpers.Say("Strange Clouds\n"))
+			})
+		})
+
+		Describe("IncorrectUsage", func() {
+			Context("when no message is passed", func() {
+				It("outputs incorrect usage", func() {
+					terminalUI.IncorrectUsage("")
+					Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage"))
+				})
+			})
+			Context("when a message is passed", func() {
+				It("outputs incorrect usage with the message", func() {
+					terminalUI.IncorrectUsage("You did that thing wrong")
+					Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: You did that thing wrong"))
+				})
+			})
+		})
+
+		Describe("Dot", func() {
+			It("says a dot", func() {
+				terminalUI.Dot()
+				Expect(outputBuffer).To(test_helpers.Say("."))
+			})
+		})
+
+		Describe("NewLine", func() {
+			It("says a newline", func() {
+				terminalUI.NewLine()
+				Expect(outputBuffer).To(test_helpers.Say("\n"))
+			})
+		})
+	})
+
+	Describe("Input Methods", func() {
+		Describe("Prompt", func() {
+			It("Prompts the user for input", func() {
+
+				answerChan := make(chan string)
+				go func() {
+					defer GinkgoRecover()
+
+                    answerChan <- terminalUI.Prompt("Nickname: ")
+					close(answerChan)
+				}()
+
+                Eventually(outputBuffer).Should(test_helpers.Say("Nickname: "))
+				stdinWriter.Write([]byte("RockStar\n"))
+
+				Expect(<-answerChan).To(Equal("RockStar"))
+                Eventually(answerChan).Should(BeClosed())
+			})
+		})
+
+	})
+
+})

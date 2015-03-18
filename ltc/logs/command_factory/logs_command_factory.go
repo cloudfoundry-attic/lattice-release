@@ -4,19 +4,19 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/codegangsta/cli"
 )
 
 type logsCommandFactory struct {
-	output              *output.Output
+	ui                  terminal.UI
 	tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter
 	exitHandler         exit_handler.ExitHandler
 }
 
-func NewLogsCommandFactory(output *output.Output, tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter, exitHandler exit_handler.ExitHandler) *logsCommandFactory {
+func NewLogsCommandFactory(ui terminal.UI, tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter, exitHandler exit_handler.ExitHandler) *logsCommandFactory {
 	return &logsCommandFactory{
-		output:              output,
+		ui:                  ui,
 		tailedLogsOutputter: tailedLogsOutputter,
 		exitHandler:         exitHandler,
 	}
@@ -49,7 +49,7 @@ func (factory *logsCommandFactory) tailLogs(context *cli.Context) {
 	appGuid := context.Args().First()
 
 	if appGuid == "" {
-		factory.output.IncorrectUsage("")
+		factory.ui.IncorrectUsage("")
 		return
 	}
 

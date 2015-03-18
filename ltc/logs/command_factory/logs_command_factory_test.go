@@ -12,7 +12,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
 )
@@ -20,6 +20,7 @@ import (
 var _ = Describe("CommandFactory", func() {
 	var (
 		outputBuffer            *gbytes.Buffer
+		terminalUI              terminal.UI
 		fakeTailedLogsOutputter *fake_tailed_logs_outputter.FakeTailedLogsOutputter
 		signalChan              chan os.Signal
 		exitHandler             exit_handler.ExitHandler
@@ -27,6 +28,7 @@ var _ = Describe("CommandFactory", func() {
 
 	BeforeEach(func() {
 		outputBuffer = gbytes.NewBuffer()
+		terminalUI = terminal.NewUI(nil, outputBuffer)
 		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
 		signalChan = make(chan os.Signal)
 		exitHandler = &fake_exit_handler.FakeExitHandler{}
@@ -37,7 +39,7 @@ var _ = Describe("CommandFactory", func() {
 		var logsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
+			commandFactory := command_factory.NewLogsCommandFactory(terminalUI, fakeTailedLogsOutputter, exitHandler)
 			logsCommand = commandFactory.MakeLogsCommand()
 		})
 
@@ -65,7 +67,7 @@ var _ = Describe("CommandFactory", func() {
 		var debugLogsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewLogsCommandFactory(output.New(outputBuffer), fakeTailedLogsOutputter, exitHandler)
+			commandFactory := command_factory.NewLogsCommandFactory(terminalUI, fakeTailedLogsOutputter, exitHandler)
 			debugLogsCommand = commandFactory.MakeDebugLogsCommand()
 		})
 

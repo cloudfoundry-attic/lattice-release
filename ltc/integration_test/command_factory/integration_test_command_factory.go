@@ -4,17 +4,15 @@ import (
 	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/codegangsta/cli"
 )
 
 type IntegrationTestCommandFactory struct {
 	integrationTestRunner integration_test.IntegrationTestRunner
-	output                *output.Output
 }
 
-func NewIntegrationTestCommandFactory(testRunner integration_test.IntegrationTestRunner, output *output.Output) *IntegrationTestCommandFactory {
-	return &IntegrationTestCommandFactory{testRunner, output}
+func NewIntegrationTestCommandFactory(testRunner integration_test.IntegrationTestRunner) *IntegrationTestCommandFactory {
+	return &IntegrationTestCommandFactory{testRunner}
 }
 
 func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.Command {

@@ -11,7 +11,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/receptor_client_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/lager"
 )
@@ -34,7 +33,7 @@ func NewCliApp() *cli.App {
 	go exitHandler.Run()
 
 	targetVerifier := target_verifier.New(receptor_client_factory.MakeReceptorClient)
-	app := cli_app_factory.MakeCliApp(os.Getenv(timeoutVar), latticeVersion, ltcConfigRoot(), exitHandler, config, logger(), targetVerifier, output.New(os.Stdout))
+	app := cli_app_factory.MakeCliApp(os.Getenv(timeoutVar), latticeVersion, ltcConfigRoot(), exitHandler, config, logger(), targetVerifier, os.Stdout)
 	return app
 }
 

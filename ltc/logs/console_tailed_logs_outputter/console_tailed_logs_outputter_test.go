@@ -12,7 +12,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/fake_log_reader"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/cloudfoundry/noaa/events"
 )
@@ -20,15 +20,18 @@ import (
 var _ = Describe("ConsoleTailedLogsOutputter", func() {
 	var (
 		outputBuffer *gbytes.Buffer
+		terminalUI   terminal.UI
 	)
 
 	BeforeEach(func() {
 		outputBuffer = gbytes.NewBuffer()
+		terminalUI = terminal.NewUI(nil, outputBuffer)
 	})
+
 	Describe("OutputTailedLogs", func() {
 		It("Tails logs", func() {
 			logReader := fake_log_reader.NewFakeLogReader()
-			consoleTailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(output.New(outputBuffer), logReader)
+			consoleTailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(terminalUI, logReader)
 
 			time := time.Now()
 			sourceType := "RTR"
@@ -57,7 +60,7 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 	Describe("StopOutputting", func() {
 		It("stops outputting logs", func() {
 			logReader := fake_log_reader.NewFakeLogReader()
-			consoleTailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(output.New(outputBuffer), logReader)
+			consoleTailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(terminalUI, logReader)
 
 			go consoleTailedLogsOutputter.OutputTailedLogs("my-app-guid")
 

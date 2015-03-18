@@ -6,7 +6,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry/noaa/events"
 )
 
@@ -17,14 +17,14 @@ type TailedLogsOutputter interface {
 
 type ConsoleTailedLogsOutputter struct {
 	outputChan chan string
-	output     *output.Output
+	ui         terminal.UI
 	logReader  logs.LogReader
 }
 
-func NewConsoleTailedLogsOutputter(output *output.Output, logReader logs.LogReader) *ConsoleTailedLogsOutputter {
+func NewConsoleTailedLogsOutputter(ui terminal.UI, logReader logs.LogReader) *ConsoleTailedLogsOutputter {
 	return &ConsoleTailedLogsOutputter{
 		outputChan: make(chan string, 10),
-		output:     output,
+		ui:         ui,
 		logReader:  logReader,
 	}
 
@@ -34,7 +34,7 @@ func (ctlo *ConsoleTailedLogsOutputter) OutputTailedLogs(appGuid string) {
 	go ctlo.logReader.TailLogs(appGuid, ctlo.logCallback, ctlo.errorCallback)
 
 	for log := range ctlo.outputChan {
-		ctlo.output.Say(log + "\n")
+		ctlo.ui.Say(log + "\n")
 	}
 }
 

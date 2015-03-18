@@ -1,22 +1,19 @@
 package fake_integration_test_runner
 
 import (
-	"io"
 	"sync"
-
-	"fmt"
 	"time"
 )
 
-func NewFakeIntegrationTestRunner(outputWriter io.Writer) *FakeIntegrationTestRunner {
-	return &FakeIntegrationTestRunner{testOutputWriter: outputWriter}
+func NewFakeIntegrationTestRunner() *FakeIntegrationTestRunner {
+	return &FakeIntegrationTestRunner{}
 }
 
 type FakeIntegrationTestRunner struct {
 	sync.RWMutex
-	testOutputWriter io.Writer
-	timeout          time.Duration
-	verbose          bool
+	timeout      time.Duration
+	verbose      bool
+	runCallCount int
 }
 
 func (fake *FakeIntegrationTestRunner) Run(timeout time.Duration, verbose bool) {
@@ -25,8 +22,13 @@ func (fake *FakeIntegrationTestRunner) Run(timeout time.Duration, verbose bool) 
 
 	fake.timeout = timeout
 	fake.verbose = verbose
+	fake.runCallCount++
+}
 
-	fmt.Fprintf(fake.testOutputWriter, "Running fake integration tests!!!\n")
+func (fake *FakeIntegrationTestRunner) RunCallCount() int {
+	fake.RLock()
+	defer fake.RUnlock()
+	return fake.runCallCount
 }
 
 func (fake *FakeIntegrationTestRunner) GetArgsForRun() (time.Duration, bool) {

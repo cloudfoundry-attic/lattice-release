@@ -37,7 +37,6 @@ type IntegrationTestRunner interface {
 
 type integrationTestRunner struct {
 	testingT          GinkgoTestingT
-	testOutputWriter  io.Writer
 	config            *config.Config
 	latticeCliHome    string
 	ltcExecutablePath string
@@ -49,8 +48,8 @@ func (g *ginkgoTestingT) Fail() {
 	os.Exit(1)
 }
 
-func NewIntegrationTestRunner(outputWriter io.Writer, config *config.Config, latticeCliHome string) IntegrationTestRunner {
-	return &integrationTestRunner{testOutputWriter: outputWriter,
+func NewIntegrationTestRunner(config *config.Config, latticeCliHome string) IntegrationTestRunner {
+	return &integrationTestRunner{
 		config:            config,
 		testingT:          &ginkgoTestingT{},
 		latticeCliHome:    latticeCliHome,

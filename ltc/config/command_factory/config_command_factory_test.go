@@ -14,7 +14,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
 )
@@ -24,6 +24,7 @@ var _ = Describe("CommandFactory", func() {
 		stdinReader     *io.PipeReader
 		stdinWriter     *io.PipeWriter
 		outputBuffer    *gbytes.Buffer
+		terminalUI      terminal.UI
 		targetCommand   cli.Command
 		config          *config_package.Config
 		targetVerifier  *fake_target_verifier.FakeTargetVerifier
@@ -33,6 +34,7 @@ var _ = Describe("CommandFactory", func() {
 	BeforeEach(func() {
 		stdinReader, stdinWriter = io.Pipe()
 		outputBuffer = gbytes.NewBuffer()
+		terminalUI = terminal.NewUI(stdinReader, outputBuffer)
 		targetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 		config = config_package.New(persister.NewMemPersister())
@@ -45,7 +47,7 @@ var _ = Describe("CommandFactory", func() {
 		}
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewConfigCommandFactory(config, targetVerifier, stdinReader, output.New(outputBuffer), fakeExitHandler)
+			commandFactory := command_factory.NewConfigCommandFactory(config, terminalUI, targetVerifier, fakeExitHandler)
 			targetCommand = commandFactory.MakeTargetCommand()
 		})
 
@@ -104,7 +106,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Context("when the persister returns errors", func() {
 				BeforeEach(func() {
-					commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("FAILURE setting api")), targetVerifier, stdinReader, output.New(outputBuffer), fakeExitHandler)
+					commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("FAILURE setting api")), terminalUI, targetVerifier, fakeExitHandler)
 					targetCommand = commandFactory.MakeTargetCommand()
 				})
 
@@ -117,7 +119,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
-		Context("setting target that requiries auth", func() {
+		Context("setting target that requires auth", func() {
 			BeforeEach(func() {
 				targetVerifier.VerifyTargetReturns(true, false, nil)
 			})

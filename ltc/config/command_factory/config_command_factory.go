@@ -1,16 +1,13 @@
 package command_factory
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"strings"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/codegangsta/cli"
 )
 
@@ -18,14 +15,13 @@ const TargetCommandName = "target"
 
 type ConfigCommandFactory struct {
 	config         *config.Config
-	input          io.Reader
-	output         *output.Output
+	ui             terminal.UI
 	targetVerifier target_verifier.TargetVerifier
 	exitHandler    exit_handler.ExitHandler
 }
 
-func NewConfigCommandFactory(config *config.Config, targetVerifier target_verifier.TargetVerifier, input io.Reader, output *output.Output, exitHandler exit_handler.ExitHandler) *ConfigCommandFactory {
-	return &ConfigCommandFactory{config, input, output, targetVerifier, exitHandler}
+func NewConfigCommandFactory(config *config.Config, ui terminal.UI, targetVerifier target_verifier.TargetVerifier, exitHandler exit_handler.ExitHandler) *ConfigCommandFactory {
+	return &ConfigCommandFactory{config, ui, targetVerifier, exitHandler}
 }
 
 func (factory *ConfigCommandFactory) MakeTargetCommand() cli.Command {
@@ -52,7 +48,7 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 	factory.config.SetLogin("", "")
 
 	if _, authorized, err := factory.targetVerifier.VerifyTarget(factory.config.Receptor()); err != nil {
-		factory.output.Say("Error verifying target: " + err.Error())
+		factory.ui.Say("Error verifying target: " + err.Error())
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	} else if authorized {
@@ -60,16 +56,16 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 		return
 	}
 
-	username := factory.prompt("Username: ")
-	password := factory.prompt("Password: ")
+	username := factory.ui.Prompt("Username: ")
+	password := factory.ui.Prompt("Password: ")
 
 	factory.config.SetLogin(username, password)
 	if _, authorized, err := factory.targetVerifier.VerifyTarget(factory.config.Receptor()); err != nil {
-		factory.output.Say("Error verifying target: " + err.Error())
+		factory.ui.Say("Error verifying target: " + err.Error())
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	} else if !authorized {
-		factory.output.Say("Could not authorize target.")
+		factory.ui.Say("Could not authorize target.")
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	}
@@ -80,30 +76,21 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 func (factory *ConfigCommandFactory) save() {
 	err := factory.config.Save()
 	if err != nil {
-		factory.output.Say(err.Error())
+		factory.ui.Say(err.Error())
 		return
 	}
 
-	factory.output.Say("Api Location Set")
-}
-
-func (factory *ConfigCommandFactory) prompt(promptText string) string {
-	reader := bufio.NewReader(factory.input)
-	factory.output.Say(promptText)
-
-	result, _ := reader.ReadString('\n')
-
-	return strings.TrimSuffix(result, "\n")
+	factory.ui.Say("Api Location Set")
 }
 
 func (factory *ConfigCommandFactory) printTarget() {
 	if factory.config.Target() == "" {
-		factory.output.Say("Target not set.")
+		factory.ui.Say("Target not set.")
 		return
 	}
-	factory.output.Say(fmt.Sprintf("Target:\t\t%s", factory.config.Target()))
+	factory.ui.Say(fmt.Sprintf("Target:\t\t%s", factory.config.Target()))
 
 	if factory.config.Username() != "" {
-		factory.output.Say(fmt.Sprintf("\nUsername:\t%s", factory.config.Username()))
+		factory.ui.Say(fmt.Sprintf("\nUsername:\t%s", factory.config.Username()))
 	}
 }

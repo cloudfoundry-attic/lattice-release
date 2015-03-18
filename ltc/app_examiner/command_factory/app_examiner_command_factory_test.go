@@ -15,9 +15,9 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output"
-	"github.com/cloudfoundry-incubator/lattice/ltc/output/cursor"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/cursor"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock/fakeclock"
@@ -28,6 +28,7 @@ var _ = Describe("CommandFactory", func() {
 	var (
 		appExaminer  *fake_app_examiner.FakeAppExaminer
 		outputBuffer *gbytes.Buffer
+		terminalUI   terminal.UI
 		clock        *fakeclock.FakeClock
 		osSignalChan chan os.Signal
 		exitHandler  *fake_exit_handler.FakeExitHandler
@@ -36,6 +37,7 @@ var _ = Describe("CommandFactory", func() {
 	BeforeEach(func() {
 		appExaminer = &fake_app_examiner.FakeAppExaminer{}
 		outputBuffer = gbytes.NewBuffer()
+		terminalUI = terminal.NewUI(nil, outputBuffer)
 		osSignalChan = make(chan os.Signal, 1)
 		clock = fakeclock.NewFakeClock(time.Now())
 		exitHandler = &fake_exit_handler.FakeExitHandler{}
@@ -45,7 +47,7 @@ var _ = Describe("CommandFactory", func() {
 		var listAppsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), clock, exitHandler)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler)
 			listAppsCommand = commandFactory.MakeListAppCommand()
 		})
 
@@ -116,7 +118,7 @@ var _ = Describe("CommandFactory", func() {
 		var visualizeCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), clock, exitHandler)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler)
 			visualizeCommand = commandFactory.MakeVisualizeCommand()
 		})
 
@@ -213,7 +215,8 @@ var _ = Describe("CommandFactory", func() {
 		var statusCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), clock, exitHandler)
+			//			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), clock, exitHandler)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler)
 			statusCommand = commandFactory.MakeStatusCommand()
 		})
 
