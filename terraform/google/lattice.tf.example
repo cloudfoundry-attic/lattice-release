@@ -4,9 +4,6 @@ module "lattice-google" {
     # Path to the JSON file used to describe your account credentials, downloaded from Google Cloud Console
     gce_account_file = "<CHANGE-ME>"
 
-    # Path to the JSON file containing the secrets for your account, downloaded from Google Cloud Console
-    gce_client_secrets_file = "<CHANGE-ME>"
-
     # The name of the project to apply any resources to
     gce_project = "<CHANGE-ME>"
 
