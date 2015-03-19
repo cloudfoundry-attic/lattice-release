@@ -14,7 +14,9 @@ else
         lattice_download_url="https://s3-us-west-2.amazonaws.com/lattice/releases/$lattice_tar_version/lattice.tgz"
     fi
 
-    echo "Downloading Lattice Release tar from $lattice_download_url => `pwd`/.lattice/lattice.tgz"
-    wget --quiet $lattice_download_url -O .lattice/lattice.tgz
+    echo "Downloading Lattice Release tar from $lattice_download_url => $(pwd)/.lattice/lattice.tgz"
+    pushd .lattice > /dev/null
+        curl -sOL $lattice_download_url
+    popd > /dev/null
     echo "Download complete"
 fi
