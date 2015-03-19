@@ -1,8 +1,6 @@
 lager
 =====
 
-[![Build Status](https://travis-ci.org/pivotal-golang/lager.svg?branch=master)](https://travis-ci.org/pivotal-golang/lager)
-
 Lager is a logging library for go.
 
 ## Usage

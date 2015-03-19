@@ -108,19 +108,11 @@ func convertLagerLog(lagerLog lager.LogFormat) (LogEntry, bool) {
 		delete(lagerLog.Data, "session")
 	}
 
-	messageComponents := strings.Split(lagerLog.Message, ".")
-
-	n := len(messageComponents)
-	if n <= 1 {
-		return LogEntry{}, false
-	}
-	logMessage := strings.Join(messageComponents[1:], ".")
-
 	return LogEntry{
 		Timestamp: time.Unix(0, int64(timestamp*1e9)),
 		LogLevel:  lagerLog.LogLevel,
 		Source:    lagerLog.Source,
-		Message:   logMessage,
+		Message:   lagerLog.Message,
 		Session:   logSession,
 
 		Error: logErr,

@@ -418,6 +418,7 @@ type ActualLRPResponse struct {
 	Ports           []PortMapping   `json:"ports"`
 	State           ActualLRPState  `json:"state"`
 	CrashCount      int             `json:"crash_count"`
+	CrashReason     string          `json:"crash_reason,omitempty"`
 	PlacementError  string          `json:"placement_error,omitempty"`
 	Since           int64           `json:"since"`
 	Evacuating      bool            `json:"evacuating"`

@@ -276,6 +276,7 @@ type ActualLRP struct {
 	ActualLRPInstanceKey
 	ActualLRPNetInfo
 	CrashCount      int             `json:"crash_count"`
+	CrashReason     string          `json:"crash_reason,omitempty"`
 	State           ActualLRPState  `json:"state"`
 	PlacementError  string          `json:"placement_error,omitempty"`
 	Since           int64           `json:"since"`

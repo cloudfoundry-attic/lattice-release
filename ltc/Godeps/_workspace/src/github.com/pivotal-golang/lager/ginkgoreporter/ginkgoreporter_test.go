@@ -86,13 +86,13 @@ var _ = Describe("Ginkgoreporter", func() {
 
 				logs := fetchLogs()
 				Ω(logs[0].Session).Should(Equal("2.1"))
-				Ω(logs[0].Message).Should(Equal("node-2.spec.start"))
+				Ω(logs[0].Message).Should(Equal("ginkgo.node-2.spec.start"))
 				Ω(logs[1].Session).Should(Equal("2.1"))
-				Ω(logs[1].Message).Should(Equal("node-2.spec.end"))
+				Ω(logs[1].Message).Should(Equal("ginkgo.node-2.spec.end"))
 				Ω(logs[2].Session).Should(Equal("2.2"))
-				Ω(logs[0].Message).Should(Equal("node-2.spec.start"))
+				Ω(logs[0].Message).Should(Equal("ginkgo.node-2.spec.start"))
 				Ω(logs[3].Session).Should(Equal("2.2"))
-				Ω(logs[1].Message).Should(Equal("node-2.spec.end"))
+				Ω(logs[1].Message).Should(Equal("ginkgo.node-2.spec.end"))
 			})
 		})
 
@@ -120,7 +120,7 @@ var _ = Describe("Ginkgoreporter", func() {
 				log := fetchLogs()[0]
 				Ω(log.LogLevel).Should(Equal(lager.INFO))
 				Ω(log.Source).Should(Equal("ginkgo"))
-				Ω(log.Message).Should(Equal("spec.start"))
+				Ω(log.Message).Should(Equal("ginkgo.spec.start"))
 				Ω(log.Session).Should(Equal("1"))
 				Ω(log.Data["summary"]).Should(Equal(jsonRoundTrip(SpecSummary{
 					Name:     []string{"A", "B"},
@@ -134,7 +134,7 @@ var _ = Describe("Ginkgoreporter", func() {
 					log := fetchLogs()[1]
 					Ω(log.LogLevel).Should(Equal(lager.INFO))
 					Ω(log.Source).Should(Equal("ginkgo"))
-					Ω(log.Message).Should(Equal("spec.end"))
+					Ω(log.Message).Should(Equal("ginkgo.spec.end"))
 					Ω(log.Session).Should(Equal("1"))
 					Ω(log.Data["summary"]).Should(Equal(jsonRoundTrip(SpecSummary{
 						Name:     []string{"A", "B"},
@@ -164,7 +164,7 @@ var _ = Describe("Ginkgoreporter", func() {
 					log := fetchLogs()[1]
 					Ω(log.LogLevel).Should(Equal(lager.ERROR))
 					Ω(log.Source).Should(Equal("ginkgo"))
-					Ω(log.Message).Should(Equal("spec.end"))
+					Ω(log.Message).Should(Equal("ginkgo.spec.end"))
 					Ω(log.Session).Should(Equal("1"))
 					Ω(log.Error.Error()).Should(Equal("something failed!\nsome/file:3"))
 					Ω(log.Data["summary"]).Should(Equal(jsonRoundTrip(SpecSummary{
