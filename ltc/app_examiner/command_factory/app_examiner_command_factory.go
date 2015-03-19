@@ -85,6 +85,32 @@ func (factory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
 	}
 }
 
+func (factory *AppExaminerCommandFactory) MakeVolumeSetStatusCommand() cli.Command {
+	return cli.Command{
+		Name:        "volume-set-status",
+		Usage:       "Shows details about a volume set",
+		Description: "ltc volume-set-status VOLUME_NAME",
+		Action:      factory.volumeSetStatus,
+		Flags:       []cli.Flag{},
+	}
+}
+
+func (factory *AppExaminerCommandFactory) volumeSetStatus(context *cli.Context) {
+	if len(context.Args()) < 1 {
+		factory.ui.IncorrectUsage("Volume Name required")
+		return
+	}
+
+	volumeSetName := context.Args()[0]
+	volumeSetInfo, err := factory.appExaminer.VolumeSetStatus(volumeSetName)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(volumeSetInfo)
+}
+
 func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 	appList, err := factory.appExaminer.ListApps()
 	if err != nil {

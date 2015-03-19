@@ -119,6 +119,15 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Name:  "no-monitor",
 			Usage: "Disables healthchecking for the app.",
 		},
+
+		cli.StringFlag{
+			Name:  "mount-volume",
+			Usage: "Volume set to attach to the app",
+		},
+		cli.StringFlag{
+			Name:  "mount-path",
+			Usage: "Path to attach the volume to in the container",
+		},
 	}
 
 	var createAppCommand = cli.Command{
@@ -187,6 +196,41 @@ func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	return removeAppCommand
 }
 
+func (factory *AppRunnerCommandFactory) MakeCreateVolumeSetCommand() cli.Command {
+	var volSetFlags = []cli.Flag{
+		cli.IntFlag{
+			Name:  "reserved-memory-mb, w",
+			Usage: "Working directory for container (overrides Docker metadata)",
+			Value: 0,
+		},
+	}
+
+	var createVolumeSetCommand = cli.Command{
+		Name:        "create-volume-set",
+		ShortName:   "cv",
+		Description: "ltc create-volume GUID INSTANCES SIZE --reserved-memory-mb=X",
+		Usage:       "Creates a volume",
+		Flags:       volSetFlags,
+		Action:      factory.createVolumeSet,
+	}
+
+	return createVolumeSetCommand
+}
+
+func (factory *AppRunnerCommandFactory) createVolumeSet(context *cli.Context) {
+	volumeSetGuid := context.Args().Get(0)
+	instances, _ := strconv.Atoi(context.Args().Get(1))
+	sizeMB, _ := strconv.Atoi(context.Args().Get(2))
+	reservedMemoryMB := context.Int("reserved-memory-mb")
+
+	fmt.Println(volumeSetGuid, instances, sizeMB, reservedMemoryMB)
+
+	err := factory.appRunner.CreateVolumeSet(volumeSetGuid, instances, sizeMB, reservedMemoryMB)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	workingDirFlag := context.String("working-dir")
 	envVarsFlag := context.StringSlice("env")
@@ -198,6 +242,10 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	monitoredPortFlag := context.Int("monitored-port")
 	routesFlag := context.String("routes")
 	noMonitorFlag := context.Bool("no-monitor")
+
+	mountVolumeFlag := context.String("mount-volume")
+	mountPathFlag := context.String("mount-path")
+
 	name := context.Args().Get(0)
 	dockerImage := context.Args().Get(1)
 	terminator := context.Args().Get(2)
@@ -284,6 +332,9 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		Ports:                portConfig,
 		WorkingDir:           workingDirFlag,
 		RouteOverrides:       routeOverrides,
+
+		MountVolume: mountVolumeFlag,
+		MountPath:   mountPathFlag,
 	})
 	if err != nil {
 		factory.ui.Say(fmt.Sprintf("Error Creating App: %s", err))

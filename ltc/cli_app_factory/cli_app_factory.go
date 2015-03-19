@@ -119,6 +119,7 @@ func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.Exit
 
 	return []cli.Command{
 		appRunnerCommandFactory.MakeCreateAppCommand(),
+		appRunnerCommandFactory.MakeCreateVolumeSetCommand(),
 		logsCommandFactory.MakeDebugLogsCommand(),
 		appExaminerCommandFactory.MakeListAppCommand(),
 		logsCommandFactory.MakeLogsCommand(),
@@ -129,6 +130,7 @@ func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.Exit
 		integrationTestCommandFactory.MakeIntegrationTestCommand(),
 		appRunnerCommandFactory.MakeUpdateRoutesCommand(),
 		appExaminerCommandFactory.MakeVisualizeCommand(),
+		appExaminerCommandFactory.MakeVolumeSetStatusCommand(),
 	}
 }
 

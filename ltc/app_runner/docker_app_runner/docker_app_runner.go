@@ -24,6 +24,8 @@ type AppRunner interface {
 	RemoveApp(name string) error
 	AppExists(name string) (bool, error)
 	RunningAppInstancesInfo(name string) (int, bool, error)
+
+	CreateVolumeSet(volumeSetGuid string, instances, sizeMB, reservedMemoryMB int) error
 }
 
 type PortConfig struct {
@@ -57,6 +59,9 @@ type CreateDockerAppParams struct {
 	Ports                PortConfig
 	WorkingDir           string
 	RouteOverrides       RouteOverrides
+
+	MountVolume string
+	MountPath   string
 }
 
 const (
@@ -88,6 +93,21 @@ func (appRunner *appRunner) CreateDockerApp(params CreateDockerAppParams) error 
 	}
 
 	return appRunner.desireLrp(params)
+}
+
+func (appRunner *appRunner) CreateVolumeSet(volumeSetGuid string, instances, sizeMB, reservedMemoryMB int) error {
+
+	volumeRequest := receptor.VolumeSetCreateRequest{
+		VolumeSetGuid:    volumeSetGuid,
+		Stack:            "lucid64",
+		Instances:        instances,
+		SizeMB:           sizeMB,
+		ReservedMemoryMB: reservedMemoryMB,
+	}
+
+	err := appRunner.receptorClient.CreateVolumeSet(volumeRequest)
+
+	return err
 }
 
 func (appRunner *appRunner) ScaleApp(name string, instances int) error {
@@ -231,6 +251,14 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 			LogSource: "HEALTH",
 		}
 	}
+
+	if params.MountVolume != "" && params.MountPath != "" {
+		req.VolumeMount = &receptor.VolumeSetAttachment{
+			VolumeSetGuid: params.MountVolume,
+			Path:          params.MountPath,
+		}
+	}
+
 	err = appRunner.receptorClient.CreateDesiredLRP(req)
 
 	return err

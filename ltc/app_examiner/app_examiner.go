@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sort"
 
+	"fmt"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 )
@@ -76,6 +77,7 @@ type AppExaminer interface {
 	ListApps() ([]AppInfo, error)
 	ListCells() ([]CellInfo, error)
 	AppStatus(appName string) (AppInfo, error)
+	VolumeSetStatus(volumeSetName string) (string, error)
 }
 
 type appExaminer struct {
@@ -161,6 +163,17 @@ func (e *appExaminer) AppStatus(appName string) (AppInfo, error) {
 	}
 
 	return *appInfoPtr, nil
+}
+
+func (e *appExaminer) VolumeSetStatus(volumeSetName string) (string, error) {
+	volumeResponse, err := e.receptorClient.VolumesByVolumeSetGuid(volumeSetName)
+
+	var stringedVolumeResponse string
+	for _, v := range volumeResponse {
+		stringedVolumeResponse += fmt.Sprint(v.Index, " ", v.VolumeGuid, " ", v.State, " ", v.SizeMB, "\n")
+	}
+
+	return stringedVolumeResponse, err
 }
 
 func mergeDesiredActualLRPs(desiredLRPs []receptor.DesiredLRPResponse, actualLRPs []receptor.ActualLRPResponse) map[string]*AppInfo {
