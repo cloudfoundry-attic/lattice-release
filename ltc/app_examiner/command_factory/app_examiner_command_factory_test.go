@@ -215,7 +215,6 @@ var _ = Describe("CommandFactory", func() {
 		var statusCommand cli.Command
 
 		BeforeEach(func() {
-			//			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, output.New(outputBuffer), clock, exitHandler)
 			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler)
 			statusCommand = commandFactory.MakeStatusCommand()
 		})

@@ -15,29 +15,29 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/fake_password_reader"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
-    "github.com/cloudfoundry-incubator/lattice/ltc/terminal/fake_password_reader"
 )
 
 var _ = Describe("CommandFactory", func() {
 	var (
-		stdinReader     *io.PipeReader
-		stdinWriter     *io.PipeWriter
-		outputBuffer    *gbytes.Buffer
-		terminalUI      terminal.UI
-		targetCommand   cli.Command
-		config          *config_package.Config
-		fakeTargetVerifier  *fake_target_verifier.FakeTargetVerifier
-		fakeExitHandler *fake_exit_handler.FakeExitHandler
-        fakePasswordReader *fake_password_reader.FakePasswordReader
+		stdinReader        *io.PipeReader
+		stdinWriter        *io.PipeWriter
+		outputBuffer       *gbytes.Buffer
+		terminalUI         terminal.UI
+		targetCommand      cli.Command
+		config             *config_package.Config
+		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
+		fakeExitHandler    *fake_exit_handler.FakeExitHandler
+		fakePasswordReader *fake_password_reader.FakePasswordReader
 	)
 
 	BeforeEach(func() {
 		stdinReader, stdinWriter = io.Pipe()
 		outputBuffer = gbytes.NewBuffer()
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
-        fakePasswordReader = &fake_password_reader.FakePasswordReader{}
+		fakePasswordReader = &fake_password_reader.FakePasswordReader{}
 		terminalUI = terminal.NewUI(stdinReader, outputBuffer, fakePasswordReader)
 		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 		config = config_package.New(persister.NewMemPersister())
@@ -125,7 +125,7 @@ var _ = Describe("CommandFactory", func() {
 		Context("setting target that requires auth", func() {
 			BeforeEach(func() {
 				fakeTargetVerifier.VerifyTargetReturns(true, false, nil)
-                fakePasswordReader.PromptForPasswordReturns("testpassword")
+				fakePasswordReader.PromptForPasswordReturns("testpassword")
 			})
 
 			It("sets the api, username, password from the target specified", func() {
@@ -141,8 +141,8 @@ var _ = Describe("CommandFactory", func() {
 				Expect(config.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
 				Expect(outputBuffer).To(test_helpers.Say("Api Location Set"))
 
-                Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
-                Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
+				Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
+				Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
 
 				Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(2))
 				Expect(fakeTargetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
@@ -150,9 +150,9 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			Context("scenarios that should not save the config", func() {
-                BeforeEach(func() {
-                    fakePasswordReader.PromptForPasswordReturns("evenworse")
-                })
+				BeforeEach(func() {
+					fakePasswordReader.PromptForPasswordReturns("evenworse")
+				})
 
 				AfterEach(func() {
 					verifyOldTargetStillSet()
@@ -167,15 +167,14 @@ var _ = Describe("CommandFactory", func() {
 
 					Eventually(commandFinishChan).Should(BeClosed())
 
-                    Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
-                    Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
+					Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
+					Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
 
-
-                    Expect(outputBuffer).To(test_helpers.Say("Could not authorize target."))
+					Expect(outputBuffer).To(test_helpers.Say("Could not authorize target."))
 				})
 
 				It("does not save the config if there is an error connecting to the receptor after prompting", func() {
-                    commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
+					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
 
 					Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
 					fakeTargetVerifier.VerifyTargetReturns(true, false, errors.New("Unknown Error"))
@@ -183,10 +182,10 @@ var _ = Describe("CommandFactory", func() {
 
 					Eventually(commandFinishChan).Should(BeClosed())
 
-                    Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
-                    Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
+					Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
+					Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
 
-                    Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
+					Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
 				})
 			})
 		})

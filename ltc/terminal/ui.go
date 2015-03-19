@@ -14,8 +14,7 @@ type UI interface {
 	NewLine()
 	Prompt(promptText string) string
 
-	io.Reader
-	io.Writer
+	io.ReadWriter
 	PasswordReader
 }
 

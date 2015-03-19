@@ -6,13 +6,10 @@ package terminal
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"syscall"
-
-//	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 )
 
 const (
@@ -28,7 +25,6 @@ var sttyArgvEOn []string = []string{"stty", "echo"}
 
 var ws syscall.WaitStatus = 0
 
-// TODO:  attach method to command factory or pass exit handler as arg
 func (pr passwordReader) PromptForPassword(promptText string, args ...interface{}) (passwd string) {
 
 	// Display the prompt.
@@ -70,8 +66,7 @@ func echoOff(fd []uintptr) (int, error) {
 	pid, err := syscall.ForkExec(sttyArg0, sttyArgvEOff, &syscall.ProcAttr{Dir: exec_cwdir, Files: fd})
 
 	if err != nil {
-		//		return 0, fmt.Errorf(T("failed turning off console echo for password entry:\n{{.ErrorDescription}}", map[string]interface{}{"ErrorDescription": err}))
-		return 0, errors.New("blah")
+		return 0, fmt.Errorf("failed turning off console echo for password entry:\n{{.ErrorDescription}}", map[string]interface{}{"ErrorDescription": err})
 	}
 
 	return pid, nil
