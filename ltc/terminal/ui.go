@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"io"
 	"strings"
+
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/password_reader"
 )
 
 type UI interface {
@@ -15,16 +17,16 @@ type UI interface {
 	Prompt(promptText string) string
 
 	io.ReadWriter
-	PasswordReader
+	password_reader.PasswordReader
 }
 
 type terminalUI struct {
 	io.Reader
 	io.Writer
-	PasswordReader
+	password_reader.PasswordReader
 }
 
-func NewUI(input io.Reader, output io.Writer, passwordReader PasswordReader) UI {
+func NewUI(input io.Reader, output io.Writer, passwordReader password_reader.PasswordReader) UI {
 	return &terminalUI{
 		input,
 		output,

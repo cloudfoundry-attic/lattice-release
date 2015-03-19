@@ -15,7 +15,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
-	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/fake_password_reader"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/password_reader/fake_password_reader"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
 )

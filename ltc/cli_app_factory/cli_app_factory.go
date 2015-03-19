@@ -18,6 +18,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/password_reader"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry/noaa"
 	"github.com/codegangsta/cli"
@@ -52,7 +53,7 @@ func MakeCliApp(timeoutStr, latticeVersion, ltcConfigRoot string, exitHandler ex
 	app.Usage = LtcUsage
 	app.Email = "lattice@cloudfoundry.org"
 
-	ui := terminal.NewUI(os.Stdin, cliStdout, terminal.NewPasswordReader(exitHandler))
+	ui := terminal.NewUI(os.Stdin, cliStdout, password_reader.NewPasswordReader(exitHandler))
 
 	app.Commands = cliCommands(timeoutStr, ltcConfigRoot, exitHandler, config, logger, targetVerifier, ui)
 

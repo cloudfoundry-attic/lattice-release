@@ -1,4 +1,4 @@
-package terminal
+package password_reader
 
 import (
 	"io"

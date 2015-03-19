@@ -1,8 +1,7 @@
 // Copied from https://code.google.com/p/gopass/
 
 // +build darwin freebsd linux netbsd openbsd
-
-package terminal
+package password_reader
 
 import (
 	"bufio"

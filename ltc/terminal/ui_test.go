@@ -8,7 +8,7 @@ import (
 	"github.com/onsi/gomega/gbytes"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
-	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/fake_password_reader"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/password_reader/fake_password_reader"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 )
 

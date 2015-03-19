@@ -4,7 +4,7 @@ package fake_password_reader
 import (
 	"sync"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/password_reader"
 )
 
 type FakePasswordReader struct {
@@ -52,4 +52,4 @@ func (fake *FakePasswordReader) PromptForPasswordReturns(result1 string) {
 	}{result1}
 }
 
-var _ terminal.PasswordReader = new(FakePasswordReader)
+var _ password_reader.PasswordReader = new(FakePasswordReader)
