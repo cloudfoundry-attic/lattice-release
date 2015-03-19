@@ -2,7 +2,7 @@ package presentation
 
 import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/colors"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry-incubator/receptor"
 )
 
