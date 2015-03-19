@@ -2,6 +2,7 @@ package terminal
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"strings"
 
@@ -14,7 +15,7 @@ type UI interface {
 	IncorrectUsage(message string)
 	Dot()
 	NewLine()
-	Prompt(promptText string) string
+	Prompt(promptText string, args ...interface{}) string
 
 	io.ReadWriter
 	password_reader.PasswordReader
@@ -58,9 +59,9 @@ func (t *terminalUI) NewLine() {
 	t.Say("\n")
 }
 
-func (t *terminalUI) Prompt(promptText string) (answer string) {
+func (t *terminalUI) Prompt(promptText string, args ...interface{}) (answer string) {
 	reader := bufio.NewReader(t)
-	t.Say(promptText)
+	fmt.Fprintf(t.Writer, promptText, args...)
 
 	result, _ := reader.ReadString('\n')
 

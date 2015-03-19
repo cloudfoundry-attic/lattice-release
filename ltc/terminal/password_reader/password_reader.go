@@ -8,7 +8,7 @@ import (
 
 //go:generate counterfeiter -o fake_password_reader/fake_password_reader.go . PasswordReader
 type PasswordReader interface {
-	PromptForPassword(promptText string, args ...interface{}) (passwd string)
+	PromptForPassword(promptText string, args ...interface{}) string
 }
 
 type passwordReader struct {
