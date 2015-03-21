@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/logs"
 	"io"
 	"os"
 	"os/exec"
-    "fmt"
 )
 
 var dropsondeDestination, sourceInstance string
@@ -33,22 +33,22 @@ func init() {
 }
 
 func main() {
-    if dropsondeDestination == ""{
-        fmt.Println("dropsondeDestination flag is required")
-        os.Exit(1)
-    }
-    if sourceInstance == ""{
-        fmt.Println("sourceInstance flag is required")
-        os.Exit(1)
-    }
+	if dropsondeDestination == "" {
+		fmt.Println("dropsondeDestination flag is required")
+		os.Exit(1)
+	}
+	if sourceInstance == "" {
+		fmt.Println("sourceInstance flag is required")
+		os.Exit(1)
+	}
 
 	args := flag.Args()
 
-    if len(args) == 0 {
-        fmt.Println("Command not specified!")
-        fmt.Println("Usage: tee2metron -dropsondeDestionation=127.0.0.1:3457 -sourceInstance=lattice-cell-21 COMMAND")
-        os.Exit(3)
-    }
+	if len(args) == 0 {
+		fmt.Println("Command not specified!")
+		fmt.Println("Usage: tee2metron -dropsondeDestionation=127.0.0.1:3457 -sourceInstance=lattice-cell-21 COMMAND")
+		os.Exit(3)
+	}
 	err := dropsonde.Initialize(dropsondeDestination, sourceInstance, args[0])
 
 	if err != nil {
@@ -73,9 +73,9 @@ func main() {
 
 	err = cmd.Start()
 	if err != nil {
-        fmt.Println(err)
-        os.Exit(3)
-    }
+		fmt.Println(err)
+		os.Exit(3)
+	}
 
 	cmd.Wait()
 }
