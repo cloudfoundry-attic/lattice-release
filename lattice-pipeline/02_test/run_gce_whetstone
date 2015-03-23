@@ -26,7 +26,6 @@ print_provider_specific_terraform_configuration(){
                         "source":"%s",
                         "local_lattice_tar_path": "%s",
                         "gce_account_file": "%s",
-                        "gce_client_secrets_file": "%s",
                         "gce_project": "%s",
                         "gce_ssh_private_key_file": "%s",
                         "gce_ssh_user": "pivotal"
@@ -37,7 +36,6 @@ print_provider_specific_terraform_configuration(){
             "$WORKSPACE_DIR/diego-release/src/github.com/cloudfoundry-incubator/lattice/terraform/google" \
             "$LATTICE_TAR_PATH" \
             "$TF_WORKING_DIR/gce-account.json" \
-            "$TF_WORKING_DIR/gce-client-secrets.json" \
             "$(cat $TF_WORKING_DIR/gce-project)" \
             "$TF_WORKING_DIR/gce-ssh-key" \
             "$terraform_outputs"
