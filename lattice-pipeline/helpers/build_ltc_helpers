@@ -191,11 +191,11 @@ rewrite_terraform_examples() {
     git_describe_lattice
 
     pushd $LATTICE_SRC_PATH/terraform/aws/example > /dev/null
-        sed -i 's/source = "github\.com.*$/source = "github\.com\/cloudfoundry-incubator\/lattice\/\/terraform\/\/aws\?ref='"$lattice_version"'"/' lattice.aws.example
+        sed -i 's/source = "github\.com.*$/source = "github\.com\/cloudfoundry-incubator\/lattice\/\/terraform\/\/aws\?ref='"$lattice_version"'"/' lattice.aws.tf
         git add lattice.aws.tf
     popd > /dev/null
     pushd $LATTICE_SRC_PATH/terraform/digitalocean/example > /dev/null
-        sed -i 's/source = "github\.com.*$/source = "github\.com\/cloudfoundry-incubator\/lattice\/\/terraform\/\/digitalocean\?ref='"$lattice_version"'"/' lattice.digitalocean.example
+        sed -i 's/source = "github\.com.*$/source = "github\.com\/cloudfoundry-incubator\/lattice\/\/terraform\/\/digitalocean\?ref='"$lattice_version"'"/' lattice.digitalocean.tf
         git add lattice.digitalocean.tf
     popd > /dev/null
     pushd $LATTICE_SRC_PATH/terraform/google/example > /dev/null
