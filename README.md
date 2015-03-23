@@ -116,7 +116,7 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 
 First, clone the Lattice repository and checkout the desired release tag or revision within the repo.  These can be obtained from the releases page or are set in the example configuration files for each supported platform below.
 
-Second, update the example/lattice.<platform>.tf file by filling in the values for the variables. Instructions for each supported platform are here:
+Second, update `terraform/<platform>/example/lattice.<platform>.tf` by filling in the values for the variables. Instructions for each supported platform are here:
 
 - [Amazon Web Services](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md)
 - [DigitalOcean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md)
