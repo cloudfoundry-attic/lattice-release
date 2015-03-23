@@ -2,10 +2,6 @@ variable "gce_account_file" {
     description = "Path to the JSON file used to describe your account credentials, downloaded from Google Cloud Console."
 }
 
-variable "gce_client_secrets_file" {
-    description = "Path to the JSON file containing the secrets for your account, downloaded from Google Cloud Console."
-}
-
 variable "gce_project" {
     description = "The name of the project to apply any resources to."
 }
