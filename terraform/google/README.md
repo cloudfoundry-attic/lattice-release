@@ -10,7 +10,7 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 
 * A [Google Cloud account](https://cloud.google.com/)
 * A [Google Compute Engine project](https://cloud.google.com/compute/docs/projects)
-* A [Google Compute Engine account and client secrets files](https://www.terraform.io/docs/providers/google/index.html)
+* A [Google Compute Engine account file](https://www.terraform.io/docs/providers/google/index.html)
 * A [Google Compute Engine Password-less SSH Key](https://cloud.google.com/compute/docs/console#sshkeys)
 
 ### Configure
@@ -23,9 +23,6 @@ module "lattice" {
 
     # Path to the JSON file used to describe your account credentials, downloaded from Google Cloud Console
     gce_account_file = "<CHANGE-ME>"
-
-    # Path to the JSON file containing the secrets for your account, downloaded from Google Cloud Console
-    gce_client_secrets_file = "<CHANGE-ME>"
 
     # The name of the project to apply any resources to
     gce_project = "<CHANGE-ME>"
@@ -55,7 +52,6 @@ module "lattice" {
 The available variables that can be configured are:
 
 * `gce_account_file`: Path to the JSON file used to describe your account credentials, downloaded from Google Cloud Console
-* `gce_client_secrets_file`: Path to the JSON file containing the secrets for your account, downloaded from Google Cloud Console
 * `gce_project`: The name of the project to apply any resources to
 * `gce_ssh_user`: SSH user
 * `gce_ssh_private_key_file`: Path to the SSH private key file
