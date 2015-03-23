@@ -114,15 +114,15 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 
 ## Deploying
 
-First, pick a Lattice version to deploy then download the appropriate `lattice.tf.example` file for that version from GitHub.  These can be obtained from the [releases](https://github.com/cloudfoundry-incubator/lattice/releases) page or the individual pages for each supported platform outlined below.
+First, clone the Lattice repository and checkout the desired release tag or revision within the repo.  These can be obtained from the releases page or are set in the example configuration files for each supported platform below.
 
-Second, update the downloaded `lattice.tf.example` file by filling in the variables.  Instructions for each supported platform are here:
+Second, update the example/lattice.<platform>.tf file by filling in the values for the variables. Instructions for each supported platform are here:
 
 - [Amazon Web Services](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md)
 - [DigitalOcean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md)
 - [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md)
 
-Finally, rename `lattice.tf.example` to `lattice.tf` and:
+Finally, run the following commands:
 
 ```bash
 terraform get -update

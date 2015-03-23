@@ -15,39 +15,7 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 
 ### Configure
 
-Create a `lattice.tf` file (or use the provided [example](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/lattice.tf.example)) and add the following contents updating the variables properly:
-
-```
-module "lattice" {
-    source = "github.com/cloudfoundry-incubator/lattice/terraform/google"
-
-    # Path to the JSON file used to describe your account credentials, downloaded from Google Cloud Console
-    gce_account_file = "<CHANGE-ME>"
-
-    # The name of the project to apply any resources to
-    gce_project = "<CHANGE-ME>"
-
-    # SSH user
-    gce_ssh_user = "<CHANGE-ME>"
-
-    # Path to the SSH private key file
-    gce_ssh_private_key_file = "<CHANGE-ME>"
-
-    # The number of Lattice Cells to launch
-    num_cells = "3"
-
-    #################################
-    ###  Optional Settings Below  ###
-    #################################
-
-    #If you wish to use your own lattice release instead of the latest version, uncomment the variable assignment below
-    #and set it to your own lattice tar's path.
-    # local_lattice_tar_path = ~/lattice.tgz
-
-    # Google Compute Engine zone
-    # gce_zone = "<CHANGE-ME>"
-}
-```
+Fill out the variables (described below) in the [example](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/example/lattice.google.tf) (and if desired, copy the file to a new folder)
 
 The available variables that can be configured are:
 
@@ -73,6 +41,7 @@ documentation for more details about how to configure the proper credentials.
 Get the templates and deploy the cluster:
 
 ```
+cd example/  # or the new location of lattice.aws.tf
 terraform get -update
 terraform apply
 ```

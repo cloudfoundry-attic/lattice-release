@@ -15,36 +15,7 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 
 ### Configure
 
-Create a `lattice.tf` file (or use the provided [example](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/lattice.tf.example)) and add the following contents updating the variables properly:
-
-```
-module "lattice-digitalocean" {
-    source = "github.com/cloudfoundry-incubator/lattice/terraform/digitalocean"
-
-    # Digital Ocean API token
-    do_token = "<CHANGE-ME>"
-
-    # SSH public key fingerprint
-    do_ssh_public_key_fingerprint = "<CHANGE-ME>"
-
-    # Path to the SSH private key file
-    do_ssh_private_key_file = "<CHANGE-ME>"
-
-    # The number of Lattice Cells to launch
-    num_cells = "3"
-
-    #################################
-    ###  Optional Settings Below  ###
-    #################################
-
-    #If you wish to use your own lattice release instead of the latest version, uncomment the variable assignment below
-    #and set it to your own lattice tar's path.
-    # local_lattice_tar_path = ~/lattice.tgz
-
-    # Digital Ocean region
-    # do_region = "<CHANGE-ME>"
-}
-```
+Fill out the variables (described below) in the [example](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/example/lattice.digitalocean.tf) (and if desired, copy the file to a new folder)
 
 The available variables that can be configured are:
 
@@ -78,6 +49,7 @@ The fingerprint is the second column in the output (`aa:bb...`)
 Get the templates and deploy the cluster:
 
 ```
+cd example/  # or the new location of lattice.aws.tf
 terraform get -update
 terraform apply
 ```
