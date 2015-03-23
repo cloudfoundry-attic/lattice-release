@@ -15,7 +15,9 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 
 ### Configure
 
-Create a `lattice.tf` file (or use the provided [example](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/lattice.tf.example)) and add the following contents updating the variables properly:
+Create a `lattice.tf` file in an empty directory (or use the provided [example](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/lattice.tf.example)). Note that attempting to deploy Lattice from within the terraform/digitalocean/ folder of this repository will result in errors.
+
+Add the following contents updating the variables properly:
 
 ```
 module "lattice-digitalocean" {
