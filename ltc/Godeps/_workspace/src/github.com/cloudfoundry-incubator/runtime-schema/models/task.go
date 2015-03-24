@@ -60,11 +60,6 @@ type mTask struct {
 	*InnerTask
 }
 
-type StagingTaskAnnotation struct {
-	AppId  string `json:"app_id"`
-	TaskId string `json:"task_id"`
-}
-
 func (t *Task) UnmarshalJSON(payload []byte) error {
 	mtask := mTask{InnerTask: (*InnerTask)(t)}
 	err := json.Unmarshal(payload, &mtask)
