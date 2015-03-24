@@ -114,22 +114,23 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 
 ## Deploying
 
-First, clone the Lattice repository and checkout the desired release tag or revision within the repo.  These can be obtained from the releases page or are set in the example configuration files for each supported platform below.
+Here are some step-by-step instructions for deploying a Lattice cluster via Terraform:
 
-Second, update `terraform/<platform>/example/lattice.<platform>.tf` by filling in the values for the variables. Instructions for each supported platform are here:
+1. Visit the [Lattice GitHub Releases page](https://github.com/cloudfoundry-incubator/lattice/releases#)
+2. Select the Lattice version you wish to deploy and download the Terraform example file for your target platform.  The filename will be `lattice.<platform>.tf`
+3. Create an empty folder and place the `lattice.<platform>.tf` file in that folder.
+4. Update the `lattice.<platform>.tf` by filling in the values for the variables. Instructions for each supported platform are here:
+  - [Amazon Web Services](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md)
+  - [DigitalOcean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md)
+  - [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md)
+5. Run the following commands in the folder containing the `lattice.<platform>.tf` file
 
-- [Amazon Web Services](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md)
-- [DigitalOcean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md)
-- [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md)
+  ```bash
+  terraform get -update
+  terraform apply
+  ```
 
-Finally, run the following commands:
-
-```bash
-terraform get -update
-terraform apply
-```
-
-This will deploy the cluster.
+  This will deploy the cluster.
 
 Upon success, terraform will print the Lattice target:
 
@@ -143,11 +144,11 @@ Outputs:
 
 which you can use with the Lattice CLI to `ltc target x.x.x.x.xip.io`.
 
-Terraform will generate a `lattice.tfstate` file.  This file describes the cluster that was built - keep it around in order to modify/tear down the cluster.
+Terraform will generate a `lattice.<platform>.tfstate` file.  This file describes the cluster that was built - keep it around in order to modify/tear down the cluster.
 
 ## Destroying
 
-To destroy the cluster:
+To destroy the cluster go to the folder containing the `lattice.<platform>.tfstate` file and run:
 
 ```bash
 terraform destroy
