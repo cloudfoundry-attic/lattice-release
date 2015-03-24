@@ -144,11 +144,11 @@ Outputs:
 
 which you can use with the Lattice CLI to `ltc target x.x.x.x.xip.io`.
 
-Terraform will generate a `lattice.<platform>.tfstate` file.  This file describes the cluster that was built - keep it around in order to modify/tear down the cluster.
+Terraform will generate a `terraform.tfstate` file.  This file describes the cluster that was built - keep it around in order to modify/tear down the cluster.
 
 ## Destroying
 
-To destroy the cluster go to the folder containing the `lattice.<platform>.tfstate` file and run:
+To destroy the cluster go to the folder containing the `terraform.tfstate` file and run:
 
 ```bash
 terraform destroy
