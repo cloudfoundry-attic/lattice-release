@@ -29,7 +29,5 @@ mkdir -pv /var/lattice/log
 
 start bootstrap &>> /var/lattice/log/coordinator-bootstrap.log
 
-export $(cat /var/lattice/setup/lattice-environment)
-
 echo "Finished Installing Lattice Coordinator ($lattice_version)!"
 
