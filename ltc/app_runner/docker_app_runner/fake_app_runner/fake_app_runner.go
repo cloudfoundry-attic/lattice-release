@@ -42,25 +42,6 @@ type FakeAppRunner struct {
 	removeAppReturns struct {
 		result1 error
 	}
-	AppExistsStub        func(name string) (bool, error)
-	appExistsMutex       sync.RWMutex
-	appExistsArgsForCall []struct {
-		name string
-	}
-	appExistsReturns struct {
-		result1 bool
-		result2 error
-	}
-	RunningAppInstancesInfoStub        func(name string) (int, bool, error)
-	runningAppInstancesInfoMutex       sync.RWMutex
-	runningAppInstancesInfoArgsForCall []struct {
-		name string
-	}
-	runningAppInstancesInfoReturns struct {
-		result1 int
-		result2 bool
-		result3 error
-	}
 }
 
 func (fake *FakeAppRunner) CreateDockerApp(params docker_app_runner.CreateDockerAppParams) error {
@@ -191,73 +172,6 @@ func (fake *FakeAppRunner) RemoveAppReturns(result1 error) {
 	fake.removeAppReturns = struct {
 		result1 error
 	}{result1}
-}
-
-func (fake *FakeAppRunner) AppExists(name string) (bool, error) {
-	fake.appExistsMutex.Lock()
-	fake.appExistsArgsForCall = append(fake.appExistsArgsForCall, struct {
-		name string
-	}{name})
-	fake.appExistsMutex.Unlock()
-	if fake.AppExistsStub != nil {
-		return fake.AppExistsStub(name)
-	} else {
-		return fake.appExistsReturns.result1, fake.appExistsReturns.result2
-	}
-}
-
-func (fake *FakeAppRunner) AppExistsCallCount() int {
-	fake.appExistsMutex.RLock()
-	defer fake.appExistsMutex.RUnlock()
-	return len(fake.appExistsArgsForCall)
-}
-
-func (fake *FakeAppRunner) AppExistsArgsForCall(i int) string {
-	fake.appExistsMutex.RLock()
-	defer fake.appExistsMutex.RUnlock()
-	return fake.appExistsArgsForCall[i].name
-}
-
-func (fake *FakeAppRunner) AppExistsReturns(result1 bool, result2 error) {
-	fake.AppExistsStub = nil
-	fake.appExistsReturns = struct {
-		result1 bool
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeAppRunner) RunningAppInstancesInfo(name string) (int, bool, error) {
-	fake.runningAppInstancesInfoMutex.Lock()
-	fake.runningAppInstancesInfoArgsForCall = append(fake.runningAppInstancesInfoArgsForCall, struct {
-		name string
-	}{name})
-	fake.runningAppInstancesInfoMutex.Unlock()
-	if fake.RunningAppInstancesInfoStub != nil {
-		return fake.RunningAppInstancesInfoStub(name)
-	} else {
-		return fake.runningAppInstancesInfoReturns.result1, fake.runningAppInstancesInfoReturns.result2, fake.runningAppInstancesInfoReturns.result3
-	}
-}
-
-func (fake *FakeAppRunner) RunningAppInstancesInfoCallCount() int {
-	fake.runningAppInstancesInfoMutex.RLock()
-	defer fake.runningAppInstancesInfoMutex.RUnlock()
-	return len(fake.runningAppInstancesInfoArgsForCall)
-}
-
-func (fake *FakeAppRunner) RunningAppInstancesInfoArgsForCall(i int) string {
-	fake.runningAppInstancesInfoMutex.RLock()
-	defer fake.runningAppInstancesInfoMutex.RUnlock()
-	return fake.runningAppInstancesInfoArgsForCall[i].name
-}
-
-func (fake *FakeAppRunner) RunningAppInstancesInfoReturns(result1 int, result2 bool, result3 error) {
-	fake.RunningAppInstancesInfoStub = nil
-	fake.runningAppInstancesInfoReturns = struct {
-		result1 int
-		result2 bool
-		result3 error
-	}{result1, result2, result3}
 }
 
 var _ docker_app_runner.AppRunner = new(FakeAppRunner)

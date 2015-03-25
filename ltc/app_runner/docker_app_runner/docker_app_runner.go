@@ -22,8 +22,6 @@ type AppRunner interface {
 	ScaleApp(name string, instances int) error
 	UpdateAppRoutes(name string, routes RouteOverrides) error
 	RemoveApp(name string) error
-	AppExists(name string) (bool, error)
-	RunningAppInstancesInfo(name string) (int, bool, error)
 }
 
 type PortConfig struct {
@@ -118,42 +116,6 @@ func (appRunner *appRunner) RemoveApp(name string) error {
 	}
 
 	return appRunner.receptorClient.DeleteDesiredLRP(name)
-}
-
-func (appRunner *appRunner) AppExists(name string) (bool, error) {
-	actualLRPs, err := appRunner.receptorClient.ActualLRPs()
-	if err != nil {
-		return false, err
-	}
-
-	for _, actualLRP := range actualLRPs {
-		if actualLRP.ProcessGuid == name {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-func (appRunner *appRunner) RunningAppInstancesInfo(name string) (count int, placementError bool, err error) {
-	runningInstances := 0
-	placementErrorOccurred := false
-	instances, err := appRunner.receptorClient.ActualLRPsByProcessGuid(name)
-	if err != nil {
-		return 0, false, err
-	}
-
-	for _, instance := range instances {
-		if instance.State == receptor.ActualLRPStateRunning {
-			runningInstances += 1
-		}
-
-		if instance.PlacementError != "" {
-			placementErrorOccurred = true
-		}
-	}
-
-	return runningInstances, placementErrorOccurred, nil
 }
 
 func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err error) {

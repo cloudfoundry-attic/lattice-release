@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
@@ -28,6 +29,7 @@ const (
 
 type AppRunnerCommandFactory struct {
 	appRunner             docker_app_runner.AppRunner
+	appExaminer           app_examiner.AppExaminer
 	ui                    terminal.UI
 	dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
 	timeout               time.Duration
@@ -40,6 +42,7 @@ type AppRunnerCommandFactory struct {
 
 type AppRunnerCommandFactoryConfig struct {
 	AppRunner             docker_app_runner.AppRunner
+	AppExaminer           app_examiner.AppExaminer
 	UI                    terminal.UI
 	DockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
 	Timeout               time.Duration
@@ -53,8 +56,9 @@ type AppRunnerCommandFactoryConfig struct {
 
 func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunnerCommandFactory {
 	return &AppRunnerCommandFactory{
-		appRunner: config.AppRunner,
-		ui:        config.UI,
+		appRunner:   config.AppRunner,
+		appExaminer: config.AppExaminer,
+		ui:          config.UI,
 		dockerMetadataFetcher: config.DockerMetadataFetcher,
 		timeout:               config.Timeout,
 		domain:                config.Domain,
@@ -372,7 +376,7 @@ func (factory *AppRunnerCommandFactory) setAppInstances(appName string, instance
 func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(appName string, instances int, action string) bool {
 	placementErrorOccurred := false
 	ok := factory.pollUntilSuccess(func() bool {
-		numberOfRunningInstances, placementError, _ := factory.appRunner.RunningAppInstancesInfo(appName)
+		numberOfRunningInstances, placementError, _ := factory.appExaminer.RunningAppInstancesInfo(appName)
 		if placementError {
 			factory.ui.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
 			placementErrorOccurred = true
@@ -406,7 +410,7 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 
 	factory.ui.Say(fmt.Sprintf("Removing %s", appName))
 	ok := factory.pollUntilSuccess(func() bool {
-		appExists, err := factory.appRunner.AppExists(appName)
+		appExists, err := factory.appExaminer.AppExists(appName)
 		return err == nil && !appExists
 	}, true)
 

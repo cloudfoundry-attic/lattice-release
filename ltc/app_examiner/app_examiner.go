@@ -76,6 +76,8 @@ type AppExaminer interface {
 	ListApps() ([]AppInfo, error)
 	ListCells() ([]CellInfo, error)
 	AppStatus(appName string) (AppInfo, error)
+	AppExists(name string) (bool, error)
+	RunningAppInstancesInfo(name string) (int, bool, error)
 }
 
 type appExaminer struct {
@@ -161,6 +163,42 @@ func (e *appExaminer) AppStatus(appName string) (AppInfo, error) {
 	}
 
 	return *appInfoPtr, nil
+}
+
+func (e *appExaminer) AppExists(name string) (bool, error) {
+	actualLRPs, err := e.receptorClient.ActualLRPs()
+	if err != nil {
+		return false, err
+	}
+
+	for _, actualLRP := range actualLRPs {
+		if actualLRP.ProcessGuid == name {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (e *appExaminer) RunningAppInstancesInfo(name string) (count int, placementError bool, err error) {
+	runningInstances := 0
+	placementErrorOccurred := false
+	instances, err := e.receptorClient.ActualLRPsByProcessGuid(name)
+	if err != nil {
+		return 0, false, err
+	}
+
+	for _, instance := range instances {
+		if instance.State == receptor.ActualLRPStateRunning {
+			runningInstances += 1
+		}
+
+		if instance.PlacementError != "" {
+			placementErrorOccurred = true
+		}
+	}
+
+	return runningInstances, placementErrorOccurred, nil
 }
 
 func mergeDesiredActualLRPs(desiredLRPs []receptor.DesiredLRPResponse, actualLRPs []receptor.ActualLRPResponse) map[string]*AppInfo {
