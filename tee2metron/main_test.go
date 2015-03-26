@@ -46,55 +46,55 @@ var _ = Describe("tee2metron", func() {
 		Eventually(gbytes.BufferWithBytes(*metronReceivedBuffer), 5).Should(gbytes.Say("Oopsie from stderr"))
 	})
 
-    Context("With a bad command", func(){
-        Context("when the command is missing", func(){
-            It("prints and error message and exits", func(){
-                command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=lattice-cell-123")
-                session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-                Expect(err).ToNot(HaveOccurred())
-                Eventually(session.Out).Should(gbytes.Say("Command not specified!"))
-                Eventually(session.Out).Should(gbytes.Say("Usage: tee2metron -dropsondeDestionation=127.0.0.1:3457 -sourceInstance=lattice-cell-21 COMMAND"))
-                Eventually(session.Exited).Should(BeClosed())
-                Expect(session.ExitCode()).To(Equal(3))
-            })
-        })
-        Context("when there is an error executing the command", func(){
-            It("prints and error message and exits", func(){
-                command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=lattice-cell-123", "do-the-fandango-for-me")
-                session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-                Expect(err).ToNot(HaveOccurred())
-                Eventually(session.Out).Should(gbytes.Say(`exec: "do-the-fandango-for-me": executable file not found in \$PATH`))
-                Eventually(session.Exited).Should(BeClosed())
-                Expect(session.ExitCode()).To(Equal(3))
-            })
-        })
-    })
+	Context("With a bad command", func() {
+		Context("when the command is missing", func() {
+			It("prints and error message and exits", func() {
+				command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=lattice-cell-123")
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(session.Out).Should(gbytes.Say("Command not specified!"))
+				Eventually(session.Out).Should(gbytes.Say("Usage: tee2metron -dropsondeDestionation=127.0.0.1:3457 -sourceInstance=lattice-cell-21 COMMAND"))
+				Eventually(session.Exited).Should(BeClosed())
+				Expect(session.ExitCode()).To(Equal(3))
+			})
+		})
+		Context("when there is an error executing the command", func() {
+			It("prints and error message and exits", func() {
+				command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=lattice-cell-123", "do-the-fandango-for-me")
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(session.Out).Should(gbytes.Say(`exec: "do-the-fandango-for-me": executable file not found in \$PATH`))
+				Eventually(session.Exited).Should(BeClosed())
+				Expect(session.ExitCode()).To(Equal(3))
+			})
+		})
+	})
 
-    Describe("Flags", func(){
-        Describe("-dropsondeDestination",func(){
-            It("is required", func() {
-                command := exec.Command(tee2MetronPath, "-sourceInstance=lattice-cell-123", chattyProcessPath)
-                session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+	Describe("Flags", func() {
+		Describe("-dropsondeDestination", func() {
+			It("is required", func() {
+				command := exec.Command(tee2MetronPath, "-sourceInstance=lattice-cell-123", chattyProcessPath)
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
-                Eventually(session.Buffer()).Should(gbytes.Say("dropsondeDestination flag is required"))
-                Expect(err).ToNot(HaveOccurred())
-                Eventually(session.Exited).Should(BeClosed())
-                Expect(session.ExitCode()).To(Equal(1))
-            })
-        })
+				Eventually(session.Buffer()).Should(gbytes.Say("dropsondeDestination flag is required"))
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(session.Exited).Should(BeClosed())
+				Expect(session.ExitCode()).To(Equal(1))
+			})
+		})
 
-        Describe("-sourceInstance",func(){
-            It("is required", func() {
-                command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", chattyProcessPath)
-                session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+		Describe("-sourceInstance", func() {
+			It("is required", func() {
+				command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", chattyProcessPath)
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
-                Eventually(session.Buffer()).Should(gbytes.Say("sourceInstance flag is required"))
-                Expect(err).ToNot(HaveOccurred())
-                Eventually(session.Exited).Should(BeClosed())
-                Expect(session.ExitCode()).To(Equal(1))
-            })
-        })
-    })
+				Eventually(session.Buffer()).Should(gbytes.Say("sourceInstance flag is required"))
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(session.Exited).Should(BeClosed())
+				Expect(session.ExitCode()).To(Equal(1))
+			})
+		})
+	})
 })
 
 func startFakeMetron() (metronReceivedBufferPtr *[]byte, port string) {
