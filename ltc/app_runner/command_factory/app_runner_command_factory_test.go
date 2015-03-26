@@ -2,6 +2,10 @@ package command_factory_test
 
 import (
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -694,6 +698,87 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Error Creating App: Major Fault"))
+			})
+		})
+	})
+
+	Describe("CreateAppFromJson", func() {
+		var (
+			createAppFromJsonCommand cli.Command
+
+			tmpDir  string
+			tmpFile *os.File
+			err     error
+		)
+
+		BeforeEach(func() {
+			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:   appRunner,
+				AppExaminer: appExaminer,
+				UI:          terminalUI,
+				DockerMetadataFetcher: dockerMetadataFetcher,
+				Timeout:               timeout,
+				Domain:                domain,
+				Env:                   []string{},
+				Clock:                 clock,
+				Logger:                logger,
+				TailedLogsOutputter:   fakeTailedLogsOutputter,
+				ExitHandler:           fakeExitHandler,
+			}
+
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
+			createAppFromJsonCommand = commandFactory.MakeCreateAppFromJsonCommand()
+
+		})
+
+		Context("when the json file exists", func() {
+			BeforeEach(func() {
+				tmpDir = os.TempDir()
+				tmpFile, err = ioutil.TempFile(tmpDir, "tmp_json")
+
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("creates an app from json", func() {
+				ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value"}`), 0700)
+
+				args := []string{tmpFile.Name()}
+
+				test_helpers.ExecuteCommandWithArgs(createAppFromJsonCommand, args)
+
+				Expect(appRunner.CreateAppFromJsonCallCount()).To(Equal(1))
+				Expect(appRunner.CreateAppFromJsonArgsForCall(0)).To(Equal([]byte(`{"Value":"test value"}`)))
+			})
+
+			It("prints an error returned by the app_runner", func() {
+				args := []string{
+					tmpFile.Name(),
+				}
+
+				appRunner.CreateAppFromJsonReturns(errors.New("some error"))
+
+				test_helpers.ExecuteCommandWithArgs(createAppFromJsonCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Error creating app: some error"))
+				Expect(appRunner.CreateAppFromJsonCallCount()).To(Equal(1))
+			})
+		})
+
+		It("is an error when no path is passed in", func() {
+			test_helpers.ExecuteCommandWithArgs(createAppFromJsonCommand, []string{})
+
+			Expect(outputBuffer).To(test_helpers.Say("Path to JSON is required"))
+			Expect(appRunner.CreateAppFromJsonCallCount()).To(BeZero())
+		})
+
+		Context("when the file cannot be read", func() {
+			It("prints an error", func() {
+				args := []string{filepath.Join(tmpDir, "file-no-existy")}
+
+				test_helpers.ExecuteCommandWithArgs(createAppFromJsonCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say(fmt.Sprintf("Error reading file: open %s: no such file or directory", filepath.Join(tmpDir, "file-no-existy"))))
+				Expect(appRunner.CreateAppFromJsonCallCount()).To(Equal(0))
 			})
 		})
 	})

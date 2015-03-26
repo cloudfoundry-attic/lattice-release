@@ -3,6 +3,7 @@ package command_factory
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"sort"
 	"strconv"
 	"strings"
@@ -153,6 +154,17 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 	}
 
 	return createAppCommand
+}
+
+func (factory *AppRunnerCommandFactory) MakeCreateAppFromJsonCommand() cli.Command {
+	var createAppFromJsonCommand = cli.Command{
+		Name:        "create-from-json",
+		Usage:       "Creates a docker app from JSON on lattice",
+		Description: "ltc create-from-json /path/to/json",
+		Action:      factory.createAppFromJson,
+	}
+
+	return createAppFromJsonCommand
 }
 
 func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
@@ -312,6 +324,28 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	} else {
 		factory.ui.Say(colors.Green(factory.urlForApp(name)))
 	}
+}
+
+func (factory *AppRunnerCommandFactory) createAppFromJson(context *cli.Context) {
+
+	filePath := context.Args().First()
+	if filePath == "" {
+		factory.ui.Say("Path to JSON is required")
+		return
+	}
+
+	jsonBytes, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		factory.ui.Say(fmt.Sprintf("Error reading file: %s", err.Error()))
+		return
+	}
+
+	err = factory.appRunner.CreateAppFromJson(jsonBytes)
+	if err != nil {
+		factory.ui.Say(fmt.Sprintf("Error creating app: %s", err.Error()))
+		return
+	}
+
 }
 
 func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {

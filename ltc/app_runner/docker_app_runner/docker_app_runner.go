@@ -1,6 +1,7 @@
 package docker_app_runner
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -19,6 +20,7 @@ const (
 //go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 type AppRunner interface {
 	CreateDockerApp(params CreateDockerAppParams) error
+	CreateAppFromJson(createAppJson []byte) error
 	ScaleApp(name string, instances int) error
 	UpdateAppRoutes(name string, routes RouteOverrides) error
 	RemoveApp(name string) error
@@ -86,6 +88,32 @@ func (appRunner *appRunner) CreateDockerApp(params CreateDockerAppParams) error 
 	}
 
 	return appRunner.desireLrp(params)
+}
+
+func (appRunner *appRunner) CreateAppFromJson(createAppJson []byte) error {
+
+	desiredLRP := receptor.DesiredLRPCreateRequest{}
+
+	err := json.Unmarshal(createAppJson, &desiredLRP)
+	if err != nil {
+		return err
+	}
+
+	if desiredLRP.ProcessGuid == reserved_app_ids.LatticeDebugLogStreamAppId {
+		return errors.New(AttemptedToCreateLatticeDebugErrorMessage)
+	}
+
+	if exists, err := appRunner.desiredLRPExists(desiredLRP.ProcessGuid); err != nil {
+		return err
+	} else if exists {
+		return newExistingAppError(desiredLRP.ProcessGuid)
+	}
+
+	if err := appRunner.receptorClient.UpsertDomain(lrpDomain, 0); err != nil {
+		return err
+	}
+
+	return appRunner.receptorClient.CreateDesiredLRP(desiredLRP)
 }
 
 func (appRunner *appRunner) ScaleApp(name string, instances int) error {
@@ -193,9 +221,8 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 			LogSource: "HEALTH",
 		}
 	}
-	err = appRunner.receptorClient.CreateDesiredLRP(req)
 
-	return err
+	return appRunner.receptorClient.CreateDesiredLRP(req)
 }
 
 func (appRunner *appRunner) updateLrpInstances(name string, instances int) error {

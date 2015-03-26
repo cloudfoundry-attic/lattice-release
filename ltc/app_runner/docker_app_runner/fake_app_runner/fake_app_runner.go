@@ -16,6 +16,14 @@ type FakeAppRunner struct {
 	createDockerAppReturns struct {
 		result1 error
 	}
+	CreateAppFromJsonStub        func(createAppJson []byte) error
+	createAppFromJsonMutex       sync.RWMutex
+	createAppFromJsonArgsForCall []struct {
+		createAppJson []byte
+	}
+	createAppFromJsonReturns struct {
+		result1 error
+	}
 	ScaleAppStub        func(name string, instances int) error
 	scaleAppMutex       sync.RWMutex
 	scaleAppArgsForCall []struct {
@@ -72,6 +80,38 @@ func (fake *FakeAppRunner) CreateDockerAppArgsForCall(i int) docker_app_runner.C
 func (fake *FakeAppRunner) CreateDockerAppReturns(result1 error) {
 	fake.CreateDockerAppStub = nil
 	fake.createDockerAppReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeAppRunner) CreateAppFromJson(createAppJson []byte) error {
+	fake.createAppFromJsonMutex.Lock()
+	fake.createAppFromJsonArgsForCall = append(fake.createAppFromJsonArgsForCall, struct {
+		createAppJson []byte
+	}{createAppJson})
+	fake.createAppFromJsonMutex.Unlock()
+	if fake.CreateAppFromJsonStub != nil {
+		return fake.CreateAppFromJsonStub(createAppJson)
+	} else {
+		return fake.createAppFromJsonReturns.result1
+	}
+}
+
+func (fake *FakeAppRunner) CreateAppFromJsonCallCount() int {
+	fake.createAppFromJsonMutex.RLock()
+	defer fake.createAppFromJsonMutex.RUnlock()
+	return len(fake.createAppFromJsonArgsForCall)
+}
+
+func (fake *FakeAppRunner) CreateAppFromJsonArgsForCall(i int) []byte {
+	fake.createAppFromJsonMutex.RLock()
+	defer fake.createAppFromJsonMutex.RUnlock()
+	return fake.createAppFromJsonArgsForCall[i].createAppJson
+}
+
+func (fake *FakeAppRunner) CreateAppFromJsonReturns(result1 error) {
+	fake.CreateAppFromJsonStub = nil
+	fake.createAppFromJsonReturns = struct {
 		result1 error
 	}{result1}
 }

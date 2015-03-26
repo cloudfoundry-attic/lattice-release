@@ -1,6 +1,7 @@
 package docker_app_runner_test
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -213,7 +214,7 @@ var _ = Describe("DockerAppRunner", func() {
 			})
 		})
 
-		Describe("returning errors from the receptor", func() {
+		Context("when the receptor returns errors", func() {
 			It("returns upsert domain errors", func() {
 				upsertError := errors.New("You're not that fresh, buddy.")
 				fakeReceptorClient.UpsertDomainReturns(upsertError)
@@ -277,6 +278,163 @@ var _ = Describe("DockerAppRunner", func() {
 				Expect(err).To(Equal(receptorError))
 			})
 		})
+	})
+
+	Describe("CreateAppFromJson", func() {
+
+		It("Creates an app from JSON", func() {
+			fakeReceptorClient.CreateDesiredLRPReturns(nil)
+
+			desiredLRP := receptor.DesiredLRPCreateRequest{
+				ProcessGuid:          "americano-app",
+				Domain:               "lattice",
+				RootFSPath:           "docker:///runtest/runner#latest",
+				Instances:            22,
+				Stack:                "lucid64",
+				EnvironmentVariables: []receptor.EnvironmentVariable{receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"}, receptor.EnvironmentVariable{Name: "PORT", Value: "2000"}},
+				Routes: route_helpers.AppRoutes{
+					route_helpers.AppRoute{Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"}, Port: 2000},
+					route_helpers.AppRoute{Hostnames: []string{"americano-app-4000.myDiegoInstall.com"}, Port: 4000},
+				}.RoutingInfo(),
+				CPUWeight:  67,
+				MemoryMB:   128,
+				DiskMB:     1024,
+				Privileged: true,
+				Ports:      []uint16{2000, 4000},
+				LogGuid:    "americano-app",
+				LogSource:  "APP",
+				Setup: &models.DownloadAction{
+					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+					To:   "/tmp",
+				},
+				Action: &models.RunAction{
+					Path:       "/app-run-statement",
+					Args:       []string{"app", "arg1", "--app", "arg 2"},
+					Privileged: true,
+					Dir:        "/user/web/myappdir",
+				},
+				Monitor: &models.RunAction{
+					Path:      "/tmp/healthcheck",
+					Args:      []string{"-port", "2000"},
+					LogSource: "HEALTH",
+				},
+			}
+
+			lrpJson, marshalErr := json.Marshal(desiredLRP)
+			Expect(marshalErr).ToNot(HaveOccurred())
+
+			err := appRunner.CreateAppFromJson(lrpJson)
+
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(1))
+			domain, ttl := fakeReceptorClient.UpsertDomainArgsForCall(0)
+			Expect(domain).To(Equal("lattice"))
+			Expect(ttl).To(Equal(time.Duration(0)))
+
+			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+			Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0)).To(Equal(desiredLRP))
+		})
+
+		It("returns errors if the app is already desired", func() {
+			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "app-already-desired", Instances: 1}}
+			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+
+			desiredLRP := receptor.DesiredLRPCreateRequest{
+				ProcessGuid: "app-already-desired",
+			}
+			lrpJson, marshalErr := json.Marshal(desiredLRP)
+			Expect(marshalErr).ToNot(HaveOccurred())
+
+			err := appRunner.CreateAppFromJson(lrpJson)
+
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("App app-already-desired, is already running"))
+			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
+			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(0))
+		})
+
+		Context("when 'lattice-debug' is passed as the appId", func() {
+			It("is an error because that id is reserved for the lattice-debug log stream", func() {
+				desiredLRP := receptor.DesiredLRPCreateRequest{
+					ProcessGuid: "lattice-debug",
+				}
+
+				lrpJson, marshalErr := json.Marshal(desiredLRP)
+				Expect(marshalErr).ToNot(HaveOccurred())
+
+				err := appRunner.CreateAppFromJson(lrpJson)
+
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal(docker_app_runner.AttemptedToCreateLatticeDebugErrorMessage))
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(0))
+			})
+		})
+
+		It("returns an error for invalid JSON", func() {
+			err := appRunner.CreateAppFromJson([]byte(`{"Value":"test value`))
+
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("unexpected end of JSON input"))
+			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(0))
+		})
+
+		Context("when the receptor returns errors", func() {
+
+			It("returns existing count errors", func() {
+				receptorError := errors.New("error - Existing Count")
+				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
+
+				desiredLRP := receptor.DesiredLRPCreateRequest{
+					ProcessGuid: "nescafe-app",
+				}
+				lrpJson, marshalErr := json.Marshal(desiredLRP)
+				Expect(marshalErr).ToNot(HaveOccurred())
+
+				err := appRunner.CreateAppFromJson(lrpJson)
+
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(receptorError))
+			})
+
+			It("returns upsert domain errors", func() {
+				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
+
+				upsertError := errors.New("You're not that fresh, buddy.")
+				fakeReceptorClient.UpsertDomainReturns(upsertError)
+
+				desiredLRP := receptor.DesiredLRPCreateRequest{
+					ProcessGuid: "whatever-app",
+				}
+				lrpJson, marshalErr := json.Marshal(desiredLRP)
+				Expect(marshalErr).ToNot(HaveOccurred())
+
+				err := appRunner.CreateAppFromJson(lrpJson)
+
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(upsertError))
+			})
+
+			It("returns existing count errors", func() {
+				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
+				fakeReceptorClient.UpsertDomainReturns(nil)
+
+				receptorError := errors.New("error - some error creating app")
+				fakeReceptorClient.CreateDesiredLRPReturns(receptorError)
+
+				desiredLRP := receptor.DesiredLRPCreateRequest{
+					ProcessGuid: "nescafe-app",
+				}
+				lrpJson, marshalErr := json.Marshal(desiredLRP)
+				Expect(marshalErr).ToNot(HaveOccurred())
+
+				err := appRunner.CreateAppFromJson(lrpJson)
+
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(Equal(receptorError))
+			})
+		})
+
 	})
 
 	Describe("ScaleApp", func() {
