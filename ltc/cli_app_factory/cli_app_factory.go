@@ -111,7 +111,7 @@ func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.Exit
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 
-	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(ui, tailedLogsOutputter, exitHandler)
+	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(appExaminer, ui, tailedLogsOutputter, exitHandler)
 
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, exitHandler)
 
@@ -123,7 +123,7 @@ func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.Exit
 		appRunnerCommandFactory.MakeCreateAppFromJsonCommand(),
 		logsCommandFactory.MakeDebugLogsCommand(),
 		appExaminerCommandFactory.MakeListAppCommand(),
-		logsCommandFactory.MakeLogsCommand(appExaminer),
+		logsCommandFactory.MakeLogsCommand(),
 		appRunnerCommandFactory.MakeRemoveAppCommand(),
 		appRunnerCommandFactory.MakeScaleAppCommand(),
 		appExaminerCommandFactory.MakeStatusCommand(),
