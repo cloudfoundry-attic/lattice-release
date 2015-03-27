@@ -19,7 +19,6 @@ type AppInfo struct {
 	ProcessGuid            string
 	DesiredInstances       int
 	ActualRunningInstances int
-	Stack                  string
 	EnvironmentVariables   []EnvironmentVariable
 	StartTimeout           uint
 	DiskMB                 int
@@ -209,17 +208,16 @@ func mergeDesiredActualLRPs(desiredLRPs []receptor.DesiredLRPResponse, actualLRP
 			ProcessGuid:            desiredLRP.ProcessGuid,
 			DesiredInstances:       desiredLRP.Instances,
 			ActualRunningInstances: 0,
-			Stack:                desiredLRP.Stack,
-			EnvironmentVariables: buildEnvVars(desiredLRP),
-			StartTimeout:         desiredLRP.StartTimeout,
-			DiskMB:               desiredLRP.DiskMB,
-			MemoryMB:             desiredLRP.MemoryMB,
-			CPUWeight:            desiredLRP.CPUWeight,
-			Ports:                desiredLRP.Ports,
-			Routes:               route_helpers.AppRoutesFromRoutingInfo(desiredLRP.Routes),
-			LogGuid:              desiredLRP.LogGuid,
-			LogSource:            desiredLRP.LogSource,
-			Annotation:           desiredLRP.Annotation,
+			EnvironmentVariables:   buildEnvVars(desiredLRP),
+			StartTimeout:           desiredLRP.StartTimeout,
+			DiskMB:                 desiredLRP.DiskMB,
+			MemoryMB:               desiredLRP.MemoryMB,
+			CPUWeight:              desiredLRP.CPUWeight,
+			Ports:                  desiredLRP.Ports,
+			Routes:                 route_helpers.AppRoutesFromRoutingInfo(desiredLRP.Routes),
+			LogGuid:                desiredLRP.LogGuid,
+			LogSource:              desiredLRP.LogSource,
+			Annotation:             desiredLRP.Annotation,
 		}
 	}
 

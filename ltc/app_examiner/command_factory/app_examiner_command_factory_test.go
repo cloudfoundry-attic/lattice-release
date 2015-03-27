@@ -225,7 +225,6 @@ var _ = Describe("CommandFactory", func() {
 					ProcessGuid:            "wompy-app",
 					DesiredInstances:       12,
 					ActualRunningInstances: 1,
-					Stack: "lucid64",
 					EnvironmentVariables: []app_examiner.EnvironmentVariable{
 						app_examiner.EnvironmentVariable{Name: "WOMPY_APP_PASSWORD", Value: "seekreet pass"},
 						app_examiner.EnvironmentVariable{Name: "WOMPY_APP_USERNAME", Value: "mrbigglesworth54"},
@@ -290,9 +289,6 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).To(test_helpers.Say("Instances"))
 			Expect(outputBuffer).To(test_helpers.Say("1/12"))
-
-			Expect(outputBuffer).To(test_helpers.Say("Stack"))
-			Expect(outputBuffer).To(test_helpers.Say("lucid64"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Start Timeout"))
 			Expect(outputBuffer).To(test_helpers.Say("600"))

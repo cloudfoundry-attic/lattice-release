@@ -82,9 +82,8 @@ var _ = Describe("DockerAppRunner", func() {
 			Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0)).To(Equal(receptor.DesiredLRPCreateRequest{
 				ProcessGuid:          "americano-app",
 				Domain:               "lattice",
-				RootFSPath:           "docker:///runtest/runner#latest",
+				RootFS:               "docker:///runtest/runner#latest",
 				Instances:            22,
-				Stack:                "lucid64",
 				EnvironmentVariables: []receptor.EnvironmentVariable{receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"}, receptor.EnvironmentVariable{Name: "PORT", Value: "2000"}},
 				Routes: route_helpers.AppRoutes{
 					route_helpers.AppRoute{Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"}, Port: 2000},
@@ -288,9 +287,8 @@ var _ = Describe("DockerAppRunner", func() {
 			desiredLRP := receptor.DesiredLRPCreateRequest{
 				ProcessGuid:          "americano-app",
 				Domain:               "lattice",
-				RootFSPath:           "docker:///runtest/runner#latest",
+				RootFS:               "docker:///runtest/runner#latest",
 				Instances:            22,
-				Stack:                "lucid64",
 				EnvironmentVariables: []receptor.EnvironmentVariable{receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"}, receptor.EnvironmentVariable{Name: "PORT", Value: "2000"}},
 				Routes: route_helpers.AppRoutes{
 					route_helpers.AppRoute{Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"}, Port: 2000},

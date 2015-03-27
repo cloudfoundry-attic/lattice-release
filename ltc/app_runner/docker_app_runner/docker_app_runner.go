@@ -190,9 +190,8 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 	req := receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
 		Domain:               lrpDomain,
-		RootFSPath:           dockerImageUrl,
+		RootFS:               dockerImageUrl,
 		Instances:            params.Instances,
-		Stack:                "lucid64",
 		Routes:               appRoutes.RoutingInfo(),
 		CPUWeight:            params.CPUWeight,
 		MemoryMB:             params.MemoryMB,

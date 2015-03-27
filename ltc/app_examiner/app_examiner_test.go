@@ -42,7 +42,6 @@ var _ = Describe("AppRunner", func() {
 						DiskMB:               256,
 						MemoryMB:             100,
 						Routes:               route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}}}.RoutingInfo(),
-						Stack:                "hardy64",
 						EnvironmentVariables: []receptor.EnvironmentVariable{},
 						StartTimeout:         30,
 						CPUWeight:            94,
@@ -76,7 +75,6 @@ var _ = Describe("AppRunner", func() {
 				Expect(process1.DiskMB).To(Equal(256))
 				Expect(process1.MemoryMB).To(Equal(100))
 				Expect(process1.Routes).To(Equal(route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}}}))
-				Expect(process1.Stack).To(Equal("hardy64"))
 				Expect(process1.EnvironmentVariables).To(Equal([]app_examiner.EnvironmentVariable{}))
 				Expect(process1.StartTimeout).To(Equal(uint(30)))
 				Expect(process1.CPUWeight).To(Equal(uint(94)))
@@ -245,9 +243,8 @@ var _ = Describe("AppRunner", func() {
 				getDesiredLRPResponse = receptor.DesiredLRPResponse{
 					ProcessGuid: "peekaboo-app",
 					Domain:      "welp.org",
-					RootFSPath:  "/var/root-fs",
+					RootFS:      "/var/root-fs",
 					Instances:   4,
-					Stack:       "lucid99",
 					EnvironmentVariables: []receptor.EnvironmentVariable{
 						receptor.EnvironmentVariable{
 							Name:  "API_TOKEN",
@@ -327,7 +324,6 @@ var _ = Describe("AppRunner", func() {
 					ProcessGuid:            "peekaboo-app",
 					DesiredInstances:       4,
 					ActualRunningInstances: 1,
-					Stack: "lucid99",
 					EnvironmentVariables: []app_examiner.EnvironmentVariable{
 						app_examiner.EnvironmentVariable{
 							Name:  "API_TOKEN",

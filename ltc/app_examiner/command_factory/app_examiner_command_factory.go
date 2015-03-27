@@ -158,8 +158,6 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 func printAppInfo(w io.Writer, appInfo app_examiner.AppInfo) {
 
 	fmt.Fprintf(w, "%s\t%s\n", "Instances", colorInstances(appInfo))
-	fmt.Fprintf(w, "%s\t%s\n", "Stack", appInfo.Stack)
-
 	fmt.Fprintf(w, "%s\t%d\n", "Start Timeout", appInfo.StartTimeout)
 	fmt.Fprintf(w, "%s\t%d\n", "DiskMB", appInfo.DiskMB)
 	fmt.Fprintf(w, "%s\t%d\n", "MemoryMB", appInfo.MemoryMB)

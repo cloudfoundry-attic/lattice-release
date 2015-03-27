@@ -153,20 +153,17 @@ func (runner *integrationTestRunner) streamLogs(timeout time.Duration, appName s
 	session, err := gexec.Start(command, getStyledWriter("logs"), getStyledWriter("logs"))
 
 	Expect(err).ToNot(HaveOccurred())
-
 	return session
 }
 
 func (runner *integrationTestRunner) streamDebugLogs(timeout time.Duration) *gexec.Session {
-    fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to stream cluster debug logs"))+"\n")
+	fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to stream cluster debug logs"))+"\n")
+	command := runner.command(timeout, "debug-logs")
 
-    command := runner.command(timeout, "debug-logs")
+	session, err := gexec.Start(command, getStyledWriter("debug"), getStyledWriter("debug"))
 
-    session, err := gexec.Start(command, getStyledWriter("debug"), getStyledWriter("debug"))
-
-    Expect(err).ToNot(HaveOccurred())
-
-    return session
+	Expect(err).ToNot(HaveOccurred())
+	return session
 }
 
 func (runner *integrationTestRunner) scaleApp(timeout time.Duration, appName string) {
