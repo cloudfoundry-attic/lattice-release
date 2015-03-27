@@ -16,11 +16,10 @@ var _ = Describe("CellPresence", func() {
 
 	BeforeEach(func() {
 		capacity = models.NewCellCapacity(128, 1024, 3)
-		cellPresence = models.NewCellPresence("some-id", "some-stack", "some-address", "some-zone", capacity)
+		cellPresence = models.NewCellPresence("some-id", "some-address", "some-zone", capacity)
 
 		payload = `{
     "cell_id":"some-id",
-    "stack": "some-stack",
     "rep_address": "some-address",
     "zone": "some-zone",
     "capacity": {
@@ -46,16 +45,6 @@ var _ = Describe("CellPresence", func() {
 					err := cellPresence.Validate()
 					Ω(err).Should(HaveOccurred())
 					Ω(err.Error()).Should(ContainSubstring("cell_id"))
-				})
-			})
-			Context("when stack is invalid", func() {
-				BeforeEach(func() {
-					cellPresence.Stack = ""
-				})
-				It("returns an error", func() {
-					err := cellPresence.Validate()
-					Ω(err).Should(HaveOccurred())
-					Ω(err.Error()).Should(ContainSubstring("stack"))
 				})
 			})
 			Context("when rep address is invalid", func() {

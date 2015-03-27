@@ -38,8 +38,8 @@ var _ = Describe("Cell Handlers", func() {
 		BeforeEach(func() {
 			capacity := models.NewCellCapacity(128, 1024, 6)
 			cellPresences = []models.CellPresence{
-				models.NewCellPresence("cell-id-0", "stack-0", "1.2.3.4", "the-zone", capacity),
-				models.NewCellPresence("cell-id-1", "stack-1", "4.5.6.7", "the-zone", capacity),
+				models.NewCellPresence("cell-id-0", "1.2.3.4", "the-zone", capacity),
+				models.NewCellPresence("cell-id-1", "4.5.6.7", "the-zone", capacity),
 			}
 		})
 

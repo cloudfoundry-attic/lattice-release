@@ -19,7 +19,6 @@ var _ = Describe("DesiredLRP", func() {
 	  "domain": "some-domain",
 	  "rootfs": "docker:///docker.com/docker",
 	  "instances": 1,
-	  "stack": "some-stack",
 		"annotation": "some-annotation",
 		"start_timeout": 0,
 	  "env":[
@@ -94,8 +93,7 @@ var _ = Describe("DesiredLRP", func() {
 			ProcessGuid: "some-guid",
 
 			Instances:  1,
-			Stack:      "some-stack",
-			RootFSPath: "docker:///docker.com/docker",
+			RootFS:     "docker:///docker.com/docker",
 			MemoryMB:   1024,
 			DiskMB:     512,
 			CPUWeight:  42,
@@ -273,9 +271,19 @@ var _ = Describe("DesiredLRP", func() {
 			assertDesiredLRPValidationFailsWithMessage(lrp, "domain")
 		})
 
-		It("requires a stack", func() {
-			lrp.Stack = ""
-			assertDesiredLRPValidationFailsWithMessage(lrp, "stack")
+		It("requires a rootfs", func() {
+			lrp.RootFS = ""
+			assertDesiredLRPValidationFailsWithMessage(lrp, "rootfs")
+		})
+
+		It("requires a valid URL with a non-empty scheme for the rootfs", func() {
+			lrp.RootFS = ":not-a-url"
+			assertDesiredLRPValidationFailsWithMessage(lrp, "rootfs")
+		})
+
+		It("requires a valid absolute URL for the rootfs", func() {
+			lrp.RootFS = "not-an-absolute-url"
+			assertDesiredLRPValidationFailsWithMessage(lrp, "rootfs")
 		})
 
 		It("requires an action", func() {
@@ -353,7 +361,7 @@ var _ = Describe("DesiredLRP", func() {
 				err := FromJSON([]byte(`{
 				"domain": "some-domain",
 				"process_guid": "process_guid",
-				"stack": "some-stack"
+				"rootfs": "some-rootfs"
 			}`,
 				), &decodedLRP)
 				Ω(err).Should(HaveOccurred())
@@ -402,18 +410,18 @@ var _ = Describe("DesiredLRP", func() {
 		for field, payload := range map[string]string{
 			"process_guid": `{
 				"domain": "some-domain",
-				"stack": "some-stack",
+				"rootfs": "some-rootfs",
 				"action":
 					{"download":{"from":"http://example.com","to":"/tmp/internet","cache_key":""}}
 			}`,
-			"stack": `{
+			"rootfs": `{
 				"domain": "some-domain",
 				"process_guid": "process_guid",
 				"action":
 					{"download":{"from":"http://example.com","to":"/tmp/internet","cache_key":""}}
 			}`,
 			"domain": `{
-				"stack": "some-stack",
+				"rootfs": "some-rootfs",
 				"process_guid": "process_guid",
 				"action":
 					{"download":{"from":"http://example.com","to":"/tmp/internet","cache_key":""}}
@@ -435,7 +443,7 @@ var _ = Describe("DesiredLRP", func() {
 
 		for field, payload := range map[string]string{
 			"annotation": `{
-				"stack": "some-stack",
+				"rootfs": "some-rootfs",
 				"domain": "some-domain",
 				"process_guid": "process_guid",
 				"instances": 1,
@@ -445,7 +453,7 @@ var _ = Describe("DesiredLRP", func() {
 				"annotation":"` + strings.Repeat("a", 10*1024+1) + `"
 			}`,
 			"routes": `{
-				"stack": "some-stack",
+				"rootfs": "some-rootfs",
 				"domain": "some-domain",
 				"process_guid": "process_guid",
 				"instances": 1,

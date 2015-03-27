@@ -19,7 +19,6 @@ var _ = Describe("LRPStartRequest", func() {
       "process_guid": "some-guid",
       "domain": "tests",
       "instances": 1,
-      "stack": "some-stack",
       "start_timeout": 0,
       "rootfs": "docker:///docker.com/docker",
       "action": {"download": {
@@ -57,12 +56,11 @@ var _ = Describe("LRPStartRequest", func() {
 				Domain:      "tests",
 				ProcessGuid: "some-guid",
 
-				RootFSPath: "docker:///docker.com/docker",
-				Instances:  1,
-				Stack:      "some-stack",
-				MemoryMB:   1024,
-				DiskMB:     512,
-				CPUWeight:  42,
+				RootFS:    "docker:///docker.com/docker",
+				Instances: 1,
+				MemoryMB:  1024,
+				DiskMB:    512,
+				CPUWeight: 42,
 				Routes: map[string]*json.RawMessage{
 					"router": &rawMessage,
 				},

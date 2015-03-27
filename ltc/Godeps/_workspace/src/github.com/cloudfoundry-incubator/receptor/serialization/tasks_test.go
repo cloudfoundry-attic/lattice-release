@@ -17,15 +17,14 @@ var _ = Describe("Task Serialization", func() {
 
 		BeforeEach(func() {
 			task = models.Task{
-				TaskGuid:   "the-task-guid",
-				Domain:     "the-domain",
-				RootFSPath: "the-rootfs-path",
-				CellID:     "the-cell-id",
+				TaskGuid: "the-task-guid",
+				Domain:   "the-domain",
+				RootFS:   "the-rootfs",
+				CellID:   "the-cell-id",
 				Action: &models.UploadAction{
 					From: "from",
 					To:   "to",
 				},
-				Stack:       "the-stack",
 				MemoryMB:    100,
 				DiskMB:      100,
 				CPUWeight:   50,
@@ -74,15 +73,14 @@ var _ = Describe("Task Serialization", func() {
 			actualResponse := serialization.TaskToResponse(task)
 
 			expectedResponse := receptor.TaskResponse{
-				TaskGuid:   "the-task-guid",
-				Domain:     "the-domain",
-				RootFSPath: "the-rootfs-path",
-				CellID:     "the-cell-id",
+				TaskGuid: "the-task-guid",
+				Domain:   "the-domain",
+				RootFS:   "the-rootfs",
+				CellID:   "the-cell-id",
 				Action: &models.UploadAction{
 					From: "from",
 					To:   "to",
 				},
-				Stack:       "the-stack",
 				MemoryMB:    100,
 				DiskMB:      100,
 				CPUWeight:   50,
@@ -141,13 +139,12 @@ var _ = Describe("Task Serialization", func() {
 
 		BeforeEach(func() {
 			request = receptor.TaskCreateRequest{
-				TaskGuid:   "the-task-guid",
-				Domain:     "the-domain",
-				RootFSPath: "the-rootfs-path",
+				TaskGuid: "the-task-guid",
+				Domain:   "the-domain",
+				RootFS:   "the-rootfs",
 				Action: &models.RunAction{
 					Path: "the-path",
 				},
-				Stack:       "the-stack",
 				MemoryMB:    100,
 				DiskMB:      100,
 				CPUWeight:   50,
@@ -174,13 +171,12 @@ var _ = Describe("Task Serialization", func() {
 			}
 
 			expectedTask = models.Task{
-				TaskGuid:   "the-task-guid",
-				Domain:     "the-domain",
-				RootFSPath: "the-rootfs-path",
+				TaskGuid: "the-task-guid",
+				Domain:   "the-domain",
+				RootFS:   "the-rootfs",
 				Action: &models.RunAction{
 					Path: "the-path",
 				},
-				Stack:       "the-stack",
 				MemoryMB:    100,
 				DiskMB:      100,
 				CPUWeight:   50,

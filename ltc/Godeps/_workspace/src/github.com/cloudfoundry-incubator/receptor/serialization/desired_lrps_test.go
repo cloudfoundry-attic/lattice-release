@@ -40,8 +40,7 @@ var _ = Describe("DesiredLRP Serialization", func() {
 			request = receptor.DesiredLRPCreateRequest{
 				ProcessGuid: "the-process-guid",
 				Domain:      "the-domain",
-				Stack:       "the-stack",
-				RootFSPath:  "the-rootfs-path",
+				RootFS:      "the-rootfs",
 				Annotation:  "foo",
 				Instances:   1,
 				Ports:       []uint16{2345, 6789},
@@ -66,8 +65,7 @@ var _ = Describe("DesiredLRP Serialization", func() {
 		It("translates the request into a DesiredLRP model, preserving attributes", func() {
 			Ω(desiredLRP.ProcessGuid).Should(Equal("the-process-guid"))
 			Ω(desiredLRP.Domain).Should(Equal("the-domain"))
-			Ω(desiredLRP.Stack).Should(Equal("the-stack"))
-			Ω(desiredLRP.RootFSPath).Should(Equal("the-rootfs-path"))
+			Ω(desiredLRP.RootFS).Should(Equal("the-rootfs"))
 			Ω(desiredLRP.Annotation).Should(Equal("foo"))
 			Ω(desiredLRP.StartTimeout).Should(Equal(uint(4)))
 			Ω(desiredLRP.Ports).Should(HaveLen(2))
@@ -101,9 +99,8 @@ var _ = Describe("DesiredLRP Serialization", func() {
 			desiredLRP = models.DesiredLRP{
 				ProcessGuid: "process-guid-0",
 				Domain:      "domain-0",
-				RootFSPath:  "root-fs-path-0",
+				RootFS:      "root-fs-0",
 				Instances:   127,
-				Stack:       "stack-0",
 				EnvironmentVariables: []models.EnvironmentVariable{
 					{Name: "ENV_VAR_NAME", Value: "value"},
 				},
@@ -135,9 +132,8 @@ var _ = Describe("DesiredLRP Serialization", func() {
 			expectedResponse := receptor.DesiredLRPResponse{
 				ProcessGuid: "process-guid-0",
 				Domain:      "domain-0",
-				RootFSPath:  "root-fs-path-0",
+				RootFS:      "root-fs-0",
 				Instances:   127,
-				Stack:       "stack-0",
 				EnvironmentVariables: []receptor.EnvironmentVariable{
 					{Name: "ENV_VAR_NAME", Value: "value"},
 				},
@@ -166,67 +162,6 @@ var _ = Describe("DesiredLRP Serialization", func() {
 
 			actualResponse := serialization.DesiredLRPToResponse(desiredLRP)
 			Ω(actualResponse).Should(Equal(expectedResponse))
-		})
-	})
-
-	Describe("DesiredLRPFromResponse", func() {
-		var desiredLRPResponse receptor.DesiredLRPResponse
-
-		BeforeEach(func() {
-			desiredLRPResponse = receptor.DesiredLRPResponse{
-				ProcessGuid: "process-guid-0",
-				Domain:      "domain-0",
-				RootFSPath:  "root-fs-path-0",
-				Instances:   127,
-				Stack:       "stack-0",
-				EnvironmentVariables: []receptor.EnvironmentVariable{
-					{Name: "ENV_VAR_NAME", Value: "value"},
-				},
-				Action:       &models.RunAction{Path: "/bin/true"},
-				StartTimeout: 4,
-				DiskMB:       126,
-				MemoryMB:     1234,
-				CPUWeight:    192,
-				Privileged:   true,
-				Ports: []uint16{
-					456,
-				},
-				Routes:      routingInfo,
-				LogGuid:     "log-guid-0",
-				LogSource:   "log-source-name-0",
-				MetricsGuid: "metrics-guid-0",
-				Annotation:  "annotation-0",
-			}
-		})
-
-		It("serializes all the fields", func() {
-			expectedDesiredLRP := models.DesiredLRP{
-				ProcessGuid: "process-guid-0",
-				Domain:      "domain-0",
-				RootFSPath:  "root-fs-path-0",
-				Instances:   127,
-				Stack:       "stack-0",
-				EnvironmentVariables: []models.EnvironmentVariable{
-					{Name: "ENV_VAR_NAME", Value: "value"},
-				},
-				Action:       &models.RunAction{Path: "/bin/true"},
-				StartTimeout: 4,
-				DiskMB:       126,
-				MemoryMB:     1234,
-				CPUWeight:    192,
-				Privileged:   true,
-				Ports: []uint16{
-					456,
-				},
-				Routes:      routes,
-				LogGuid:     "log-guid-0",
-				LogSource:   "log-source-name-0",
-				MetricsGuid: "metrics-guid-0",
-				Annotation:  "annotation-0",
-			}
-
-			actualDesiredLRP := serialization.DesiredLRPFromResponse(desiredLRPResponse)
-			Ω(actualDesiredLRP).Should(Equal(expectedDesiredLRP))
 		})
 	})
 })

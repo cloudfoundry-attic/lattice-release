@@ -38,9 +38,8 @@ type TaskCreateRequest struct {
 	MetricsGuid           string                     `json:"metrics_guid"`
 	MemoryMB              int                        `json:"memory_mb"`
 	ResultFile            string                     `json:"result_file"`
-	Stack                 string                     `json:"stack"`
 	TaskGuid              string                     `json:"task_guid"`
-	RootFSPath            string                     `json:"rootfs"`
+	RootFS                string                     `json:"rootfs"`
 	Privileged            bool                       `json:"privileged"`
 	EnvironmentVariables  []EnvironmentVariable      `json:"env,omitempty"`
 	EgressRules           []models.SecurityGroupRule `json:"egress_rules,omitempty"`
@@ -101,9 +100,8 @@ type TaskResponse struct {
 	MetricsGuid           string                     `json:"metrics_guid"`
 	MemoryMB              int                        `json:"memory_mb"`
 	ResultFile            string                     `json:"result_file"`
-	Stack                 string                     `json:"stack"`
 	TaskGuid              string                     `json:"task_guid"`
-	RootFSPath            string                     `json:"rootfs"`
+	RootFS                string                     `json:"rootfs"`
 	Privileged            bool                       `json:"privileged"`
 	EnvironmentVariables  []EnvironmentVariable      `json:"env,omitempty"`
 	CellID                string                     `json:"cell_id"`
@@ -163,9 +161,8 @@ type RoutingInfo map[string]*json.RawMessage
 type DesiredLRPCreateRequest struct {
 	ProcessGuid          string                     `json:"process_guid"`
 	Domain               string                     `json:"domain"`
-	RootFSPath           string                     `json:"rootfs"`
+	RootFS               string                     `json:"rootfs"`
 	Instances            int                        `json:"instances"`
-	Stack                string                     `json:"stack"`
 	EnvironmentVariables []EnvironmentVariable      `json:"env,omitempty"`
 	Setup                models.Action              `json:"-"`
 	Action               models.Action              `json:"-"`
@@ -285,9 +282,8 @@ type DesiredLRPUpdateRequest struct {
 type DesiredLRPResponse struct {
 	ProcessGuid          string                     `json:"process_guid"`
 	Domain               string                     `json:"domain"`
-	RootFSPath           string                     `json:"rootfs"`
+	RootFS               string                     `json:"rootfs"`
 	Instances            int                        `json:"instances"`
-	Stack                string                     `json:"stack"`
 	EnvironmentVariables []EnvironmentVariable      `json:"env,omitempty"`
 	Setup                models.Action              `json:"setup"`
 	Action               models.Action              `json:"action"`
@@ -448,7 +444,6 @@ func (m *ModificationTag) SucceededBy(other ModificationTag) bool {
 
 type CellResponse struct {
 	CellID   string       `json:"cell_id"`
-	Stack    string       `json:"stack"`
 	Zone     string       `json:"zone"`
 	Capacity CellCapacity `json:"capacity"`
 }

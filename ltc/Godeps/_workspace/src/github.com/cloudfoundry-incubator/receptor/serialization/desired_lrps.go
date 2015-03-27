@@ -11,9 +11,8 @@ func DesiredLRPFromRequest(req receptor.DesiredLRPCreateRequest) models.DesiredL
 	return models.DesiredLRP{
 		ProcessGuid:          req.ProcessGuid,
 		Domain:               req.Domain,
-		RootFSPath:           req.RootFSPath,
+		RootFS:               req.RootFS,
 		Instances:            req.Instances,
-		Stack:                req.Stack,
 		EnvironmentVariables: EnvironmentVariablesToModel(req.EnvironmentVariables),
 		Setup:                req.Setup,
 		Action:               req.Action,
@@ -38,9 +37,8 @@ func DesiredLRPToResponse(lrp models.DesiredLRP) receptor.DesiredLRPResponse {
 	return receptor.DesiredLRPResponse{
 		ProcessGuid:          lrp.ProcessGuid,
 		Domain:               lrp.Domain,
-		RootFSPath:           lrp.RootFSPath,
+		RootFS:               lrp.RootFS,
 		Instances:            lrp.Instances,
-		Stack:                lrp.Stack,
 		EnvironmentVariables: EnvironmentVariablesFromModel(lrp.EnvironmentVariables),
 		Setup:                lrp.Setup,
 		Action:               lrp.Action,
@@ -58,31 +56,6 @@ func DesiredLRPToResponse(lrp models.DesiredLRP) receptor.DesiredLRPResponse {
 		Annotation:           lrp.Annotation,
 		EgressRules:          lrp.EgressRules,
 		ModificationTag:      desiredLRPModificationTagToResponseModificationTag(lrp.ModificationTag),
-	}
-}
-
-func DesiredLRPFromResponse(resp receptor.DesiredLRPResponse) models.DesiredLRP {
-	return models.DesiredLRP{
-		ProcessGuid:          resp.ProcessGuid,
-		Domain:               resp.Domain,
-		RootFSPath:           resp.RootFSPath,
-		Instances:            resp.Instances,
-		Stack:                resp.Stack,
-		EnvironmentVariables: EnvironmentVariablesToModel(resp.EnvironmentVariables),
-		Setup:                resp.Setup,
-		Action:               resp.Action,
-		Monitor:              resp.Monitor,
-		StartTimeout:         resp.StartTimeout,
-		DiskMB:               resp.DiskMB,
-		MemoryMB:             resp.MemoryMB,
-		CPUWeight:            resp.CPUWeight,
-		Privileged:           resp.Privileged,
-		Ports:                resp.Ports,
-		Routes:               RoutingInfoToRawMessages(resp.Routes),
-		LogGuid:              resp.LogGuid,
-		LogSource:            resp.LogSource,
-		MetricsGuid:          resp.MetricsGuid,
-		Annotation:           resp.Annotation,
 	}
 }
 

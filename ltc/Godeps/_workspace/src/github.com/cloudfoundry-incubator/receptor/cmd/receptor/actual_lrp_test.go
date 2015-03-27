@@ -44,7 +44,7 @@ var _ = Describe("Actual LRP API", func() {
 			ProcessGuid: "process-guid-0",
 			Domain:      "domain-0",
 			Instances:   1,
-			Stack:       "some-stack",
+			RootFS:      "some:rootfs",
 			Ports:       []uint16{80},
 			Action:      &models.RunAction{Path: "/bin/true"},
 		}

@@ -23,8 +23,7 @@ var taskGuidPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 type Task struct {
 	TaskGuid             string                `json:"task_guid"`
 	Domain               string                `json:"domain"`
-	RootFSPath           string                `json:"rootfs"`
-	Stack                string                `json:"stack"`
+	RootFS               string                `json:"rootfs"`
 	EnvironmentVariables []EnvironmentVariable `json:"env,omitempty"`
 	Action               Action                `json:"-"`
 	MemoryMB             int                   `json:"memory_mb"`
@@ -92,8 +91,13 @@ func (task Task) Validate() error {
 		validationError = validationError.Append(ErrInvalidField{"task_guid"})
 	}
 
-	if task.Stack == "" {
-		validationError = validationError.Append(ErrInvalidField{"stack"})
+	if task.RootFS == "" {
+		validationError = validationError.Append(ErrInvalidField{"rootfs"})
+	}
+
+	rootFSURL, err := url.Parse(task.RootFS)
+	if err != nil || rootFSURL.Scheme == "" {
+		validationError = validationError.Append(ErrInvalidField{"rootfs"})
 	}
 
 	if task.Action == nil {

@@ -15,3 +15,4 @@ Here's an outline:
     - [LRPs](api_lrps.md)
     - [Cells](api_cells.md)
     - [Domains](api_domains.md)
+    - [Events] (events.md)

@@ -204,7 +204,7 @@ func newValidDesiredLRPCreateRequest() receptor.DesiredLRPCreateRequest {
 	return receptor.DesiredLRPCreateRequest{
 		ProcessGuid: fmt.Sprintf("process-guid-%d", processId),
 		Domain:      "test-domain",
-		Stack:       "some-stack",
+		RootFS:      "some:rootfs",
 		Instances:   1,
 		Ports:       []uint16{1234, 5678},
 		Action: &models.RunAction{

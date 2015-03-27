@@ -39,8 +39,7 @@ var _ = Describe("TaskHandler", func() {
 		validCreateRequest := receptor.TaskCreateRequest{
 			TaskGuid:   "task-guid-1",
 			Domain:     "test-domain",
-			RootFSPath: "docker://docker",
-			Stack:      "some-stack",
+			RootFS:     "docker://docker",
 			Action:     &models.RunAction{Path: "/bin/bash", Args: []string{"echo", "hi"}},
 			MemoryMB:   24,
 			DiskMB:     12,
@@ -55,8 +54,7 @@ var _ = Describe("TaskHandler", func() {
 		expectedTask := models.Task{
 			TaskGuid:   "task-guid-1",
 			Domain:     "test-domain",
-			RootFSPath: "docker://docker",
-			Stack:      "some-stack",
+			RootFS:     "docker://docker",
 			Action:     &models.RunAction{Path: "/bin/bash", Args: []string{"echo", "hi"}},
 			MemoryMB:   24,
 			DiskMB:     12,

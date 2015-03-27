@@ -49,7 +49,7 @@ var _ = Describe("TaskHandler", func() {
 			Failed:        true,
 			FailureReason: "'cause",
 			Result:        "some result",
-			Stack:         "java",
+			RootFS:        "some:rootfs",
 			Domain:        "some-domain",
 			Action:        &models.RunAction{Path: "true"},
 		}

@@ -32,7 +32,7 @@ var _ = Describe("EventSource", func() {
 					models.DesiredLRP{
 						ProcessGuid: "some-guid",
 						Domain:      "some-domain",
-						Stack:       "some-stack",
+						RootFS:      "some-rootfs",
 						Action: &models.RunAction{
 							Path: "true",
 						},

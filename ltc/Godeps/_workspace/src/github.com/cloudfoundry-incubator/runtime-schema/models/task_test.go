@@ -20,7 +20,6 @@ var _ = Describe("Task", func() {
 		"task_guid":"some-guid",
 		"domain":"some-domain",
 		"rootfs": "docker:///docker.com/docker",
-		"stack":"some-stack",
 		"env":[
 			{
 				"name":"ENV_VAR_NAME",
@@ -71,10 +70,9 @@ var _ = Describe("Task", func() {
 	}`
 
 		task = Task{
-			TaskGuid:   "some-guid",
-			Domain:     "some-domain",
-			RootFSPath: "docker:///docker.com/docker",
-			Stack:      "some-stack",
+			TaskGuid: "some-guid",
+			Domain:   "some-domain",
+			RootFS:   "docker:///docker.com/docker",
 			EnvironmentVariables: []EnvironmentVariable{
 				{
 					Name:  "ENV_VAR_NAME",
@@ -131,7 +129,7 @@ var _ = Describe("Task", func() {
 				task = Task{
 					Domain:   "some-domain",
 					TaskGuid: "some-task-guid",
-					Stack:    "some-stack",
+					RootFS:   "some:rootfs",
 					Action: &RunAction{
 						Path: "ls",
 					},
@@ -147,7 +145,7 @@ var _ = Describe("Task", func() {
 				task = Task{
 					Domain:   "some-domain",
 					TaskGuid: "invalid/guid",
-					Stack:    "some-stack",
+					RootFS:   "some:rootfs",
 					Action: &RunAction{
 						Path: "ls",
 					},
@@ -164,14 +162,14 @@ var _ = Describe("Task", func() {
 				"task_guid",
 				Task{
 					Domain: "some-domain",
-					Stack:  "some-stack",
+					RootFS: "some:rootfs",
 					Action: &RunAction{
 						Path: "ls",
 					},
 				},
 			},
 			{
-				"stack",
+				"rootfs",
 				Task{
 					Domain:   "some-domain",
 					TaskGuid: "task-guid",
@@ -181,10 +179,32 @@ var _ = Describe("Task", func() {
 				},
 			},
 			{
+				"rootfs",
+				Task{
+					Domain:   "some-domain",
+					TaskGuid: "task-guid",
+					RootFS:   ":invalid-url",
+					Action: &RunAction{
+						Path: "ls",
+					},
+				},
+			},
+			{
+				"rootfs",
+				Task{
+					Domain:   "some-domain",
+					TaskGuid: "task-guid",
+					RootFS:   "invalid-absolute-url",
+					Action: &RunAction{
+						Path: "ls",
+					},
+				},
+			},
+			{
 				"domain",
 				Task{
 					TaskGuid: "task-guid",
-					Stack:    "some-stack",
+					RootFS:   "some:rootfs",
 					Action: &RunAction{
 						Path: "ls",
 					},
@@ -195,14 +215,14 @@ var _ = Describe("Task", func() {
 				Task{
 					Domain:   "some-domain",
 					TaskGuid: "task-guid",
-					Stack:    "some-stack",
+					RootFS:   "some:rootfs",
 				}},
 			{
 				"path",
 				Task{
 					Domain:   "some-domain",
 					TaskGuid: "task-guid",
-					Stack:    "some-stack",
+					RootFS:   "some:rootfs",
 					Action:   &RunAction{},
 				},
 			},
@@ -211,7 +231,7 @@ var _ = Describe("Task", func() {
 				Task{
 					Domain:   "some-domain",
 					TaskGuid: "task-guid",
-					Stack:    "some-stack",
+					RootFS:   "some:rootfs",
 					Action: &RunAction{
 						Path: "ls",
 					},
@@ -223,7 +243,7 @@ var _ = Describe("Task", func() {
 				Task{
 					Domain:   "some-domain",
 					TaskGuid: "task-guid",
-					Stack:    "some-stack",
+					RootFS:   "some:rootfs",
 					Action: &RunAction{
 						Path: "ls",
 					},
@@ -235,7 +255,7 @@ var _ = Describe("Task", func() {
 				Task{
 					Domain:   "some-domain",
 					TaskGuid: "task-guid",
-					Stack:    "some-stack",
+					RootFS:   "some:rootfs",
 					Action: &RunAction{
 						Path: "ls",
 					},
@@ -282,7 +302,7 @@ var _ = Describe("Task", func() {
 				expectedTask = Task{
 					TaskGuid: "some-guid",
 					Domain:   "some-domain",
-					Stack:    "some-stack",
+					RootFS:   "some:rootfs",
 				}
 			})
 
@@ -292,7 +312,7 @@ var _ = Describe("Task", func() {
 					"task_guid":"some-guid",
 					"domain":"some-domain",
 					"action": null,
-					"stack":"some-stack"
+					"rootfs":"some:rootfs"
 				}`
 				})
 
@@ -309,7 +329,7 @@ var _ = Describe("Task", func() {
 					taskJSON = `{
 					"task_guid":"some-guid",
 					"domain":"some-domain",
-					"stack":"some-stack"
+					"rootfs":"some:rootfs"
 				}`
 				})
 
