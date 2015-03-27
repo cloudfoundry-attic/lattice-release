@@ -120,7 +120,7 @@ func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.Exit
 
 	return []cli.Command{
 		appRunnerCommandFactory.MakeCreateAppCommand(),
-		appRunnerCommandFactory.MakeCreateAppFromJsonCommand(),
+		appRunnerCommandFactory.MakeCreateLrpCommand(),
 		logsCommandFactory.MakeDebugLogsCommand(),
 		appExaminerCommandFactory.MakeListAppCommand(),
 		logsCommandFactory.MakeLogsCommand(),

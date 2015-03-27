@@ -704,7 +704,7 @@ var _ = Describe("CommandFactory", func() {
 
 	Describe("CreateAppFromJson", func() {
 		var (
-			createAppFromJsonCommand cli.Command
+			createLrpCommand cli.Command
 
 			tmpDir  string
 			tmpFile *os.File
@@ -727,7 +727,7 @@ var _ = Describe("CommandFactory", func() {
 			}
 
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
-			createAppFromJsonCommand = commandFactory.MakeCreateAppFromJsonCommand()
+			createLrpCommand = commandFactory.MakeCreateLrpCommand()
 
 		})
 
@@ -744,10 +744,10 @@ var _ = Describe("CommandFactory", func() {
 
 				args := []string{tmpFile.Name()}
 
-				test_helpers.ExecuteCommandWithArgs(createAppFromJsonCommand, args)
+				test_helpers.ExecuteCommandWithArgs(createLrpCommand, args)
 
-				Expect(appRunner.CreateAppFromJsonCallCount()).To(Equal(1))
-				Expect(appRunner.CreateAppFromJsonArgsForCall(0)).To(Equal([]byte(`{"Value":"test value"}`)))
+				Expect(appRunner.CreateLrpCallCount()).To(Equal(1))
+				Expect(appRunner.CreateLrpArgsForCall(0)).To(Equal([]byte(`{"Value":"test value"}`)))
 			})
 
 			It("prints an error returned by the app_runner", func() {
@@ -755,30 +755,30 @@ var _ = Describe("CommandFactory", func() {
 					tmpFile.Name(),
 				}
 
-				appRunner.CreateAppFromJsonReturns(errors.New("some error"))
+				appRunner.CreateLrpReturns(errors.New("some error"))
 
-				test_helpers.ExecuteCommandWithArgs(createAppFromJsonCommand, args)
+				test_helpers.ExecuteCommandWithArgs(createLrpCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Error creating app: some error"))
-				Expect(appRunner.CreateAppFromJsonCallCount()).To(Equal(1))
+				Expect(appRunner.CreateLrpCallCount()).To(Equal(1))
 			})
 		})
 
 		It("is an error when no path is passed in", func() {
-			test_helpers.ExecuteCommandWithArgs(createAppFromJsonCommand, []string{})
+			test_helpers.ExecuteCommandWithArgs(createLrpCommand, []string{})
 
 			Expect(outputBuffer).To(test_helpers.Say("Path to JSON is required"))
-			Expect(appRunner.CreateAppFromJsonCallCount()).To(BeZero())
+			Expect(appRunner.CreateLrpCallCount()).To(BeZero())
 		})
 
 		Context("when the file cannot be read", func() {
 			It("prints an error", func() {
 				args := []string{filepath.Join(tmpDir, "file-no-existy")}
 
-				test_helpers.ExecuteCommandWithArgs(createAppFromJsonCommand, args)
+				test_helpers.ExecuteCommandWithArgs(createLrpCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say(fmt.Sprintf("Error reading file: open %s: no such file or directory", filepath.Join(tmpDir, "file-no-existy"))))
-				Expect(appRunner.CreateAppFromJsonCallCount()).To(Equal(0))
+				Expect(appRunner.CreateLrpCallCount()).To(Equal(0))
 			})
 		})
 	})

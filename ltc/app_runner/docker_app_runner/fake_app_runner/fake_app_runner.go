@@ -16,12 +16,12 @@ type FakeAppRunner struct {
 	createDockerAppReturns struct {
 		result1 error
 	}
-	CreateAppFromJsonStub        func(createAppJson []byte) error
-	createAppFromJsonMutex       sync.RWMutex
-	createAppFromJsonArgsForCall []struct {
-		createAppJson []byte
+	CreateLrpStub        func(createLrpJson []byte) error
+	createLrpMutex       sync.RWMutex
+	createLrpArgsForCall []struct {
+		createLrpJson []byte
 	}
-	createAppFromJsonReturns struct {
+	createLrpReturns struct {
 		result1 error
 	}
 	ScaleAppStub        func(name string, instances int) error
@@ -84,34 +84,34 @@ func (fake *FakeAppRunner) CreateDockerAppReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeAppRunner) CreateAppFromJson(createAppJson []byte) error {
-	fake.createAppFromJsonMutex.Lock()
-	fake.createAppFromJsonArgsForCall = append(fake.createAppFromJsonArgsForCall, struct {
-		createAppJson []byte
-	}{createAppJson})
-	fake.createAppFromJsonMutex.Unlock()
-	if fake.CreateAppFromJsonStub != nil {
-		return fake.CreateAppFromJsonStub(createAppJson)
+func (fake *FakeAppRunner) CreateLrp(createLrpJson []byte) error {
+	fake.createLrpMutex.Lock()
+	fake.createLrpArgsForCall = append(fake.createLrpArgsForCall, struct {
+		createLrpJson []byte
+	}{createLrpJson})
+	fake.createLrpMutex.Unlock()
+	if fake.CreateLrpStub != nil {
+		return fake.CreateLrpStub(createLrpJson)
 	} else {
-		return fake.createAppFromJsonReturns.result1
+		return fake.createLrpReturns.result1
 	}
 }
 
-func (fake *FakeAppRunner) CreateAppFromJsonCallCount() int {
-	fake.createAppFromJsonMutex.RLock()
-	defer fake.createAppFromJsonMutex.RUnlock()
-	return len(fake.createAppFromJsonArgsForCall)
+func (fake *FakeAppRunner) CreateLrpCallCount() int {
+	fake.createLrpMutex.RLock()
+	defer fake.createLrpMutex.RUnlock()
+	return len(fake.createLrpArgsForCall)
 }
 
-func (fake *FakeAppRunner) CreateAppFromJsonArgsForCall(i int) []byte {
-	fake.createAppFromJsonMutex.RLock()
-	defer fake.createAppFromJsonMutex.RUnlock()
-	return fake.createAppFromJsonArgsForCall[i].createAppJson
+func (fake *FakeAppRunner) CreateLrpArgsForCall(i int) []byte {
+	fake.createLrpMutex.RLock()
+	defer fake.createLrpMutex.RUnlock()
+	return fake.createLrpArgsForCall[i].createLrpJson
 }
 
-func (fake *FakeAppRunner) CreateAppFromJsonReturns(result1 error) {
-	fake.CreateAppFromJsonStub = nil
-	fake.createAppFromJsonReturns = struct {
+func (fake *FakeAppRunner) CreateLrpReturns(result1 error) {
+	fake.CreateLrpStub = nil
+	fake.createLrpReturns = struct {
 		result1 error
 	}{result1}
 }

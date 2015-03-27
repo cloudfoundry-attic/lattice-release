@@ -156,15 +156,16 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 	return createAppCommand
 }
 
-func (factory *AppRunnerCommandFactory) MakeCreateAppFromJsonCommand() cli.Command {
-	var createAppFromJsonCommand = cli.Command{
-		Name:        "create-from-json",
+func (factory *AppRunnerCommandFactory) MakeCreateLrpCommand() cli.Command {
+	var createLrpCommand = cli.Command{
+		Name:        "create-lrp",
+		ShortName:   "cl",
 		Usage:       "Creates a docker app from JSON on lattice",
-		Description: "ltc create-from-json /path/to/json",
-		Action:      factory.createAppFromJson,
+		Description: "ltc create-lrp /path/to/json",
+		Action:      factory.createLrp,
 	}
 
-	return createAppFromJsonCommand
+	return createLrpCommand
 }
 
 func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
@@ -326,7 +327,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	}
 }
 
-func (factory *AppRunnerCommandFactory) createAppFromJson(context *cli.Context) {
+func (factory *AppRunnerCommandFactory) createLrp(context *cli.Context) {
 
 	filePath := context.Args().First()
 	if filePath == "" {
@@ -340,7 +341,7 @@ func (factory *AppRunnerCommandFactory) createAppFromJson(context *cli.Context) 
 		return
 	}
 
-	err = factory.appRunner.CreateAppFromJson(jsonBytes)
+	err = factory.appRunner.CreateLrp(jsonBytes)
 	if err != nil {
 		factory.ui.Say(fmt.Sprintf("Error creating app: %s", err.Error()))
 		return
