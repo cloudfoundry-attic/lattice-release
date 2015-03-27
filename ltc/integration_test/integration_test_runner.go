@@ -99,7 +99,7 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 			})
 
 			It("eventually runs a docker app", func() {
-				debugLogsStream := runner.streamLogs(timeout, "lattice-debug")
+				debugLogsStream := runner.streamDebugLogs(timeout)
 				defer func() { debugLogsStream.Terminate().Wait() }()
 
 				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app", "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Lattice User", "--quiet")
@@ -155,6 +155,18 @@ func (runner *integrationTestRunner) streamLogs(timeout time.Duration, appName s
 	Expect(err).ToNot(HaveOccurred())
 
 	return session
+}
+
+func (runner *integrationTestRunner) streamDebugLogs(timeout time.Duration) *gexec.Session {
+    fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to stream cluster debug logs"))+"\n")
+
+    command := runner.command(timeout, "debug-logs")
+
+    session, err := gexec.Start(command, getStyledWriter("debug"), getStyledWriter("debug"))
+
+    Expect(err).ToNot(HaveOccurred())
+
+    return session
 }
 
 func (runner *integrationTestRunner) scaleApp(timeout time.Duration, appName string) {
