@@ -1,6 +1,9 @@
 package command_factory
 
 import (
+	"fmt"
+
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
@@ -9,13 +12,15 @@ import (
 )
 
 type logsCommandFactory struct {
+	appExaminer         app_examiner.AppExaminer
 	ui                  terminal.UI
 	tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter
 	exitHandler         exit_handler.ExitHandler
 }
 
-func NewLogsCommandFactory(ui terminal.UI, tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter, exitHandler exit_handler.ExitHandler) *logsCommandFactory {
+func NewLogsCommandFactory(appExaminer app_examiner.AppExaminer, ui terminal.UI, tailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter, exitHandler exit_handler.ExitHandler) *logsCommandFactory {
 	return &logsCommandFactory{
+		appExaminer:         appExaminer,
 		ui:                  ui,
 		tailedLogsOutputter: tailedLogsOutputter,
 		exitHandler:         exitHandler,
@@ -51,6 +56,14 @@ func (factory *logsCommandFactory) tailLogs(context *cli.Context) {
 	if appGuid == "" {
 		factory.ui.IncorrectUsage("")
 		return
+	}
+
+	if appExists, err := factory.appExaminer.AppExists(appGuid); err != nil {
+		factory.ui.SayLine(fmt.Sprintf("Error: %s", err.Error()))
+		return
+	} else if !appExists {
+		factory.ui.SayLine(fmt.Sprintf("Application %s not found.", appGuid))
+		factory.ui.SayLine(fmt.Sprintf("Tailing logs and waiting for %s to appear...", appGuid))
 	}
 
 	factory.tailedLogsOutputter.OutputTailedLogs(appGuid)
