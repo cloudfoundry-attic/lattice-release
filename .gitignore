@@ -1,4 +1,3 @@
-
 Vagrantfile-e
 .vagrant
 .idea
@@ -10,11 +9,23 @@ ltc.tar.gz
 *.box
 *.iso
 
-*playground
-lattice.tf
+ltc/ltc
+tee2metron/tee2metron
+*.test
+*.coverprofile
+
 terraform.tfvars
 terraform.tfstate
 terraform.tfstate.backup
 .lattice.tf.swp
 .terraform
 .terraform.tfstate.swp
+
+*playground
+lattice.tf
+lattice.aws.tf
+lattice.digitalocean.tf
+lattice.gce.tf
+!terraform/aws/example/lattice.aws.tf
+!terraform/digitalocean/example/lattice.digitalocean.tf
+!terraform/gce/example/lattice.gce.tf
