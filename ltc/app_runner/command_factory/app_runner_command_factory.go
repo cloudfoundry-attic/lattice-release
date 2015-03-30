@@ -127,9 +127,9 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 	}
 
 	var createAppCommand = cli.Command{
-		Name:      "create",
-		ShortName: "cr",
-		Usage:     "Creates a docker app on lattice",
+		Name:    "create",
+		Aliases: []string{"cr"},
+		Usage:   "Creates a docker app on lattice",
 		Description: `ltc create APP_NAME DOCKER_IMAGE
 
    APP_NAME is required and must be unique across the Lattice cluster
@@ -159,7 +159,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeCreateLrpCommand() cli.Command {
 	var createLrpCommand = cli.Command{
 		Name:        "create-lrp",
-		ShortName:   "cl",
+		Aliases:     []string{"cl"},
 		Usage:       "Creates a docker app from JSON on lattice",
 		Description: "ltc create-lrp /path/to/json",
 		Action:      factory.createLrp,
@@ -171,7 +171,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateLrpCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 	var scaleAppCommand = cli.Command{
 		Name:        "scale",
-		ShortName:   "sc",
+		Aliases:     []string{"sc"},
 		Usage:       "Scales a docker app on lattice",
 		Description: "ltc scale APP_NAME NUM_INSTANCES",
 		Action:      factory.scaleApp,
@@ -183,7 +183,7 @@ func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 	var updateRoutesCommand = cli.Command{
 		Name:        "update-routes",
-		ShortName:   "ur",
+		Aliases:     []string{"ur"},
 		Usage:       "Updates the routes for a running app",
 		Description: "ltc update-routes APP_NAME ROUTE,OTHER_ROUTE...", // TODO: route format?
 		Action:      factory.updateAppRoutes,
@@ -195,7 +195,7 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	var removeAppCommand = cli.Command{
 		Name:        "remove",
-		ShortName:   "rm",
+		Aliases:     []string{"rm"},
 		Description: "ltc remove APP_NAME",
 		Usage:       "Stops and removes a docker app from lattice",
 		Action:      factory.removeApp,
@@ -347,7 +347,7 @@ func (factory *AppRunnerCommandFactory) createLrp(context *cli.Context) {
 		return
 	}
 
-	factory.ui.Say(colors.Green(fmt.Sprintf("Successfully submitted %s.", lrpName))+"\n")
+	factory.ui.Say(colors.Green(fmt.Sprintf("Successfully submitted %s.", lrpName)) + "\n")
 	factory.ui.Say(fmt.Sprintf("To view the status of your application: ltc status %s\n", lrpName))
 }
 

@@ -43,7 +43,7 @@ func (factory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
 
 	var listCommand = cli.Command{
 		Name:        "list",
-		ShortName:   "li",
+		Aliases:     []string{"li"},
 		Usage:       "Lists applications running on lattice",
 		Description: "ltc list",
 		Action:      factory.listApps,
@@ -64,7 +64,7 @@ func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 
 	var visualizeCommand = cli.Command{
 		Name:        "visualize",
-		ShortName:   "vz",
+		Aliases:     []string{"vz"},
 		Usage:       "Shows a visualization of the workload distribution across the lattice cells",
 		Description: "ltc visualize [-r=DELAY]",
 		Action:      factory.visualizeCells,
@@ -77,7 +77,7 @@ func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 func (factory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
 	return cli.Command{
 		Name:        "status",
-		ShortName:   "st",
+		Aliases:     []string{"st"},
 		Usage:       "Shows details about a running app on lattice",
 		Description: "ltc status APP_NAME",
 		Action:      factory.appStatus,
