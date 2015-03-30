@@ -25,7 +25,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "7ec5b0dce4f86d1d79e3d68df670760bffd7c7c5"
+			"Rev": "92d89517244c5da5c279f889af344538a86891d1"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
