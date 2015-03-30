@@ -697,12 +697,12 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Error Creating App: Major Fault"))
+				Expect(outputBuffer).To(test_helpers.Say("Error creating app: Major Fault"))
 			})
 		})
 	})
 
-	Describe("CreateAppFromJson", func() {
+	Describe("CreateLrp", func() {
 		var (
 			createLrpCommand cli.Command
 
@@ -728,7 +728,6 @@ var _ = Describe("CommandFactory", func() {
 
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			createLrpCommand = commandFactory.MakeCreateLrpCommand()
-
 		})
 
 		Context("when the json file exists", func() {
@@ -741,25 +740,28 @@ var _ = Describe("CommandFactory", func() {
 
 			It("creates an app from json", func() {
 				ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value"}`), 0700)
-
 				args := []string{tmpFile.Name()}
+
+				appRunner.CreateLrpReturns("my-json-app", nil)
 
 				test_helpers.ExecuteCommandWithArgs(createLrpCommand, args)
 
 				Expect(appRunner.CreateLrpCallCount()).To(Equal(1))
 				Expect(appRunner.CreateLrpArgsForCall(0)).To(Equal([]byte(`{"Value":"test value"}`)))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Green("Successfully submitted my-json-app.")))
+				Expect(outputBuffer).To(test_helpers.Say("To view the status of your application: ltc status my-json-app"))
+
 			})
 
 			It("prints an error returned by the app_runner", func() {
 				args := []string{
 					tmpFile.Name(),
 				}
-
-				appRunner.CreateLrpReturns(errors.New("some error"))
+				appRunner.CreateLrpReturns("app-that-broke", errors.New("some error"))
 
 				test_helpers.ExecuteCommandWithArgs(createLrpCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Error creating app: some error"))
+				Expect(outputBuffer).To(test_helpers.Say("Error creating app-that-broke: some error"))
 				Expect(appRunner.CreateLrpCallCount()).To(Equal(1))
 			})
 		})

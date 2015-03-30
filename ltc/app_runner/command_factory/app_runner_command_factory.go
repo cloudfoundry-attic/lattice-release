@@ -303,7 +303,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		RouteOverrides:       routeOverrides,
 	})
 	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error Creating App: %s", err))
+		factory.ui.Say(fmt.Sprintf("Error creating app: %s", err))
 		return
 	}
 
@@ -341,12 +341,14 @@ func (factory *AppRunnerCommandFactory) createLrp(context *cli.Context) {
 		return
 	}
 
-	err = factory.appRunner.CreateLrp(jsonBytes)
+	lrpName, err := factory.appRunner.CreateLrp(jsonBytes)
 	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error creating app: %s", err.Error()))
+		factory.ui.Say(fmt.Sprintf("Error creating %s: %s", lrpName, err.Error()))
 		return
 	}
 
+	factory.ui.Say(colors.Green(fmt.Sprintf("Successfully submitted %s.", lrpName))+"\n")
+	factory.ui.Say(fmt.Sprintf("To view the status of your application: ltc status %s\n", lrpName))
 }
 
 func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
