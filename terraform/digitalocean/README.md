@@ -15,7 +15,12 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 
 ### Configure
 
-Fill out the variables (described below) in the [example](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/example/lattice.digitalocean.tf) (and if desired, copy the file to a new folder)
+Here are some step-by-step instructions for configuring a Lattice cluster via Terraform:
+
+1. Visit the [Lattice GitHub Releases page](https://github.com/cloudfoundry-incubator/lattice/releases#)
+2. Select the Lattice version you wish to deploy and download the Terraform example file for your target platform.  The filename will be `lattice.digitalocean.tf`
+3. Create an empty folder and place the `lattice.digitalocean.tf` file in that folder.
+4. Update the `lattice.digitalocean.tf` by filling in the values for the variables.  Details for the values of those variables are below.
 
 The available variables that can be configured are:
 
@@ -46,15 +51,18 @@ The fingerprint is the second column in the output (`aa:bb...`)
 
 ### Deploy
 
-Get the templates and deploy the cluster:
+Here are some step-by-step instructions for deploying a Lattice cluster via Terraform:
 
-```
-cd example/  # or the new location of lattice.aws.tf
-terraform get -update
-terraform apply
-```
+1. Run the following commands in the folder containing the `lattice.digitalocean.tf` file
 
-After the cluster has been successfully, terraform will print the Lattice domain:
+  ```bash
+  terraform get -update
+  terraform apply
+  ```
+
+  This will deploy the cluster.
+
+Upon success, terraform will print the Lattice target:
 
 ```
 Outputs:
@@ -63,6 +71,10 @@ Outputs:
   lattice_username = xxxxxxxx
   lattice_password = xxxxxxxx
 ```
+
+which you can use with the Lattice CLI to `ltc target x.x.x.x.xip.io`.
+
+Terraform will generate a `terraform.tfstate` file.  This file describes the cluster that was built - keep it around in order to modify/tear down the cluster.
 
 ### Use
 

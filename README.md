@@ -120,9 +120,9 @@ Here are some step-by-step instructions for deploying a Lattice cluster via Terr
 2. Select the Lattice version you wish to deploy and download the Terraform example file for your target platform.  The filename will be `lattice.<platform>.tf`
 3. Create an empty folder and place the `lattice.<platform>.tf` file in that folder.
 4. Update the `lattice.<platform>.tf` by filling in the values for the variables. Instructions for each supported platform are here:
-  - [Amazon Web Services](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md)
-  - [DigitalOcean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md)
-  - [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md)
+  - [Amazon Web Services](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md#configure)
+  - [DigitalOcean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md#configure)
+  - [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md#configure)
 5. Run the following commands in the folder containing the `lattice.<platform>.tf` file
 
   ```bash
