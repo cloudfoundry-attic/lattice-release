@@ -62,6 +62,7 @@ a viable and more stable option is to clone lattice and godep restore from the v
 ```bash
     $ mkdir -p ~/workspace/go
     $ export GOPATH=~/workspace/go
+    $ export PATH="$PATH:$GOPATH/bin"
     $ go get github.com/dajulia3/godep #Our forked version of godep that handles submodules:
     $ go get github.com/onsi/ginkgo/ginkgo
     $ go get github.com/onsi/gomega
