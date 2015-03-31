@@ -21,7 +21,7 @@ func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.C
 		cli.DurationFlag{
 			Name:  "timeout",
 			Usage: "Duration of time tests will wait for lattice to respond",
-			Value: time.Second * 30,
+			Value: time.Minute * 2,
 		},
 		cli.BoolFlag{
 			Name:  "verbose, v",

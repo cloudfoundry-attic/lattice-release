@@ -257,12 +257,12 @@ var _ = Describe("CliAppFactory", func() {
 			Expect(cli_app_factory.Timeout("25")).To(Equal(25 * time.Second))
 		})
 
-		It("returns one minute for an empty string", func() {
-			Expect(cli_app_factory.Timeout("")).To(Equal(time.Minute))
+		It("returns two minutes for an empty string", func() {
+			Expect(cli_app_factory.Timeout("")).To(Equal(time.Minute * 2))
 		})
 
-		It("returns one minute for an invalid string", func() {
-			Expect(cli_app_factory.Timeout("CANNOT PARSE")).To(Equal(time.Minute))
+		It("returns two minutes for an invalid string", func() {
+			Expect(cli_app_factory.Timeout("CANNOT PARSE")).To(Equal(time.Minute * 2))
 		})
 	})
 

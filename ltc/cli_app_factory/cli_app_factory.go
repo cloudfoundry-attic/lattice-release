@@ -139,7 +139,7 @@ func Timeout(timeoutEnv string) time.Duration {
 		return time.Second * time.Duration(timeout)
 	}
 
-	return time.Minute
+	return time.Minute * 2
 }
 
 func LoggregatorUrl(loggregatorTarget string) string {
