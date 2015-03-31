@@ -480,7 +480,7 @@ func (factory *AppRunnerCommandFactory) urlForApp(name string) string {
 
 func (factory *AppRunnerCommandFactory) buildEnvironment(envVars []string, appName string) map[string]string {
 	environment := make(map[string]string)
-    environment["PROCESS_GUID"] = appName
+	environment["PROCESS_GUID"] = appName
 
 	for _, envVarPair := range envVars {
 		name, value := parseEnvVarPair(envVarPair)
