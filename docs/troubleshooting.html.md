@@ -79,4 +79,4 @@ Outside of the HTTP router, Lattice does not ship with a service discovery solut
 
 ## How do I upgrade Lattice?
 
-Lattice [does not support rolling upgrades](/docs/#is-lattice-ready-for-production).
+Lattice [does not support rolling upgrades](index.html#is-Lattice-ready-for-production).
