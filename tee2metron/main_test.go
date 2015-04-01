@@ -2,15 +2,14 @@ package main_test
 
 import (
 	"fmt"
+	"net"
+	"os/exec"
+	"regexp"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-	"net"
-	"os/exec"
-
-	"regexp"
-	//    "errors""strings"
 )
 
 const maxUpdDatagramSize = 65507
@@ -32,6 +31,7 @@ var _ = Describe("tee2metron", func() {
 		metronReceivedBuffer, port := startFakeMetron()
 		dropsondeDestinationFlag := "-dropsondeDestination=127.0.0.1:" + port
 		command := exec.Command(tee2MetronPath, dropsondeDestinationFlag, "-sourceInstance=lattice-cell-123", chattyProcessPath, "chattyArg1", "chattyArg2", "-chattyFlag")
+
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
 		Consistently(session.Exited).ShouldNot(BeClosed())

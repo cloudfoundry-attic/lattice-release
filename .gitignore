@@ -11,6 +11,7 @@ ltc.tar.gz
 
 ltc/ltc
 tee2metron/tee2metron
+tee2metron/test_helpers/chatty_process/chatty_process
 *.test
 *.coverprofile
 
