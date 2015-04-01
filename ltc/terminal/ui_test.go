@@ -8,6 +8,7 @@ import (
 	"github.com/onsi/gomega/gbytes"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/password_reader"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/password_reader/fake_password_reader"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 )
@@ -33,11 +34,11 @@ var _ = Describe("UI", func() {
 		It("instantiates a terminal", func() {
 			Expect(terminalUI).ToNot(BeNil())
 
-			_, readerOk := terminalUI.(io.Reader)
-			Expect(readerOk).To(BeTrue())
+			_, readWriterOk := terminalUI.(io.ReadWriter)
+			Expect(readWriterOk).To(BeTrue())
 
-			_, writerOk := terminalUI.(io.Writer)
-			Expect(writerOk).To(BeTrue())
+			_, passwordReaderOk := terminalUI.(password_reader.PasswordReader)
+			Expect(passwordReaderOk).To(BeTrue())
 		})
 	})
 
