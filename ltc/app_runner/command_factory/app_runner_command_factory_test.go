@@ -116,7 +116,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(createDockerAppParameters.DockerImagePath).To(Equal("superfun/app:mycooltag"))
 			Expect(createDockerAppParameters.AppArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
 			Expect(createDockerAppParameters.Instances).To(Equal(22))
-			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "COLOR": "Blue", "UNSET": ""}))
+			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "PROCESS_GUID": "cool-web-app", "COLOR": "Blue", "UNSET": ""}))
 			Expect(createDockerAppParameters.Privileged).To(Equal(true))
 			Expect(createDockerAppParameters.CPUWeight).To(Equal(uint(57)))
 			Expect(createDockerAppParameters.MemoryMB).To(Equal(12))
@@ -138,6 +138,28 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-3000-yay.192.168.11.11.xip.io\n")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-wahoo.192.168.11.11.xip.io\n")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-me-too.192.168.11.11.xip.io\n")))
+		})
+
+		Context("when the PROCESS_GUID is passed in as --env", func() {
+			It("sets the PROCESS_GUID to the value passed in", func() {
+				args := []string{
+					"app-to-start",
+					"fun-org/app",
+					"--env=PROCESS_GUID=MyHappyGuid",
+				}
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{StartCommand: []string{""}}, nil)
+				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
+				createDockerAppParams := appRunner.CreateDockerAppArgsForCall(0)
+				appEnvVars := createDockerAppParams.EnvironmentVariables
+				processGuidEnvVar, found := appEnvVars["PROCESS_GUID"]
+
+				Expect(found).To(BeTrue())
+				Expect(processGuidEnvVar).To(Equal("MyHappyGuid"))
+			})
 		})
 
 		Context("when a malformed routes flag is passed", func() {

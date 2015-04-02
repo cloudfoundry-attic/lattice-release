@@ -317,7 +317,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		DockerImagePath:      dockerImage,
 		StartCommand:         startCommand,
 		AppArgs:              appArgs,
-		EnvironmentVariables: factory.buildEnvironment(envVarsFlag),
+		EnvironmentVariables: factory.buildEnvironment(envVarsFlag, name),
 		Privileged:           context.Bool("run-as-root"),
 		Monitor:              !noMonitorFlag,
 		Instances:            instancesFlag,
@@ -520,8 +520,9 @@ func (factory *AppRunnerCommandFactory) urlForApp(name string) string {
 	return fmt.Sprintf("http://%s.%s\n", name, factory.domain)
 }
 
-func (factory *AppRunnerCommandFactory) buildEnvironment(envVars []string) map[string]string {
+func (factory *AppRunnerCommandFactory) buildEnvironment(envVars []string, appName string) map[string]string {
 	environment := make(map[string]string)
+	environment["PROCESS_GUID"] = appName
 
 	for _, envVarPair := range envVars {
 		name, value := parseEnvVarPair(envVarPair)

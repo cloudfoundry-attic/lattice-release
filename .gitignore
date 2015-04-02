@@ -1,6 +1,7 @@
 Vagrantfile-e
 .vagrant
 .idea
+*.iml
 bin/linux_amd64/*
 lattice.tgz
 ltc.tar.gz
