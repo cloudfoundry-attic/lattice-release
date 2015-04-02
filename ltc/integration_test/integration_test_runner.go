@@ -19,7 +19,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
-	"github.com/cloudfoundry-incubator/runtime-schema/models/factories"
+	"github.com/nu7hatch/gouuid"
 )
 
 var (
@@ -88,7 +88,10 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 			)
 
 			BeforeEach(func() {
-				appName = fmt.Sprintf("lattice-test-app-%s", factories.GenerateGuid())
+				appGuid, err := uuid.NewV4()
+				Expect(err).ToNot(HaveOccurred())
+
+				appName = fmt.Sprintf("lattice-test-app-%s", appGuid.String())
 				route = fmt.Sprintf("%s.%s", appName, runner.config.Target())
 			})
 
