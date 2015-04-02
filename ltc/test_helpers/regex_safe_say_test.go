@@ -30,6 +30,20 @@ var _ = Describe("RegexSafeSay", func() {
 		})
 	})
 
+	Describe("SayLine", func() {
+		It("matches with regex-escaped characters", func() {
+			gbytesBuffer.Write([]byte("sample\n"))
+
+			Expect(gbytesBuffer).To(test_helpers.SayLine("sample"))
+		})
+
+		It("negated match", func() {
+			gbytesBuffer.Write([]byte("no match"))
+
+			Expect(gbytesBuffer).ToNot(test_helpers.SayLine("no match"))
+		})
+	})
+
 	Describe("SayIncorrectUsage", func() {
 		It("matches", func() {
 			gbytesBuffer.Write([]byte("Incorrect Usage"))
