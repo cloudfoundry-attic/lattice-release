@@ -461,7 +461,10 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	if ok {
 		factory.ui.Say(colors.Green("Successfully Removed " + appName + "."))
 	} else {
-		factory.ui.Say(colors.Red(fmt.Sprintf("Failed to remove %s.", appName)))
+		factory.ui.Say(colors.Red("Timed out waiting for the container to shut down."))
+		factory.ui.NewLine()
+		factory.ui.SayLine("Lattice will continue to shut down your container in the background.")
+		factory.ui.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", appName))
 	}
 }
 
