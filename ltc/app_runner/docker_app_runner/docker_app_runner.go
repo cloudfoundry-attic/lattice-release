@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
@@ -57,6 +58,7 @@ type CreateDockerAppParams struct {
 	Ports                PortConfig
 	WorkingDir           string
 	RouteOverrides       RouteOverrides
+	Timeout              time.Duration
 }
 
 const (
