@@ -1224,7 +1224,7 @@ var _ = Describe("CommandFactory", func() {
 				clock.IncrementBySeconds(120)
 
 				Eventually(commandFinishChan).Should(BeClosed())
-				
+
 				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to shut down.")))
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
 				Expect(outputBuffer).To(test_helpers.SayLine("Lattice will continue to shut down your container in the background."))
