@@ -17,6 +17,7 @@ var _ = Describe("CommandExecutor", func() {
 
 	BeforeEach(func() {
 		commandRan = false
+
 		cliCommand = cli.Command{
 			Name: "exec",
 			Action: func(*cli.Context) {
@@ -25,19 +26,20 @@ var _ = Describe("CommandExecutor", func() {
 		}
 	})
 
-	AfterEach(func() {
-		Expect(commandRan).To(BeTrue())
-	})
-
 	Describe("ExecuteCommandWithArgs", func() {
 		It("executes the command", func() {
 			test_helpers.ExecuteCommandWithArgs(cliCommand, []string{})
+
+			Expect(commandRan).To(BeTrue())
 		})
 	})
 
 	Describe("AsyncExecuteCommandWithArgs", func() {
-		It("executes the command", func(done Done) {
-			done <- test_helpers.AsyncExecuteCommandWithArgs(cliCommand, []string{})
+		It("executes the command", func() {
+			doneChan := test_helpers.AsyncExecuteCommandWithArgs(cliCommand, []string{})
+			
+			Eventually(doneChan).Should(BeClosed())
+			Expect(commandRan).To(BeTrue())
 		})
 	})
 })
