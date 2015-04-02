@@ -26,7 +26,7 @@ type pollingAction string
 
 const (
 	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a comma-delimited list of integers between 0-65535."
-	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format route:port"
+	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format port:route"
 	MustSetMonitoredPortErrorMessage = "Must set monitored-port when specifying multiple exposed ports unless --no-monitor is set."
 
 	DefaultPollingTimeout time.Duration = 2 * time.Minute
