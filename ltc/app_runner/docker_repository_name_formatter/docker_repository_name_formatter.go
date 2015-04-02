@@ -1,7 +1,7 @@
 package docker_repository_name_formatter
 
 import (
-	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -25,7 +25,7 @@ func ParseRepoNameAndTagFromImageReference(dockerImageReference string) (string,
 
 func convertDockerURI(dockerURI string) (string, error) {
 	if strings.Contains(dockerURI, "://") {
-		return "", errors.New("docker URI [" + dockerURI + "] should not contain scheme")
+		return "", fmt.Errorf("docker URI [%s] should not contain scheme", dockerURI)
 	}
 
 	indexName, remoteName, tag, err := parseDockerRepoUrl(dockerURI)

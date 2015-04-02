@@ -16,7 +16,7 @@ type DockerSession interface {
 
 //go:generate counterfeiter -o fake_docker_session/fake_docker_session_factory.go . DockerSessionFactory
 type DockerSessionFactory interface {
-	MakeSession(repoName string) (DockerSession, error)
+	MakeSession(reposName string) (DockerSession, error)
 }
 
 type dockerSessionFactory struct{}
@@ -25,8 +25,8 @@ func NewDockerSessionFactory() *dockerSessionFactory {
 	return &dockerSessionFactory{}
 }
 
-func (factory *dockerSessionFactory) MakeSession(repoName string) (DockerSession, error) {
-	repositoryInfo, err := registry.ParseRepositoryInfo(repoName)
+func (factory *dockerSessionFactory) MakeSession(reposName string) (DockerSession, error) {
+	repositoryInfo, err := registry.ParseRepositoryInfo(reposName)
 	if err != nil {
 		return nil, fmt.Errorf("Error resolving Docker repository name:\n" + err.Error())
 	}
