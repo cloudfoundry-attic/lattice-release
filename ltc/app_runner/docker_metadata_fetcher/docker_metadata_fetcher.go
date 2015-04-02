@@ -41,7 +41,7 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(dockerImageReference string)
 	var reposName string
 	if len(indexName) > 0 {
 		reposName = fmt.Sprintf("%s/%s", indexName, remoteName)
-	else {
+	} else {
 		reposName = remoteName
 	}
 
