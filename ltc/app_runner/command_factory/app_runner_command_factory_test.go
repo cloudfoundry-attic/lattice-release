@@ -116,7 +116,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(createDockerAppParameters.DockerImagePath).To(Equal("superfun/app:mycooltag"))
 			Expect(createDockerAppParameters.AppArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
 			Expect(createDockerAppParameters.Instances).To(Equal(22))
-			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "COLOR": "Blue", "UNSET": ""}))
+			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "PROCESS_GUID": "cool-web-app","COLOR": "Blue", "UNSET": ""}))
 			Expect(createDockerAppParameters.Privileged).To(Equal(true))
 			Expect(createDockerAppParameters.CPUWeight).To(Equal(uint(57)))
 			Expect(createDockerAppParameters.MemoryMB).To(Equal(12))
