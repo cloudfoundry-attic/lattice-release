@@ -24,8 +24,6 @@ PUT /v1/desired_lrps/:process_guid
 
 Diego responds by immediately taking actions to attain consistency between ActualLRPs and DesiredLRPs.
 
-> Alternatively, you can `POST` an updated `DesiredLRPCreateRequest`, though it is an error to modify fields that are not in `DesiredLRPUpdateRequest`.
-
 ## Deleting DesiredLRPs
 
 To delete an existing DesiredLRP (thereby shutting down all associated ActualLRPs):

@@ -12,7 +12,7 @@ type FakeHub struct {
 	SubscribeStub        func() (receptor.EventSource, error)
 	subscribeMutex       sync.RWMutex
 	subscribeArgsForCall []struct{}
-	subscribeReturns struct {
+	subscribeReturns     struct {
 		result1 receptor.EventSource
 		result2 error
 	}
@@ -24,7 +24,7 @@ type FakeHub struct {
 	CloseStub        func() error
 	closeMutex       sync.RWMutex
 	closeArgsForCall []struct{}
-	closeReturns struct {
+	closeReturns     struct {
 		result1 error
 	}
 	RegisterCallbackStub        func(func(count int))

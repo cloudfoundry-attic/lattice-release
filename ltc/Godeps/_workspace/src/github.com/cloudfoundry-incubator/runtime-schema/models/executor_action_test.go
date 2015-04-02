@@ -8,11 +8,11 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "github.com/cloudfoundry-incubator/runtime-schema/models"
+	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 var _ = Describe("Actions", func() {
-	itSerializes := func(actionPayload string, action Action) {
+	itSerializes := func(actionPayload string, action models.Action) {
 		It("Action -> JSON for "+string(action.ActionType()), func() {
 			By("marshalling to JSON", func() {
 				marshalledAction := action
@@ -26,27 +26,27 @@ var _ = Describe("Actions", func() {
 			By("wrapping", func() {
 				marshalledAction := action
 
-				json, err := MarshalAction(marshalledAction)
+				json, err := models.MarshalAction(marshalledAction)
 				Ω(err).ShouldNot(HaveOccurred())
 				Ω(json).Should(MatchJSON(wrappedJSON))
 			})
 		})
 	}
 
-	itDeserializes := func(actionPayload string, action Action) {
+	itDeserializes := func(actionPayload string, action models.Action) {
 		It("JSON -> Action for "+string(action.ActionType()), func() {
 			wrappedJSON := fmt.Sprintf(`{"%s":%s}`, action.ActionType(), actionPayload)
 
 			By("unwrapping", func() {
-				var unmarshalledAction Action
-				unmarshalledAction, err := UnmarshalAction([]byte(wrappedJSON))
+				var unmarshalledAction models.Action
+				unmarshalledAction, err := models.UnmarshalAction([]byte(wrappedJSON))
 				Ω(err).ShouldNot(HaveOccurred())
 				Ω(unmarshalledAction).Should(Equal(action))
 			})
 		})
 	}
 
-	itSerializesAndDeserializes := func(actionPayload string, action Action) {
+	itSerializesAndDeserializes := func(actionPayload string, action models.Action) {
 		itSerializes(actionPayload, action)
 		itDeserializes(actionPayload, action)
 	}
@@ -59,7 +59,7 @@ var _ = Describe("Actions", func() {
 					"to": "local_location",
 					"cache_key": "elephant"
 			}`,
-			&DownloadAction{
+			&models.DownloadAction{
 				Artifact: "mouse",
 				From:     "web_location",
 				To:       "local_location",
@@ -68,11 +68,11 @@ var _ = Describe("Actions", func() {
 		)
 
 		Describe("Validate", func() {
-			var downloadAction DownloadAction
+			var downloadAction models.DownloadAction
 
 			Context("when the action has 'from' and 'to' specified", func() {
 				It("is valid", func() {
-					downloadAction = DownloadAction{
+					downloadAction = models.DownloadAction{
 						From: "web_location",
 						To:   "local_location",
 					}
@@ -85,13 +85,13 @@ var _ = Describe("Actions", func() {
 			for _, testCase := range []ValidatorErrorCase{
 				{
 					"from",
-					DownloadAction{
+					models.DownloadAction{
 						To: "local_location",
 					},
 				},
 				{
 					"to",
-					DownloadAction{
+					models.DownloadAction{
 						From: "web_location",
 					},
 				},
@@ -108,7 +108,7 @@ var _ = Describe("Actions", func() {
 					"from": "local_location",
 					"to": "web_location"
 			}`,
-			&UploadAction{
+			&models.UploadAction{
 				Artifact: "mouse",
 				From:     "local_location",
 				To:       "web_location",
@@ -116,11 +116,11 @@ var _ = Describe("Actions", func() {
 		)
 
 		Describe("Validate", func() {
-			var uploadAction UploadAction
+			var uploadAction models.UploadAction
 
 			Context("when the action has 'from' and 'to' specified", func() {
 				It("is valid", func() {
-					uploadAction = UploadAction{
+					uploadAction = models.UploadAction{
 						To:   "web_location",
 						From: "local_location",
 					}
@@ -133,13 +133,13 @@ var _ = Describe("Actions", func() {
 			for _, testCase := range []ValidatorErrorCase{
 				{
 					"from",
-					UploadAction{
+					models.UploadAction{
 						To: "web_location",
 					},
 				},
 				{
 					"to",
-					UploadAction{
+					models.UploadAction{
 						From: "local_location",
 					},
 				},
@@ -162,11 +162,11 @@ var _ = Describe("Actions", func() {
 					"resource_limits":{},
 					"privileged": true
 			}`,
-			&RunAction{
+			&models.RunAction{
 				Path: "rm",
 				Dir:  "./some-dir",
 				Args: []string{"-rf", "/"},
-				Env: []EnvironmentVariable{
+				Env: []models.EnvironmentVariable{
 					{"FOO", "1"},
 					{"BAR", "2"},
 				},
@@ -175,11 +175,11 @@ var _ = Describe("Actions", func() {
 		)
 
 		Describe("Validate", func() {
-			var runAction RunAction
+			var runAction models.RunAction
 
 			Context("when the action has 'path' specified", func() {
 				It("is valid", func() {
-					runAction = RunAction{
+					runAction = models.RunAction{
 						Path: "ls",
 					}
 
@@ -191,7 +191,7 @@ var _ = Describe("Actions", func() {
 			for _, testCase := range []ValidatorErrorCase{
 				{
 					"path",
-					RunAction{},
+					models.RunAction{},
 				},
 			} {
 				testValidatorErrorCase(testCase)
@@ -212,8 +212,8 @@ var _ = Describe("Actions", func() {
 				},
 				"timeout": 10000000
 			}`,
-			Timeout(
-				&RunAction{
+			models.Timeout(
+				&models.RunAction{
 					Path: "echo",
 				},
 				10*time.Millisecond,
@@ -225,7 +225,7 @@ var _ = Describe("Actions", func() {
 				"action": null,
 				"timeout": 10000000
 			}`,
-			Timeout(
+			models.Timeout(
 				nil,
 				10*time.Millisecond,
 			),
@@ -235,19 +235,19 @@ var _ = Describe("Actions", func() {
 			`{
 				"timeout": 10000000
 			}`,
-			Timeout(
+			models.Timeout(
 				nil,
 				10*time.Millisecond,
 			),
 		)
 
 		Describe("Validate", func() {
-			var timeoutAction TimeoutAction
+			var timeoutAction models.TimeoutAction
 
 			Context("when the action has 'action' specified and a positive timeout", func() {
 				It("is valid", func() {
-					timeoutAction = TimeoutAction{
-						Action: &UploadAction{
+					timeoutAction = models.TimeoutAction{
+						Action: &models.UploadAction{
 							From: "local_location",
 							To:   "web_location",
 						},
@@ -262,14 +262,14 @@ var _ = Describe("Actions", func() {
 			for _, testCase := range []ValidatorErrorCase{
 				{
 					"action",
-					TimeoutAction{
+					models.TimeoutAction{
 						Timeout: time.Second,
 					},
 				},
 				{
 					"from",
-					TimeoutAction{
-						Action: &UploadAction{
+					models.TimeoutAction{
+						Action: &models.UploadAction{
 							To: "web_location",
 						},
 						Timeout: time.Second,
@@ -277,8 +277,8 @@ var _ = Describe("Actions", func() {
 				},
 				{
 					"timeout",
-					TimeoutAction{
-						Action: &UploadAction{
+					models.TimeoutAction{
+						Action: &models.UploadAction{
 							From: "local_location",
 							To:   "web_location",
 						},
@@ -302,28 +302,28 @@ var _ = Describe("Actions", func() {
 						}
 					}
 			}`,
-			Try(&RunAction{Path: "echo"}),
+			models.Try(&models.RunAction{Path: "echo"}),
 		)
 
 		itSerializesAndDeserializes(
 			`{
 					"action": null
 			}`,
-			Try(nil),
+			models.Try(nil),
 		)
 
 		itDeserializes(
 			`{}`,
-			Try(nil),
+			models.Try(nil),
 		)
 
 		Describe("Validate", func() {
-			var tryAction TryAction
+			var tryAction models.TryAction
 
 			Context("when the action has 'action' specified", func() {
 				It("is valid", func() {
-					tryAction = TryAction{
-						Action: &UploadAction{
+					tryAction = models.TryAction{
+						Action: &models.UploadAction{
 							From: "local_location",
 							To:   "web_location",
 						},
@@ -337,12 +337,12 @@ var _ = Describe("Actions", func() {
 			for _, testCase := range []ValidatorErrorCase{
 				{
 					"action",
-					TryAction{},
+					models.TryAction{},
 				},
 				{
 					"from",
-					TryAction{
-						Action: &UploadAction{
+					models.TryAction{
+						Action: &models.UploadAction{
 							To: "web_location",
 						},
 					},
@@ -374,34 +374,34 @@ var _ = Describe("Actions", func() {
 						}
 					]
 			}`,
-			Parallel(
-				&DownloadAction{
+			models.Parallel(
+				&models.DownloadAction{
 					From:     "web_location",
 					To:       "local_location",
 					CacheKey: "elephant",
 				},
-				&RunAction{Path: "echo"},
+				&models.RunAction{Path: "echo"},
 			),
 		)
 
 		itDeserializes(
 			`{}`,
-			&ParallelAction{},
+			&models.ParallelAction{},
 		)
 
 		itSerializesAndDeserializes(
 			`{
 				"actions": null
 			}`,
-			&ParallelAction{},
+			&models.ParallelAction{},
 		)
 
 		itSerializesAndDeserializes(
 			`{
 				"actions": []
 			}`,
-			&ParallelAction{
-				Actions: []Action{},
+			&models.ParallelAction{
+				Actions: []models.Action{},
 			},
 		)
 
@@ -409,21 +409,21 @@ var _ = Describe("Actions", func() {
 			`{
 				"actions": [null]
 			}`,
-			&ParallelAction{
-				Actions: []Action{
+			&models.ParallelAction{
+				Actions: []models.Action{
 					nil,
 				},
 			},
 		)
 
 		Describe("Validate", func() {
-			var parallelAction ParallelAction
+			var parallelAction models.ParallelAction
 
 			Context("when the action has 'actions' as a slice of valid actions", func() {
 				It("is valid", func() {
-					parallelAction = ParallelAction{
-						Actions: []Action{
-							&UploadAction{
+					parallelAction = models.ParallelAction{
+						Actions: []models.Action{
+							&models.UploadAction{
 								From: "local_location",
 								To:   "web_location",
 							},
@@ -438,21 +438,21 @@ var _ = Describe("Actions", func() {
 			for _, testCase := range []ValidatorErrorCase{
 				{
 					"actions",
-					ParallelAction{},
+					models.ParallelAction{},
 				},
 				{
 					"action at index 0",
-					ParallelAction{
-						Actions: []Action{
+					models.ParallelAction{
+						Actions: []models.Action{
 							nil,
 						},
 					},
 				},
 				{
 					"from",
-					ParallelAction{
-						Actions: []Action{
-							&UploadAction{
+					models.ParallelAction{
+						Actions: []models.Action{
+							&models.UploadAction{
 								To: "web_location",
 							},
 						},
@@ -485,34 +485,34 @@ var _ = Describe("Actions", func() {
 						}
 					]
 			}`,
-			Serial(
-				&DownloadAction{
+			models.Serial(
+				&models.DownloadAction{
 					From:     "web_location",
 					To:       "local_location",
 					CacheKey: "elephant",
 				},
-				&RunAction{Path: "echo"},
+				&models.RunAction{Path: "echo"},
 			),
 		)
 
 		itDeserializes(
 			`{}`,
-			&SerialAction{},
+			&models.SerialAction{},
 		)
 
 		itSerializesAndDeserializes(
 			`{
 				"actions": null
 			}`,
-			&SerialAction{},
+			&models.SerialAction{},
 		)
 
 		itSerializesAndDeserializes(
 			`{
 				"actions": []
 			}`,
-			&SerialAction{
-				Actions: []Action{},
+			&models.SerialAction{
+				Actions: []models.Action{},
 			},
 		)
 
@@ -520,21 +520,21 @@ var _ = Describe("Actions", func() {
 			`{
 				"actions": [null]
 			}`,
-			&SerialAction{
-				Actions: []Action{
+			&models.SerialAction{
+				Actions: []models.Action{
 					nil,
 				},
 			},
 		)
 
 		Describe("Validate", func() {
-			var serialAction SerialAction
+			var serialAction models.SerialAction
 
 			Context("when the action has 'actions' as a slice of valid actions", func() {
 				It("is valid", func() {
-					serialAction = SerialAction{
-						Actions: []Action{
-							&UploadAction{
+					serialAction = models.SerialAction{
+						Actions: []models.Action{
+							&models.UploadAction{
 								From: "local_location",
 								To:   "web_location",
 							},
@@ -549,21 +549,21 @@ var _ = Describe("Actions", func() {
 			for _, testCase := range []ValidatorErrorCase{
 				{
 					"actions",
-					SerialAction{},
+					models.SerialAction{},
 				},
 				{
 					"action at index 0",
-					SerialAction{
-						Actions: []Action{
+					models.SerialAction{
+						Actions: []models.Action{
 							nil,
 						},
 					},
 				},
 				{
 					"from",
-					SerialAction{
-						Actions: []Action{
-							&UploadAction{
+					models.SerialAction{
+						Actions: []models.Action{
+							&models.UploadAction{
 								To: "web_location",
 							},
 							nil,
@@ -591,8 +591,8 @@ var _ = Describe("Actions", func() {
 						}
 					}
 			}`,
-			EmitProgressFor(
-				&RunAction{
+			models.EmitProgressFor(
+				&models.RunAction{
 					Path: "echo",
 				},
 				"reticulating splines", "reticulated splines", "reticulation failed",
@@ -606,7 +606,7 @@ var _ = Describe("Actions", func() {
 					"failure_message_prefix": "reticulation failed",
 					"action": null
 			}`,
-			EmitProgressFor(
+			models.EmitProgressFor(
 				nil,
 				"reticulating splines", "reticulated splines", "reticulation failed",
 			),
@@ -618,19 +618,19 @@ var _ = Describe("Actions", func() {
 					"success_message": "reticulated splines",
 					"failure_message_prefix": "reticulation failed"
 			}`,
-			EmitProgressFor(
+			models.EmitProgressFor(
 				nil,
 				"reticulating splines", "reticulated splines", "reticulation failed",
 			),
 		)
 
 		Describe("Validate", func() {
-			var emitProgressAction EmitProgressAction
+			var emitProgressAction models.EmitProgressAction
 
 			Context("when the action has 'action' specified", func() {
 				It("is valid", func() {
-					emitProgressAction = EmitProgressAction{
-						Action: &UploadAction{
+					emitProgressAction = models.EmitProgressAction{
+						Action: &models.UploadAction{
 							From: "local_location",
 							To:   "web_location",
 						},
@@ -644,12 +644,12 @@ var _ = Describe("Actions", func() {
 			for _, testCase := range []ValidatorErrorCase{
 				{
 					"action",
-					EmitProgressAction{},
+					models.EmitProgressAction{},
 				},
 				{
 					"from",
-					EmitProgressAction{
-						Action: &UploadAction{
+					models.EmitProgressAction{
+						Action: &models.UploadAction{
 							To: "web_location",
 						},
 					},
