@@ -617,8 +617,12 @@ var _ = Describe("CommandFactory", func() {
 
 					Eventually(commandFinishChan).Should(BeClosed())
 
-					Expect(outputBuffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
+					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to come up.")))
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
+					Expect(outputBuffer).To(test_helpers.SayLine("This typically happens because docker layers can take time to download."))
+					Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still downloading your application in the background."))
+					Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs cool-web-app"))
+					Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
 				})
 			})
 
@@ -657,8 +661,7 @@ var _ = Describe("CommandFactory", func() {
 
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
 					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
-					Expect(outputBuffer).ToNot(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-					Expect(outputBuffer).ToNot(test_helpers.Say(colors.Red("cool-web-app took too long to start.\n")))
+					Expect(outputBuffer).ToNot(test_helpers.Say("Timed out waiting for the container"))
 				})
 			})
 		})
@@ -889,8 +892,12 @@ var _ = Describe("CommandFactory", func() {
 				clock.IncrementBySeconds(120)
 
 				Eventually(commandFinishChan).Should(BeClosed())
-				Expect(outputBuffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to scale.")))
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to scale.")))
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still scaling your application in the background."))
+				Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs cool-web-app"))
+				Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
 			})
 		})
 
@@ -973,8 +980,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
 				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
-				Expect(outputBuffer).ToNot(test_helpers.Say(colors.Green("App Scaled Successfully.")))
-				Expect(outputBuffer).ToNot(test_helpers.Say(colors.Red("cool-web-app took too long to scale.")))
+				Expect(outputBuffer).ToNot(test_helpers.Say("Timed out waiting for the container"))
 			})
 		})
 	})

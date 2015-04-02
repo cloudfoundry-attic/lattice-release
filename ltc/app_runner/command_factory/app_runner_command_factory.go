@@ -22,12 +22,17 @@ import (
 	"github.com/pivotal-golang/lager"
 )
 
+type pollingAction string
+
 const (
 	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a comma-delimited list of integers between 0-65535."
 	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format route:port"
 	MustSetMonitoredPortErrorMessage = "Must set monitored-port when specifying multiple exposed ports unless --no-monitor is set."
 
 	DefaultPollingTimeout time.Duration = 2 * time.Minute
+
+	pollingStart pollingAction = "start"
+	pollingScale pollingAction = "scale"
 )
 
 type AppRunnerCommandFactory struct {
@@ -432,28 +437,6 @@ func (factory *AppRunnerCommandFactory) setAppInstances(pollTimeout time.Duratio
 	}
 }
 
-func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout time.Duration, appName string, instances int, action string) bool {
-	placementErrorOccurred := false
-	ok := factory.pollUntilSuccess(pollTimeout, func() bool {
-		numberOfRunningInstances, placementError, _ := factory.appExaminer.RunningAppInstancesInfo(appName)
-		if placementError {
-			factory.ui.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
-			placementErrorOccurred = true
-			return true
-		}
-		return numberOfRunningInstances == instances
-	}, true)
-
-	if placementErrorOccurred {
-		factory.exitHandler.Exit(exit_codes.PlacementError)
-		return false
-	} else if !ok {
-		factory.ui.SayLine(colors.Red(appName + " took too long to " + action + "."))
-	}
-	return ok
-
-}
-
 func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	appName := c.Args().First()
 	timeoutFlag := c.Duration("timeout")
@@ -496,6 +479,38 @@ func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Durati
 	}
 	factory.ui.NewLine()
 	return false
+}
+
+func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout time.Duration, appName string, instances int, action pollingAction) bool {
+	placementErrorOccurred := false
+	ok := factory.pollUntilSuccess(pollTimeout, func() bool {
+		numberOfRunningInstances, placementError, _ := factory.appExaminer.RunningAppInstancesInfo(appName)
+		if placementError {
+			factory.ui.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
+			placementErrorOccurred = true
+			return true
+		}
+		return numberOfRunningInstances == instances
+	}, true)
+
+	if placementErrorOccurred {
+		factory.exitHandler.Exit(exit_codes.PlacementError)
+		return false
+	} else if !ok {
+		if action == pollingStart {
+			factory.ui.Say(colors.Red("Timed out waiting for the container to come up."))
+			factory.ui.NewLine()
+			factory.ui.SayLine("This typically happens because docker layers can take time to download.")
+			factory.ui.SayLine("Lattice is still downloading your application in the background.")
+		} else {
+			factory.ui.Say(colors.Red("Timed out waiting for the container to scale."))
+			factory.ui.NewLine()
+			factory.ui.SayLine("Lattice is still scaling your application in the background.")
+		}
+		factory.ui.SayLine(fmt.Sprintf("To view logs:\n\tltc logs %s", appName))
+		factory.ui.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", appName))
+	}
+	return ok
 }
 
 func (factory *AppRunnerCommandFactory) urlForApp(name string) string {
