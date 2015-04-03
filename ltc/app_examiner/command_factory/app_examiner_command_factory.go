@@ -19,7 +19,15 @@ import (
 	"github.com/pivotal-golang/clock"
 )
 
-const TimestampDisplayLayout = "2006-01-02 15:04:05 (MST)"
+const (
+	TimestampDisplayLayout = "2006-01-02 15:04:05 (MST)"
+
+	minColumnWidth = 13
+)
+
+var (
+	indentHeading = strings.Repeat(" ", minColumnWidth/2)
+)
 
 // IntSlice attaches the methods of sort.Interface to []uint16, sorting in increasing order.
 type UInt16Slice []uint16
@@ -75,13 +83,20 @@ func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 }
 
 func (factory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
+	var statusFlags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "summary, s",
+			Usage: "Summarizes the app instances",
+		},
+	}
+
 	return cli.Command{
 		Name:        "status",
 		Aliases:     []string{"st"},
 		Usage:       "Shows details about a running app on lattice",
 		Description: "ltc status APP_NAME",
 		Action:      factory.appStatus,
-		Flags:       []cli.Flag{},
+		Flags:       statusFlags,
 	}
 }
 
@@ -114,48 +129,41 @@ func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 	w.Flush()
 }
 
-func printHorizontalRule(w io.Writer, pattern string) {
-	header := strings.Repeat(pattern, 80) + "\n"
-	fmt.Fprintf(w, header)
-}
-
 func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
+	summaryFlag := context.Bool("summary")
+
 	if len(context.Args()) < 1 {
 		factory.ui.IncorrectUsage("App Name required")
 		return
 	}
 
 	appName := context.Args()[0]
-	appInfo, err := factory.appExaminer.AppStatus(appName)
 
+	appInfo, err := factory.appExaminer.AppStatus(appName)
 	if err != nil {
 		factory.ui.Say(err.Error())
 		return
 	}
 
-	minColumnWidth := 13
-	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)
+	factory.printAppInfo(appInfo)
 
-	headingPrefix := strings.Repeat(" ", minColumnWidth/2)
+	if summaryFlag {
+		factory.printInstanceSummary(appInfo.ActualInstances)
+	} else {
+		factory.printInstanceInfo(appInfo.ActualInstances)
+	}
+}
+
+func (factory *AppExaminerCommandFactory) printAppInfo(appInfo app_examiner.AppInfo) {
+	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)
 
 	titleBar := func(title string) {
 		printHorizontalRule(w, "=")
-		fmt.Fprintf(w, "%s%s\n", headingPrefix, title)
+		fmt.Fprintf(w, "%s%s\n", indentHeading, title)
 		printHorizontalRule(w, "-")
 	}
 
-	titleBar(colors.Bold(appName))
-
-	printAppInfo(w, appInfo)
-
-	fmt.Fprintln(w, "")
-	printHorizontalRule(w, "=")
-
-	printInstanceInfo(w, headingPrefix, appInfo.ActualInstances)
-	w.Flush()
-}
-
-func printAppInfo(w io.Writer, appInfo app_examiner.AppInfo) {
+	titleBar(colors.Bold(appInfo.ProcessGuid))
 
 	fmt.Fprintf(w, "%s\t%s\n", "Instances", colorInstances(appInfo))
 	fmt.Fprintf(w, "%s\t%d\n", "Start Timeout", appInfo.StartTimeout)
@@ -183,37 +191,38 @@ func printAppInfo(w io.Writer, appInfo app_examiner.AppInfo) {
 	}
 	fmt.Fprintf(w, "%s\n\n%s", "Environment", envVars)
 
+	fmt.Fprintln(w, "")
+
+	w.Flush()
 }
 
-func printAppRoutes(w io.Writer, appInfo app_examiner.AppInfo) {
-	formatRoute := func(hostname string, port uint16) string {
-		return colors.Cyan(fmt.Sprintf("%s => %d", hostname, port))
-	}
+func (factory *AppExaminerCommandFactory) printInstanceSummary(actualInstances []app_examiner.InstanceInfo) {
+	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)
 
-	routeStringsByPort := appInfo.Routes.HostnamesByPort()
-	ports := make(UInt16Slice, 0, len(routeStringsByPort))
-	for port, _ := range routeStringsByPort {
-		ports = append(ports, port)
-	}
-	sort.Sort(ports)
+	printHorizontalRule(w, "=")
+	fmt.Fprintf(w, fmt.Sprintf("%s\t%s\t%s\t%s\n", "Instance", "State", "Crashes", "Since"))
+	printHorizontalRule(w, "-")
 
-	for portIndex, port := range ports {
-		routeStrs, _ := routeStringsByPort[uint16(port)]
-		for routeIndex, routeStr := range routeStrs {
-			if routeIndex == 0 && portIndex == 0 {
-				fmt.Fprintf(w, "%s\t%s\n", "Routes", formatRoute(routeStrs[0], port))
-			} else {
-				fmt.Fprintf(w, "\t%s\n", formatRoute(routeStr, port))
-			}
+	for _, instance := range actualInstances {
+		if instance.PlacementError == "" && instance.State != "CRASHED" {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", strconv.Itoa(instance.Index), instance.State, strconv.Itoa(instance.CrashCount), fmt.Sprint(time.Unix(0, instance.Since).Format(TimestampDisplayLayout)))
+		} else {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", strconv.Itoa(instance.Index), instance.State, strconv.Itoa(instance.CrashCount), "N/A")
 		}
 	}
+
+	w.Flush()
 }
 
-func printInstanceInfo(w io.Writer, headingPrefix string, actualInstances []app_examiner.InstanceInfo) {
+func (factory *AppExaminerCommandFactory) printInstanceInfo(actualInstances []app_examiner.InstanceInfo) {
+	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)	
+
 	instanceBar := func(index, state string) {
-		fmt.Fprintf(w, "%sInstance %s  [%s]\n", headingPrefix, index, state)
+		fmt.Fprintf(w, "%sInstance %s  [%s]\n", indentHeading, index, state)
 		printHorizontalRule(w, "-")
 	}
+
+	printHorizontalRule(w, "=")
 
 	for _, instance := range actualInstances {
 		instanceBar(fmt.Sprint(instance.Index), presentation.ColorInstanceState(instance))
@@ -237,6 +246,8 @@ func printInstanceInfo(w io.Writer, headingPrefix string, actualInstances []app_
 		fmt.Fprintf(w, "%s \t%d \n", "Crash Count", instance.CrashCount)
 		printHorizontalRule(w, "-")
 	}
+
+	w.Flush()
 }
 
 func (factory *AppExaminerCommandFactory) visualizeCells(context *cli.Context) {
@@ -299,6 +310,11 @@ func (factory *AppExaminerCommandFactory) printDistribution() int {
 	return len(cells)
 }
 
+func printHorizontalRule(w io.Writer, pattern string) {
+	header := strings.Repeat(pattern, 80) + "\n"
+	fmt.Fprintf(w, header)
+}
+
 func colorInstances(appInfo app_examiner.AppInfo) string {
 	instances := fmt.Sprintf("%d/%d", appInfo.ActualRunningInstances, appInfo.DesiredInstances)
 	if appInfo.ActualRunningInstances == appInfo.DesiredInstances {
@@ -308,4 +324,28 @@ func colorInstances(appInfo app_examiner.AppInfo) string {
 	}
 
 	return colors.Yellow(instances)
+}
+
+func printAppRoutes(w io.Writer, appInfo app_examiner.AppInfo) {
+	formatRoute := func(hostname string, port uint16) string {
+		return colors.Cyan(fmt.Sprintf("%s => %d", hostname, port))
+	}
+
+	routeStringsByPort := appInfo.Routes.HostnamesByPort()
+	ports := make(UInt16Slice, 0, len(routeStringsByPort))
+	for port, _ := range routeStringsByPort {
+		ports = append(ports, port)
+	}
+	sort.Sort(ports)
+
+	for portIndex, port := range ports {
+		routeStrs, _ := routeStringsByPort[uint16(port)]
+		for routeIndex, routeStr := range routeStrs {
+			if routeIndex == 0 && portIndex == 0 {
+				fmt.Fprintf(w, "%s\t%s\n", "Routes", formatRoute(routeStrs[0], port))
+			} else {
+				fmt.Fprintf(w, "\t%s\n", formatRoute(routeStr, port))
+			}
+		}
+	}
 }

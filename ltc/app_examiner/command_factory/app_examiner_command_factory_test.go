@@ -159,7 +159,7 @@ var _ = Describe("CommandFactory", func() {
 
 				setNumberOfRunningInstances(0)
 
-				closeChan = test_helpers.AsyncExecuteCommandWithArgs(visualizeCommand, []string{"-rate", "2s"})
+				closeChan = test_helpers.AsyncExecuteCommandWithArgs(visualizeCommand, []string{"--rate", "2s"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("cell-0: " + colors.Red("empty") + cursor.ClearToEndOfLine() + "\n"))
 				Eventually(outputBuffer).Should(test_helpers.Say("cell-1" + colors.Red("[MISSING]") + ": " + cursor.ClearToEndOfLine() + "\n"))
@@ -182,7 +182,7 @@ var _ = Describe("CommandFactory", func() {
 			It("dynamically displays any errors", func() {
 				appExaminer.ListCellsReturns(nil, errors.New("Spilled the Paint"))
 
-				closeChan = test_helpers.AsyncExecuteCommandWithArgs(visualizeCommand, []string{"-rate", "1s"})
+				closeChan = test_helpers.AsyncExecuteCommandWithArgs(visualizeCommand, []string{"--rate", "1s"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Error visualizing: Spilled the Paint" + cursor.ClearToEndOfLine() + "\n"))
 
@@ -194,7 +194,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("Ensures the user's cursor is visible even if they interrupt ltc", func() {
-				closeChan = test_helpers.AsyncExecuteCommandWithArgs(visualizeCommand, []string{"-rate=1s"})
+				closeChan = test_helpers.AsyncExecuteCommandWithArgs(visualizeCommand, []string{"--rate=1s"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 
@@ -212,73 +212,77 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("StatusCommand", func() {
-		var statusCommand cli.Command
+		var (
+			statusCommand cli.Command
+			sampleAppInfo app_examiner.AppInfo
+		)
 
 		BeforeEach(func() {
 			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler)
 			statusCommand = commandFactory.MakeStatusCommand()
+
+			sampleAppInfo = app_examiner.AppInfo{
+				ProcessGuid:            "wompy-app",
+				DesiredInstances:       12,
+				ActualRunningInstances: 1,
+				EnvironmentVariables: []app_examiner.EnvironmentVariable{
+					app_examiner.EnvironmentVariable{Name: "WOMPY_APP_PASSWORD", Value: "seekreet pass"},
+					app_examiner.EnvironmentVariable{Name: "WOMPY_APP_USERNAME", Value: "mrbigglesworth54"},
+				},
+				StartTimeout: 600,
+				DiskMB:       2048,
+				MemoryMB:     256,
+				CPUWeight:    100,
+				Ports:        []uint16{8887, 9000},
+				Routes: route_helpers.AppRoutes{
+					route_helpers.AppRoute{
+						Port:      9090,
+						Hostnames: []string{"route-me.my-fun-domain.com"},
+					},
+					route_helpers.AppRoute{
+						Port:      8080,
+						Hostnames: []string{"wompy-app.my-fun-domain.com", "cranky-app.my-fun-domain.com"},
+					},
+				},
+				LogGuid:    "a9s8dfa99023r",
+				LogSource:  "wompy-app-logz",
+				Annotation: "I love this app. So wompy.",
+				ActualInstances: []app_examiner.InstanceInfo{
+					app_examiner.InstanceInfo{
+						InstanceGuid: "a0s9f-u9a8sf-aasdioasdjoi",
+						CellID:       "cell-12",
+						Index:        3,
+						Ip:           "10.85.12.100",
+						Ports: []app_examiner.PortMapping{
+							app_examiner.PortMapping{
+								HostPort:      1234,
+								ContainerPort: 3000,
+							},
+							app_examiner.PortMapping{
+								HostPort:      5555,
+								ContainerPort: 6666,
+							},
+						},
+						State: "RUNNING",
+						Since: 401120627 * 1e9,
+					},
+					app_examiner.InstanceInfo{
+						Index:          4,
+						State:          "UNCLAIMED",
+						PlacementError: "insufficient resources.",
+						CrashCount:     2,
+					},
+					app_examiner.InstanceInfo{
+						Index:      5,
+						State:      "CRASHED",
+						CrashCount: 7,
+					},
+				},
+			}
 		})
 
 		It("emits a pretty representation of the DesiredLRP", func() {
-			appExaminer.AppStatusReturns(
-				app_examiner.AppInfo{
-					ProcessGuid:            "wompy-app",
-					DesiredInstances:       12,
-					ActualRunningInstances: 1,
-					EnvironmentVariables: []app_examiner.EnvironmentVariable{
-						app_examiner.EnvironmentVariable{Name: "WOMPY_APP_PASSWORD", Value: "seekreet pass"},
-						app_examiner.EnvironmentVariable{Name: "WOMPY_APP_USERNAME", Value: "mrbigglesworth54"},
-					},
-					StartTimeout: 600,
-					DiskMB:       2048,
-					MemoryMB:     256,
-					CPUWeight:    100,
-					Ports:        []uint16{8887, 9000},
-					Routes: route_helpers.AppRoutes{
-						route_helpers.AppRoute{
-							Port:      9090,
-							Hostnames: []string{"route-me.my-fun-domain.com"},
-						},
-						route_helpers.AppRoute{
-							Port:      8080,
-							Hostnames: []string{"wompy-app.my-fun-domain.com", "cranky-app.my-fun-domain.com"},
-						},
-					},
-					LogGuid:    "a9s8dfa99023r",
-					LogSource:  "wompy-app-logz",
-					Annotation: "I love this app. So wompy.",
-					ActualInstances: []app_examiner.InstanceInfo{
-						app_examiner.InstanceInfo{
-							InstanceGuid: "a0s9f-u9a8sf-aasdioasdjoi",
-							CellID:       "cell-12",
-							Index:        3,
-							Ip:           "10.85.12.100",
-							Ports: []app_examiner.PortMapping{
-								app_examiner.PortMapping{
-									HostPort:      1234,
-									ContainerPort: 3000,
-								},
-								app_examiner.PortMapping{
-									HostPort:      5555,
-									ContainerPort: 6666,
-								},
-							},
-							State: "RUNNING",
-							Since: 401120627 * 1e9,
-						},
-						app_examiner.InstanceInfo{
-							Index:          4,
-							State:          "UNCLAIMED",
-							PlacementError: "insufficient resources.",
-							CrashCount:     2,
-						},
-						app_examiner.InstanceInfo{
-							Index:      5,
-							State:      "CRASHED",
-							CrashCount: 7,
-						},
-					},
-				}, nil)
+			appExaminer.AppStatusReturns(sampleAppInfo, nil)
 
 			test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
 
@@ -387,8 +391,49 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
-		Context("When no appName is specified", func() {
-			It("Prints usage information", func() {
+		Context("when the --summary flag is passed", func() {
+			It("prints the instance info in summary mode", func() {
+				appExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--summary"})
+
+				Expect(appExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(appExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Instance"))
+				Expect(outputBuffer).To(test_helpers.Say("State"))
+				Expect(outputBuffer).To(test_helpers.Say("Crashes"))
+				Expect(outputBuffer).To(test_helpers.Say("Since"))
+
+				Expect(outputBuffer).To(test_helpers.Say("3"))
+				Expect(outputBuffer).To(test_helpers.Say("RUNNING"))
+				Expect(outputBuffer).To(test_helpers.Say("0"))
+				prettyTimestamp := time.Unix(0, 401120627*1e9).Format(command_factory.TimestampDisplayLayout)
+				Expect(outputBuffer).To(test_helpers.Say(prettyTimestamp))
+
+				Expect(outputBuffer).To(test_helpers.Say("4"))
+				Expect(outputBuffer).To(test_helpers.Say("UNCLAIMED"))
+				Expect(outputBuffer).To(test_helpers.Say("2"))
+
+				Expect(outputBuffer).To(test_helpers.Say("5"))
+				Expect(outputBuffer).To(test_helpers.Say("CRASHED"))
+				Expect(outputBuffer).To(test_helpers.Say("7"))
+
+			})
+		})
+
+		Context("when annotation is empty", func() {
+			It("omits annotation from the output", func() {
+				appExaminer.AppStatusReturns(app_examiner.AppInfo{ProcessGuid: "jumpy-app"}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"jumpy-app"})
+
+				Expect(outputBuffer).NotTo(test_helpers.Say("Annotation"))
+			})
+		})
+
+		Context("when no app name is specified", func() {
+			It("prints usage information", func() {
 				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{})
 				Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
 			})
@@ -402,14 +447,5 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("You want the status?? ...YOU CAN'T HANDLE THE STATUS!!!"))
 		})
 
-		Context("When Annotation is empty", func() {
-			It("omits Annotation from the output", func() {
-				appExaminer.AppStatusReturns(app_examiner.AppInfo{ProcessGuid: "jumpy-app"}, nil)
-
-				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"jumpy-app"})
-
-				Expect(outputBuffer).NotTo(test_helpers.Say("Annotation"))
-			})
-		})
 	})
 })
