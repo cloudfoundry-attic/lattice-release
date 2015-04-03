@@ -55,7 +55,7 @@ ltc target 192.168.11.11.xip.io
 
 ## Using Different Providers
 
-You can do this with either VMware Fusion or VirtualBox:
+You can do this with either VirtualBox or VMware Fusion (version 7 or later):
 
 Virtualbox:
 
