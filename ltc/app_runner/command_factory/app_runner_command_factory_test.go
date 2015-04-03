@@ -135,6 +135,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).To(test_helpers.Say("Creating App: cool-web-app\n"))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
+			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-3000-yay.192.168.11.11.xip.io\n")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-wahoo.192.168.11.11.xip.io\n")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-me-too.192.168.11.11.xip.io\n")))
@@ -616,6 +617,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
 				Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
+				Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
 				Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io\n")))
 			})
 
@@ -645,6 +647,8 @@ var _ = Describe("CommandFactory", func() {
 					Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still downloading your application in the background."))
 					Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs cool-web-app"))
 					Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
+					Expect(outputBuffer).To(test_helpers.Say("App will be reachable at:\n"))
+					Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io\n")))
 				})
 			})
 
@@ -920,6 +924,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still scaling your application in the background."))
 				Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs cool-web-app"))
 				Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
 			})
 		})
 

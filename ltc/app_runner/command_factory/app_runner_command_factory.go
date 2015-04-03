@@ -343,6 +343,9 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 
 	if ok {
 		factory.ui.Say(colors.Green(name + " is now running.\n"))
+		factory.ui.Say("App is reachable at:\n")
+	} else {
+		factory.ui.Say("App will be reachable at:\n")
 	}
 
 	if routeOverrides != nil {
@@ -512,6 +515,7 @@ func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout
 		}
 		factory.ui.SayLine(fmt.Sprintf("To view logs:\n\tltc logs %s", appName))
 		factory.ui.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", appName))
+		factory.ui.NewLine()
 	}
 	return ok
 }
