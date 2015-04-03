@@ -44,6 +44,11 @@ var _ = Describe("tee2metron", func() {
 		Eventually(gbytes.BufferWithBytes(*metronReceivedBuffer)).Should(gbytes.Say("lattice-cell-123"))
 		Eventually(gbytes.BufferWithBytes(*metronReceivedBuffer), 5).Should(gbytes.Say("Hi from stdout. My args are: [chattyArg1 chattyArg2 -chattyFlag]"))
 		Eventually(gbytes.BufferWithBytes(*metronReceivedBuffer), 5).Should(gbytes.Say("Oopsie from stderr"))
+
+		//Initate and wait for the process to terminate
+		session.Terminate()
+		Eventually(session.Exited).Should(BeClosed())
+		Expect(session.ExitCode()).To(Equal(2))
 	})
 
 	Context("With a bad command", func() {
@@ -64,6 +69,19 @@ var _ = Describe("tee2metron", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 				Eventually(session.Out).Should(gbytes.Say(`exec: "do-the-fandango-for-me": executable file not found in \$PATH`))
+				Eventually(session.Exited).Should(BeClosed())
+				Expect(session.ExitCode()).To(Equal(3))
+			})
+		})
+		Context("when there is an no permission to execute", func() {
+			It("prints and error message and exits", func() {
+				chmodCmd := exec.Command("chmod", "u-x", chattyProcessPath)
+				_, chmodErr := gexec.Start(chmodCmd, GinkgoWriter, GinkgoWriter)
+				Expect(chmodErr).ToNot(HaveOccurred())
+				command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=lattice-cell-123", chattyProcessPath, "chattyArg1", "chattyArg2", "-chattyFlag")
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).ToNot(HaveOccurred())
+				Eventually(session.Out).Should(gbytes.Say("chatty_process: permission denied"))
 				Eventually(session.Exited).Should(BeClosed())
 				Expect(session.ExitCode()).To(Equal(3))
 			})
