@@ -47,6 +47,7 @@ The default behavior of `ltc create`, outlined above, can be modified via a seri
 - **`--cpu-weight=100`** specifies the relative CPU weight to apply to the container (scale 1-100).
 - **`--instances=1`** specifies the number of instances of the application to launch.  This can also be modified after the application is started.
 - **`--no-monitor`** disables health monitoring.  Lattice will consider the application crashed only if it exits.
+- **`--timeout=2m`** sets the maximum polling duration for starting the app.
 
 Finally, one can override the default start command by specifiying a start command after a `--` separator.  This can be followed by any arguments one wishes to pass to the app.  For example:
 
@@ -76,15 +77,27 @@ You can modify all of this behavior from the command line:
 
 `ltc remove APP_NAME` removes an application entirely from a Lattice deployment.  To stop an application without removing it, try `ltc scale APP_NAME 0`.
 
+`ltc remove` accepts the following additional command line flag(s):
+
+- **`--timeout=2m`** sets the maximum polling duration for removing the app.
+
 ### `ltc scale` 
 
 `ltc scale APP_NAME NUM_INSTANCES` modifies the number of running instances of an application.
+
+`ltc scale` accepts the following additional command line flag(s):
+
+- **`--timeout=2m`** sets the maximum polling duration for scaling the app.
 
 ### `ltc update-routes`
 
 `ltc update-routes APP_NAME PORT:ROUTE,PORT:ROUTE,...` allows you to update the routes associated with an application *after* it has been deployed.  The format is identical to the `--routes` option on `ltc create`.
 
 The set of routes passed into `ltc update-routes` will *override* the existing set of routes - these modification will start working shortly after the call to `update-routes`.
+
+### `ltc create-lrp`
+
+`ltc create-lrp /path/to/json` creates an application with the configuration specified in the JSON.  The syntax of the JSON can be found at the [Receptor API docs](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/lrps.md#describing-desiredlrps)
 
 ## Streaming Logs
 
