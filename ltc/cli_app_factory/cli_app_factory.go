@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
-	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
@@ -44,7 +42,7 @@ const (
 	latticeCliHomeVar = "LATTICE_CLI_HOME"
 )
 
-func MakeCliApp(timeoutStr, latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, cliStdout io.Writer) *cli.App {
+func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, cliStdout io.Writer) *cli.App {
 	config.Load()
 	app := cli.NewApp()
 	app.Name = AppName
@@ -55,7 +53,7 @@ func MakeCliApp(timeoutStr, latticeVersion, ltcConfigRoot string, exitHandler ex
 
 	ui := terminal.NewUI(os.Stdin, cliStdout, password_reader.NewPasswordReader(exitHandler))
 
-	app.Commands = cliCommands(timeoutStr, ltcConfigRoot, exitHandler, config, logger, targetVerifier, ui)
+	app.Commands = cliCommands(ltcConfigRoot, exitHandler, config, logger, targetVerifier, ui)
 
 	app.Before = func(context *cli.Context) error {
 		args := context.Args()
@@ -82,7 +80,7 @@ func MakeCliApp(timeoutStr, latticeVersion, ltcConfigRoot string, exitHandler ex
 	return app
 }
 
-func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, ui terminal.UI) []cli.Command {
+func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, ui terminal.UI) []cli.Command {
 
 	receptorClient := receptor.NewClient(config.Receptor())
 	appRunner := docker_app_runner.New(receptorClient, config.Target())
@@ -100,7 +98,6 @@ func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.Exit
 		AppExaminer:           appExaminer,
 		DockerMetadataFetcher: docker_metadata_fetcher.New(docker_metadata_fetcher.NewDockerSessionFactory()),
 		UI:                  ui,
-		Timeout:             Timeout(timeoutStr),
 		Domain:              config.Target(),
 		Env:                 os.Environ(),
 		Clock:               clock,
@@ -132,14 +129,6 @@ func cliCommands(timeoutStr, ltcConfigRoot string, exitHandler exit_handler.Exit
 		appRunnerCommandFactory.MakeUpdateRoutesCommand(),
 		appExaminerCommandFactory.MakeVisualizeCommand(),
 	}
-}
-
-func Timeout(timeoutEnv string) time.Duration {
-	if timeout, err := strconv.Atoi(timeoutEnv); err == nil {
-		return time.Second * time.Duration(timeout)
-	}
-
-	return time.Minute
 }
 
 func LoggregatorUrl(loggregatorTarget string) string {

@@ -17,20 +17,20 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/receptor",
-			"Rev": "9626cdefbcff71da30f212bae92fe4c4cd82e2b8"
+			"Rev": "6eb9e7079b2694b1a2fc2d9b0ebad3537b9c541e"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "271cf3d7b9a8911b2acb6cd081bdf5f143956508"
+			"Rev": "83eb3d678d202dc4dc6c8fed282417c865aacc57"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "7ec5b0dce4f86d1d79e3d68df670760bffd7c7c5"
+			"Rev": "92d89517244c5da5c279f889af344538a86891d1"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-74-g50c77ec",
-			"Rev": "50c77ecec0068c9aef9d90ae0fd0fdf410041da3"
+			"Comment": "1.2.0-95-g9b2bd2b",
+			"Rev": "9b2bd2b3489748d4d0a204fa4eb2ee9e89e0ebc6"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/api",

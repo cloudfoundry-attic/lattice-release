@@ -22,10 +22,17 @@ import (
 	"github.com/pivotal-golang/lager"
 )
 
+type pollingAction string
+
 const (
 	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a comma-delimited list of integers between 0-65535."
-	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format route:port"
+	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format port:route"
 	MustSetMonitoredPortErrorMessage = "Must set monitored-port when specifying multiple exposed ports unless --no-monitor is set."
+
+	DefaultPollingTimeout time.Duration = 2 * time.Minute
+
+	pollingStart pollingAction = "start"
+	pollingScale pollingAction = "scale"
 )
 
 type AppRunnerCommandFactory struct {
@@ -33,7 +40,6 @@ type AppRunnerCommandFactory struct {
 	appExaminer           app_examiner.AppExaminer
 	ui                    terminal.UI
 	dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
-	timeout               time.Duration
 	domain                string
 	env                   []string
 	clock                 clock.Clock
@@ -46,7 +52,6 @@ type AppRunnerCommandFactoryConfig struct {
 	AppExaminer           app_examiner.AppExaminer
 	UI                    terminal.UI
 	DockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
-	Timeout               time.Duration
 	Domain                string
 	Env                   []string
 	Clock                 clock.Clock
@@ -61,7 +66,6 @@ func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunner
 		appExaminer: config.AppExaminer,
 		ui:          config.UI,
 		dockerMetadataFetcher: config.DockerMetadataFetcher,
-		timeout:               config.Timeout,
 		domain:                config.Domain,
 		env:                   config.Env,
 		clock:                 config.Clock,
@@ -122,14 +126,19 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 		},
 		cli.BoolFlag{
 			Name:  "no-monitor",
-			Usage: "Disables healthchecking for the app.",
+			Usage: "Disables healthchecking for the app",
+		},
+		cli.DurationFlag{
+			Name:  "timeout",
+			Usage: "Polling timeout for app to start",
+			Value: DefaultPollingTimeout,
 		},
 	}
 
 	var createAppCommand = cli.Command{
-		Name:      "create",
-		ShortName: "cr",
-		Usage:     "Creates a docker app on lattice",
+		Name:    "create",
+		Aliases: []string{"cr"},
+		Usage:   "Creates a docker app on lattice",
 		Description: `ltc create APP_NAME DOCKER_IMAGE
 
    APP_NAME is required and must be unique across the Lattice cluster
@@ -159,7 +168,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeCreateLrpCommand() cli.Command {
 	var createLrpCommand = cli.Command{
 		Name:        "create-lrp",
-		ShortName:   "cl",
+		Aliases:     []string{"cl"},
 		Usage:       "Creates a docker app from JSON on lattice",
 		Description: "ltc create-lrp /path/to/json",
 		Action:      factory.createLrp,
@@ -169,12 +178,20 @@ func (factory *AppRunnerCommandFactory) MakeCreateLrpCommand() cli.Command {
 }
 
 func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
+	var createFlags = []cli.Flag{
+		cli.DurationFlag{
+			Name:  "timeout",
+			Usage: "Polling timeout for app to scale",
+			Value: DefaultPollingTimeout,
+		},
+	}
 	var scaleAppCommand = cli.Command{
 		Name:        "scale",
-		ShortName:   "sc",
+		Aliases:     []string{"sc"},
 		Usage:       "Scales a docker app on lattice",
 		Description: "ltc scale APP_NAME NUM_INSTANCES",
 		Action:      factory.scaleApp,
+		Flags:       createFlags,
 	}
 
 	return scaleAppCommand
@@ -183,7 +200,7 @@ func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 	var updateRoutesCommand = cli.Command{
 		Name:        "update-routes",
-		ShortName:   "ur",
+		Aliases:     []string{"ur"},
 		Usage:       "Updates the routes for a running app",
 		Description: "ltc update-routes APP_NAME ROUTE,OTHER_ROUTE...", // TODO: route format?
 		Action:      factory.updateAppRoutes,
@@ -193,12 +210,20 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 }
 
 func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
+	var createFlags = []cli.Flag{
+		cli.DurationFlag{
+			Name:  "timeout",
+			Usage: "Polling timeout for app to remove",
+			Value: DefaultPollingTimeout,
+		},
+	}
 	var removeAppCommand = cli.Command{
 		Name:        "remove",
-		ShortName:   "rm",
+		Aliases:     []string{"rm"},
 		Description: "ltc remove APP_NAME",
 		Usage:       "Stops and removes a docker app from lattice",
 		Action:      factory.removeApp,
+		Flags:       createFlags,
 	}
 
 	return removeAppCommand
@@ -215,6 +240,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	monitoredPortFlag := context.Int("monitored-port")
 	routesFlag := context.String("routes")
 	noMonitorFlag := context.Bool("no-monitor")
+	timeoutFlag := context.Duration("timeout")
 	name := context.Args().Get(0)
 	dockerImage := context.Args().Get(1)
 	terminator := context.Args().Get(2)
@@ -291,7 +317,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		DockerImagePath:      dockerImage,
 		StartCommand:         startCommand,
 		AppArgs:              appArgs,
-		EnvironmentVariables: factory.buildEnvironment(envVarsFlag),
+		EnvironmentVariables: factory.buildEnvironment(envVarsFlag, name),
 		Privileged:           context.Bool("run-as-root"),
 		Monitor:              !noMonitorFlag,
 		Instances:            instancesFlag,
@@ -301,9 +327,10 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		Ports:                portConfig,
 		WorkingDir:           workingDirFlag,
 		RouteOverrides:       routeOverrides,
+		Timeout:              timeoutFlag,
 	})
 	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error Creating App: %s", err))
+		factory.ui.Say(fmt.Sprintf("Error creating app: %s", err))
 		return
 	}
 
@@ -312,10 +339,13 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	go factory.tailedLogsOutputter.OutputTailedLogs(name)
 	defer factory.tailedLogsOutputter.StopOutputting()
 
-	ok := factory.pollUntilAllInstancesRunning(name, instancesFlag, "start")
+	ok := factory.pollUntilAllInstancesRunning(timeoutFlag, name, instancesFlag, "start")
 
 	if ok {
 		factory.ui.Say(colors.Green(name + " is now running.\n"))
+		factory.ui.Say("App is reachable at:\n")
+	} else {
+		factory.ui.Say("App will be reachable at:\n")
 	}
 
 	if routeOverrides != nil {
@@ -341,18 +371,20 @@ func (factory *AppRunnerCommandFactory) createLrp(context *cli.Context) {
 		return
 	}
 
-	err = factory.appRunner.CreateLrp(jsonBytes)
+	lrpName, err := factory.appRunner.CreateLrp(jsonBytes)
 	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error creating app: %s", err.Error()))
+		factory.ui.Say(fmt.Sprintf("Error creating %s: %s", lrpName, err.Error()))
 		return
 	}
 
+	factory.ui.Say(colors.Green(fmt.Sprintf("Successfully submitted %s.", lrpName)) + "\n")
+	factory.ui.Say(fmt.Sprintf("To view the status of your application: ltc status %s\n", lrpName))
 }
 
 func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
 	appName := c.Args().First()
 	instancesArg := c.Args().Get(1)
-
+	timeoutFlag := c.Duration("timeout")
 	if appName == "" || instancesArg == "" {
 		factory.ui.IncorrectUsage("Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'")
 		return
@@ -364,7 +396,7 @@ func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
 		return
 	}
 
-	factory.setAppInstances(appName, instances)
+	factory.setAppInstances(timeoutFlag, appName, instances)
 }
 
 func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
@@ -391,7 +423,7 @@ func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
 	factory.ui.Say(fmt.Sprintf("Updating %s routes. You can check this app's current routes by running 'ltc status %s'", appName, appName))
 }
 
-func (factory *AppRunnerCommandFactory) setAppInstances(appName string, instances int) {
+func (factory *AppRunnerCommandFactory) setAppInstances(pollTimeout time.Duration, appName string, instances int) {
 	err := factory.appRunner.ScaleApp(appName, instances)
 
 	if err != nil {
@@ -401,37 +433,17 @@ func (factory *AppRunnerCommandFactory) setAppInstances(appName string, instance
 
 	factory.ui.Say(fmt.Sprintf("Scaling %s to %d instances \n", appName, instances))
 
-	ok := factory.pollUntilAllInstancesRunning(appName, instances, "scale")
+	ok := factory.pollUntilAllInstancesRunning(pollTimeout, appName, instances, "scale")
 
 	if ok {
 		factory.ui.Say(colors.Green("App Scaled Successfully"))
 	}
 }
 
-func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(appName string, instances int, action string) bool {
-	placementErrorOccurred := false
-	ok := factory.pollUntilSuccess(func() bool {
-		numberOfRunningInstances, placementError, _ := factory.appExaminer.RunningAppInstancesInfo(appName)
-		if placementError {
-			factory.ui.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
-			placementErrorOccurred = true
-			return true
-		}
-		return numberOfRunningInstances == instances
-	}, true)
-
-	if placementErrorOccurred {
-		factory.exitHandler.Exit(exit_codes.PlacementError)
-		return false
-	} else if !ok {
-		factory.ui.SayLine(colors.Red(appName + " took too long to " + action + "."))
-	}
-	return ok
-
-}
-
 func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	appName := c.Args().First()
+	timeoutFlag := c.Duration("timeout")
+
 	if appName == "" {
 		factory.ui.IncorrectUsage("App Name required")
 		return
@@ -444,7 +456,7 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	}
 
 	factory.ui.Say(fmt.Sprintf("Removing %s", appName))
-	ok := factory.pollUntilSuccess(func() bool {
+	ok := factory.pollUntilSuccess(timeoutFlag, func() bool {
 		appExists, err := factory.appExaminer.AppExists(appName)
 		return err == nil && !appExists
 	}, true)
@@ -452,13 +464,16 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	if ok {
 		factory.ui.Say(colors.Green("Successfully Removed " + appName + "."))
 	} else {
-		factory.ui.Say(colors.Red(fmt.Sprintf("Failed to remove %s.", appName)))
+		factory.ui.Say(colors.Red("Timed out waiting for the container to shut down."))
+		factory.ui.NewLine()
+		factory.ui.SayLine("Lattice will continue to shut down your container in the background.")
+		factory.ui.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", appName))
 	}
 }
 
-func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollingFunc func() bool, outputProgress bool) (ok bool) {
+func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Duration, pollingFunc func() bool, outputProgress bool) (ok bool) {
 	startingTime := factory.clock.Now()
-	for startingTime.Add(factory.timeout).After(factory.clock.Now()) {
+	for startingTime.Add(pollTimeout).After(factory.clock.Now()) {
 		if result := pollingFunc(); result {
 			factory.ui.NewLine()
 			return true
@@ -472,12 +487,46 @@ func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollingFunc func() bool
 	return false
 }
 
+func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout time.Duration, appName string, instances int, action pollingAction) bool {
+	placementErrorOccurred := false
+	ok := factory.pollUntilSuccess(pollTimeout, func() bool {
+		numberOfRunningInstances, placementError, _ := factory.appExaminer.RunningAppInstancesInfo(appName)
+		if placementError {
+			factory.ui.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
+			placementErrorOccurred = true
+			return true
+		}
+		return numberOfRunningInstances == instances
+	}, true)
+
+	if placementErrorOccurred {
+		factory.exitHandler.Exit(exit_codes.PlacementError)
+		return false
+	} else if !ok {
+		if action == pollingStart {
+			factory.ui.Say(colors.Red("Timed out waiting for the container to come up."))
+			factory.ui.NewLine()
+			factory.ui.SayLine("This typically happens because docker layers can take time to download.")
+			factory.ui.SayLine("Lattice is still downloading your application in the background.")
+		} else {
+			factory.ui.Say(colors.Red("Timed out waiting for the container to scale."))
+			factory.ui.NewLine()
+			factory.ui.SayLine("Lattice is still scaling your application in the background.")
+		}
+		factory.ui.SayLine(fmt.Sprintf("To view logs:\n\tltc logs %s", appName))
+		factory.ui.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", appName))
+		factory.ui.NewLine()
+	}
+	return ok
+}
+
 func (factory *AppRunnerCommandFactory) urlForApp(name string) string {
 	return fmt.Sprintf("http://%s.%s\n", name, factory.domain)
 }
 
-func (factory *AppRunnerCommandFactory) buildEnvironment(envVars []string) map[string]string {
+func (factory *AppRunnerCommandFactory) buildEnvironment(envVars []string, appName string) map[string]string {
 	environment := make(map[string]string)
+	environment["PROCESS_GUID"] = appName
 
 	for _, envVarPair := range envVars {
 		name, value := parseEnvVarPair(envVarPair)

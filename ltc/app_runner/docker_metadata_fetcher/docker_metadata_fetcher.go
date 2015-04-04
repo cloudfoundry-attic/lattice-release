@@ -33,36 +33,36 @@ func New(sessionFactory DockerSessionFactory) DockerMetadataFetcher {
 
 func (fetcher *dockerMetadataFetcher) FetchMetadata(dockerImageReference string) (*ImageMetadata, error) {
 
-	var indexAndRepoName string
-	indexName, repoName, tag, err := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImageReference)
+	indexName, remoteName, tag, err := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImageReference)
 	if err != nil {
 		return nil, err
 	}
 
+	var reposName string
 	if len(indexName) > 0 {
-		indexAndRepoName = indexName + "/" + repoName
+		reposName = fmt.Sprintf("%s/%s", indexName, remoteName)
 	} else {
-		indexAndRepoName = repoName
+		reposName = remoteName
 	}
 
-	session, err := fetcher.dockerSessionFactory.MakeSession(indexAndRepoName)
+	session, err := fetcher.dockerSessionFactory.MakeSession(reposName)
 	if err != nil {
 		return nil, err
 	}
 
-	repoData, err := session.GetRepositoryData(repoName)
+	repoData, err := session.GetRepositoryData(remoteName)
 	if err != nil {
 		return nil, err
 	}
 
-	tagsList, err := session.GetRemoteTags(repoData.Endpoints, repoName, repoData.Tokens)
+	tagsList, err := session.GetRemoteTags(repoData.Endpoints, remoteName, repoData.Tokens)
 	if err != nil {
 		return nil, err
 	}
 
 	imgID, ok := tagsList[tag]
 	if !ok {
-		return nil, fmt.Errorf("Unknown tag: %s:%s", repoName, tag)
+		return nil, fmt.Errorf("Unknown tag: %s:%s", remoteName, tag)
 	}
 
 	var img *image.Image

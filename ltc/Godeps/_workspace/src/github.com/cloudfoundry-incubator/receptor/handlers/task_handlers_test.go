@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/cloudfoundry-incubator/receptor"
-	. "github.com/cloudfoundry-incubator/receptor/handlers"
+	"github.com/cloudfoundry-incubator/receptor/handlers"
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/bbserrors"
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
@@ -23,7 +23,7 @@ var _ = Describe("TaskHandler", func() {
 		logger           lager.Logger
 		fakeBBS          *fake_bbs.FakeReceptorBBS
 		responseRecorder *httptest.ResponseRecorder
-		handler          *TaskHandler
+		handler          *handlers.TaskHandler
 		request          *http.Request
 	)
 
@@ -32,7 +32,7 @@ var _ = Describe("TaskHandler", func() {
 		logger = lager.NewLogger("test")
 		logger.RegisterSink(lager.NewWriterSink(GinkgoWriter, lager.DEBUG))
 		responseRecorder = httptest.NewRecorder()
-		handler = NewTaskHandler(fakeBBS, logger)
+		handler = handlers.NewTaskHandler(fakeBBS, logger)
 	})
 
 	Describe("Create", func() {

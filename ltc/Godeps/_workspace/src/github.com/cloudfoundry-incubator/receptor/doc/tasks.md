@@ -65,23 +65,24 @@ The consumer of Diego may organize their Tasks into groupings called Domains.  T
 
 - It is an error to provide an empty `domain`.
 
-#### Task Placement
-
-In the future Diego will support the notion of Placement Pools via arbitrary tags associated with Cells.  For now, this functionality is limited to the notion of `stack`.
-
-#### `stack` [required]
-
-Diego can support different target platforms (linux, windows, etc.). `stack` allows you to select which target platform the Task must run against.  For a typical Diego deployment you should set `stack` to `lucid64`
-
-- It is an error to provide an empty `stack`.
-
 #### Container Contents and Environment
 
-#### `rootfs` [optional]
+The `rootfs` field specifies the root filesystem to mount into the container.  Diego can be configured with a set of *preloaded* RootFSes.  These are named root filesystems that are already on the Diego Cells.
 
-By default, when provisioning a container, Diego will mount a pre-configured root filesystem.  Currently, the default filesystem provided by [diego-release](https://github.com/cloudfoundry-incubator/diego-release) is based on lucid64 and is geared towards supporting the Cloud Foundry buildpacks.
+Preloaded root filesystems look like:
 
-It is possible, however, to provide a custom root filesystem by specifying a Docker image for `rootfs`:
+```
+"rootfs": "preloaded:ROOTFS-NAME"
+```
+
+On Cloud Foundry, Diego ships with two root filesystems:
+```
+"rootfs": "preloaded:lucid64"
+"rootfs": "preloaded:cflinuxfs2"
+```
+these are built to work with the Cloud Foundry buildpacks.
+
+It is possible to provide a custom root filesystem by specifying a Docker image for `rootfs`:
 
 ```
 "rootfs": "docker:///docker-org/docker-image#docker-tag"
@@ -95,7 +96,7 @@ To pull the image from a different registry than the default (Docker Hub), speci
 
 > You *must* specify the dockerimage `rootfs` uri as specified, including the leading `docker://`!
 
-> [Lattice](https://github.com/pivotal-cf-experimental/lattice) does not ship with a default rootfs. You must specify a docker-image when using Lattice. You can mount the filesystem provided by diego-release by specifying `"rootfs": "docker:///cloudfoundry/lucid64"` or `"rootfs": "docker:///cloudfoundry/trusty64"`.
+> [Lattice](https://github.com/pivotal-cf-experimental/lattice) does not ship with any preloaded root filesystems. You must specify a Docker image when using Lattice. You can mount the filesystem provided by diego-release by specifying `"rootfs": "docker:///cloudfoundry/lucid64"` or `"rootfs": "docker:///cloudfoundry/cflinuxfs2"`.
 
 #### `env` [optional]
 

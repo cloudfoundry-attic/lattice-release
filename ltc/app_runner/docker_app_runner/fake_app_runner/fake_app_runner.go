@@ -16,13 +16,14 @@ type FakeAppRunner struct {
 	createDockerAppReturns struct {
 		result1 error
 	}
-	CreateLrpStub        func(createLrpJson []byte) error
+	CreateLrpStub        func(createLrpJson []byte) (string, error)
 	createLrpMutex       sync.RWMutex
 	createLrpArgsForCall []struct {
 		createLrpJson []byte
 	}
 	createLrpReturns struct {
-		result1 error
+		result1 string
+		result2 error
 	}
 	ScaleAppStub        func(name string, instances int) error
 	scaleAppMutex       sync.RWMutex
@@ -84,7 +85,7 @@ func (fake *FakeAppRunner) CreateDockerAppReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeAppRunner) CreateLrp(createLrpJson []byte) error {
+func (fake *FakeAppRunner) CreateLrp(createLrpJson []byte) (string, error) {
 	fake.createLrpMutex.Lock()
 	fake.createLrpArgsForCall = append(fake.createLrpArgsForCall, struct {
 		createLrpJson []byte
@@ -93,7 +94,7 @@ func (fake *FakeAppRunner) CreateLrp(createLrpJson []byte) error {
 	if fake.CreateLrpStub != nil {
 		return fake.CreateLrpStub(createLrpJson)
 	} else {
-		return fake.createLrpReturns.result1
+		return fake.createLrpReturns.result1, fake.createLrpReturns.result2
 	}
 }
 
@@ -109,11 +110,12 @@ func (fake *FakeAppRunner) CreateLrpArgsForCall(i int) []byte {
 	return fake.createLrpArgsForCall[i].createLrpJson
 }
 
-func (fake *FakeAppRunner) CreateLrpReturns(result1 error) {
+func (fake *FakeAppRunner) CreateLrpReturns(result1 string, result2 error) {
 	fake.CreateLrpStub = nil
 	fake.createLrpReturns = struct {
-		result1 error
-	}{result1}
+		result1 string
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeAppRunner) ScaleApp(name string, instances int) error {

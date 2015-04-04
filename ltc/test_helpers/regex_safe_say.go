@@ -12,12 +12,16 @@ func Say(expected string, args ...interface{}) types.GomegaMatcher {
 	return gbytes.Say(regexSafe(expected))
 }
 
-func SayIncorrectUsage() types.GomegaMatcher {
-	return gbytes.Say(regexSafe("Incorrect Usage"))
+func SayLine(expected string, args ...interface{}) types.GomegaMatcher {
+	return gbytes.Say(regexSafe(expected) + "\n")
 }
 
 func SayNewLine() types.GomegaMatcher {
 	return Say("\n")
+}
+
+func SayIncorrectUsage() types.GomegaMatcher {
+	return gbytes.Say(regexSafe("Incorrect Usage"))
 }
 
 var regex = regexp.MustCompile("[-/\\\\^$*+?.()|[\\]{}]")

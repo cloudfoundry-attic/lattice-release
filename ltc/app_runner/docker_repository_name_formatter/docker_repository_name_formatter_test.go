@@ -21,7 +21,6 @@ var _ = Describe("DockerRepositoryNameFormatter", func() {
 				})
 
 				Context("when a tag is specified", func() {
-
 					It("Converts it to a tagged url that receptor can use as a rootfs", func() {
 						formattedName, err := docker_repository_name_formatter.FormatForReceptor("jimbo/my-docker-app:test")
 						Expect(err).NotTo(HaveOccurred())
@@ -55,7 +54,6 @@ var _ = Describe("DockerRepositoryNameFormatter", func() {
 
 		})
 
-		// TODO:  is two slashes OK in url for custom registry
 		Context("with a non-standard docker registry name", func() {
 
 			It("Converts it to a tagged url that receptor can use as a rootfs", func() {

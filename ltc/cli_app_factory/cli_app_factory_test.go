@@ -3,7 +3,6 @@ package cli_app_factory_test
 import (
 	"errors"
 	"sort"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -23,6 +22,7 @@ import (
 )
 
 var _ = Describe("CliAppFactory", func() {
+
 	var (
 		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
 		memPersister       persister.Persister
@@ -44,7 +44,6 @@ var _ = Describe("CliAppFactory", func() {
 
 	JustBeforeEach(func() {
 		cliApp = cli_app_factory.MakeCliApp(
-			"30",
 			latticeVersion,
 			"~/",
 			&fake_exit_handler.FakeExitHandler{},
@@ -250,20 +249,6 @@ var _ = Describe("CliAppFactory", func() {
 			})
 		})
 
-	})
-
-	Describe("Timeout", func() {
-		It("returns the timeout in seconds", func() {
-			Expect(cli_app_factory.Timeout("25")).To(Equal(25 * time.Second))
-		})
-
-		It("returns one minute for an empty string", func() {
-			Expect(cli_app_factory.Timeout("")).To(Equal(time.Minute))
-		})
-
-		It("returns one minute for an invalid string", func() {
-			Expect(cli_app_factory.Timeout("CANNOT PARSE")).To(Equal(time.Minute))
-		})
 	})
 
 	Describe("LoggregatorUrl", func() {

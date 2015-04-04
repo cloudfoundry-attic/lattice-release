@@ -1,4 +1,4 @@
-package main_test
+package test_helpers_test
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestTee2metron(t *testing.T) {
+func TestTestHelpers(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Tee2metron Suite")
+	RunSpecs(t, "TestHelpers Suite")
 }

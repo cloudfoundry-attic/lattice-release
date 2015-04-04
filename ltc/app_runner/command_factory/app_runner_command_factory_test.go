@@ -37,8 +37,7 @@ var _ = Describe("CommandFactory", func() {
 		appExaminer                   *fake_app_examiner.FakeAppExaminer
 		outputBuffer                  *gbytes.Buffer
 		terminalUI                    terminal.UI
-		timeout                       time.Duration = 10 * time.Second
-		domain                        string        = "192.168.11.11.xip.io"
+		domain                        string = "192.168.11.11.xip.io"
 		clock                         *fakeclock.FakeClock
 		dockerMetadataFetcher         *fake_docker_metadata_fetcher.FakeDockerMetadataFetcher
 		appRunnerCommandFactoryConfig command_factory.AppRunnerCommandFactoryConfig
@@ -69,7 +68,6 @@ var _ = Describe("CommandFactory", func() {
 				AppExaminer: appExaminer,
 				UI:          terminalUI,
 				DockerMetadataFetcher: dockerMetadataFetcher,
-				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   env,
 				Clock:                 clock,
@@ -97,6 +95,7 @@ var _ = Describe("CommandFactory", func() {
 				"--env=LANG=\"Chicago English\"",
 				"--env=COLOR",
 				"--env=UNSET",
+				"--timeout=28s",
 				"cool-web-app",
 				"superfun/app:mycooltag",
 				"--",
@@ -107,7 +106,6 @@ var _ = Describe("CommandFactory", func() {
 			appExaminer.RunningAppInstancesInfoReturns(22, false, nil)
 
 			test_helpers.ExecuteCommandWithArgs(createCommand, args)
-
 			Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
 			Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("superfun/app:mycooltag"))
 
@@ -118,12 +116,13 @@ var _ = Describe("CommandFactory", func() {
 			Expect(createDockerAppParameters.DockerImagePath).To(Equal("superfun/app:mycooltag"))
 			Expect(createDockerAppParameters.AppArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
 			Expect(createDockerAppParameters.Instances).To(Equal(22))
-			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "COLOR": "Blue", "UNSET": ""}))
+			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "PROCESS_GUID": "cool-web-app", "COLOR": "Blue", "UNSET": ""}))
 			Expect(createDockerAppParameters.Privileged).To(Equal(true))
 			Expect(createDockerAppParameters.CPUWeight).To(Equal(uint(57)))
 			Expect(createDockerAppParameters.MemoryMB).To(Equal(12))
 			Expect(createDockerAppParameters.DiskMB).To(Equal(12))
 			Expect(createDockerAppParameters.Monitor).To(Equal(true))
+			Expect(createDockerAppParameters.Timeout).To(Equal(time.Second * 28))
 
 			Expect(createDockerAppParameters.Ports.Monitored).To(Equal(uint16(3000)))
 			Expect(createDockerAppParameters.Ports.Exposed).To(Equal([]uint16{1111, 2000, 3000}))
@@ -136,9 +135,32 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).To(test_helpers.Say("Creating App: cool-web-app\n"))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
+			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-3000-yay.192.168.11.11.xip.io\n")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-wahoo.192.168.11.11.xip.io\n")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-me-too.192.168.11.11.xip.io\n")))
+		})
+
+		Context("when the PROCESS_GUID is passed in as --env", func() {
+			It("sets the PROCESS_GUID to the value passed in", func() {
+				args := []string{
+					"app-to-start",
+					"fun-org/app",
+					"--env=PROCESS_GUID=MyHappyGuid",
+				}
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{StartCommand: []string{""}}, nil)
+				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
+				createDockerAppParams := appRunner.CreateDockerAppArgsForCall(0)
+				appEnvVars := createDockerAppParams.EnvironmentVariables
+				processGuidEnvVar, found := appEnvVars["PROCESS_GUID"]
+
+				Expect(found).To(BeTrue())
+				Expect(processGuidEnvVar).To(Equal("MyHappyGuid"))
+			})
 		})
 
 		Context("when a malformed routes flag is passed", func() {
@@ -490,7 +512,7 @@ var _ = Describe("CommandFactory", func() {
 				"fun-org/app",
 			}
 
-			JustBeforeEach(func() {
+			BeforeEach(func() {
 				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 			})
 
@@ -540,7 +562,24 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
-		Context("polling for the app to start after desiring the app", func() {
+		Context("when the timeout flag is not passed", func() {
+			It("defaults the timeout to something reasonable", func() {
+				args := []string{
+					"app-to-timeout",
+					"fun-org/app",
+				}
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{StartCommand: []string{""}}, nil)
+				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
+				createDockerAppParams := appRunner.CreateDockerAppArgsForCall(0)
+				Expect(createDockerAppParams.Timeout).To(Equal(command_factory.DefaultPollingTimeout))
+			})
+		})
+
+		Describe("polling for the app to start after desiring the app", func() {
 			It("polls for the app to start with correct number of instances, outputting logs while the app starts", func() {
 				args := []string{
 					"--instances=10",
@@ -578,34 +617,43 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
 				Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
+				Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
 				Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io\n")))
 			})
 
-			It("alerts the user if the app does not start", func() {
-				args := []string{
-					"cool-web-app",
-					"superfun/app",
-					"--",
-					"/start-me-please",
-				}
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-				appExaminer.RunningAppInstancesInfoReturns(0, false, nil)
+			Context("when the app does not start before the timeout elapses", func() {
+				It("alerts the user the app took too long to start", func() {
+					args := []string{
+						"cool-web-app",
+						"superfun/app",
+						"--",
+						"/start-me-please",
+					}
+					dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+					appExaminer.RunningAppInstancesInfoReturns(0, false, nil)
 
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
+					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
 
-				Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
+					Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
+					Expect(outputBuffer).To(test_helpers.SayNewLine())
 
-				clock.IncrementBySeconds(10)
+					clock.IncrementBySeconds(120)
 
-				Eventually(commandFinishChan).Should(BeClosed())
+					Eventually(commandFinishChan).Should(BeClosed())
 
-				Expect(outputBuffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to start.")))
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
+					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to come up.")))
+					Expect(outputBuffer).To(test_helpers.SayNewLine())
+					Expect(outputBuffer).To(test_helpers.SayLine("This typically happens because docker layers can take time to download."))
+					Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still downloading your application in the background."))
+					Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs cool-web-app"))
+					Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
+					Expect(outputBuffer).To(test_helpers.Say("App will be reachable at:\n"))
+					Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io\n")))
+				})
 			})
 
 			Context("when there is a placement error when polling for the app to start", func() {
-				It("Prints an error message and exits", func() {
+				It("prints an error message and exits", func() {
 					args := []string{
 						"--instances=10",
 						"--ports=3000",
@@ -639,8 +687,7 @@ var _ = Describe("CommandFactory", func() {
 
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
 					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
-					Expect(outputBuffer).ToNot(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-					Expect(outputBuffer).ToNot(test_helpers.Say(colors.Red("cool-web-app took too long to start.\n")))
+					Expect(outputBuffer).ToNot(test_helpers.Say("Timed out waiting for the container"))
 				})
 			})
 		})
@@ -697,12 +744,12 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Error Creating App: Major Fault"))
+				Expect(outputBuffer).To(test_helpers.Say("Error creating app: Major Fault"))
 			})
 		})
 	})
 
-	Describe("CreateAppFromJson", func() {
+	Describe("CreateLrpCommand", func() {
 		var (
 			createLrpCommand cli.Command
 
@@ -717,7 +764,6 @@ var _ = Describe("CommandFactory", func() {
 				AppExaminer: appExaminer,
 				UI:          terminalUI,
 				DockerMetadataFetcher: dockerMetadataFetcher,
-				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   []string{},
 				Clock:                 clock,
@@ -728,7 +774,6 @@ var _ = Describe("CommandFactory", func() {
 
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			createLrpCommand = commandFactory.MakeCreateLrpCommand()
-
 		})
 
 		Context("when the json file exists", func() {
@@ -741,25 +786,28 @@ var _ = Describe("CommandFactory", func() {
 
 			It("creates an app from json", func() {
 				ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value"}`), 0700)
-
 				args := []string{tmpFile.Name()}
+
+				appRunner.CreateLrpReturns("my-json-app", nil)
 
 				test_helpers.ExecuteCommandWithArgs(createLrpCommand, args)
 
 				Expect(appRunner.CreateLrpCallCount()).To(Equal(1))
 				Expect(appRunner.CreateLrpArgsForCall(0)).To(Equal([]byte(`{"Value":"test value"}`)))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Green("Successfully submitted my-json-app.")))
+				Expect(outputBuffer).To(test_helpers.Say("To view the status of your application: ltc status my-json-app"))
+
 			})
 
 			It("prints an error returned by the app_runner", func() {
 				args := []string{
 					tmpFile.Name(),
 				}
-
-				appRunner.CreateLrpReturns(errors.New("some error"))
+				appRunner.CreateLrpReturns("app-that-broke", errors.New("some error"))
 
 				test_helpers.ExecuteCommandWithArgs(createLrpCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Error creating app: some error"))
+				Expect(outputBuffer).To(test_helpers.Say("Error creating app-that-broke: some error"))
 				Expect(appRunner.CreateLrpCallCount()).To(Equal(1))
 			})
 		})
@@ -793,7 +841,6 @@ var _ = Describe("CommandFactory", func() {
 				AppExaminer: appExaminer,
 				UI:          terminalUI,
 				DockerMetadataFetcher: dockerMetadataFetcher,
-				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   []string{},
 				Clock:                 clock,
@@ -854,26 +901,31 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("App Scaled Successfully")))
 		})
 
-		It("alerts the user if the app does not scale succesfully", func() {
-			appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+		Context("when the app does not scale before the timeout elapses", func() {
+			It("alerts the user the app took too long to scale", func() {
+				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+				args := []string{
+					"cool-web-app",
+					"22",
+				}
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 
-			args := []string{
-				"cool-web-app",
-				"22",
-			}
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
-			dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
+				Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
 
-			Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
+				clock.IncrementBySeconds(120)
 
-			clock.IncrementBySeconds(10)
+				Eventually(commandFinishChan).Should(BeClosed())
 
-			Eventually(commandFinishChan).Should(BeClosed())
-
-			Expect(outputBuffer).To(test_helpers.Say(colors.Red("cool-web-app took too long to scale.")))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to scale.")))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still scaling your application in the background."))
+				Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs cool-web-app"))
+				Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+			})
 		})
 
 		Context("when the receptor returns errors", func() {
@@ -882,8 +934,8 @@ var _ = Describe("CommandFactory", func() {
 					"cool-web-app",
 					"22",
 				}
-
 				appRunner.ScaleAppReturns(errors.New("Major Fault"))
+
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Error Scaling App to 22 instances: Major Fault"))
@@ -955,8 +1007,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
 				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
-				Expect(outputBuffer).ToNot(test_helpers.Say(colors.Green("App Scaled Successfully.")))
-				Expect(outputBuffer).ToNot(test_helpers.Say(colors.Red("cool-web-app took too long to scale.")))
+				Expect(outputBuffer).ToNot(test_helpers.Say("Timed out waiting for the container"))
 			})
 		})
 	})
@@ -970,7 +1021,6 @@ var _ = Describe("CommandFactory", func() {
 				AppExaminer: appExaminer,
 				UI:          terminalUI,
 				DockerMetadataFetcher: dockerMetadataFetcher,
-				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   []string{},
 				Clock:                 clock,
@@ -1087,7 +1137,6 @@ var _ = Describe("CommandFactory", func() {
 				AppExaminer: appExaminer,
 				UI:          terminalUI,
 				DockerMetadataFetcher: dockerMetadataFetcher,
-				Timeout:               timeout,
 				Domain:                domain,
 				Env:                   []string{},
 				Clock:                 clock,
@@ -1098,7 +1147,7 @@ var _ = Describe("CommandFactory", func() {
 			removeCommand = commandFactory.MakeRemoveAppCommand()
 		})
 
-		It("removes a app", func() {
+		It("removes an app", func() {
 			args := []string{
 				"cool",
 			}
@@ -1142,62 +1191,73 @@ var _ = Describe("CommandFactory", func() {
 			Eventually(outputBuffer).Should(test_helpers.Say(colors.Green("Successfully Removed cool.")))
 		})
 
-		It("alerts the user if the app does not remove", func() {
-			appExaminer.AppExistsReturns(true, nil)
+		Context("when the app is not removed before the timeout elapses", func() {
+			It("alerts the user the app took too long to remove", func() {
+				appExaminer.AppExistsReturns(true, nil)
+				args := []string{
+					"cool-web-app",
+				}
 
-			args := []string{
-				"cool-web-app",
-			}
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
 
-			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
+				Eventually(outputBuffer).Should(test_helpers.Say("Removing cool-web-app"))
 
-			Eventually(outputBuffer).Should(test_helpers.Say("Removing cool-web-app"))
+				clock.IncrementBySeconds(120)
 
-			clock.IncrementBySeconds(10)
+				Eventually(commandFinishChan).Should(BeClosed())
 
-			Eventually(commandFinishChan).Should(BeClosed())
-
-			Expect(outputBuffer).To(test_helpers.Say(colors.Red("Failed to remove cool-web-app.")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to shut down.")))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.SayLine("Lattice will continue to shut down your container in the background."))
+				Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
+			})
 		})
 
-		It("alerts the user if the app runner returns an error", func() {
-			appExaminer.AppExistsReturns(false, errors.New("Something Bad"))
+		Context("invalid syntax", func() {
+			It("validates that the name is passed in", func() {
+				args := []string{
+					"",
+				}
 
-			args := []string{
-				"cool-web-app",
-			}
+				test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
-			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
-
-			Eventually(outputBuffer).Should(test_helpers.Say("Removing cool-web-app"))
-
-			clock.IncrementBySeconds(10)
-
-			Eventually(commandFinishChan).Should(BeClosed())
-			Expect(outputBuffer).To(test_helpers.Say(colors.Red("Failed to remove cool-web-app.")))
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
+				Expect(appRunner.RemoveAppCallCount()).To(Equal(0))
+			})
 		})
 
-		It("validates that the name is passed in", func() {
-			args := []string{
-				"",
-			}
+		Context("when the receptor returns an error", func() {
+			It("outputs error messages when trying to remove the app", func() {
+				args := []string{
+					"cool-web-app",
+				}
+				appRunner.RemoveAppReturns(errors.New("Major Fault"))
 
-			test_helpers.ExecuteCommandWithArgs(removeCommand, args)
+				test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
-			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
-			Expect(appRunner.RemoveAppCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say("Error Stopping App: Major Fault"))
+			})
+
+			It("reports a timeout when polling for the remove errors out", func() {
+				args := []string{
+					"cool-web-app",
+				}
+				appExaminer.AppExistsReturns(false, errors.New("Something Bad"))
+
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
+
+				Eventually(outputBuffer).Should(test_helpers.Say("Removing cool-web-app"))
+
+				clock.IncrementBySeconds(120)
+
+				Eventually(commandFinishChan).Should(BeClosed())
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to shut down.")))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.SayLine("Lattice will continue to shut down your container in the background."))
+				Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
+			})
 		})
 
-		It("outputs error messages", func() {
-			args := []string{
-				"cool-web-app",
-			}
-
-			appRunner.RemoveAppReturns(errors.New("Major Fault"))
-			test_helpers.ExecuteCommandWithArgs(removeCommand, args)
-
-			Expect(outputBuffer).To(test_helpers.Say("Error Stopping App: Major Fault"))
-		})
 	})
-
 })

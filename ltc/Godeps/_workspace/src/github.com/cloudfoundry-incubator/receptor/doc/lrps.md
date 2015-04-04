@@ -21,11 +21,10 @@ When desiring an LRP you `POST` a valid `DesiredLRPCreateRequest`.  The [API ref
     "process_guid": "some-guid",
     "domain": "some-domain",
 
-    "stack": "lucid64",
-
     "instances": 17,
 
-    "rootfs": "docker:///docker-org/docker-image",
+    "rootfs": "VALID-ROOTFS",
+
     "env": [
         {"name": "ENV_NAME_A", "value": "ENV_VALUE_A"},
         {"name": "ENV_NAME_B", "value": "ENV_VALUE_B"}
@@ -93,13 +92,7 @@ The consumer of Diego may organize their LRPs into groupings called Domains.  Th
 
 #### LRP Placement
 
-In the future Diego will support the notion of Placement Pools via arbitrary tags associated with Cells.  For now, this functionality is limited to the notion of `stack`.
-
-#### `stack` [required]
-
-Diego can support different target platforms (linux, windows, etc.). `stack` allows you to select which target platform the Task must run against.  For a typical Diego deployment you should set `stack` to `lucid64`
-
-- It is an error to provide an empty `stack`.
+In the future Diego will support the notion of Placement Pools via arbitrary tags associated with Cells.
 
 #### Instances
 
@@ -109,11 +102,24 @@ Diego can run and manage multiple instances (`ActualLRP`s) for each `DesiredLRP`
 
 #### Container Contents and Environment
 
-#### `rootfs` [optional]
+#### `rootfs` [required]
 
-By default, when provisioning a container Diego will mount a pre-configured root filesystem.  Currently, the default filesystem provided by [diego-release](https://github.com/cloudfoundry-incubator/diego-release) is based on lucid64 and is geared towards supporting the Cloud Foundry buildpacks.
+The `rootfs` field specifies the root filesystem to mount into the container.  Diego can be configured with a set of *preloaded* RootFSes.  These are named root filesystems that are already on the Diego Cells.
 
-It is possible, however, to provide a custom root filesystem by specifying a Docker image for `rootfs`:
+Preloaded root filesystems look like:
+
+```
+"rootfs": "preloaded:ROOTFS-NAME"
+```
+
+On Cloud Foundry, Diego ships with two root filesystems:
+```
+"rootfs": "preloaded:lucid64"
+"rootfs": "preloaded:cflinuxfs2"
+```
+these are built to work with the Cloud Foundry buildpacks.
+
+It is possible to provide a custom root filesystem by specifying a Docker image for `rootfs`:
 
 ```
 "rootfs": "docker:///docker-org/docker-image#docker-tag"
@@ -127,7 +133,7 @@ To pull the image from a different registry than the default (Docker Hub), speci
 
 > You *must* specify the dockerimage `rootfs` uri as specified, including the leading `docker://`!
 
-> [Lattice](https://github.com/pivotal-cf-experimental/lattice) does not ship with a default rootfs. You must specify a Docker image when using Lattice. You can mount the filesystem provided by diego-release by specifying `"rootfs": "docker:///cloudfoundry/lucid64"` or `"rootfs": "docker:///cloudfoundry/trusty64"`.
+> [Lattice](https://github.com/pivotal-cf-experimental/lattice) does not ship with any preloaded root filesystems. You must specify a Docker image when using Lattice. You can mount the filesystem provided by diego-release by specifying `"rootfs": "docker:///cloudfoundry/lucid64"` or `"rootfs": "docker:///cloudfoundry/cflinuxfs2"`.
 
 #### `env` [optional]
 
@@ -315,14 +321,23 @@ It is possible, however, to dynamically modify the number of instances, and the 
 ```
 {
     "instances": 17,
-    "routes": ["a.example.com", "b.example.com"],
+    "routes": {
+        "cf-router": [
+            {
+                "hostnames": ["a.example.com", "b.example.com"],
+                "port": 8080
+            }, {
+                "hostnames": ["c.example.com"],
+                "port": 5050
+            }
+        ],
+        "router-key": "any opaque json payload"
+    },
     "annotation": "arbitrary metadata"
 }
 ```
 
 These may be provided simultaneously in one request, or independendantly over several requests.
-
-> Note, while it is recommended that an update to a `DesiredLRP` be explicitly provided as a `DesiredLRPUpdateRequest`, the API does allow consumers to re-`POST` an existing `DesiredLRP`.  In such cases, the API will validate that only the mutable fields (i.e. fields also present in `DesiredLRPUpdateRequest`) have changed.
 
 ### Monitoring Health
 

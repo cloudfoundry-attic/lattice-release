@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
@@ -20,7 +21,7 @@ const (
 //go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 type AppRunner interface {
 	CreateDockerApp(params CreateDockerAppParams) error
-	CreateLrp(createLrpJson []byte) error
+	CreateLrp(createLrpJson []byte) (string, error)
 	ScaleApp(name string, instances int) error
 	UpdateAppRoutes(name string, routes RouteOverrides) error
 	RemoveApp(name string) error
@@ -57,6 +58,7 @@ type CreateDockerAppParams struct {
 	Ports                PortConfig
 	WorkingDir           string
 	RouteOverrides       RouteOverrides
+	Timeout              time.Duration
 }
 
 const (
@@ -90,30 +92,31 @@ func (appRunner *appRunner) CreateDockerApp(params CreateDockerAppParams) error 
 	return appRunner.desireLrp(params)
 }
 
-func (appRunner *appRunner) CreateLrp(createLrpJson []byte) error {
+func (appRunner *appRunner) CreateLrp(createLrpJson []byte) (string, error) {
 
 	desiredLRP := receptor.DesiredLRPCreateRequest{}
 
 	err := json.Unmarshal(createLrpJson, &desiredLRP)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if desiredLRP.ProcessGuid == reserved_app_ids.LatticeDebugLogStreamAppId {
-		return errors.New(AttemptedToCreateLatticeDebugErrorMessage)
+		return desiredLRP.ProcessGuid, errors.New(AttemptedToCreateLatticeDebugErrorMessage)
 	}
 
 	if exists, err := appRunner.desiredLRPExists(desiredLRP.ProcessGuid); err != nil {
-		return err
+		return desiredLRP.ProcessGuid, err
 	} else if exists {
-		return newExistingAppError(desiredLRP.ProcessGuid)
+		return desiredLRP.ProcessGuid, newExistingAppError(desiredLRP.ProcessGuid)
 	}
 
 	if err := appRunner.receptorClient.UpsertDomain(lrpDomain, 0); err != nil {
-		return err
+		return desiredLRP.ProcessGuid, err
 	}
 
-	return appRunner.receptorClient.CreateDesiredLRP(desiredLRP)
+	err = appRunner.receptorClient.CreateDesiredLRP(desiredLRP)
+	return desiredLRP.ProcessGuid, err
 }
 
 func (appRunner *appRunner) ScaleApp(name string, instances int) error {

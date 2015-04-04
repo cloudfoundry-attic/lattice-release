@@ -19,7 +19,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
-	"github.com/cloudfoundry-incubator/runtime-schema/models/factories"
+	"github.com/nu7hatch/gouuid"
 )
 
 var (
@@ -88,12 +88,15 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 			)
 
 			BeforeEach(func() {
-				appName = fmt.Sprintf("lattice-test-app-%s", factories.GenerateGuid())
+				appGuid, err := uuid.NewV4()
+				Expect(err).ToNot(HaveOccurred())
+
+				appName = fmt.Sprintf("lattice-test-app-%s", appGuid.String())
 				route = fmt.Sprintf("%s.%s", appName, runner.config.Target())
 			})
 
 			AfterEach(func() {
-				runner.removeApp(timeout, appName)
+				runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
 
 				Eventually(errorCheckForRoute(route), timeout, 1).Should(HaveOccurred())
 			})
@@ -102,7 +105,7 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 				debugLogsStream := runner.streamDebugLogs(timeout)
 				defer func() { debugLogsStream.Terminate().Wait() }()
 
-				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app", "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Lattice User", "--quiet")
+				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app", fmt.Sprintf("--timeout=%s", timeout.String()), "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Lattice User", "--quiet")
 
 				Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
@@ -116,7 +119,7 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 
 				Eventually(logsStream.Out, timeout).Should(gbytes.Say("LATTICE-TEST-APP. Says Hello Lattice User."))
 
-				runner.scaleApp(timeout, appName)
+				runner.scaleApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
 
 				instanceCountChan := make(chan int, numCpu)
 				go countInstances(route, instanceCountChan)
@@ -135,7 +138,7 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 func (runner *integrationTestRunner) createDockerApp(timeout time.Duration, appName string, args ...string) {
 	fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to create %s", appName))+"\n")
 	createArgs := append([]string{"create", appName}, args...)
-	command := runner.command(timeout, createArgs...)
+	command := runner.command(createArgs...)
 
 	session, err := gexec.Start(command, getStyledWriter("create"), getStyledWriter("create"))
 
@@ -146,9 +149,9 @@ func (runner *integrationTestRunner) createDockerApp(timeout time.Duration, appN
 	fmt.Fprintf(getStyledWriter("test"), "Yay! Created %s\n", appName)
 }
 
-func (runner *integrationTestRunner) streamLogs(timeout time.Duration, appName string) *gexec.Session {
+func (runner *integrationTestRunner) streamLogs(timeout time.Duration, appName string, args ...string) *gexec.Session {
 	fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to stream logs from %s", appName))+"\n")
-	command := runner.command(timeout, "logs", appName)
+	command := runner.command("logs", appName)
 
 	session, err := gexec.Start(command, getStyledWriter("logs"), getStyledWriter("logs"))
 
@@ -156,9 +159,9 @@ func (runner *integrationTestRunner) streamLogs(timeout time.Duration, appName s
 	return session
 }
 
-func (runner *integrationTestRunner) streamDebugLogs(timeout time.Duration) *gexec.Session {
+func (runner *integrationTestRunner) streamDebugLogs(timeout time.Duration, args ...string) *gexec.Session {
 	fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to stream cluster debug logs"))+"\n")
-	command := runner.command(timeout, "debug-logs")
+	command := runner.command("debug-logs")
 
 	session, err := gexec.Start(command, getStyledWriter("debug"), getStyledWriter("debug"))
 
@@ -166,9 +169,9 @@ func (runner *integrationTestRunner) streamDebugLogs(timeout time.Duration) *gex
 	return session
 }
 
-func (runner *integrationTestRunner) scaleApp(timeout time.Duration, appName string) {
+func (runner *integrationTestRunner) scaleApp(timeout time.Duration, appName string, args ...string) {
 	fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to scale %s", appName))+"\n")
-	command := runner.command(timeout, "scale", appName, "3")
+	command := runner.command("scale", appName, "3")
 
 	session, err := gexec.Start(command, getStyledWriter("scale"), getStyledWriter("scale"))
 
@@ -176,9 +179,9 @@ func (runner *integrationTestRunner) scaleApp(timeout time.Duration, appName str
 	expectExit(timeout, session)
 }
 
-func (runner *integrationTestRunner) removeApp(timeout time.Duration, appName string) {
+func (runner *integrationTestRunner) removeApp(timeout time.Duration, appName string, args ...string) {
 	fmt.Fprintf(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to remove %s", appName))+"\n")
-	command := runner.command(timeout, "remove", appName)
+	command := runner.command("remove", appName)
 
 	session, err := gexec.Start(command, getStyledWriter("remove"), getStyledWriter("remove"))
 
@@ -187,12 +190,11 @@ func (runner *integrationTestRunner) removeApp(timeout time.Duration, appName st
 }
 
 //TODO: add subcommand string param
-func (runner *integrationTestRunner) command(timeout time.Duration, arg ...string) *exec.Cmd {
+func (runner *integrationTestRunner) command(arg ...string) *exec.Cmd {
 	command := exec.Command(runner.ltcExecutablePath, arg...)
 	appName := "APP_NAME=LATTICE-TEST-APP"
 	cliHome := fmt.Sprintf("LATTICE_CLI_HOME=%s", runner.latticeCliHome)
-	cliTimeout := fmt.Sprintf("LATTICE_CLI_TIMEOUT=%d", int(timeout.Seconds()))
-	command.Env = []string{cliHome, appName, cliTimeout}
+	command.Env = []string{cliHome, appName}
 	return command
 }
 

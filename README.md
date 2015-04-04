@@ -3,7 +3,7 @@
 <table>
   <tr>
     <td>
-      <a href="http://lattice.cf"><img src="https://github.com/cloudfoundry-incubator/lattice/raw/develop/logos/lattice.jpg" align="left" height="200" width="200" ></a>
+      <a href="http://lattice.cf"><img src="https://github.com/cloudfoundry-incubator/lattice/raw/develop/logos/lattice.png" align="left" width="200" ></a>
     </td>
     <td>
       Website: <a href="http://lattice.cf">http://lattice.cf</a><br>
@@ -55,7 +55,7 @@ ltc target 192.168.11.11.xip.io
 
 ## Using Different Providers
 
-You can do this with either VMware Fusion or VirtualBox:
+You can do this with either VirtualBox or VMware Fusion (version 7 or later):
 
 Virtualbox:
 
@@ -120,9 +120,9 @@ Here are some step-by-step instructions for deploying a Lattice cluster via Terr
 2. Select the Lattice version you wish to deploy and download the Terraform example file for your target platform.  The filename will be `lattice.<platform>.tf`
 3. Create an empty folder and place the `lattice.<platform>.tf` file in that folder.
 4. Update the `lattice.<platform>.tf` by filling in the values for the variables. Instructions for each supported platform are here:
-  - [Amazon Web Services](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md)
-  - [DigitalOcean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md)
-  - [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md)
+  - [Amazon Web Services](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md#configure)
+  - [DigitalOcean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md#configure)
+  - [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md#configure)
 5. Run the following commands in the folder containing the `lattice.<platform>.tf` file
 
   ```bash

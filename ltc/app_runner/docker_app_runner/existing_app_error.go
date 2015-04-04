@@ -9,5 +9,5 @@ func newExistingAppError(appName string) existingAppError {
 }
 
 func (appName existingAppError) Error() string {
-	return fmt.Sprintf("App %s, is already running", string(appName))
+	return fmt.Sprintf("%s is already running", string(appName))
 }

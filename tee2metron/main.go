@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/cloudfoundry/dropsonde"
-	"github.com/cloudfoundry/dropsonde/logs"
 	"io"
 	"os"
 	"os/exec"
+
+	"github.com/cloudfoundry/dropsonde"
+	"github.com/cloudfoundry/dropsonde/logs"
 )
 
 var dropsondeDestination, sourceInstance string
