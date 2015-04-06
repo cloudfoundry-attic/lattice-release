@@ -1,0 +1,108 @@
+---
+title: Private Docker Registry
+weight: 7
+doc_subnav: true
+---
+
+# Private Docker Registries
+
+## How to use Lattice with a private Docker Registry
+
+Lattice can be used with an insecure private Docker Registry following a few simple configuration steps.
+
+## boot2docker Configuration
+
+The following assumes:
+
+* using [http://boot2docker.io/](http://boot2docker.io/)
+* using port 5000 to run a private docker registry image on the boot2docker vm
+* using IP 192.168.59.103 for boot2docker, find the ip on your boo2docker vm with `boot2docker ip`
+
+Use `boot2docker ssh` to create the file `/var/lib/boot2docker/profile` with the contents:
+
+```
+EXTRA_ARGS="--insecure-registry 192.168.59.103:5000"
+```
+
+After the edits it should look like this:
+
+```
+# cat /var/lib/boot2docker/profile
+EXTRA_ARGS="--insecure-registry 192.168.59.103:5000"
+```
+
+After editing the file, restart docker on boot2docker with:
+
+`sudo /etc/init.d/docker restart`
+
+Run the private docker registry on boot2docker:
+
+```
+docker run -p 5000:5000 registry
+```
+
+## lattice VM configuration
+
+The following assumes using the local Vagrant VM. If you are using a distributed cloud deployment of lattice, you will need to make these changes on each Cell.
+
+ssh to the VM with `vagrant ssh` from the directory with the Vagrantfile
+
+On the lattice VM, add the following option for garden-linux in `/etc/init/garden-linux.conf`:
+
+```
+-insecureDockerRegistryList="192.168.59.103:5000"
+```
+
+## Use an example docker image from the private registry
+
+Pull the lattice-app image from DockerHub and push it to the local private registry:
+
+    docker run --rm -i -t -p 8080:8080 -e INSTANCE_INDEX=0 -e PORT=8080 cloudfoundry/lattice-app /lattice-app
+
+    // get the image id
+    docker images
+    REPOSITORY                        TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+    registry                          latest              e33e81d7024c        10 days ago         413.7 MB
+    cloudfoundry/lattice-app          latest              29d531509fb1        3 months ago        19.23 MB
+
+    // tag the image id to the private registry location
+    docker tag 29d531509fb1 192.168.59.103:5000/lattice-app
+
+    // push the image to the private registry
+    docker push 192.168.59.103:5000/lattice-app
+
+Now post JSON referencing the private docker registry. See [this example json](https://gist.github.com/jbayer/9497299cd00aee5ecefe#file-private-lattice-json-L29) for the desired LRP message.
+
+Note the private docker registry syntax. Save the `private-lattice.json` file somewhere.
+
+Open up two ltc shells, optionally using [veritas](https://github.com/pivotal-cf-experimental/veritas) for pretty print of the lattice component logs:
+
+    ltc debug-logs | veritas chug
+    ltc logs lattice-app
+
+Post the `private-lattice.json` to the receptor API endpoint with the private docker registry syntax, look for a 201 response code and see that the LRP is listed:
+
+    curl -X POST -d @/Users/jamesbayer/Downloads/private-lattice.json http://receptor.192.168.11.11.xip.io/v1/desired_lrps -vvv
+    * Hostname was NOT found in DNS cache
+    *   Trying 192.168.11.11...
+    * Connected to receptor.192.168.11.11.xip.io (192.168.11.11) port 80 (#0)
+    > POST /v1/desired_lrps HTTP/1.1
+    > User-Agent: curl/7.37.1
+    > Host: receptor.192.168.11.11.xip.io
+    > Accept: */*
+    > Content-Length: 866
+    > Content-Type: application/x-www-form-urlencoded
+    >
+    * upload completely sent off: 866 out of 866 bytes
+    < HTTP/1.1 201 Created
+    < Content-Length: 0
+    < Content-Type: text/plain; charset=utf-8
+    < Date: Tue, 31 Mar 2015 05:56:52 GMT
+    < X-Cf-Requestid: e22dabaf-e809-4508-733b-e8da82539e96
+    <
+    * Connection #0 to host receptor.192.168.11.11.xip.io left intact
+    $ ltc list
+    App Name	Instances	DiskMB		MemoryMB	Route
+    lattice-app	1/1		1024		128		lattice-app.192.168.11.11.xip.io, lattice-app-8080.192.168.11.11.xip.io => 8080
+
+If there is a problem, the `ltc debug-logs` shell should show more detail about the problem.
