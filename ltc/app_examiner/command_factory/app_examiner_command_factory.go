@@ -178,7 +178,7 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 		case <-factory.clock.NewTimer(rateFlag).C():
 			appInfo, err = factory.appExaminer.AppStatus(appName)
 			if err != nil {
-				factory.ui.Say("Error showing status: " + err.Error())
+				factory.ui.Say("Error getting status: " + err.Error())
 				return
 			}
 			factory.ui.Say(cursor.Up(linesWritten))
