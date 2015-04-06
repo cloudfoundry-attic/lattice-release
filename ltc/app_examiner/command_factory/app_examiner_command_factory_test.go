@@ -155,6 +155,11 @@ var _ = Describe("CommandFactory", func() {
 		Context("When a rate flag is provided", func() {
 			var closeChan chan struct{}
 
+			AfterEach(func() {
+				go exitHandler.Exit(exit_codes.SigInt)
+				Eventually(closeChan).Should(BeClosed())
+			})
+
 			It("dynamically displays the visualization", func() {
 				setNumberOfRunningInstances := func(count int) {
 					appExaminer.ListCellsReturns([]app_examiner.CellInfo{app_examiner.CellInfo{CellID: "cell-0", RunningInstances: count}, app_examiner.CellInfo{CellID: "cell-1", RunningInstances: count, Missing: true}}, nil)
@@ -171,7 +176,7 @@ var _ = Describe("CommandFactory", func() {
 
 				clock.IncrementBySeconds(1)
 
-				Consistently(outputBuffer).ShouldNot(test_helpers.Say("cell: \n"))
+				Consistently(outputBuffer).ShouldNot(test_helpers.Say("cell: \n")) // TODO: how would this happen
 
 				clock.IncrementBySeconds(1)
 
@@ -204,11 +209,6 @@ var _ = Describe("CommandFactory", func() {
 				exitHandler.Exit(exit_codes.SigInt)
 
 				Expect(outputBuffer).Should(test_helpers.Say(cursor.Show()))
-			})
-
-			AfterEach(func() {
-				go exitHandler.Exit(exit_codes.SigInt)
-				Eventually(closeChan).Should(BeClosed())
 			})
 		})
 
@@ -443,7 +443,8 @@ var _ = Describe("CommandFactory", func() {
 				closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate", "2s"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
-				Eventually(outputBuffer).Should(test_helpers.Say("1982-09-17 09:23:47 (CDT)"))
+				prettyTimestamp := time.Unix(0, 401120627*1e9).Format(command_factory.TimestampDisplayLayout)
+				Eventually(outputBuffer).Should(test_helpers.Say(prettyTimestamp))
 
 				clock.IncrementBySeconds(1)
 
@@ -469,7 +470,8 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(24)))
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
-				Eventually(outputBuffer).Should(test_helpers.Say("1982-11-03 23:09:27 (CST)"))
+				prettyTimestamp = time.Unix(0, 405234567*1e9).Format(command_factory.TimestampDisplayLayout)
+				Eventually(outputBuffer).Should(test_helpers.Say(prettyTimestamp))
 			})
 
 			It("dynamically displays any errors", func() {
