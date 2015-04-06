@@ -2,6 +2,7 @@ package command_factory_test
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -22,6 +23,8 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock/fakeclock"
 )
+
+const TerminalEsc = "\033["
 
 var _ = Describe("CommandFactory", func() {
 
@@ -193,7 +196,7 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.ClearToEndOfDisplay()))
 			})
 
-			It("Ensures the user's cursor is visible even if they interrupt ltc", func() {
+			It("ensures the user's cursor is visible even if they interrupt ltc", func() {
 				closeChan = test_helpers.AsyncExecuteCommandWithArgs(visualizeCommand, []string{"--rate=1s"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
@@ -419,6 +422,83 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("CRASHED"))
 				Expect(outputBuffer).To(test_helpers.Say("7"))
 
+			})
+		})
+
+		Context("when a rate flag is passed", func() {
+
+			var closeChan chan struct{}
+
+			AfterEach(func() {
+				go exitHandler.Exit(exit_codes.SigInt)
+				Eventually(closeChan).Should(BeClosed())
+
+				_, err := fmt.Print(cursor.Show())
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("refreshes for the designated time", func() {
+				appExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+				closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate", "2s"})
+
+				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
+				Eventually(outputBuffer).Should(test_helpers.Say("1982-09-17 09:23:47 (CDT)"))
+
+				clock.IncrementBySeconds(1)
+
+				Consistently(outputBuffer).ShouldNot(test_helpers.Say("wompy-app"))
+
+				refreshAppInfo := app_examiner.AppInfo{
+					ProcessGuid:            "wompy-app",
+					DesiredInstances:       1,
+					ActualRunningInstances: 1,
+					ActualInstances: []app_examiner.InstanceInfo{
+						app_examiner.InstanceInfo{
+							InstanceGuid: "a0s9f-u9a8sf-aasdioasdjoi",
+							Index:        1,
+							State:        "RUNNING",
+							Since:        405234567 * 1e9,
+						},
+					},
+				}
+				appExaminer.AppStatusReturns(refreshAppInfo, nil)
+
+				clock.IncrementBySeconds(1)
+
+				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
+				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(24)))
+				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
+				Eventually(outputBuffer).Should(test_helpers.Say("1982-11-03 23:09:27 (CST)"))
+			})
+
+			It("dynamically displays any errors", func() {
+				appExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+				closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate", "1s"})
+
+				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
+				Expect(outputBuffer).ToNot(test_helpers.Say("Error getting status"))
+
+				appExaminer.AppStatusReturns(app_examiner.AppInfo{}, errors.New("error fetching status"))
+
+				clock.IncrementBySeconds(1)
+
+				Eventually(closeChan).Should(BeClosed())
+
+				Expect(outputBuffer).ToNot(test_helpers.Say(TerminalEsc + "\\d+A"))
+				Expect(outputBuffer).To(test_helpers.Say("Error getting status: error fetching status"))
+			})
+
+			Context("when the user interrupts ltc status with ctrl-c", func() {
+				It("ensures the user's cursor is still visible", func() {
+					closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate=1s"})
+
+					Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
+
+					exitHandler.Exit(exit_codes.SigInt)
+					Expect(outputBuffer).To(test_helpers.Say(cursor.Show()))
+				})
 			})
 		})
 

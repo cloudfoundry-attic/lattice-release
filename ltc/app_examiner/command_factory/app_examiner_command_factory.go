@@ -88,6 +88,10 @@ func (factory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
 			Name:  "summary, s",
 			Usage: "Summarizes the app instances",
 		},
+		cli.DurationFlag{
+			Name:  "rate, r",
+			Usage: "Status refresh rate (e.g., \".5s\" or \"10ms\")",
+		},
 	}
 
 	return cli.Command{
@@ -131,6 +135,7 @@ func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 
 func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 	summaryFlag := context.Bool("summary")
+	rateFlag := context.Duration("rate")
 
 	if len(context.Args()) < 1 {
 		factory.ui.IncorrectUsage("App Name required")
@@ -147,14 +152,46 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 
 	factory.printAppInfo(appInfo)
 
-	if summaryFlag {
+	if summaryFlag || rateFlag != 0 {
 		factory.printInstanceSummary(appInfo.ActualInstances)
 	} else {
 		factory.printInstanceInfo(appInfo.ActualInstances)
 	}
+
+	if rateFlag == 0 {
+		return
+	}
+
+	linesWritten := appStatusLinesWritten(appInfo)
+	closeChan := make(chan struct{})
+	factory.ui.Say(cursor.Hide())
+
+	factory.exitHandler.OnExit(func() {
+		closeChan <- struct{}{}
+		factory.ui.Say(cursor.Show())
+	})
+
+	for {
+		select {
+		case <-closeChan:
+			return
+		case <-factory.clock.NewTimer(rateFlag).C():
+			appInfo, err = factory.appExaminer.AppStatus(appName)
+			if err != nil {
+				factory.ui.Say("Error showing status: " + err.Error())
+				return
+			}
+			factory.ui.Say(cursor.Up(linesWritten))
+			factory.printAppInfo(appInfo)
+			factory.printInstanceSummary(appInfo.ActualInstances)
+			linesWritten = appStatusLinesWritten(appInfo)
+		}
+	}
 }
 
 func (factory *AppExaminerCommandFactory) printAppInfo(appInfo app_examiner.AppInfo) {
+	factory.ui.Say(cursor.ClearToEndOfDisplay())
+
 	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)
 
 	titleBar := func(title string) {
@@ -196,18 +233,30 @@ func (factory *AppExaminerCommandFactory) printAppInfo(appInfo app_examiner.AppI
 	w.Flush()
 }
 
+func appStatusLinesWritten(appInfo app_examiner.AppInfo) int {
+	linesWritten := 9
+	for _, appRoute := range appInfo.Routes {
+		linesWritten += len(appRoute.Hostnames)
+	}
+	linesWritten += 3
+	linesWritten += len(appInfo.EnvironmentVariables)
+	linesWritten += 4
+	linesWritten += len(appInfo.ActualInstances)
+	return linesWritten
+}
+
 func (factory *AppExaminerCommandFactory) printInstanceSummary(actualInstances []app_examiner.InstanceInfo) {
 	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)
 
 	printHorizontalRule(w, "=")
-	fmt.Fprintf(w, fmt.Sprintf("%s\t%s\t%s\t%s\n", "Instance", "State", "Crashes", "Since"))
+	fmt.Fprintf(w, fmt.Sprintf("%s\t%s\t%s\t%s\n", "Instance", colors.NoColor("State")+"    ", "Crashes", "Since"))
 	printHorizontalRule(w, "-")
 
 	for _, instance := range actualInstances {
 		if instance.PlacementError == "" && instance.State != "CRASHED" {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", strconv.Itoa(instance.Index), instance.State, strconv.Itoa(instance.CrashCount), fmt.Sprint(time.Unix(0, instance.Since).Format(TimestampDisplayLayout)))
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", strconv.Itoa(instance.Index), presentation.PadAndColorInstanceState(instance), strconv.Itoa(instance.CrashCount), fmt.Sprint(time.Unix(0, instance.Since).Format(TimestampDisplayLayout)))
 		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", strconv.Itoa(instance.Index), instance.State, strconv.Itoa(instance.CrashCount), "N/A")
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", strconv.Itoa(instance.Index), presentation.PadAndColorInstanceState(instance), strconv.Itoa(instance.CrashCount), "N/A")
 		}
 	}
 
@@ -215,7 +264,7 @@ func (factory *AppExaminerCommandFactory) printInstanceSummary(actualInstances [
 }
 
 func (factory *AppExaminerCommandFactory) printInstanceInfo(actualInstances []app_examiner.InstanceInfo) {
-	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)	
+	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)
 
 	instanceBar := func(index, state string) {
 		fmt.Fprintf(w, "%sInstance %s  [%s]\n", indentHeading, index, state)
@@ -225,6 +274,7 @@ func (factory *AppExaminerCommandFactory) printInstanceInfo(actualInstances []ap
 	printHorizontalRule(w, "=")
 
 	for _, instance := range actualInstances {
+
 		instanceBar(fmt.Sprint(instance.Index), presentation.ColorInstanceState(instance))
 
 		if instance.PlacementError == "" && instance.State != "CRASHED" {

@@ -1,6 +1,9 @@
 package presentation
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry-incubator/receptor"
@@ -26,4 +29,13 @@ func ColorInstanceState(instanceInfo app_examiner.InstanceInfo) string {
 	}
 
 	return colorFunc(string(instanceInfo.State))
+}
+
+func PadAndColorInstanceState(instanceInfo app_examiner.InstanceInfo) string {
+	padLength := 0
+	if len(ColorInstanceState(instanceInfo)) < len(colors.NoColor("UNCLAIMED")) {
+		padLength = len("UNCLAIMED") - len(instanceInfo.State)
+	}
+
+	return fmt.Sprintf("%s%s", ColorInstanceState(instanceInfo), strings.Repeat(" ", padLength))
 }
