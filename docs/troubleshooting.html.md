@@ -39,6 +39,10 @@ There are two remaining areas of Docker compatbility that we are working on:
 
 Here are a few pointers to help you debug and fix some common issues:
 
+### Increase `ltc`'s Timeout
+
+`ltc create` will wait up to one minute for your application to start.  If this fails it may be that your Docker container is large and has not downloaded yet.  You can set the `LATTICE_CLI_TIMEOUT` environment variable (in seconds) to instruct `ltc` to wait longer.  Note that `ltc` does not remove your application when this timeout occurs, so your application may eventually start in the background.
+
 ### Increase Memory and Disk Limits
 
 By default, `ltc` applies a memory limit of 128MB and a disk limit of 1024MB to the container.  If your process is exiting prematurely it may be attempting to consume more than 128MB of memory.  You can increase the limit using the `--memory-mb` flag.  To turn off memory and disk limits set `--memory-mb` and `--disk-mb` to `0`.
@@ -49,7 +53,7 @@ By default, `ltc` applies a memory limit of 128MB and a disk limit of 1024MB to 
 
 ### Run as Root
 
-Lattice runs the process in your Docker image as an unprivileged user.  Sometimes this user does not have privileges to execue the requested process - you can try using the `--run-as-root` flag to get around this limitation.
+Lattice runs the process in your Docker image as an unprivileged user.  Sometimes this user does not have privileges to execute the requested process - you can try using the `--run-as-root` flag to get around this limitation.
 
 > We have plans to build more robust support for specifying the user/uid/group/gid to run the container as.
 
@@ -63,7 +67,7 @@ If you're still stuck you can try streaming the Lattice debug-logs with `ltc deb
 
 ## How do I communicate with my containers over TCP?
 
-THe Lattice router only supports HTTP communication at this time.  If you would like to use TCP instead you will need to communicate with the container by IP and port, which you can get via `ltc status`.  For a local vagrant deployed Lattice, the containers can be reached at `192.168.11.11`.  On AWS, you will need to configure your ELB to route traffic to the Cells in your VPC.
+The Lattice router only supports HTTP communication at this time.  If you would like to use TCP instead you will need to communicate with the container by IP and port, which you can get via `ltc status`.  For a local vagrant deployed Lattice, the containers can be reached at `192.168.11.11`.  On AWS, you will need to configure your ELB to route traffic to the Cells in your VPC.
 
 ## How do I communicate between containers?
 
@@ -75,4 +79,4 @@ Outside of the HTTP router, Lattice does not ship with a service discovery solut
 
 ## How do I upgrade Lattice?
 
-Lattice [does not support rolling upgrades](index.html#is-Lattice-ready-for-production).
+Lattice [does not support rolling upgrades](/docs/#is-lattice-ready-for-production).
