@@ -208,6 +208,7 @@ var _ = Describe("CommandFactory", func() {
 
 				exitHandler.Exit(exit_codes.SigInt)
 
+				Eventually(closeChan).Should(BeClosed())
 				Expect(outputBuffer).Should(test_helpers.Say(cursor.Show()))
 			})
 		})
@@ -490,6 +491,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).ToNot(test_helpers.Say(TerminalEsc + "\\d+A"))
 				Expect(outputBuffer).To(test_helpers.Say("Error getting status: error fetching status"))
+				Expect(outputBuffer).To(test_helpers.Say(cursor.Show()))
 			})
 
 			Context("when the user interrupts ltc status with ctrl-c", func() {
@@ -499,6 +501,8 @@ var _ = Describe("CommandFactory", func() {
 					Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 
 					exitHandler.Exit(exit_codes.SigInt)
+
+					Eventually(closeChan).Should(BeClosed())
 					Expect(outputBuffer).To(test_helpers.Say(cursor.Show()))
 				})
 			})

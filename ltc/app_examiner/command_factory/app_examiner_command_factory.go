@@ -134,6 +134,7 @@ func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 }
 
 func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
+
 	summaryFlag := context.Bool("summary")
 	rateFlag := context.Duration("rate")
 
@@ -164,6 +165,7 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 
 	linesWritten := appStatusLinesWritten(appInfo)
 	closeChan := make(chan struct{})
+	defer factory.ui.Say(cursor.Show())
 	factory.ui.Say(cursor.Hide())
 
 	factory.exitHandler.OnExit(func() {
