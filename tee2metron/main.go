@@ -78,5 +78,10 @@ func main() {
 		os.Exit(3)
 	}
 
-	cmd.Wait()
+	// if the child is killed abnormally we would know
+	err = cmd.Wait()
+	if err != nil {
+		fmt.Println(args[0], ":", err)
+		os.Exit(3)
+	}
 }
