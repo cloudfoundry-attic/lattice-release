@@ -3,6 +3,7 @@ package docker_metadata_fetcher
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
@@ -45,9 +46,17 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(dockerImageReference string)
 		reposName = remoteName
 	}
 
-	session, err := fetcher.dockerSessionFactory.MakeSession(reposName)
+	var session DockerSession
+	session, err = fetcher.dockerSessionFactory.MakeSession(reposName, false)
 	if err != nil {
-		return nil, err
+		if !strings.Contains(err.Error(), "this private registry supports only HTTP or HTTPS with an unknown CA certificate") {
+			return nil, err
+		}
+
+		session, err = fetcher.dockerSessionFactory.MakeSession(reposName, true)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	repoData, err := session.GetRepositoryData(remoteName)

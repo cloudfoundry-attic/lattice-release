@@ -8,10 +8,11 @@ import (
 )
 
 type FakeDockerSessionFactory struct {
-	MakeSessionStub        func(repoName string) (docker_metadata_fetcher.DockerSession, error)
+	MakeSessionStub        func(reposName string, allowInsecure bool) (docker_metadata_fetcher.DockerSession, error)
 	makeSessionMutex       sync.RWMutex
 	makeSessionArgsForCall []struct {
-		repoName string
+		reposName     string
+		allowInsecure bool
 	}
 	makeSessionReturns struct {
 		result1 docker_metadata_fetcher.DockerSession
@@ -19,14 +20,15 @@ type FakeDockerSessionFactory struct {
 	}
 }
 
-func (fake *FakeDockerSessionFactory) MakeSession(repoName string) (docker_metadata_fetcher.DockerSession, error) {
+func (fake *FakeDockerSessionFactory) MakeSession(reposName string, allowInsecure bool) (docker_metadata_fetcher.DockerSession, error) {
 	fake.makeSessionMutex.Lock()
 	fake.makeSessionArgsForCall = append(fake.makeSessionArgsForCall, struct {
-		repoName string
-	}{repoName})
+		reposName     string
+		allowInsecure bool
+	}{reposName, allowInsecure})
 	fake.makeSessionMutex.Unlock()
 	if fake.MakeSessionStub != nil {
-		return fake.MakeSessionStub(repoName)
+		return fake.MakeSessionStub(reposName, allowInsecure)
 	} else {
 		return fake.makeSessionReturns.result1, fake.makeSessionReturns.result2
 	}
@@ -38,10 +40,10 @@ func (fake *FakeDockerSessionFactory) MakeSessionCallCount() int {
 	return len(fake.makeSessionArgsForCall)
 }
 
-func (fake *FakeDockerSessionFactory) MakeSessionArgsForCall(i int) string {
+func (fake *FakeDockerSessionFactory) MakeSessionArgsForCall(i int) (string, bool) {
 	fake.makeSessionMutex.RLock()
 	defer fake.makeSessionMutex.RUnlock()
-	return fake.makeSessionArgsForCall[i].repoName
+	return fake.makeSessionArgsForCall[i].reposName, fake.makeSessionArgsForCall[i].allowInsecure
 }
 
 func (fake *FakeDockerSessionFactory) MakeSessionReturns(result1 docker_metadata_fetcher.DockerSession, result2 error) {

@@ -13,10 +13,15 @@ import (
 
 var _ = Describe("DockerSessionFactory", func() {
 	Describe("MakeSession", func() {
-		var registryHost string
-		var dockerRegistryServer *ghttp.Server
+		var (
+			registryHost         string
+			dockerRegistryServer *ghttp.Server
+			sessionFactory       docker_metadata_fetcher.DockerSessionFactory
+		)
 
 		BeforeEach(func() {
+			sessionFactory = docker_metadata_fetcher.NewDockerSessionFactory()
+
 			dockerRegistryServer = ghttp.NewServer()
 		})
 
@@ -24,7 +29,7 @@ var _ = Describe("DockerSessionFactory", func() {
 			dockerRegistryServer.Close()
 		})
 
-		Describe("Happy Path", func() {
+		Describe("creating registry sessions", func() {
 			BeforeEach(func() {
 				parts, _ := url.Parse(dockerRegistryServer.URL())
 				registryHost = parts.Host
@@ -33,34 +38,43 @@ var _ = Describe("DockerSessionFactory", func() {
 				dockerRegistryServer.RouteToHandler("GET", "/v2/", ghttp.VerifyRequest("GET", "/v2/"))
 			})
 
-			It("creates a registry session for the given repo", func() {
-				sessionFactory := docker_metadata_fetcher.NewDockerSessionFactory()
-				session, err := sessionFactory.MakeSession(registryHost + "/lattice-mappppppppppppappapapa")
+			Context("when connecting to a secure registry", func() {
+				It("creates a registry session for the given repo", func() {
+					session, err := sessionFactory.MakeSession(registryHost+"/lattice-mappppppppppppappapapa", false)
+					Expect(err).ToNot(HaveOccurred())
 
-				Expect(err).ToNot(HaveOccurred())
-				registrySession, ok := session.(*registry.Session)
-				Expect(ok).To(BeTrue())
+					registrySession, ok := session.(*registry.Session)
+					Expect(ok).To(BeTrue())
 
-				Expect(*registrySession.GetAuthConfig(true)).To(Equal(registry.AuthConfig{}))
+					Expect(*registrySession.GetAuthConfig(true)).To(Equal(registry.AuthConfig{}))
+				})
+			})
 
+			Context("when connecting to an insecure registry", func() {
+				It("creates a registry session for the given repo", func() {
+					session, err := sessionFactory.MakeSession(registryHost+"/lattice-mappppppppppppappapapa", true)
+					Expect(err).ToNot(HaveOccurred())
+
+					registrySession, ok := session.(*registry.Session)
+					Expect(ok).To(BeTrue())
+
+					Expect(*registrySession.GetAuthConfig(true)).To(Equal(registry.AuthConfig{}))
+				})
 			})
 		})
 
-		Context("When resolving the repo name fails", func() {
+		Context("when resolving the repo name fails", func() {
 			It("returns errors from resolving the repo name", func() {
-				sessionFactory := docker_metadata_fetcher.NewDockerSessionFactory()
-				_, err := sessionFactory.MakeSession("¥Not-A-Valid-Repo-Name¥" + "/lattice-mappppppppppppappapapa")
+				_, err := sessionFactory.MakeSession("¥Not-A-Valid-Repo-Name¥"+"/lattice-mappppppppppppappapapa", false)
 
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(MatchRegexp("Error resolving Docker repository name:\nInvalid namespace name"))
-
 			})
 		})
 
 		Context("when creating a new endpoint fails", func() {
 			It("returns an error", func() {
-				sessionFactory := docker_metadata_fetcher.NewDockerSessionFactory()
-				_, err := sessionFactory.MakeSession("nonexistantregistry.example.com/lattice-mappppppppppppappapapa")
+				_, err := sessionFactory.MakeSession("nonexistantregistry.example.com/lattice-mappppppppppppappapapa", false)
 
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(MatchRegexp("Error Connecting to Docker registry:\ninvalid registry endpoint"))
