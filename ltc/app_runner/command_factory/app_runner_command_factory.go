@@ -250,15 +250,15 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 
 	switch {
 	case len(context.Args()) < 2:
-		factory.ui.IncorrectUsage("APP_NAME and DOCKER_IMAGE are required")
+		factory.ui.SayIncorrectUsage("APP_NAME and DOCKER_IMAGE are required")
 		return
 	case startCommand != "" && terminator != "--":
-		factory.ui.IncorrectUsage("'--' Required before start command")
+		factory.ui.SayIncorrectUsage("'--' Required before start command")
 		return
 	case len(context.Args()) > 4:
 		appArgs = context.Args()[4:]
 	case cpuWeightFlag < 1 || cpuWeightFlag > 100:
-		factory.ui.IncorrectUsage("Invalid CPU Weight")
+		factory.ui.SayIncorrectUsage("Invalid CPU Weight")
 		return
 	}
 
@@ -386,13 +386,13 @@ func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
 	instancesArg := c.Args().Get(1)
 	timeoutFlag := c.Duration("timeout")
 	if appName == "" || instancesArg == "" {
-		factory.ui.IncorrectUsage("Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'")
+		factory.ui.SayIncorrectUsage("Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'")
 		return
 	}
 
 	instances, err := strconv.Atoi(instancesArg)
 	if err != nil {
-		factory.ui.IncorrectUsage("Number of Instances must be an integer")
+		factory.ui.SayIncorrectUsage("Number of Instances must be an integer")
 		return
 	}
 
@@ -404,7 +404,7 @@ func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
 	userDefinedRoutes := c.Args().Get(1)
 
 	if appName == "" || userDefinedRoutes == "" {
-		factory.ui.IncorrectUsage("Please enter 'ltc update-routes APP_NAME NEW_ROUTES'")
+		factory.ui.SayIncorrectUsage("Please enter 'ltc update-routes APP_NAME NEW_ROUTES'")
 		return
 	}
 
@@ -445,7 +445,7 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	timeoutFlag := c.Duration("timeout")
 
 	if appName == "" {
-		factory.ui.IncorrectUsage("App Name required")
+		factory.ui.SayIncorrectUsage("App Name required")
 		return
 	}
 
@@ -465,7 +465,7 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 		factory.ui.Say(colors.Green("Successfully Removed " + appName + "."))
 	} else {
 		factory.ui.Say(colors.Red("Timed out waiting for the container to shut down."))
-		factory.ui.NewLine()
+		factory.ui.SayNewLine()
 		factory.ui.SayLine("Lattice will continue to shut down your container in the background.")
 		factory.ui.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", appName))
 	}
@@ -475,7 +475,7 @@ func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Durati
 	startingTime := factory.clock.Now()
 	for startingTime.Add(pollTimeout).After(factory.clock.Now()) {
 		if result := pollingFunc(); result {
-			factory.ui.NewLine()
+			factory.ui.SayNewLine()
 			return true
 		} else if outputProgress {
 			factory.ui.Say(".")
@@ -483,7 +483,7 @@ func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Durati
 
 		factory.clock.Sleep(1 * time.Second)
 	}
-	factory.ui.NewLine()
+	factory.ui.SayNewLine()
 	return false
 }
 
@@ -505,17 +505,17 @@ func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout
 	} else if !ok {
 		if action == pollingStart {
 			factory.ui.Say(colors.Red("Timed out waiting for the container to come up."))
-			factory.ui.NewLine()
+			factory.ui.SayNewLine()
 			factory.ui.SayLine("This typically happens because docker layers can take time to download.")
 			factory.ui.SayLine("Lattice is still downloading your application in the background.")
 		} else {
 			factory.ui.Say(colors.Red("Timed out waiting for the container to scale."))
-			factory.ui.NewLine()
+			factory.ui.SayNewLine()
 			factory.ui.SayLine("Lattice is still scaling your application in the background.")
 		}
 		factory.ui.SayLine(fmt.Sprintf("To view logs:\n\tltc logs %s", appName))
 		factory.ui.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", appName))
-		factory.ui.NewLine()
+		factory.ui.SayNewLine()
 	}
 	return ok
 }

@@ -54,7 +54,7 @@ func (factory *logsCommandFactory) tailLogs(context *cli.Context) {
 	appGuid := context.Args().First()
 
 	if appGuid == "" {
-		factory.ui.IncorrectUsage("")
+		factory.ui.SayIncorrectUsage("")
 		return
 	}
 

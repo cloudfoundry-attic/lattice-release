@@ -139,7 +139,7 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 	rateFlag := context.Duration("rate")
 
 	if len(context.Args()) < 1 {
-		factory.ui.IncorrectUsage("App Name required")
+		factory.ui.SayIncorrectUsage("App Name required")
 		return
 	}
 
@@ -338,7 +338,7 @@ func (factory *AppExaminerCommandFactory) printDistribution() int {
 	if err != nil {
 		factory.ui.Say("Error visualizing: " + err.Error())
 		factory.ui.Say(cursor.ClearToEndOfLine())
-		factory.ui.NewLine()
+		factory.ui.SayNewLine()
 		return 1
 	}
 
@@ -356,7 +356,7 @@ func (factory *AppExaminerCommandFactory) printDistribution() int {
 			factory.ui.Say(colors.Yellow(strings.Repeat("•", cell.ClaimedInstances)))
 		}
 		factory.ui.Say(cursor.ClearToEndOfLine())
-		factory.ui.NewLine()
+		factory.ui.SayNewLine()
 	}
 
 	return len(cells)

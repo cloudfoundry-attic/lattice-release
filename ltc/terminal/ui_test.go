@@ -57,32 +57,25 @@ var _ = Describe("UI", func() {
 			})
 		})
 
-		Describe("IncorrectUsage", func() {
+		Describe("SayIncorrectUsage", func() {
 			Context("when no message is passed", func() {
 				It("outputs incorrect usage", func() {
-					terminalUI.IncorrectUsage("")
-					Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage"))
+					terminalUI.SayIncorrectUsage("")
+					Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
 				})
 			})
 			Context("when a message is passed", func() {
 				It("outputs incorrect usage with the message", func() {
-					terminalUI.IncorrectUsage("You did that thing wrong")
+					terminalUI.SayIncorrectUsage("You did that thing wrong")
 					Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: You did that thing wrong"))
 				})
 			})
 		})
-
-		Describe("Dot", func() {
-			It("says a dot", func() {
-				terminalUI.Dot()
-				Expect(outputBuffer).To(test_helpers.Say("."))
-			})
-		})
-
-		Describe("NewLine", func() {
+		
+		Describe("SayNewLine", func() {
 			It("says a newline", func() {
-				terminalUI.NewLine()
-				Expect(outputBuffer).To(test_helpers.Say("\n"))
+				terminalUI.SayNewLine()
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
 			})
 		})
 	})
