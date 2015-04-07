@@ -1151,72 +1151,38 @@ var _ = Describe("CommandFactory", func() {
 				"cool",
 			}
 
-			appExaminer.AppExistsReturns(false, nil)
-
 			test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
 			Eventually(outputBuffer).Should(test_helpers.Say("Removing cool"))
-			Eventually(outputBuffer).Should(test_helpers.Say(colors.Green("Successfully Removed cool.")))
 
 			Expect(appRunner.RemoveAppCallCount()).To(Equal(1))
 			Expect(appRunner.RemoveAppArgsForCall(0)).To(Equal("cool"))
 		})
 
-		It("polls until the app is removed", func() {
+
+		It("removes multiple apps", func(){
+
 			args := []string{
-				"cool",
+				"app1",
+				"app2",
+				"app3",
 			}
+			
+			test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
-			appExaminer.AppExistsReturns(true, nil)
+			Eventually(outputBuffer).Should(test_helpers.SayLine("Removing app1..."))
+			Eventually(outputBuffer).Should(test_helpers.SayLine("Removing app2..."))
+			Eventually(outputBuffer).Should(test_helpers.SayLine("Removing app3..."))
 
-			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
-
-			Eventually(outputBuffer).Should(test_helpers.Say("Removing cool"))
-
-			Expect(appExaminer.AppExistsCallCount()).To(Equal(1))
-			Expect(appExaminer.AppExistsArgsForCall(0)).To(Equal("cool"))
-
-			clock.IncrementBySeconds(1)
-			Eventually(outputBuffer).Should(test_helpers.Say("."))
-			clock.IncrementBySeconds(1)
-			Eventually(outputBuffer).Should(test_helpers.Say("."))
-
-			appExaminer.AppExistsReturns(false, nil)
-			clock.IncrementBySeconds(1)
-
-			Eventually(commandFinishChan).Should(BeClosed())
-
-			Eventually(outputBuffer).Should(test_helpers.SayNewLine())
-			Eventually(outputBuffer).Should(test_helpers.Say(colors.Green("Successfully Removed cool.")))
-		})
-
-		Context("when the app is not removed before the timeout elapses", func() {
-			It("alerts the user the app took too long to remove", func() {
-				appExaminer.AppExistsReturns(true, nil)
-				args := []string{
-					"cool-web-app",
-				}
-
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
-
-				Eventually(outputBuffer).Should(test_helpers.Say("Removing cool-web-app"))
-
-				clock.IncrementBySeconds(120)
-
-				Eventually(commandFinishChan).Should(BeClosed())
-
-				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to shut down.")))
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
-				Expect(outputBuffer).To(test_helpers.SayLine("Lattice will continue to shut down your container in the background."))
-				Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
-			})
+			Expect(appRunner.RemoveAppCallCount()).To(Equal(3))
+			Expect(appRunner.RemoveAppArgsForCall(0)).To(Equal("app1"))
+			Expect(appRunner.RemoveAppArgsForCall(1)).To(Equal("app2"))
+			Expect(appRunner.RemoveAppArgsForCall(2)).To(Equal("app3"))
 		})
 
 		Context("invalid syntax", func() {
 			It("validates that the name is passed in", func() {
-				args := []string{
-					"",
-				}
+				args := []string{}
 
 				test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
@@ -1234,27 +1200,32 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Error Stopping App: Major Fault"))
+				Expect(outputBuffer).To(test_helpers.Say("Error stopping cool-web-app: Major Fault"))
+				Expect(appRunner.RemoveAppCallCount()).To(Equal(1))
 			})
 
-			It("reports a timeout when polling for the remove errors out", func() {
+			It("outputs error messages when trying to remove the app", func() {
 				args := []string{
-					"cool-web-app",
+					"app1",
+					"app2",
+					"app3",
 				}
-				appExaminer.AppExistsReturns(false, errors.New("Something Bad"))
 
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(removeCommand, args)
+				appRunner.RemoveAppStub = func(name string) error {
+					if name == "app2" {
+						return errors.New("Major Fault")
+					}
+					return nil
+				}
 
-				Eventually(outputBuffer).Should(test_helpers.Say("Removing cool-web-app"))
+				test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
-				clock.IncrementBySeconds(120)
+				Expect(outputBuffer).To(test_helpers.SayLine("Removing app1..."))
+				Expect(outputBuffer).To(test_helpers.SayLine("Removing app2..."))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error stopping app2: Major Fault"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Removing app3..."))
 
-				Eventually(commandFinishChan).Should(BeClosed())
-
-				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to shut down.")))
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
-				Expect(outputBuffer).To(test_helpers.SayLine("Lattice will continue to shut down your container in the background."))
-				Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
+				Expect(appRunner.RemoveAppCallCount()).To(Equal(3))
 			})
 		})
 

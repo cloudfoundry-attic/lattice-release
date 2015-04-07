@@ -467,7 +467,7 @@ var _ = Describe("DockerAppRunner", func() {
 			err := appRunner.ScaleApp("app-not-running", 15)
 
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("app-not-running is not started. Please start an app first"))
+			Expect(err.Error()).To(Equal("app-not-running is not started."))
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
 
@@ -543,7 +543,7 @@ var _ = Describe("DockerAppRunner", func() {
 			err := appRunner.UpdateAppRoutes("app-not-running", expectedRouteOverrides)
 
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("app-not-running is not started. Please start an app first"))
+			Expect(err.Error()).To(Equal("app-not-running is not started."))
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
 
@@ -589,7 +589,7 @@ var _ = Describe("DockerAppRunner", func() {
 			err := appRunner.RemoveApp("app-not-running")
 
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("app-not-running is not started. Please start an app first"))
+			Expect(err.Error()).To(Equal("app-not-running is not started."))
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 
 		})

@@ -210,20 +210,13 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 }
 
 func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
-	var removeFlags = []cli.Flag{
-		cli.DurationFlag{
-			Name:  "timeout",
-			Usage: "Polling timeout for app to remove",
-			Value: DefaultPollingTimeout,
-		},
-	}
+
 	var removeAppCommand = cli.Command{
 		Name:        "remove",
 		Aliases:     []string{"rm"},
-		Description: "ltc remove APP_NAME",
-		Usage:       "Stops and removes a docker app from lattice",
+		Description: "ltc remove APP1_NAME [APP2_NAME APP3_NAME...]",
+		Usage:       "Stops and removes docker app(s) from lattice",
 		Action:      factory.removeApp,
-		Flags:       removeFlags,
 	}
 
 	return removeAppCommand
@@ -441,33 +434,19 @@ func (factory *AppRunnerCommandFactory) setAppInstances(pollTimeout time.Duratio
 }
 
 func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
-	appName := c.Args().First()
-	timeoutFlag := c.Duration("timeout")
+	appNames := c.Args()
 
-	if appName == "" {
+	if len(appNames) == 0 {
 		factory.ui.SayIncorrectUsage("App Name required")
 		return
 	}
 
-	err := factory.appRunner.RemoveApp(appName)
-	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error Stopping App: %s", err))
-		return
-	}
-
-	factory.ui.Say(fmt.Sprintf("Removing %s", appName))
-	ok := factory.pollUntilSuccess(timeoutFlag, func() bool {
-		appExists, err := factory.appExaminer.AppExists(appName)
-		return err == nil && !appExists
-	}, true)
-
-	if ok {
-		factory.ui.Say(colors.Green("Successfully Removed " + appName + "."))
-	} else {
-		factory.ui.Say(colors.Red("Timed out waiting for the container to shut down."))
-		factory.ui.SayNewLine()
-		factory.ui.SayLine("Lattice will continue to shut down your container in the background.")
-		factory.ui.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", appName))
+	for _, appName := range appNames {
+		factory.ui.SayLine(fmt.Sprintf("Removing %s...", appName))
+		err:= factory.appRunner.RemoveApp(appName)
+		if err != nil {
+			factory.ui.SayLine(fmt.Sprintf("Error stopping %s: %s", appName, err))
+		}
 	}
 }
 

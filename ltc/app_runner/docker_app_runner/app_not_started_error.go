@@ -9,5 +9,5 @@ func newAppNotStartedError(appName string) appNotStartedError {
 }
 
 func (appName appNotStartedError) Error() string {
-	return fmt.Sprintf("%s is not started. Please start an app first", string(appName))
+	return fmt.Sprintf("%s is not started.", string(appName))
 }
