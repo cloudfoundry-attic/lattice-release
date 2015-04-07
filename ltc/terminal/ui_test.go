@@ -71,7 +71,7 @@ var _ = Describe("UI", func() {
 				})
 			})
 		})
-		
+
 		Describe("SayNewLine", func() {
 			It("says a newline", func() {
 				terminalUI.SayNewLine()

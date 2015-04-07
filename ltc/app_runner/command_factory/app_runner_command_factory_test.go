@@ -752,10 +752,9 @@ var _ = Describe("CommandFactory", func() {
 	Describe("CreateLrpCommand", func() {
 		var (
 			createLrpCommand cli.Command
-
-			tmpDir  string
-			tmpFile *os.File
-			err     error
+			tmpDir           string
+			tmpFile          *os.File
+			err              error
 		)
 
 		BeforeEach(func() {

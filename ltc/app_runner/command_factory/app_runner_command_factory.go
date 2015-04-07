@@ -178,7 +178,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateLrpCommand() cli.Command {
 }
 
 func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
-	var createFlags = []cli.Flag{
+	var scaleFlags = []cli.Flag{
 		cli.DurationFlag{
 			Name:  "timeout",
 			Usage: "Polling timeout for app to scale",
@@ -191,7 +191,7 @@ func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 		Usage:       "Scales a docker app on lattice",
 		Description: "ltc scale APP_NAME NUM_INSTANCES",
 		Action:      factory.scaleApp,
-		Flags:       createFlags,
+		Flags:       scaleFlags,
 	}
 
 	return scaleAppCommand
@@ -210,7 +210,7 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 }
 
 func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
-	var createFlags = []cli.Flag{
+	var removeFlags = []cli.Flag{
 		cli.DurationFlag{
 			Name:  "timeout",
 			Usage: "Polling timeout for app to remove",
@@ -223,7 +223,7 @@ func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 		Description: "ltc remove APP_NAME",
 		Usage:       "Stops and removes a docker app from lattice",
 		Action:      factory.removeApp,
-		Flags:       createFlags,
+		Flags:       removeFlags,
 	}
 
 	return removeAppCommand
