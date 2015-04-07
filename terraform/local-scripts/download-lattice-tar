@@ -8,7 +8,7 @@ else
 
     lattice_tar_version=$(cat $LATTICE_VERSION_FILE_PATH)
 
-    if egrep '\-\d+-g[0-9a-fA-F]{7,10}$' $LATTICE_VERSION_FILE_PATH; then # unstable versions match `git describe` format
+    if egrep '\-[[:digit:]]+-g[0-9a-fA-F]{7,10}$' $LATTICE_VERSION_FILE_PATH; then # unstable versions match `git describe` format
         lattice_download_url="https://s3-us-west-2.amazonaws.com/lattice/unstable/$lattice_tar_version/lattice.tgz"
     else
         lattice_download_url="https://s3-us-west-2.amazonaws.com/lattice/releases/$lattice_tar_version/lattice.tgz"

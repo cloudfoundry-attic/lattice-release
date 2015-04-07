@@ -24,11 +24,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   lattice_tar_version=File.read(File.join(File.dirname(__FILE__), "Version")).chomp
-  system 'git show-ref --tags --quiet --verify -- "refs/tags/' + "#{lattice_tar_version}" + '"'
+  system 'egrep -q \'\-[[:digit:]]+-g[0-9a-fA-F]{7,10}$\' ' + File.join(File.dirname(__FILE__), "Version")
   if $? == 0
-    lattice_tar_url="https://s3-us-west-2.amazonaws.com/lattice/releases/#{lattice_tar_version}/lattice.tgz"
-  else
     lattice_tar_url="https://s3-us-west-2.amazonaws.com/lattice/unstable/#{lattice_tar_version}/lattice.tgz"
+  else
+    lattice_tar_url="https://s3-us-west-2.amazonaws.com/lattice/releases/#{lattice_tar_version}/lattice.tgz"
   end
 
   config.vm.provision "shell" do |s|
