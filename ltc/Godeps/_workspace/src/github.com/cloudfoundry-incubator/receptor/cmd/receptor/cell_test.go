@@ -1,12 +1,11 @@
 package main_test
 
 import (
-	"time"
-
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
+	"github.com/cloudfoundry-incubator/runtime-schema/bbs/shared"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
-	"github.com/tedsuo/ifrit"
+	"github.com/hashicorp/consul/consul/structs"
 	"github.com/tedsuo/ifrit/ginkgomon"
 
 	. "github.com/onsi/ginkgo"
@@ -14,22 +13,25 @@ import (
 )
 
 var _ = Describe("Cell API", func() {
-	var heartbeatProcess ifrit.Process
 	var cellPresence models.CellPresence
-	var heartbeatInterval time.Duration
 
 	BeforeEach(func() {
-		heartbeatInterval = 100 * time.Millisecond
 		capacity := models.NewCellCapacity(128, 1024, 6)
 		cellPresence = models.NewCellPresence("cell-0", "1.2.3.4", "the-zone", capacity)
-		heartbeatRunner := bbs.NewCellHeartbeat(cellPresence, heartbeatInterval)
-		heartbeatProcess = ginkgomon.Invoke(heartbeatRunner)
+		value, err := models.ToJSON(cellPresence)
+
+		_, err = consulAdapter.AcquireAndMaintainLock(
+			shared.CellSchemaPath(cellPresence.CellID),
+			value,
+			structs.SessionTTLMin,
+			nil)
+		Ω(err).ShouldNot(HaveOccurred())
+
 		receptorProcess = ginkgomon.Invoke(receptorRunner)
 	})
 
 	AfterEach(func() {
 		ginkgomon.Kill(receptorProcess)
-		ginkgomon.Kill(heartbeatProcess)
 	})
 
 	Describe("GET /v1/cells", func() {

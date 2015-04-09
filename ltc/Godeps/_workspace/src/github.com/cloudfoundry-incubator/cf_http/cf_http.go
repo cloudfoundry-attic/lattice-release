@@ -17,17 +17,21 @@ func Initialize(timeout time.Duration) {
 }
 
 func NewClient() *http.Client {
-	return &http.Client{
-		Timeout: config.Timeout,
-	}
+	return newClient(5*time.Second, 0*time.Second, config.Timeout)
 }
 
 func NewStreamingClient() *http.Client {
+	return newClient(5*time.Second, 30*time.Second, 0*time.Second)
+}
+
+func newClient(dialTimeout, keepAliveTimeout, timeout time.Duration) *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
 			Dial: (&net.Dialer{
-				KeepAlive: 10 * time.Second,
+				Timeout:   dialTimeout,
+				KeepAlive: keepAliveTimeout,
 			}).Dial,
 		},
+		Timeout: timeout,
 	}
 }

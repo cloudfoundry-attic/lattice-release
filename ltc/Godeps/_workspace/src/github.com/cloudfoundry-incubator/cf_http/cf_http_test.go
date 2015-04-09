@@ -11,23 +11,33 @@ import (
 )
 
 var _ = Describe("CfHttp", func() {
+	var timeout time.Duration
+
+	BeforeEach(func() {
+		timeout = 1 * time.Second
+	})
+
+	JustBeforeEach(func() {
+		cf_http.Initialize(timeout)
+	})
+
 	Describe("NewClient", func() {
-		var timeout time.Duration
-
-		BeforeEach(func() {
-			timeout = 1 * time.Second
-		})
-
 		It("returns an http client", func() {
-			By("Getting a client before initializaqtion", func() {
-				Ω(*cf_http.NewClient()).Should(Equal(*http.DefaultClient))
-			})
+			client := cf_http.NewClient()
+			Ω(client.Timeout).Should(Equal(timeout))
+			transport := client.Transport.(*http.Transport)
+			Ω(transport.Dial).ShouldNot(BeNil())
+			Ω(transport.DisableKeepAlives).Should(BeFalse())
+		})
+	})
 
-			cf_http.Initialize(timeout)
-
-			Ω(*cf_http.NewClient()).Should(Equal(http.Client{
-				Timeout: timeout,
-			}))
+	Describe("NewStreamingClient", func() {
+		It("returns an http client", func() {
+			client := cf_http.NewStreamingClient()
+			Ω(client.Timeout).Should(BeZero())
+			transport := client.Transport.(*http.Transport)
+			Ω(transport.Dial).ShouldNot(BeNil())
+			Ω(transport.DisableKeepAlives).Should(BeFalse())
 		})
 	})
 })

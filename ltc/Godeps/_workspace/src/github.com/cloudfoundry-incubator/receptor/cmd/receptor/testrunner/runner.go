@@ -13,6 +13,7 @@ type Args struct {
 	Address            string
 	TaskHandlerAddress string
 	EtcdCluster        string
+	ConsulCluster      string
 	Username           string
 	Password           string
 	NatsAddresses      string
@@ -34,6 +35,8 @@ func (args Args) ArgSlice() []string {
 		"-natsUsername", args.NatsUsername,
 		"-natsPassword", args.NatsPassword,
 		"-corsEnabled=" + strconv.FormatBool(args.CORSEnabled),
+		"-heartbeatRetryInterval", "1s",
+		"-consulCluster", args.ConsulCluster,
 	}
 }
 
@@ -41,6 +44,6 @@ func New(binPath string, args Args) *ginkgomon.Runner {
 	return ginkgomon.New(ginkgomon.Config{
 		Name:       "receptor",
 		Command:    exec.Command(binPath, args.ArgSlice()...),
-		StartCheck: "heartbeat.started",
+		StartCheck: "receptor.started",
 	})
 }
