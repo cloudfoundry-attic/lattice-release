@@ -109,7 +109,7 @@ VAGRANT_LATTICE_TAR_PATH=/path/to/lattice.tgz vagrant up
 
 This repository contains several [Terraform](https://www.terraform.io/) templates to help you deploy on your choice of IaaS.  To deploy Lattice in this way you will need:
 
-* [Terraform](https://www.terraform.io/intro/getting-started/install.html) >= 0.3.7 installed on your machine
+* [Terraform](https://www.terraform.io/intro/getting-started/install.html) == 0.3.7 installed on your machine (Terraform 0.4.0 is currently unsupported, we are looking into fixing this)
 * Credentials for your choice of IaaS
 
 ## Deploying
