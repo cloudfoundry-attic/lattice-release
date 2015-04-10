@@ -6,13 +6,9 @@ doc_subnav: true
 
 # Private Docker Registries
 
-Lattice does not currently ship with a private Docker registry.  We plan on remedying this soon to improve our developer experience.  Until then, follow these instructions to spin up a Docker registry on boot2docker and configure Lattice to allow communication with it.
+Lattice does not currently ship with a private Docker registry.  We plan on remedying this soon to improve our developer experience.  Until then, follow these instructions to spin up a Docker registry on boot2docker, configure the Docker daemon on boot2docker, configure Lattice to allow communication with the private registry, and then import a Docker image to the private registry and launch it via Lattice.
 
-## How to use Lattice with a private Docker Registry
-
-Lattice can be used with an insecure private Docker Registry following a few simple configuration steps.
-
-## boot2docker Configuration
+## Launch a Private Docker Registry and configure the Docker daemon via boot2docker
 
 The following assumes:
 
@@ -59,3 +55,5 @@ Pull the lattice-app image from DockerHub and push it to the local private regis
     ltc create private-lattice-app 192.168.59.103:5000/lattice-app
 
 If there is a problem, run `ltc debug-logs` in a shell while you `ltc remove private-lattice-app` and retry the `ltc create`.
+
+> Note: you will need `ltc` version 0.2.3 or greater.
