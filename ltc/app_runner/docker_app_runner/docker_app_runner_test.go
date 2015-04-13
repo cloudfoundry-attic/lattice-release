@@ -152,6 +152,28 @@ var _ = Describe("DockerAppRunner", func() {
 			})
 		})
 
+		Context("when NoRoutes is true", func() {
+			It("does not register any routes for the app", func() {
+				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
+
+				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
+					Name:            "americano-app",
+					StartCommand:    "/app-run-statement",
+					DockerImagePath: "runtest/runner",
+					AppArgs:         []string{},
+					RouteOverrides: docker_app_runner.RouteOverrides{
+						docker_app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
+					},
+					NoRoutes: true,
+					Ports:    docker_app_runner.PortConfig{Monitored: 1234, Exposed: []uint16{1234}},
+				})
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes).To(Equal(route_helpers.AppRoutes{}.RoutingInfo()))
+			})
+		})
+
 		Context("when Monitor is false", func() {
 			It("Does not pass a monitor action, regardless of whether or not a monitor port is passed", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
@@ -279,7 +301,7 @@ var _ = Describe("DockerAppRunner", func() {
 		})
 	})
 
-	Describe("CreateAppFromJson", func() {
+	Describe("CreateLrp", func() {
 
 		It("Creates an app from JSON", func() {
 			fakeReceptorClient.CreateDesiredLRPReturns(nil)
@@ -523,6 +545,22 @@ var _ = Describe("DockerAppRunner", func() {
 			}
 
 			Expect(route_helpers.AppRoutesFromRoutingInfo(updateRequest.Routes)).To(ContainExactly(expectedRoutes))
+		})
+
+		Context("when an empty routes is passed", func() {
+			It("deregisters the routes", func() {
+				desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app"}}
+				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+
+				err := appRunner.UpdateAppRoutes("americano-app", docker_app_runner.RouteOverrides{})
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(fakeReceptorClient.UpdateDesiredLRPCallCount()).To(Equal(1))
+				processGuid, updateRequest := fakeReceptorClient.UpdateDesiredLRPArgsForCall(0)
+				Expect(processGuid).To(Equal("americano-app"))
+
+				Expect(updateRequest.Routes).To(Equal(route_helpers.AppRoutes{}.RoutingInfo()))
+			})
 		})
 
 		It("returns errors if the app is NOT already started", func() {

@@ -58,6 +58,7 @@ type CreateDockerAppParams struct {
 	Ports                PortConfig
 	WorkingDir           string
 	RouteOverrides       RouteOverrides
+	NoRoutes             bool
 	Timeout              time.Duration
 }
 
@@ -174,8 +175,9 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", params.Ports.Monitored)})
 
 	var appRoutes route_helpers.AppRoutes
-
-	if len(params.RouteOverrides) > 0 {
+	if params.NoRoutes {
+		appRoutes = route_helpers.AppRoutes{}
+	} else if len(params.RouteOverrides) > 0 {
 		routeMap := make(map[uint16][]string)
 		for _, override := range params.RouteOverrides {
 			routeMap[override.Port] = append(routeMap[override.Port], fmt.Sprintf("%s.%s", override.HostnamePrefix, appRunner.systemDomain))
@@ -187,7 +189,7 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 			})
 		}
 	} else {
-		appRoutes = appRunner.buildRoutingInfo(params.Name, params.Ports)
+		appRoutes = appRunner.buildDefaultRoutingInfo(params.Name, params.Ports)
 	}
 
 	req := receptor.DesiredLRPCreateRequest{
@@ -239,7 +241,7 @@ func (appRunner *appRunner) updateLrpInstances(name string, instances int) error
 }
 
 func (appRunner *appRunner) updateLrpRoutes(name string, routes RouteOverrides) error {
-	var appRoutes route_helpers.AppRoutes
+	appRoutes := route_helpers.AppRoutes{}
 
 	routeMap := make(map[uint16][]string)
 	for _, override := range routes {
@@ -262,7 +264,7 @@ func (appRunner *appRunner) updateLrpRoutes(name string, routes RouteOverrides) 
 	return err
 }
 
-func (appRunner *appRunner) buildRoutingInfo(appName string, portConfig PortConfig) route_helpers.AppRoutes {
+func (appRunner *appRunner) buildDefaultRoutingInfo(appName string, portConfig PortConfig) route_helpers.AppRoutes {
 	appRoutes := route_helpers.AppRoutes{}
 
 	for _, port := range portConfig.Exposed {

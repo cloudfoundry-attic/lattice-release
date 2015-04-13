@@ -131,6 +131,7 @@ var _ = Describe("CommandFactory", func() {
 				docker_app_runner.RouteOverride{HostnamePrefix: "route-1111-wahoo", Port: 1111},
 				docker_app_runner.RouteOverride{HostnamePrefix: "route-1111-me-too", Port: 1111},
 			}))
+			Expect(createDockerAppParameters.NoRoutes).To(BeFalse())
 			Expect(createDockerAppParameters.WorkingDir).To(Equal("/applications"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Creating App: cool-web-app\n"))
@@ -412,6 +413,29 @@ var _ = Describe("CommandFactory", func() {
 				})
 			})
 
+		})
+
+		Context("when the --no-routes flag is passed", func() {
+			It("calls app runner with NoRoutes equal to true", func() {
+				args := []string{
+					"cool-web-app",
+					"superfun/app",
+					"--no-routes",
+					"--",
+					"/start-me-please",
+				}
+				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
+				createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+
+				Expect(createDockerAppParameters.NoRoutes).To(BeTrue())
+
+				Expect(outputBuffer).NotTo(test_helpers.Say("App is reachable at:"))
+				Expect(outputBuffer).NotTo(test_helpers.Say("http://cool-web-app.192.168.11.11.xip.io"))
+			})
 		})
 
 		Context("when no working dir is provided, but the metadata has a working dir", func() {
@@ -1059,6 +1083,25 @@ var _ = Describe("CommandFactory", func() {
 			Expect(routeOverrides).To(Equal(expectedRouteOverrides))
 		})
 
+		Context("when the --no-routes flag is passed", func() {
+			It("deregisters all the routes", func() {
+				args := []string{
+					"cool-web-app",
+					"--no-routes",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
+
+				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(1))
+				name, routeOverrides := appRunner.UpdateAppRoutesArgsForCall(0)
+
+				Expect(name).To(Equal("cool-web-app"))
+				Expect(routeOverrides).To(Equal(docker_app_runner.RouteOverrides{}))
+
+				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+			})
+		})
+
 		Context("when the receptor returns errors", func() {
 			It("outputs error messages", func() {
 				args := []string{
@@ -1082,7 +1125,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES'"))
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag."))
 				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 			})
 
@@ -1093,7 +1136,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES'"))
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag."))
 				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 			})
 		})
@@ -1159,15 +1202,14 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appRunner.RemoveAppArgsForCall(0)).To(Equal("cool"))
 		})
 
-
-		It("removes multiple apps", func(){
+		It("removes multiple apps", func() {
 
 			args := []string{
 				"app1",
 				"app2",
 				"app3",
 			}
-			
+
 			test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
 			Eventually(outputBuffer).Should(test_helpers.SayLine("Removing app1..."))
