@@ -95,7 +95,7 @@ Currently, Lattice does not support updating via provision. So to update, you ha
 
 ### No such host errors
 
-DNS resolution for `xip.io` addresses can sometimes be flakey, resulting in errors such as the following:
+DNS resolution for `xip.io` addresses can sometimes be flaky, resulting in errors such as the following:
 
 ```bash
  ltc target 192.168.11.11.xip.io
@@ -103,9 +103,9 @@ DNS resolution for `xip.io` addresses can sometimes be flakey, resulting in erro
  dial tcp: lookup receptor.192.168.11.11.xip.io: no such host
 ```
 
-The first point of call should be to check your networking DSN settings. Local "forwarding DNS" servers provided by some home routers can have trouble resolving `xip.io` addresses. Try setting you DNS to point to your real upstream DNS servers, or alternatively try using [Google DNS](https://developers.google.com/speed/public-dns/).
+First, check your networking DNS settings. Local "forwarding DNS" servers provided by some home routers can have trouble resolving `xip.io` addresses. Try setting your DNS to point to your real upstream DNS servers, or alternatively try using [Google DNS](https://developers.google.com/speed/public-dns/) by using `8.8.8.8` and/or `8.8.4.4`.
 
-Unfortunately `xip.io` itself also sometimes returns similar "no such host" errors. The alternative that we have found is to use `dnsmasq` configured to resolve all `xip.io` addresses to `192.168.11.11`. This also requires creating a `/etc/resolvers/io` file that points to `127.0.0.1`. See further instructions [here] (http://passingcuriosity.com/2013/dnsmasq-dev-osx/). 
+Unfortunately `xip.io` itself also sometimes returns similar "no such host" errors. The alternative that we have found is to use `dnsmasq` configured to resolve all `xip.io` addresses to `192.168.11.11`. This also requires creating a `/etc/resolvers/io` file that points to `127.0.0.1`. See further instructions [here](http://passingcuriosity.com/2013/dnsmasq-dev-osx/). 
 
 ## Running Vagrant with a custom Lattice tar
 
