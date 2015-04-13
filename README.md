@@ -93,10 +93,23 @@ Currently, Lattice does not support updating via provision. So to update, you ha
 
 ## Troubleshooting
 
--  xip.io is sometimes flaky, resulting in no such host errors.
--  The alternative that we have found is to use dnsmasq configured to resolve all xip.io addresses to 192.168.11.11.
--  This also requires creating a /etc/resolvers/io file that points to 127.0.0.1. See further instructions [here] (http://passingcuriosity.com/2013/dnsmasq-dev-osx/). 
--  If you have trouble running `vagrant up --provider virtualbox` with the error
+### No such host errors
+
+DNS resolution for `xip.io` addresses can sometimes be flaky, resulting in errors such as the following:
+
+```bash
+ ltc target 192.168.11.11.xip.io
+ Error verifying target: Get http://receptor.192.168.11.11.xip.io/v1/desired_lrps: 
+ dial tcp: lookup receptor.192.168.11.11.xip.io: no such host
+```
+
+First, check your networking DNS settings. Local "forwarding DNS" servers provided by some home routers can have trouble resolving `xip.io` addresses. Try setting your DNS to point to your real upstream DNS servers, or alternatively try using [Google DNS](https://developers.google.com/speed/public-dns/) by using `8.8.8.8` and/or `8.8.4.4`.
+
+Unfortunately `xip.io` itself also sometimes returns similar "no such host" errors. The alternative that we have found is to use `dnsmasq` configured to resolve all `xip.io` addresses to `192.168.11.11`. This also requires creating a `/etc/resolvers/io` file that points to `127.0.0.1`. See further instructions [here](http://passingcuriosity.com/2013/dnsmasq-dev-osx/). 
+
+### Miscellaneous
+
+If you have trouble running `vagrant up --provider virtualbox` with the error
 
 ```
 default: Warning: Remote connection disconnect. Retrying...
