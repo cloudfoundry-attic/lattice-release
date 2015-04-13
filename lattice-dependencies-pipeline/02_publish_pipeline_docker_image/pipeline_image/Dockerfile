@@ -24,9 +24,9 @@ RUN \
   apt-get -y install git
 
 RUN \
-  wget --quiet https://dl.bintray.com/mitchellh/terraform/terraform_0.3.7_linux_amd64.zip && \
-  unzip terraform_0.3.7_linux_amd64.zip -d /usr/local/terraform; \
-  rm -v terraform_0.3.7_linux_amd64.zip; \
+  wget --quiet https://dl.bintray.com/mitchellh/terraform/terraform_0.4.2_linux_amd64.zip && \
+  unzip terraform_0.4.2_linux_amd64.zip -d /usr/local/terraform; \
+  rm -v terraform_0.4.2_linux_amd64.zip; \
   cd /usr/local/bin && ln -sv /usr/local/terraform/* .
 
 RUN \
