@@ -96,6 +96,15 @@ Currently, Lattice does not support updating via provision. So to update, you ha
 -  xip.io is sometimes flaky, resulting in no such host errors.
 -  The alternative that we have found is to use dnsmasq configured to resolve all xip.io addresses to 192.168.11.11.
 -  This also requires creating a /etc/resolvers/io file that points to 127.0.0.1. See further instructions [here] (http://passingcuriosity.com/2013/dnsmasq-dev-osx/). 
+-  If you have trouble running `vagrant up --provider virtualbox` with the error
+
+```
+default: Warning: Remote connection disconnect. Retrying...
+default: Warning: Authentication failure. Retrying...
+...
+```
+
+try upgrading to the latest VirtualBox.
 
 ## Running Vagrant with a custom Lattice tar
 
