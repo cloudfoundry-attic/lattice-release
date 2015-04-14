@@ -74,7 +74,7 @@ If you are trying to run both the VirtualBox and VMWare providers on the same ma
 you'll need to run them on different private networks (subnets) that do not conflict.
 
 Set the System IP to an address that does not conflict with the host networking configuration by passing the
-LATTICE_SYSTEM_IP environment variable to the vagrant up command:
+`LATTICE_SYSTEM_IP` environment variable to the vagrant up command:
 
 ```bash
 LATTICE_SYSTEM_IP=192.168.80.100 vagrant up
@@ -105,7 +105,12 @@ DNS resolution for `xip.io` addresses can sometimes be flaky, resulting in error
 
 First, check your networking DNS settings. Local "forwarding DNS" servers provided by some home routers can have trouble resolving `xip.io` addresses. Try setting your DNS to point to your real upstream DNS servers, or alternatively try using [Google DNS](https://developers.google.com/speed/public-dns/) by using `8.8.8.8` and/or `8.8.4.4`.
 
-Unfortunately `xip.io` itself also sometimes returns similar "no such host" errors. The recommended alternative is to follow the [dnsmasq instructions](https://github.com/cloudfoundry-incubator/lattice/blob/master/dnsmasq-readme.md), and then use `lattice.dev` instead of `192.168.11.11.xip.io` to point to the cluster.
+Unfortunately `xip.io` itself also sometimes returns similar "no such host" errors. The recommended alternative is to follow the [dnsmasq instructions](https://github.com/cloudfoundry-incubator/lattice/blob/master/dnsmasq-readme.md), pass the `LATTICE_SYSTEM_DOMAIN` environment variable to the vagrant up command, and target using `lattice.dev` instead of `192.168.11.11.xip.io` to point to the cluster, as follows:
+
+```
+LATTICE_SYSTEM_DOMAIN=lattice.dev vagrant up
+ltc target lattice.dev
+```
 
 ### Miscellaneous
 

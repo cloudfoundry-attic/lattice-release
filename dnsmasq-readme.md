@@ -23,27 +23,35 @@ sudo launchctl load /Library/LaunchDaemons/homebrew.mxcl.dnsmasq.plist
 
 ## Configuration
 
-### Set up dnsmasq to resolve `*.dev`
+### Set up dnsmasq to resolve `lattice.dev`
 
 1. Append line to `/usr/local/etc/dnsmasq.conf` 
 ```
-address=/dev/<LATTICE_SYSTEM_IP>   # i.e., 192.168.11.11
+address=/lattice.dev/<LATTICE_SYSTEM_IP> # i.e., 192.168.11.11
 ```
+
 2. Restart dnsmasq service
 ```bash
 sudo launchctl stop homebrew.mxcl.dnsmasq
 sudo launchctl start homebrew.mxcl.dnsmasq
 ```
 
-### Configure workstation to use dnsmasq resolver for `*.dev`
+### Configure workstation to use dnsmasq resolver for `lattice.dev`
 
 1. Create `/etc/resolver` folder
 ```bash
 sudo mkdir -p /etc/resolver
 ```
-2. Define resolver for `.dev`
+2. Define resolver for `lattice.dev`
 ```bash
-sudo tee /etc/resolver/dev >/dev/null <<EOF
+sudo tee /etc/resolver/lattice.dev >/dev/null <<EOF
 nameserver 127.0.0.1
 EOF
+```
+
+## Starting Lattice cluster with alternate name
+
+1. Set `LATTICE_SYSTEM_DOMAIN` environment variable during `vagrant up`:
+```
+LATTICE_SYSTEM_DOMAIN=lattice.dev vagrant up --provider=<PROVIDER> 
 ```
