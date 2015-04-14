@@ -56,6 +56,8 @@ go get -d github.com/cloudfoundry-incubator/lattice/ltc
 GOPATH=$GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/Godeps/_workspace:$GOPATH go install github.com/cloudfoundry-incubator/lattice/ltc
 ```
 
+Please Note: `go get -d` above may fail, these errors can be ignored. `ltc` relies on Godeps to provide stable versions of its dependencies.
+
 ### Example Usage:
 
     ltc target 192.168.11.11.xip.io
