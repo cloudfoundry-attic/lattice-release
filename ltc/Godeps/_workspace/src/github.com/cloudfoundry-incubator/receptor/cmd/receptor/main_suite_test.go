@@ -45,7 +45,7 @@ var etcdRunner *etcdstorerunner.ETCDClusterRunner
 var etcdAdapter storeadapter.StoreAdapter
 
 var consulRunner *consuladapter.ClusterRunner
-var consulAdapter *consuladapter.Adapter
+var consulSession *consuladapter.Session
 
 var bbs *Bbs.BBS
 
@@ -83,10 +83,10 @@ var _ = SynchronizedBeforeSuite(
 			1,
 			"http",
 		)
-		consulAdapter = consulRunner.NewAdapter()
 
 		etcdRunner.Start()
 		consulRunner.Start()
+		consulRunner.WaitUntilReady()
 	},
 )
 
@@ -102,14 +102,14 @@ var _ = BeforeEach(func() {
 
 	etcdRunner.Reset()
 
-	consulRunner.WaitUntilReady()
 	consulRunner.Reset()
+	consulSession = consulRunner.NewSession("a-session")
 
 	receptorAddress = fmt.Sprintf("127.0.0.1:%d", 6700+GinkgoParallelNode())
 	receptorTaskHandlerAddress = fmt.Sprintf("127.0.0.1:%d", 1169+GinkgoParallelNode())
 
 	etcdAdapter = etcdRunner.Adapter()
-	bbs = Bbs.NewBBS(etcdAdapter, consulAdapter, "http://"+receptorTaskHandlerAddress, clock.NewClock(), logger)
+	bbs = Bbs.NewBBS(etcdAdapter, consulSession, "http://"+receptorTaskHandlerAddress, clock.NewClock(), logger)
 
 	natsPort = 4051 + GinkgoParallelNode()
 	natsAddress = fmt.Sprintf("127.0.0.1:%d", natsPort)

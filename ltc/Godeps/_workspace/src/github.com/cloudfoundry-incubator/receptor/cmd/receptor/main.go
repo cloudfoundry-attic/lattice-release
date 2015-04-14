@@ -243,17 +243,18 @@ func initializeReceptorBBS(logger lager.Logger) Bbs.ReceptorBBS {
 		logger.Fatal("failed-to-connect-to-etcd", err)
 	}
 
-	consulScheme, consulAddresses, err := consuladapter.Parse(*consulCluster)
+	client, err := consuladapter.NewClient(*consulCluster)
 	if err != nil {
-		logger.Fatal("failed-parsing-consul-cluster", err)
+		logger.Fatal("new-client-failed", err)
 	}
 
-	consulAdapter, err := consuladapter.NewAdapter(consulAddresses, consulScheme)
+	sessionMgr := consuladapter.NewSessionManager(client)
+	consulSession, err := consuladapter.NewSession("receptor", *lockTTL, client, sessionMgr)
 	if err != nil {
-		logger.Fatal("failed-building-consul-adapter", err)
+		logger.Fatal("consul-session-failed", err)
 	}
 
-	return Bbs.NewReceptorBBS(etcdAdapter, consulAdapter, clock.NewClock(), logger)
+	return Bbs.NewReceptorBBS(etcdAdapter, consulSession, *taskHandlerAddress, clock.NewClock(), logger)
 }
 
 func initializeServerRegistration(logger lager.Logger) (registration natbeat.RegistryMessage) {

@@ -5,7 +5,6 @@ import (
 	"github.com/cloudfoundry-incubator/receptor/serialization"
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/shared"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
-	"github.com/hashicorp/consul/consul/structs"
 	"github.com/tedsuo/ifrit/ginkgomon"
 
 	. "github.com/onsi/ginkgo"
@@ -20,11 +19,7 @@ var _ = Describe("Cell API", func() {
 		cellPresence = models.NewCellPresence("cell-0", "1.2.3.4", "the-zone", capacity)
 		value, err := models.ToJSON(cellPresence)
 
-		_, err = consulAdapter.AcquireAndMaintainLock(
-			shared.CellSchemaPath(cellPresence.CellID),
-			value,
-			structs.SessionTTLMin,
-			nil)
+		_, err = consulSession.SetPresence(shared.CellSchemaPath(cellPresence.CellID), value)
 		Ω(err).ShouldNot(HaveOccurred())
 
 		receptorProcess = ginkgomon.Invoke(receptorRunner)

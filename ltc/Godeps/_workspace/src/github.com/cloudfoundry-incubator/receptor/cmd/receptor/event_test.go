@@ -190,13 +190,12 @@ var _ = Describe("Event", func() {
 			Ω(err).ShouldNot(HaveOccurred())
 			actualLRP := *actualLRPGroup.Instance
 
-			// discard DesiredLRP creation event
-			Eventually(events).Should(Receive())
-
 			var event receptor.Event
-			Eventually(events).Should(Receive(&event))
+			Eventually(func() receptor.Event {
+				Eventually(events).Should(Receive(&event))
+				return event
+			}).Should(BeAssignableToTypeOf(receptor.ActualLRPCreatedEvent{}))
 
-			Ω(event).Should(BeAssignableToTypeOf(receptor.ActualLRPCreatedEvent{}))
 			actualLRPCreatedEvent := event.(receptor.ActualLRPCreatedEvent)
 			Ω(actualLRPCreatedEvent.ActualLRPResponse).Should(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
 
