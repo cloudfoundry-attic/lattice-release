@@ -55,6 +55,7 @@ resource "aws_security_group" "lattice-network" {
 }
 
 resource "aws_eip" "lb" {
+    instance = "${aws_instance.lattice-coordinator.id}"
 }
 
 resource "aws_instance" "lattice-coordinator" {
@@ -103,7 +104,7 @@ resource "aws_instance" "lattice-coordinator" {
             "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${aws_instance.lattice-coordinator.private_ip}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_eip.lb.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_instance.lattice-coordinator.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
         ]
     }
 
@@ -157,7 +158,7 @@ resource "aws_instance" "lattice-cell" {
         inline = [
             "sudo mkdir -p /var/lattice/setup",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${aws_instance.lattice-coordinator.private_ip}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_eip.lb.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_instance.lattice-coordinator.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_CELL_ID=lattice-cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
         ]
