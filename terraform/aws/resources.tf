@@ -164,7 +164,7 @@ resource "aws_instance" "lattice-cell" {
         script = "${path.module}/../remote-scripts/install-lattice-cell"
     }
     resource "aws_eip" "lb" {
-        instance = "${aws_instance.lattice-coordinator}"
+        instance = "${aws_instance.lattice-coordinator.id}"
         vpc = true
 }
 
