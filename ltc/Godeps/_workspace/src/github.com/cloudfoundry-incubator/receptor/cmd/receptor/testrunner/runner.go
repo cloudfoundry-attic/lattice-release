@@ -35,7 +35,6 @@ func (args Args) ArgSlice() []string {
 		"-natsUsername", args.NatsUsername,
 		"-natsPassword", args.NatsPassword,
 		"-corsEnabled=" + strconv.FormatBool(args.CORSEnabled),
-		"-heartbeatRetryInterval", "1s",
 		"-consulCluster", args.ConsulCluster,
 	}
 }

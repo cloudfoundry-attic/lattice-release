@@ -69,12 +69,6 @@ var lockTTL = flag.Duration(
 	"TTL for service lock",
 )
 
-var heartbeatRetryInterval = flag.Duration(
-	"heartbeatRetryInterval",
-	lock_bbs.RetryInterval,
-	"interval to wait before retrying presence",
-)
-
 var etcdCluster = flag.String(
 	"etcdCluster",
 	"http://127.0.0.1:4001",
