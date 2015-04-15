@@ -75,9 +75,13 @@ compile_lattice-cell() {
 
     compile_lattice_cell_loggregator
 
-    CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
-    wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul
-    chmod +x $GOBIN/consul
+    CONSUL_OBJECT_ID="3e6c1e47-95a5-45ef-aeec-2cb4cc4c529a"
+    wget "http://blob.cfblob.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul.zip
+    pushd $GOBIN
+        unzip consul.zip
+        chmod +x $GOBIN/consul
+        rm -vf consul.zip
+    popd
 
     cp -av $LATTICE_PATH/lattice-cell/ $OUTPUT_DIR/
 }
@@ -103,9 +107,13 @@ compile_coordinator() {
     compile_gorouter
     compile_coordinator_loggregator
 
-    CONSUL_OBJECT_ID="bb8108ec-b026-4ce4-8216-0fabfeaac904"
-    wget "http://go-diego-go.s3.amazonaws.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul
-    chmod +x $GOBIN/consul
+    CONSUL_OBJECT_ID="3e6c1e47-95a5-45ef-aeec-2cb4cc4c529a"
+    wget "http://blob.cfblob.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul.zip
+    pushd $GOBIN
+        unzip consul.zip
+        chmod +x $GOBIN/consul
+        rm -vf consul.zip
+    popd
 
     cp -av $LATTICE_PATH/coordinator/ $OUTPUT_DIR/
 }
