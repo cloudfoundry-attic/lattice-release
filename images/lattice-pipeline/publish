@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+docker pull ubuntu:trusty
+docker build --force-rm --no-cache -t $DOCKER_IMAGE lattice/images/pipeline-image/image/
+docker push $DOCKER_IMAGE
+
+#Also publish to Dockerhub. Lattice is open source!
+docker login --email="$DOCKER_HUB_EMAIL"  --username="$DOCKER_HUB_USERNAME" --password="$DOCKER_HUB_PASSWORD"
+docker build --force-rm --no-cache -t cloudfoundry/lattice-pipeline lattice/images/pipeline-image/image/
+docker push cloudfoundry/lattice-pipeline
