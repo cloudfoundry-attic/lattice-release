@@ -163,5 +163,9 @@ resource "aws_instance" "lattice-cell" {
     provisioner "remote-exec" {
         script = "${path.module}/../remote-scripts/install-lattice-cell"
     }
+    resource "aws_eip" "lb" {
+        instance = "${aws_instance.lattice-coordinator}"
+        vpc = true
+}
 
 }
