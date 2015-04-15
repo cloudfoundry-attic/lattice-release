@@ -54,6 +54,10 @@ resource "aws_security_group" "lattice-network" {
     }
 }
 
+resource "aws_eip" "lb" {
+    instance = "${aws_instance.lattice-coordinator.id}"
+}
+
 resource "aws_instance" "lattice-coordinator" {
     ami = "${lookup(var.aws_image, var.aws_region)}"
     instance_type = "${var.aws_instance_type_coordinator}"
@@ -163,5 +167,4 @@ resource "aws_instance" "lattice-cell" {
     provisioner "remote-exec" {
         script = "${path.module}/../remote-scripts/install-lattice-cell"
     }
-
 }
