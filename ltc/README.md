@@ -53,10 +53,11 @@ You must have [Go](https://golang.org) 1.4+ installed and set up correctly.  `lt
 
 ```
 go get -d github.com/cloudfoundry-incubator/lattice/ltc
-GOPATH=$GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/Godeps/_workspace:$GOPATH go install github.com/cloudfoundry-incubator/lattice/ltc
+$GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/scripts/install
 ```
 
-Please Note: `go get -d` above may fail, these errors can be ignored. `ltc` relies on Godeps to provide stable versions of its dependencies.
+The first command downloads the package. The second installs it, specifying the path to the dependencies.  
+Note: `go get` will additionally attempt to download package dependencies, which may fail. This is due to Docker auto-generated packages, and is safe to ignore.
 
 ### Example Usage:
 
