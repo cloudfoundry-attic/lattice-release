@@ -151,7 +151,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Error visualizing: The list was lost"))
 			})
 		})
-
+/*
 		Context("When a rate flag is provided", func() {
 			var closeChan chan struct{}
 
@@ -212,7 +212,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).Should(test_helpers.Say(cursor.Show()))
 			})
 		})
-
+*/
 	})
 
 	Describe("StatusCommand", func() {

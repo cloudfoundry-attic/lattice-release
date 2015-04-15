@@ -16,6 +16,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/cursor"
 	"github.com/codegangsta/cli"
+	"github.com/gizak/termui"
 	"github.com/pivotal-golang/clock"
 )
 
@@ -304,30 +305,15 @@ func (factory *AppExaminerCommandFactory) printInstanceInfo(actualInstances []ap
 
 func (factory *AppExaminerCommandFactory) visualizeCells(context *cli.Context) {
 	rate := context.Duration("rate")
-
-	factory.ui.Say(colors.Bold("Distribution\n"))
-	linesWritten := factory.printDistribution()
-
 	if rate == 0 {
+		factory.ui.Say(colors.Bold("Distribution\n"))
+		factory.printDistribution()
 		return
 	}
 
-	closeChan := make(chan struct{})
-	factory.ui.Say(cursor.Hide())
-
-	factory.exitHandler.OnExit(func() {
-		closeChan <- struct{}{}
-		factory.ui.Say(cursor.Show())
-	})
-
-	for {
-		select {
-		case <-closeChan:
-			return
-		case <-factory.clock.NewTimer(rate).C():
-			factory.ui.Say(cursor.Up(linesWritten))
-			linesWritten = factory.printDistribution()
-		}
+	err := factory.printDistributionChart(rate)
+	if err != nil {
+		factory.ui.Say(err.Error())
 	}
 }
 
@@ -400,4 +386,156 @@ func printAppRoutes(w io.Writer, appInfo app_examiner.AppInfo) {
 			}
 		}
 	}
+}
+
+func (factory *AppExaminerCommandFactory) printDistributionChart(rate time.Duration) error {
+
+	//Initialize termui
+	err := termui.Init()
+	if err != nil {
+		panic(err)
+	}
+	defer termui.Close()
+
+	termui.UseTheme("helloworld")
+
+	//Initalize some widgets
+	p := termui.NewPar("Lattice Visualization")
+	p.Height = 1
+	p.Width = 25
+	p.TextFgColor = termui.ColorWhite
+	p.Border.FgColor = termui.ColorWhite
+	//p.X = ((termui.TermWidth() / 2) - 13)
+	//p.Y = 0
+	p.HasBorder = false
+
+	r := termui.NewPar(fmt.Sprintf("rate:%v", rate))
+	r.Height = 1
+	r.Width = 10
+	r.TextFgColor = termui.ColorWhite
+	r.Border.FgColor = termui.ColorWhite
+	//r.X = ((termui.TermWidth() / 2) - 5)
+	//r.Y = termui.TermHeight() - 2
+	r.HasBorder = false
+
+	s := termui.NewPar("hit [+=inc; -=dec; q=quit]")
+	s.Height = 1
+	s.Width = 30
+	s.TextFgColor = termui.ColorWhite
+	s.Border.FgColor = termui.ColorWhite
+	//s.X = ((termui.TermWidth() / 2) - 15)
+	//s.Y = termui.TermHeight() - 2
+	s.HasBorder = false
+	
+	bg := termui.NewBarChart()
+	bg.IsDisplay = false
+	bg.Data = []int{0}
+	bg.DataLabels = []string{"1[M]"}
+	bg.Width = termui.TermWidth() - 10
+	bg.Height = termui.TermHeight() - 5
+	//bg.X = 5
+	//bg.Y = 2
+	bg.BarColor = termui.ColorGreen
+	bg.NumColor = termui.ColorRed
+	bg.TextColor = termui.ColorWhite
+	bg.Border.LabelFgColor = termui.ColorWhite
+	bg.Border.Label = "X-Axis: I[R/T]=CellIndex[Total Instance/Running Instance];[M]=Missing;[E]=Empty"
+	bg.BarWidth = 10
+	bg.BarGap = 1
+	
+	//12 colomn grid system
+	termui.Body.AddRows (termui.NewRow(termui.NewCol(12,5,p)))
+	termui.Body.AddRows (termui.NewRow(termui.NewCol(12,0,bg)))
+	termui.Body.AddRows (termui.NewRow(termui.NewCol(6,0,s), termui.NewCol(6,5,r)))
+						 
+	
+	termui.Body.Align()
+	
+	termui.Render(termui.Body)
+	
+	
+	bg.IsDisplay = true
+	evt := termui.EventCh()
+	for {
+		select {
+		case e := <-evt:
+			if e.Type == termui.EventKey {
+				switch {
+				case (e.Ch == 'q' || e.Ch == 'Q'):
+					return nil
+
+				case (e.Ch == '+' || e.Ch == '='):
+					rate += 1 * time.Second
+					if rate > (100 * time.Second) {
+						rate = 100 * time.Second
+					}
+					break
+				case (e.Ch == '_' || e.Ch == '-'):
+					rate -= 1 * time.Second
+					if rate <= (1 * time.Second) {
+						rate = 1 * time.Second
+					}
+				}
+				r.Text = fmt.Sprintf("rate:%v", rate)
+				termui.Render(termui.Body)
+			}
+			if e.Type == termui.EventResize {
+				termui.Body.Width = termui.TermWidth()
+				termui.Body.Align()
+				termui.Render(termui.Body)
+			}		
+			break
+		
+		case <-factory.clock.NewTimer(rate).C():
+			err := factory.getProgressBars(bg)
+			if err != nil {
+				return err
+			}
+			termui.Render(termui.Body)
+			break
+		}
+	}
+	return nil
+}
+
+func (factory *AppExaminerCommandFactory) getProgressBars(bg *termui.BarChart)  error{
+
+	//barIntList := make([]int, 0)
+	//barStringList := make([]string, 0)
+	var barIntList []int
+	var barStringList []string
+
+	var per float64
+	var barLable string
+
+	cells, err := factory.appExaminer.ListCells()
+	if err != nil {
+		return err
+	}
+	
+	barIntList = append(barIntList,100)
+	barStringList = append(barStringList, "Y-Ref in %")
+	
+	for i, cell := range cells {
+		
+		if cell.Missing {
+			per = 0.0
+			barLable = fmt.Sprintf("%d[M]", i+1)
+			
+		} else if cell.RunningInstances == 0 && cell.ClaimedInstances == 0 && !cell.Missing {
+			per = 0.0
+			barLable = fmt.Sprintf("%d[E]", i+1)
+		} else {
+
+			per = (float64(cell.RunningInstances) / float64((cell.RunningInstances + cell.ClaimedInstances))) * 100
+			barLable = fmt.Sprintf("%d[%d/%d]", i+1, cell.RunningInstances, cell.RunningInstances+cell.ClaimedInstances)
+		}
+		barIntList = append(barIntList,int(per))
+		barStringList = append(barStringList, barLable)
+	}
+	
+	bg.Data = barIntList
+	bg.DataLabels = barStringList
+	
+	return  nil
 }
