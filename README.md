@@ -17,7 +17,7 @@ Lattice is an open source project for running containerized workloads on a clust
 Lattice is based on a number of open source [Cloud Foundry](http://cloudfoundry.org) components:
 
 - [Diego](https://github.com/cloudfoundry-incubator/diego-design-notes) schedules and monitors containerized workloads
-- [Doppler](https://github.com/cloudfoundry/loggregator) aggregates and streams application logs
+- [Loggregator](https://github.com/cloudfoundry/loggregator) aggregates and streams application logs
 - [Gorouter](https://github.com/cloudfoundry/gorouter) provides http load-balancing
 
 ## Deploy Lattice
