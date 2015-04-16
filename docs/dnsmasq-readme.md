@@ -11,14 +11,28 @@ brew up
 # Install dnsmasq
 brew install dnsmasq
 ```
-2. Copy default configs and start service
-```bash
-# Copy the default configuration file.
-cp $(brew list dnsmasq | grep /dnsmasq.conf.example$) /usr/local/etc/dnsmasq.conf
-# Copy the daemon configuration file into place.
-sudo cp $(brew list dnsmasq | grep /homebrew.mxcl.dnsmasq.plist$) /Library/LaunchDaemons/
-# Start Dnsmasq automatically.
-sudo launchctl load /Library/LaunchDaemons/homebrew.mxcl.dnsmasq.plist
+
+2. Use the commands provided by `brew info dnsmasq` to configure and start the service:  
+* As of dnsmasq v2.72, `brew info dnsmasq` returned:
+```
+$ brew info dnsmasq
+dnsmasq: stable 2.72 (bottled)
+http://www.thekelleys.org.uk/dnsmasq/doc.html
+/usr/local/Cellar/dnsmasq/2.72 (7 files, 496K) *
+  Built from source
+From: https://github.com/Homebrew/homebrew/blob/master/Library/Formula/dnsmasq.rb
+...
+==> Caveats
+To configure dnsmasq, copy the example configuration to /usr/local/etc/dnsmasq.conf
+and edit to taste.
+
+  cp /usr/local/opt/dnsmasq/dnsmasq.conf.example /usr/local/etc/dnsmasq.conf
+
+To have launchd start dnsmasq at startup:
+    sudo cp -fv /usr/local/opt/dnsmasq/*.plist /Library/LaunchDaemons
+    sudo chown root /Library/LaunchDaemons/homebrew.mxcl.dnsmasq.plist
+Then to load dnsmasq now:
+    sudo launchctl load /Library/LaunchDaemons/homebrew.mxcl.dnsmasq.plist
 ```
 
 ## Configuration
@@ -40,7 +54,7 @@ sudo launchctl start homebrew.mxcl.dnsmasq
 
 1. Create `/etc/resolver` folder
 ```bash
-sudo mkdir -p /etc/resolver
+sudo mkdir /etc/resolver
 ```
 2. Define resolver for `lattice.dev`
 ```bash

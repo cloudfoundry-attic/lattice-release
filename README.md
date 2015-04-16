@@ -105,7 +105,7 @@ DNS resolution for `xip.io` addresses can sometimes be flaky, resulting in error
 
 First, check your networking DNS settings. Local "forwarding DNS" servers provided by some home routers can have trouble resolving `xip.io` addresses. Try setting your DNS to point to your real upstream DNS servers, or alternatively try using [Google DNS](https://developers.google.com/speed/public-dns/) by using `8.8.8.8` and/or `8.8.4.4`.
 
-Unfortunately `xip.io` itself also sometimes returns similar "no such host" errors. The recommended alternative is to follow the [dnsmasq instructions](https://github.com/cloudfoundry-incubator/lattice/blob/master/dnsmasq-readme.md), pass the `LATTICE_SYSTEM_DOMAIN` environment variable to the vagrant up command, and target using `lattice.dev` instead of `192.168.11.11.xip.io` to point to the cluster, as follows:
+Unfortunately `xip.io` itself also sometimes returns similar "no such host" errors. The recommended alternative is to follow the [dnsmasq instructions](https://github.com/cloudfoundry-incubator/lattice/blob/master/docs/dnsmasq-readme.md), pass the `LATTICE_SYSTEM_DOMAIN` environment variable to the vagrant up command, and target using `lattice.dev` instead of `192.168.11.11.xip.io` to point to the cluster, as follows:
 
 ```
 LATTICE_SYSTEM_DOMAIN=lattice.dev vagrant up
@@ -197,7 +197,7 @@ Here are some ways *you* can contribute:
 * by closing [issues](https://github.com/cloudfoundry-incubator/lattice/issues)
 * by reviewing patches
 
-Also see the [Development Readme](https://github.com/cloudfoundry-incubator/lattice/tree/master/development-readme.md)
+Also see the [Development Readme](https://github.com/cloudfoundry-incubator/lattice/tree/master/docs/development-readme.md)
 
 ## Development Workflow
 
