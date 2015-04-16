@@ -44,7 +44,7 @@ resource "google_compute_instance" "lattice-coordinator" {
 
     #COMMON
     provisioner "local-exec" {
-      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../local-scripts/download-lattice-tar"
+      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
     }
 
     provisioner "file" {
@@ -53,13 +53,13 @@ resource "google_compute_instance" "lattice-coordinator" {
     }
 
     provisioner "file" {
-      source = "${path.module}/../remote-scripts/install_from_tar"
-      destination = "/tmp/install_from_tar"
+      source = "${path.module}/../scripts/remote/install-from-tar"
+      destination = "/tmp/install-from-tar"
     }
 
     provisioner "remote-exec" {
       inline = [
-          "sudo chmod 755 /tmp/install_from_tar",
+          "sudo chmod 755 /tmp/install-from-tar",
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
       ]
     }
@@ -76,7 +76,7 @@ resource "google_compute_instance" "lattice-coordinator" {
     }
 
     provisioner "remote-exec" {
-        script = "${path.module}/../remote-scripts/install-lattice-coordinator"
+        script = "${path.module}/../scripts/remote/install-brain"
     }
 }
 
@@ -102,7 +102,7 @@ resource "google_compute_instance" "lattice-cell" {
 
     #COMMON
     provisioner "local-exec" {
-      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../local-scripts/download-lattice-tar"
+      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
     }
 
     provisioner "file" {
@@ -111,13 +111,13 @@ resource "google_compute_instance" "lattice-cell" {
     }
 
     provisioner "file" {
-      source = "${path.module}/../remote-scripts/install_from_tar"
-      destination = "/tmp/install_from_tar"
+      source = "${path.module}/../scripts/remote/install-from-tar"
+      destination = "/tmp/install-from-tar"
     }
 
     provisioner "remote-exec" {
       inline = [
-          "sudo chmod 755 /tmp/install_from_tar",
+          "sudo chmod 755 /tmp/install-from-tar",
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
       ]
     }
@@ -134,6 +134,6 @@ resource "google_compute_instance" "lattice-cell" {
     }
 
     provisioner "remote-exec" {
-        script = "${path.module}/../remote-scripts/install-lattice-cell"
+        script = "${path.module}/../scripts/remote/install-cell"
     }
 }
