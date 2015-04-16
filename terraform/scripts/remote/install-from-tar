@@ -15,10 +15,10 @@ fi
 
 tar -xf /tmp/lattice.tgz -C /tmp #File Provisioner puts it in /tmp/lattice.tgz
 
-/tmp/lattice-build/common/install-common
+/tmp/lattice-build/scripts/install-common
 
 if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
-    /tmp/lattice-build/brain/install-brain
+    /tmp/lattice-build/scripts/install-brain
 
     #Stop consul and bootstrap in collocated install so we can trigger dependencies to fire off the single bootstrap script
     #once the cell is installed too.
@@ -27,8 +27,8 @@ if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
 
     sleep 2
 
-    /tmp/lattice-build/cell/install-cell
+    /tmp/lattice-build/scripts/install-cell
 else
-    /tmp/lattice-build/$COMPONENT_TO_INSTALL/install-$COMPONENT_TO_INSTALL
+    /tmp/lattice-build/scripts/install-$COMPONENT_TO_INSTALL
 fi
 
