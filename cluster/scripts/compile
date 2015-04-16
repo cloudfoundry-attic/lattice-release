@@ -3,7 +3,7 @@
 set -e
 
 compile_garden_linux() {
-    mkdir -p $OUTPUT_DIR/lattice-cell/garden
+    mkdir -p $OUTPUT_DIR/cell/garden
     rm -rf $GOPATH/pkg/*
 
     rm -rf $GOPATH/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace/pkg/*
@@ -17,8 +17,8 @@ compile_garden_linux() {
     pushd $DIEGO_RELEASE_PATH/src/github.com/cloudfoundry-incubator/garden-linux/old
         make
 
-        cp -a linux_backend/bin $OUTPUT_DIR/lattice-cell/garden/garden-bin
-        cp -a linux_backend/skeleton $OUTPUT_DIR/lattice-cell/garden/skeleton
+        cp -a linux_backend/bin $OUTPUT_DIR/cell/garden/garden-bin
+        cp -a linux_backend/skeleton $OUTPUT_DIR/cell/garden/skeleton
     popd
 
     rm -rf $GOPATH/pkg/*
@@ -40,7 +40,7 @@ compile_gorouter() {
     popd
 }
 
-compile_coordinator_loggregator() {
+compile_brain_loggregator() {
     pushd $CF_RELEASE_PATH/src/loggregator
         GOPATH=`pwd`
         go install trafficcontroller
@@ -50,7 +50,7 @@ compile_coordinator_loggregator() {
     popd
 }
 
-compile_lattice_cell_loggregator() {
+compile_cell_loggregator() {
     pushd $CF_RELEASE_PATH/src/loggregator
         GOPATH=`pwd`
         go install metron
@@ -59,8 +59,8 @@ compile_lattice_cell_loggregator() {
 }
 
 
-compile_lattice-cell() {
-    export GOBIN=$OUTPUT_DIR/lattice-cell/bin
+compile_cell() {
+    export GOBIN=$OUTPUT_DIR/cell/bin
     compile_garden_linux
 
     pushd $GOPATH
@@ -73,7 +73,7 @@ compile_lattice-cell() {
 
     rm -rf $GOPATH/pkg/*
 
-    compile_lattice_cell_loggregator
+    compile_cell_loggregator
 
     CONSUL_OBJECT_ID="3e6c1e47-95a5-45ef-aeec-2cb4cc4c529a"
     wget "http://blob.cfblob.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul.zip
@@ -83,11 +83,11 @@ compile_lattice-cell() {
         rm -vf consul.zip
     popd
 
-    cp -av $LATTICE_PATH/lattice-cell/ $OUTPUT_DIR/
+    cp -av $LATTICE_PATH/cluster/cell/ $OUTPUT_DIR/
 }
 
-compile_coordinator() {
-    export GOBIN=$OUTPUT_DIR/coordinator/bin
+compile_brain() {
+    export GOBIN=$OUTPUT_DIR/brain/bin
 
     pushd $GOPATH
         go install github.com/cloudfoundry-incubator/route-emitter/cmd/route-emitter
@@ -105,7 +105,7 @@ compile_coordinator() {
     rm -rf $GOPATH/pkg
 
     compile_gorouter
-    compile_coordinator_loggregator
+    compile_brain_loggregator
 
     CONSUL_OBJECT_ID="3e6c1e47-95a5-45ef-aeec-2cb4cc4c529a"
     wget "http://blob.cfblob.com/${CONSUL_OBJECT_ID}" -O $GOBIN/consul.zip
@@ -115,7 +115,7 @@ compile_coordinator() {
         rm -vf consul.zip
     popd
 
-    cp -av $LATTICE_PATH/coordinator/ $OUTPUT_DIR/
+    cp -av $LATTICE_PATH/cluster/brain/ $OUTPUT_DIR/
 }
 
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
@@ -142,12 +142,12 @@ rm -rf $OUTPUT_DIR/*
 rm -rf $GOPATH/pkg/*
 
 mkdir -pv $OUTPUT_DIR/common/
-cp -av $LATTICE_PATH/common/* $OUTPUT_DIR/common/
+cp -av $LATTICE_PATH/cluster/common/* $OUTPUT_DIR/common/
 
 cp -v $LATTICE_PATH/Version $OUTPUT_DIR/common/LATTICE_VERSION
 
-compile_lattice-cell
-compile_coordinator
+compile_cell
+compile_brain
 
 rm -rf $GOPATH/pkg/*
 rm -rf $GOPATH/bin/*
