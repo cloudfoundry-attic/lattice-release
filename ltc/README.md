@@ -24,12 +24,14 @@ With `ltc` you can:
 
 ##Setup:
 
-Download the appropriate binary for your architecture.  These link to the *latest* version of `ltc`.  For a specific version visit the [releases](https://github.com/cloudfoundry-incubator/lattice/releases) page.
+Download the appropriate binary for your architecture.  These link to the *latest* release of `ltc`.  For a specific release version visit the [releases](https://github.com/cloudfoundry-incubator/lattice/releases) page.  The latest unstable build is available below.
 
-Platform | Architecture | Link
----------|--------------|--------
-MacOS | amd64 | [https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc](https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc)
-Linux | amd64 | [https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc](https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc)
+Platform | Architecture | Type | Link
+---------|--------------|------|--------
+MacOS | amd64 | Release | [https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc](https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc)
+Linux | amd64 | Release | [https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc](https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc)
+MacOS | amd64 | Unstable | [https://lattice.s3.amazonaws.com/unstable/latest/darwin-amd64/ltc](https://lattice.s3.amazonaws.com/unstable/latest/darwin-amd64/ltc)
+Linux | amd64 | Unstable | [https://lattice.s3.amazonaws.com/unstable/latest/linux-amd64/ltc](https://lattice.s3.amazonaws.com/unstable/latest/linux-amd64/ltc)
 
 Here's a simple installation script.  It assumes `$HOME/bin` is on your $PATH
 
