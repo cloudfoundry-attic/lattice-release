@@ -29,7 +29,7 @@ The available variables that can be configured are:
 * `do_ssh_private_key_file`: Path to the SSH private key file
 * `do_region`: The DO region to operate under (default `nyc2`)
 * `do_image`: The droplet image ID or slug to base the launched instances (default `ubuntu-14-04-x64`)
-* `do_size_coordinator`: The DO size to use for the Lattice Coordinator instance (default `512mb`)
+* `do_size_brain`: The DO size to use for the Lattice Brain instance (default `512mb`)
 * `do_size_cell`: The DO size to use for the Lattice Cell instances (default `2gb`)
 * `num_cells`: The number of Lattice Cells to launch (default `3`)
 * `lattice_username`: Lattice username (default `user`)

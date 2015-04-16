@@ -32,7 +32,7 @@ The available variables that can be configured are:
 * `aws_vpc_cidr_block`: The IPv4 address range that machines in the network are assigned to, represented as a CIDR block (default `10.0.0.0/16`)
 * `aws_subnet_cidr_block`: The IPv4 address range that machines in the network are assigned to, represented as a CIDR block (default `10.0.1.0/24`)
 * `aws_image`: The name of the image to base the launched instances (default `ubuntu trusty 64bit hvm ami`)
-* `aws_instance_type_coordinator`: The machine type to use for the Lattice Coordinator instance (default `m3.medium`)
+* `aws_instance_type_brain`: The machine type to use for the Lattice Brain instance (default `m3.medium`)
 * `aws_instance_type_cell`: The machine type to use for the Lattice Cells instances (default `m3.medium`)
 * `num_cells`: The number of Lattice Cells to launch (default `3`)
 * `lattice_username`: Lattice username (default `user`)

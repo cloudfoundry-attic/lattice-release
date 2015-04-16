@@ -1,5 +1,5 @@
 output "lattice_target" {
-    value = "${digitalocean_droplet.lattice-coordinator.ipv4_address}.xip.io"
+    value = "${digitalocean_droplet.lattice-brain.ipv4_address}.xip.io"
 }
 
 output "lattice_username" {

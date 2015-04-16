@@ -34,8 +34,8 @@ variable "gce_image" {
     default = "ubuntu-1404-trusty-v20141212"
 }
 
-variable "gce_machine_type_coordinator" {
-    description = "The machine type to use for the Lattice Coordinator instance."
+variable "gce_machine_type_brain" {
+    description = "The machine type to use for the Lattice Brain instance."
     default = "n1-standard-1"
 }
 

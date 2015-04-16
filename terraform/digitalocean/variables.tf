@@ -20,8 +20,8 @@ variable "do_image" {
     default = "ubuntu-14-04-x64"
 }
 
-variable "do_size_coordinator" {
-    description = "The DO size to use for the Lattice Coordinator instance."
+variable "do_size_brain" {
+    description = "The DO size to use for the Lattice Brain instance."
     default = "512mb"
 }
 

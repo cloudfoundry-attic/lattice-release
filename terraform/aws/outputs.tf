@@ -1,5 +1,5 @@
 output "lattice_target" {
-    value = "${aws_instance.lattice-coordinator.public_ip}.xip.io"
+    value = "${aws_instance.lattice-brain.public_ip}.xip.io"
 }
 
 output "lattice_username" {
