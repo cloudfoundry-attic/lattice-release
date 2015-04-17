@@ -13,7 +13,7 @@ Lattice does not currently ship with a private Docker registry.  We plan on reme
 The following assumes:
 
 * Using the latest [http://boot2docker.io/](http://boot2docker.io/)
-* Using IP 192.168.59.103 for boot2docker. Find the ip on your boo2docker vm with `boot2docker ip`
+* Using IP 192.168.59.103 for boot2docker. Find the ip on your boot2docker vm with `boot2docker ip`
 
 **1. Allow the Docker daemon to communicate with the private registry**
 
