@@ -8,7 +8,7 @@ doc_subnav: true
 
 ## What is Lattice?
 
-Lattice is an open source project for running containerized workloads on a cluster.  A Lattice cluster is comprised of a number of Lattice Cells (VMs that run containers) and a Lattice Coordinator that monitors the Cells.
+Lattice is an open source project for running containerized workloads on a cluster.  A Lattice cluster is comprised of a number of Lattice Cells (VMs that run containers) and a 'Brain' that monitors the Cells.
 
 Lattice includes built-in http load-balancing, a cluster scheduler, log aggregation with log streaming and health management.
 
@@ -129,4 +129,4 @@ Lattice uses Cloud Foundry's [Garden-Linux](https://github.com/cloudfoundry-incu
 
 When running all of Lattice on a single VM, the process overhead in-use is about 250MB with no containers and no activity.
 
-When running Lattice in distributed mode with no containers and no activity, the Cell uses about 156MB of process overhead and the Coordinator uses about 141MB.
+When running Lattice in distributed mode with no containers and no activity, the Cell uses about 156MB of process overhead and the Brain uses about 141MB.
