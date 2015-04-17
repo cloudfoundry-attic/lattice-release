@@ -2,9 +2,9 @@
 
 ## Installation 
 
-* [Source link](http://passingcuriosity.com/2013/dnsmasq-dev-osx/)
+[Source link](http://passingcuriosity.com/2013/dnsmasq-dev-osx/)
 
-1. Use Homebrew to install `dnsmasq`
+1) Use Homebrew to install `dnsmasq`
 ```bash
 # Update your homebrew installation
 brew up
@@ -12,7 +12,7 @@ brew up
 brew install dnsmasq
 ```
 
-2. Use the commands provided by `brew info dnsmasq` to configure and start the service:  
+2) Use the commands provided by `brew info dnsmasq` to configure and start the service:  
 * As of dnsmasq v2.72, `brew info dnsmasq` returned:
 ```
 $ brew info dnsmasq
@@ -52,11 +52,11 @@ sudo launchctl start homebrew.mxcl.dnsmasq
 
 ### Configure workstation to use dnsmasq resolver for `lattice.dev`
 
-1. Create `/etc/resolver` folder
+1) Create `/etc/resolver` folder
 ```bash
 sudo mkdir /etc/resolver
 ```
-2. Define resolver for `lattice.dev`
+2) Define resolver for `lattice.dev`
 ```bash
 sudo tee /etc/resolver/lattice.dev >/dev/null <<EOF
 nameserver 127.0.0.1
@@ -65,7 +65,31 @@ EOF
 
 ## Starting Lattice cluster with alternate name
 
-1. Set `LATTICE_SYSTEM_DOMAIN` environment variable during `vagrant up`:
+1) Set `LATTICE_SYSTEM_DOMAIN` environment variable during `vagrant up`:
 ```
 LATTICE_SYSTEM_DOMAIN=lattice.dev vagrant up --provider=<PROVIDER> 
+```
+
+### Validating setup
+```
+% host www.lattice.dev 127.0.0.1
+Using domain server:
+Name: 127.0.0.1
+Address: 127.0.0.1#53
+Aliases: 
+
+www.lattice.dev has address 192.168.11.11
+```
+
+```
+% host www.yahoo.com 127.0.0.1
+Using domain server:
+Name: 127.0.0.1
+Address: 127.0.0.1#53
+Aliases: 
+
+www.yahoo.com is an alias for fd-fp3.wg1.b.yahoo.com.
+fd-fp3.wg1.b.yahoo.com has address 206.190.36.45
+fd-fp3.wg1.b.yahoo.com has address 206.190.36.105
+fd-fp3.wg1.b.yahoo.com has IPv6 address 2001:4998:c:a06::2:4008
 ```
