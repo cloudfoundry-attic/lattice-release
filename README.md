@@ -3,7 +3,7 @@
 <table>
   <tr>
     <td>
-      <a href="http://lattice.cf"><img src="https://github.com/cloudfoundry-incubator/lattice/raw/develop/logos/lattice.png" align="left" width="200" ></a>
+      <a href="http://lattice.cf"><img src="https://github.com/cloudfoundry-incubator/lattice/raw/master/docs/logos/lattice.png" align="left" width="200" ></a>
     </td>
     <td>
       Website: <a href="http://lattice.cf">http://lattice.cf</a><br>
@@ -222,5 +222,5 @@ details that may be necessary to reproduce the bug including the Lattice version
 
 # Copyright
 
-See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/LICENSE) for details.
+See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/docs/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).
