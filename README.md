@@ -3,7 +3,7 @@
 <table>
   <tr>
     <td>
-      <a href="http://lattice.cf"><img src="https://github.com/cloudfoundry-incubator/lattice/raw/develop/logos/lattice.png" align="left" width="200" ></a>
+      <a href="http://lattice.cf"><img src="https://raw.githubusercontent.com/cloudfoundry-incubator/lattice/master/logos/lattice.png" align="left" width="200" ></a>
     </td>
     <td>
       Website: <a href="http://lattice.cf">http://lattice.cf</a><br>
@@ -70,7 +70,7 @@ vagrant up --provider vmware_fusion
 
 ### Networking Conflicts
 
-If you are trying to run both the VirtualBox and VMWare providers on the same machine, 
+If you are trying to run both the VirtualBox and VMWare providers on the same machine,
 you'll need to run them on different private networks (subnets) that do not conflict.
 
 Set the System IP to an address that does not conflict with the host networking configuration by passing the
@@ -99,7 +99,7 @@ DNS resolution for `xip.io` addresses can sometimes be flaky, resulting in error
 
 ```bash
  ltc target 192.168.11.11.xip.io
- Error verifying target: Get http://receptor.192.168.11.11.xip.io/v1/desired_lrps: 
+ Error verifying target: Get http://receptor.192.168.11.11.xip.io/v1/desired_lrps:
  dial tcp: lookup receptor.192.168.11.11.xip.io: no such host
 ```
 
@@ -136,7 +136,7 @@ VAGRANT_LATTICE_TAR_PATH=/path/to/lattice.tgz vagrant up
 
 This repository contains several [Terraform](https://www.terraform.io/) templates to help you deploy on your choice of IaaS.  To deploy Lattice in this way you will need:
 
-* [Terraform](https://www.terraform.io/intro/getting-started/install.html) >= 0.4.2 installed on your machine 
+* [Terraform](https://www.terraform.io/intro/getting-started/install.html) >= 0.4.2 installed on your machine
 * Credentials for your choice of IaaS
 
 ## Deploying
