@@ -63,7 +63,11 @@ By default, `ltc` requests that Lattice perform a periodic health check agains t
 
 ### Watch Lattice Component Logs
 
-If you're still stuck you can try streaming the Lattice debug-logs with `ltc debug-logs` while launching your application.  
+If you're still stuck you can try streaming the Lattice debug-logs with `ltc debug-logs` while launching your application. [The veritas cli](https://github.com/pivotal-cf-experimental/veritas) is helpful for pretty printing the json log format from `ltc debug-logs` into something more human readable with a command like `ltc debug-logs | veritas chug`.
+
+### How do I get a shell inside a lattice container.
+
+See this detailed step-by-step set of instructions for how to [get shell access to a container running on lattice](https://docs.google.com/a/pivotal.io/document/d/1WWoQ_d5nR4-P6VfLbAAbzOZIvRj-Xdff2hsjM_ZWRUQ/edit#heading=h.hwnzq0ni9hoj).
 
 ## How do I communicate with my containers over TCP?
 

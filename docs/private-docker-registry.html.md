@@ -1,6 +1,6 @@
 ---
 title: Private Docker Registry
-weight: 7
+weight: 8
 doc_subnav: true
 ---
 
