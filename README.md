@@ -3,7 +3,7 @@
 <table>
   <tr>
     <td>
-      <a href="http://lattice.cf"><img src="https://raw.githubusercontent.com/cloudfoundry-incubator/lattice/master/logos/lattice.png" align="left" width="200" ></a>
+      <a href="http://lattice.cf"><img src="https://raw.githubusercontent.com/cloudfoundry-incubator/lattice/master/docs/logos/lattice.png" align="left" width="200" ></a>
     </td>
     <td>
       Website: <a href="http://lattice.cf">http://lattice.cf</a><br>
