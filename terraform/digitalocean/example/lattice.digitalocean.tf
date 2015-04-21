@@ -4,10 +4,10 @@ module "lattice-digitalocean" {
     # Digital Ocean API token
     do_token = "<CHANGE-ME>"
 
-    # SSH public key fingerprint
-    do_ssh_public_key_fingerprint = "<CHANGE-ME>"
+    # SSH public key id. Get the key ID from https://developers.digitalocean.com/documentation/v1/ssh-keys/
+    do_ssh_public_key_id = "<CHANGE-ME>"
 
-    # Path to the SSH private key file
+    # Path to the SSH private key file. This needs to match the public key id defined above
     do_ssh_private_key_file = "<CHANGE-ME>"
 
     # The number of Lattice Cells to launch

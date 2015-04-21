@@ -2,8 +2,8 @@ variable "do_token" {
     description = "Digital Ocean API token."
 }
 
-variable "do_ssh_public_key_fingerprint" {
-    description = "SSH public key fingerprint."
+variable "do_ssh_public_key_id" {
+    description = "SSH public key id."
 }
 
 variable "do_ssh_private_key_file" {

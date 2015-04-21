@@ -4,7 +4,7 @@ resource "digitalocean_droplet" "lattice-brain" {
     image    = "${var.do_image}"
     size     = "${var.do_size_brain}"
     ssh_keys = [
-      "${var.do_ssh_public_key_fingerprint}",
+      "${var.do_ssh_public_key_id}",
     ]
     private_networking = true
 
@@ -57,7 +57,7 @@ resource "digitalocean_droplet" "lattice-cell" {
     image    = "${var.do_image}"
     size     = "${var.do_size_cell}"
     ssh_keys = [
-      "${var.do_ssh_public_key_fingerprint}",
+      "${var.do_ssh_public_key_id}",
     ]
     private_networking = true
 
