@@ -185,6 +185,8 @@ terraform destroy
 
 In the spirit of [free software](http://www.fsf.org/licensing/essays/free-sw.html), **everyone** is encouraged to help improve this project.
 
+Please submit pull requests against the **develop branch**. Only the continuous integration system commits to master.
+
 Here are some ways *you* can contribute:
 
 * by using alpha, beta, and prerelease versions
@@ -198,11 +200,6 @@ Here are some ways *you* can contribute:
 * by reviewing patches
 
 Also see the [Development Readme](https://github.com/cloudfoundry-incubator/lattice/tree/master/docs/development-readme.md)
-
-## Development Workflow
-
-Development work should be done on the develop branch.
-As a general rule, only CI should commit to master.
 
 ## Submitting an Issue
 We use the [GitHub issue tracker](https://github.com/cloudfoundry-incubator/lattice/issues) to track bugs and features.
