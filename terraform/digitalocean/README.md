@@ -40,9 +40,7 @@ documentation for more details about how to configure the proper credentials.
 
 ### Getting your SSH Key ID
 
-You can get the key ID by executing an API call against the Digital Ocean API. More info here
-
-https://developers.digitalocean.com/documentation/v1/ssh-keys/
+You can get the key ID by executing an API call against the Digital Ocean API. More info can found on the [DigitalOcean API Reference](https://developers.digitalocean.com/documentation/v2/#list-all-keys).  The token needed for the `Authorization: Bearer` header is the same as the DigitalOcean API Token referenced in the Prerequisites.
 
 ### Deploy
 
