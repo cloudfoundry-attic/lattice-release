@@ -232,11 +232,6 @@ func initializeReceptorBBS(logger lager.Logger) Bbs.ReceptorBBS {
 		workpool.NewWorkPool(100),
 	)
 
-	err := etcdAdapter.Connect()
-	if err != nil {
-		logger.Fatal("failed-to-connect-to-etcd", err)
-	}
-
 	client, err := consuladapter.NewClient(*consulCluster)
 	if err != nil {
 		logger.Fatal("new-client-failed", err)
