@@ -39,7 +39,7 @@ More complex workloads can be constructed and submitted directly to Lattice's Re
 Make sure you have [Vagrant](https://vagrantup.com/) installed, then:
 
 ```bash
-git clone git@github.com:cloudfoundry-incubator/lattice.git
+git clone https://github.com/cloudfoundry-incubator/lattice.git
 cd lattice
 git checkout <VERSION>
 vagrant up
