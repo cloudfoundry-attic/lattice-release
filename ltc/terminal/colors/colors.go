@@ -15,37 +15,54 @@ const (
 	purpleUnderline string = "\x1b[35;4m"
 	defaultStyle    string = "\x1b[0m"
 	boldStyle       string = "\x1b[1m"
+	grayColor       string = "\x1b[90m"
 )
 
+func Colorize(colorCode string, format string, args ...interface{}) string {
+	var out string
+
+	if len(args) > 0 {
+		out = fmt.Sprintf(format, args...)
+	} else {
+		out = format
+	}
+
+	return fmt.Sprintf("%s%s%s", colorCode, out, defaultStyle)
+}
+
 func Red(output string) string {
-	return colorize(output, red)
+	return colorText(output, red)
 }
 
 func Green(output string) string {
-	return colorize(output, green)
+	return colorText(output, green)
 }
 
 func Cyan(output string) string {
-	return colorize(output, cyan)
+	return colorText(output, cyan)
 }
 
 func Yellow(output string) string {
-	return colorize(output, yellow)
+	return colorText(output, yellow)
+}
+
+func Gray(output string) string {
+	return colorText(output, grayColor)
 }
 
 func NoColor(output string) string {
-	return colorize(output, defaultStyle)
+	return colorText(output, defaultStyle)
 }
 
 func Bold(output string) string {
-	return colorize(output, boldStyle)
+	return colorText(output, boldStyle)
 }
 
 func PurpleUnderline(output string) string {
-	return colorize(output, purpleUnderline)
+	return colorText(output, purpleUnderline)
 }
 
-func colorize(output string, color string) string {
+func colorText(output string, color string) string {
 	if strings.TrimSpace(output) == "" {
 		return output
 	}
