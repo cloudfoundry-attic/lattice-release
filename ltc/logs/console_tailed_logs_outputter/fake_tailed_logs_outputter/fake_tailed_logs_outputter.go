@@ -7,13 +7,10 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 )
 
-func NewFakeTailedLogsOutputter() *FakeTailedLogsOutputter {
-	return &FakeTailedLogsOutputter{
-		stopChan: make(chan struct{}),
-	}
-}
-
 type FakeTailedLogsOutputter struct {
+	OutputDebugLogsStub         func()
+	outputDebugLogsMutex        sync.RWMutex
+	outputDebugLogsArgsForCall  []struct{}
 	OutputTailedLogsStub        func(appGuid string)
 	outputTailedLogsMutex       sync.RWMutex
 	outputTailedLogsArgsForCall []struct {
@@ -23,6 +20,28 @@ type FakeTailedLogsOutputter struct {
 	stopOutputtingMutex       sync.RWMutex
 	stopOutputtingArgsForCall []struct{}
 	stopChan                  chan struct{}
+}
+
+func NewFakeTailedLogsOutputter() *FakeTailedLogsOutputter {
+	return &FakeTailedLogsOutputter{
+		stopChan: make(chan struct{}),
+	}
+}
+
+func (fake *FakeTailedLogsOutputter) OutputDebugLogs() {
+	fake.outputDebugLogsMutex.Lock()
+	fake.outputDebugLogsArgsForCall = append(fake.outputDebugLogsArgsForCall, struct{}{})
+	fake.outputDebugLogsMutex.Unlock()
+	if fake.OutputDebugLogsStub != nil {
+		fake.OutputDebugLogsStub()
+	}
+	<-fake.stopChan
+}
+
+func (fake *FakeTailedLogsOutputter) OutputDebugLogsCallCount() int {
+	fake.outputDebugLogsMutex.RLock()
+	defer fake.outputDebugLogsMutex.RUnlock()
+	return len(fake.outputDebugLogsArgsForCall)
 }
 
 func (fake *FakeTailedLogsOutputter) OutputTailedLogs(appGuid string) {

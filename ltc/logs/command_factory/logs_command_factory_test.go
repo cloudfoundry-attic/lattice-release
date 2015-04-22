@@ -13,7 +13,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
-	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
@@ -108,8 +107,7 @@ var _ = Describe("CommandFactory", func() {
 		It("tails logs from the lattice-debug stream", func() {
 			test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{})
 
-			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
-			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal(reserved_app_ids.LatticeDebugLogStreamAppId))
+			Eventually(fakeTailedLogsOutputter.OutputDebugLogsCallCount).Should(Equal(1))
 		})
 	})
 

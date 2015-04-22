@@ -5,12 +5,14 @@ import (
 	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry/noaa/events"
 )
 
 type TailedLogsOutputter interface {
+	OutputDebugLogs()
 	OutputTailedLogs(appGuid string)
 	StopOutputting()
 }
@@ -28,6 +30,14 @@ func NewConsoleTailedLogsOutputter(ui terminal.UI, logReader logs.LogReader) *Co
 		logReader:  logReader,
 	}
 
+}
+
+func (ctlo *ConsoleTailedLogsOutputter) OutputDebugLogs() {
+	go ctlo.logReader.TailLogs(reserved_app_ids.LatticeDebugLogStreamAppId, ctlo.logCallback, ctlo.errorCallback)
+
+	for log := range ctlo.outputChan {
+		ctlo.ui.Say(log + "\n")
+	}
 }
 
 func (ctlo *ConsoleTailedLogsOutputter) OutputTailedLogs(appGuid string) {

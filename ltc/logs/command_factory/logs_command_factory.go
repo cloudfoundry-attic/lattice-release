@@ -6,7 +6,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
-	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/codegangsta/cli"
 )
@@ -70,5 +69,5 @@ func (factory *logsCommandFactory) tailLogs(context *cli.Context) {
 }
 
 func (factory *logsCommandFactory) tailDebugLogs(context *cli.Context) {
-	factory.tailedLogsOutputter.OutputTailedLogs(reserved_app_ids.LatticeDebugLogStreamAppId)
+	factory.tailedLogsOutputter.OutputDebugLogs()
 }
