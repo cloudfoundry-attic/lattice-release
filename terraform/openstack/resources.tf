@@ -32,7 +32,7 @@ resource "openstack_networking_network_v2" "lattice-network" {
 resource "openstack_networking_subnet_v2" "lattice-network" {
     region = "${var.openstack_region}"
     network_id = "${openstack_networking_network_v2.lattice-network.id}"
-    cidr = ${var.openstack_subnet_cidr_block}
+    cidr = "${var.openstack_subnet_cidr_block}"
     ip_version = 4
 }
 

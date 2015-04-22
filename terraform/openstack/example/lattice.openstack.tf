@@ -7,6 +7,9 @@ module "lattice-openstack" {
     # OpenStack Password
     openstack_secret_key = "<CHANGE-ME>"
 
+    # OpenStack Tenant Name
+    openstack_tenant_name = "<CHANGE-ME>"
+
     # SSH Key Name
     openstack_key_name = "<CHANGE-ME>"
 
