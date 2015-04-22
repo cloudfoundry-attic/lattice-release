@@ -2,7 +2,7 @@
 
 Many Lattice services run over HTTP. Via the [Gorouter](https://github.com/cloudfoundry/gorouter), they share the same IP address. They are distinguished based on which hostname they've been accessed by. That's why many Lattice examples require the use of `.xip.io` instead of the raw IP address. That way, the client correctly communicates the domain name to the service regardless of how many services share that IP address.
 
-We've taken to using [dnsmasq](http://www.thekelleys.org.uk/dnsmasq/doc.html) to avoid the use of `.xip.io` above. Dnsmaq is a useful tool to provide a private, local DNS server that can be configured to return the IP addresse of your Lattice installment. In this document, the examples use the [dnsmasq package for OSX](http://passingcuriosity.com/2013/dnsmasq-dev-osx/). If you are not on OSX, you can use the [source distribution](http://www.thekelleys.org.uk/dnsmasq/).
+We've taken to using [dnsmasq](http://www.thekelleys.org.uk/dnsmasq/doc.html) to avoid the use of `.xip.io` above. Dnsmaq is a useful tool to provide a private, local DNS server that can be configured to return the IP address of your Lattice installment. In this document, the examples use the [dnsmasq package for OSX](http://passingcuriosity.com/2013/dnsmasq-dev-osx/). If you are not on OSX, you can use the [source distribution](http://www.thekelleys.org.uk/dnsmasq/).
 
 After following these instructions, wherever you see `servicename.IP-ADDRESS.xip.io` you can simply use `servicename.lattice.dev`. So, `ltc target 192.168.11.11.xip.io` becomes `ltc target lattice.dev`.
 
