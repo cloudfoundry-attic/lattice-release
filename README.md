@@ -24,7 +24,7 @@ Lattice is based on a number of open source [Cloud Foundry](http://cloudfoundry.
 
 A [local deployment](#local-deployment) of Lattice can be launched with Vagrant.
 
-A scalable [cluster deployment](#clustered-deployment) of Lattice can be launched with Terraform.  We currently support [AWS](#amazon-web-services), [DigitalOcean](#digitalocean), and [Google Cloud](#google-cloud)
+A scalable [cluster deployment](#clustered-deployment) of Lattice can be launched with Terraform.  We currently support [AWS](terraform/aws/README.md), [DigitalOcean](terraform/digitalocean/README.md), and [Google Cloud](terraform/google/README.md)
 
 ## Use Lattice
 
