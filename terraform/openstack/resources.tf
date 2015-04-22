@@ -62,14 +62,14 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
     image_name = "${var.openstack_image}"
     flavor_name = "${var.openstack_instance_type_coordinator}"
     key_pair = "${var.openstack_key_name}"
-    security_groups = $openstack_compute_secgroup_v2.lattice-sg.name
+    security_groups = "${openstack_compute_secgroup_v2.lattice-sg.name}"
     metadata {
         lattice-role = "coordinator"
     }
     network {
         uuid = "${openstack_networking_network_v2.lattice-network.id}"
     }
-    floating_ip = ${openstack_compute_floatingip_v2.fip-1}
+    floating_ip = "${openstack_compute_floatingip_v2.fip-1.id}"
 
     connection {
         user = "${var.openstack_ssh_user}"
@@ -124,7 +124,7 @@ resource "openstack_compute_instance_v2" "lattice-cell" {
     image_name = "${var.openstack_image}"
     flavor_name = "${var.openstack_instance_type_cell}"
     key_pair = "${var.openstack_key_name}"
-    security_groups = $openstack_compute_secgroup_v2.lattice-sg.name
+    security_groups = "${openstack_compute_secgroup_v2.lattice-sg.name}"
     metadata {
         lattice-role = "cell"
         lattice-cell-instance = "${count.index}"
