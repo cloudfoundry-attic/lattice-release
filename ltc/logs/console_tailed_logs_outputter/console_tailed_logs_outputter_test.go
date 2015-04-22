@@ -59,8 +59,36 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 		})
 	})
 
+	// TODO: is this realistic data for debug-logs
 	Describe("OutputDebugLogs", func() {
-		It("Tails logs", func() {
+
+		// TODO: re-do this test
+		It("tails logs with pretty formatting", func() {
+			time := time.Now()
+			sourceType := "RTR"
+			sourceInstance := "cell-1"
+
+			unixTime := time.UnixNano()
+			logReader.AddLog(&events.LogMessage{
+				Message:        []byte("First log"),
+				Timestamp:      &unixTime,
+				SourceType:     &sourceType,
+				SourceInstance: &sourceInstance,
+			})
+			logReader.AddError(errors.New("First Error"))
+
+			go consoleTailedLogsOutputter.OutputDebugLogs(true)
+
+			Eventually(logReader.GetAppGuid).Should(Equal(reserved_app_ids.LatticeDebugLogStreamAppId))
+
+			Eventually(outputBuffer).Should(test_helpers.Say("RTR"))
+			Eventually(outputBuffer).Should(test_helpers.Say("cell-1"))
+			Eventually(outputBuffer).Should(test_helpers.Say("First log"))
+
+			Eventually(outputBuffer).Should(test_helpers.Say("First Error\n"))
+		})
+
+		It("tails logs without pretty formatting", func() {
 			time := time.Now()
 			sourceType := "RTR"
 			sourceInstance := "1"
@@ -74,13 +102,13 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 			})
 			logReader.AddError(errors.New("First Error"))
 
-			go consoleTailedLogsOutputter.OutputDebugLogs()
+			go consoleTailedLogsOutputter.OutputDebugLogs(false)
 
 			Eventually(logReader.GetAppGuid).Should(Equal(reserved_app_ids.LatticeDebugLogStreamAppId))
 
-			logOutputBufferString := fmt.Sprintf("%s [%s|%s] First log\n", colors.Cyan(time.Format("02 Jan 15:04")), colors.Yellow(sourceType), colors.Yellow(sourceInstance))
-			Eventually(outputBuffer).Should(test_helpers.Say(logOutputBufferString))
-
+			Consistently(outputBuffer).ShouldNot(test_helpers.Say(sourceType))
+			Consistently(outputBuffer).ShouldNot(test_helpers.Say(sourceInstance))
+			Eventually(outputBuffer).Should(test_helpers.Say("First log\n"))
 			Eventually(outputBuffer).Should(test_helpers.Say("First Error\n"))
 		})
 	})

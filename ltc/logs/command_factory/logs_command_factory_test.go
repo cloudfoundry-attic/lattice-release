@@ -108,7 +108,18 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{})
 
 			Eventually(fakeTailedLogsOutputter.OutputDebugLogsCallCount).Should(Equal(1))
+			Expect(fakeTailedLogsOutputter.OutputDebugLogsArgsForCall(0)).To(Equal(true))
 		})
+
+		Context("when the --raw flag is passed", func() {
+			It("tails the debug logs without pretty print", func() {
+				test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{"--raw"})
+
+				Eventually(fakeTailedLogsOutputter.OutputDebugLogsCallCount).Should(Equal(1))
+				Expect(fakeTailedLogsOutputter.OutputDebugLogsArgsForCall(0)).To(Equal(false))
+			})
+		})
+
 	})
 
 })

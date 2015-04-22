@@ -8,9 +8,11 @@ import (
 )
 
 type FakeTailedLogsOutputter struct {
-	OutputDebugLogsStub         func()
-	outputDebugLogsMutex        sync.RWMutex
-	outputDebugLogsArgsForCall  []struct{}
+	OutputDebugLogsStub        func(pretty bool)
+	outputDebugLogsMutex       sync.RWMutex
+	outputDebugLogsArgsForCall []struct {
+		pretty bool
+	}
 	OutputTailedLogsStub        func(appGuid string)
 	outputTailedLogsMutex       sync.RWMutex
 	outputTailedLogsArgsForCall []struct {
@@ -28,12 +30,14 @@ func NewFakeTailedLogsOutputter() *FakeTailedLogsOutputter {
 	}
 }
 
-func (fake *FakeTailedLogsOutputter) OutputDebugLogs() {
+func (fake *FakeTailedLogsOutputter) OutputDebugLogs(pretty bool) {
 	fake.outputDebugLogsMutex.Lock()
-	fake.outputDebugLogsArgsForCall = append(fake.outputDebugLogsArgsForCall, struct{}{})
+	fake.outputDebugLogsArgsForCall = append(fake.outputDebugLogsArgsForCall, struct {
+		pretty bool
+	}{pretty})
 	fake.outputDebugLogsMutex.Unlock()
 	if fake.OutputDebugLogsStub != nil {
-		fake.OutputDebugLogsStub()
+		fake.OutputDebugLogsStub(pretty)
 	}
 	<-fake.stopChan
 }
@@ -42,6 +46,12 @@ func (fake *FakeTailedLogsOutputter) OutputDebugLogsCallCount() int {
 	fake.outputDebugLogsMutex.RLock()
 	defer fake.outputDebugLogsMutex.RUnlock()
 	return len(fake.outputDebugLogsArgsForCall)
+}
+
+func (fake *FakeTailedLogsOutputter) OutputDebugLogsArgsForCall(i int) bool {
+	fake.outputDebugLogsMutex.RLock()
+	defer fake.outputDebugLogsMutex.RUnlock()
+	return fake.outputDebugLogsArgsForCall[i].pretty
 }
 
 func (fake *FakeTailedLogsOutputter) OutputTailedLogs(appGuid string) {

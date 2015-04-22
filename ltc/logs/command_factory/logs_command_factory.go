@@ -40,12 +40,19 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 }
 
 func (factory *logsCommandFactory) MakeDebugLogsCommand() cli.Command {
+	var debugLogsFlags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "raw",
+			Usage: "Removes pretty formatting",
+		},
+	}
 	return cli.Command{
 		Name:        "debug-logs",
 		Aliases:     []string{"dl"},
 		Usage:       "Streams logs from the lattice cluster components",
 		Description: "ltc debug-logs",
 		Action:      factory.tailDebugLogs,
+		Flags:       debugLogsFlags,
 	}
 }
 
@@ -69,5 +76,6 @@ func (factory *logsCommandFactory) tailLogs(context *cli.Context) {
 }
 
 func (factory *logsCommandFactory) tailDebugLogs(context *cli.Context) {
-	factory.tailedLogsOutputter.OutputDebugLogs()
+	rawFlag := context.Bool("raw")
+	factory.tailedLogsOutputter.OutputDebugLogs(!rawFlag)
 }
