@@ -2,6 +2,7 @@ package prettify_test
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,6 +23,10 @@ var _ = Describe("Prettify", func() {
 		sourceInstance := "cell-77"
 		logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298","session":"7.1.10","trace":"trace-me-now"}}`)
 
+		lagerTimestamp := "1429296198.620077372"
+		lagerUnixTime, err := strconv.ParseFloat(lagerTimestamp, 64)
+		Expect(err).ToNot(HaveOccurred())
+
 		logMessage := &events.LogMessage{
 			Message:        logPayload,
 			Timestamp:      &unixTime,
@@ -36,7 +41,7 @@ var _ = Describe("Prettify", func() {
 		Expect(prettyLog).To(ContainSubstring(`rep`))
 		Expect(prettyLog).To(ContainSubstring(`cell-77`))
 		Expect(prettyLog).To(ContainSubstring(`INFO`))
-		Expect(prettyLog).To(ContainSubstring(`04/17 13:43:18.62`))
+		Expect(prettyLog).To(ContainSubstring(time.Unix(0, int64(lagerUnixTime*1e9)).Format("01/02 15:04:05.00")))
 		Expect(prettyLog).To(ContainSubstring(`7.1.10`))
 		Expect(prettyLog).To(ContainSubstring(`rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container`))
 		Expect(prettyLog).To(ContainSubstring(`{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298"}`))
@@ -147,6 +152,11 @@ var _ = Describe("Prettify", func() {
 		unixTime := now.UnixNano()
 		sourceType := "rep"
 		sourceInstance := "cell-77"
+
+		lagerTimestamp := "1429296198.620077372"
+		lagerUnixTime, err := strconv.ParseFloat(lagerTimestamp, 64)
+		Expect(err).ToNot(HaveOccurred())
+
 		logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298","session":"7.1.10"}}`)
 
 		logMessage := &events.LogMessage{
@@ -163,7 +173,7 @@ var _ = Describe("Prettify", func() {
 		Expect(prettyLog).To(MatchRegexp(`\S{4}rep\S{4}\s{9}`))
 		Expect(prettyLog).To(MatchRegexp(`^.{22}cell-77\s{2}`))
 		Expect(prettyLog).To(MatchRegexp(`^.{34}\S{4}[INFO]\S{4}`))
-		Expect(prettyLog).To(MatchRegexp(`^.{48}04/17 13:43:18.62`))
+		Expect(prettyLog).To(MatchRegexp(`^.{48}` + time.Unix(0, int64(lagerUnixTime*1e9)).Format("01/02 15:04:05.00")))
 		Expect(prettyLog).To(MatchRegexp(`^.{66}7.1.10`))
 		Expect(prettyLog).To(MatchRegexp(`^.{81}rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container`))
 

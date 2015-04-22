@@ -59,10 +59,8 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 		})
 	})
 
-	// TODO: is this realistic data for debug-logs
 	Describe("OutputDebugLogs", func() {
 
-		// TODO: re-do this test
 		It("tails logs with pretty formatting", func() {
 			time := time.Now()
 			sourceType := "RTR"
