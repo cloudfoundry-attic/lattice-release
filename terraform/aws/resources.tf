@@ -126,7 +126,7 @@ resource "aws_instance" "lattice-brain" {
     }
 }
 
-resource "aws_instance" "lattice-cell" {
+resource "aws_instance" "cell" {
     depends_on = ["aws_eip.ip"]
     count = "${var.num_cells}"
     ami = "${lookup(var.aws_image, var.aws_region)}"
@@ -137,7 +137,7 @@ resource "aws_instance" "lattice-cell" {
       "${aws_security_group.lattice-network.id}",
     ]
     tags {
-        Name = "lattice-cell-${count.index}"
+        Name = "cell-${count.index}"
     }
 
     connection {
@@ -173,7 +173,7 @@ resource "aws_instance" "lattice-cell" {
             "sudo mkdir -p /var/lattice/setup",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${aws_instance.lattice-brain.private_ip}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_eip.ip.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"LATTICE_CELL_ID=lattice-cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"LATTICE_CELL_ID=cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
         ]
     }

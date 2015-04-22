@@ -50,9 +50,9 @@ resource "digitalocean_droplet" "lattice-brain" {
     }
 }
 
-resource "digitalocean_droplet" "lattice-cell" {
+resource "digitalocean_droplet" "cell" {
     count    = "${var.num_cells}"
-    name     = "lattice-cell-${count.index}"
+    name     = "cell-${count.index}"
     region   = "${var.do_region}"
     image    = "${var.do_image}"
     size     = "${var.do_size_cell}"
@@ -93,7 +93,7 @@ resource "digitalocean_droplet" "lattice-cell" {
             "sudo mkdir -p /var/lattice/setup/",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${digitalocean_droplet.lattice-brain.ipv4_address}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"SYSTEM_DOMAIN=${digitalocean_droplet.lattice-brain.ipv4_address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"LATTICE_CELL_ID=lattice-cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"LATTICE_CELL_ID=cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
         ]
     }

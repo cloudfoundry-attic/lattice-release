@@ -30,7 +30,7 @@ var _ = Describe("tee2metron", func() {
 	It("prints stdout and stderr and streams them to metron", func() {
 		metronReceivedBuffer, port := startFakeMetron()
 		dropsondeDestinationFlag := "-dropsondeDestination=127.0.0.1:" + port
-		command := exec.Command(tee2MetronPath, dropsondeDestinationFlag, "-sourceInstance=lattice-cell-123", chattyProcessPath, "chattyArg1", "chattyArg2", "-chattyFlag")
+		command := exec.Command(tee2MetronPath, dropsondeDestinationFlag, "-sourceInstance=cell-123", chattyProcessPath, "chattyArg1", "chattyArg2", "-chattyFlag")
 
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
@@ -41,7 +41,7 @@ var _ = Describe("tee2metron", func() {
 
 		Eventually(gbytes.BufferWithBytes(*metronReceivedBuffer)).Should(gbytes.Say(chattyProcessPath))
 		Eventually(gbytes.BufferWithBytes(*metronReceivedBuffer)).Should(gbytes.Say("lattice-debug"))
-		Eventually(gbytes.BufferWithBytes(*metronReceivedBuffer)).Should(gbytes.Say("lattice-cell-123"))
+		Eventually(gbytes.BufferWithBytes(*metronReceivedBuffer)).Should(gbytes.Say("cell-123"))
 		Eventually(gbytes.BufferWithBytes(*metronReceivedBuffer), 5).Should(gbytes.Say("Hi from stdout. My args are: [chattyArg1 chattyArg2 -chattyFlag]"))
 		Eventually(gbytes.BufferWithBytes(*metronReceivedBuffer), 5).Should(gbytes.Say("Oopsie from stderr"))
 
@@ -54,18 +54,18 @@ var _ = Describe("tee2metron", func() {
 	Context("With a bad command", func() {
 		Context("when the command is missing", func() {
 			It("prints and error message and exits", func() {
-				command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=lattice-cell-123")
+				command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=cell-123")
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 				Eventually(session.Out).Should(gbytes.Say("Command not specified!"))
-				Eventually(session.Out).Should(gbytes.Say("Usage: tee2metron -dropsondeDestionation=127.0.0.1:3457 -sourceInstance=lattice-cell-21 COMMAND"))
+				Eventually(session.Out).Should(gbytes.Say("Usage: tee2metron -dropsondeDestionation=127.0.0.1:3457 -sourceInstance=cell-21 COMMAND"))
 				Eventually(session.Exited).Should(BeClosed())
 				Expect(session.ExitCode()).To(Equal(3))
 			})
 		})
 		Context("when there is an error executing the command", func() {
 			It("prints and error message and exits", func() {
-				command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=lattice-cell-123", "do-the-fandango-for-me")
+				command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=cell-123", "do-the-fandango-for-me")
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 				Eventually(session.Out).Should(gbytes.Say(`exec: "do-the-fandango-for-me": executable file not found in \$PATH`))
@@ -78,7 +78,7 @@ var _ = Describe("tee2metron", func() {
 				chmodCmd := exec.Command("chmod", "u-x", chattyProcessPath)
 				_, chmodErr := gexec.Start(chmodCmd, GinkgoWriter, GinkgoWriter)
 				Expect(chmodErr).ToNot(HaveOccurred())
-				command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=lattice-cell-123", chattyProcessPath, "chattyArg1", "chattyArg2", "-chattyFlag")
+				command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=cell-123", chattyProcessPath, "chattyArg1", "chattyArg2", "-chattyFlag")
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).ToNot(HaveOccurred())
 				Eventually(session.Out).Should(gbytes.Say("chatty_process: permission denied"))
@@ -91,7 +91,7 @@ var _ = Describe("tee2metron", func() {
 	Describe("Flags", func() {
 		Describe("-dropsondeDestination", func() {
 			It("is required", func() {
-				command := exec.Command(tee2MetronPath, "-sourceInstance=lattice-cell-123", chattyProcessPath)
+				command := exec.Command(tee2MetronPath, "-sourceInstance=cell-123", chattyProcessPath)
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 
 				Eventually(session.Buffer()).Should(gbytes.Say("dropsondeDestination flag is required"))

@@ -47,7 +47,7 @@ func main() {
 
 	if len(args) == 0 {
 		fmt.Println("Command not specified!")
-		fmt.Println("Usage: tee2metron -dropsondeDestionation=127.0.0.1:3457 -sourceInstance=lattice-cell-21 COMMAND")
+		fmt.Println("Usage: tee2metron -dropsondeDestionation=127.0.0.1:3457 -sourceInstance=cell-21 COMMAND")
 		os.Exit(3)
 	}
 	err := dropsonde.Initialize(dropsondeDestination, sourceInstance, args[0])
