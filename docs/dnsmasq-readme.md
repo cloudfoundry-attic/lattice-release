@@ -1,20 +1,23 @@
-#DNSMasq Configuration Readme
+# DNSMasq Configuration on OSX
+
+Many Lattice services run over HTTP. Via the [Gorouter](https://github.com/cloudfoundry/gorouter), they share the same IP address. They are distinguished based on which hostname they've been accessed by. That's why many Lattice examples require the use of `.xip.io` instead of the raw IP address. That way, the client correctly communicates the domain name to the service regardless of how many services share that IP address.
+
+We've taken to using [dnsmasq](http://www.thekelleys.org.uk/dnsmasq/doc.html) to avoid the use of `.xip.io` above. Dnsmaq is a useful tool to provide a private, local DNS server that can be configured to return the IP addresse of your Lattice installment. In this document, the examples use the [dnsmasq package for OSX](http://passingcuriosity.com/2013/dnsmasq-dev-osx/). If you are not on OSX, you can use the (source distribution)[http://www.thekelleys.org.uk/dnsmasq/].
+
+After following these instructions, wherever you see `servicename.IP-ADDRESS.xip.io` you can simply use `servicename.lattice.dev`. So, `ltc target 192.168.11.11.xip.io` becomes `ltc target lattice.dev`.
 
 ## Installation 
 
-[Source link](http://passingcuriosity.com/2013/dnsmasq-dev-osx/)
-
-1) Use Homebrew to install `dnsmasq`
+- Use Homebrew to install `dnsmasq`
 ```bash
 # Update your homebrew installation
-brew up
+$ brew up
 # Install dnsmasq
-brew install dnsmasq
+$ brew install dnsmasq
 ```
-
-2) Use the commands provided by `brew info dnsmasq` to configure and start the service:  
-* As of dnsmasq v2.72, `brew info dnsmasq` returned:
-```
+- Use the commands provided by `brew info dnsmasq` to configure and start the service:  
+  * As of dnsmasq v2.72, `brew info dnsmasq` returned:
+```bash
 $ brew info dnsmasq
 dnsmasq: stable 2.72 (bottled)
 http://www.thekelleys.org.uk/dnsmasq/doc.html
@@ -37,42 +40,39 @@ Then to load dnsmasq now:
 
 ## Configuration
 
-### Set up dnsmasq to resolve `lattice.dev`
-
-1. Append line to `/usr/local/etc/dnsmasq.conf` 
-```
+### Set up dnsmasq to resolve lattice.dev
+- Using your favorite text editor, append the following line to `/usr/local/etc/dnsmasq.conf`. Make sure to replace `<LATTICE_SYSTEM_IP>` with your Lattice target IP address. 
+```bash
 address=/lattice.dev/<LATTICE_SYSTEM_IP> # i.e., 192.168.11.11
 ```
-
-2. Restart dnsmasq service
+- Restart the dnsmasq service
 ```bash
-sudo launchctl stop homebrew.mxcl.dnsmasq
-sudo launchctl start homebrew.mxcl.dnsmasq
+$ sudo launchctl stop homebrew.mxcl.dnsmasq
+$ sudo launchctl start homebrew.mxcl.dnsmasq
 ```
 
-### Configure workstation to use dnsmasq resolver for `lattice.dev`
-
-1) Create `/etc/resolver` folder
+### Configure your workstation to use the dnsmasq resolver for lattice.dev
+- Create `/etc/resolver` folder
 ```bash
-sudo mkdir /etc/resolver
+$ sudo mkdir /etc/resolver
 ```
-2) Define resolver for `lattice.dev`
+- Create a file that defines the resolver for `lattice.dev`
 ```bash
-sudo tee /etc/resolver/lattice.dev >/dev/null <<EOF
+$ sudo tee /etc/resolver/lattice.dev >/dev/null <<EOF
 nameserver 127.0.0.1
 EOF
 ```
 
 ## Starting Lattice cluster with alternate name
-
-1) Set `LATTICE_SYSTEM_DOMAIN` environment variable during `vagrant up`:
+- Set `LATTICE_SYSTEM_DOMAIN` environment variable during `vagrant up`:
 ```
 LATTICE_SYSTEM_DOMAIN=lattice.dev vagrant up --provider=<PROVIDER> 
 ```
 
-### Validating setup
-```
-% host www.lattice.dev 127.0.0.1
+### Validating your dnsmasq setup
+Here's how you can prove that you're set up to redirect requests for the lattice.dev domain, as well as make sure that regular DNS resolution has not been affected.
+```bash
+$ host www.lattice.dev 127.0.0.1
 Using domain server:
 Name: 127.0.0.1
 Address: 127.0.0.1#53
@@ -81,8 +81,8 @@ Aliases:
 www.lattice.dev has address 192.168.11.11
 ```
 
-```
-% host www.yahoo.com 127.0.0.1
+```bash
+$ host www.yahoo.com 127.0.0.1
 Using domain server:
 Name: 127.0.0.1
 Address: 127.0.0.1#53
