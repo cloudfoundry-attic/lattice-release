@@ -80,6 +80,12 @@ Destroy the cluster:
 terraform destroy
 ```
 
+### Notes
+
+The AWS Terraform configs now support Elastic IPs.  This means the cluster can be stopped  when it's not in-use (e.g., overnight to save on usage fees), and the Lattice cluster will retain the same target address when the instances are restarted.  In order to do this, use the [AWS EC2 Console](console.aws.amazon.com/ec2/), browse to Instances, and go to Instance State > Stop (or Start when reactivating) on the Lattice instances. 
+
+Please Note: There are hourly charges on having an Elastic IP provisioned but not associated to a running instance.  More details can be found on [AWS Pricing](http://aws.amazon.com/ec2/pricing/#Elastic_IP_Addresses).
+
 ## Copyright
 
 See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/docs/LICENSE) for details.
