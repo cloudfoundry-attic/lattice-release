@@ -162,6 +162,10 @@
 			"Rev": "c54fbb67c1f1e68d7d6f8d2ad7c9360404616a41"
 		},
 		{
+			"ImportPath": "github.com/gizak/termui",
+			"Rev": "fc47847f39d3c33df19cc8611232b6cec07f1f43"
+		},
+		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
 			"Rev": "bc946d07d1016848dfd2507f90f0859c9471681e"
 		},
@@ -176,6 +180,15 @@
 		{
 			"ImportPath": "github.com/gorilla/websocket",
 			"Rev": "ab5b3a61f5b6aa323d66ece457334396c4ccdd03"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-runewidth",
+			"Comment": "travisish-31-g58a0da4",
+			"Rev": "58a0da4ed7b321c9b5dfeffb7e03ee188fae1c60"
+		},
+		{
+			"ImportPath": "github.com/nsf/termbox-go",
+			"Rev": "bc836fdbcf75184c95c96500ea740e3dd727b5a8"
 		},
 		{
 			"ImportPath": "github.com/nu7hatch/gouuid",
