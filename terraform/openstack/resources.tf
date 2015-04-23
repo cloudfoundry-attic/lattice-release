@@ -1,4 +1,4 @@
-resource "openstack_compute_keypair_v2" "${var.openstack_key_name}" {
+resource "openstack_compute_keypair_v2" "lattice-key" {
     name = "${var.openstack_key_name}"
     region = "${var.openstack_region}"
     public_key = "${var.openstack_public_key}"
@@ -60,7 +60,7 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
     image_name = "${var.openstack_image}"
     flavor_name = "${var.openstack_instance_type_coordinator}"
     key_pair = "${var.openstack_key_name}"
-    security_groups = "${openstack_compute_secgroup_v2.lattice-sg.name}"
+    security_groups = ["${openstack_compute_secgroup_v2.lattice-sg.name}"]
     metadata {
         lattice-role = "coordinator"
     }
@@ -122,17 +122,13 @@ resource "openstack_compute_instance_v2" "lattice-cell" {
     image_name = "${var.openstack_image}"
     flavor_name = "${var.openstack_instance_type_cell}"
     key_pair = "${var.openstack_key_name}"
-    security_groups = "${openstack_compute_secgroup_v2.lattice-sg.name}"
+    security_groups = ["${openstack_compute_secgroup_v2.lattice-sg.name}"]
     metadata {
         lattice-role = "cell"
         lattice-cell-instance = "${count.index}"
     }
     network {
         uuid = "${openstack_networking_network_v2.lattice-network.id}"
-    }
-
-    tags {
-        Name = "lattice-cell-${count.index}"
     }
 
     connection {
