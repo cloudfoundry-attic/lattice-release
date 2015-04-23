@@ -1,4 +1,11 @@
-#Lattice Development Readme
+---
+title: Lattice Development
+weight: 9
+doc_subnav: true
+
+---
+
+#Lattice Development
 
 ##Cluster Development
 
