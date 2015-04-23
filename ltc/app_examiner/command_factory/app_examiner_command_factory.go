@@ -24,7 +24,8 @@ import (
 const (
 	TimestampDisplayLayout = "2006-01-02 15:04:05 (MST)"
 
-	minColumnWidth = 13
+	minColumnWidth     = 13
+	graphicalRateDelta = 100 * time.Millisecond
 )
 
 var (
@@ -427,8 +428,8 @@ func (factory *AppExaminerCommandFactory) printDistributionChart(rate time.Durat
 		//panic(err)
 	}
 	defer termui.Close()
-	if rate < time.Second {
-		rate = time.Second
+	if rate <= time.Duration(0) {
+		rate = graphicalRateDelta
 	}
 
 	termui.UseTheme("helloworld")
@@ -483,7 +484,7 @@ func (factory *AppExaminerCommandFactory) printDistributionChart(rate time.Durat
 	bg.BarWidth = 10
 	bg.BarGap = 1
 
-	//12 colomn grid system
+	//12 column grid system
 	termui.Body.AddRows(termui.NewRow(termui.NewCol(12, 5, p)))
 	termui.Body.AddRows(termui.NewRow(termui.NewCol(12, 0, bg)))
 	termui.Body.AddRows(termui.NewRow(termui.NewCol(6, 0, s), termui.NewCol(6, 5, r)))
@@ -501,17 +502,12 @@ func (factory *AppExaminerCommandFactory) printDistributionChart(rate time.Durat
 				switch {
 				case (e.Ch == 'q' || e.Ch == 'Q'):
 					return nil
-
 				case (e.Ch == '+' || e.Ch == '='):
-					rate += 1 * time.Second
-					if rate > (100 * time.Second) {
-						rate = 100 * time.Second
-					}
-					break
+					rate += graphicalRateDelta
 				case (e.Ch == '_' || e.Ch == '-'):
-					rate -= 1 * time.Second
-					if rate <= (1 * time.Second) {
-						rate = 1 * time.Second
+					rate -= graphicalRateDelta
+					if rate <= time.Duration(0) {
+						rate = graphicalRateDelta
 					}
 				}
 				r.Text = fmt.Sprintf("rate:%v", rate)
@@ -522,15 +518,12 @@ func (factory *AppExaminerCommandFactory) printDistributionChart(rate time.Durat
 				termui.Body.Align()
 				termui.Render(termui.Body)
 			}
-			break
-
 		case <-factory.clock.NewTimer(rate).C():
 			err := factory.getProgressBars(bg)
 			if err != nil {
 				return err
 			}
 			termui.Render(termui.Body)
-			break
 		}
 	}
 	return nil
@@ -541,7 +534,7 @@ func (factory *AppExaminerCommandFactory) getProgressBars(bg *termui.MBarChart) 
 	var barIntList [2][]int
 	var barStringList []string
 
-	var barLable string
+	var barLabel string
 	maxTotal := -1
 
 	cells, err := factory.appExaminer.ListCells()
@@ -552,10 +545,10 @@ func (factory *AppExaminerCommandFactory) getProgressBars(bg *termui.MBarChart) 
 	for i, cell := range cells {
 
 		if cell.Missing {
-			barLable = fmt.Sprintf("%d[M]", i+1)
+			barLabel = fmt.Sprintf("%d[M]", i+1)
 
 		} else if cell.RunningInstances == 0 && cell.ClaimedInstances == 0 && !cell.Missing {
-			barLable = fmt.Sprintf("%d[E]", i+1)
+			barLabel = fmt.Sprintf("%d[E]", i+1)
 			barIntList[0] = append(barIntList[0], 0)
 			barIntList[1] = append(barIntList[1], 0)
 		} else {
@@ -563,12 +556,12 @@ func (factory *AppExaminerCommandFactory) getProgressBars(bg *termui.MBarChart) 
 			total := cell.RunningInstances + cell.ClaimedInstances
 			barIntList[0] = append(barIntList[0], cell.RunningInstances)
 			barIntList[1] = append(barIntList[1], cell.ClaimedInstances)
-			barLable = fmt.Sprintf("%d[%d/%d]", i+1, cell.RunningInstances, total)
+			barLabel = fmt.Sprintf("%d[%d/%d]", i+1, cell.RunningInstances, total)
 			if total > maxTotal {
 				maxTotal = total
 			}
 		}
-		barStringList = append(barStringList, barLable)
+		barStringList = append(barStringList, barLabel)
 	}
 
 	bg.Data[0] = barIntList[0]
