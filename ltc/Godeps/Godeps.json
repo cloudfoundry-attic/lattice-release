@@ -21,7 +21,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "c9f475fc0390f99764b49d202879a5a14841cf7b"
+			"Rev": "8dfec851d0bc707ee76f3d0453ffcadef2ae5eec"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
@@ -167,7 +167,7 @@
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
-			"Rev": "bc946d07d1016848dfd2507f90f0859c9471681e"
+			"Rev": "0ac967c269268f1af7d9bcc7927ccc9a589b2b36"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",
@@ -179,7 +179,7 @@
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
-			"Rev": "ab5b3a61f5b6aa323d66ece457334396c4ccdd03"
+			"Rev": "2dbddebb8266b93c5e6b119efb54e89043186f3f"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-runewidth",
