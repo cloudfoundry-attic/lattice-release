@@ -25,11 +25,11 @@ Here are some step-by-step instructions for configuring a Lattice cluster via Te
 The available variables that can be configured are:
 
 * `do_token`: Digital Ocean API token
-* `do_ssh_public_key_fingerprint`: SSH public key fingerprint
+* `do_ssh_public_key_id`: SSH public key id. Key ID of your uploaded SSH key.
 * `do_ssh_private_key_file`: Path to the SSH private key file
 * `do_region`: The DO region to operate under (default `nyc2`)
 * `do_image`: The droplet image ID or slug to base the launched instances (default `ubuntu-14-04-x64`)
-* `do_size_coordinator`: The DO size to use for the Lattice Coordinator instance (default `512mb`)
+* `do_size_brain`: The DO size to use for the Lattice Brain instance (default `512mb`)
 * `do_size_cell`: The DO size to use for the Lattice Cell instances (default `2gb`)
 * `num_cells`: The number of Lattice Cells to launch (default `3`)
 * `lattice_username`: Lattice username (default `user`)
@@ -38,16 +38,9 @@ The available variables that can be configured are:
 Refer to the [Terraform DigitalOcean (DO) provider](https://www.terraform.io/docs/providers/do/index.html)
 documentation for more details about how to configure the proper credentials.
 
-#### Generating the SSH public key fingerprint 
+### Getting your SSH Key ID
 
-You can generate the SSH public key fingerprint from your public key via (e.g.)
-
-```
-ssh-keygen -lf ~/.ssh/id_rsa.pub
-2048 aa:bb:cc:dd:ee:ff:aa:bb:cc:dd:ee:ff:aa:bb:cc:dd foo@bar.com (RSA)
-```
-
-The fingerprint is the second column in the output (`aa:bb...`)
+You can get the key ID by executing an API call against the Digital Ocean API. More info can found on the [DigitalOcean API Reference](https://developers.digitalocean.com/documentation/v2/#list-all-keys).  The token needed for the `Authorization: Bearer` header is the same as the DigitalOcean API Token referenced in the Prerequisites.
 
 ### Deploy
 
@@ -105,5 +98,5 @@ from scratch.
 
 ## Copyright
 
-See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/LICENSE) for details.
+See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/docs/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).

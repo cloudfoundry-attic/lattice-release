@@ -6,7 +6,7 @@ pushd /workspace/cf-release/src/loggregator
    git submodule update --init --recursive
 popd
 
-./diego-release/src/github.com/cloudfoundry-incubator/lattice/compile \
+./diego-release/src/github.com/cloudfoundry-incubator/lattice/cluster/scripts/compile \
     /workspace/lattice-build \
     /workspace/diego-release \
     /workspace/cf-release \

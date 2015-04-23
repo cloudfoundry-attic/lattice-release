@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e
+
+COMPONENT_TO_INSTALL=$1
+
+if [ $COMPONENT_TO_INSTALL != "cell" ] && [ $COMPONENT_TO_INSTALL != "brain" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
+    echo "Incorrect Usage. Must install either cell or brain or both.
+    Usage: install-from-tar cell [LATTICE_TAR_PATH] OR
+           install-from-tar brain [LATTICE_TAR_PATH]
+           install-from-tar collocated [LATTICE_TAR_PATH]
+    "
+    exit 2
+fi
+
+tar -xf /tmp/lattice.tgz -C /tmp #File Provisioner puts it in /tmp/lattice.tgz
+
+/tmp/lattice-build/scripts/install-common
+
+if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
+    /tmp/lattice-build/scripts/install-brain
+
+    #Stop consul and bootstrap in collocated install so we can trigger dependencies to fire off the single bootstrap script
+    #once the cell is installed too.
+    stop consul
+    stop bootstrap
+
+    sleep 2
+
+    /tmp/lattice-build/scripts/install-cell
+else
+    /tmp/lattice-build/scripts/install-$COMPONENT_TO_INSTALL
+fi
+

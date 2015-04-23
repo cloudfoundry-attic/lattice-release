@@ -18,23 +18,23 @@ resource "google_compute_firewall" "lattice-network" {
     target_tags = ["lattice"]
 }
 
-resource "google_compute_address" "lattice-coordinator" {
-    name = "lattice-coordinator"
+resource "google_compute_address" "lattice-brain" {
+    name = "lattice-brain"
 }
 
-resource "google_compute_instance" "lattice-coordinator" {
+resource "google_compute_instance" "lattice-brain" {
     zone = "${var.gce_zone}"
-    name = "lattice-coordinator"
+    name = "lattice-brain"
     tags = ["lattice"]
-    description = "Lattice Coordinator"
-    machine_type = "${var.gce_machine_type_coordinator}"
+    description = "Lattice Brain"
+    machine_type = "${var.gce_machine_type_brain}"
     disk {
         image = "${var.gce_image}"
         auto_delete = true
     }
     network {
         source = "${google_compute_network.lattice-network.name}"
-        address = "${google_compute_address.lattice-coordinator.address}"
+        address = "${google_compute_address.lattice-brain.address}"
     }
 
     connection {
@@ -44,7 +44,7 @@ resource "google_compute_instance" "lattice-coordinator" {
 
     #COMMON
     provisioner "local-exec" {
-      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../local-scripts/download-lattice-tar"
+      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
     }
 
     provisioner "file" {
@@ -53,13 +53,13 @@ resource "google_compute_instance" "lattice-coordinator" {
     }
 
     provisioner "file" {
-      source = "${path.module}/../remote-scripts/install_from_tar"
-      destination = "/tmp/install_from_tar"
+      source = "${path.module}/../scripts/remote/install-from-tar"
+      destination = "/tmp/install-from-tar"
     }
 
     provisioner "remote-exec" {
       inline = [
-          "sudo chmod 755 /tmp/install_from_tar",
+          "sudo chmod 755 /tmp/install-from-tar",
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
       ]
     }
@@ -70,13 +70,13 @@ resource "google_compute_instance" "lattice-coordinator" {
             "sudo mkdir -p /var/lattice/setup/",
             "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${google_compute_address.lattice-coordinator.address}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${google_compute_address.lattice-coordinator.address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${google_compute_address.lattice-brain.address}\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${google_compute_address.lattice-brain.address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
         ]
     }
 
     provisioner "remote-exec" {
-        script = "${path.module}/../remote-scripts/install-lattice-coordinator"
+        script = "${path.module}/../scripts/remote/install-brain"
     }
 }
 
@@ -102,7 +102,7 @@ resource "google_compute_instance" "lattice-cell" {
 
     #COMMON
     provisioner "local-exec" {
-      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../local-scripts/download-lattice-tar"
+      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
     }
 
     provisioner "file" {
@@ -111,13 +111,13 @@ resource "google_compute_instance" "lattice-cell" {
     }
 
     provisioner "file" {
-      source = "${path.module}/../remote-scripts/install_from_tar"
-      destination = "/tmp/install_from_tar"
+      source = "${path.module}/../scripts/remote/install-from-tar"
+      destination = "/tmp/install-from-tar"
     }
 
     provisioner "remote-exec" {
       inline = [
-          "sudo chmod 755 /tmp/install_from_tar",
+          "sudo chmod 755 /tmp/install-from-tar",
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
       ]
     }
@@ -126,14 +126,14 @@ resource "google_compute_instance" "lattice-cell" {
     provisioner "remote-exec" {
         inline = [
             "sudo mkdir -p /var/lattice/setup/",
-            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${google_compute_address.lattice-coordinator.address}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${google_compute_address.lattice-coordinator.address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${google_compute_address.lattice-brain.address}\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${google_compute_address.lattice-brain.address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_CELL_ID=lattice-cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
         ]
     }
 
     provisioner "remote-exec" {
-        script = "${path.module}/../remote-scripts/install-lattice-cell"
+        script = "${path.module}/../scripts/remote/install-cell"
     }
 }

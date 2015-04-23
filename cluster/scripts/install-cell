@@ -6,7 +6,7 @@ lattice_version=$(< /var/lattice/LATTICE_VERSION)
 
 echo "Installing Lattice ($lattice_version) - Lattice Cell"
 
-lattice_cell_build_path=/tmp/lattice-build/lattice-cell
+cell_build_path=/tmp/lattice-build/cell
 
 install_dependencies() {
     echo "Installing Dependencies..."
@@ -21,11 +21,11 @@ install_dependencies() {
     popd
 }
 
-#-n so we don't overwrite the coordinator upstart scripts in collocated installation.
-#In collocated, Consul should run only in server mode and not use the lattice-cell consul upstart which is client-only mode
-cp -nv $lattice_cell_build_path/upstart/* /etc/init
-cp -nv $lattice_cell_build_path/bin/* /usr/local/bin
-cp -av $lattice_cell_build_path/cell_health_check /var/lattice
+#-n so we don't overwrite the brain upstart scripts in collocated installation.
+#In collocated, Consul should run only in server mode and not use the cell consul upstart which is client-only mode
+cp -nv $cell_build_path/upstart/* /etc/init
+cp -nv $cell_build_path/bin/* /usr/local/bin
+cp -av $cell_build_path/cell_health_check /var/lattice
 
 mkdir -pv /var/lattice/garden
 mkdir -pv /var/lattice/garden/depot
@@ -33,11 +33,11 @@ mkdir -pv /var/lattice/garden/rootfs
 mkdir -pv /var/lattice/garden/overlays
 mkdir -pv /var/lattice/garden/graph
 
-cp -av $lattice_cell_build_path/garden/garden-bin /var/lattice/garden/garden-bin
-cp -av $lattice_cell_build_path/garden/skeleton /var/lattice/garden/skeleton
+cp -av $cell_build_path/garden/garden-bin /var/lattice/garden/garden-bin
+cp -av $cell_build_path/garden/skeleton /var/lattice/garden/skeleton
 
 mkdir -pv /var/lattice/config
-cp -anv $lattice_cell_build_path/config /var/lattice
+cp -anv $cell_build_path/config /var/lattice
 
 apt-get -y install gcc
 apt-get -y install make
@@ -47,7 +47,7 @@ apt-get -y install linux-image-extra-$(uname -r)
 mkdir -pv /var/lattice/run
 mkdir -pv /var/lattice/log
 
-install_dependencies &> /var/lattice/log/lattice-cell-install.log
+install_dependencies &> /var/lattice/log/cell-install.log
 start bootstrap
 
 echo "Finished Installing Lattice Cell ($lattice_version)!" 

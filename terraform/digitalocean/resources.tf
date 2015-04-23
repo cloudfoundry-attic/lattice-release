@@ -1,10 +1,10 @@
-resource "digitalocean_droplet" "lattice-coordinator" {
-    name     = "lattice-coordinator"
+resource "digitalocean_droplet" "lattice-brain" {
+    name     = "lattice-brain"
     region   = "${var.do_region}"
     image    = "${var.do_image}"
-    size     = "${var.do_size_coordinator}"
+    size     = "${var.do_size_brain}"
     ssh_keys = [
-      "${var.do_ssh_public_key_fingerprint}",
+      "${var.do_ssh_public_key_id}",
     ]
     private_networking = true
 
@@ -14,7 +14,7 @@ resource "digitalocean_droplet" "lattice-coordinator" {
 
     #COMMON
     provisioner "local-exec" {
-      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../local-scripts/download-lattice-tar"
+      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
     }
 
     provisioner "file" {
@@ -23,13 +23,13 @@ resource "digitalocean_droplet" "lattice-coordinator" {
     }
 
     provisioner "file" {
-      source = "${path.module}/../remote-scripts/install_from_tar"
-      destination = "/tmp/install_from_tar"
+      source = "${path.module}/../scripts/remote/install-from-tar"
+      destination = "/tmp/install-from-tar"
     }
 
     provisioner "remote-exec" {
       inline = [
-          "sudo chmod 755 /tmp/install_from_tar",
+          "sudo chmod 755 /tmp/install-from-tar",
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
       ]
     }
@@ -40,13 +40,13 @@ resource "digitalocean_droplet" "lattice-coordinator" {
             "sudo mkdir -p /var/lattice/setup/",
             "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${digitalocean_droplet.lattice-coordinator.ipv4_address}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${digitalocean_droplet.lattice-coordinator.ipv4_address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${digitalocean_droplet.lattice-brain.ipv4_address}\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${digitalocean_droplet.lattice-brain.ipv4_address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
         ]
     }
 
     provisioner "remote-exec" {
-        script = "${path.module}/../remote-scripts/install-lattice-coordinator"
+        script = "${path.module}/../scripts/remote/install-brain"
     }
 }
 
@@ -57,7 +57,7 @@ resource "digitalocean_droplet" "lattice-cell" {
     image    = "${var.do_image}"
     size     = "${var.do_size_cell}"
     ssh_keys = [
-      "${var.do_ssh_public_key_fingerprint}",
+      "${var.do_ssh_public_key_id}",
     ]
     private_networking = true
 
@@ -67,7 +67,7 @@ resource "digitalocean_droplet" "lattice-cell" {
 
     #COMMON
     provisioner "local-exec" {
-      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../local-scripts/download-lattice-tar"
+      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
     }
 
     provisioner "file" {
@@ -76,13 +76,13 @@ resource "digitalocean_droplet" "lattice-cell" {
     }
 
     provisioner "file" {
-      source = "${path.module}/../remote-scripts/install_from_tar"
-      destination = "/tmp/install_from_tar"
+      source = "${path.module}/../scripts/remote/install-from-tar"
+      destination = "/tmp/install-from-tar"
     }
 
     provisioner "remote-exec" {
       inline = [
-          "sudo chmod 755 /tmp/install_from_tar",
+          "sudo chmod 755 /tmp/install-from-tar",
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
       ]
     }
@@ -91,14 +91,14 @@ resource "digitalocean_droplet" "lattice-cell" {
     provisioner "remote-exec" {
         inline = [
             "sudo mkdir -p /var/lattice/setup/",
-            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${digitalocean_droplet.lattice-coordinator.ipv4_address}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${digitalocean_droplet.lattice-coordinator.ipv4_address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${digitalocean_droplet.lattice-brain.ipv4_address}\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${digitalocean_droplet.lattice-brain.ipv4_address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_CELL_ID=lattice-cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
         ]
     }
 
     provisioner "remote-exec" {
-        script = "${path.module}/../remote-scripts/install-lattice-cell"
+        script = "${path.module}/../scripts/remote/install-cell"
     }
 }

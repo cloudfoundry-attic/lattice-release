@@ -1,0 +1,17 @@
+#!/bin/bash -e
+
+[ -z "$DEBUG" ] || set -x
+
+go_version=$(grep -o "\d.\d.\d" <<< $(go version))
+go_version_num=$(tr -d '.' <<< $go_version)
+
+if [ $go_version_num -lt 140 ]
+then
+  printf "You must have Go 1.4+ installed and set up correctly"
+  exit 1
+fi
+
+ltc_src=github.com/cloudfoundry-incubator/lattice/ltc
+export GOPATH="$GOPATH/src/$ltc_src/Godeps/_workspace:$GOPATH"
+
+go install $ltc_src

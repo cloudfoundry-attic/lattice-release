@@ -28,7 +28,7 @@ cleanup(){
 }
 
 setup_and_run_whetstone(){
-    source $WORKSPACE_DIR/diego-release/src/github.com/cloudfoundry-incubator/lattice/lattice-pipeline/02_test/helpers/setup_whetstone
+    source $WORKSPACE_DIR/diego-release/src/github.com/cloudfoundry-incubator/lattice/pipeline/02_test/helpers/setup_whetstone
     setup_whetstone
 
     echo "=========================Lattice Integration Tests=============================\n"

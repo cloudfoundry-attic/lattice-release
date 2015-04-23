@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sudo /tmp/install-from-tar cell

@@ -2,8 +2,8 @@ variable "do_token" {
     description = "Digital Ocean API token."
 }
 
-variable "do_ssh_public_key_fingerprint" {
-    description = "SSH public key fingerprint."
+variable "do_ssh_public_key_id" {
+    description = "SSH public key id."
 }
 
 variable "do_ssh_private_key_file" {
@@ -20,8 +20,8 @@ variable "do_image" {
     default = "ubuntu-14-04-x64"
 }
 
-variable "do_size_coordinator" {
-    description = "The DO size to use for the Lattice Coordinator instance."
+variable "do_size_brain" {
+    description = "The DO size to use for the Lattice Brain instance."
     default = "512mb"
 }
 

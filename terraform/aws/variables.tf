@@ -49,8 +49,8 @@ variable "aws_image" {
     }
 }
 
-variable "aws_instance_type_coordinator" {
-    description = "The machine type to use for the Lattice Coordinator instance."
+variable "aws_instance_type_brain" {
+    description = "The machine type to use for the Lattice Brain instance."
     default = "m3.medium"
 }
 

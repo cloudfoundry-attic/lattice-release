@@ -6,10 +6,10 @@ COMPONENT_TO_INSTALL=$1
 PATH_TO_LATTICE_TAR=$2
 LATTICE_TAR_URL=$3
 
-if [ $COMPONENT_TO_INSTALL != "lattice-cell" ] && [ $COMPONENT_TO_INSTALL != "coordinator" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
-    echo "Incorrect Usage. Must install either lattice-cell or coordinator or both.
-    Usage: install_from_tar lattice-cell [LATTICE_TAR_PATH] OR
-           install_from_tar coordinator [LATTICE_TAR_PATH]
+if [ $COMPONENT_TO_INSTALL != "cell" ] && [ $COMPONENT_TO_INSTALL != "brain" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
+    echo "Incorrect Usage. Must install either cell or brain or both.
+    Usage: install_from_tar cell [LATTICE_TAR_PATH] OR
+           install_from_tar brain [LATTICE_TAR_PATH]
            install_from_tar collocated [LATTICE_TAR_PATH]
     "
     exit 2
@@ -29,10 +29,10 @@ fi
 
 tar -xf $PATH_TO_LATTICE_TAR -C /tmp
 
-/tmp/lattice-build/common/install-common
+/tmp/lattice-build/scripts/install-common
 
 if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
-    /tmp/lattice-build/coordinator/install-coordinator
+    /tmp/lattice-build/scripts/install-brain
 
     #Stop consul and bootstrap in collocated install so we can trigger dependencies to fire off the single bootstrap script
     #once the cell is installed too.
@@ -41,8 +41,8 @@ if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
 
     sleep 2
 
-    /tmp/lattice-build/lattice-cell/install-lattice-cell
+    /tmp/lattice-build/scripts/install-cell
 else
-    /tmp/lattice-build/$COMPONENT_TO_INSTALL/install-$COMPONENT_TO_INSTALL
+    /tmp/lattice-build/scripts/install-$COMPONENT_TO_INSTALL
 fi
 

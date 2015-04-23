@@ -1,5 +1,5 @@
 output "lattice_target" {
-    value = "${google_compute_address.lattice-coordinator.address}.xip.io"
+    value = "${google_compute_address.lattice-brain.address}.xip.io"
 }
 
 output "lattice_username" {

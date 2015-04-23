@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -e
+
+lattice_version=$(< /var/lattice/LATTICE_VERSION)
+
+echo "Installing Lattice ($lattice_version) - Brain"
+
+lattice_brain_path=/tmp/lattice-build/brain
+
+cp -v $lattice_brain_path/upstart/* /etc/init
+cp -v $lattice_brain_path/bin/* /usr/local/bin
+cp -av $lattice_brain_path/brain_health_check /var/lattice 
+
+mkdir -pv /var/lattice/static-files
+
+pushd $lattice_brain_path/bin > /dev/null
+    tar -cvzf /var/lattice/static-files/healthcheck.tgz healthcheck
+popd > /dev/null
+
+mkdir -pv /var/lattice/config
+cp -av $lattice_brain_path/config /var/lattice
+
+mkdir -pv /var/lattice/setup
+cp -av $lattice_brain_path/setup /var/lattice
+
+mkdir -pv /var/lattice/run
+mkdir -pv /var/lattice/log
+
+start bootstrap &>> /var/lattice/log/brain-bootstrap.log
+
+echo "Finished Installing Lattice Brain ($lattice_version)!"
+

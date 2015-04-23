@@ -69,12 +69,6 @@ var lockTTL = flag.Duration(
 	"TTL for service lock",
 )
 
-var heartbeatRetryInterval = flag.Duration(
-	"heartbeatRetryInterval",
-	lock_bbs.RetryInterval,
-	"interval to wait before retrying presence",
-)
-
 var etcdCluster = flag.String(
 	"etcdCluster",
 	"http://127.0.0.1:4001",
@@ -237,11 +231,6 @@ func initializeReceptorBBS(logger lager.Logger) Bbs.ReceptorBBS {
 		strings.Split(*etcdCluster, ","),
 		workpool.NewWorkPool(100),
 	)
-
-	err := etcdAdapter.Connect()
-	if err != nil {
-		logger.Fatal("failed-to-connect-to-etcd", err)
-	}
 
 	client, err := consuladapter.NewClient(*consulCluster)
 	if err != nil {

@@ -44,7 +44,7 @@ If you have not developed a golang project before, please see the [Golang docs](
 
 ```bash
     $ export PULL_DOCKER_IMAGE=false
-    $ alias recompile-lattice="cd ~/workspace && $GOPATH/src/github.com/cloudfoundry-incubator/lattice/lattice-pipeline/helpers/run_with_docker /workspace/diego-release/src/github.com/cloudfoundry-incubator/lattice/lattice-pipeline/01_compilation/compile_lattice_tar && mv -v ./lattice.tgz $GOPATH/src/github.com/cloudfoundry-incubator/lattice/"
+    $ alias recompile-lattice="cd ~/workspace && $GOPATH/src/github.com/cloudfoundry-incubator/lattice/pipeline/helpers/run_with_docker /workspace/diego-release/src/github.com/cloudfoundry-incubator/lattice/pipeline/01_compilation/compile_lattice_tar && mv -v ./lattice.tgz $GOPATH/src/github.com/cloudfoundry-incubator/lattice/"
     $ alias remake-vagrant="cd-lattice; vagrant destroy --force; recompile-lattice && VAGRANT_LATTICE_TAR_PATH=/vagrant/lattice.tgz vagrant up --provider=virtualbox; go install github.com/cloudfoundry-incubator/lattice/ltc"
 ```
 

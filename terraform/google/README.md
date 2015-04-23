@@ -32,7 +32,7 @@ The available variables that can be configured are:
 * `gce_zone`: The zone that the machines should be created in (default `us-central1-a`)
 * `gce_ipv4_range`: The IPv4 address range that machines in the network are assigned to, represented as a CIDR block (default `10.0.0.0/16`)
 * `gce_image`: The name of the image to base the launched instances (default `ubuntu-1404-trusty-v20141212`)
-* `gce_machine_type_coordinator`: The machine type to use for the Lattice Coordinator instance (default `n1-standard-1`)
+* `gce_machine_type_brain`: The machine type to use for the Lattice Brain instance (default `n1-standard-1`)
 * `gce_machine_type_cell`: The machine type to use for the Lattice Cells instances (default `n1-standard-4`)
 * `num_cells`: The number of Lattice Cells to launch (default `3`)
 * `lattice_username`: Lattice username (default `user`)
@@ -82,5 +82,5 @@ terraform destroy
 
 ## Copyright
 
-See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/LICENSE) for details.
+See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/docs/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).
