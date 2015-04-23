@@ -36,14 +36,12 @@ resource "openstack_networking_subnet_v2" "lattice-network" {
     ip_version = 4
 }
 
-
 resource "openstack_networking_router_v2" "lattice-network" {
     region = "${var.openstack_region}"
     name = "lattice-network"
     admin_state_up = "true"
     external_gateway = "${var.openstack_neutron_router_gateway_network_id}"
 }
-
 
 resource "openstack_networking_router_interface_v2" "lattice-network" {
     region = "${var.openstack_region}"
