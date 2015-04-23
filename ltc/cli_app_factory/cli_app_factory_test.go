@@ -2,7 +2,6 @@ package cli_app_factory_test
 
 import (
 	"errors"
-	"sort"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -65,15 +64,69 @@ var _ = Describe("CliAppFactory", func() {
 			Expect(cliApp.Commands).NotTo(BeEmpty())
 		})
 
-		It("lists the subcommands in alphabetical order", func() {
+		It("runs the help command and checks a sample string in each line", func() {
+			cliApp.Run([]string{"ltc"})
+
+			//Ignore bolds and formatting lets check a sample content from each string
+			helpText := []string{
+				"NAME:",
+				"ltc - Command line interface for Lattice.",
+				"USAGE:",
+				"global options",
+				"VERSION:",
+				"v0.2.Test",
+				"AUTHOR",
+				"Pivotal <lattice@cloudfoundry.org>",
+				"",
+				"GLOBAL OPTIONS:",
+				"show help",
+				"print the version",
+				"",
+				"COMMANDS",
+				"Target Lattice",
+				"Targets a lattice cluster",
+				"",
+				"Create and Modify Apps",
+				"Creates a docker app on lattice",
+				"Updates the routes for a running app",
+				"Stops and removes docker app",
+				"Scales a docker app on lattice",
+				"",
+				"Stream Logs",
+				"Streams logs from the specified application",
+				"",
+				"See Whats Running",
+				"Lists applications running on lattice",
+				"Shows details about a running app on lattice",
+				"Shows a visualization of the workload distribution across the lattice cells",
+				"",
+				"Advanced",
+				"Creates a docker app from JSON on lattice",
+				"",
+				"Help and Debug",
+				"Streams logs from the lattice cluster components",
+				"Runs test suite against targeted lattice cluster",
+			}
+
+			for _, line := range helpText {
+				Expect(outputBuffer).To(gbytes.Say(line))
+			}
+
+		})
+
+		It("lists the subcommands", func() {
 			cliCommands := cliApp.Commands
+			cliExpectedCommands := []string{"target", "create", "update-routes", "remove", "scale", "logs", "list", "status", "visualize", "create-lrp", "debug-logs", "test"}
 			Expect(cliCommands).NotTo(BeEmpty())
 
 			var commandNames []string
 			for _, cmd := range cliCommands {
 				commandNames = append(commandNames, cmd.Name)
 			}
-			Expect(sort.StringsAreSorted(commandNames)).To(BeTrue())
+			Expect(len(commandNames)).Should(Equal(len(cliExpectedCommands))) //Check the lenght first as we will know if a command is added or removed
+			for i, cmd := range commandNames {
+				Expect(cliExpectedCommands[i]).Should(Equal(cmd))
+			}
 		})
 
 		Context("when invoked without latticeVersion set", func() {

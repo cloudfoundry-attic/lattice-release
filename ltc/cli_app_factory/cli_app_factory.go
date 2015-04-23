@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
+	"text/tabwriter"
+	"text/template"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
@@ -42,6 +45,50 @@ const (
 	latticeCliHomeVar = "LATTICE_CLI_HOME"
 )
 
+type CmdWithTheme struct {
+	cmd   cli.Command
+	theme int
+}
+
+func getCommands(cmds []CmdWithTheme) []cli.Command {
+
+	var retCmd []cli.Command
+	for _, c := range cmds {
+		retCmd = append(retCmd, c.cmd)
+	}
+	return retCmd
+}
+
+//Some variables for thememed help
+var (
+	AppHelpThemedTemplate = `NAME:
+   {{.Name}} - {{.Usage}}
+USAGE:
+   {{.Name}} {{if .Flags}}[global options] {{end}}command{{if .Flags}} [command options]{{end}} [arguments...]
+VERSION:
+   {{.Version}}
+AUTHOR(S): 
+   {{range .Authors}}{{ . }}
+   {{end}}
+GLOBAL OPTIONS:
+   {{range .Flags}}{{.}}
+   {{end}}
+`
+	listOfCmds   []CmdWithTheme
+	listOfThemes = []string{"Target Lattice", "Create and Modify Apps", "Stream Logs", "See Whats Running", "Advanced", "Help and Debug"}
+	cliappWriter io.Writer
+)
+
+const (
+	themeLatticeTarget = iota
+	themeCreateModify
+	themeLogs
+	themeSeeWhatsRunning
+	themeAdvanced
+	themeHelpDebug
+	themeCOUNT //This should always be the last entry in this const section
+)
+
 func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, cliStdout io.Writer) *cli.App {
 	config.Load()
 	app := cli.NewApp()
@@ -53,7 +100,15 @@ func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.E
 
 	ui := terminal.NewUI(os.Stdin, cliStdout, password_reader.NewPasswordReader(exitHandler))
 
-	app.Commands = cliCommands(ltcConfigRoot, exitHandler, config, logger, targetVerifier, ui)
+	listOfCmds = cliCommands(ltcConfigRoot, exitHandler, config, logger, targetVerifier, ui)
+
+	app.Commands = getCommands(listOfCmds)
+
+	//Over-write app.Writer to the supplied terminal Writer cli defautls it to stdout
+	app.Writer = cliStdout
+	cliappWriter = app.Writer
+	//Assign a custom helper function
+	cli.HelpPrinter = PrintThemedHelp
 
 	app.Before = func(context *cli.Context) error {
 		args := context.Args()
@@ -80,7 +135,7 @@ func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.E
 	return app
 }
 
-func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, ui terminal.UI) []cli.Command {
+func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, ui terminal.UI) []CmdWithTheme {
 
 	receptorClient := receptor.NewClient(config.Receptor())
 	appRunner := docker_app_runner.New(receptorClient, config.Target())
@@ -115,19 +170,19 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	testRunner := integration_test.NewIntegrationTestRunner(config, ltcConfigRoot)
 	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner)
 
-	return []cli.Command{
-		appRunnerCommandFactory.MakeCreateAppCommand(),
-		appRunnerCommandFactory.MakeCreateLrpCommand(),
-		logsCommandFactory.MakeDebugLogsCommand(),
-		appExaminerCommandFactory.MakeListAppCommand(),
-		logsCommandFactory.MakeLogsCommand(),
-		appRunnerCommandFactory.MakeRemoveAppCommand(),
-		appRunnerCommandFactory.MakeScaleAppCommand(),
-		appExaminerCommandFactory.MakeStatusCommand(),
-		configCommandFactory.MakeTargetCommand(),
-		integrationTestCommandFactory.MakeIntegrationTestCommand(),
-		appRunnerCommandFactory.MakeUpdateRoutesCommand(),
-		appExaminerCommandFactory.MakeVisualizeCommand(),
+	return []CmdWithTheme{
+		{configCommandFactory.MakeTargetCommand(), themeLatticeTarget},
+		{appRunnerCommandFactory.MakeCreateAppCommand(), themeCreateModify},
+		{appRunnerCommandFactory.MakeUpdateRoutesCommand(), themeCreateModify},
+		{appRunnerCommandFactory.MakeRemoveAppCommand(), themeCreateModify},
+		{appRunnerCommandFactory.MakeScaleAppCommand(), themeCreateModify},
+		{logsCommandFactory.MakeLogsCommand(), themeLogs},
+		{appExaminerCommandFactory.MakeListAppCommand(), themeSeeWhatsRunning},
+		{appExaminerCommandFactory.MakeStatusCommand(), themeSeeWhatsRunning},
+		{appExaminerCommandFactory.MakeVisualizeCommand(), themeSeeWhatsRunning},
+		{appRunnerCommandFactory.MakeCreateLrpCommand(), themeAdvanced},
+		{logsCommandFactory.MakeDebugLogsCommand(), themeHelpDebug},
+		{integrationTestCommandFactory.MakeIntegrationTestCommand(), themeHelpDebug},
 	}
 }
 
@@ -140,4 +195,44 @@ func defaultVersion(latticeVersion string) string {
 		return "development (not versioned)"
 	}
 	return latticeVersion
+}
+
+func PrintThemedHelp(templ string, data interface{}) {
+	if strings.Contains(templ, "GLOBAL OPTIONS") {
+		funcMap := template.FuncMap{
+			"join": strings.Join,
+		}
+		w := tabwriter.NewWriter(cliappWriter, 0, 8, 1, '\t', 0)
+		t := template.Must(template.New("helptheam").Funcs(funcMap).Parse(AppHelpThemedTemplate))
+		err := t.Execute(w, data)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Fprintf(w, "COMMANDS:\t\n")
+		for i := 0; i < themeCOUNT; i++ {
+			fmt.Fprintf(w, "%s:\t\n", listOfThemes[i])
+			for _, c := range listOfCmds {
+				if c.theme == i {
+					fmt.Fprintf(w, "   %s\t%s\n", strings.Join(c.cmd.Names(), ", "), c.cmd.Usage)
+
+				}
+			}
+			fmt.Fprintln(w, "\t")
+
+		}
+		w.Flush()
+
+	} else {
+		// default to codegangsta's help screen for others commands
+		funcMap := template.FuncMap{
+			"join": strings.Join,
+		}
+		w := tabwriter.NewWriter(cliappWriter, 0, 8, 1, '\t', 0)
+		t := template.Must(template.New("help").Funcs(funcMap).Parse(templ))
+		err := t.Execute(w, data)
+		if err != nil {
+			panic(err)
+		}
+		w.Flush()
+	}
 }
