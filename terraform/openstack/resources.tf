@@ -67,7 +67,7 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
     network {
         uuid = "${openstack_networking_network_v2.lattice-network.id}"
     }
-    floating_ip = "${openstack_compute_floatingip_v2.fip-1.id}"
+    floating_ip = "${openstack_compute_floatingip_v2.fip-1.address}"
 
     connection {
         user = "${var.openstack_ssh_user}"
