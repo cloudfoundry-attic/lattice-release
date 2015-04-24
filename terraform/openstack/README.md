@@ -1,6 +1,3 @@
-# Work in progress!
-  Dont expect this to work yet!
-
 # Lattice Terraform templates for Openstack
 
 This project contains [Terraform](https://www.terraform.io/) templates to help you deploy
