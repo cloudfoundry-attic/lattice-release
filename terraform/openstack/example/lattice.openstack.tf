@@ -14,13 +14,20 @@ module "lattice-openstack" {
     openstack_key_name = "<CHANGE-ME>"
 
     # SSH Public Key to Upload
-    openstack_public_key ="<CHANGE ME>"
+    openstack_public_key = "<CHANGE-ME>"
 
-    # Path to the SSH private key file
+    # Path & filename of the SSH private key file
     openstack_ssh_private_key_file = "<CHANGE-ME>"
 
     # The number of Lattice Cells to launch
     num_cells = "3"
+
+    # URI of Keystone authentication agent
+    openstack_keystone_uri = "<CHANGE-ME>"
+
+    # Instance Flavor Types
+    openstack_instance_type_coordinator = "<CHANGE-ME>"
+    openstack_instance_type_cell = "<CHANGE-ME>"
 
     # The internet-facing network which Neutron L3 routers should use as a gateway (UUID)
     openstack_neutron_router_gateway_network_id = "<CHANGE-ME>"
@@ -29,7 +36,7 @@ module "lattice-openstack" {
     openstack_floating_ip_pool_name = "<CHANGE-ME>"
 
     # The name of the Openstack Glance image used to spin up all VM instances.
-    openstack_image = "<CHANGE ME>"
+    openstack_image = "<CHANGE-ME>"
 
     #################################
     ###  Optional Settings Below  ###
