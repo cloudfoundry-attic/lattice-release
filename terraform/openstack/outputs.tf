@@ -1,5 +1,5 @@
 output "lattice_target" {
-    value = "${openstack_compute_instance_v2.lattice-coordinator.public_ip}.xip.io"
+    value = "${openstack_compute_instance_v2.lattice-coordinator.floating_ip}.xip.io"
 }
 
 output "lattice_username" {
