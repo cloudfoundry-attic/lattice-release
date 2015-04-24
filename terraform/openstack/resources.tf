@@ -54,6 +54,12 @@ resource "openstack_compute_floatingip_v2" "fip-1" {
     pool = "${var.openstack_floating_ip_pool_name}"
 }
 
+resource "openstack_compute_floatingip_v2" "fip-worker" {
+    count = "${var.num_cells}"
+    region = "${var.openstack_region}"
+    pool = "${var.openstack_floating_ip_pool_name}"
+}
+
 resource "openstack_compute_instance_v2" "lattice-coordinator" {
     region = "${var.openstack_region}"
     name = "lattice-coordinator"
@@ -130,6 +136,7 @@ resource "openstack_compute_instance_v2" "lattice-cell" {
     network {
         uuid = "${openstack_networking_network_v2.lattice-network.id}"
     }
+    floating_ip = "${element(openstack_compute_floatingip_v2.fip-worker.*.address, count.index)}"
 
     connection {
         user = "${var.openstack_ssh_user}"
