@@ -47,6 +47,14 @@ type InstanceInfo struct {
 	Since          int64
 	PlacementError string
 	CrashCount     int
+	HasMetrics     bool
+	Metrics        InstanceMetrics
+}
+
+type InstanceMetrics struct {
+	CpuPercentage float64
+	MemoryBytes   uint64
+	DiskBytes     uint64
 }
 
 type instanceInfoSortableByIndex []InstanceInfo
@@ -81,10 +89,11 @@ type AppExaminer interface {
 
 type appExaminer struct {
 	receptorClient receptor.Client
+	noaaConsumer   NoaaConsumer
 }
 
-func New(receptorClient receptor.Client) *appExaminer {
-	return &appExaminer{receptorClient}
+func New(receptorClient receptor.Client, noaaConsumer NoaaConsumer) *appExaminer {
+	return &appExaminer{receptorClient, noaaConsumer}
 }
 
 func (e *appExaminer) ListCells() ([]CellInfo, error) {
@@ -161,6 +170,30 @@ func (e *appExaminer) AppStatus(appName string) (AppInfo, error) {
 		return AppInfo{}, errors.New(AppNotFoundErrorMessage)
 	}
 
+	containerMetrics, err := e.noaaConsumer.GetContainerMetrics(appName, "")
+	if err != nil {
+		return AppInfo{}, err
+	}
+
+	indexMap := make(map[int]int, 0)
+	for index, instance := range appInfoPtr.ActualInstances {
+		indexMap[instance.Index] = index
+	}
+
+	// fmt.Println("len(containerMetrics)=", len(containerMetrics))
+	for _, metric := range containerMetrics {
+		metricIndex, ok := indexMap[int(metric.GetInstanceIndex())]
+		if !ok {
+			continue
+		}
+		instanceInfo := &appInfoPtr.ActualInstances[metricIndex]
+		instanceInfo.HasMetrics = true
+		instanceInfo.Metrics = InstanceMetrics{
+			CpuPercentage: metric.GetCpuPercentage(),
+			MemoryBytes:   metric.GetMemoryBytes(),
+			DiskBytes:     metric.GetDiskBytes(),
+		}
+	}
 	return *appInfoPtr, nil
 }
 
@@ -247,6 +280,7 @@ func mergeDesiredActualLRPs(desiredLRPs []receptor.DesiredLRPResponse, actualLRP
 			Since:          actualLRP.Since,
 			PlacementError: actualLRP.PlacementError,
 			CrashCount:     actualLRP.CrashCount,
+			HasMetrics:     false,
 		}
 
 		appMap[actualLRP.ProcessGuid].ActualInstances = append(appMap[actualLRP.ProcessGuid].ActualInstances, instanceInfo)

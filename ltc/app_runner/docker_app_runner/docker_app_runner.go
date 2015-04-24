@@ -205,6 +205,7 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 		Ports:                params.Ports.Exposed,
 		LogGuid:              params.Name,
 		LogSource:            "APP",
+		MetricsGuid:          params.Name,
 		EnvironmentVariables: envVars,
 		Setup: &models.DownloadAction{
 			From: healthcheckDownloadUrl,

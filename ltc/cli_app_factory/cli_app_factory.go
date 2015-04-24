@@ -83,14 +83,15 @@ func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.E
 func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, ui terminal.UI) []cli.Command {
 
 	receptorClient := receptor.NewClient(config.Receptor())
+	noaaConsumer := noaa.NewConsumer(LoggregatorUrl(config.Loggregator()), nil, nil)
 	appRunner := docker_app_runner.New(receptorClient, config.Target())
 
 	clock := clock.NewClock()
 
-	logReader := logs.NewLogReader(noaa.NewConsumer(LoggregatorUrl(config.Loggregator()), nil, nil))
+	logReader := logs.NewLogReader(noaaConsumer)
 	tailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(ui, logReader)
 
-	appExaminer := app_examiner.New(receptorClient)
+	appExaminer := app_examiner.New(receptorClient, app_examiner.NewNoaaConsumer(noaaConsumer))
 	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, ui, clock, exitHandler)
 
 	appRunnerCommandFactoryConfig := app_runner_command_factory.AppRunnerCommandFactoryConfig{

@@ -18,6 +18,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/cursor"
 	"github.com/codegangsta/cli"
 	"github.com/gizak/termui"
+	"github.com/pivotal-golang/bytefmt"
 	"github.com/pivotal-golang/clock"
 )
 
@@ -302,7 +303,14 @@ func (factory *AppExaminerCommandFactory) printInstanceInfo(actualInstances []ap
 		} else if instance.State != "CRASHED" {
 			fmt.Fprintf(w, "%s\t%s\n", "Placement Error", instance.PlacementError)
 		}
+
 		fmt.Fprintf(w, "%s \t%d \n", "Crash Count", instance.CrashCount)
+
+		if instance.HasMetrics {
+			fmt.Fprintf(w, "%s \t%.2f \n", "CPU Percentage", instance.Metrics.CpuPercentage)
+			fmt.Fprintf(w, "%s \t%s \n", "Memory Usage", bytefmt.ByteSize(instance.Metrics.MemoryBytes))
+			fmt.Fprintf(w, "%s \t%s \n", "Disk Usage", bytefmt.ByteSize(instance.Metrics.DiskBytes))
+		}
 		printHorizontalRule(w, "-")
 	}
 

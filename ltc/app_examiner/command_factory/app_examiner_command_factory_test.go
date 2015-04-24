@@ -267,14 +267,21 @@ var _ = Describe("CommandFactory", func() {
 								ContainerPort: 6666,
 							},
 						},
-						State: "RUNNING",
-						Since: 401120627 * 1e9,
+						State:      "RUNNING",
+						Since:      401120627 * 1e9,
+						HasMetrics: true,
+						Metrics: app_examiner.InstanceMetrics{
+							CpuPercentage: 23.45678,
+							MemoryBytes:   655360,
+							DiskBytes:     1782411427,
+						},
 					},
 					app_examiner.InstanceInfo{
 						Index:          4,
 						State:          "UNCLAIMED",
 						PlacementError: "insufficient resources.",
 						CrashCount:     2,
+						HasMetrics:     false,
 					},
 					app_examiner.InstanceInfo{
 						Index:      5,
@@ -347,6 +354,18 @@ var _ = Describe("CommandFactory", func() {
 			prettyTimestamp := time.Unix(0, 401120627*1e9).Format(command_factory.TimestampDisplayLayout)
 			Expect(outputBuffer).To(test_helpers.Say(prettyTimestamp))
 
+			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
+			Expect(outputBuffer).To(test_helpers.Say("0"))
+
+			Expect(outputBuffer).To(test_helpers.Say("CPU Percentage"))
+			Expect(outputBuffer).To(test_helpers.Say("23.46"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Memory Usage"))
+			Expect(outputBuffer).To(test_helpers.Say("640K"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Disk Usage"))
+			Expect(outputBuffer).To(test_helpers.Say("1.7G"))
+
 			Expect(outputBuffer).To(test_helpers.Say("Instance 4"))
 			Expect(outputBuffer).To(test_helpers.Say("UNCLAIMED"))
 
@@ -355,6 +374,9 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("insufficient resources."))
 			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
 			Expect(outputBuffer).To(test_helpers.Say("2"))
+			Expect(outputBuffer).NotTo(test_helpers.Say("CPU Percentage"))
+			Expect(outputBuffer).NotTo(test_helpers.Say("Memory Usage"))
+			Expect(outputBuffer).NotTo(test_helpers.Say("Disk Usage"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Instance 5"))
 			Expect(outputBuffer).To(test_helpers.Say("CRASHED"))
@@ -362,6 +384,10 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).NotTo(test_helpers.Say("InstanceGuid"))
 			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
 			Expect(outputBuffer).To(test_helpers.Say("7"))
+
+			Expect(outputBuffer).NotTo(test_helpers.Say("CPU Percentage"))
+			Expect(outputBuffer).NotTo(test_helpers.Say("Memory Usage"))
+			Expect(outputBuffer).NotTo(test_helpers.Say("Disk Usage"))
 
 		})
 

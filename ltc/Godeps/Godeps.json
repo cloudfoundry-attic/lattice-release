@@ -205,6 +205,10 @@
 			"Rev": "982c859aeeffd81ab8717403fb03c379b6c92b5f"
 		},
 		{
+			"ImportPath": "github.com/pivotal-golang/bytefmt",
+			"Rev": "6aed4ea8cc487b9ce9dde32d7ebc8be7c8d5a66c"
+		},
+		{
 			"ImportPath": "github.com/pivotal-golang/clock",
 			"Rev": "5a6429d4274a895e93d3db8bb6addcba4c9a84eb"
 		},
