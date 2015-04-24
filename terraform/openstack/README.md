@@ -24,30 +24,34 @@ Here are some step-by-step instructions for configuring a Lattice cluster via Te
 4. Update the `lattice.openstack.tf` by filling in the values for the variables.  Details for the values of those variables are below.
 
 The available variables that can be configured are:
-**TODO**
-* `aws_access_key`: AWS access key
-* `aws_secret_key`: AWS secret key
-* `aws_key_name`: The SSH key name to use for the instances
-* `aws_ssh_private_key_file`: Path to the SSH private key file
-* `aws_ssh_user`: SSH user (default `ubuntu`)
-* `aws_region`: AWS region (default `us-east-1`)
-* `aws_vpc_cidr_block`: The IPv4 address range that machines in the network are assigned to, represented as a CIDR block (default `10.0.0.0/16`)
-* `aws_subnet_cidr_block`: The IPv4 address range that machines in the network are assigned to, represented as a CIDR block (default `10.0.1.0/24`)
-* `aws_image`: The name of the image to base the launched instances (default `ubuntu trusty 64bit hvm ami`)
-* `aws_instance_type_coordinator`: The machine type to use for the Lattice Coordinator instance (default `m3.medium`)
-* `aws_instance_type_cell`: The machine type to use for the Lattice Cells instances (default `m3.medium`)
+
+* `openstack_access_key`: Openstack username.
+* `openstack_secret_key`: Openstack Password.
+* `openstack_tenant_name`: The Tenant/Project name in Openstack.
+* `openstack_key_name`: The name given to the SSH key which will be uploaded for use by the instances.
+* `openstack_public_key`: The actual contents of rsa_id.pub to upload as the public key.
+* `openstack_ssh_private_key_file`: Path to the SSH private key file (Stays local. Used for provisioning.)
+* `openstack_ssh_user`: SSH user (default `ubuntu`)
 * `num_cells`: The number of Lattice Cells to launch (default `3`)
+* `openstack_keystone_uri`: The Keystone API URL
+*  `openstack_instance_type_coordinator`: flavour for Coordinator node
+* `openstack_instance_type_cell`: flavour for Cell nodes
+* `openstack_neutron_router_gateway_network_id`: The UUID of a network which can be used by a Neutron router as a WAN IP address. (Gateway Network)
+* `openstack_floating_ip_pool_name`: The Name of the Openstack IP pool from which to request floating IP's
+* `openstack_image`: The Ubuntu image in glance to use for Instances.
+* `openstack_region`: Openstack Region. Leave blank to support Openstack installations without region support.
 * `lattice_username`: Lattice username (default `user`)
 * `lattice_password`: Lattice password (default `pass`)
 
-Refer to the [Terraform AWS provider](https://www.terraform.io/docs/providers/aws/index.html)
+
+Refer to the [Terraform AWS provider](https://www.terraform.io/docs/providers/openstack/index.html)
 documentation for more details about how to configure the proper credentials.
 
 ### Deploy
 
 Here are some step-by-step instructions for deploying a Lattice cluster via Terraform:
 
-1. Run the following commands in the folder containing the `lattice.aws.tf` file
+1. Run the following commands in the folder containing the `lattice.openstack.tf` file
 
   ```bash
   terraform get -update
@@ -82,7 +86,10 @@ Destroy the cluster:
 terraform destroy
 ```
 
-## Copyright
+Sometimes, destroy will need to be run twice to completely destroy all components, as openstack networking components are often seen as 'still in use' when destroyed immidietley after the instances that relied on them.
 
-See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/LICENSE) for details.
+## Copyright
+Openstack Terraform support for Lattice.cf added by Matt Johnson <matjohn2@cisco.com>.
+
+For Lattice copyright, see [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).
