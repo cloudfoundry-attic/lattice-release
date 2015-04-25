@@ -61,8 +61,7 @@ var _ = Describe("CommandFactory", func() {
 		It("handles invalid appguids", func() {
 			test_helpers.ExecuteCommandWithArgs(logsCommand, []string{})
 
-			Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage"))
-			Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(Equal(0))
+			Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
 		})
 
 		It("handles non existent application", func() {

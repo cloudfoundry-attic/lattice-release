@@ -142,6 +142,68 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-me-too.192.168.11.11.xip.io\n")))
 		})
 
+		It("create a docker app only using create command aliases", func() {
+			args := []string{
+				"-c=57",
+				"-m=12",
+				"-d=12",
+				"-p=3000,2000,1111",
+				"-M=3000",
+				"-R=3000:route-3000-yay,1111:route-1111-wahoo,1111:route-1111-me-too",
+				"-w=/applications",
+				"-r=true",
+				"-i=22",
+				"-e=TIMEZONE=CST",
+				"-e=LANG=\"Chicago English\"",
+				"-e=COLOR",
+				"-e=UNSET",
+				"-t=28s",
+				"cool-web-app",
+				"superfun/app:mycooltag",
+				"--",
+				"/start-me-please",
+				"AppArg0",
+				"--appFlavor=\"purple\"",
+			}
+			appExaminer.RunningAppInstancesInfoReturns(22, false, nil)
+
+			test_helpers.ExecuteCommandWithArgs(createCommand, args)
+			Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
+			Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("superfun/app:mycooltag"))
+
+			Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
+			createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+			Expect(createDockerAppParameters.Name).To(Equal("cool-web-app"))
+			Expect(createDockerAppParameters.StartCommand).To(Equal("/start-me-please"))
+			Expect(createDockerAppParameters.DockerImagePath).To(Equal("superfun/app:mycooltag"))
+			Expect(createDockerAppParameters.AppArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
+			Expect(createDockerAppParameters.Instances).To(Equal(22))
+			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "PROCESS_GUID": "cool-web-app", "COLOR": "Blue", "UNSET": ""}))
+			Expect(createDockerAppParameters.Privileged).To(Equal(true))
+			Expect(createDockerAppParameters.CPUWeight).To(Equal(uint(57)))
+			Expect(createDockerAppParameters.MemoryMB).To(Equal(12))
+			Expect(createDockerAppParameters.DiskMB).To(Equal(12))
+			Expect(createDockerAppParameters.Monitor).To(Equal(true))
+			Expect(createDockerAppParameters.Timeout).To(Equal(time.Second * 28))
+
+			Expect(createDockerAppParameters.Ports.Monitored).To(Equal(uint16(3000)))
+			Expect(createDockerAppParameters.Ports.Exposed).To(Equal([]uint16{1111, 2000, 3000}))
+			Expect(createDockerAppParameters.RouteOverrides).To(ContainExactly(docker_app_runner.RouteOverrides{
+				docker_app_runner.RouteOverride{HostnamePrefix: "route-3000-yay", Port: 3000},
+				docker_app_runner.RouteOverride{HostnamePrefix: "route-1111-wahoo", Port: 1111},
+				docker_app_runner.RouteOverride{HostnamePrefix: "route-1111-me-too", Port: 1111},
+			}))
+			Expect(createDockerAppParameters.NoRoutes).To(BeFalse())
+			Expect(createDockerAppParameters.WorkingDir).To(Equal("/applications"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Creating App: cool-web-app\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
+			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-3000-yay.192.168.11.11.xip.io\n")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-wahoo.192.168.11.11.xip.io\n")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-me-too.192.168.11.11.xip.io\n")))
+		})
+
 		Context("when the PROCESS_GUID is passed in as --env", func() {
 			It("sets the PROCESS_GUID to the value passed in", func() {
 				args := []string{
