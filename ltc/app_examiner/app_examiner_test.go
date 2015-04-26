@@ -569,8 +569,17 @@ var _ = Describe("AppRunner", func() {
 
 		Context("when the noaa consumer returns errors", func() {
 			It("returns errors from from fetching the container metrics", func() {
-				fakeReceptorClient.GetDesiredLRPReturns(getDesiredLRPResponse, nil)
-				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPsByProcessGuidResponse, nil)
+				desiredLRPs := receptor.DesiredLRPResponse{
+					ProcessGuid: "peekaboo-app",
+				}
+				actualLRPs := []receptor.ActualLRPResponse{
+					receptor.ActualLRPResponse{
+						ProcessGuid: "peekaboo-app",
+						Index:       6,
+					},
+				}
+				fakeReceptorClient.GetDesiredLRPReturns(desiredLRPs, nil)
+				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPs, nil)
 				fakeNoaaConsumer.GetContainerMetricsReturns(nil, errors.New("no metrics 4 you"))
 
 				_, err := appExaminer.AppStatus("peekaboo-app")
