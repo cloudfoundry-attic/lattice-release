@@ -8,9 +8,9 @@ LATTICE_TAR_URL=$3
 
 if [ $COMPONENT_TO_INSTALL != "cell" ] && [ $COMPONENT_TO_INSTALL != "brain" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
     echo "Incorrect Usage. Must install either cell or brain or both.
-    Usage: install_from_tar cell [LATTICE_TAR_PATH] OR
-           install_from_tar brain [LATTICE_TAR_PATH]
-           install_from_tar collocated [LATTICE_TAR_PATH]
+    Usage: install-from-tar cell [LATTICE_TAR_PATH] OR
+           install-from-tar brain [LATTICE_TAR_PATH]
+           install-from-tar collocated [LATTICE_TAR_PATH]
     "
     exit 2
 fi
