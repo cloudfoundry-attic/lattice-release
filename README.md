@@ -105,7 +105,7 @@ DNS resolution for `xip.io` addresses can sometimes be flaky, resulting in error
 
 First, check your networking DNS settings. Local "forwarding DNS" servers provided by some home routers can have trouble resolving `xip.io` addresses. Try setting your DNS to point to your real upstream DNS servers, or alternatively try using [Google DNS](https://developers.google.com/speed/public-dns/) by using `8.8.8.8` and/or `8.8.4.4`.
 
-Unfortunately `xip.io` itself also sometimes returns similar "no such host" errors. The recommended alternative is to follow the [dnsmasq instructions](https://github.com/cloudfoundry-incubator/lattice/blob/master/docs/dnsmasq-readme.md), pass the `LATTICE_SYSTEM_DOMAIN` environment variable to the vagrant up command, and target using `lattice.dev` instead of `192.168.11.11.xip.io` to point to the cluster, as follows:
+Unfortunately `xip.io` itself also sometimes returns similar "no such host" errors. The recommended alternative is to follow the [dnsmasq instructions](docs/dnsmasq-readme.md), pass the `LATTICE_SYSTEM_DOMAIN` environment variable to the vagrant up command, and target using `lattice.dev` instead of `192.168.11.11.xip.io` to point to the cluster, as follows:
 
 ```
 LATTICE_SYSTEM_DOMAIN=lattice.dev vagrant up
@@ -147,9 +147,9 @@ Here are some step-by-step instructions for deploying a Lattice cluster via Terr
 2. Select the Lattice version you wish to deploy and download the Terraform example file for your target platform.  The filename will be `lattice.<platform>.tf`
 3. Create an empty folder and place the `lattice.<platform>.tf` file in that folder.
 4. Update the `lattice.<platform>.tf` by filling in the values for the variables. Instructions for each supported platform are here:
-  - [Amazon Web Services](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md#configure)
-  - [DigitalOcean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md#configure)
-  - [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md#configure)
+  - [Amazon Web Services](terraform/aws/README.md#configure)
+  - [DigitalOcean](terraform/digitalocean/README.md#configure)
+  - [Google Cloud](terraform/google/README.md#configure)
 5. Run the following commands in the folder containing the `lattice.<platform>.tf` file
 
   ```bash
@@ -199,7 +199,7 @@ Here are some ways *you* can contribute:
 * by closing [issues](https://github.com/cloudfoundry-incubator/lattice/issues)
 * by reviewing patches
 
-Also see the [Development Readme](https://github.com/cloudfoundry-incubator/lattice/tree/master/docs/development-readme.md)
+Also see the [Development Readme](docs/development-readme.md)
 
 ## Submitting an Issue
 We use the [GitHub issue tracker](https://github.com/cloudfoundry-incubator/lattice/issues) to track bugs and features.
@@ -219,5 +219,5 @@ details that may be necessary to reproduce the bug including the Lattice version
 
 # Copyright
 
-See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/docs/LICENSE) for details.
+See [LICENSE](docs/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).

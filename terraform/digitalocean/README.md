@@ -17,7 +17,7 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 
 Here are some step-by-step instructions for configuring a Lattice cluster via Terraform:
 
-1. Visit the [Lattice GitHub Releases page](https://github.com/cloudfoundry-incubator/lattice/releases#)
+1. Visit the [Lattice GitHub Releases page](https://github.com/cloudfoundry-incubator/lattice/releases)
 2. Select the Lattice version you wish to deploy and download the Terraform example file for your target platform.  The filename will be `lattice.digitalocean.tf`
 3. Create an empty folder and place the `lattice.digitalocean.tf` file in that folder.
 4. Update the `lattice.digitalocean.tf` by filling in the values for the variables.  Details for the values of those variables are below.
@@ -71,7 +71,7 @@ Terraform will generate a `terraform.tfstate` file.  This file describes the clu
 
 ### Use
 
-Refer to the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) documentation.
+Refer to the [Lattice CLI](../../ltc) documentation.
 
 ### Destroy
 
@@ -98,5 +98,5 @@ from scratch.
 
 ## Copyright
 
-See [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/docs/LICENSE) for details.
+See [LICENSE](../../docs/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).

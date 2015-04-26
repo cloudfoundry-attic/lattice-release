@@ -12,7 +12,10 @@
   </tr>
 </table>
 
-`ltc` provides an easy-to-use command line interface for [Lattice](https://github.com/pivotal-cf-experimental/lattice)
+[![Build Status](https://travis-ci.org/cloudfoundry-incubator/lattice.svg?branch=develop)](https://travis-ci.org/cloudfoundry-incubator/lattice)
+[![Coverage Status](https://coveralls.io/repos/cloudfoundry-incubator/lattice/badge.svg?branch=develop)](https://coveralls.io/r/cloudfoundry-incubator/lattice?branch=develop)
+
+`ltc` provides an easy-to-use command line interface for [Lattice](https://github.com/cloudfoundry-incubator/lattice)
 
 With `ltc` you can:
 
@@ -74,3 +77,8 @@ To scale up the app:
     ltc scale lattice-app 5
 
 Refresh the browser to see the requests routing to different Docker containers running lattice-app.
+
+## Copyright
+
+See [LICENSE](../docs/LICENSE) for details.
+Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).
