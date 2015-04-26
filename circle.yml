@@ -1,0 +1,30 @@
+general:
+  build_dir: ltc
+  branches:
+    only:
+      - develop
+      - master
+machine:
+  timezone:
+    America/Los_Angeles
+  golang:
+    version: 1.4
+  environment:
+    GOPATH: $HOME/gopath
+dependencies:
+  pre:
+    - rm -rfv "$GOPATH"
+    - mkdir -pv "$GOPATH/bin"
+    - 'if [[ "${TRAVIS_GO_VERSION}" =~ 1.[2-3] ]]; then go get code.google.com/p/go.tools/cmd/cover; else go get golang.org/x/tools/cmd/cover; fi'
+    - go get -v github.com/tools/godep
+    - go get -v github.com/onsi/ginkgo/ginkgo
+    - go get -v github.com/mattn/goveralls
+  override:
+    - godep restore:
+        environment:
+          PATH: $GOPATH/bin:$PATH
+test:
+  override:
+    - ginkgo -r --race --randomizeAllSpecs --failOnPending --skipMeasurements --cover:
+        environment:
+          PATH: $GOPATH/bin:$PATH
