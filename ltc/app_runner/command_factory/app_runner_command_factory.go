@@ -92,7 +92,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Value: &cli.StringSlice{},
 		},
 		cli.IntFlag{
-			Name:  "cpu-weight",
+			Name:  "cpu-weight, c",
 			Usage: "Relative CPU weight for the container (valid values: 1-100)",
 			Value: 100,
 		},
@@ -111,16 +111,16 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Usage: "Ports to expose on the container",
 		},
 		cli.IntFlag{
-			Name:  "monitored-port",
+			Name:  "monitored-port, M", // -m is already used for memory
 			Usage: "Selects which port is used to healthcheck the app. Required for multiple exposed ports",
 		},
 		cli.StringFlag{
-			Name: "routes",
+			Name: "routes, R", // -r is already used for root user
 			Usage: "Route mappings to exposed ports as follows:\n\t\t" +
 				"--routes=80:web,8080:api will route web to 80 and api to 8080",
 		},
 		cli.IntFlag{
-			Name:  "instances",
+			Name:  "instances, i",
 			Usage: "Number of application instances to spawn on launch",
 			Value: 1,
 		},
@@ -133,7 +133,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Usage: "Registers no routes for the app",
 		},
 		cli.DurationFlag{
-			Name:  "timeout",
+			Name:  "timeout, t",
 			Usage: "Polling timeout for app to start",
 			Value: DefaultPollingTimeout,
 		},
@@ -184,7 +184,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateLrpCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 	var scaleFlags = []cli.Flag{
 		cli.DurationFlag{
-			Name:  "timeout",
+			Name:  "timeout, t",
 			Usage: "Polling timeout for app to scale",
 			Value: DefaultPollingTimeout,
 		},
