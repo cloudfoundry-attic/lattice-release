@@ -33,7 +33,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   config.vm.provision "shell" do |s|
-    s.path = "cluster/scripts/install_from_tar"
+    s.path = "cluster/scripts/install-from-tar"
     s.args = ["collocated", ENV["VAGRANT_LATTICE_TAR_PATH"].to_s, lattice_tar_url]
   end
 
