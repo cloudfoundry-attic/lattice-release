@@ -196,13 +196,13 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.1.0-40-ge573630",
-			"Rev": "e57363034d6f4d61cd9ef0b6917f69ad03977914"
+			"Comment": "v1.1.0-44-gae043a2",
+			"Rev": "ae043a2b2a91d6441adedc96d2c01958a78ee516"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Comment": "v1.0-30-g982c859",
-			"Rev": "982c859aeeffd81ab8717403fb03c379b6c92b5f"
+			"Comment": "v1.0-41-ga91b9a2",
+			"Rev": "a91b9a2e8063d07570320914bfe10a91d9323074"
 		},
 		{
 			"ImportPath": "github.com/pivotal-golang/bytefmt",
