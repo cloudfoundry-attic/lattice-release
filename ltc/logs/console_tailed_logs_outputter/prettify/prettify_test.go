@@ -16,28 +16,30 @@ import (
 
 var _ = Describe("Prettify", func() {
 
-	It("pretties the text for lager message", func() {
-		now := time.Now()
-		unixTime := now.UnixNano()
-		sourceType := "rep"
-		sourceInstance := "cell-77"
-		logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298","session":"7.1.10","trace":"trace-me-now"}}`)
+	var (
+		input []byte
+	)
 
-		lagerTimestamp := "1429296198.620077372"
-		lagerUnixTime, err := strconv.ParseFloat(lagerTimestamp, 64)
-		Expect(err).ToNot(HaveOccurred())
-
-		logMessage := &events.LogMessage{
-			Message:        logPayload,
+	buildLogMessage := func(sourceType, sourceInstance string, timestamp time.Time, message []byte) *events.LogMessage {
+		unixTime := timestamp.UnixNano()
+		return &events.LogMessage{
+			Message:        message,
 			Timestamp:      &unixTime,
 			SourceType:     &sourceType,
 			SourceInstance: &sourceInstance,
 		}
+	}
+
+	It("pretties the text for lager message", func() {
+		input = []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298","session":"7.1.10","trace":"trace-me-now"}}`)
+		lagerTimestamp := "1429296198.620077372"
+		lagerUnixTime, err := strconv.ParseFloat(lagerTimestamp, 64)
+		Expect(err).ToNot(HaveOccurred())
+		logMessage := buildLogMessage("rep", "cell-77", time.Time{}, input)
 
 		prettyLog := prettify.Prettify(logMessage)
 
 		Expect(prettyLog).ToNot(BeEmpty())
-
 		Expect(prettyLog).To(ContainSubstring(`rep`))
 		Expect(prettyLog).To(ContainSubstring(`cell-77`))
 		Expect(prettyLog).To(ContainSubstring(`INFO`))
@@ -49,22 +51,12 @@ var _ = Describe("Prettify", func() {
 
 	It("pretties the text for non-lager message", func() {
 		now := time.Now()
-		unixTime := now.UnixNano()
-		sourceType := "rep"
-		sourceInstance := "cell-77"
-		logPayload := []byte(`ABC 123`)
-
-		logMessage := &events.LogMessage{
-			Message:        logPayload,
-			Timestamp:      &unixTime,
-			SourceType:     &sourceType,
-			SourceInstance: &sourceInstance,
-		}
+		input = []byte(`ABC 123`)
+		logMessage := buildLogMessage("rep", "cell-77", now, input)
 
 		prettyLog := prettify.Prettify(logMessage)
 
 		Expect(prettyLog).ToNot(BeEmpty())
-
 		Expect(prettyLog).To(ContainSubstring(`rep`))
 		Expect(prettyLog).To(ContainSubstring(`cell-77`))
 		Expect(prettyLog).To(ContainSubstring(`ABC 123`))
@@ -72,18 +64,8 @@ var _ = Describe("Prettify", func() {
 	})
 
 	It("prints a newline for non-empty data", func() {
-		now := time.Now()
-		unixTime := now.UnixNano()
-		sourceType := "rep"
-		sourceInstance := "cell-77"
-		logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298"}}`)
-
-		logMessage := &events.LogMessage{
-			Message:        logPayload,
-			Timestamp:      &unixTime,
-			SourceType:     &sourceType,
-			SourceInstance: &sourceInstance,
-		}
+		input = []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298"}}`)
+		logMessage := buildLogMessage("rep", "cell-77", time.Time{}, input)
 
 		prettyLog := prettify.Prettify(logMessage)
 
@@ -92,18 +74,8 @@ var _ = Describe("Prettify", func() {
 	})
 
 	It("does not print newline for empty data", func() {
-		now := time.Now()
-		unixTime := now.UnixNano()
-		sourceType := "rep"
-		sourceInstance := "cell-77"
-		logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{}}`)
-
-		logMessage := &events.LogMessage{
-			Message:        logPayload,
-			Timestamp:      &unixTime,
-			SourceType:     &sourceType,
-			SourceInstance: &sourceInstance,
-		}
+		input = []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{}}`)
+		logMessage := buildLogMessage("rep", "cell-77", time.Time{}, input)
 
 		prettyLog := prettify.Prettify(logMessage)
 
@@ -112,18 +84,8 @@ var _ = Describe("Prettify", func() {
 	})
 
 	It("highlights the source type column with app-specific color", func() {
-		now := time.Now()
-		unixTime := now.UnixNano()
-		sourceType := "rep"
-		sourceInstance := "cell-77"
-		logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{}}`)
-
-		logMessage := &events.LogMessage{
-			Message:        logPayload,
-			Timestamp:      &unixTime,
-			SourceType:     &sourceType,
-			SourceInstance: &sourceInstance,
-		}
+		input = []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{}}`)
+		logMessage := buildLogMessage("rep", "cell-77", time.Time{}, input)
 
 		prettyLog := prettify.Prettify(logMessage)
 
@@ -132,14 +94,8 @@ var _ = Describe("Prettify", func() {
 
 	Context("when the source type is unknown", func() {
 		It("highlights the source type column with no color", func() {
-
-			sourceType := "happyjoy"
-			logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"happyjoy","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298","session":"7.1.10"}}`)
-
-			logMessage := &events.LogMessage{
-				Message:    logPayload,
-				SourceType: &sourceType,
-			}
+			input = []byte(`{"timestamp":"1429296198.620077372","source":"happyjoy","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298","session":"7.1.10"}}`)
+			logMessage := buildLogMessage("happyjoy", "", time.Time{}, input)
 
 			prettyLog := prettify.Prettify(logMessage)
 
@@ -149,22 +105,11 @@ var _ = Describe("Prettify", func() {
 
 	It("pads and spaces the output for lager", func() {
 		now := time.Now()
-		unixTime := now.UnixNano()
-		sourceType := "rep"
-		sourceInstance := "cell-77"
-
 		lagerTimestamp := "1429296198.620077372"
 		lagerUnixTime, err := strconv.ParseFloat(lagerTimestamp, 64)
 		Expect(err).ToNot(HaveOccurred())
-
-		logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298","session":"7.1.10"}}`)
-
-		logMessage := &events.LogMessage{
-			Message:        logPayload,
-			Timestamp:      &unixTime,
-			SourceType:     &sourceType,
-			SourceInstance: &sourceInstance,
-		}
+		input = []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298","session":"7.1.10"}}`)
+		logMessage := buildLogMessage("rep", "cell-77", now, input)
 
 		prettyLog := prettify.Prettify(logMessage)
 
@@ -182,17 +127,8 @@ var _ = Describe("Prettify", func() {
 
 	It("pads and spaces the output for non-lager", func() {
 		now := time.Now()
-		unixTime := now.UnixNano()
-		sourceType := "rep"
-		sourceInstance := "cell-77"
-		logPayload := []byte(`ABC 123`)
-
-		logMessage := &events.LogMessage{
-			Message:        logPayload,
-			Timestamp:      &unixTime,
-			SourceType:     &sourceType,
-			SourceInstance: &sourceInstance,
-		}
+		input = []byte(`ABC 123`)
+		logMessage := buildLogMessage("rep", "cell-77", now, input)
 
 		prettyLog := prettify.Prettify(logMessage)
 
@@ -205,18 +141,8 @@ var _ = Describe("Prettify", func() {
 	Context("for the various log levels", func() {
 
 		It("colors the INFO with SourceType-specific color", func() {
-			now := time.Now()
-			unixTime := now.UnixNano()
-			sourceType := "rep"
-			sourceInstance := "cell-77"
-			logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{}}`)
-
-			logMessage := &events.LogMessage{
-				Message:        logPayload,
-				Timestamp:      &unixTime,
-				SourceType:     &sourceType,
-				SourceInstance: &sourceInstance,
-			}
+			input = []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{}}`)
+			logMessage := buildLogMessage("rep", "", time.Time{}, input)
 
 			prettyLog := prettify.Prettify(logMessage)
 
@@ -224,18 +150,8 @@ var _ = Describe("Prettify", func() {
 		})
 
 		It("colors the DEBUG as Gray", func() {
-			now := time.Now()
-			unixTime := now.UnixNano()
-			sourceType := "rep"
-			sourceInstance := "cell-77"
-			logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":0,"data":{}}`)
-
-			logMessage := &events.LogMessage{
-				Message:        logPayload,
-				Timestamp:      &unixTime,
-				SourceType:     &sourceType,
-				SourceInstance: &sourceInstance,
-			}
+			input = []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":0,"data":{}}`)
+			logMessage := buildLogMessage("", "", time.Time{}, input)
 
 			prettyLog := prettify.Prettify(logMessage)
 
@@ -243,18 +159,8 @@ var _ = Describe("Prettify", func() {
 		})
 
 		It("colors the ERROR as Red", func() {
-			now := time.Now()
-			unixTime := now.UnixNano()
-			sourceType := "rep"
-			sourceInstance := "cell-77"
-			logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":2,"data":{}}`)
-
-			logMessage := &events.LogMessage{
-				Message:        logPayload,
-				Timestamp:      &unixTime,
-				SourceType:     &sourceType,
-				SourceInstance: &sourceInstance,
-			}
+			input = []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":2,"data":{}}`)
+			logMessage := buildLogMessage("", "", time.Time{}, input)
 
 			prettyLog := prettify.Prettify(logMessage)
 
@@ -262,18 +168,8 @@ var _ = Describe("Prettify", func() {
 		})
 
 		It("colors the FATAL as Red", func() {
-			now := time.Now()
-			unixTime := now.UnixNano()
-			sourceType := "rep"
-			sourceInstance := "cell-77"
-			logPayload := []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":3,"data":{}}`)
-
-			logMessage := &events.LogMessage{
-				Message:        logPayload,
-				Timestamp:      &unixTime,
-				SourceType:     &sourceType,
-				SourceInstance: &sourceInstance,
-			}
+			input = []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":3,"data":{}}`)
+			logMessage := buildLogMessage("", "", time.Time{}, input)
 
 			prettyLog := prettify.Prettify(logMessage)
 

@@ -21,15 +21,12 @@ type Entry struct {
 type LogEntry struct {
 	Timestamp time.Time
 	LogLevel  lager.LogLevel
-
-	Source  string
-	Message string
-	Session string
-
-	Error error
-	Trace string
-
-	Data lager.Data
+	Source    string
+	Message   string
+	Session   string
+	Error     error
+	Trace     string
+	Data      lager.Data
 }
 
 func ChugLogMessage(logMessage *events.LogMessage) Entry {
@@ -105,11 +102,9 @@ func convertLagerLog(lagerLog lager.LogFormat) (LogEntry, bool) {
 		Source:    lagerLog.Source,
 		Message:   lagerLog.Message,
 		Session:   logSession,
-
-		Error: logErr,
-		Trace: logTrace,
-
-		Data: data,
+		Error:     logErr,
+		Trace:     logTrace,
+		Data:      data,
 	}, true
 
 }
