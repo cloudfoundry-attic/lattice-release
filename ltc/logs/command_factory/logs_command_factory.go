@@ -42,7 +42,7 @@ func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 func (factory *logsCommandFactory) MakeDebugLogsCommand() cli.Command {
 	var debugLogsFlags = []cli.Flag{
 		cli.BoolFlag{
-			Name:  "raw",
+			Name:  "raw, r",
 			Usage: "Removes pretty formatting",
 		},
 	}
@@ -60,7 +60,7 @@ func (factory *logsCommandFactory) tailLogs(context *cli.Context) {
 	appGuid := context.Args().First()
 
 	if appGuid == "" {
-		factory.ui.SayIncorrectUsage("")
+		factory.ui.SayIncorrectUsage("APP_NAME required")
 		return
 	}
 
