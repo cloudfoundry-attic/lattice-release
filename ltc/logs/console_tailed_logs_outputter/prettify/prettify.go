@@ -24,7 +24,7 @@ func Prettify(logMessage *events.LogMessage) string {
 	// TODO: Or, do we use GetSourceType() for raw and Json source for pretty?
 	color, ok := colorLookup[strings.Split(entry.LogMessage.GetSourceType(), ":")[0]]
 	if !ok {
-		color = "\x1b[0m" // TODO: use a constant for this
+		color = colors.ColorDefault
 	}
 	var components []string
 
@@ -49,7 +49,7 @@ func prettyPrintLog(entry chug.Entry) []string {
 
 	color, ok := colorLookup[strings.Split(entry.LogMessage.GetSourceType(), ":")[0]]
 	if !ok {
-		color = "\x1b[0m" // TODO: use a constant for this
+		color = colors.ColorDefault
 	}
 
 	level := ""
@@ -57,11 +57,11 @@ func prettyPrintLog(entry chug.Entry) []string {
 	case lager.INFO:
 		level = colors.Colorize(color, "[INFO]")
 	case lager.DEBUG:
-		level = colors.Gray("[DEBUG]")
+		level = colors.Colorize(colors.ColorGray, "[DEBUG]")
 	case lager.ERROR:
-		level = colors.Red("[ERROR]")
+		level = colors.Colorize(colors.ColorRed, "[ERROR]")
 	case lager.FATAL:
-		level = colors.Red("[FATAL]")
+		level = colors.Colorize(colors.ColorRed, "[FATAL]")
 	}
 	level = fmt.Sprintf("%-15s", level)
 

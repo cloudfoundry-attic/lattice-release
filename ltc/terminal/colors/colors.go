@@ -18,18 +18,6 @@ const (
 	grayColor       string = "\x1b[90m"
 )
 
-func Colorize(colorCode string, format string, args ...interface{}) string {
-	var out string
-
-	if len(args) > 0 {
-		out = fmt.Sprintf(format, args...)
-	} else {
-		out = format
-	}
-
-	return fmt.Sprintf("%s%s%s", colorCode, out, defaultStyle)
-}
-
 func Red(output string) string {
 	return colorText(output, red)
 }
