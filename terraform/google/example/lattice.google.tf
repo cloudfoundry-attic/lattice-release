@@ -1,5 +1,5 @@
 module "lattice-google" {
-    source = "github.com/cloudfoundry-incubator/lattice//terraform//google?ref=v0.2.3-88-g5283243"
+    source = "github.com/cloudfoundry-incubator/lattice//terraform//google?ref=v0.2.3-102-gf4e1c2b"
 
     # Path to the JSON file used to describe your account credentials, downloaded from Google Cloud Console
     gce_account_file = "<CHANGE-ME>"
