@@ -3,6 +3,7 @@ package prettify
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,12 +27,17 @@ func Prettify(logMessage *events.LogMessage) string {
 	if !ok {
 		color = colors.ColorDefault
 	}
-	var components []string
+
+	sourcePrefix := fmt.Sprintf("[%s%s%s|%s%s%s]", color, entry.LogMessage.GetSourceType(), colors.ColorDefault, color, entry.LogMessage.GetSourceInstance(), colors.ColorDefault)
+	colorWidth := len(color)*2 + len(colors.ColorDefault)*2
+	sourcePrefixWidth := strconv.Itoa(22 + colorWidth)
 
 	// TODO: "no color" code is 1 char less than color codes; if sourceType not found in
 	// colorLookup, only pad to 20 chars
-	components = append(components, fmt.Sprintf("%-21s", colors.Colorize(color, entry.LogMessage.GetSourceType())))
-	components = append(components, fmt.Sprintf("%-9s", entry.LogMessage.GetSourceInstance()))
+	var components []string
+	components = append(components, fmt.Sprintf("%-"+sourcePrefixWidth+"s", sourcePrefix))
+	// components = append(components, fmt.Sprintf("%-21s", colors.Colorize(color, entry.LogMessage.GetSourceType())))
+	// components = append(components, fmt.Sprintf("%-9s", colors.Colorize(color, entry.LogMessage.GetSourceInstance())))
 
 	var whichFunc func(chug.Entry) []string
 
@@ -47,23 +53,22 @@ func Prettify(logMessage *events.LogMessage) string {
 
 func prettyPrintLog(entry chug.Entry) []string {
 
-	color, ok := colorLookup[strings.Split(entry.LogMessage.GetSourceType(), ":")[0]]
-	if !ok {
-		color = colors.ColorDefault
-	}
-
-	level := ""
+	var logColor, level string
 	switch entry.Log.LogLevel {
 	case lager.INFO:
-		level = colors.Colorize(color, "[INFO]")
+		logColor = colors.ColorDefault
+		level = "[INFO]"
 	case lager.DEBUG:
-		level = colors.Colorize(colors.ColorGray, "[DEBUG]")
+		logColor = colors.ColorGray
+		level = "[DEBUG]"
 	case lager.ERROR:
-		level = colors.Colorize(colors.ColorRed, "[ERROR]")
+		logColor = colors.ColorRed
+		level = "[ERROR]"
 	case lager.FATAL:
-		level = colors.Colorize(colors.ColorRed, "[FATAL]")
+		logColor = colors.ColorRed
+		level = "[FATAL]"
 	}
-	level = fmt.Sprintf("%-15s", level)
+	level = fmt.Sprintf("%s%-9s", logColor, level)
 
 	var components []string
 	components = append(components, level)
@@ -72,10 +77,16 @@ func prettyPrintLog(entry chug.Entry) []string {
 	components = append(components, fmt.Sprintf("%-17s", timestamp))
 	components = append(components, fmt.Sprintf("%-14s", entry.Log.Session))
 	components = append(components, entry.Log.Message)
+	components = append(components, colors.ColorDefault)
+
+	// Add error line here.
+	if entry.Log.Error != nil {
+		components = append(components, fmt.Sprintf("\n%s%s%s%s", strings.Repeat(" ", 66), logColor, entry.Log.Error.Error(), colors.ColorDefault))
+	}
 
 	if len(entry.Log.Data) > 0 {
 		dataJSON, _ := json.Marshal(entry.Log.Data)
-		components = append(components, fmt.Sprintf("\n%s%s", strings.Repeat(" ", 63), string(dataJSON)))
+		components = append(components, fmt.Sprintf("\n%s%s%s%s", strings.Repeat(" ", 66), logColor, string(dataJSON), colors.ColorDefault))
 	}
 
 	return components
@@ -83,7 +94,7 @@ func prettyPrintLog(entry chug.Entry) []string {
 
 func prettyPrintRaw(entry chug.Entry) []string {
 	var components []string
-	components = append(components, strings.Repeat(" ", 6)) // loglevel
+	components = append(components, strings.Repeat(" ", 9)) // loglevel
 	timestamp := time.Unix(0, entry.LogMessage.GetTimestamp())
 	components = append(components, fmt.Sprintf("%-17s", timestamp.Format("01/02 15:04:05.00")))
 	components = append(components, strings.Repeat(" ", 14)) // sesh
