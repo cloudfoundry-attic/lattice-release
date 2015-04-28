@@ -12,6 +12,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical/fake_graphical_visualizer"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
@@ -29,12 +30,13 @@ const TerminalEsc = "\033["
 var _ = Describe("CommandFactory", func() {
 
 	var (
-		appExaminer  *fake_app_examiner.FakeAppExaminer
-		outputBuffer *gbytes.Buffer
-		terminalUI   terminal.UI
-		clock        *fakeclock.FakeClock
-		osSignalChan chan os.Signal
-		exitHandler  *fake_exit_handler.FakeExitHandler
+		appExaminer         *fake_app_examiner.FakeAppExaminer
+		outputBuffer        *gbytes.Buffer
+		terminalUI          terminal.UI
+		clock               *fakeclock.FakeClock
+		osSignalChan        chan os.Signal
+		exitHandler         *fake_exit_handler.FakeExitHandler
+		graphicalVisualizer *fake_graphical_visualizer.FakeGraphicalVisualizer
 	)
 
 	BeforeEach(func() {
@@ -44,13 +46,14 @@ var _ = Describe("CommandFactory", func() {
 		osSignalChan = make(chan os.Signal, 1)
 		clock = fakeclock.NewFakeClock(time.Now())
 		exitHandler = &fake_exit_handler.FakeExitHandler{}
+		graphicalVisualizer = &fake_graphical_visualizer.FakeGraphicalVisualizer{}
 	})
 
 	Describe("ListAppsCommand", func() {
 		var listAppsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil)
 			listAppsCommand = commandFactory.MakeListAppCommand()
 		})
 
@@ -121,7 +124,7 @@ var _ = Describe("CommandFactory", func() {
 		var visualizeCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, graphicalVisualizer)
 			visualizeCommand = commandFactory.MakeVisualizeCommand()
 		})
 
@@ -152,7 +155,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
-		Context("When a rate flag is provided", func() {
+		Context("when a rate flag is provided", func() {
 			var closeChan chan struct{}
 
 			AfterEach(func() {
@@ -213,6 +216,44 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
+		Context("when the graphical flag is passed", func() {
+
+			It("makes a successful call to the graphical visualizer and returns", func() {
+				graphicalVisualizer.PrintDistributionChartReturns(nil)
+
+				test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{"--graphical"})
+
+				Consistently(outputBuffer).ShouldNot(test_helpers.Say("Distribution"))
+				Expect(graphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
+				Expect(graphicalVisualizer.PrintDistributionChartArgsForCall(0)).To(BeZero())
+			})
+
+			It("prints the error from an unsuccessful call to the graphical visualizer", func() {
+				graphicalVisualizer.PrintDistributionChartReturns(errors.New("errored"))
+
+				test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{"--graphical"})
+
+				Consistently(outputBuffer).ShouldNot(test_helpers.Say("Distribution"))
+				Eventually(outputBuffer).Should(test_helpers.Say("Error Visualization: errored"))
+				Expect(graphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
+			})
+
+			Context("when the rate flag is also passed", func() {
+				It("sets the initial rate when calling the graphical visualizer", func() {
+					graphicalVisualizer.PrintDistributionChartReturns(nil)
+
+					test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{"--graphical", "--rate=200ms"})
+
+					Consistently(outputBuffer).ShouldNot(test_helpers.Say("Distribution"))
+					Expect(graphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
+					duration, err := time.ParseDuration("200ms")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(graphicalVisualizer.PrintDistributionChartArgsForCall(0)).To(Equal(duration))
+				})
+			})
+
+		})
+
 	})
 
 	Describe("StatusCommand", func() {
@@ -222,7 +263,7 @@ var _ = Describe("CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil)
 			statusCommand = commandFactory.MakeStatusCommand()
 
 			sampleAppInfo = app_examiner.AppInfo{

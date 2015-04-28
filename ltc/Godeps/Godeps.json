@@ -163,7 +163,7 @@
 		},
 		{
 			"ImportPath": "github.com/gizak/termui",
-			"Rev": "fc47847f39d3c33df19cc8611232b6cec07f1f43"
+			"Rev": "ce9bf21e3a5dd9e751030b4c55b00279c6d2fec0"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
