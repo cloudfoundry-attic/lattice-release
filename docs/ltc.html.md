@@ -42,9 +42,9 @@ The default behavior of `ltc create`, outlined above, can be modified via a seri
 - **`--working-dir=/path/to/working-dir`** sets the working directory, overriding the default associated with the Docker image.
 - **`--run-as-root`** launches the command in the process as the root user.  By default, Lattice uses a non-root user created at container-creation time.  Lattice does not yet honor the Docker USER directive.  There are plans to address this soon.  For most containers `--run-as-root` is a sufficient workaround.
 - **`--env NAME[=VALUE]`** specifies environment variables. You can have multiple `--env` flags.  These are merged *on top of* the Environment variables extracted from the Docker image metadata.  Passing an --env flag without explicitly setting the VALUE uses the current execution context to set the value.
+- **`--cpu-weight=100`** specifies the relative CPU weight to apply to the container (scale 1-100).
 - **`--memory-mb=128`** specifies the memory limit to apply to the container.  To allow unlimited memory usage, set this to 0.
 - **`--disk-mb=1024`** specifies the disk limit to apply to the container.  This governs any writes *on top of* the root filesystem mounted into the container.  To allow unlimited disk usage, set this to 0.
-- **`--cpu-weight=100`** specifies the relative CPU weight to apply to the container (scale 1-100).
 - **`--instances=1`** specifies the number of instances of the application to launch.  This can also be modified after the application is started.
 - **`--no-monitor`** disables health monitoring.  Lattice will consider the application crashed only if it exits.
 - **`--timeout=2m`** sets the maximum polling duration for starting the app.
@@ -68,32 +68,31 @@ You can modify all of this behavior from the command line:
 - **`--port=8080,9000`** allows you to specify the set of ports to open on the container.  This overrides any `EXPOSE` directives associated with the Docker image.  When specifying multiple ports via `--port` you must also specify a `--monitored-port` to perform the health-check on (or, alternatively, turn off the health-check via `--no-monitor`).
 - **`--monitored-port=8080`** allows you to modify the port that `ltc` chooses to perform the health-check on.
 - **`--routes=8080:my-app,9000:my-app-admin`** allows you to specify the routes to map to the requested ports.  In this example, `my-app.192.168.11.11.xip.io` will map to port `8080` and `my-app-admin.192.168.11.11.xip.io` will map to port `9000`.
-
-  You can repeat the port entry to attach multiple routes to the same port (e.g. `--routes=8080:my-app,8080:my-app-alias`).
+  - You can repeat the port entry to attach multiple routes to the same port (e.g. `--routes=8080:my-app,8080:my-app-alias`).
+- **`--no-routes`** allows you to specify that no routes be registered. 
 
 > For instances with *multiple* `EXPOSE` directives, `ltc` selects the *lowest* port for the purposes of routing traffic and performing the health check.
 
 ### `ltc remove`
 
-`ltc remove APP_NAME` removes an application entirely from a Lattice deployment.  To stop an application without removing it, try `ltc scale APP_NAME 0`.
+`ltc remove APP1_NAME [APP2_NAME APP3_NAME...]` removes the specified applications from a Lattice deployment.  
 
-`ltc remove` accepts the following additional command line flag(s):
-
-- **`--timeout=2m`** sets the maximum polling duration for removing the app.
+- This operation is performed in the background. `ltc list` may still show the app as running immediately after running `ltc remove`. 
+- To stop an application without removing it, try `ltc scale APP_NAME 0`.
 
 ### `ltc scale` 
 
 `ltc scale APP_NAME NUM_INSTANCES` modifies the number of running instances of an application.
 
-`ltc scale` accepts the following additional command line flag(s):
-
 - **`--timeout=2m`** sets the maximum polling duration for scaling the app.
 
 ### `ltc update-routes`
 
-`ltc update-routes APP_NAME PORT:ROUTE,PORT:ROUTE,...` allows you to update the routes associated with an application *after* it has been deployed.  The format is identical to the `--routes` option on `ltc create`.
+`ltc update-routes APP_NAME PORT:ROUTE,PORT:ROUTE,...` allows you to update the routes associated with an application *after* it has been deployed.  The format is identical to the `--routes` option on `ltc create`. 
 
 The set of routes passed into `ltc update-routes` will *override* the existing set of routes - these modification will start working shortly after the call to `update-routes`.
+
+- **`--no-routes`** specifies that no routes be registered. 
 
 ### `ltc create-lrp`
 
@@ -127,15 +126,23 @@ The subsequent sections include information about individual instances of the ap
     Ip              192.168.11.11
     Ports           61001:7777;61002:9999
     Since           2015-02-06 16:52:40 (PST)
+    Crash Count     0
+    CPU Percentage  43.78
+    Memory Usage    87M
+    Disk Usage      163M
     --------------------------------------------------------------------------------
 
 This indicates that instance 0 of the application has been `RUNNING` on `lattice-cell-01` since `2015-02-06 16:52:40 (PST)`.  The application can be reached at the indicated ip address (`192.168.11.11`).  This particular application included two EXPOSE directives, one for port  `7777` the other for port `9999`.  The `Ports` section of the report indicates the host-side ports that can be used to connect to the application at the requested container-side ports.  For example, to connect to `7777` one goes to `192.168.11.11:61001`.  To connect to `9999` one goes to `192.168.11.11:61002`.
+
+- **`--summary`** summarizes the app instances section to one line per instance.
+- **`--rate=1s`** refreshes the output at the specified time interval.
 
 ### `ltc visualize`
 
 `ltc visualize` displays the *distribution* of application instances across the targetted Lattice deployment.  Each running application is rendered as a green dot.  Starting applications are rendered as yellow dots.
 
-- **`--rate=1s`** refreshes the output at the specified time interval
+- **`--rate=1s`** refreshes the output at the specified time interval.
+- **`--graphical`** uses the full terminal to display a graphical visualization.
 
 ## Is Lattice Working?
 
@@ -143,11 +150,12 @@ This indicates that instance 0 of the application has been `RUNNING` on `lattice
 
 `ltc test` runs a minimal integration suite to ensure that a Lattice deploy is functioning correctly.
 
-- **`-v`** verbose mode.  shows application output during test suite.
+- **`--verbose`** verbose mode.  shows application output during test suite.
 - **`--timeout=30s`** sets the wait time for Lattice to respond.
 
 ### `ltc debug-logs`
 
 `ltc debug-logs` streams back logs from some of Lattice's key components.  This is useful for debugging situations where containers fail to get created/torn down.
 
+- **`--raw`** prints the cluster logs with no styling.
 
