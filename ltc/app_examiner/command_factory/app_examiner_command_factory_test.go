@@ -155,7 +155,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
-		Context("When a rate flag is provided", func() {
+		Context("when a rate flag is provided", func() {
 			var closeChan chan struct{}
 
 			AfterEach(func() {
@@ -214,6 +214,44 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(closeChan).Should(BeClosed())
 				Expect(outputBuffer).Should(test_helpers.Say(cursor.Show()))
 			})
+		})
+
+		Context("when the graphical flag is passed", func() {
+
+			It("makes a successful call to the graphical visualizer and returns", func() {
+				graphicalVisualizer.PrintDistributionChartReturns(nil)
+
+				test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{"--graphical"})
+
+				Consistently(outputBuffer).ShouldNot(test_helpers.Say("Distribution"))
+				Expect(graphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
+				Expect(graphicalVisualizer.PrintDistributionChartArgsForCall(0)).To(BeZero())
+			})
+
+			It("prints the error from an unsuccessful call to the graphical visualizer", func() {
+				graphicalVisualizer.PrintDistributionChartReturns(errors.New("errored"))
+
+				test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{"--graphical"})
+
+				Consistently(outputBuffer).ShouldNot(test_helpers.Say("Distribution"))
+				Eventually(outputBuffer).Should(test_helpers.Say("Error Visualization: errored"))
+				Expect(graphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
+			})
+
+			Context("when the rate flag is also passed", func() {
+				It("sets the initial rate when calling the graphical visualizer", func() {
+					graphicalVisualizer.PrintDistributionChartReturns(nil)
+
+					test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{"--graphical", "--rate=200ms"})
+
+					Consistently(outputBuffer).ShouldNot(test_helpers.Say("Distribution"))
+					Expect(graphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
+					duration, err := time.ParseDuration("200ms")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(graphicalVisualizer.PrintDistributionChartArgsForCall(0)).To(Equal(duration))
+				})
+			})
+
 		})
 
 	})

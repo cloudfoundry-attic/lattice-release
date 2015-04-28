@@ -322,10 +322,9 @@ func (factory *AppExaminerCommandFactory) visualizeCells(context *cli.Context) {
 	if graphicalFlag {
 		err := factory.graphicalVisualizer.PrintDistributionChart(rate)
 		if err != nil {
-			factory.ui.SayLine("Error Visualization:" + err.Error())
-		} else {
-			return
+			factory.ui.SayLine("Error Visualization: " + err.Error())
 		}
+		return
 	}
 
 	factory.ui.Say(colors.Bold("Distribution\n"))
