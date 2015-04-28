@@ -25,8 +25,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   lattice_tar_version=File.read(File.join(File.dirname(__FILE__), "Version")).chomp
-  system 'egrep -q \'\-[[:digit:]]+-g[0-9a-fA-F]{7,10}$\' ' + File.join(File.dirname(__FILE__), "Version")
-  if $? == 0
+  if lattice_tar_version =~ /\-[[:digit:]]+\-g[0-9a-fA-F]{7,10}$/ 
     lattice_tar_url="https://s3-us-west-2.amazonaws.com/lattice/unstable/#{lattice_tar_version}/lattice.tgz"
   else
     lattice_tar_url="https://s3-us-west-2.amazonaws.com/lattice/releases/#{lattice_tar_version}/lattice.tgz"
