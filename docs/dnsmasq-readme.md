@@ -1,9 +1,11 @@
+<!--
 ---
 title: DNSMasq Configuration
 weight: 8
 doc_subnav: true
 
 ---
+-->
 
 # DNSMasq Configuration on OSX
 
