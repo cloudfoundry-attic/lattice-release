@@ -41,7 +41,7 @@ Here's a simple installation script.  It assumes `$HOME/bin` is on your $PATH
 **Mac**:
 ```bash
   mkdir -p $HOME/bin
-  wget https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc -O $HOME/bin/ltc
+  curl https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc -o $HOME/bin/ltc
   chmod +x $HOME/bin/ltc
 ```
 
