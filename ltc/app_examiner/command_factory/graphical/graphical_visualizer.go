@@ -16,23 +16,25 @@ const (
 	graphicalRateDelta = 100 * time.Millisecond
 )
 
-//Declare some function pointers which will be usefull for testing
-var (
-	InitTermUI func() error
-	Label      func(string) *termui.Par
-	BarGraph   func() *termui.MBarChart
-)
-
-func Init() {
-	InitTermUI = termui.Init
-	Label = termui.NewPar
-	BarGraph = termui.NewMBarChart
+//go:generate counterfeiter -o fake_graphical_visualizer/fake_graphical_visualizer.go . GraphicalVisualizer
+type GraphicalVisualizer interface {
+	PrintDistributionChart(rate time.Duration) error
 }
 
-func PrintDistributionChart(appExaminer app_examiner.AppExaminer, rate time.Duration) error {
+type graphicalVisualizer struct {
+	appExaminer app_examiner.AppExaminer
+}
+
+func NewGraphicalVisualizer(appExaminer app_examiner.AppExaminer) *graphicalVisualizer {
+	return &graphicalVisualizer{
+		appExaminer: appExaminer,
+	}
+}
+
+func (gv *graphicalVisualizer) PrintDistributionChart(rate time.Duration) error {
 
 	//Initialize termui
-	err := InitTermUI()
+	err := termui.Init()
 	if err != nil {
 		return errors.New("Unable to initalize terminal graphics mode.")
 		//panic(err)
@@ -45,7 +47,7 @@ func PrintDistributionChart(appExaminer app_examiner.AppExaminer, rate time.Dura
 	termui.UseTheme("helloworld")
 
 	//Initalize some widgets
-	p := Label("Lattice Visualization")
+	p := termui.NewPar("Lattice Visualization")
 	if p == nil {
 		return errors.New("Error Initializing termui objects NewPar")
 	}
@@ -54,7 +56,7 @@ func PrintDistributionChart(appExaminer app_examiner.AppExaminer, rate time.Dura
 	p.TextFgColor = termui.ColorWhite
 	p.HasBorder = false
 
-	r := Label(fmt.Sprintf("rate:%v", rate))
+	r := termui.NewPar(fmt.Sprintf("rate:%v", rate))
 	if r == nil {
 		return errors.New("Error Initializing termui objects NewPar")
 	}
@@ -63,7 +65,7 @@ func PrintDistributionChart(appExaminer app_examiner.AppExaminer, rate time.Dura
 	r.TextFgColor = termui.ColorWhite
 	r.HasBorder = false
 
-	s := Label("hit [+=inc; -=dec; q=quit]")
+	s := termui.NewPar("hit [+=inc; -=dec; q=quit]")
 	if s == nil {
 		return errors.New("Error Initializing termui objects NewPar")
 	}
@@ -72,7 +74,7 @@ func PrintDistributionChart(appExaminer app_examiner.AppExaminer, rate time.Dura
 	s.TextFgColor = termui.ColorWhite
 	s.HasBorder = false
 
-	bg := BarGraph()
+	bg := termui.NewMBarChart()
 	if bg == nil {
 		return errors.New("Error Initializing termui objects NewMBarChart")
 	}
@@ -128,7 +130,7 @@ func PrintDistributionChart(appExaminer app_examiner.AppExaminer, rate time.Dura
 				termui.Render(termui.Body)
 			}
 		case <-clock.NewTimer(rate).C():
-			err := getProgressBars(appExaminer, bg)
+			err := gv.getProgressBars(bg)
 			if err != nil {
 				return err
 			}
@@ -138,7 +140,7 @@ func PrintDistributionChart(appExaminer app_examiner.AppExaminer, rate time.Dura
 	return nil
 }
 
-func getProgressBars(appExaminer app_examiner.AppExaminer, bg *termui.MBarChart) error {
+func (gv *graphicalVisualizer) getProgressBars(bg *termui.MBarChart) error {
 
 	var barIntList [2][]int
 	var barStringList []string
@@ -147,7 +149,7 @@ func getProgressBars(appExaminer app_examiner.AppExaminer, bg *termui.MBarChart)
 	var cellIndex int
 	maxTotal := -1
 
-	cells, err := appExaminer.ListCells()
+	cells, err := gv.appExaminer.ListCells()
 	if err != nil {
 		return err
 	}

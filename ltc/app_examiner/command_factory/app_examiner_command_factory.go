@@ -38,14 +38,15 @@ func (p UInt16Slice) Less(i, j int) bool { return p[i] < p[j] }
 func (p UInt16Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 type AppExaminerCommandFactory struct {
-	appExaminer app_examiner.AppExaminer
-	ui          terminal.UI
-	clock       clock.Clock
-	exitHandler exit_handler.ExitHandler
+	appExaminer         app_examiner.AppExaminer
+	ui                  terminal.UI
+	clock               clock.Clock
+	exitHandler         exit_handler.ExitHandler
+	graphicalVisualizer graphical.GraphicalVisualizer
 }
 
-func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, ui terminal.UI, clock clock.Clock, exitHandler exit_handler.ExitHandler) *AppExaminerCommandFactory {
-	return &AppExaminerCommandFactory{appExaminer, ui, clock, exitHandler}
+func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, ui terminal.UI, clock clock.Clock, exitHandler exit_handler.ExitHandler, graphicalVisualizer graphical.GraphicalVisualizer) *AppExaminerCommandFactory {
+	return &AppExaminerCommandFactory{appExaminer, ui, clock, exitHandler, graphicalVisualizer}
 }
 
 func (factory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
@@ -319,8 +320,7 @@ func (factory *AppExaminerCommandFactory) visualizeCells(context *cli.Context) {
 	graphicalFlag := context.Bool("graphical")
 
 	if graphicalFlag {
-		graphical.Init()
-		err := graphical.PrintDistributionChart(factory.appExaminer, rate)
+		err := factory.graphicalVisualizer.PrintDistributionChart(rate)
 		if err != nil {
 			factory.ui.SayLine("Error Visualization:" + err.Error())
 		} else {
