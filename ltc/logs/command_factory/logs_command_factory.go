@@ -47,12 +47,19 @@ func (factory *logsCommandFactory) MakeDebugLogsCommand() cli.Command {
 		},
 	}
 	return cli.Command{
-		Name:        "debug-logs",
-		Aliases:     []string{"dl"},
-		Usage:       "Streams logs from the lattice cluster components",
-		Description: "ltc debug-logs",
-		Action:      factory.tailDebugLogs,
-		Flags:       debugLogsFlags,
+		Name:    "debug-logs",
+		Aliases: []string{"dl"},
+		Usage:   "Streams logs from the lattice cluster components",
+		// Description: "ltc debug-logs",
+		Description: `ltc debug-logs [--raw]
+
+   Output format is:
+
+    [source|instance] [loglevel] timestamp session message summary
+                                                   (error message)
+                                                   (message detail)`,
+		Action: factory.tailDebugLogs,
+		Flags:  debugLogsFlags,
 	}
 }
 
