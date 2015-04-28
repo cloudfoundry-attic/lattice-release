@@ -32,13 +32,8 @@ func Prettify(logMessage *events.LogMessage) string {
 	colorWidth := len(color)*2 + len(colors.ColorDefault)*2
 	sourcePrefixWidth := strconv.Itoa(22 + colorWidth)
 
-	// TODO: "no color" code is 1 char less than color codes; if sourceType not found in
-	// colorLookup, only pad to 20 chars
 	var components []string
 	components = append(components, fmt.Sprintf("%-"+sourcePrefixWidth+"s", sourcePrefix))
-	// components = append(components, fmt.Sprintf("%-21s", colors.Colorize(color, entry.LogMessage.GetSourceType())))
-	// components = append(components, fmt.Sprintf("%-9s", colors.Colorize(color, entry.LogMessage.GetSourceInstance())))
-
 	var whichFunc func(chug.Entry) []string
 
 	if entry.IsLager {
@@ -79,7 +74,6 @@ func prettyPrintLog(entry chug.Entry) []string {
 	components = append(components, entry.Log.Message)
 	components = append(components, colors.ColorDefault)
 
-	// Add error line here.
 	if entry.Log.Error != nil {
 		components = append(components, fmt.Sprintf("\n%s%s%s%s", strings.Repeat(" ", 66), logColor, entry.Log.Error.Error(), colors.ColorDefault))
 	}

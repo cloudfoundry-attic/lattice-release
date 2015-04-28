@@ -26,6 +26,16 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 		consoleTailedLogsOutputter *console_tailed_logs_outputter.ConsoleTailedLogsOutputter
 	)
 
+	buildLogMessage := func(sourceType, sourceInstance string, timestamp time.Time, message []byte) *events.LogMessage {
+		unixTime := timestamp.UnixNano()
+		return &events.LogMessage{
+			Message:        message,
+			Timestamp:      &unixTime,
+			SourceType:     &sourceType,
+			SourceInstance: &sourceInstance,
+		}
+	}
+
 	BeforeEach(func() {
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
@@ -35,26 +45,16 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 
 	Describe("OutputTailedLogs", func() {
 		It("Tails logs", func() {
-			time := time.Now()
-			sourceType := "RTR"
-			sourceInstance := "1"
-
-			unixTime := time.UnixNano()
-			logReader.AddLog(&events.LogMessage{
-				Message:        []byte("First log"),
-				Timestamp:      &unixTime,
-				SourceType:     &sourceType,
-				SourceInstance: &sourceInstance,
-			})
+			now := time.Now()
+			logReader.AddLog(buildLogMessage("RTR", "1", now, []byte("First log")))
 			logReader.AddError(errors.New("First Error"))
 
 			go consoleTailedLogsOutputter.OutputTailedLogs("my-app-guid")
 
 			Eventually(logReader.GetAppGuid).Should(Equal("my-app-guid"))
 
-			logOutputBufferString := fmt.Sprintf("%s [%s|%s] First log\n", colors.Cyan(time.Format("02 Jan 15:04")), colors.Yellow(sourceType), colors.Yellow(sourceInstance))
+			logOutputBufferString := fmt.Sprintf("%s [%s|%s] First log\n", colors.Cyan(now.Format("02 Jan 15:04")), colors.Yellow("RTR"), colors.Yellow("1"))
 			Eventually(outputBuffer).Should(test_helpers.Say(logOutputBufferString))
-
 			Eventually(outputBuffer).Should(test_helpers.Say("First Error\n"))
 		})
 	})
@@ -62,50 +62,33 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 	Describe("OutputDebugLogs", func() {
 
 		It("tails logs with pretty formatting", func() {
-			time := time.Now()
-			sourceType := "RTR"
-			sourceInstance := "cell-1"
-
-			unixTime := time.UnixNano()
-			logReader.AddLog(&events.LogMessage{
-				Message:        []byte("First log"),
-				Timestamp:      &unixTime,
-				SourceType:     &sourceType,
-				SourceInstance: &sourceInstance,
-			})
+			now := time.Now()
+			logReader.AddLog(buildLogMessage("executor", "cell-1", now, []byte("First log")))
 			logReader.AddError(errors.New("First Error"))
 
 			go consoleTailedLogsOutputter.OutputDebugLogs(true)
 
 			Eventually(logReader.GetAppGuid).Should(Equal(reserved_app_ids.LatticeDebugLogStreamAppId))
 
-			Eventually(outputBuffer).Should(test_helpers.Say("RTR"))
+			Eventually(outputBuffer).Should(test_helpers.Say("executor"))
 			Eventually(outputBuffer).Should(test_helpers.Say("cell-1"))
+			Eventually(outputBuffer).Should(test_helpers.Say(now.Format("01/02 15:04:05.00")))
 			Eventually(outputBuffer).Should(test_helpers.Say("First log"))
-
 			Eventually(outputBuffer).Should(test_helpers.Say("First Error\n"))
 		})
 
 		It("tails logs without pretty formatting", func() {
-			time := time.Now()
-			sourceType := "RTR"
-			sourceInstance := "1"
-
-			unixTime := time.UnixNano()
-			logReader.AddLog(&events.LogMessage{
-				Message:        []byte("First log"),
-				Timestamp:      &unixTime,
-				SourceType:     &sourceType,
-				SourceInstance: &sourceInstance,
-			})
+			now := time.Now()
+			logReader.AddLog(buildLogMessage("executor", "cell-1", now, []byte("First log")))
 			logReader.AddError(errors.New("First Error"))
 
 			go consoleTailedLogsOutputter.OutputDebugLogs(false)
 
 			Eventually(logReader.GetAppGuid).Should(Equal(reserved_app_ids.LatticeDebugLogStreamAppId))
 
-			Consistently(outputBuffer).ShouldNot(test_helpers.Say(sourceType))
-			Consistently(outputBuffer).ShouldNot(test_helpers.Say(sourceInstance))
+			Eventually(outputBuffer).Should(test_helpers.Say(now.Format("01/02 15:04:05.00")))
+			Eventually(outputBuffer).Should(test_helpers.Say("executor"))
+			Eventually(outputBuffer).Should(test_helpers.Say("cell-1"))
 			Eventually(outputBuffer).Should(test_helpers.Say("First log\n"))
 			Eventually(outputBuffer).Should(test_helpers.Say("First Error\n"))
 		})

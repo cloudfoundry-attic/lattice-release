@@ -75,7 +75,8 @@ func (ctlo *ConsoleTailedLogsOutputter) prettyDebugErrorCallback(err error) {
 }
 
 func (ctlo *ConsoleTailedLogsOutputter) rawDebugLogCallback(log *events.LogMessage) {
-	logOutput := fmt.Sprintf("%s", log.GetMessage())
+	timeString := time.Unix(0, log.GetTimestamp()).Format("01/02 15:04:05.00")
+	logOutput := fmt.Sprintf("%s [%s|%s] %s", timeString, log.GetSourceType(), log.GetSourceInstance(), log.GetMessage())
 	ctlo.outputChan <- logOutput
 }
 
