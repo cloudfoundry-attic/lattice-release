@@ -314,7 +314,6 @@ var _ = Describe("CommandFactory", func() {
 						Metrics: app_examiner.InstanceMetrics{
 							CpuPercentage: 23.45678,
 							MemoryBytes:   655360,
-							DiskBytes:     1782411427,
 						},
 					},
 					app_examiner.InstanceInfo{
@@ -404,9 +403,6 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("Memory Usage"))
 			Expect(outputBuffer).To(test_helpers.Say("640K"))
 
-			Expect(outputBuffer).To(test_helpers.Say("Disk Usage"))
-			Expect(outputBuffer).To(test_helpers.Say("1.7G"))
-
 			Expect(outputBuffer).To(test_helpers.Say("Instance 4"))
 			Expect(outputBuffer).To(test_helpers.Say("UNCLAIMED"))
 
@@ -417,7 +413,6 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("2"))
 			Expect(outputBuffer).NotTo(test_helpers.Say("CPU Percentage"))
 			Expect(outputBuffer).NotTo(test_helpers.Say("Memory Usage"))
-			Expect(outputBuffer).NotTo(test_helpers.Say("Disk Usage"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Instance 5"))
 			Expect(outputBuffer).To(test_helpers.Say("CRASHED"))
@@ -428,7 +423,6 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).NotTo(test_helpers.Say("CPU Percentage"))
 			Expect(outputBuffer).NotTo(test_helpers.Say("Memory Usage"))
-			Expect(outputBuffer).NotTo(test_helpers.Say("Disk Usage"))
 
 		})
 

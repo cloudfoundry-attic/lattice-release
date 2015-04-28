@@ -307,7 +307,6 @@ func (factory *AppExaminerCommandFactory) printInstanceInfo(actualInstances []ap
 		if instance.HasMetrics {
 			fmt.Fprintf(w, "%s \t%.2f \n", "CPU Percentage", instance.Metrics.CpuPercentage)
 			fmt.Fprintf(w, "%s \t%s \n", "Memory Usage", bytefmt.ByteSize(instance.Metrics.MemoryBytes))
-			fmt.Fprintf(w, "%s \t%s \n", "Disk Usage", bytefmt.ByteSize(instance.Metrics.DiskBytes))
 		}
 		printHorizontalRule(w, "-")
 	}
