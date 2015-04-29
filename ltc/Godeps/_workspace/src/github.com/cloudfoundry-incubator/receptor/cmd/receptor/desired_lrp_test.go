@@ -34,21 +34,21 @@ var _ = Describe("Desired LRP API", func() {
 		})
 
 		It("responds without an error", func() {
-			Ω(createErr).ShouldNot(HaveOccurred())
+			Expect(createErr).NotTo(HaveOccurred())
 		})
 
 		It("desires an LRP in the BBS", func() {
 			Eventually(bbs.DesiredLRPs).Should(HaveLen(1))
 			desiredLRPs, err := bbs.DesiredLRPs()
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(desiredLRPs[0].ProcessGuid).To(Equal(lrpToCreate.ProcessGuid))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(desiredLRPs[0].ProcessGuid).To(Equal(lrpToCreate.ProcessGuid))
 		})
 
 		Context("when the desired LRP already exists", func() {
 			It("fails the request with an appropriate error", func() {
 				err := client.CreateDesiredLRP(lrpToCreate)
-				Ω(err).Should(BeAssignableToTypeOf(receptor.Error{}))
-				Ω(err.(receptor.Error).Type).Should(Equal(receptor.DesiredLRPAlreadyExists))
+				Expect(err).To(BeAssignableToTypeOf(receptor.Error{}))
+				Expect(err.(receptor.Error).Type).To(Equal(receptor.DesiredLRPAlreadyExists))
 			})
 		})
 	})
@@ -62,21 +62,21 @@ var _ = Describe("Desired LRP API", func() {
 		BeforeEach(func() {
 			lrpRequest = newValidDesiredLRPCreateRequest()
 			err := client.CreateDesiredLRP(lrpRequest)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			desiredLRP, err = bbs.DesiredLRPByProcessGuid(lrpRequest.ProcessGuid)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			lrpResponse, getErr = client.GetDesiredLRP(lrpRequest.ProcessGuid)
 		})
 
 		It("responds without an error", func() {
-			Ω(getErr).ShouldNot(HaveOccurred())
+			Expect(getErr).NotTo(HaveOccurred())
 		})
 
 		It("fetches the desired lrp with the matching process guid", func() {
 			expectedLRPResponse := serialization.DesiredLRPToResponse(desiredLRP)
-			Ω(lrpResponse).Should(Equal(expectedLRPResponse))
+			Expect(lrpResponse).To(Equal(expectedLRPResponse))
 		})
 	})
 
@@ -94,7 +94,7 @@ var _ = Describe("Desired LRP API", func() {
 		BeforeEach(func() {
 			createLRPReq := newValidDesiredLRPCreateRequest()
 			err := client.CreateDesiredLRP(createLRPReq)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			update := receptor.DesiredLRPUpdateRequest{
 				Instances:  &instances,
@@ -106,16 +106,16 @@ var _ = Describe("Desired LRP API", func() {
 		})
 
 		It("responds without an error", func() {
-			Ω(updateErr).ShouldNot(HaveOccurred())
+			Expect(updateErr).NotTo(HaveOccurred())
 		})
 
 		It("updates the LRP in the BBS", func() {
 			Eventually(bbs.DesiredLRPs).Should(HaveLen(1))
 			desiredLRPs, err := bbs.DesiredLRPs()
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(desiredLRPs[0].Instances).To(Equal(instances))
-			Ω(desiredLRPs[0].Annotation).To(Equal(annotation))
-			Ω(desiredLRPs[0].Routes).To(Equal(map[string]*json.RawMessage(routingInfo)))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(desiredLRPs[0].Instances).To(Equal(instances))
+			Expect(desiredLRPs[0].Annotation).To(Equal(annotation))
+			Expect(desiredLRPs[0].Routes).To(Equal(map[string]*json.RawMessage(routingInfo)))
 		})
 	})
 
@@ -126,19 +126,19 @@ var _ = Describe("Desired LRP API", func() {
 		BeforeEach(func() {
 			lrpRequest = newValidDesiredLRPCreateRequest()
 			err := client.CreateDesiredLRP(lrpRequest)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			deleteErr = client.DeleteDesiredLRP(lrpRequest.ProcessGuid)
 		})
 
 		It("responds without an error", func() {
-			Ω(deleteErr).ShouldNot(HaveOccurred())
+			Expect(deleteErr).NotTo(HaveOccurred())
 		})
 
 		It("deletes the desired lrp with the matching process guid", func() {
 			_, getErr := client.GetDesiredLRP(lrpRequest.ProcessGuid)
-			Ω(getErr).Should(BeAssignableToTypeOf(receptor.Error{}))
-			Ω(getErr.(receptor.Error).Type).Should(Equal(receptor.DesiredLRPNotFound))
+			Expect(getErr).To(BeAssignableToTypeOf(receptor.Error{}))
+			Expect(getErr.(receptor.Error).Type).To(Equal(receptor.DesiredLRPNotFound))
 		})
 	})
 
@@ -150,17 +150,17 @@ var _ = Describe("Desired LRP API", func() {
 		BeforeEach(func() {
 			for i := 0; i < expectedLRPCount; i++ {
 				err := client.CreateDesiredLRP(newValidDesiredLRPCreateRequest())
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 			}
 			lrpResponses, getErr = client.DesiredLRPs()
 		})
 
 		It("responds without an error", func() {
-			Ω(getErr).ShouldNot(HaveOccurred())
+			Expect(getErr).NotTo(HaveOccurred())
 		})
 
 		It("fetches all of the desired lrps", func() {
-			Ω(lrpResponses).Should(HaveLen(expectedLRPCount))
+			Expect(lrpResponses).To(HaveLen(expectedLRPCount))
 		})
 	})
 
@@ -175,23 +175,23 @@ var _ = Describe("Desired LRP API", func() {
 				lrp := newValidDesiredLRPCreateRequest()
 				lrp.Domain = expectedDomain
 				err := client.CreateDesiredLRP(lrp)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 			}
 			for i := 0; i < expectedLRPCount; i++ {
 				lrp := newValidDesiredLRPCreateRequest()
 				lrp.Domain = "wrong-domain"
 				err := client.CreateDesiredLRP(lrp)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 			}
 			lrpResponses, getErr = client.DesiredLRPsByDomain(expectedDomain)
 		})
 
 		It("responds without an error", func() {
-			Ω(getErr).ShouldNot(HaveOccurred())
+			Expect(getErr).NotTo(HaveOccurred())
 		})
 
 		It("fetches all of the desired lrps", func() {
-			Ω(lrpResponses).Should(HaveLen(expectedLRPCount))
+			Expect(lrpResponses).To(HaveLen(expectedLRPCount))
 		})
 	})
 })

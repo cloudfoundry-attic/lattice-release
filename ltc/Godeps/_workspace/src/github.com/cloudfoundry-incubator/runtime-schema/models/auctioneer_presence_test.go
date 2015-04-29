@@ -24,8 +24,8 @@ var _ = Describe("AuctioneerPresence", func() {
 	Describe("ToJSON", func() {
 		It("should JSONify", func() {
 			json, err := models.ToJSON(&auctioneerPresence)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(string(json)).Should(MatchJSON(payload))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(json)).To(MatchJSON(payload))
 		})
 	})
 
@@ -33,9 +33,9 @@ var _ = Describe("AuctioneerPresence", func() {
 		It("returns an AuctioneerPresence with correct fields", func() {
 			decodedAuctioneerPresence := &models.AuctioneerPresence{}
 			err := models.FromJSON([]byte(payload), decodedAuctioneerPresence)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
-			Ω(decodedAuctioneerPresence).Should(Equal(&auctioneerPresence))
+			Expect(decodedAuctioneerPresence).To(Equal(&auctioneerPresence))
 		})
 
 		Context("with an invalid payload", func() {
@@ -44,7 +44,7 @@ var _ = Describe("AuctioneerPresence", func() {
 				decodedAuctioneerPresence := &models.AuctioneerPresence{}
 				err := models.FromJSON([]byte(payload), decodedAuctioneerPresence)
 
-				Ω(err).Should(HaveOccurred())
+				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
@@ -56,7 +56,7 @@ var _ = Describe("AuctioneerPresence", func() {
 			})
 
 			It("returns no error", func() {
-				Ω(auctioneerPresence.Validate()).ShouldNot(HaveOccurred())
+				Expect(auctioneerPresence.Validate()).NotTo(HaveOccurred())
 			})
 		})
 
@@ -67,8 +67,8 @@ var _ = Describe("AuctioneerPresence", func() {
 
 			It("returns no error", func() {
 				err := auctioneerPresence.Validate()
-				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(ContainElement(models.ErrInvalidField{"auctioneer_id"}))
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(ContainElement(models.ErrInvalidField{"auctioneer_id"}))
 			})
 		})
 
@@ -79,8 +79,8 @@ var _ = Describe("AuctioneerPresence", func() {
 
 			It("returns no error", func() {
 				err := auctioneerPresence.Validate()
-				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(ContainElement(models.ErrInvalidField{"auctioneer_address"}))
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(ContainElement(models.ErrInvalidField{"auctioneer_address"}))
 			})
 		})
 	})

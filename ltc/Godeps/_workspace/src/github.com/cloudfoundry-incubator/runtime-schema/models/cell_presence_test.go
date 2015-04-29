@@ -33,7 +33,7 @@ var _ = Describe("CellPresence", func() {
 	Describe("Validate", func() {
 		Context("when cell presence is valid", func() {
 			It("does not return an error", func() {
-				Ω(cellPresence.Validate()).ShouldNot(HaveOccurred())
+				Expect(cellPresence.Validate()).NotTo(HaveOccurred())
 			})
 		})
 		Context("when cell presence is invalid", func() {
@@ -43,8 +43,8 @@ var _ = Describe("CellPresence", func() {
 				})
 				It("returns an error", func() {
 					err := cellPresence.Validate()
-					Ω(err).Should(HaveOccurred())
-					Ω(err.Error()).Should(ContainSubstring("cell_id"))
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("cell_id"))
 				})
 			})
 			Context("when rep address is invalid", func() {
@@ -53,8 +53,8 @@ var _ = Describe("CellPresence", func() {
 				})
 				It("returns an error", func() {
 					err := cellPresence.Validate()
-					Ω(err).Should(HaveOccurred())
-					Ω(err.Error()).Should(ContainSubstring("rep_address"))
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("rep_address"))
 				})
 			})
 
@@ -65,8 +65,8 @@ var _ = Describe("CellPresence", func() {
 					})
 					It("returns an error", func() {
 						err := cellPresence.Validate()
-						Ω(err).Should(HaveOccurred())
-						Ω(err.Error()).Should(ContainSubstring("memory_mb"))
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(ContainSubstring("memory_mb"))
 					})
 				})
 
@@ -76,8 +76,8 @@ var _ = Describe("CellPresence", func() {
 					})
 					It("returns an error", func() {
 						err := cellPresence.Validate()
-						Ω(err).Should(HaveOccurred())
-						Ω(err.Error()).Should(ContainSubstring("memory_mb"))
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(ContainSubstring("memory_mb"))
 					})
 				})
 
@@ -87,8 +87,8 @@ var _ = Describe("CellPresence", func() {
 					})
 					It("returns an error", func() {
 						err := cellPresence.Validate()
-						Ω(err).Should(HaveOccurred())
-						Ω(err.Error()).Should(ContainSubstring("containers"))
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(ContainSubstring("containers"))
 					})
 				})
 
@@ -98,8 +98,8 @@ var _ = Describe("CellPresence", func() {
 					})
 					It("returns an error", func() {
 						err := cellPresence.Validate()
-						Ω(err).Should(HaveOccurred())
-						Ω(err.Error()).Should(ContainSubstring("containers"))
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(ContainSubstring("containers"))
 					})
 				})
 
@@ -109,8 +109,8 @@ var _ = Describe("CellPresence", func() {
 					})
 					It("returns an error", func() {
 						err := cellPresence.Validate()
-						Ω(err).Should(HaveOccurred())
-						Ω(err.Error()).Should(ContainSubstring("disk_mb"))
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(ContainSubstring("disk_mb"))
 					})
 				})
 			})
@@ -120,8 +120,8 @@ var _ = Describe("CellPresence", func() {
 	Describe("ToJSON", func() {
 		It("should JSONify", func() {
 			json, err := models.ToJSON(&cellPresence)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(string(json)).Should(MatchJSON(payload))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(json)).To(MatchJSON(payload))
 		})
 	})
 
@@ -129,9 +129,9 @@ var _ = Describe("CellPresence", func() {
 		It("returns a CellPresence with correct fields", func() {
 			decodedCellPresence := &models.CellPresence{}
 			err := models.FromJSON([]byte(payload), decodedCellPresence)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
-			Ω(decodedCellPresence).Should(Equal(&cellPresence))
+			Expect(decodedCellPresence).To(Equal(&cellPresence))
 		})
 
 		Context("with an invalid payload", func() {
@@ -140,7 +140,7 @@ var _ = Describe("CellPresence", func() {
 				decodedCellPresence := &models.CellPresence{}
 				err := models.FromJSON([]byte(payload), decodedCellPresence)
 
-				Ω(err).Should(HaveOccurred())
+				Expect(err).To(HaveOccurred())
 			})
 		})
 	})

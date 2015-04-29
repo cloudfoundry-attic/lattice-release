@@ -83,7 +83,7 @@ var _ = Describe("Event Stream Handlers", func() {
 		JustBeforeEach(func() {
 			var err error
 			response, err = http.Get(server.URL)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		Context("when failing to subscribe to the event hub", func() {
@@ -92,7 +92,7 @@ var _ = Describe("Event Stream Handlers", func() {
 			})
 
 			It("returns an internal server error", func() {
-				Ω(response.StatusCode).Should(Equal(http.StatusInternalServerError))
+				Expect(response.StatusCode).To(Equal(http.StatusInternalServerError))
 			})
 		})
 
@@ -102,7 +102,7 @@ var _ = Describe("Event Stream Handlers", func() {
 
 				hub.Emit(fakeEvent{"A"})
 
-				Ω(reader.Next()).Should(Equal(sse.Event{
+				Expect(reader.Next()).To(Equal(sse.Event{
 					ID:   "0",
 					Name: "fake",
 					Data: []byte(`{"token":"A"}`),
@@ -110,17 +110,18 @@ var _ = Describe("Event Stream Handlers", func() {
 
 				hub.Emit(fakeEvent{"B"})
 
-				Ω(reader.Next()).Should(Equal(sse.Event{
+				Expect(reader.Next()).To(Equal(sse.Event{
 					ID:   "1",
 					Name: "fake",
 					Data: []byte(`{"token":"B"}`),
 				}))
+
 			})
 
 			It("returns Content-Type as text/event-stream", func() {
-				Ω(response.Header.Get("Content-Type")).Should(Equal("text/event-stream; charset=utf-8"))
-				Ω(response.Header.Get("Cache-Control")).Should(Equal("no-cache, no-store, must-revalidate"))
-				Ω(response.Header.Get("Connection")).Should(Equal("keep-alive"))
+				Expect(response.Header.Get("Content-Type")).To(Equal("text/event-stream; charset=utf-8"))
+				Expect(response.Header.Get("Cache-Control")).To(Equal("no-cache, no-store, must-revalidate"))
+				Expect(response.Header.Get("Connection")).To(Equal("keep-alive"))
 			})
 
 			Context("when the source provides an unmarshalable event", func() {
@@ -129,7 +130,7 @@ var _ = Describe("Event Stream Handlers", func() {
 
 					reader := sse.NewReadCloser(response.Body)
 					_, err := reader.Next()
-					Ω(err).Should(Equal(io.EOF))
+					Expect(err).To(Equal(io.EOF))
 				})
 			})
 
@@ -141,7 +142,7 @@ var _ = Describe("Event Stream Handlers", func() {
 				It("closes the client event stream", func() {
 					reader := sse.NewReadCloser(response.Body)
 					_, err := reader.Next()
-					Ω(err).Should(Equal(io.EOF))
+					Expect(err).To(Equal(io.EOF))
 				})
 			})
 
@@ -150,7 +151,7 @@ var _ = Describe("Event Stream Handlers", func() {
 					reader := sse.NewReadCloser(response.Body)
 					hub.Emit(fakeEvent{"A"})
 					err := reader.Close()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					Eventually(eventStreamDone, 10).Should(BeClosed())
 				})
 			})

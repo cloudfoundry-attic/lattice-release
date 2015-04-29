@@ -21,8 +21,8 @@ func testValidatorErrorCase(testCase ValidatorErrorCase) {
 	Context("when invalid", func() {
 		It("returns an error indicating '"+message+"'", func() {
 			err := invalid.Validate()
-			Ω(err).Should(HaveOccurred())
-			Ω(err.Error()).Should(ContainSubstring(message))
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring(message))
 		})
 	})
 }

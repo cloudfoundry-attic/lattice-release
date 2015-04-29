@@ -42,26 +42,26 @@ var _ = Describe("Logger", func() {
 		})
 
 		It("writes a log to the sink", func() {
-			Ω(testSink.Logs()).Should(HaveLen(1))
+			Expect(testSink.Logs()).To(HaveLen(1))
 		})
 
 		It("records the source component", func() {
-			Ω(log.Source).Should(Equal(component))
+			Expect(log.Source).To(Equal(component))
 		})
 
 		It("outputs a properly-formatted message", func() {
-			Ω(log.Message).Should(Equal(fmt.Sprintf("%s.%s", component, action)))
+			Expect(log.Message).To(Equal(fmt.Sprintf("%s.%s", component, action)))
 		})
 
 		It("has a timestamp", func() {
 			expectedTime := float64(time.Now().UnixNano()) / 1e9
 			parsedTimestamp, err := strconv.ParseFloat(log.Timestamp, 64)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(parsedTimestamp).Should(BeNumerically("~", expectedTime, 1.0))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(parsedTimestamp).To(BeNumerically("~", expectedTime, 1.0))
 		})
 
 		It("sets the proper output level", func() {
-			Ω(log.LogLevel).Should(Equal(level))
+			Expect(log.LogLevel).To(Equal(level))
 		})
 	}
 
@@ -73,10 +73,10 @@ var _ = Describe("Logger", func() {
 		})
 
 		It("data contains custom user data", func() {
-			Ω(log.Data["foo"]).Should(Equal("bar"))
-			Ω(log.Data["a-number"]).Should(BeNumerically("==", 7))
-			Ω(log.Data["baz"]).Should(Equal("quux"))
-			Ω(log.Data["b-number"]).Should(BeNumerically("==", 43))
+			Expect(log.Data["foo"]).To(Equal("bar"))
+			Expect(log.Data["a-number"]).To(BeNumerically("==", 7))
+			Expect(log.Data["baz"]).To(Equal("quux"))
+			Expect(log.Data["b-number"]).To(BeNumerically("==", 43))
 		})
 	}
 
@@ -101,24 +101,24 @@ var _ = Describe("Logger", func() {
 			})
 
 			It("logs with a shared session id in the data", func() {
-				Ω(testSink.Logs()[0].Data["session"]).Should(Equal("1"))
-				Ω(testSink.Logs()[1].Data["session"]).Should(Equal("1"))
-				Ω(testSink.Logs()[2].Data["session"]).Should(Equal("1"))
-				Ω(testSink.Logs()[3].Data["session"]).Should(Equal("1"))
+				Expect(testSink.Logs()[0].Data["session"]).To(Equal("1"))
+				Expect(testSink.Logs()[1].Data["session"]).To(Equal("1"))
+				Expect(testSink.Logs()[2].Data["session"]).To(Equal("1"))
+				Expect(testSink.Logs()[3].Data["session"]).To(Equal("1"))
 			})
 
 			It("logs with the task added to the message", func() {
-				Ω(testSink.Logs()[0].Message).Should(Equal("my-component.sub-action.some-debug-action"))
-				Ω(testSink.Logs()[1].Message).Should(Equal("my-component.sub-action.some-info-action"))
-				Ω(testSink.Logs()[2].Message).Should(Equal("my-component.sub-action.some-error-action"))
-				Ω(testSink.Logs()[3].Message).Should(Equal("my-component.sub-action.some-fatal-action"))
+				Expect(testSink.Logs()[0].Message).To(Equal("my-component.sub-action.some-debug-action"))
+				Expect(testSink.Logs()[1].Message).To(Equal("my-component.sub-action.some-info-action"))
+				Expect(testSink.Logs()[2].Message).To(Equal("my-component.sub-action.some-error-action"))
+				Expect(testSink.Logs()[3].Message).To(Equal("my-component.sub-action.some-fatal-action"))
 			})
 
 			It("logs with the original data", func() {
-				Ω(testSink.Logs()[0].Data["level"]).Should(Equal("debug"))
-				Ω(testSink.Logs()[1].Data["level"]).Should(Equal("info"))
-				Ω(testSink.Logs()[2].Data["level"]).Should(Equal("error"))
-				Ω(testSink.Logs()[3].Data["level"]).Should(Equal("fatal"))
+				Expect(testSink.Logs()[0].Data["level"]).To(Equal("debug"))
+				Expect(testSink.Logs()[1].Data["level"]).To(Equal("info"))
+				Expect(testSink.Logs()[2].Data["level"]).To(Equal("error"))
+				Expect(testSink.Logs()[3].Data["level"]).To(Equal("fatal"))
 			})
 
 			Context("with data", func() {
@@ -127,17 +127,17 @@ var _ = Describe("Logger", func() {
 				})
 
 				It("logs with the data added to the message", func() {
-					Ω(testSink.Logs()[0].Data["foo"]).Should(Equal("bar"))
-					Ω(testSink.Logs()[1].Data["foo"]).Should(Equal("bar"))
-					Ω(testSink.Logs()[2].Data["foo"]).Should(Equal("bar"))
-					Ω(testSink.Logs()[3].Data["foo"]).Should(Equal("bar"))
+					Expect(testSink.Logs()[0].Data["foo"]).To(Equal("bar"))
+					Expect(testSink.Logs()[1].Data["foo"]).To(Equal("bar"))
+					Expect(testSink.Logs()[2].Data["foo"]).To(Equal("bar"))
+					Expect(testSink.Logs()[3].Data["foo"]).To(Equal("bar"))
 				})
 
 				It("keeps the original data", func() {
-					Ω(testSink.Logs()[0].Data["level"]).Should(Equal("debug"))
-					Ω(testSink.Logs()[1].Data["level"]).Should(Equal("info"))
-					Ω(testSink.Logs()[2].Data["level"]).Should(Equal("error"))
-					Ω(testSink.Logs()[3].Data["level"]).Should(Equal("fatal"))
+					Expect(testSink.Logs()[0].Data["level"]).To(Equal("debug"))
+					Expect(testSink.Logs()[1].Data["level"]).To(Equal("info"))
+					Expect(testSink.Logs()[2].Data["level"]).To(Equal("error"))
+					Expect(testSink.Logs()[3].Data["level"]).To(Equal("fatal"))
 				})
 			})
 
@@ -147,17 +147,17 @@ var _ = Describe("Logger", func() {
 				})
 
 				It("logs with a shared session id in the data", func() {
-					Ω(testSink.Logs()[0].Data["session"]).Should(Equal("2"))
-					Ω(testSink.Logs()[1].Data["session"]).Should(Equal("2"))
-					Ω(testSink.Logs()[2].Data["session"]).Should(Equal("2"))
-					Ω(testSink.Logs()[3].Data["session"]).Should(Equal("2"))
+					Expect(testSink.Logs()[0].Data["session"]).To(Equal("2"))
+					Expect(testSink.Logs()[1].Data["session"]).To(Equal("2"))
+					Expect(testSink.Logs()[2].Data["session"]).To(Equal("2"))
+					Expect(testSink.Logs()[3].Data["session"]).To(Equal("2"))
 				})
 
 				It("logs with the task added to the message", func() {
-					Ω(testSink.Logs()[0].Message).Should(Equal("my-component.next-sub-action.some-debug-action"))
-					Ω(testSink.Logs()[1].Message).Should(Equal("my-component.next-sub-action.some-info-action"))
-					Ω(testSink.Logs()[2].Message).Should(Equal("my-component.next-sub-action.some-error-action"))
-					Ω(testSink.Logs()[3].Message).Should(Equal("my-component.next-sub-action.some-fatal-action"))
+					Expect(testSink.Logs()[0].Message).To(Equal("my-component.next-sub-action.some-debug-action"))
+					Expect(testSink.Logs()[1].Message).To(Equal("my-component.next-sub-action.some-info-action"))
+					Expect(testSink.Logs()[2].Message).To(Equal("my-component.next-sub-action.some-error-action"))
+					Expect(testSink.Logs()[3].Message).To(Equal("my-component.next-sub-action.some-fatal-action"))
 				})
 			})
 
@@ -167,14 +167,14 @@ var _ = Describe("Logger", func() {
 				})
 
 				It("returns a new logger with the given data", func() {
-					Ω(testSink.Logs()[0].Data["foo"]).Should(Equal("bar"))
-					Ω(testSink.Logs()[1].Data["foo"]).Should(Equal("bar"))
-					Ω(testSink.Logs()[2].Data["foo"]).Should(Equal("bar"))
-					Ω(testSink.Logs()[3].Data["foo"]).Should(Equal("bar"))
+					Expect(testSink.Logs()[0].Data["foo"]).To(Equal("bar"))
+					Expect(testSink.Logs()[1].Data["foo"]).To(Equal("bar"))
+					Expect(testSink.Logs()[2].Data["foo"]).To(Equal("bar"))
+					Expect(testSink.Logs()[3].Data["foo"]).To(Equal("bar"))
 				})
 
 				It("does not append to the logger's task", func() {
-					Ω(testSink.Logs()[0].Message).Should(Equal("my-component.some-debug-action"))
+					Expect(testSink.Logs()[0].Message).To(Equal("my-component.some-debug-action"))
 				})
 			})
 
@@ -184,17 +184,17 @@ var _ = Describe("Logger", func() {
 				})
 
 				It("logs with a shared session id in the data", func() {
-					Ω(testSink.Logs()[0].Data["session"]).Should(Equal("1.1"))
-					Ω(testSink.Logs()[1].Data["session"]).Should(Equal("1.1"))
-					Ω(testSink.Logs()[2].Data["session"]).Should(Equal("1.1"))
-					Ω(testSink.Logs()[3].Data["session"]).Should(Equal("1.1"))
+					Expect(testSink.Logs()[0].Data["session"]).To(Equal("1.1"))
+					Expect(testSink.Logs()[1].Data["session"]).To(Equal("1.1"))
+					Expect(testSink.Logs()[2].Data["session"]).To(Equal("1.1"))
+					Expect(testSink.Logs()[3].Data["session"]).To(Equal("1.1"))
 				})
 
 				It("logs with the task added to the message", func() {
-					Ω(testSink.Logs()[0].Message).Should(Equal("my-component.sub-action.sub-sub-action.some-debug-action"))
-					Ω(testSink.Logs()[1].Message).Should(Equal("my-component.sub-action.sub-sub-action.some-info-action"))
-					Ω(testSink.Logs()[2].Message).Should(Equal("my-component.sub-action.sub-sub-action.some-error-action"))
-					Ω(testSink.Logs()[3].Message).Should(Equal("my-component.sub-action.sub-sub-action.some-fatal-action"))
+					Expect(testSink.Logs()[0].Message).To(Equal("my-component.sub-action.sub-sub-action.some-debug-action"))
+					Expect(testSink.Logs()[1].Message).To(Equal("my-component.sub-action.sub-sub-action.some-info-action"))
+					Expect(testSink.Logs()[2].Message).To(Equal("my-component.sub-action.sub-sub-action.some-error-action"))
+					Expect(testSink.Logs()[3].Message).To(Equal("my-component.sub-action.sub-sub-action.some-fatal-action"))
 				})
 			})
 		})
@@ -249,7 +249,7 @@ var _ = Describe("Logger", func() {
 			TestLogData()
 
 			It("data contains error message", func() {
-				Ω(testSink.Logs()[0].Data["error"]).Should(Equal(err.Error()))
+				Expect(testSink.Logs()[0].Data["error"]).To(Equal(err.Error()))
 			})
 		})
 
@@ -261,7 +261,7 @@ var _ = Describe("Logger", func() {
 			TestCommonLogFeatures(lager.ERROR)
 
 			It("data contains error message", func() {
-				Ω(testSink.Logs()[0].Data["error"]).Should(Equal(err.Error()))
+				Expect(testSink.Logs()[0].Data["error"]).To(Equal(err.Error()))
 			})
 		})
 
@@ -273,7 +273,7 @@ var _ = Describe("Logger", func() {
 			TestCommonLogFeatures(lager.ERROR)
 
 			It("does not contain the error message", func() {
-				Ω(testSink.Logs()[0].Data).ShouldNot(HaveKey("error"))
+				Expect(testSink.Logs()[0].Data).NotTo(HaveKey("error"))
 			})
 		})
 	})
@@ -295,15 +295,15 @@ var _ = Describe("Logger", func() {
 			TestLogData()
 
 			It("data contains error message", func() {
-				Ω(testSink.Logs()[0].Data["error"]).Should(Equal(err.Error()))
+				Expect(testSink.Logs()[0].Data["error"]).To(Equal(err.Error()))
 			})
 
 			It("data contains stack trace", func() {
-				Ω(testSink.Logs()[0].Data["trace"]).ShouldNot(BeEmpty())
+				Expect(testSink.Logs()[0].Data["trace"]).NotTo(BeEmpty())
 			})
 
 			It("panics with the provided error", func() {
-				Ω(fatalErr).Should(Equal(err))
+				Expect(fatalErr).To(Equal(err))
 			})
 		})
 
@@ -319,15 +319,15 @@ var _ = Describe("Logger", func() {
 			TestCommonLogFeatures(lager.FATAL)
 
 			It("data contains error message", func() {
-				Ω(testSink.Logs()[0].Data["error"]).Should(Equal(err.Error()))
+				Expect(testSink.Logs()[0].Data["error"]).To(Equal(err.Error()))
 			})
 
 			It("data contains stack trace", func() {
-				Ω(testSink.Logs()[0].Data["trace"]).ShouldNot(BeEmpty())
+				Expect(testSink.Logs()[0].Data["trace"]).NotTo(BeEmpty())
 			})
 
 			It("panics with the provided error", func() {
-				Ω(fatalErr).Should(Equal(err))
+				Expect(fatalErr).To(Equal(err))
 			})
 		})
 
@@ -343,15 +343,15 @@ var _ = Describe("Logger", func() {
 			TestCommonLogFeatures(lager.FATAL)
 
 			It("does not contain the error message", func() {
-				Ω(testSink.Logs()[0].Data).ShouldNot(HaveKey("error"))
+				Expect(testSink.Logs()[0].Data).NotTo(HaveKey("error"))
 			})
 
 			It("data contains stack trace", func() {
-				Ω(testSink.Logs()[0].Data["trace"]).ShouldNot(BeEmpty())
+				Expect(testSink.Logs()[0].Data["trace"]).NotTo(BeEmpty())
 			})
 
 			It("panics with the provided error (i.e. nil)", func() {
-				Ω(fatalErr).Should(BeNil())
+				Expect(fatalErr).To(BeNil())
 			})
 		})
 	})

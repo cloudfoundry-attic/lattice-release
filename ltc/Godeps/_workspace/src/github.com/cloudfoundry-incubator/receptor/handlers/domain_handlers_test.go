@@ -56,18 +56,18 @@ var _ = Describe("Domain Handlers", func() {
 
 			Context("when the call to the BBS succeeds", func() {
 				It("calls Upsert on the BBS", func() {
-					Ω(fakeBBS.UpsertDomainCallCount()).Should(Equal(1))
+					Expect(fakeBBS.UpsertDomainCallCount()).To(Equal(1))
 					d, ttl := fakeBBS.UpsertDomainArgsForCall(0)
-					Ω(d).To(Equal(domain))
-					Ω(ttl).To(Equal(ttlInSeconds))
+					Expect(d).To(Equal(domain))
+					Expect(ttl).To(Equal(ttlInSeconds))
 				})
 
 				It("responds with 204 Status NO CONTENT", func() {
-					Ω(responseRecorder.Code).Should(Equal(http.StatusNoContent))
+					Expect(responseRecorder.Code).To(Equal(http.StatusNoContent))
 				})
 
 				It("responds with an empty body", func() {
-					Ω(responseRecorder.Body.String()).Should(Equal(""))
+					Expect(responseRecorder.Body.String()).To(Equal(""))
 				})
 			})
 
@@ -77,7 +77,7 @@ var _ = Describe("Domain Handlers", func() {
 				})
 
 				It("responds with 500 INTERNAL ERROR", func() {
-					Ω(responseRecorder.Code).Should(Equal(http.StatusInternalServerError))
+					Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
 				})
 
 				It("responds with a relevant error message", func() {
@@ -86,7 +86,7 @@ var _ = Describe("Domain Handlers", func() {
 						Message: "ka-boom",
 					})
 
-					Ω(responseRecorder.Body.String()).Should(Equal(string(expectedBody)))
+					Expect(responseRecorder.Body.String()).To(Equal(string(expectedBody)))
 				})
 			})
 
@@ -98,7 +98,7 @@ var _ = Describe("Domain Handlers", func() {
 				})
 
 				It("responds with 400 BAD REQUEST", func() {
-					Ω(responseRecorder.Code).Should(Equal(http.StatusBadRequest))
+					Expect(responseRecorder.Code).To(Equal(http.StatusBadRequest))
 				})
 
 				It("responds with a relevant error message", func() {
@@ -107,7 +107,7 @@ var _ = Describe("Domain Handlers", func() {
 						Message: validationError.Error(),
 					})
 
-					Ω(responseRecorder.Body.String()).Should(Equal(string(expectedBody)))
+					Expect(responseRecorder.Body.String()).To(Equal(string(expectedBody)))
 				})
 			})
 
@@ -117,10 +117,10 @@ var _ = Describe("Domain Handlers", func() {
 				})
 
 				It("sets the TTL to 0 (inifinite)", func() {
-					Ω(fakeBBS.UpsertDomainCallCount()).Should(Equal(1))
+					Expect(fakeBBS.UpsertDomainCallCount()).To(Equal(1))
 					d, ttl := fakeBBS.UpsertDomainArgsForCall(0)
-					Ω(d).To(Equal(domain))
-					Ω(ttl).To(Equal(0))
+					Expect(d).To(Equal(domain))
+					Expect(ttl).To(Equal(0))
 				})
 			})
 
@@ -131,13 +131,13 @@ var _ = Describe("Domain Handlers", func() {
 					})
 
 					It("fails with an error", func() {
-						Ω(responseRecorder.Code).Should(Equal(http.StatusBadRequest))
+						Expect(responseRecorder.Code).To(Equal(http.StatusBadRequest))
 						expectedBody, _ := json.Marshal(receptor.Error{
 							Type:    receptor.InvalidRequest,
 							Message: handlers.ErrMaxAgeMissing.Error(),
 						})
 
-						Ω(responseRecorder.Body.String()).Should(Equal(string(expectedBody)))
+						Expect(responseRecorder.Body.String()).To(Equal(string(expectedBody)))
 					})
 				})
 			})
@@ -149,7 +149,7 @@ var _ = Describe("Domain Handlers", func() {
 			})
 
 			It("responds with 400 BAD REQUEST", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusBadRequest))
+				Expect(responseRecorder.Code).To(Equal(http.StatusBadRequest))
 			})
 
 			It("responds with a relevant error message", func() {
@@ -158,7 +158,7 @@ var _ = Describe("Domain Handlers", func() {
 					Message: handlers.ErrDomainMissing.Error(),
 				})
 
-				Ω(responseRecorder.Body.String()).Should(Equal(string(expectedBody)))
+				Expect(responseRecorder.Body.String()).To(Equal(string(expectedBody)))
 			})
 		})
 	})
@@ -180,19 +180,19 @@ var _ = Describe("Domain Handlers", func() {
 			})
 
 			It("call the BBS to retrieve the domains", func() {
-				Ω(fakeBBS.DomainsCallCount()).Should(Equal(1))
+				Expect(fakeBBS.DomainsCallCount()).To(Equal(1))
 			})
 
 			It("responds with 200 Status OK", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusOK))
+				Expect(responseRecorder.Code).To(Equal(http.StatusOK))
 			})
 
 			It("returns a list of domains", func() {
 				response := []string{}
 				err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Ω(response).Should(ConsistOf(domains))
+				Expect(response).To(ConsistOf(domains))
 			})
 		})
 
@@ -202,11 +202,11 @@ var _ = Describe("Domain Handlers", func() {
 			})
 
 			It("responds with 200 Status OK", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusOK))
+				Expect(responseRecorder.Code).To(Equal(http.StatusOK))
 			})
 
 			It("returns an empty list", func() {
-				Ω(responseRecorder.Body.String()).Should(Equal("[]"))
+				Expect(responseRecorder.Body.String()).To(Equal("[]"))
 			})
 		})
 
@@ -216,18 +216,19 @@ var _ = Describe("Domain Handlers", func() {
 			})
 
 			It("responds with an error", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusInternalServerError))
+				Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
 			})
 
 			It("provides relevant error information", func() {
 				var receptorError receptor.Error
 				err := json.Unmarshal(responseRecorder.Body.Bytes(), &receptorError)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Ω(receptorError).Should(Equal(receptor.Error{
+				Expect(receptorError).To(Equal(receptor.Error{
 					Type:    receptor.UnknownError,
 					Message: "Something went wrong",
 				}))
+
 			})
 		})
 	})

@@ -67,7 +67,7 @@ func TestReceptor(t *testing.T) {
 var _ = SynchronizedBeforeSuite(
 	func() []byte {
 		receptorConfig, err := gexec.Build("github.com/cloudfoundry-incubator/receptor/cmd/receptor", "-race")
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 		return []byte(receptorConfig)
 	},
 	func(receptorConfig []byte) {

@@ -32,8 +32,8 @@ var _ = Describe("Resources", func() {
 					It("unmarshals", func() {
 						var actualRequest receptor.TaskCreateRequest
 						err := json.Unmarshal([]byte(payload), &actualRequest)
-						Ω(err).ShouldNot(HaveOccurred())
-						Ω(actualRequest).Should(Equal(expectedRequest))
+						Expect(err).NotTo(HaveOccurred())
+						Expect(actualRequest).To(Equal(expectedRequest))
 					})
 				})
 
@@ -45,8 +45,8 @@ var _ = Describe("Resources", func() {
 					It("unmarshals", func() {
 						var actualRequest receptor.TaskCreateRequest
 						err := json.Unmarshal([]byte(payload), &actualRequest)
-						Ω(err).ShouldNot(HaveOccurred())
-						Ω(actualRequest).Should(Equal(expectedRequest))
+						Expect(err).NotTo(HaveOccurred())
+						Expect(actualRequest).To(Equal(expectedRequest))
 					})
 				})
 			})
@@ -83,8 +83,8 @@ var _ = Describe("Resources", func() {
 				It("unmarshals", func() {
 					var actualRequest receptor.TaskCreateRequest
 					err := json.Unmarshal([]byte(payload), &actualRequest)
-					Ω(err).ShouldNot(HaveOccurred())
-					Ω(actualRequest).Should(Equal(expectedRequest))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(actualRequest).To(Equal(expectedRequest))
 				})
 			})
 		})
@@ -110,8 +110,8 @@ var _ = Describe("Resources", func() {
 					It("unmarshals", func() {
 						var actualResponse receptor.TaskResponse
 						err := json.Unmarshal([]byte(payload), &actualResponse)
-						Ω(err).ShouldNot(HaveOccurred())
-						Ω(actualResponse).Should(Equal(expectedResponse))
+						Expect(err).NotTo(HaveOccurred())
+						Expect(actualResponse).To(Equal(expectedResponse))
 					})
 				})
 
@@ -123,8 +123,8 @@ var _ = Describe("Resources", func() {
 					It("unmarshals", func() {
 						var actualResponse receptor.TaskResponse
 						err := json.Unmarshal([]byte(payload), &actualResponse)
-						Ω(err).ShouldNot(HaveOccurred())
-						Ω(actualResponse).Should(Equal(expectedResponse))
+						Expect(err).NotTo(HaveOccurred())
+						Expect(actualResponse).To(Equal(expectedResponse))
 					})
 				})
 			})
@@ -161,8 +161,8 @@ var _ = Describe("Resources", func() {
 				It("unmarshals", func() {
 					var actualRequest receptor.TaskResponse
 					err := json.Unmarshal([]byte(payload), &actualRequest)
-					Ω(err).ShouldNot(HaveOccurred())
-					Ω(actualRequest).Should(Equal(expectedResponse))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(actualRequest).To(Equal(expectedResponse))
 				})
 			})
 		})
@@ -190,8 +190,8 @@ var _ = Describe("Resources", func() {
 					It("unmarshals", func() {
 						var actualRequest receptor.DesiredLRPCreateRequest
 						err := json.Unmarshal([]byte(payload), &actualRequest)
-						Ω(err).ShouldNot(HaveOccurred())
-						Ω(actualRequest).Should(Equal(expectedRequest))
+						Expect(err).NotTo(HaveOccurred())
+						Expect(actualRequest).To(Equal(expectedRequest))
 					})
 				})
 
@@ -203,8 +203,8 @@ var _ = Describe("Resources", func() {
 					It("unmarshals", func() {
 						var actualRequest receptor.DesiredLRPCreateRequest
 						err := json.Unmarshal([]byte(payload), &actualRequest)
-						Ω(err).ShouldNot(HaveOccurred())
-						Ω(actualRequest).Should(Equal(expectedRequest))
+						Expect(err).NotTo(HaveOccurred())
+						Expect(actualRequest).To(Equal(expectedRequest))
 					})
 				})
 			})
@@ -238,8 +238,8 @@ var _ = Describe("Resources", func() {
 				It("unmarshals", func() {
 					var actualRequest receptor.DesiredLRPCreateRequest
 					err := json.Unmarshal([]byte(payload), &actualRequest)
-					Ω(err).ShouldNot(HaveOccurred())
-					Ω(actualRequest).Should(Equal(expectedRequest))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(actualRequest).To(Equal(expectedRequest))
 				})
 			})
 		})
@@ -267,8 +267,8 @@ var _ = Describe("Resources", func() {
 					It("unmarshals", func() {
 						var actualResponse receptor.DesiredLRPResponse
 						err := json.Unmarshal([]byte(payload), &actualResponse)
-						Ω(err).ShouldNot(HaveOccurred())
-						Ω(actualResponse).Should(Equal(expectedResponse))
+						Expect(err).NotTo(HaveOccurred())
+						Expect(actualResponse).To(Equal(expectedResponse))
 					})
 				})
 
@@ -280,8 +280,8 @@ var _ = Describe("Resources", func() {
 					It("unmarshals", func() {
 						var actualResponse receptor.DesiredLRPResponse
 						err := json.Unmarshal([]byte(payload), &actualResponse)
-						Ω(err).ShouldNot(HaveOccurred())
-						Ω(actualResponse).Should(Equal(expectedResponse))
+						Expect(err).NotTo(HaveOccurred())
+						Expect(actualResponse).To(Equal(expectedResponse))
 					})
 				})
 			})
@@ -319,8 +319,8 @@ var _ = Describe("Resources", func() {
 				It("unmarshals", func() {
 					var actualResponse receptor.DesiredLRPResponse
 					err := json.Unmarshal([]byte(payload), &actualResponse)
-					Ω(err).ShouldNot(HaveOccurred())
-					Ω(actualResponse).Should(Equal(expectedResponse))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(actualResponse).To(Equal(expectedResponse))
 				})
 			})
 		})
@@ -345,7 +345,7 @@ var _ = Describe("Resources", func() {
 				bytes, err := json.Marshal(cfroutes.CFRoutes{
 					{Hostnames: []string{"a", "b"}, Port: 1},
 				})
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
 				cfRawMessage := json.RawMessage(bytes)
 				routingInfo[cfroutes.CF_ROUTER] = &cfRawMessage
@@ -354,8 +354,8 @@ var _ = Describe("Resources", func() {
 				routingInfo["foo"] = &fooRawMessage
 
 				bytes, err = json.Marshal(routingInfo)
-				Ω(err).ShouldNot(HaveOccurred())
-				Ω(bytes).Should(MatchJSON(jsonRoutes))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(bytes).To(MatchJSON(jsonRoutes))
 			})
 
 			Context("when the routing info is empty", func() {
@@ -370,13 +370,13 @@ var _ = Describe("Resources", func() {
 						Routes: receptor.RoutingInfo{},
 					}
 
-					Ω(w.Routes).ShouldNot(BeNil())
-					Ω(w.Routes).Should(BeEmpty())
+					Expect(w.Routes).NotTo(BeNil())
+					Expect(w.Routes).To(BeEmpty())
 
 					bytes, err := json.Marshal(w)
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 
-					Ω(bytes).Should(MatchJSON(`{"name":"wrapper"}`))
+					Expect(bytes).To(MatchJSON(`{"name":"wrapper"}`))
 				})
 			})
 		})
@@ -384,11 +384,11 @@ var _ = Describe("Resources", func() {
 		Describe("Unmarshal", func() {
 			It("returns both cf-routes and other", func() {
 				err := json.Unmarshal([]byte(jsonRoutes), &routingInfo)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Ω(len(routingInfo)).Should(Equal(2))
-				Ω(string(*routingInfo["cf-router"])).Should(MatchJSON(`[{"port": 1,"hostnames":["a", "b"]}]`))
-				Ω(string(*routingInfo["foo"])).Should(MatchJSON(`"bar"`))
+				Expect(len(routingInfo)).To(Equal(2))
+				Expect(string(*routingInfo["cf-router"])).To(MatchJSON(`[{"port": 1,"hostnames":["a", "b"]}]`))
+				Expect(string(*routingInfo["foo"])).To(MatchJSON(`"bar"`))
 			})
 		})
 	})
@@ -404,54 +404,54 @@ var _ = Describe("Resources", func() {
 
 		Describe("Equal", func() {
 			It("returns true when equivalent", func() {
-				Ω(currentTag.Equal(currentTag)).Should(BeTrue())
+				Expect(currentTag.Equal(currentTag)).To(BeTrue())
 			})
 
 			It("returns false when the indexes do not match", func() {
-				Ω(currentTag.Equal(sameEpochNewerIndexTag)).Should(BeFalse())
-				Ω(currentTag.Equal(sameEpochOlderIndexTag)).Should(BeFalse())
+				Expect(currentTag.Equal(sameEpochNewerIndexTag)).To(BeFalse())
+				Expect(currentTag.Equal(sameEpochOlderIndexTag)).To(BeFalse())
 			})
 
 			It("returns false when the epochs do not match", func() {
-				Ω(currentTag.Equal(differentEpochCurrentIndexTag)).Should(BeFalse())
+				Expect(currentTag.Equal(differentEpochCurrentIndexTag)).To(BeFalse())
 			})
 
 			It("returns false when epoch is empty", func() {
-				Ω(currentTag.Equal(missingEpochTag)).Should(BeFalse())
+				Expect(currentTag.Equal(missingEpochTag)).To(BeFalse())
 			})
 		})
 
 		Describe("SucceededBy", func() {
 			It("returns true when the modification tag has an empty epoch", func() {
-				Ω(missingEpochTag.SucceededBy(currentTag)).Should(BeTrue())
+				Expect(missingEpochTag.SucceededBy(currentTag)).To(BeTrue())
 			})
 
 			It("returns true when the other modification tag has an empty epoch", func() {
-				Ω(currentTag.SucceededBy(missingEpochTag)).Should(BeTrue())
+				Expect(currentTag.SucceededBy(missingEpochTag)).To(BeTrue())
 			})
 
 			It("returns true when the epoch is different and the index is older", func() {
-				Ω(currentTag.SucceededBy(differentEpochOlderIndexTag)).Should(BeTrue())
+				Expect(currentTag.SucceededBy(differentEpochOlderIndexTag)).To(BeTrue())
 			})
 
 			It("returns true when the epoch is different and the index is the same", func() {
-				Ω(currentTag.SucceededBy(differentEpochCurrentIndexTag)).Should(BeTrue())
+				Expect(currentTag.SucceededBy(differentEpochCurrentIndexTag)).To(BeTrue())
 			})
 
 			It("returns true when the epoch is different and the index is newer", func() {
-				Ω(currentTag.SucceededBy(differentEpochNewerIndexTag)).Should(BeTrue())
+				Expect(currentTag.SucceededBy(differentEpochNewerIndexTag)).To(BeTrue())
 			})
 
 			It("returns false when the epoch the same and the index is older", func() {
-				Ω(currentTag.SucceededBy(sameEpochOlderIndexTag)).Should(BeFalse())
+				Expect(currentTag.SucceededBy(sameEpochOlderIndexTag)).To(BeFalse())
 			})
 
 			It("returns false when the epoch the same and the index is the same", func() {
-				Ω(currentTag.SucceededBy(currentTag)).Should(BeFalse())
+				Expect(currentTag.SucceededBy(currentTag)).To(BeFalse())
 			})
 
 			It("returns true when the epoch the same and the index is newer", func() {
-				Ω(currentTag.SucceededBy(sameEpochNewerIndexTag)).Should(BeTrue())
+				Expect(currentTag.SucceededBy(sameEpochNewerIndexTag)).To(BeTrue())
 			})
 		})
 	})

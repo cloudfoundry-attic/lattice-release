@@ -150,8 +150,8 @@ var _ = Describe("DesiredLRP", func() {
 	Describe("To JSON", func() {
 		It("should JSONify", func() {
 			json, err := ToJSON(&lrp)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(string(json)).Should(MatchJSON(lrpPayload))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(json)).To(MatchJSON(lrpPayload))
 		})
 	})
 
@@ -164,7 +164,7 @@ var _ = Describe("DesiredLRP", func() {
 			expectedLRP.Instances = instances
 
 			updatedLRP := lrp.ApplyUpdate(update)
-			Ω(updatedLRP).Should(Equal(expectedLRP))
+			Expect(updatedLRP).To(Equal(expectedLRP))
 		})
 
 		It("allows empty routes to be set", func() {
@@ -176,7 +176,7 @@ var _ = Describe("DesiredLRP", func() {
 			expectedLRP.Routes = map[string]*json.RawMessage{}
 
 			updatedLRP := lrp.ApplyUpdate(update)
-			Ω(updatedLRP).Should(Equal(expectedLRP))
+			Expect(updatedLRP).To(Equal(expectedLRP))
 		})
 
 		It("allows annotation to be set", func() {
@@ -189,7 +189,7 @@ var _ = Describe("DesiredLRP", func() {
 			expectedLRP.Annotation = annotation
 
 			updatedLRP := lrp.ApplyUpdate(update)
-			Ω(updatedLRP).Should(Equal(expectedLRP))
+			Expect(updatedLRP).To(Equal(expectedLRP))
 		})
 
 		It("allows empty annotation to be set", func() {
@@ -202,7 +202,7 @@ var _ = Describe("DesiredLRP", func() {
 			expectedLRP.Annotation = emptyAnnotation
 
 			updatedLRP := lrp.ApplyUpdate(update)
-			Ω(updatedLRP).Should(Equal(expectedLRP))
+			Expect(updatedLRP).To(Equal(expectedLRP))
 		})
 
 		It("updates routes", func() {
@@ -219,15 +219,15 @@ var _ = Describe("DesiredLRP", func() {
 			}
 
 			updatedLRP := lrp.ApplyUpdate(update)
-			Ω(updatedLRP).Should(Equal(expectedLRP))
+			Expect(updatedLRP).To(Equal(expectedLRP))
 		})
 	})
 
 	Describe("Validate", func() {
 		var assertDesiredLRPValidationFailsWithMessage = func(lrp DesiredLRP, substring string) {
 			validationErr := lrp.Validate()
-			Ω(validationErr).Should(HaveOccurred())
-			Ω(validationErr.Error()).Should(ContainSubstring(substring))
+			Expect(validationErr).To(HaveOccurred())
+			Expect(validationErr.Error()).To(ContainSubstring(substring))
 		}
 
 		Context("process_guid only contains `A-Z`, `a-z`, `0-9`, `-`, and `_`", func() {
@@ -237,7 +237,7 @@ var _ = Describe("DesiredLRP", func() {
 					It(fmt.Sprintf("'%s' is a valid process_guid", validGuid), func() {
 						lrp.ProcessGuid = validGuid
 						err := lrp.Validate()
-						Ω(err).ShouldNot(HaveOccurred())
+						Expect(err).NotTo(HaveOccurred())
 					})
 				}(validGuid)
 			}
@@ -259,11 +259,11 @@ var _ = Describe("DesiredLRP", func() {
 
 			lrp.Instances = 0
 			validationErr := lrp.Validate()
-			Ω(validationErr).ShouldNot(HaveOccurred())
+			Expect(validationErr).NotTo(HaveOccurred())
 
 			lrp.Instances = 1
 			validationErr = lrp.Validate()
-			Ω(validationErr).ShouldNot(HaveOccurred())
+			Expect(validationErr).NotTo(HaveOccurred())
 		})
 
 		It("requires a domain", func() {
@@ -331,7 +331,7 @@ var _ = Describe("DesiredLRP", func() {
 				lrp.EgressRules = []SecurityGroupRule{}
 
 				validationErr := lrp.Validate()
-				Ω(validationErr).ShouldNot(HaveOccurred())
+				Expect(validationErr).NotTo(HaveOccurred())
 			})
 		})
 	})
@@ -340,18 +340,18 @@ var _ = Describe("DesiredLRP", func() {
 		It("returns a LRP with correct fields", func() {
 			decodedLRP := DesiredLRP{}
 			err := FromJSON([]byte(lrpPayload), &decodedLRP)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
-			Ω(decodedLRP).Should(Equal(lrp))
+			Expect(decodedLRP).To(Equal(lrp))
 		})
 
 		Context("with an invalid payload", func() {
 			It("returns the error", func() {
 				decodedLRP := DesiredLRP{}
 				err := FromJSON([]byte("aliens lol"), &decodedLRP)
-				Ω(err).Should(HaveOccurred())
+				Expect(err).To(HaveOccurred())
 
-				Ω(decodedLRP).Should(BeZero())
+				Expect(decodedLRP).To(BeZero())
 			})
 		})
 
@@ -364,7 +364,7 @@ var _ = Describe("DesiredLRP", func() {
 				"rootfs": "some-rootfs"
 			}`,
 				), &decodedLRP)
-				Ω(err).Should(HaveOccurred())
+				Expect(err).To(HaveOccurred())
 			})
 		})
 
@@ -388,8 +388,8 @@ var _ = Describe("DesiredLRP", func() {
 				It("unmarshals", func() {
 					var actualLRP DesiredLRP
 					err := json.Unmarshal([]byte(payload), &actualLRP)
-					Ω(err).ShouldNot(HaveOccurred())
-					Ω(actualLRP).Should(Equal(expectedLRP))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(actualLRP).To(Equal(expectedLRP))
 				})
 			})
 
@@ -401,8 +401,8 @@ var _ = Describe("DesiredLRP", func() {
 				It("unmarshals", func() {
 					var actualLRP DesiredLRP
 					err := json.Unmarshal([]byte(payload), &actualLRP)
-					Ω(err).ShouldNot(HaveOccurred())
-					Ω(actualLRP).Should(Equal(expectedLRP))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(actualLRP).To(Equal(expectedLRP))
 				})
 			})
 		})
@@ -435,8 +435,8 @@ var _ = Describe("DesiredLRP", func() {
 					decodedLRP := &DesiredLRP{}
 
 					err := FromJSON([]byte(jsonBytes), decodedLRP)
-					Ω(err).Should(HaveOccurred())
-					Ω(err.Error()).Should(ContainSubstring(missingField))
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring(missingField))
 				})
 			})
 		}
@@ -473,8 +473,8 @@ var _ = Describe("DesiredLRP", func() {
 					decodedLRP := &DesiredLRP{}
 
 					err := FromJSON([]byte(jsonBytes), decodedLRP)
-					Ω(err).Should(HaveOccurred())
-					Ω(err.Error()).Should(ContainSubstring(tooLongField))
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring(tooLongField))
 				})
 			})
 		}

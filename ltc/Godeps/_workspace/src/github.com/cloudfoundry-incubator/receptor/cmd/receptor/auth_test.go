@@ -28,21 +28,21 @@ var _ = Describe("Basic Auth", func() {
 		BeforeEach(func() {
 			var err error
 			req, err = http.NewRequest("GET", "http://"+receptorAddress, nil)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		JustBeforeEach(func() {
 			var err error
 
 			res, err = http.DefaultClient.Do(req)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			res.Body.Close()
 		})
 
 		Context("when the username and password have been set", func() {
 			It("returns 401 for all requests", func() {
-				Ω(res.StatusCode).Should(Equal(http.StatusUnauthorized))
+				Expect(res.StatusCode).To(Equal(http.StatusUnauthorized))
 			})
 		})
 
@@ -55,7 +55,7 @@ var _ = Describe("Basic Auth", func() {
 			})
 
 			It("does not return 401", func() {
-				Ω(res.StatusCode).Should(Equal(http.StatusNotFound))
+				Expect(res.StatusCode).To(Equal(http.StatusNotFound))
 			})
 		})
 
@@ -67,7 +67,7 @@ var _ = Describe("Basic Auth", func() {
 			})
 
 			It("does not return 401", func() {
-				Ω(res.StatusCode).Should(Equal(http.StatusNotFound))
+				Expect(res.StatusCode).To(Equal(http.StatusNotFound))
 			})
 		})
 	})

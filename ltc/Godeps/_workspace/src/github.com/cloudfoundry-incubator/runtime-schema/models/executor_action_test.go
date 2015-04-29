@@ -18,8 +18,8 @@ var _ = Describe("Actions", func() {
 				marshalledAction := action
 
 				json, err := json.Marshal(&marshalledAction)
-				Ω(err).ShouldNot(HaveOccurred())
-				Ω(json).Should(MatchJSON(actionPayload))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(json).To(MatchJSON(actionPayload))
 			})
 
 			wrappedJSON := fmt.Sprintf(`{"%s":%s}`, action.ActionType(), actionPayload)
@@ -27,8 +27,8 @@ var _ = Describe("Actions", func() {
 				marshalledAction := action
 
 				json, err := models.MarshalAction(marshalledAction)
-				Ω(err).ShouldNot(HaveOccurred())
-				Ω(json).Should(MatchJSON(wrappedJSON))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(json).To(MatchJSON(wrappedJSON))
 			})
 		})
 	}
@@ -40,8 +40,8 @@ var _ = Describe("Actions", func() {
 			By("unwrapping", func() {
 				var unmarshalledAction models.Action
 				unmarshalledAction, err := models.UnmarshalAction([]byte(wrappedJSON))
-				Ω(err).ShouldNot(HaveOccurred())
-				Ω(unmarshalledAction).Should(Equal(action))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(unmarshalledAction).To(Equal(action))
 			})
 		})
 	}
@@ -78,7 +78,7 @@ var _ = Describe("Actions", func() {
 					}
 
 					err := downloadAction.Validate()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 
@@ -126,7 +126,7 @@ var _ = Describe("Actions", func() {
 					}
 
 					err := uploadAction.Validate()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 
@@ -184,7 +184,7 @@ var _ = Describe("Actions", func() {
 					}
 
 					err := runAction.Validate()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 
@@ -255,7 +255,7 @@ var _ = Describe("Actions", func() {
 					}
 
 					err := timeoutAction.Validate()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 
@@ -330,7 +330,7 @@ var _ = Describe("Actions", func() {
 					}
 
 					err := tryAction.Validate()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 
@@ -431,7 +431,7 @@ var _ = Describe("Actions", func() {
 					}
 
 					err := parallelAction.Validate()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 
@@ -542,7 +542,7 @@ var _ = Describe("Actions", func() {
 					}
 
 					err := serialAction.Validate()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 
@@ -637,7 +637,7 @@ var _ = Describe("Actions", func() {
 					}
 
 					err := emitProgressAction.Validate()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 

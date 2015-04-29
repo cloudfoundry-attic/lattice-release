@@ -80,7 +80,7 @@ var _ = Describe("Watcher", func() {
 				var callback func(int)
 
 				BeforeEach(func() {
-					Ω(hub.RegisterCallbackCallCount()).Should(Equal(1))
+					Expect(hub.RegisterCallbackCallCount()).To(Equal(1))
 					callback = hub.RegisterCallbackArgsForCall(0)
 					callback(1)
 				})
@@ -195,7 +195,7 @@ var _ = Describe("Watcher", func() {
 
 			Context("when the watcher receives several desired watch errors in a retry interval", func() {
 				It("uses only one active timer", func() {
-					Ω(hub.RegisterCallbackCallCount()).Should(Equal(1))
+					Expect(hub.RegisterCallbackCallCount()).To(Equal(1))
 					callback := hub.RegisterCallbackArgsForCall(0)
 
 					Eventually(bbs.WatchForDesiredLRPChangesCallCount).Should(Equal(1))
@@ -213,7 +213,7 @@ var _ = Describe("Watcher", func() {
 
 			Context("when the watcher receives several actual watch errors in a retry interval", func() {
 				It("uses only one active timer", func() {
-					Ω(hub.RegisterCallbackCallCount()).Should(Equal(1))
+					Expect(hub.RegisterCallbackCallCount()).To(Equal(1))
 					callback := hub.RegisterCallbackArgsForCall(0)
 
 					Eventually(bbs.WatchForActualLRPChangesCallCount).Should(Equal(1))
@@ -272,12 +272,12 @@ var _ = Describe("Watcher", func() {
 				})
 
 				It("emits a DesiredLRPCreatedEvent to the hub", func() {
-					Ω(hub.EmitCallCount()).Should(Equal(1))
+					Expect(hub.EmitCallCount()).To(Equal(1))
 					event := hub.EmitArgsForCall(0)
 
 					desiredLRPCreatedEvent, ok := event.(receptor.DesiredLRPCreatedEvent)
-					Ω(ok).Should(BeTrue())
-					Ω(desiredLRPCreatedEvent.DesiredLRPResponse).Should(Equal(serialization.DesiredLRPToResponse(desiredLRP)))
+					Expect(ok).To(BeTrue())
+					Expect(desiredLRPCreatedEvent.DesiredLRPResponse).To(Equal(serialization.DesiredLRPToResponse(desiredLRP)))
 				})
 			})
 
@@ -287,13 +287,13 @@ var _ = Describe("Watcher", func() {
 				})
 
 				It("emits a DesiredLRPChangedEvent to the hub", func() {
-					Ω(hub.EmitCallCount()).Should(Equal(1))
+					Expect(hub.EmitCallCount()).To(Equal(1))
 					event := hub.EmitArgsForCall(0)
 
 					desiredLRPChangedEvent, ok := event.(receptor.DesiredLRPChangedEvent)
-					Ω(ok).Should(BeTrue())
-					Ω(desiredLRPChangedEvent.Before).Should(Equal(serialization.DesiredLRPToResponse(desiredLRP)))
-					Ω(desiredLRPChangedEvent.After).Should(Equal(serialization.DesiredLRPToResponse(desiredLRP)))
+					Expect(ok).To(BeTrue())
+					Expect(desiredLRPChangedEvent.Before).To(Equal(serialization.DesiredLRPToResponse(desiredLRP)))
+					Expect(desiredLRPChangedEvent.After).To(Equal(serialization.DesiredLRPToResponse(desiredLRP)))
 				})
 			})
 
@@ -303,12 +303,12 @@ var _ = Describe("Watcher", func() {
 				})
 
 				It("emits a DesiredLRPRemovedEvent to the hub", func() {
-					Ω(hub.EmitCallCount()).Should(Equal(1))
+					Expect(hub.EmitCallCount()).To(Equal(1))
 					event := hub.EmitArgsForCall(0)
 
 					desiredLRPRemovedEvent, ok := event.(receptor.DesiredLRPRemovedEvent)
-					Ω(ok).Should(BeTrue())
-					Ω(desiredLRPRemovedEvent.DesiredLRPResponse).Should(Equal(serialization.DesiredLRPToResponse(desiredLRP)))
+					Expect(ok).To(BeTrue())
+					Expect(desiredLRPRemovedEvent.DesiredLRPResponse).To(Equal(serialization.DesiredLRPToResponse(desiredLRP)))
 				})
 			})
 		})
@@ -329,12 +329,12 @@ var _ = Describe("Watcher", func() {
 				})
 
 				It("emits an ActualLRPCreatedEvent to the hub", func() {
-					Ω(hub.EmitCallCount()).Should(Equal(1))
+					Expect(hub.EmitCallCount()).To(Equal(1))
 					event := hub.EmitArgsForCall(0)
-					Ω(event).Should(BeAssignableToTypeOf(receptor.ActualLRPCreatedEvent{}))
+					Expect(event).To(BeAssignableToTypeOf(receptor.ActualLRPCreatedEvent{}))
 
 					actualLRPCreatedEvent := event.(receptor.ActualLRPCreatedEvent)
-					Ω(actualLRPCreatedEvent.ActualLRPResponse).Should(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
+					Expect(actualLRPCreatedEvent.ActualLRPResponse).To(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
 				})
 			})
 
@@ -344,13 +344,13 @@ var _ = Describe("Watcher", func() {
 				})
 
 				It("emits an ActualLRPChangedEvent to the hub", func() {
-					Ω(hub.EmitCallCount()).Should(Equal(1))
+					Expect(hub.EmitCallCount()).To(Equal(1))
 					event := hub.EmitArgsForCall(0)
-					Ω(event).Should(BeAssignableToTypeOf(receptor.ActualLRPChangedEvent{}))
+					Expect(event).To(BeAssignableToTypeOf(receptor.ActualLRPChangedEvent{}))
 
 					actualLRPChangedEvent := event.(receptor.ActualLRPChangedEvent)
-					Ω(actualLRPChangedEvent.Before).Should(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
-					Ω(actualLRPChangedEvent.After).Should(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
+					Expect(actualLRPChangedEvent.Before).To(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
+					Expect(actualLRPChangedEvent.After).To(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
 				})
 			})
 
@@ -360,12 +360,12 @@ var _ = Describe("Watcher", func() {
 				})
 
 				It("emits an ActualLRPRemovedEvent to the hub", func() {
-					Ω(hub.EmitCallCount()).Should(Equal(1))
+					Expect(hub.EmitCallCount()).To(Equal(1))
 					event := hub.EmitArgsForCall(0)
-					Ω(event).Should(BeAssignableToTypeOf(receptor.ActualLRPRemovedEvent{}))
+					Expect(event).To(BeAssignableToTypeOf(receptor.ActualLRPRemovedEvent{}))
 
 					actualLRPRemovedEvent := event.(receptor.ActualLRPRemovedEvent)
-					Ω(actualLRPRemovedEvent.ActualLRPResponse).Should(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
+					Expect(actualLRPRemovedEvent.ActualLRPResponse).To(Equal(serialization.ActualLRPToResponse(actualLRP, false)))
 				})
 			})
 
@@ -375,12 +375,12 @@ var _ = Describe("Watcher", func() {
 				})
 
 				It("emits an ActualLRPCreatedEvent to the hub", func() {
-					Ω(hub.EmitCallCount()).Should(Equal(1))
+					Expect(hub.EmitCallCount()).To(Equal(1))
 					event := hub.EmitArgsForCall(0)
-					Ω(event).Should(BeAssignableToTypeOf(receptor.ActualLRPCreatedEvent{}))
+					Expect(event).To(BeAssignableToTypeOf(receptor.ActualLRPCreatedEvent{}))
 
 					actualLRPCreatedEvent := event.(receptor.ActualLRPCreatedEvent)
-					Ω(actualLRPCreatedEvent.ActualLRPResponse).Should(Equal(serialization.ActualLRPToResponse(actualLRP, true)))
+					Expect(actualLRPCreatedEvent.ActualLRPResponse).To(Equal(serialization.ActualLRPToResponse(actualLRP, true)))
 				})
 			})
 
@@ -390,13 +390,13 @@ var _ = Describe("Watcher", func() {
 				})
 
 				It("emits an ActualLRPChangedEvent to the hub", func() {
-					Ω(hub.EmitCallCount()).Should(Equal(1))
+					Expect(hub.EmitCallCount()).To(Equal(1))
 					event := hub.EmitArgsForCall(0)
-					Ω(event).Should(BeAssignableToTypeOf(receptor.ActualLRPChangedEvent{}))
+					Expect(event).To(BeAssignableToTypeOf(receptor.ActualLRPChangedEvent{}))
 
 					actualLRPChangedEvent := event.(receptor.ActualLRPChangedEvent)
-					Ω(actualLRPChangedEvent.Before).Should(Equal(serialization.ActualLRPToResponse(actualLRP, true)))
-					Ω(actualLRPChangedEvent.After).Should(Equal(serialization.ActualLRPToResponse(actualLRP, true)))
+					Expect(actualLRPChangedEvent.Before).To(Equal(serialization.ActualLRPToResponse(actualLRP, true)))
+					Expect(actualLRPChangedEvent.After).To(Equal(serialization.ActualLRPToResponse(actualLRP, true)))
 				})
 			})
 
@@ -406,12 +406,12 @@ var _ = Describe("Watcher", func() {
 				})
 
 				It("emits an ActualLRPRemovedEvent to the hub", func() {
-					Ω(hub.EmitCallCount()).Should(Equal(1))
+					Expect(hub.EmitCallCount()).To(Equal(1))
 					event := hub.EmitArgsForCall(0)
-					Ω(event).Should(BeAssignableToTypeOf(receptor.ActualLRPRemovedEvent{}))
+					Expect(event).To(BeAssignableToTypeOf(receptor.ActualLRPRemovedEvent{}))
 
 					actualLRPRemovedEvent := event.(receptor.ActualLRPRemovedEvent)
-					Ω(actualLRPRemovedEvent.ActualLRPResponse).Should(Equal(serialization.ActualLRPToResponse(actualLRP, true)))
+					Expect(actualLRPRemovedEvent.ActualLRPResponse).To(Equal(serialization.ActualLRPToResponse(actualLRP, true)))
 				})
 			})
 		})

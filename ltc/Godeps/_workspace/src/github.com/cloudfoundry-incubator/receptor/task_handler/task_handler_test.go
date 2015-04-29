@@ -40,7 +40,7 @@ var _ = Describe("TaskHandler", func() {
 		var err error
 
 		response, err = http.Post(server.URL, "application/json", bytes.NewBuffer(payload))
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	Describe("when the handler receives a task", func() {
@@ -57,15 +57,15 @@ var _ = Describe("TaskHandler", func() {
 		BeforeEach(func() {
 			var err error
 			payload, err = models.ToJSONArray(task)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("enqueues the task on the worker", func() {
-			Ω(enqueue).Should(Receive(Equal(task)))
+			Expect(enqueue).To(Receive(Equal(task)))
 		})
 
 		It("returns 202", func() {
-			Ω(response.StatusCode).Should(Equal(http.StatusAccepted))
+			Expect(response.StatusCode).To(Equal(http.StatusAccepted))
 		})
 	})
 
@@ -75,11 +75,11 @@ var _ = Describe("TaskHandler", func() {
 		})
 
 		It("returns 400", func() {
-			Ω(response.StatusCode).Should(Equal(http.StatusBadRequest))
+			Expect(response.StatusCode).To(Equal(http.StatusBadRequest))
 		})
 
 		It("does not enqueue anything somehow", func() {
-			Ω(enqueue).ShouldNot(Receive())
+			Expect(enqueue).NotTo(Receive())
 		})
 	})
 })

@@ -35,9 +35,9 @@ var _ = Describe("CORS support", func() {
 			})
 
 			It("responds to with a ACAO header containg the ORIGIN header value", func() {
-				Ω(res.StatusCode).Should(Equal(http.StatusOK))
+				Expect(res.StatusCode).To(Equal(http.StatusOK))
 				value := res.Header.Get("Access-Control-Allow-Origin")
-				Ω(value).Should(Equal(req.Header.Get("Origin")))
+				Expect(value).To(Equal(req.Header.Get("Origin")))
 			})
 		})
 
@@ -50,7 +50,7 @@ var _ = Describe("CORS support", func() {
 			})
 
 			It("returns 200 OK", func() {
-				Ω(res.StatusCode).Should(Equal(http.StatusOK))
+				Expect(res.StatusCode).To(Equal(http.StatusOK))
 			})
 		})
 	})
@@ -70,7 +70,7 @@ var _ = Describe("CORS support", func() {
 
 			It("responds to without a ACAO header", func() {
 				_, isSet := res.Header["Access-Control-Allow-Origin"]
-				Ω(isSet).Should(BeFalse())
+				Expect(isSet).To(BeFalse())
 			})
 		})
 	})
@@ -80,22 +80,22 @@ func doGetRequest() (*http.Request, *http.Response) {
 	reqGen := rata.NewRequestGenerator("http://"+receptorAddress, receptor.Routes)
 
 	req, err := reqGen.CreateRequest(receptor.TasksRoute, nil, nil)
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 
 	req.Header.Set("Origin", "example.com")
 	req.SetBasicAuth(username, password)
 	httpClient := http.Client{}
 	res, err := httpClient.Do(req)
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 
 	return req, res
 }
 
 func doOptionsRequest() (*http.Request, *http.Response) {
 	req, err := http.NewRequest("OPTIONS", "http://"+receptorAddress, nil)
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	httpClient := http.Client{}
 	res, err := httpClient.Do(req)
-	Ω(err).ShouldNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	return req, res
 }

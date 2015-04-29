@@ -24,38 +24,38 @@ var _ = Describe("Domain API", func() {
 		Context("with a ttl > 0", func() {
 			BeforeEach(func() {
 				postErr = client.UpsertDomain("domain-0", 100*time.Second)
-				Ω(postErr).ShouldNot(HaveOccurred())
+				Expect(postErr).NotTo(HaveOccurred())
 			})
 
 			It("has the correct data from the bbs", func() {
 				domains, err := bbs.Domains()
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Ω(domains).Should(ConsistOf([]string{"domain-0"}))
+				Expect(domains).To(ConsistOf([]string{"domain-0"}))
 			})
 		})
 
 		Context("with an infinite ttl (0)", func() {
 			BeforeEach(func() {
 				postErr = client.UpsertDomain("domain-0", 0)
-				Ω(postErr).ShouldNot(HaveOccurred())
+				Expect(postErr).NotTo(HaveOccurred())
 
 				postErr = client.UpsertDomain("domain-1", 1*time.Second)
-				Ω(postErr).ShouldNot(HaveOccurred())
+				Expect(postErr).NotTo(HaveOccurred())
 			})
 
 			It("has the correct data from the bbs", func() {
 				domains, err := bbs.Domains()
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Ω(domains).Should(ConsistOf([]string{"domain-0", "domain-1"}))
+				Expect(domains).To(ConsistOf([]string{"domain-0", "domain-1"}))
 
 				time.Sleep(2 * time.Second)
 
 				domains, err = bbs.Domains()
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Ω(domains).Should(ConsistOf([]string{"domain-0"}))
+				Expect(domains).To(ConsistOf([]string{"domain-0"}))
 			})
 		})
 	})
@@ -69,22 +69,22 @@ var _ = Describe("Domain API", func() {
 			expectedDomains = []string{"domain-0", "domain-1"}
 			for i, d := range expectedDomains {
 				err := bbs.UpsertDomain(d, 100*(i+1))
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 			}
 
 			actualDomains, getErr = client.Domains()
 		})
 
 		It("responds without error", func() {
-			Ω(getErr).ShouldNot(HaveOccurred())
+			Expect(getErr).NotTo(HaveOccurred())
 		})
 
 		It("has the correct number of responses", func() {
-			Ω(actualDomains).Should(HaveLen(2))
+			Expect(actualDomains).To(HaveLen(2))
 		})
 
 		It("has the correct domains from the bbs", func() {
-			Ω(expectedDomains).Should(ConsistOf(actualDomains))
+			Expect(expectedDomains).To(ConsistOf(actualDomains))
 		})
 	})
 })

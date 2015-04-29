@@ -53,21 +53,21 @@ var _ = Describe("Cell Handlers", func() {
 			})
 
 			It("call the BBS to retrieve the actual LRPs", func() {
-				Ω(fakeBBS.CellsCallCount()).Should(Equal(1))
+				Expect(fakeBBS.CellsCallCount()).To(Equal(1))
 			})
 
 			It("responds with 200 Status OK", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusOK))
+				Expect(responseRecorder.Code).To(Equal(http.StatusOK))
 			})
 
 			It("returns a list of cell presence responses", func() {
 				response := []receptor.CellResponse{}
 				err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Ω(response).Should(HaveLen(2))
+				Expect(response).To(HaveLen(2))
 				for _, cellPresence := range cellPresences {
-					Ω(response).Should(ContainElement(serialization.CellPresenceToCellResponse(cellPresence)))
+					Expect(response).To(ContainElement(serialization.CellPresenceToCellResponse(cellPresence)))
 				}
 			})
 		})
@@ -78,11 +78,11 @@ var _ = Describe("Cell Handlers", func() {
 			})
 
 			It("responds with 200 Status OK", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusOK))
+				Expect(responseRecorder.Code).To(Equal(http.StatusOK))
 			})
 
 			It("returns an empty list", func() {
-				Ω(responseRecorder.Body.String()).Should(Equal("[]"))
+				Expect(responseRecorder.Body.String()).To(Equal("[]"))
 			})
 		})
 
@@ -92,18 +92,19 @@ var _ = Describe("Cell Handlers", func() {
 			})
 
 			It("responds with an error", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusInternalServerError))
+				Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
 			})
 
 			It("provides relevant error information", func() {
 				var receptorError receptor.Error
 				err := json.Unmarshal(responseRecorder.Body.Bytes(), &receptorError)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Ω(receptorError).Should(Equal(receptor.Error{
+				Expect(receptorError).To(Equal(receptor.Error{
 					Type:    receptor.UnknownError,
 					Message: "Something went wrong",
 				}))
+
 			})
 		})
 	})

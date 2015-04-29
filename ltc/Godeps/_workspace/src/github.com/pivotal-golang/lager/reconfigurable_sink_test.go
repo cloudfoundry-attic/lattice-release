@@ -23,7 +23,7 @@ var _ = Describe("ReconfigurableSink", func() {
 	})
 
 	It("returns the current level", func() {
-		Ω(sink.GetMinLevel()).Should(Equal(lager.INFO))
+		Expect(sink.GetMinLevel()).To(Equal(lager.INFO))
 	})
 
 	Context("when logging above the minimum log level", func() {
@@ -32,7 +32,7 @@ var _ = Describe("ReconfigurableSink", func() {
 		})
 
 		It("writes to the given sink", func() {
-			Ω(testSink.Buffer()).Should(gbytes.Say("hello world\n"))
+			Expect(testSink.Buffer()).To(gbytes.Say("hello world\n"))
 		})
 	})
 
@@ -42,7 +42,7 @@ var _ = Describe("ReconfigurableSink", func() {
 		})
 
 		It("does not write to the given writer", func() {
-			Ω(testSink.Buffer().Contents()).Should(BeEmpty())
+			Expect(testSink.Buffer().Contents()).To(BeEmpty())
 		})
 	})
 
@@ -53,11 +53,11 @@ var _ = Describe("ReconfigurableSink", func() {
 
 		It("writes logs above the new log level", func() {
 			sink.Log(lager.DEBUG, []byte("hello world"))
-			Ω(testSink.Buffer()).Should(gbytes.Say("hello world\n"))
+			Expect(testSink.Buffer()).To(gbytes.Say("hello world\n"))
 		})
 
 		It("returns the newly updated level", func() {
-			Ω(sink.GetMinLevel()).Should(Equal(lager.DEBUG))
+			Expect(sink.GetMinLevel()).To(Equal(lager.DEBUG))
 		})
 	})
 })

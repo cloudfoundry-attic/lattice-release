@@ -20,7 +20,7 @@ var _ = Describe("Cell API", func() {
 		value, err := models.ToJSON(cellPresence)
 
 		_, err = consulSession.SetPresence(shared.CellSchemaPath(cellPresence.CellID), value)
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 
 		receptorProcess = ginkgomon.Invoke(receptorRunner)
 	})
@@ -36,7 +36,7 @@ var _ = Describe("Cell API", func() {
 		BeforeEach(func() {
 			Eventually(func() []models.CellPresence {
 				cellPresences, err := bbs.Cells()
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 				return cellPresences
 			}).Should(HaveLen(1))
 
@@ -44,19 +44,19 @@ var _ = Describe("Cell API", func() {
 		})
 
 		It("responds without error", func() {
-			Ω(getErr).ShouldNot(HaveOccurred())
+			Expect(getErr).NotTo(HaveOccurred())
 		})
 
 		It("has the correct data from the bbs", func() {
 			cellPresences, err := bbs.Cells()
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			expectedResponses := make([]receptor.CellResponse, 0, 1)
 			for _, cellPresence := range cellPresences {
 				expectedResponses = append(expectedResponses, serialization.CellPresenceToCellResponse(cellPresence))
 			}
 
-			Ω(cellResponses).Should(ConsistOf(expectedResponses))
+			Expect(cellResponses).To(ConsistOf(expectedResponses))
 		})
 
 	})

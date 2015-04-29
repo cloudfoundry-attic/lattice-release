@@ -72,17 +72,17 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("calls DesireTask on the BBS with the correct task", func() {
-				Ω(fakeBBS.DesireTaskCallCount()).Should(Equal(1))
+				Expect(fakeBBS.DesireTaskCallCount()).To(Equal(1))
 				_, task := fakeBBS.DesireTaskArgsForCall(0)
-				Ω(task).Should(Equal(expectedTask))
+				Expect(task).To(Equal(expectedTask))
 			})
 
 			It("responds with 201 CREATED", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusCreated))
+				Expect(responseRecorder.Code).To(Equal(http.StatusCreated))
 			})
 
 			It("responds with an empty body", func() {
-				Ω(responseRecorder.Body.String()).Should(Equal(""))
+				Expect(responseRecorder.Body.String()).To(Equal(""))
 			})
 
 			Context("when env vars are specified", func() {
@@ -98,20 +98,21 @@ var _ = Describe("TaskHandler", func() {
 				})
 
 				It("passes them to the BBS", func() {
-					Ω(fakeBBS.DesireTaskCallCount()).Should(Equal(1))
+					Expect(fakeBBS.DesireTaskCallCount()).To(Equal(1))
 					_, task := fakeBBS.DesireTaskArgsForCall(0)
-					Ω(task.EnvironmentVariables).Should(Equal([]models.EnvironmentVariable{
+					Expect(task.EnvironmentVariables).To(Equal([]models.EnvironmentVariable{
 						{Name: "var1", Value: "val1"},
 						{Name: "var2", Value: "val2"},
 					}))
+
 				})
 			})
 
 			Context("when no env vars are specified", func() {
 				It("passes a nil slice to the BBS", func() {
-					Ω(fakeBBS.DesireTaskCallCount()).Should(Equal(1))
+					Expect(fakeBBS.DesireTaskCallCount()).To(Equal(1))
 					_, task := fakeBBS.DesireTaskArgsForCall(0)
-					Ω(task.EnvironmentVariables).Should(BeNil())
+					Expect(task.EnvironmentVariables).To(BeNil())
 				})
 			})
 		})
@@ -123,13 +124,13 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("calls DesireTask on the BBS with the correct task", func() {
-				Ω(fakeBBS.DesireTaskCallCount()).Should(Equal(1))
+				Expect(fakeBBS.DesireTaskCallCount()).To(Equal(1))
 				_, task := fakeBBS.DesireTaskArgsForCall(0)
-				Ω(task.TaskGuid).Should(Equal("task-guid-1"))
+				Expect(task.TaskGuid).To(Equal("task-guid-1"))
 			})
 
 			It("responds with 500 INTERNAL ERROR", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusInternalServerError))
+				Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
 			})
 
 			It("responds with a relevant error message", func() {
@@ -138,7 +139,7 @@ var _ = Describe("TaskHandler", func() {
 					Message: "ka-boom",
 				})
 
-				Ω(responseRecorder.Body.String()).Should(Equal(string(expectedBody)))
+				Expect(responseRecorder.Body.String()).To(Equal(string(expectedBody)))
 			})
 		})
 
@@ -151,7 +152,7 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("responds with 400 BAD REQUEST", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusBadRequest))
+				Expect(responseRecorder.Code).To(Equal(http.StatusBadRequest))
 			})
 
 			It("responds with a relevant error message", func() {
@@ -159,7 +160,7 @@ var _ = Describe("TaskHandler", func() {
 					Type:    receptor.InvalidTask,
 					Message: validationError.Error(),
 				})
-				Ω(responseRecorder.Body.String()).Should(Equal(string(expectedBody)))
+				Expect(responseRecorder.Body.String()).To(Equal(string(expectedBody)))
 			})
 		})
 
@@ -171,11 +172,11 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("does not call DesireTask on the BBS", func() {
-				Ω(fakeBBS.DesireTaskCallCount()).Should(Equal(0))
+				Expect(fakeBBS.DesireTaskCallCount()).To(Equal(0))
 			})
 
 			It("responds with 400 BAD REQUEST", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusBadRequest))
+				Expect(responseRecorder.Code).To(Equal(http.StatusBadRequest))
 			})
 
 			It("responds with a relevant error message", func() {
@@ -184,7 +185,7 @@ var _ = Describe("TaskHandler", func() {
 					Type:    receptor.InvalidJSON,
 					Message: err.Error(),
 				})
-				Ω(responseRecorder.Body.String()).Should(Equal(string(expectedBody)))
+				Expect(responseRecorder.Body.String()).To(Equal(string(expectedBody)))
 			})
 		})
 	})
@@ -197,7 +198,7 @@ var _ = Describe("TaskHandler", func() {
 
 			It("responds with an error", func() {
 				handler.GetAll(responseRecorder, newTestRequest(""))
-				Ω(responseRecorder.Code).Should(Equal(http.StatusInternalServerError))
+				Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
 			})
 		})
 
@@ -238,15 +239,15 @@ var _ = Describe("TaskHandler", func() {
 					var tasks []receptor.TaskResponse
 
 					request, err := http.NewRequest("", "http://example.com?domain=domain-1", nil)
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 
 					handler.GetAll(responseRecorder, request)
-					Ω(responseRecorder.Code).Should(Equal(http.StatusOK))
+					Expect(responseRecorder.Code).To(Equal(http.StatusOK))
 					err = json.Unmarshal(responseRecorder.Body.Bytes(), &tasks)
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 
 					_, actualDomain := fakeBBS.TasksByDomainArgsForCall(0)
-					Ω(actualDomain).Should(Equal("domain-1"))
+					Expect(actualDomain).To(Equal("domain-1"))
 					expectedTasks := []receptor.TaskResponse{
 						{
 							TaskGuid: domain1Task.TaskGuid,
@@ -255,7 +256,7 @@ var _ = Describe("TaskHandler", func() {
 							State:    receptor.TaskStatePending,
 						},
 					}
-					Ω(tasks).Should(Equal(expectedTasks))
+					Expect(tasks).To(Equal(expectedTasks))
 				})
 			})
 
@@ -264,9 +265,9 @@ var _ = Describe("TaskHandler", func() {
 					var tasks []receptor.TaskResponse
 
 					handler.GetAll(responseRecorder, newTestRequest(""))
-					Ω(responseRecorder.Code).Should(Equal(http.StatusOK))
+					Expect(responseRecorder.Code).To(Equal(http.StatusOK))
 					err := json.Unmarshal(responseRecorder.Body.Bytes(), &tasks)
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					expectedTasks := []receptor.TaskResponse{
 						{
 							TaskGuid: domain1Task.TaskGuid,
@@ -281,7 +282,7 @@ var _ = Describe("TaskHandler", func() {
 							State:    receptor.TaskStatePending,
 						},
 					}
-					Ω(tasks).Should(ConsistOf(expectedTasks))
+					Expect(tasks).To(ConsistOf(expectedTasks))
 				})
 			})
 
@@ -297,7 +298,7 @@ var _ = Describe("TaskHandler", func() {
 		JustBeforeEach(func() {
 			var err error
 			request, err = http.NewRequest("", fmt.Sprintf("http://example.com/?:task_guid=%s", taskGuid), nil)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 			handler.GetByGuid(responseRecorder, request)
 		})
 
@@ -307,23 +308,24 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("does not call TaskByGuid", func() {
-				Ω(fakeBBS.TaskByGuidCallCount()).Should(Equal(0))
+				Expect(fakeBBS.TaskByGuidCallCount()).To(Equal(0))
 			})
 
 			It("responds with a 400 Bad Request", func() {
 				handler.GetByGuid(responseRecorder, request)
-				Ω(responseRecorder.Code).Should(Equal(http.StatusBadRequest))
+				Expect(responseRecorder.Code).To(Equal(http.StatusBadRequest))
 			})
 
 			It("responds with a relevant error message", func() {
 				var taskError receptor.Error
 
 				err := json.Unmarshal(responseRecorder.Body.Bytes(), &taskError)
-				Ω(err).ShouldNot(HaveOccurred())
-				Ω(taskError).Should(Equal(receptor.Error{
+				Expect(err).NotTo(HaveOccurred())
+				Expect(taskError).To(Equal(receptor.Error{
 					Type:    receptor.InvalidRequest,
 					Message: "task_guid missing from request",
 				}))
+
 			})
 		})
 
@@ -333,18 +335,19 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("responds with a 404 NOT FOUND", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusNotFound))
+				Expect(responseRecorder.Code).To(Equal(http.StatusNotFound))
 			})
 
 			It("responds with a TaskNotFound error in the body", func() {
 				var taskError receptor.Error
 				err := json.Unmarshal(responseRecorder.Body.Bytes(), &taskError)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Ω(taskError).Should(Equal(receptor.Error{
+				Expect(taskError).To(Equal(receptor.Error{
 					Type:    receptor.TaskNotFound,
 					Message: "task with guid 'the-task-guid' not found",
 				}))
+
 			})
 		})
 
@@ -354,7 +357,7 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("responds with an error", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusInternalServerError))
+				Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
 			})
 		})
 
@@ -382,16 +385,16 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("retrieves the task by the given guid", func() {
-				Ω(fakeBBS.TaskByGuidArgsForCall(0)).Should(Equal("the-task-guid"))
+				Expect(fakeBBS.TaskByGuidArgsForCall(0)).To(Equal("the-task-guid"))
 			})
 
 			It("gets the task", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusOK))
+				Expect(responseRecorder.Code).To(Equal(http.StatusOK))
 
 				var actualTask receptor.TaskResponse
 				err := json.Unmarshal(responseRecorder.Body.Bytes(), &actualTask)
-				Ω(err).ShouldNot(HaveOccurred())
-				Ω(expectedTask).Should(Equal(actualTask))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(expectedTask).To(Equal(actualTask))
 			})
 		})
 	})
@@ -401,18 +404,18 @@ var _ = Describe("TaskHandler", func() {
 			BeforeEach(func() {
 				var err error
 				request, err = http.NewRequest("", "http://example.com?:task_guid=the-task-guid", nil)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 				fakeBBS.ResolvingTaskReturns(errors.New("Failed to resolve task"))
 			})
 
 			It("responds with an error", func() {
 				handler.Delete(responseRecorder, request)
-				Ω(responseRecorder.Code).Should(Equal(http.StatusInternalServerError))
+				Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
 			})
 
 			It("does not try to resolve the task", func() {
 				handler.Delete(responseRecorder, request)
-				Ω(fakeBBS.ResolveTaskCallCount()).Should(BeZero())
+				Expect(fakeBBS.ResolveTaskCallCount()).To(BeZero())
 			})
 		})
 
@@ -420,13 +423,13 @@ var _ = Describe("TaskHandler", func() {
 			BeforeEach(func() {
 				var err error
 				request, err = http.NewRequest("", "http://example.com?:task_guid=the-task-guid", nil)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 				fakeBBS.ResolveTaskReturns(errors.New("Failed to resolve task"))
 			})
 
 			It("responds with an error", func() {
 				handler.Delete(responseRecorder, request)
-				Ω(responseRecorder.Code).Should(Equal(http.StatusInternalServerError))
+				Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
 			})
 		})
 	})
@@ -435,7 +438,7 @@ var _ = Describe("TaskHandler", func() {
 		BeforeEach(func() {
 			var err error
 			request, err = http.NewRequest("", "http://example.com?:task_guid=the-task-guid", nil)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		JustBeforeEach(func() {
@@ -448,18 +451,19 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("responds with a 404 NOT FOUND", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusNotFound))
+				Expect(responseRecorder.Code).To(Equal(http.StatusNotFound))
 			})
 
 			It("responds with a TaskNotFound error in the body", func() {
 				var taskError receptor.Error
 				err := json.Unmarshal(responseRecorder.Body.Bytes(), &taskError)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Ω(taskError).Should(Equal(receptor.Error{
+				Expect(taskError).To(Equal(receptor.Error{
 					Type:    receptor.TaskNotFound,
 					Message: "task with guid 'the-task-guid' not found",
 				}))
+
 			})
 		})
 
@@ -469,7 +473,7 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("responds with an error", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusInternalServerError))
+				Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
 			})
 		})
 
@@ -479,7 +483,7 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("responds with a 200", func() {
-				Ω(responseRecorder.Code).Should(Equal(http.StatusOK))
+				Expect(responseRecorder.Code).To(Equal(http.StatusOK))
 			})
 		})
 	})

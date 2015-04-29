@@ -30,7 +30,7 @@ var _ = Describe("CellPresence Serialization", func() {
 			}
 
 			actualResponse := serialization.CellPresenceToCellResponse(cellPresence)
-			Ω(actualResponse).Should(Equal(expectedResponse))
+			Expect(actualResponse).To(Equal(expectedResponse))
 		})
 	})
 })

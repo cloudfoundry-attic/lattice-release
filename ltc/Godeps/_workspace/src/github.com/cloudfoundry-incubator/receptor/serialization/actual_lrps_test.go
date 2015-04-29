@@ -68,7 +68,7 @@ var _ = Describe("ActualLRP Serialization", func() {
 			}
 
 			actualResponse := serialization.ActualLRPToResponse(actualLRP, true)
-			Ω(actualResponse).Should(Equal(expectedResponse))
+			Expect(actualResponse).To(Equal(expectedResponse))
 		})
 
 		It("maps model states to receptor states", func() {
@@ -81,11 +81,11 @@ var _ = Describe("ActualLRP Serialization", func() {
 
 			for modelState, jsonState := range expectedStateMap {
 				actualLRP.State = modelState
-				Ω(serialization.ActualLRPToResponse(actualLRP, false).State).Should(Equal(jsonState))
+				Expect(serialization.ActualLRPToResponse(actualLRP, false).State).To(Equal(jsonState))
 			}
 
 			actualLRP.State = ""
-			Ω(serialization.ActualLRPToResponse(actualLRP, false).State).Should(Equal(receptor.ActualLRPStateInvalid))
+			Expect(serialization.ActualLRPToResponse(actualLRP, false).State).To(Equal(receptor.ActualLRPStateInvalid))
 		})
 
 		Context("when there is placement error", func() {
@@ -96,7 +96,7 @@ var _ = Describe("ActualLRP Serialization", func() {
 
 			It("includes the placement error", func() {
 				actualResponse := serialization.ActualLRPToResponse(actualLRP, false)
-				Ω(actualResponse.PlacementError).Should(Equal(diego_errors.INSUFFICIENT_RESOURCES_MESSAGE))
+				Expect(actualResponse.PlacementError).To(Equal(diego_errors.INSUFFICIENT_RESOURCES_MESSAGE))
 			})
 		})
 
@@ -108,7 +108,7 @@ var _ = Describe("ActualLRP Serialization", func() {
 
 			It("includes the placement error", func() {
 				actualResponse := serialization.ActualLRPToResponse(actualLRP, false)
-				Ω(actualResponse.CrashReason).Should(Equal("crashed"))
+				Expect(actualResponse.CrashReason).To(Equal("crashed"))
 			})
 		})
 

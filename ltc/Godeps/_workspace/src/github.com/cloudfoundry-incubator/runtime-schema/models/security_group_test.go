@@ -33,8 +33,8 @@ var _ = Describe("SecurityGroupRule", func() {
 	Describe("To JSON", func() {
 		It("should JSONify a rule", func() {
 			json, err := models.ToJSON(&rule)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(string(json)).Should(MatchJSON(rulePayload))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(json)).To(MatchJSON(rulePayload))
 		})
 
 		It("should JSONify icmp info", func() {
@@ -45,8 +45,8 @@ var _ = Describe("SecurityGroupRule", func() {
 			}
 
 			json, err := models.ToJSON(&icmpRule)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(string(json)).Should(MatchJSON(`{"protocol": "icmp", "destinations": ["1.2.3.4/16"], "icmp_info": {"type":0,"code":0}, "log":false }`))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(json)).To(MatchJSON(`{"protocol": "icmp", "destinations": ["1.2.3.4/16"], "icmp_info": {"type":0,"code":0}, "log":false }`))
 		})
 	})
 
@@ -97,7 +97,7 @@ var _ = Describe("SecurityGroupRule", func() {
 					})
 
 					It("passes validation and does not return an error", func() {
-						Ω(validationErr).ShouldNot(HaveOccurred())
+						Expect(validationErr).NotTo(HaveOccurred())
 					})
 				})
 
@@ -108,7 +108,7 @@ var _ = Describe("SecurityGroupRule", func() {
 					})
 
 					It("returns an error", func() {
-						Ω(validationErr).Should(MatchError(ContainSubstring("ports")))
+						Expect(validationErr).To(MatchError(ContainSubstring("ports")))
 					})
 				})
 
@@ -119,7 +119,7 @@ var _ = Describe("SecurityGroupRule", func() {
 					})
 
 					It("returns an error", func() {
-						Ω(validationErr).Should(MatchError(ContainSubstring("ports")))
+						Expect(validationErr).To(MatchError(ContainSubstring("ports")))
 					})
 				})
 
@@ -133,7 +133,7 @@ var _ = Describe("SecurityGroupRule", func() {
 					})
 
 					It("passes validation and does not return an error", func() {
-						Ω(validationErr).ShouldNot(HaveOccurred())
+						Expect(validationErr).NotTo(HaveOccurred())
 					})
 				})
 
@@ -144,7 +144,7 @@ var _ = Describe("SecurityGroupRule", func() {
 					})
 
 					It("returns an error", func() {
-						Ω(validationErr).Should(MatchError(ContainSubstring("port_range")))
+						Expect(validationErr).To(MatchError(ContainSubstring("port_range")))
 					})
 				})
 			})
@@ -156,7 +156,7 @@ var _ = Describe("SecurityGroupRule", func() {
 				})
 
 				It("returns an error", func() {
-					Ω(validationErr).Should(MatchError(ContainSubstring("Invalid: ports and port_range provided")))
+					Expect(validationErr).To(MatchError(ContainSubstring("Invalid: ports and port_range provided")))
 				})
 			})
 
@@ -167,7 +167,7 @@ var _ = Describe("SecurityGroupRule", func() {
 				})
 
 				It("returns an error", func() {
-					Ω(validationErr).Should(MatchError(ContainSubstring("Missing required field: ports or port_range")))
+					Expect(validationErr).To(MatchError(ContainSubstring("Missing required field: ports or port_range")))
 				})
 			})
 		}
@@ -180,7 +180,7 @@ var _ = Describe("SecurityGroupRule", func() {
 					})
 
 					It("passes validation and does not return an error", func() {
-						Ω(validationErr).ShouldNot(HaveOccurred())
+						Expect(validationErr).NotTo(HaveOccurred())
 					})
 				})
 
@@ -190,7 +190,7 @@ var _ = Describe("SecurityGroupRule", func() {
 					})
 
 					It("returns an error", func() {
-						Ω(validationErr).Should(MatchError(ContainSubstring("destination")))
+						Expect(validationErr).To(MatchError(ContainSubstring("destination")))
 					})
 				})
 			})
@@ -204,7 +204,7 @@ var _ = Describe("SecurityGroupRule", func() {
 				})
 
 				It("fails", func() {
-					Ω(validationErr).Should(MatchError(ContainSubstring("port_range")))
+					Expect(validationErr).To(MatchError(ContainSubstring("port_range")))
 				})
 			})
 
@@ -215,7 +215,7 @@ var _ = Describe("SecurityGroupRule", func() {
 				})
 
 				It("fails", func() {
-					Ω(validationErr).Should(MatchError(ContainSubstring("ports")))
+					Expect(validationErr).To(MatchError(ContainSubstring("ports")))
 				})
 			})
 		}
@@ -226,7 +226,7 @@ var _ = Describe("SecurityGroupRule", func() {
 					icmpInfo = &models.ICMPInfo{}
 				})
 				It("fails", func() {
-					Ω(validationErr).Should(MatchError(ContainSubstring("icmp_info")))
+					Expect(validationErr).To(MatchError(ContainSubstring("icmp_info")))
 				})
 			})
 		}
@@ -238,7 +238,7 @@ var _ = Describe("SecurityGroupRule", func() {
 				})
 
 				It("succeeds", func() {
-					Ω(validationErr).ShouldNot(HaveOccurred())
+					Expect(validationErr).NotTo(HaveOccurred())
 				})
 			})
 		}
@@ -250,7 +250,7 @@ var _ = Describe("SecurityGroupRule", func() {
 				})
 
 				It("fails", func() {
-					Ω(validationErr).Should(MatchError(ContainSubstring("log")))
+					Expect(validationErr).To(MatchError(ContainSubstring("log")))
 				})
 			})
 		}
@@ -266,7 +266,7 @@ var _ = Describe("SecurityGroupRule", func() {
 				})
 
 				It("passes validation and does not return an error", func() {
-					Ω(validationErr).ShouldNot(HaveOccurred())
+					Expect(validationErr).NotTo(HaveOccurred())
 				})
 			})
 
@@ -276,7 +276,7 @@ var _ = Describe("SecurityGroupRule", func() {
 				})
 
 				It("passes validation and does not return an error", func() {
-					Ω(validationErr).ShouldNot(HaveOccurred())
+					Expect(validationErr).NotTo(HaveOccurred())
 				})
 
 				Context("and the range is not valid", func() {
@@ -285,7 +285,7 @@ var _ = Describe("SecurityGroupRule", func() {
 					})
 
 					It("fails", func() {
-						Ω(validationErr).Should(MatchError(ContainSubstring("destination")))
+						Expect(validationErr).To(MatchError(ContainSubstring("destination")))
 					})
 				})
 			})
@@ -296,7 +296,7 @@ var _ = Describe("SecurityGroupRule", func() {
 				})
 
 				It("passes validation and does not return an error", func() {
-					Ω(validationErr).ShouldNot(HaveOccurred())
+					Expect(validationErr).NotTo(HaveOccurred())
 				})
 			})
 
@@ -306,7 +306,7 @@ var _ = Describe("SecurityGroupRule", func() {
 				})
 
 				It("fails", func() {
-					Ω(validationErr).Should(MatchError(ContainSubstring("destination")))
+					Expect(validationErr).To(MatchError(ContainSubstring("destination")))
 				})
 			})
 		})
@@ -352,7 +352,7 @@ var _ = Describe("SecurityGroupRule", func() {
 					})
 
 					It("fails", func() {
-						Ω(validationErr).Should(HaveOccurred())
+						Expect(validationErr).To(HaveOccurred())
 					})
 				})
 			})
@@ -374,7 +374,7 @@ var _ = Describe("SecurityGroupRule", func() {
 				})
 
 				It("returns an error", func() {
-					Ω(validationErr).Should(MatchError(ContainSubstring("protocol")))
+					Expect(validationErr).To(MatchError(ContainSubstring("protocol")))
 				})
 			})
 		})
@@ -387,8 +387,8 @@ var _ = Describe("SecurityGroupRule", func() {
 			})
 
 			It("aggregates validation errors", func() {
-				Ω(validationErr).Should(MatchError(ContainSubstring("port_range")))
-				Ω(validationErr).Should(MatchError(ContainSubstring("destination")))
+				Expect(validationErr).To(MatchError(ContainSubstring("port_range")))
+				Expect(validationErr).To(MatchError(ContainSubstring("destination")))
 			})
 		})
 	})

@@ -85,8 +85,8 @@ var _ = Describe("LRPStartRequest", func() {
 	Describe("ToJSON", func() {
 		It("should JSONify", func() {
 			jsonPayload, err := models.ToJSON(&lrpStart)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(string(jsonPayload)).Should(MatchJSON(lrpStartPayload))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(jsonPayload)).To(MatchJSON(lrpStartPayload))
 		})
 	})
 
@@ -100,8 +100,8 @@ var _ = Describe("LRPStartRequest", func() {
 		})
 
 		It("returns a LRP with correct fields", func() {
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(decodedLRPStartRequest).Should(Equal(&lrpStart))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(decodedLRPStartRequest).To(Equal(&lrpStart))
 		})
 
 		Context("with an invalid payload", func() {
@@ -110,7 +110,7 @@ var _ = Describe("LRPStartRequest", func() {
 			})
 
 			It("returns the error", func() {
-				Ω(err).Should(HaveOccurred())
+				Expect(err).To(HaveOccurred())
 			})
 		})
 
@@ -146,8 +146,8 @@ var _ = Describe("LRPStartRequest", func() {
 			})
 
 			It("returns a validation error", func() {
-				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(ContainElement(models.ErrInvalidField{"process_guid"}))
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(ContainElement(models.ErrInvalidField{"process_guid"}))
 			})
 		})
 
@@ -183,8 +183,8 @@ var _ = Describe("LRPStartRequest", func() {
 			})
 
 			It("returns a validation error", func() {
-				Ω(err).Should(HaveOccurred())
-				Ω(err).Should(ContainElement(models.ErrInvalidField{"indices"}))
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(ContainElement(models.ErrInvalidField{"indices"}))
 			})
 		})
 
@@ -221,7 +221,7 @@ var _ = Describe("LRPStartRequest", func() {
 			})
 
 			It("returns a validation error", func() {
-				Ω(err).Should(BeAssignableToTypeOf(&json.UnmarshalTypeError{}))
+				Expect(err).To(BeAssignableToTypeOf(&json.UnmarshalTypeError{}))
 			})
 		})
 

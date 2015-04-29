@@ -13,15 +13,15 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/cf_http",
-			"Rev": "c89ab7949e78943b7c3c3583975e85f2a0b4e5c3"
+			"Rev": "ff7e3614c359812c9903a1e611619cd1f3dd4d97"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/receptor",
-			"Rev": "ff21b689ba421d236acb3438d03bd04ee3f66e75"
+			"Rev": "ab1f941793cfeb689b435963344ecd59554f6a28"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "4dbaab28af730aa4c9b3384eefc79c0672d9878b"
+			"Rev": "e758a68ebb2b24d1d95c70bcf8ff969321180e40"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
@@ -206,15 +206,15 @@
 		},
 		{
 			"ImportPath": "github.com/pivotal-golang/bytefmt",
-			"Rev": "6aed4ea8cc487b9ce9dde32d7ebc8be7c8d5a66c"
+			"Rev": "eb6a478daea5cd564c230719240761a1a2ccc713"
 		},
 		{
 			"ImportPath": "github.com/pivotal-golang/clock",
-			"Rev": "5a6429d4274a895e93d3db8bb6addcba4c9a84eb"
+			"Rev": "270608bba0223b4ee5e0ac06f85e7964378f57a3"
 		},
 		{
 			"ImportPath": "github.com/pivotal-golang/lager",
-			"Rev": "09a71f6eb2dcc1c2335e37ceb78a91c6f618d561"
+			"Rev": "c88fa6d6c4d2f8a21a4599785211e41777750d34"
 		},
 		{
 			"ImportPath": "github.com/tedsuo/rata",

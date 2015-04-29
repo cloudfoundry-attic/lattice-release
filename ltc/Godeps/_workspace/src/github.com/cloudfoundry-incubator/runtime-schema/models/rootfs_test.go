@@ -10,7 +10,7 @@ import (
 var _ = Describe("Rootfs", func() {
 	Describe("PreloadedRootFS", func() {
 		It("generates the correct preloaded rootfs URL for the stack", func() {
-			Ω(models.PreloadedRootFS("bluth-cid64")).Should(Equal("preloaded:bluth-cid64"))
+			Expect(models.PreloadedRootFS("bluth-cid64")).To(Equal("preloaded:bluth-cid64"))
 		})
 	})
 })

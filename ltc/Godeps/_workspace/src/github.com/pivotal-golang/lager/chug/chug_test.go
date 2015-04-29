@@ -40,8 +40,8 @@ var _ = Describe("Chug", func() {
 			logger.Info("again", data)
 
 			entry := <-stream
-			Ω(entry.IsLager).Should(BeTrue())
-			Ω(entry.Log).Should(MatchLogEntry(LogEntry{
+			Expect(entry.IsLager).To(BeTrue())
+			Expect(entry.Log).To(MatchLogEntry(LogEntry{
 				LogLevel: lager.DEBUG,
 				Source:   "chug-test",
 				Message:  "chug-test.chug",
@@ -49,32 +49,34 @@ var _ = Describe("Chug", func() {
 			}))
 
 			entry = <-stream
-			Ω(entry.IsLager).Should(BeTrue())
-			Ω(entry.Log).Should(MatchLogEntry(LogEntry{
+			Expect(entry.IsLager).To(BeTrue())
+			Expect(entry.Log).To(MatchLogEntry(LogEntry{
 				LogLevel: lager.INFO,
 				Source:   "chug-test",
 				Message:  "chug-test.again",
 				Data:     data,
 			}))
+
 		})
 
 		It("should parse the timestamp", func() {
 			logger.Debug("chug")
 			entry := <-stream
-			Ω(entry.Log.Timestamp).Should(BeTemporally("~", time.Now(), 10*time.Millisecond))
+			Expect(entry.Log.Timestamp).To(BeTemporally("~", time.Now(), 10*time.Millisecond))
 		})
 
 		Context("when parsing an error message", func() {
 			It("should include the error", func() {
 				data := lager.Data{"some-float": 3.0, "some-string": "foo"}
 				logger.Error("chug", errors.New("some-error"), data)
-				Ω((<-stream).Log).Should(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
 					LogLevel: lager.ERROR,
 					Source:   "chug-test",
 					Message:  "chug-test.chug",
 					Error:    errors.New("some-error"),
 					Data:     lager.Data{"some-float": 3.0, "some-string": "foo"},
 				}))
+
 			})
 		})
 
@@ -82,13 +84,14 @@ var _ = Describe("Chug", func() {
 			It("should not take the error out of the data map", func() {
 				data := lager.Data{"some-float": 3.0, "some-string": "foo", "error": "some-error"}
 				logger.Info("chug", data)
-				Ω((<-stream).Log).Should(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.chug",
 					Error:    nil,
 					Data:     lager.Data{"some-float": 3.0, "some-string": "foo", "error": "some-error"},
 				}))
+
 			})
 		})
 
@@ -103,7 +106,7 @@ var _ = Describe("Chug", func() {
 				nestedSession = firstSession.Session("nested-session-2")
 				nestedSession.Info("modernify")
 
-				Ω((<-stream).Log).Should(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.first-session.encabulate",
@@ -111,7 +114,7 @@ var _ = Describe("Chug", func() {
 					Data:     lager.Data{},
 				}))
 
-				Ω((<-stream).Log).Should(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.first-session.nested-session-1.baconize",
@@ -119,7 +122,7 @@ var _ = Describe("Chug", func() {
 					Data:     lager.Data{},
 				}))
 
-				Ω((<-stream).Log).Should(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.first-session.remodulate",
@@ -127,7 +130,7 @@ var _ = Describe("Chug", func() {
 					Data:     lager.Data{},
 				}))
 
-				Ω((<-stream).Log).Should(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.first-session.nested-session-1.ergonomize",
@@ -135,13 +138,14 @@ var _ = Describe("Chug", func() {
 					Data:     lager.Data{},
 				}))
 
-				Ω((<-stream).Log).Should(MatchLogEntry(LogEntry{
+				Expect((<-stream).Log).To(MatchLogEntry(LogEntry{
 					LogLevel: lager.INFO,
 					Source:   "chug-test",
 					Message:  "chug-test.first-session.nested-session-2.modernify",
 					Session:  "1.2",
 					Data:     lager.Data{},
 				}))
+
 			})
 		})
 	})
@@ -159,15 +163,15 @@ var _ = Describe("Chug", func() {
 		})
 
 		It("should be a lager message", func() {
-			Ω(entry.IsLager).Should(BeTrue())
+			Expect(entry.IsLager).To(BeTrue())
 		})
 
 		It("should contain all the data in Raw", func() {
-			Ω(entry.Raw).Should(Equal(input))
+			Expect(entry.Raw).To(Equal(input))
 		})
 
 		It("should succesfully parse the lager message", func() {
-			Ω(entry.Log.Source).Should(Equal("chug-test"))
+			Expect(entry.Log.Source).To(Equal("chug-test"))
 		})
 	})
 
@@ -184,9 +188,9 @@ var _ = Describe("Chug", func() {
 
 		itReturnsRawData := func() {
 			It("returns raw data", func() {
-				Ω(entry.IsLager).Should(BeFalse())
-				Ω(entry.Log).Should(BeZero())
-				Ω(entry.Raw).Should(Equal(input))
+				Expect(entry.IsLager).To(BeFalse())
+				Expect(entry.Log).To(BeZero())
+				Expect(entry.Raw).To(Equal(input))
 			})
 		}
 

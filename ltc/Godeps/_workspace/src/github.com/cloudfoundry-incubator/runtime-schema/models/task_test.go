@@ -136,7 +136,7 @@ var _ = Describe("Task", func() {
 				}
 
 				err := task.Validate()
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 			})
 		})
 
@@ -152,8 +152,8 @@ var _ = Describe("Task", func() {
 				}
 
 				err := task.Validate()
-				Ω(err).Should(HaveOccurred())
-				Ω(err.Error()).Should(ContainSubstring("task_guid"))
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("task_guid"))
 			})
 		})
 
@@ -272,8 +272,8 @@ var _ = Describe("Task", func() {
 	Describe("Marshal", func() {
 		It("should JSONify", func() {
 			json, err := models.ToJSON(&task)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(string(json)).Should(MatchJSON(taskPayload))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(json)).To(MatchJSON(taskPayload))
 		})
 	})
 
@@ -281,16 +281,16 @@ var _ = Describe("Task", func() {
 		It("returns a Task with correct fields", func() {
 			decodedTask := &models.Task{}
 			err := models.FromJSON([]byte(taskPayload), decodedTask)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
-			Ω(decodedTask).Should(Equal(&task))
+			Expect(decodedTask).To(Equal(&task))
 		})
 
 		Context("with an invalid payload", func() {
 			It("returns the error", func() {
 				decodedTask := &models.Task{}
 				err := models.FromJSON([]byte("aliens lol"), decodedTask)
-				Ω(err).Should(HaveOccurred())
+				Expect(err).To(HaveOccurred())
 			})
 		})
 
@@ -319,8 +319,8 @@ var _ = Describe("Task", func() {
 				It("unmarshals", func() {
 					var actualTask models.Task
 					err := json.Unmarshal([]byte(taskJSON), &actualTask)
-					Ω(err).ShouldNot(HaveOccurred())
-					Ω(actualTask).Should(Equal(expectedTask))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(actualTask).To(Equal(expectedTask))
 				})
 			})
 
@@ -336,8 +336,8 @@ var _ = Describe("Task", func() {
 				It("unmarshals", func() {
 					var actualTask models.Task
 					err := json.Unmarshal([]byte(taskJSON), &actualTask)
-					Ω(err).ShouldNot(HaveOccurred())
-					Ω(actualTask).Should(Equal(expectedTask))
+					Expect(err).NotTo(HaveOccurred())
+					Expect(actualTask).To(Equal(expectedTask))
 				})
 			})
 		})

@@ -24,20 +24,20 @@ var _ = Describe("CfHttp", func() {
 	Describe("NewClient", func() {
 		It("returns an http client", func() {
 			client := cf_http.NewClient()
-			Ω(client.Timeout).Should(Equal(timeout))
+			Expect(client.Timeout).To(Equal(timeout))
 			transport := client.Transport.(*http.Transport)
-			Ω(transport.Dial).ShouldNot(BeNil())
-			Ω(transport.DisableKeepAlives).Should(BeFalse())
+			Expect(transport.Dial).NotTo(BeNil())
+			Expect(transport.DisableKeepAlives).To(BeFalse())
 		})
 	})
 
 	Describe("NewStreamingClient", func() {
 		It("returns an http client", func() {
 			client := cf_http.NewStreamingClient()
-			Ω(client.Timeout).Should(BeZero())
+			Expect(client.Timeout).To(BeZero())
 			transport := client.Transport.(*http.Transport)
-			Ω(transport.Dial).ShouldNot(BeNil())
-			Ω(transport.DisableKeepAlives).Should(BeFalse())
+			Expect(transport.Dial).NotTo(BeNil())
+			Expect(transport.DisableKeepAlives).To(BeFalse())
 		})
 	})
 })

@@ -6,7 +6,7 @@ Human readable byte formatter
 Example:
 
 ```go
-  bytefmt.ByteSize(100.5*bytefmt.MEGABYE) // returns "100.5M"
+  bytefmt.ByteSize(100.5*bytefmt.MEGABYTE) // returns "100.5M"
   bytefmt.ByteSize(uint64(1024)) // returns "1K"
 ```
 

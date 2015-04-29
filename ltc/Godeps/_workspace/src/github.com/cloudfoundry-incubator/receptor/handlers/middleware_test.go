@@ -39,13 +39,13 @@ var _ = Describe("Middleware", func() {
 			})
 
 			It("calls the wrapped handler", func() {
-				Ω(wrappedHandler.ServeHTTPCallCount()).Should(Equal(1))
+				Expect(wrappedHandler.ServeHTTPCallCount()).To(Equal(1))
 			})
 
 			It("sets the CORS response headers", func() {
 				headers := res.Header()
-				Ω(headers.Get("Access-Control-Allow-Origin")).Should(Equal(expectedOrigin))
-				Ω(headers.Get("Access-Control-Allow-Credentials")).Should(Equal("true"))
+				Expect(headers.Get("Access-Control-Allow-Origin")).To(Equal(expectedOrigin))
+				Expect(headers.Get("Access-Control-Allow-Credentials")).To(Equal("true"))
 			})
 		})
 
@@ -59,15 +59,15 @@ var _ = Describe("Middleware", func() {
 					})
 
 					It("calls the wrapped handler", func() {
-						Ω(wrappedHandler.ServeHTTPCallCount()).Should(Equal(1))
+						Expect(wrappedHandler.ServeHTTPCallCount()).To(Equal(1))
 					})
 
 					It("does not set the CORS response headers", func() {
 						_, isSet := res.Header()["Access-Control-Allow-Origin"]
-						Ω(isSet).Should(BeFalse())
+						Expect(isSet).To(BeFalse())
 
 						_, isSet = res.Header()["Access-Control-Allow-Credentials"]
-						Ω(isSet).Should(BeFalse())
+						Expect(isSet).To(BeFalse())
 					})
 				})
 			}
@@ -88,19 +88,19 @@ var _ = Describe("Middleware", func() {
 			})
 
 			It("does not call the wrapped handler", func() {
-				Ω(wrappedHandler.ServeHTTPCallCount()).Should(Equal(0))
+				Expect(wrappedHandler.ServeHTTPCallCount()).To(Equal(0))
 			})
 
 			It("responds with 200 OK", func() {
-				Ω(res.Code).Should(Equal(http.StatusOK))
+				Expect(res.Code).To(Equal(http.StatusOK))
 			})
 
 			It("sets the CORS preflight response headers", func() {
 				headers := res.Header()
-				Ω(headers.Get("Access-Control-Allow-Origin")).Should(Equal(expectedOrigin))
-				Ω(headers.Get("Access-Control-Allow-Credentials")).Should(Equal("true"))
-				Ω(headers.Get("Access-Control-Allow-Methods")).Should(Equal(expectedAllowedMethods))
-				Ω(headers.Get("Access-Control-Allow-Headers")).Should(Equal(expectedAllowedHeaders))
+				Expect(headers.Get("Access-Control-Allow-Origin")).To(Equal(expectedOrigin))
+				Expect(headers.Get("Access-Control-Allow-Credentials")).To(Equal("true"))
+				Expect(headers.Get("Access-Control-Allow-Methods")).To(Equal(expectedAllowedMethods))
+				Expect(headers.Get("Access-Control-Allow-Headers")).To(Equal(expectedAllowedHeaders))
 			})
 		})
 	})
@@ -126,10 +126,10 @@ var _ = Describe("Middleware", func() {
 			})
 
 			It("forwards it as the request's Authorization header", func() {
-				Ω(wrappedHandler.ServeHTTPCallCount()).Should(Equal(1))
+				Expect(wrappedHandler.ServeHTTPCallCount()).To(Equal(1))
 
 				_, wrappedReq := wrappedHandler.ServeHTTPArgsForCall(0)
-				Ω(wrappedReq.Header.Get("Authorization")).Should(Equal("some-auth"))
+				Expect(wrappedReq.Header.Get("Authorization")).To(Equal("some-auth"))
 			})
 		})
 
@@ -140,10 +140,10 @@ var _ = Describe("Middleware", func() {
 			})
 
 			It("does not clobber the Authorization header", func() {
-				Ω(wrappedHandler.ServeHTTPCallCount()).Should(Equal(1))
+				Expect(wrappedHandler.ServeHTTPCallCount()).To(Equal(1))
 
 				_, wrappedReq := wrappedHandler.ServeHTTPArgsForCall(0)
-				Ω(wrappedReq.Header.Get("Authorization")).Should(Equal("some-not-clobbered-auth"))
+				Expect(wrappedReq.Header.Get("Authorization")).To(Equal("some-not-clobbered-auth"))
 			})
 		})
 	})
@@ -163,7 +163,7 @@ var _ = Describe("Middleware", func() {
 			})
 
 			It("calls the wrapped handler", func() {
-				Ω(wrappedHandler.ServeHTTPCallCount()).Should(Equal(1))
+				Expect(wrappedHandler.ServeHTTPCallCount()).To(Equal(1))
 			})
 		})
 
@@ -173,7 +173,7 @@ var _ = Describe("Middleware", func() {
 			})
 
 			It("doesn't call the wrapped handler", func() {
-				Ω(wrappedHandler.ServeHTTPCallCount()).Should(Equal(0))
+				Expect(wrappedHandler.ServeHTTPCallCount()).To(Equal(0))
 			})
 		})
 
@@ -184,7 +184,7 @@ var _ = Describe("Middleware", func() {
 			})
 
 			It("returns 401 UNAUTHORIZED", func() {
-				Ω(res.Code).Should(Equal(http.StatusUnauthorized))
+				Expect(res.Code).To(Equal(http.StatusUnauthorized))
 			})
 
 			It("returns an unauthorized error response", func() {
@@ -192,11 +192,11 @@ var _ = Describe("Middleware", func() {
 					Type:    receptor.Unauthorized,
 					Message: http.StatusText(http.StatusUnauthorized),
 				})
-				Ω(res.Body.String()).Should(Equal(string(expectedBody)))
+				Expect(res.Body.String()).To(Equal(string(expectedBody)))
 			})
 
 			It("doesn't call the wrapped handler", func() {
-				Ω(wrappedHandler.ServeHTTPCallCount()).Should(Equal(0))
+				Expect(wrappedHandler.ServeHTTPCallCount()).To(Equal(0))
 			})
 		})
 	})

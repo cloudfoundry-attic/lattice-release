@@ -65,7 +65,7 @@ var _ = Describe("Task Serialization", func() {
 
 			for modelState, jsonState := range EXPECTED_STATE_MAP {
 				task.State = modelState
-				Ω(serialization.TaskToResponse(task).State).Should(Equal(jsonState))
+				Expect(serialization.TaskToResponse(task).State).To(Equal(jsonState))
 			}
 		})
 
@@ -109,7 +109,7 @@ var _ = Describe("Task Serialization", func() {
 				},
 			}
 
-			Ω(actualResponse).Should(Equal(expectedResponse))
+			Expect(actualResponse).To(Equal(expectedResponse))
 		})
 
 		Context("when the task has a CompletionCallbackURL", func() {
@@ -122,13 +122,13 @@ var _ = Describe("Task Serialization", func() {
 			})
 
 			It("serializes the completion callback URL", func() {
-				Ω(serialization.TaskToResponse(task).CompletionCallbackURL).Should(Equal("http://example.com/the-path"))
+				Expect(serialization.TaskToResponse(task).CompletionCallbackURL).To(Equal("http://example.com/the-path"))
 			})
 		})
 
 		Context("when the task doesn't have a CompletionCallbackURL", func() {
 			It("leaves the completion callback URL blank", func() {
-				Ω(serialization.TaskToResponse(task).CompletionCallbackURL).Should(Equal(""))
+				Expect(serialization.TaskToResponse(task).CompletionCallbackURL).To(Equal(""))
 			})
 		})
 	})
@@ -205,9 +205,9 @@ var _ = Describe("Task Serialization", func() {
 
 		It("translates the request into a task model, preserving attributes", func() {
 			actualTask, err := serialization.TaskFromRequest(request)
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
-			Ω(actualTask).Should(Equal(expectedTask))
+			Expect(actualTask).To(Equal(expectedTask))
 		})
 
 		Context("when the request contains a parseable completion_callback_url", func() {
@@ -217,13 +217,14 @@ var _ = Describe("Task Serialization", func() {
 
 			It("parses the URL", func() {
 				actualTask, err := serialization.TaskFromRequest(request)
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
-				Ω(actualTask.CompletionCallbackURL).Should(Equal(&url.URL{
+				Expect(actualTask.CompletionCallbackURL).To(Equal(&url.URL{
 					Scheme: "http",
 					Host:   "stager.service.discovery.thing",
 					Path:   "/endpoint",
 				}))
+
 			})
 		})
 
@@ -234,7 +235,7 @@ var _ = Describe("Task Serialization", func() {
 
 			It("errors", func() {
 				_, err := serialization.TaskFromRequest(request)
-				Ω(err).Should(HaveOccurred())
+				Expect(err).To(HaveOccurred())
 			})
 		})
 	})

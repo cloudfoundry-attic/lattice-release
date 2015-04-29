@@ -53,20 +53,20 @@ var _ = Describe("FakeClock", func() {
 		Context("when a timer is created", func() {
 			It("increments the watcher count", func() {
 				fakeClock.NewTimer(time.Second)
-				Ω(fakeClock.WatcherCount()).Should(Equal(1))
+				Expect(fakeClock.WatcherCount()).To(Equal(1))
 
 				fakeClock.NewTimer(2 * time.Second)
-				Ω(fakeClock.WatcherCount()).Should(Equal(2))
+				Expect(fakeClock.WatcherCount()).To(Equal(2))
 			})
 		})
 
 		Context("when a timer fires", func() {
 			It("increments the watcher count", func() {
 				fakeClock.NewTimer(time.Second)
-				Ω(fakeClock.WatcherCount()).Should(Equal(1))
+				Expect(fakeClock.WatcherCount()).To(Equal(1))
 
 				fakeClock.Increment(time.Second)
-				Ω(fakeClock.WatcherCount()).Should(Equal(0))
+				Expect(fakeClock.WatcherCount()).To(Equal(0))
 			})
 		})
 	})

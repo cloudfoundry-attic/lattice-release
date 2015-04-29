@@ -93,7 +93,7 @@ var _ = Describe("TaskWorker", func() {
 
 			var err error
 			callbackURL, err = url.Parse(fakeServer.URL() + "/the-callback/url")
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		AfterEach(func() {
@@ -112,14 +112,14 @@ var _ = Describe("TaskWorker", func() {
 
 		Context("when the task has a completion callback URL", func() {
 			It("marks the task as resolving", func() {
-				Ω(fakeBBS.ResolvingTaskCallCount()).Should(Equal(0))
+				Expect(fakeBBS.ResolvingTaskCallCount()).To(Equal(0))
 
 				simulateTaskCompleting()
 				statusCodes <- 200
 
 				Eventually(fakeBBS.ResolveTaskCallCount).Should(Equal(1))
 				_, actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
-				Ω(actualGuid).Should(Equal("the-task-guid"))
+				Expect(actualGuid).To(Equal("the-task-guid"))
 			})
 
 			It("processes tasks in parallel", func() {
@@ -158,7 +158,7 @@ var _ = Describe("TaskWorker", func() {
 
 						Eventually(fakeBBS.ResolveTaskCallCount).Should(Equal(1))
 						_, actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
-						Ω(actualGuid).Should(Equal("the-task-guid"))
+						Expect(actualGuid).To(Equal("the-task-guid"))
 					})
 				})
 
@@ -170,7 +170,7 @@ var _ = Describe("TaskWorker", func() {
 
 						Eventually(fakeBBS.ResolveTaskCallCount).Should(Equal(1))
 						_, actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
-						Ω(actualGuid).Should(Equal("the-task-guid"))
+						Expect(actualGuid).To(Equal("the-task-guid"))
 					})
 				})
 
@@ -182,7 +182,7 @@ var _ = Describe("TaskWorker", func() {
 
 						Eventually(fakeBBS.ResolveTaskCallCount).Should(Equal(1))
 						_, actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
-						Ω(actualGuid).Should(Equal("the-task-guid"))
+						Expect(actualGuid).To(Equal("the-task-guid"))
 					})
 				})
 
@@ -205,7 +205,7 @@ var _ = Describe("TaskWorker", func() {
 
 						Eventually(fakeBBS.ResolveTaskCallCount, 0.25).Should(Equal(1))
 						_, actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
-						Ω(actualGuid).Should(Equal("the-task-guid"))
+						Expect(actualGuid).To(Equal("the-task-guid"))
 					})
 
 					Context("when the request fails every time", func() {
@@ -271,7 +271,7 @@ var _ = Describe("TaskWorker", func() {
 							Eventually(fakeBBS.ResolveTaskCallCount, 0.25).Should(Equal(1))
 
 							_, resolvedTaskGuid := fakeBBS.ResolveTaskArgsForCall(0)
-							Ω(resolvedTaskGuid).Should(Equal("the-task-guid"))
+							Expect(resolvedTaskGuid).To(Equal("the-task-guid"))
 						})
 					})
 				})

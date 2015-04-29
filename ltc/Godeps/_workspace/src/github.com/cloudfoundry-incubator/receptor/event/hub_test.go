@@ -37,7 +37,7 @@ var _ = Describe("Hub", func() {
 			BeforeEach(func() {
 				var err error
 				eventSource, err = hub.Subscribe()
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
 				counts = make(chan int, 1)
 				cbCounts := counts
@@ -55,7 +55,7 @@ var _ = Describe("Hub", func() {
 					Eventually(counts).Should(Receive())
 
 					_, err := hub.Subscribe()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 				})
 
 				It("calls the callback with the new subscriber count", func() {
@@ -68,7 +68,7 @@ var _ = Describe("Hub", func() {
 					Eventually(counts).Should(Receive())
 
 					err := eventSource.Close()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 
 					// emit event so hub sees closed source and drops subscription
 					hub.Emit(fakeEvent{})
@@ -84,7 +84,7 @@ var _ = Describe("Hub", func() {
 					Eventually(counts).Should(Receive())
 
 					err := hub.Close()
-					Ω(err).ShouldNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 				})
 
 				It("calls the callback with a zero count", func() {
@@ -96,22 +96,22 @@ var _ = Describe("Hub", func() {
 
 	It("fans-out events emitted to it to all subscribers", func() {
 		source1, err := hub.Subscribe()
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 		source2, err := hub.Subscribe()
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 
 		hub.Emit(fakeEvent{Token: 1})
-		Ω(source1.Next()).Should(Equal(fakeEvent{Token: 1}))
-		Ω(source2.Next()).Should(Equal(fakeEvent{Token: 1}))
+		Expect(source1.Next()).To(Equal(fakeEvent{Token: 1}))
+		Expect(source2.Next()).To(Equal(fakeEvent{Token: 1}))
 
 		hub.Emit(fakeEvent{Token: 2})
-		Ω(source1.Next()).Should(Equal(fakeEvent{Token: 2}))
-		Ω(source2.Next()).Should(Equal(fakeEvent{Token: 2}))
+		Expect(source1.Next()).To(Equal(fakeEvent{Token: 2}))
+		Expect(source2.Next()).To(Equal(fakeEvent{Token: 2}))
 	})
 
 	It("closes slow consumers after MAX_PENDING_SUBSCRIBER_EVENTS missed events", func() {
 		slowConsumer, err := hub.Subscribe()
-		Ω(err).ShouldNot(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred())
 
 		By("filling the 'buffer'")
 		for eventToken := 0; eventToken < event.MAX_PENDING_SUBSCRIBER_EVENTS; eventToken++ {
@@ -120,12 +120,12 @@ var _ = Describe("Hub", func() {
 
 		By("reading 2 events off")
 		ev, err := slowConsumer.Next()
-		Ω(err).ShouldNot(HaveOccurred())
-		Ω(ev).Should(Equal(fakeEvent{Token: 0}))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(ev).To(Equal(fakeEvent{Token: 0}))
 
 		ev, err = slowConsumer.Next()
-		Ω(err).ShouldNot(HaveOccurred())
-		Ω(ev).Should(Equal(fakeEvent{Token: 1}))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(ev).To(Equal(fakeEvent{Token: 1}))
 
 		By("putting 3 more events on, 'overflowing the buffer' and making the consumer 'slow'")
 		for eventToken := event.MAX_PENDING_SUBSCRIBER_EVENTS; eventToken < event.MAX_PENDING_SUBSCRIBER_EVENTS+3; eventToken++ {
@@ -135,46 +135,46 @@ var _ = Describe("Hub", func() {
 		By("reading off all the 'buffered' events")
 		for eventToken := 2; eventToken < event.MAX_PENDING_SUBSCRIBER_EVENTS+2; eventToken++ {
 			ev, err = slowConsumer.Next()
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(ev).Should(Equal(fakeEvent{Token: eventToken}))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ev).To(Equal(fakeEvent{Token: eventToken}))
 		}
 
 		By("trying to read more out of the source")
 		_, err = slowConsumer.Next()
-		Ω(err).Should(Equal(receptor.ErrReadFromClosedSource))
+		Expect(err).To(Equal(receptor.ErrReadFromClosedSource))
 	})
 
 	Describe("closing an event source", func() {
 		It("prevents current events from propagating to the source", func() {
 			source, err := hub.Subscribe()
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			hub.Emit(fakeEvent{Token: 1})
-			Ω(source.Next()).Should(Equal(fakeEvent{Token: 1}))
+			Expect(source.Next()).To(Equal(fakeEvent{Token: 1}))
 
 			err = source.Close()
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			_, err = source.Next()
-			Ω(err).Should(Equal(receptor.ErrReadFromClosedSource))
+			Expect(err).To(Equal(receptor.ErrReadFromClosedSource))
 		})
 
 		It("prevents future events from propagating to the source", func() {
 			source, err := hub.Subscribe()
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			err = source.Close()
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			hub.Emit(fakeEvent{Token: 1})
 
 			_, err = source.Next()
-			Ω(err).Should(Equal(receptor.ErrReadFromClosedSource))
+			Expect(err).To(Equal(receptor.ErrReadFromClosedSource))
 		})
 
 		It("immediately removes the closed event source from its subscribers", func() {
 			source, err := hub.Subscribe()
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			counts := make(chan int, 1)
 
@@ -185,7 +185,7 @@ var _ = Describe("Hub", func() {
 			Eventually(counts).Should(Receive(Equal(1)))
 
 			err = source.Close()
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(counts).Should(Receive(BeZero()))
 
@@ -194,13 +194,13 @@ var _ = Describe("Hub", func() {
 		Context("when the source is already closed", func() {
 			It("errors", func() {
 				source, err := hub.Subscribe()
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
 				err = source.Close()
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
 				err = source.Close()
-				Ω(err).Should(Equal(receptor.ErrSourceAlreadyClosed))
+				Expect(err).To(Equal(receptor.ErrSourceAlreadyClosed))
 			})
 		})
 	})
@@ -208,32 +208,32 @@ var _ = Describe("Hub", func() {
 	Describe("closing the hub", func() {
 		It("all subscribers receive errors", func() {
 			source, err := hub.Subscribe()
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			err = hub.Close()
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			_, err = source.Next()
-			Ω(err).Should(Equal(receptor.ErrReadFromClosedSource))
+			Expect(err).To(Equal(receptor.ErrReadFromClosedSource))
 		})
 
 		It("does not accept new subscribers", func() {
 			err := hub.Close()
-			Ω(err).ShouldNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 			_, err = hub.Subscribe()
-			Ω(err).Should(Equal(receptor.ErrSubscribedToClosedHub))
+			Expect(err).To(Equal(receptor.ErrSubscribedToClosedHub))
 		})
 
 		Context("when the hub is already closed", func() {
 			BeforeEach(func() {
 				err := hub.Close()
-				Ω(err).ShouldNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 			})
 
 			It("errors", func() {
 				err := hub.Close()
-				Ω(err).Should(Equal(receptor.ErrHubAlreadyClosed))
+				Expect(err).To(Equal(receptor.ErrHubAlreadyClosed))
 			})
 		})
 	})
