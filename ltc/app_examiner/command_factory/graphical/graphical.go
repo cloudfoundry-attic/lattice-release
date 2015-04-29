@@ -78,7 +78,7 @@ func PrintDistributionChart(appExaminer app_examiner.AppExaminer, rate time.Dura
 	}
 	bg.IsDisplay = false
 	bg.Data[0] = []int{0}
-	bg.DataLabels = []string{"1[M]"}
+	bg.DataLabels = []string{"Missing"}
 	bg.Width = termui.TermWidth() - 10
 	bg.Height = termui.TermHeight() - 5
 	bg.BarColor[0] = termui.ColorGreen
@@ -87,7 +87,7 @@ func PrintDistributionChart(appExaminer app_examiner.AppExaminer, rate time.Dura
 	bg.NumColor[1] = termui.ColorRed
 	bg.TextColor = termui.ColorWhite
 	bg.Border.LabelFgColor = termui.ColorWhite
-	bg.Border.Label = "X-Axis: I[R/T]=CellIndex[Total Instance/Running Instance];[M]=Missing;[E]=Empty"
+	bg.Border.Label = "[X-Axis: Cells; Y-Axis: Instances]"
 	bg.BarWidth = 10
 	bg.BarGap = 1
 	bg.ShowScale = true
@@ -155,10 +155,10 @@ func getProgressBars(appExaminer app_examiner.AppExaminer, bg *termui.MBarChart)
 	for i, cell := range cells {
 
 		if cell.Missing {
-			barLabel = fmt.Sprintf("%d[M]", i+1)
+			barLabel = fmt.Sprintf("Missing")
 
 		} else if cell.RunningInstances == 0 && cell.ClaimedInstances == 0 && !cell.Missing {
-			barLabel = fmt.Sprintf("%d[E]", i+1)
+			barLabel = fmt.Sprintf("Empty")
 			barIntList[0] = append(barIntList[0], 0)
 			barIntList[1] = append(barIntList[1], 0)
 		} else {
@@ -172,7 +172,7 @@ func getProgressBars(appExaminer app_examiner.AppExaminer, bg *termui.MBarChart)
 			total := cell.RunningInstances + cell.ClaimedInstances
 			barIntList[0] = append(barIntList[0], cell.RunningInstances)
 			barIntList[1] = append(barIntList[1], cell.ClaimedInstances)
-			barLabel = fmt.Sprintf("%d[%d/%d]", cellIndex, cell.RunningInstances, total)
+			barLabel = fmt.Sprintf("cell-%d", cellIndex)
 			if total > maxTotal {
 				maxTotal = total
 			}
