@@ -22,8 +22,7 @@ import (
 )
 
 const (
-	TimestampDisplayLayout = "2006-01-02 15:04:05 (MST)"
-	minColumnWidth         = 13
+	minColumnWidth = 13
 )
 
 var (
@@ -257,14 +256,14 @@ func (factory *AppExaminerCommandFactory) printInstanceSummary(actualInstances [
 	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)
 
 	printHorizontalRule(w, "=")
-	fmt.Fprintf(w, fmt.Sprintf("%s\t%s\t%s\t%s\n", "Instance", colors.NoColor("State")+"    ", "Crashes", "Since"))
+	fmt.Fprintf(w, fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n", "Instance", colors.NoColor("State")+"    ", "Crashes", "CPU", "Memory", "Since"))
 	printHorizontalRule(w, "-")
 
 	for _, instance := range actualInstances {
 		if instance.PlacementError == "" && instance.State != "CRASHED" {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", strconv.Itoa(instance.Index), presentation.PadAndColorInstanceState(instance), strconv.Itoa(instance.CrashCount), fmt.Sprint(time.Unix(0, instance.Since).Format(TimestampDisplayLayout)))
+			fmt.Fprintf(w, "%s\t%s\t%s\t%.2f%%\t%s\t%s\n", strconv.Itoa(instance.Index), presentation.PadAndColorInstanceState(instance), strconv.Itoa(instance.CrashCount), (instance.Metrics.CpuPercentage), (bytefmt.ByteSize(instance.Metrics.MemoryBytes)), fmt.Sprint(time.Since(time.Unix(0, instance.Since)).String()))
 		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", strconv.Itoa(instance.Index), presentation.PadAndColorInstanceState(instance), strconv.Itoa(instance.CrashCount), "N/A")
+			fmt.Fprintf(w, "%s\t%s\t%s\t%.2f%%\t%s\t%s\n", strconv.Itoa(instance.Index), presentation.PadAndColorInstanceState(instance), strconv.Itoa(instance.CrashCount), (instance.Metrics.CpuPercentage), (bytefmt.ByteSize(instance.Metrics.MemoryBytes)), "N/A")
 		}
 	}
 
@@ -296,7 +295,7 @@ func (factory *AppExaminerCommandFactory) printInstanceInfo(actualInstances []ap
 			}
 			fmt.Fprintf(w, "%s\t%s\n", "Port Mapping", strings.Join(portMappingStrings, ";"))
 
-			fmt.Fprintf(w, "%s\t%s\n", "Since", fmt.Sprint(time.Unix(0, instance.Since).Format(TimestampDisplayLayout)))
+			fmt.Fprintf(w, "%s\t%s\n", "Since", fmt.Sprint(time.Since(time.Unix(0, instance.Since)).String()))
 
 		} else if instance.State != "CRASHED" {
 			fmt.Fprintf(w, "%s\t%s\n", "Placement Error", instance.PlacementError)
@@ -305,8 +304,8 @@ func (factory *AppExaminerCommandFactory) printInstanceInfo(actualInstances []ap
 		fmt.Fprintf(w, "%s \t%d \n", "Crash Count", instance.CrashCount)
 
 		if instance.HasMetrics {
-			fmt.Fprintf(w, "%s \t%.2f \n", "CPU Percentage", instance.Metrics.CpuPercentage)
-			fmt.Fprintf(w, "%s \t%s \n", "Memory Usage", bytefmt.ByteSize(instance.Metrics.MemoryBytes))
+			fmt.Fprintf(w, "%s \t%.2f%% \n", "CPU", instance.Metrics.CpuPercentage)
+			fmt.Fprintf(w, "%s \t%s \n", "Memory", bytefmt.ByteSize(instance.Metrics.MemoryBytes))
 		}
 		printHorizontalRule(w, "-")
 	}
