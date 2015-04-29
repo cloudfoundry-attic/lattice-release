@@ -131,6 +131,9 @@ By default, `vagrant up` will fetch the latest Lattice binary tarball.  To use a
 ```bash
 VAGRANT_LATTICE_TAR_PATH=/path/to/lattice.tgz vagrant up
 ```
+## Manual install of Lattice
+
+Follow these [instructions](docs/manual-install.md) to install a co-located Lattice cluster to a server that's already deployed. (e.g., vSphere)  
 
 # Clustered Deployment
 
