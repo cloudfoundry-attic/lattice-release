@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -337,6 +338,11 @@ var _ = Describe("CommandFactory", func() {
 
 			test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
 
+			/* Calculating the since time here to avoid comparing the different Since values. */
+			timeSince := time.Since(time.Unix(0, 401120627*1e9))
+			timeHours := fmt.Sprint(timeSince.Hours())
+			prettyTimestamp := strings.Split(timeHours, ".")[0]
+
 			Expect(appExaminer.AppStatusCallCount()).To(Equal(1))
 			Expect(appExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
 
@@ -391,16 +397,15 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).To(test_helpers.Say("Since"))
 
-			prettyTimestamp := time.Unix(0, 401120627*1e9).Format(command_factory.TimestampDisplayLayout)
 			Expect(outputBuffer).To(test_helpers.Say(prettyTimestamp))
 
 			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
 			Expect(outputBuffer).To(test_helpers.Say("0"))
 
-			Expect(outputBuffer).To(test_helpers.Say("CPU Percentage"))
-			Expect(outputBuffer).To(test_helpers.Say("23.46"))
+			Expect(outputBuffer).To(test_helpers.Say("CPU"))
+			Expect(outputBuffer).To(test_helpers.Say("23.46%"))
 
-			Expect(outputBuffer).To(test_helpers.Say("Memory Usage"))
+			Expect(outputBuffer).To(test_helpers.Say("Memory"))
 			Expect(outputBuffer).To(test_helpers.Say("640K"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Instance 4"))
@@ -411,8 +416,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("insufficient resources."))
 			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
 			Expect(outputBuffer).To(test_helpers.Say("2"))
-			Expect(outputBuffer).NotTo(test_helpers.Say("CPU Percentage"))
-			Expect(outputBuffer).NotTo(test_helpers.Say("Memory Usage"))
+			Expect(outputBuffer).NotTo(test_helpers.Say("CPU"))
+			Expect(outputBuffer).NotTo(test_helpers.Say("Memory"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Instance 5"))
 			Expect(outputBuffer).To(test_helpers.Say("CRASHED"))
@@ -421,8 +426,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
 			Expect(outputBuffer).To(test_helpers.Say("7"))
 
-			Expect(outputBuffer).NotTo(test_helpers.Say("CPU Percentage"))
-			Expect(outputBuffer).NotTo(test_helpers.Say("Memory Usage"))
+			Expect(outputBuffer).NotTo(test_helpers.Say("CPU"))
+			Expect(outputBuffer).NotTo(test_helpers.Say("Memory"))
 
 		})
 
@@ -462,23 +467,32 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--summary"})
 
+				timeSince := time.Since(time.Unix(0, 401120627*1e9))
+				timeHours := fmt.Sprint(timeSince.Hours())
+				prettyTimestamp := strings.Split(timeHours, ".")[0]
+
 				Expect(appExaminer.AppStatusCallCount()).To(Equal(1))
 				Expect(appExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
 
 				Expect(outputBuffer).To(test_helpers.Say("Instance"))
 				Expect(outputBuffer).To(test_helpers.Say("State"))
 				Expect(outputBuffer).To(test_helpers.Say("Crashes"))
+				Expect(outputBuffer).To(test_helpers.Say("CPU"))
+				Expect(outputBuffer).To(test_helpers.Say("Memory"))
 				Expect(outputBuffer).To(test_helpers.Say("Since"))
 
 				Expect(outputBuffer).To(test_helpers.Say("3"))
 				Expect(outputBuffer).To(test_helpers.Say("RUNNING"))
 				Expect(outputBuffer).To(test_helpers.Say("0"))
-				prettyTimestamp := time.Unix(0, 401120627*1e9).Format(command_factory.TimestampDisplayLayout)
+				Expect(outputBuffer).To(test_helpers.Say("23.46%"))
+				Expect(outputBuffer).To(test_helpers.Say("640K"))
 				Expect(outputBuffer).To(test_helpers.Say(prettyTimestamp))
 
 				Expect(outputBuffer).To(test_helpers.Say("4"))
 				Expect(outputBuffer).To(test_helpers.Say("UNCLAIMED"))
 				Expect(outputBuffer).To(test_helpers.Say("2"))
+				Expect(outputBuffer).To(test_helpers.Say("0.00%"))
+				Expect(outputBuffer).To(test_helpers.Say("0"))
 
 				Expect(outputBuffer).To(test_helpers.Say("5"))
 				Expect(outputBuffer).To(test_helpers.Say("CRASHED"))
@@ -504,8 +518,11 @@ var _ = Describe("CommandFactory", func() {
 
 				closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate", "2s"})
 
+				timeSince := time.Since(time.Unix(0, 401120627*1e9))
+				timeHours := fmt.Sprint(timeSince.Hours())
+				prettyTimestamp := strings.Split(timeHours, ".")[0]
+
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
-				prettyTimestamp := time.Unix(0, 401120627*1e9).Format(command_factory.TimestampDisplayLayout)
 				Eventually(outputBuffer).Should(test_helpers.Say(prettyTimestamp))
 
 				clock.IncrementBySeconds(1)
@@ -525,6 +542,10 @@ var _ = Describe("CommandFactory", func() {
 						},
 					},
 				}
+				timeSince = time.Since(time.Unix(0, 405234567*1e9))
+				timeHours = fmt.Sprint(timeSince.Hours())
+				prettyTimestamp = strings.Split(timeHours, ".")[0]
+
 				appExaminer.AppStatusReturns(refreshAppInfo, nil)
 
 				clock.IncrementBySeconds(1)
@@ -532,7 +553,7 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(24)))
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
-				prettyTimestamp = time.Unix(0, 405234567*1e9).Format(command_factory.TimestampDisplayLayout)
+
 				Eventually(outputBuffer).Should(test_helpers.Say(prettyTimestamp))
 			})
 
