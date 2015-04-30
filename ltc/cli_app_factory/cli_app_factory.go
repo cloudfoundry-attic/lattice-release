@@ -50,7 +50,7 @@ func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.E
 	app.Author = latticeCliAuthor
 	app.Version = defaultVersion(latticeVersion)
 	app.Usage = LtcUsage
-	app.Email = "lattice@cloudfoundry.org"
+	app.Email = "cf-lattice@lists.cloudfoundry.org"
 
 	ui := terminal.NewUI(os.Stdin, cliStdout, password_reader.NewPasswordReader(exitHandler))
 
