@@ -17,7 +17,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/receptor",
-			"Rev": "ab1f941793cfeb689b435963344ecd59554f6a28"
+			"Rev": "8aa88234f9a386c4a2c1fcd2834f532e6f50b766"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",

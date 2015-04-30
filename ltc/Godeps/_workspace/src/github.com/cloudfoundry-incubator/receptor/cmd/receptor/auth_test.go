@@ -3,6 +3,7 @@ package main_test
 import (
 	"encoding/base64"
 	"net/http"
+	"net/url"
 
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/cmd/receptor/testrunner"
@@ -68,6 +69,37 @@ var _ = Describe("Basic Auth", func() {
 
 			It("does not return 401", func() {
 				Expect(res.StatusCode).To(Equal(http.StatusNotFound))
+			})
+		})
+
+		Describe("AuthCookie", func() {
+			BeforeEach(func() {
+				req.URL.Path = "/v1/auth_cookie"
+				req.URL.User = url.UserPassword(username, password)
+				req.Method = "POST"
+			})
+
+			It("returns an authenication cookie", func() {
+				Expect(res.StatusCode).To(Equal(http.StatusNoContent))
+				Expect(res.Cookies()).To(HaveLen(1))
+				Expect(res.Cookies()[0].String()).To(Equal((&http.Cookie{
+					Name:     receptor.AuthorizationCookieName,
+					Value:    "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"+password)),
+					MaxAge:   0,
+					HttpOnly: true,
+				}).String()))
+
+				By("Using the cookie to make a request")
+
+				req2, err := http.NewRequest("GET", "http://"+receptorAddress, nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				req2.AddCookie(res.Cookies()[0])
+
+				res2, err := http.DefaultClient.Do(req2)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(res2.StatusCode).To(Equal(http.StatusNotFound))
 			})
 		})
 	})

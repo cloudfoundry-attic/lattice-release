@@ -17,6 +17,7 @@ func New(bbs Bbs.ReceptorBBS, hub event.Hub, logger lager.Logger, username, pass
 	cellHandler := NewCellHandler(bbs, logger)
 	domainHandler := NewDomainHandler(bbs, logger)
 	eventStreamHandler := NewEventStreamHandler(hub, logger)
+	authCookieHandler := NewAuthCookieHandler(logger)
 
 	actions := rata.Handlers{
 		// Tasks
@@ -48,6 +49,9 @@ func New(bbs Bbs.ReceptorBBS, hub event.Hub, logger lager.Logger, username, pass
 
 		// Event Streaming
 		receptor.EventStream: route(eventStreamHandler.EventStream),
+
+		// Authentication Cookie
+		receptor.GenerateCookie: route(authCookieHandler.GenerateCookie),
 	}
 
 	handler, err := rata.NewRouter(receptor.Routes, actions)

@@ -32,6 +32,9 @@ const (
 
 	// Event Streaming
 	EventStream = "EventStream"
+
+	// Authentication Cookie
+	GenerateCookie = "GenerateCookie"
 )
 
 var Routes = rata.Routes{
@@ -64,4 +67,7 @@ var Routes = rata.Routes{
 
 	// Event Streaming
 	{Path: "/v1/events", Method: "GET", Name: EventStream},
+
+	// Authentication Cookie
+	{Path: "/v1/auth_cookie", Method: "POST", Name: GenerateCookie},
 }
