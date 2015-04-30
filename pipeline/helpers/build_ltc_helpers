@@ -172,7 +172,6 @@ bump_lattice_version() {
 
         git add Version
         git add DIEGO_VERSION
-        deliver_stories_message=$(extract_deliver_stories_message)
 
         git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
 

@@ -73,6 +73,8 @@ bump_unstable_lattice() {
         git pull origin master
         git checkout master
 
+        deliver_stories_message=$(extract_deliver_stories_message)
+
         # Most of the time this will be a ff-only merge.
         # It won't be if there is a change to master, eg a README change or a PR merged directly into master
         # that hasn't made it back to develop yet.
