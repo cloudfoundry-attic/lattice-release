@@ -629,10 +629,9 @@ func parseRouteOverrides(routes string) (docker_app_runner.RouteOverrides, error
 }
 
 func parseEnvVarPair(envVarPair string) (name, value string) {
-	s := strings.Split(envVarPair, "=")
+	s := strings.SplitN(envVarPair, "=", 2)
 	if len(s) > 1 {
 		return s[0], s[1]
-	} else {
-		return s[0], ""
 	}
+	return s[0], ""
 }

@@ -92,7 +92,8 @@ var _ = Describe("CommandFactory", func() {
 				"--run-as-root=true",
 				"--instances=22",
 				"--env=TIMEZONE=CST",
-				"--env=LANG=\"Chicago English\"",
+				`--env=LANG="Chicago English"`,
+				`--env=JAVA_OPTS="-Djava.arg=/dev/urandom"`,
 				"--env=COLOR",
 				"--env=UNSET",
 				"--timeout=28s",
@@ -101,7 +102,7 @@ var _ = Describe("CommandFactory", func() {
 				"--",
 				"/start-me-please",
 				"AppArg0",
-				"--appFlavor=\"purple\"",
+				`--appFlavor="purple"`,
 			}
 			appExaminer.RunningAppInstancesInfoReturns(22, false, nil)
 
@@ -116,7 +117,14 @@ var _ = Describe("CommandFactory", func() {
 			Expect(createDockerAppParameters.DockerImagePath).To(Equal("superfun/app:mycooltag"))
 			Expect(createDockerAppParameters.AppArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
 			Expect(createDockerAppParameters.Instances).To(Equal(22))
-			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{"TIMEZONE": "CST", "LANG": "\"Chicago English\"", "PROCESS_GUID": "cool-web-app", "COLOR": "Blue", "UNSET": ""}))
+			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{
+				"TIMEZONE":     "CST",
+				"LANG":         `"Chicago English"`,
+				"JAVA_OPTS":    `"-Djava.arg=/dev/urandom"`,
+				"PROCESS_GUID": "cool-web-app",
+				"COLOR":        "Blue",
+				"UNSET":        "",
+			}))
 			Expect(createDockerAppParameters.Privileged).To(Equal(true))
 			Expect(createDockerAppParameters.CPUWeight).To(Equal(uint(57)))
 			Expect(createDockerAppParameters.MemoryMB).To(Equal(12))
