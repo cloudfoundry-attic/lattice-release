@@ -15,8 +15,8 @@ $ brew up
 # Install dnsmasq
 $ brew install dnsmasq
 ```
-- Use the commands provided by `brew info dnsmasq` to configure and start the service:  
-  * As of dnsmasq v2.72, `brew info dnsmasq` returned:
+- Use the commands provided by `brew info dnsmasq` to configure and start the service.<br>
+  As of dnsmasq v2.72, `brew info dnsmasq` returned:
 ```bash
 $ brew info dnsmasq
 dnsmasq: stable 2.72 (bottled)
