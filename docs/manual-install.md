@@ -4,6 +4,12 @@
 
 * Ubuntu-based Linux install
 * No previous lattice installations already running
+* Following packages installed via `apt-get`:
+  - `curl`
+  - `gcc`
+  - `make`
+  - `quota`
+  - `linux-image-extra-$(uname -r)`
 
 ## Installation
 
