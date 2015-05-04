@@ -94,6 +94,17 @@
         },
         {
             "type": "shell",
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "apt-get -y install curl",
+                "apt-get -y install gcc",
+                "apt-get -y install make",
+                "apt-get -y install quota",
+                "apt-get -y install linux-image-extra-$(uname -r)"
+            ]
+        },
+        {
+            "type": "shell",
             "only": ["vmware-iso"],
             "execute_command": "sudo {{.Path}}",
             "inline": [

@@ -39,11 +39,6 @@ cp -av $cell_build_path/garden/skeleton /var/lattice/garden/skeleton
 mkdir -pv /var/lattice/config
 cp -anv $cell_build_path/config /var/lattice
 
-apt-get -y install gcc
-apt-get -y install make
-apt-get -y install quota
-apt-get -y install linux-image-extra-$(uname -r)
-
 mkdir -pv /var/lattice/run
 mkdir -pv /var/lattice/log
 
