@@ -4,6 +4,9 @@ set -e
 
 mkdir -p /var/lattice/setup
 
+apt-get -y update
+apt-get -y install curl
+
 lattice_common_build_path=/tmp/lattice-build/common
 
 cp $lattice_common_build_path/health_check /var/lattice
