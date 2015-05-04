@@ -16,6 +16,9 @@ module "lattice-aws" {
     # The number of Lattice Cells to launch
     num_cells = "3"
 
+    # The default is your elastic IP.xip.io
+    aws_system_domain = "${aws_eip.ip.public_ip}.xip.io"
+
     #################################
     ###  Optional Settings Below  ###
     #################################
