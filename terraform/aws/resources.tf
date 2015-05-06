@@ -67,9 +67,7 @@ resource "aws_eip" "ip" {
           "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_eip.ip.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
           "sudo shutdown -r now"
         ]   
-}
-
-
+    }
 }
 
 resource "aws_instance" "lattice-brain" {
@@ -109,6 +107,19 @@ resource "aws_instance" "lattice-brain" {
           "sudo chmod 755 /tmp/install-from-tar",
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\"" #SHOULDN'T PATH_TO_LATTICE_TAR be set to /tmp/lattice.tgz???
       ]
+    }
+
+    provisioner "remote-exec" {
+        inline = [
+            "sleep 15",
+            "sudo apt-get update",
+            "sudo apt-get -y upgrade",
+            "sudo apt-get -y install curl",
+            "sudo apt-get -y install gcc",
+            "sudo apt-get -y install make",
+            "sudo apt-get -y install quota",
+            "sudo apt-get -y install linux-image-extra-$(uname -r)"
+        ]
     }
     #/COMMON
 
@@ -165,6 +176,19 @@ resource "aws_instance" "cell" {
           "sudo chmod 755 /tmp/install-from-tar",
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
       ]
+    }
+
+    provisioner "remote-exec" {
+        inline = [
+            "sleep 15",
+            "sudo apt-get update",
+            "sudo apt-get -y upgrade",
+            "sudo apt-get -y install curl",
+            "sudo apt-get -y install gcc",
+            "sudo apt-get -y install make",
+            "sudo apt-get -y install quota",
+            "sudo apt-get -y install linux-image-extra-$(uname -r)"
+        ]
     }
     #/COMMON
 

@@ -63,6 +63,19 @@ resource "google_compute_instance" "lattice-brain" {
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
       ]
     }
+
+    provisioner "remote-exec" {
+        inline = [
+            "sleep 15",
+            "sudo apt-get update",
+            "sudo apt-get -y upgrade",
+            "sudo apt-get -y install curl",
+            "sudo apt-get -y install gcc",
+            "sudo apt-get -y install make",
+            "sudo apt-get -y install quota",
+            "sudo apt-get -y install linux-image-extra-$(uname -r)"
+        ]
+    }
     #/COMMON
 
     provisioner "remote-exec" {
@@ -120,6 +133,19 @@ resource "google_compute_instance" "cell" {
           "sudo chmod 755 /tmp/install-from-tar",
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
       ]
+    }
+
+    provisioner "remote-exec" {
+        inline = [
+            "sleep 15",
+            "sudo apt-get update",
+            "sudo apt-get -y upgrade",
+            "sudo apt-get -y install curl",
+            "sudo apt-get -y install gcc",
+            "sudo apt-get -y install make",
+            "sudo apt-get -y install quota",
+            "sudo apt-get -y install linux-image-extra-$(uname -r)"
+        ]
     }
     #/COMMON
 
