@@ -1,0 +1,32 @@
+{
+	"builders": [
+		{
+			"type": "amazon-ebs",
+			"region": "us-east-1",
+			"source_ami": "ami-f63b3e9e",
+			"instance_type": "m3.medium",
+			"ssh_username": "ubuntu",
+			"ami_name": "ubuntu-trusty-64-v{{isotime \"20060102\"}}",
+			"ami_groups": ["all"],
+			"ami_regions": [
+				"us-west-1",
+				"us-west-2"
+			]
+		}
+	],
+	"provisioners": [
+		{
+			"type": "shell",
+			"inline": [
+		    	"sleep 30",
+		    	"sudo apt-get update",
+		    	"sudo apt-get -y upgrade",
+		    	"sudo apt-get -y install curl",
+            	"sudo apt-get -y install gcc",
+            	"sudo apt-get -y install make",
+            	"sudo apt-get -y install quota",
+            	"sudo apt-get -y install linux-image-extra-$(uname -r)"
+		    ]
+		}
+	]
+}
