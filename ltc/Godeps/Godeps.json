@@ -21,7 +21,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "e758a68ebb2b24d1d95c70bcf8ff969321180e40"
+			"Rev": "6931d81a27465f8fb5d2bb9a781ff7c5f4231136"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
@@ -196,13 +196,13 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.1.0-44-gae043a2",
-			"Rev": "ae043a2b2a91d6441adedc96d2c01958a78ee516"
+			"Comment": "v1.2.0-beta",
+			"Rev": "0efbdc3a60137c0757b84e994a56037378170913"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Comment": "v1.0-41-ga91b9a2",
-			"Rev": "a91b9a2e8063d07570320914bfe10a91d9323074"
+			"Comment": "v1.0-43-gf4f1cae",
+			"Rev": "f4f1caefe95e396ea97b72dd6c52973ae4a6978c"
 		},
 		{
 			"ImportPath": "github.com/pivotal-golang/bytefmt",
