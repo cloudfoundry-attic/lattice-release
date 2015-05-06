@@ -269,7 +269,7 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		Describe("interactions with the docker metadata fetcher", func() {
-			Context("when the docker image is hosted on the docker hub registry", func() {
+			Context("when the docker image is hosted on a docker registry", func() {
 				It("creates a Docker based app with sensible defaults and checks for metadata to know the image exists", func() {
 					args := []string{
 						"cool-web-app",
@@ -290,36 +290,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(outputBuffer).To(test_helpers.Say("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
 					Expect(createDockerAppParameters.Privileged).To(Equal(false))
 					Expect(createDockerAppParameters.MemoryMB).To(Equal(128))
-					Expect(createDockerAppParameters.DiskMB).To(Equal(1024))
-					Expect(createDockerAppParameters.Ports.Monitored).To(Equal(uint16(8080)))
-					Expect(createDockerAppParameters.Ports.Exposed).To(Equal([]uint16{8080}))
-					Expect(createDockerAppParameters.Instances).To(Equal(1))
-					Expect(createDockerAppParameters.WorkingDir).To(Equal("/"))
-				})
-			})
-
-			Context("when the docker image is hosted on a custom registry", func() {
-				It("creates a docker based app with sensible defaults and checks for metadata to know the image exists", func() {
-					args := []string{
-						"cool-web-app",
-						"super.fun.time:5000/mega-app:hallo",
-						"--",
-						"/start-me-please",
-					}
-					appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
-					dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-
-					test_helpers.ExecuteCommandWithArgs(createCommand, args)
-
-					Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
-					Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("super.fun.time:5000/mega-app:hallo"))
-
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-					createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
-					Expect(outputBuffer).To(test_helpers.Say("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
-					Expect(createDockerAppParameters.Privileged).To(Equal(false))
-					Expect(createDockerAppParameters.MemoryMB).To(Equal(128))
-					Expect(createDockerAppParameters.DiskMB).To(Equal(1024))
+					Expect(createDockerAppParameters.DiskMB).To(Equal(0))
 					Expect(createDockerAppParameters.Ports.Monitored).To(Equal(uint16(8080)))
 					Expect(createDockerAppParameters.Ports.Exposed).To(Equal([]uint16{8080}))
 					Expect(createDockerAppParameters.Instances).To(Equal(1))

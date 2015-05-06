@@ -52,7 +52,7 @@ func (factory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
 
 	var listCommand = cli.Command{
 		Name:        "list",
-		Aliases:     []string{"li"},
+		Aliases:     []string{"li", "ls"},
 		Usage:       "Lists applications running on lattice",
 		Description: "ltc list",
 		Action:      factory.listApps,

@@ -104,7 +104,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 		cli.IntFlag{
 			Name:  "disk-mb, d",
 			Usage: "Disk limit for container in MB",
-			Value: 1024,
+			Value: 0,
 		},
 		cli.StringFlag{
 			Name:  "ports, p",
