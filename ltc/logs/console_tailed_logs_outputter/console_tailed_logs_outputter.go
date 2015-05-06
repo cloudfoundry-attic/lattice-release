@@ -57,7 +57,7 @@ func (ctlo *ConsoleTailedLogsOutputter) StopOutputting() {
 }
 
 func (ctlo *ConsoleTailedLogsOutputter) logCallback(log *events.LogMessage) {
-	timeString := time.Unix(0, log.GetTimestamp()).Format("02 Jan 15:04")
+	timeString := time.Unix(0, log.GetTimestamp()).Format("01/02 15:04:05.00")
 	logOutput := fmt.Sprintf("%s [%s|%s] %s", colors.Cyan(timeString), colors.Yellow(log.GetSourceType()), colors.Yellow(log.GetSourceInstance()), log.GetMessage())
 	ctlo.outputChan <- logOutput
 }

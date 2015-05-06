@@ -53,7 +53,7 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 
 			Eventually(logReader.GetAppGuid).Should(Equal("my-app-guid"))
 
-			logOutputBufferString := fmt.Sprintf("%s [%s|%s] First log\n", colors.Cyan(now.Format("02 Jan 15:04")), colors.Yellow("RTR"), colors.Yellow("1"))
+			logOutputBufferString := fmt.Sprintf("%s [%s|%s] First log\n", colors.Cyan(now.Format("01/02 15:04:05.00")), colors.Yellow("RTR"), colors.Yellow("1"))
 			Eventually(outputBuffer).Should(test_helpers.Say(logOutputBufferString))
 			Eventually(outputBuffer).Should(test_helpers.Say("First Error\n"))
 		})
