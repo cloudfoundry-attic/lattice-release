@@ -256,16 +256,42 @@ func (factory *AppExaminerCommandFactory) printInstanceSummary(actualInstances [
 	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)
 
 	printHorizontalRule(w, "=")
-	fmt.Fprintf(w, fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n", "Instance", colors.NoColor("State")+"    ", "Crashes", "CPU", "Memory", "Uptime"))
+	fmt.Fprintf(w, fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n",
+		"Instance",
+		colors.NoColor("State")+"    ",
+		"Crashes",
+		"CPU",
+		"Memory",
+		"Uptime"),
+	)
 	printHorizontalRule(w, "-")
 
 	for _, instance := range actualInstances {
+		metricsSlice := []string{"N/A", "N/A"}
+		if instance.HasMetrics {
+			metricsSlice = []string{
+				fmt.Sprintf("%.2f%%", instance.Metrics.CpuPercentage),
+				fmt.Sprintf("%s", bytefmt.ByteSize(instance.Metrics.MemoryBytes)),
+			}
+		}
 		if instance.PlacementError == "" && instance.State != "CRASHED" {
 			uptime := time.Since(time.Unix(0, instance.Since))
 			roundedUptime := uptime - (uptime % time.Second)
-			fmt.Fprintf(w, "%s\t%s\t%s\t%.2f%%\t%s\t%s\n", strconv.Itoa(instance.Index), presentation.PadAndColorInstanceState(instance), strconv.Itoa(instance.CrashCount), (instance.Metrics.CpuPercentage), (bytefmt.ByteSize(instance.Metrics.MemoryBytes)), fmt.Sprint(roundedUptime))
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+				strconv.Itoa(instance.Index),
+				presentation.PadAndColorInstanceState(instance),
+				strconv.Itoa(instance.CrashCount),
+				strings.Join(metricsSlice, "\t"),
+				fmt.Sprint(roundedUptime),
+			)
 		} else {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%.2f%%\t%s\t%s\n", strconv.Itoa(instance.Index), presentation.PadAndColorInstanceState(instance), strconv.Itoa(instance.CrashCount), (instance.Metrics.CpuPercentage), (bytefmt.ByteSize(instance.Metrics.MemoryBytes)), "N/A")
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+				strconv.Itoa(instance.Index),
+				presentation.PadAndColorInstanceState(instance),
+				strconv.Itoa(instance.CrashCount),
+				strings.Join(metricsSlice, "\t"),
+				"N/A",
+			)
 		}
 	}
 

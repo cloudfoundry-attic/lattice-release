@@ -491,12 +491,14 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("4"))
 				Expect(outputBuffer).To(test_helpers.Say("UNCLAIMED"))
 				Expect(outputBuffer).To(test_helpers.Say("2"))
-				Expect(outputBuffer).To(test_helpers.Say("0.00%"))
-				Expect(outputBuffer).To(test_helpers.Say("0"))
+				Expect(outputBuffer).To(test_helpers.Say("N/A"))
+				Expect(outputBuffer).To(test_helpers.Say("N/A"))
 
 				Expect(outputBuffer).To(test_helpers.Say("5"))
 				Expect(outputBuffer).To(test_helpers.Say("CRASHED"))
 				Expect(outputBuffer).To(test_helpers.Say("7"))
+				Expect(outputBuffer).To(test_helpers.Say("N/A"))
+				Expect(outputBuffer).To(test_helpers.Say("N/A"))
 			})
 		})
 

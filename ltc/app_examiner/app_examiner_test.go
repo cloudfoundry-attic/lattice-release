@@ -431,7 +431,7 @@ var _ = Describe("AppRunner", func() {
 
 					result, err := appExaminer.AppStatus("peekaboo-app")
 
-					Expect(err).To(BeNil())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(result).To(Equal(app_examiner.AppInfo{
 						ProcessGuid:            "peekaboo-app",
 						ActualRunningInstances: 1,
@@ -508,7 +508,7 @@ var _ = Describe("AppRunner", func() {
 				result, err := appExaminer.AppStatus("peekaboo-app")
 
 				Expect(err).To(MatchError(app_examiner.AppNotFoundErrorMessage))
-				Expect(result).To(Equal(app_examiner.AppInfo{}))
+				Expect(result).To(BeZero())
 
 				Expect(fakeReceptorClient.GetDesiredLRPCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.ActualLRPsByProcessGuidCallCount()).To(Equal(1))
@@ -541,7 +541,7 @@ var _ = Describe("AppRunner", func() {
 				result, err := appExaminer.AppStatus("peekaboo-app")
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(result).ToNot(BeNil())
+				Expect(result).ToNot(BeZero())
 
 				Expect(result.ActualInstances).To(HaveLen(1))
 				Expect(result.ActualInstances[0].HasMetrics).To(BeFalse())
@@ -553,8 +553,7 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.GetDesiredLRPReturns(receptor.DesiredLRPResponse{}, receptor.Error{Type: receptor.UnknownError, Message: "Oops."})
 				_, err := appExaminer.AppStatus("app-to-status")
 
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Oops."))
+				Expect(err).To(MatchError("Oops."))
 			})
 
 			It("returns errors from fetching the ActualLRPs", func() {
@@ -562,13 +561,12 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(nil, receptor.Error{Type: receptor.UnknownError, Message: "ABANDON SHIP!!!!"})
 				_, err := appExaminer.AppStatus("kiss-my-bumper")
 
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("ABANDON SHIP!!!!"))
+				Expect(err).To(MatchError("ABANDON SHIP!!!!"))
 			})
 		})
 
 		Context("when the noaa consumer returns errors", func() {
-			It("returns errors from from fetching the container metrics", func() {
+			It("returns an AppInfo without container metrics", func() {
 				desiredLRPs := receptor.DesiredLRPResponse{
 					ProcessGuid: "peekaboo-app",
 				}
@@ -582,9 +580,13 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPs, nil)
 				fakeNoaaConsumer.GetContainerMetricsReturns(nil, errors.New("no metrics 4 you"))
 
-				_, err := appExaminer.AppStatus("peekaboo-app")
+				result, err := appExaminer.AppStatus("peekaboo-app")
 
-				Expect(err).To(MatchError("no metrics 4 you"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result).ToNot(BeZero())
+
+				Expect(result.ActualInstances).To(HaveLen(1))
+				Expect(result.ActualInstances[0].HasMetrics).To(BeFalse())
 			})
 		})
 	})
