@@ -81,7 +81,17 @@ LATTICE_SYSTEM_IP=192.168.80.100 vagrant up
 ltc target 192.168.80.100.xip.io
 ```
 
-## Updating
+## Miscellaneous
+
+### Running Vagrant with a custom Lattice tar
+
+By default, `vagrant up` will fetch the latest Lattice binary tarball.  To use a particular tarball:
+
+```bash
+VAGRANT_LATTICE_TAR_PATH=/path/to/lattice.tgz vagrant up
+```
+
+### Updating
 
 Currently, Lattice does not support updating via provision. So to update, you have to destroy the box and bring it back up:
 
@@ -90,6 +100,26 @@ Currently, Lattice does not support updating via provision. So to update, you ha
  git pull
  vagrant up
 ```
+
+### Manual install of Lattice
+
+Follow these [instructions](docs/manual-install.md) to install a co-located Lattice cluster to a server that's already deployed. (e.g., vSphere)  
+
+### Proxy configuration
+
+Copy the following into `~/.vagrant.d/Vagrantfile`:
+
+```
+Vagrant.configure("2") do |config|
+  if Vagrant.has_plugin?("vagrant-proxyconf")
+    config.proxy.http     = "http://PROXY_IP:PROXY_PORT"
+    config.proxy.https    = "http://PROXY_IP:PROXY_PORT"
+    config.proxy.no_proxy = "localhost,127.0.0.1,.consul"
+  end
+end
+```
+
+Then proceed with `vagrant up`.
 
 ## Troubleshooting
 
@@ -123,17 +153,6 @@ default: Warning: Authentication failure. Retrying...
 ```
 
 try upgrading to the latest VirtualBox.
-
-## Running Vagrant with a custom Lattice tar
-
-By default, `vagrant up` will fetch the latest Lattice binary tarball.  To use a particular tarball:
-
-```bash
-VAGRANT_LATTICE_TAR_PATH=/path/to/lattice.tgz vagrant up
-```
-## Manual install of Lattice
-
-Follow these [instructions](docs/manual-install.md) to install a co-located Lattice cluster to a server that's already deployed. (e.g., vSphere)  
 
 # Clustered Deployment
 

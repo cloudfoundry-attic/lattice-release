@@ -24,6 +24,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     s.inline = "cp /var/lattice/setup/lattice-environment /vagrant/.lattice-environment"
   end
 
+  if Vagrant.has_plugin?("vagrant-proxyconf")
+    config.vm.provision "shell" do |s|
+      s.inline = "grep -i proxy /etc/environment >> /var/lattice/setup/lattice-environment"
+    end
+  end
+
   lattice_tar_version=File.read(File.join(File.dirname(__FILE__), "Version")).chomp
   if lattice_tar_version =~ /\-[[:digit:]]+\-g[0-9a-fA-F]{7,10}$/ 
     lattice_tar_url="https://s3-us-west-2.amazonaws.com/lattice/unstable/#{lattice_tar_version}/lattice.tgz"
