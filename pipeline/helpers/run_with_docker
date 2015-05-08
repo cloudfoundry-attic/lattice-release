@@ -25,6 +25,7 @@ docker run -a stdout -a stderr -w /workspace \
   -e DIEGO_RELEASE_PATH \
   -e DRY_RUN \
   -e LATTICE_RELEASE_VERSION \
+  -e LATTICE_WEBSITE_CLONE_URL \
   -e AWS_ACCESS_KEY_ID \
   -e AWS_SECRET_ACCESS_KEY \
   -e GO_REVISION_DIEGO_RELEASE \

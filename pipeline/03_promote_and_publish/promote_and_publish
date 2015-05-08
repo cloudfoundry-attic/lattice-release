@@ -192,6 +192,50 @@ stage_pipeline_artifact() {
     popd > /dev/null
 }
 
+copy_docs_to_lattice_website() {
+    local docspath="~/docs-space"
+
+    echo "Copy lattice docs to temp folder"
+    mkdir -pv $docspath/lattice
+    cp -afv $LATTICE_SRC_PATH/docs $docspath/lattice
+
+    echo "Cloning lattice-website"
+    pushd $docspath
+        rm -rf lattice-website
+        git clone $LATTICE_WEBSITE_CLONE_URL
+        pushd lattice-website
+            git checkout master
+        popd
+    popd
+
+    echo "Merging metadata into docs"
+    $LATTICE_SRC_PATH/pipeline/helpers/merge-metadata-into-docs.rb $docspath/lattice $docspath/lattice-website
+
+    echo "Committing"
+    pushd $docspath/lattice-website
+        git add middleman/source/docs
+
+        if [ $(git diff --cached --numstat -- middleman/source/docs/ | wc -l) -gt 0 ]; then
+            echo "Website changes to commit:"
+            git status
+            git commit -m "Publish lattice docs for $lattice_version
+
+            +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
+            "
+            git show       ## to be deleted
+        fi
+
+        if [ -z "$DRY_RUN" ] ; then
+            git push origin master
+        else
+            git push origin master --dry-run
+        fi
+    popd 
+
+    rm -rf /workspace/lattice-website
+    cp -afv $docspath/lattice-website /workspace
+}
+
 source $(dirname $0)/../helpers/build_ltc_helpers
 
 lattice_tar_path=${1:-/workspace/lattice.tgz}
@@ -213,5 +257,7 @@ upload_unstable_lattice_tar_to_s3
 upload_unstable_ltc_binaries_to_s3
 
 push_unstable_lattice
+
+copy_docs_to_lattice_website
 
 stage_pipeline_artifact
