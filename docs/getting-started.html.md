@@ -22,7 +22,7 @@ First, clone the Lattice repository:
 
     git clone https://github.com/cloudfoundry-incubator/lattice.git
     cd lattice
-    git checkout <%= version %>
+    git checkout master
 
 Then bring up the Vagrant box:
 
@@ -40,7 +40,7 @@ The VM should download and start.
 
 > If you are trying to run both the VirtualBox and VMWare providers on the same machine, you'll need to run them on different private networks (subnets) that do not conflict.
 
-> Learn more about deploying Lattice at the GitHub [README](https://github.com/cloudfoundry-incubator/lattice/tree/<%= version %>)
+> Learn more about deploying Lattice at the GitHub [README](https://github.com/cloudfoundry-incubator/lattice/tree/master)
 
 ## Fetching `ltc` - the Lattice CLI
 
@@ -51,13 +51,13 @@ Alternatively you can use these installation scripts.  They assume `$HOME/bin` i
 For Mac:
 
     mkdir -p $HOME/bin
-    wget https://lattice.s3.amazonaws.com/releases/<%= version %>/darwin-amd64/ltc -O $HOME/bin/ltc
+    wget https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc -O $HOME/bin/ltc
     chmod +x $HOME/bin/ltc
 
 For Linux:
 
     mkdir -p $HOME/bin
-    wget https://lattice.s3.amazonaws.com/releases/<%= version %>/linux-amd64/ltc -O $HOME/bin/ltc
+    wget https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc -O $HOME/bin/ltc
     chmod +x $HOME/bin/ltc
 
 Further instructions can be found [here](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc).

@@ -37,7 +37,7 @@ Lattice lives up to these principles.
 
 You can run Lattice easily on your laptop with a [Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#local-deployment) or deploy a [cluster of machines](https://github.com/cloudfoundry-incubator/lattice#clustered-deployment) with [AWS](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md), [Digital Ocean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md) or [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md).
 
-Up-to-date installation instructions are on the [GitHub README](https://github.com/cloudfoundry-incubator/lattice/tree/<%= version %>).
+Up-to-date installation instructions are on the [GitHub README](https://github.com/cloudfoundry-incubator/lattice/tree/master).
 
 ## How do I use Lattice?
 
