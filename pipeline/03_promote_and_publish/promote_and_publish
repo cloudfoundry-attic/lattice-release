@@ -196,8 +196,8 @@ copy_docs_to_lattice_website() {
     local docspath="~/docs-space"
 
     echo "Copy lattice docs to temp folder"
-    mkdir -pv $docspath/lattice
-    cp -afv $LATTICE_SRC_PATH/docs $docspath/lattice
+    mkdir -p $docspath/lattice
+    cp -af $LATTICE_SRC_PATH/docs $docspath/lattice
 
     echo "Cloning lattice-website"
     pushd $docspath
@@ -205,6 +205,7 @@ copy_docs_to_lattice_website() {
         git clone $LATTICE_WEBSITE_CLONE_URL
         pushd lattice-website
             git checkout master
+            rm -rf middleman/source/docs/*
         popd
     popd
 
@@ -222,7 +223,6 @@ copy_docs_to_lattice_website() {
 
             +Committed by GOCD- Run #$GO_PIPELINE_LABEL of Pipeline: $GO_PIPELINE_NAME, Stage: $GO_STAGE_NAME, JOB: $GO_JOB_NAME
             "
-            git show       ## to be deleted
         fi
 
         if [ -z "$DRY_RUN" ] ; then
@@ -233,7 +233,7 @@ copy_docs_to_lattice_website() {
     popd 
 
     rm -rf /workspace/lattice-website
-    cp -afv $docspath/lattice-website /workspace
+    cp -af $docspath/lattice-website /workspace
 }
 
 source $(dirname $0)/../helpers/build_ltc_helpers
