@@ -62,7 +62,7 @@ You can modify all of this behavior from the command line:
 - **`--port=8080,9000`** allows you to specify the set of ports to open on the container.  This overrides any `EXPOSE` directives associated with the Docker image.  When specifying multiple ports via `--port` you must also specify a `--monitored-port` to perform the health-check on (or, alternatively, turn off the health-check via `--no-monitor`).
 - **`--monitored-port=8080`** allows you to modify the port that `ltc` chooses to perform the health-check on.
 - **`--routes=8080:my-app,9000:my-app-admin`** allows you to specify the routes to map to the requested ports.  In this example, `my-app.192.168.11.11.xip.io` will map to port `8080` and `my-app-admin.192.168.11.11.xip.io` will map to port `9000`.
-  - You can repeat the port entry to attach multiple routes to the same port (e.g. `--routes=8080:my-app,8080:my-app-alias`).
+  - You can comma-delimit multiple routes to the same port (e.g. `--routes=8080:my-app,8080:my-app-alias`).
 - **`--no-routes`** allows you to specify that no routes be registered. 
 
 > For instances with *multiple* `EXPOSE` directives, `ltc` selects the *lowest* port for the purposes of routing traffic and performing the health check.

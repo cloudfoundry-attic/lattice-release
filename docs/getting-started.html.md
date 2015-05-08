@@ -64,7 +64,7 @@ You need to tell `ltc` how to connect to your Lattice deployment.  The target do
 
 ## Launching and Routing to a Dockerimage
 
-We have a simple Go-based demo web application hosted on the Docker registry at [`cloudfoundry/lattice-app`](https://registry.hub.docker.com/cloudfoundry/lattice-app).  You can launch this image by running:
+We have a simple Go-based demo web application hosted on the Docker registry at [`cloudfoundry/lattice-app`](https://registry.hub.docker.com/u/cloudfoundry/lattice-app).  You can launch this image by running:
 
     ltc create lattice-app cloudfoundry/lattice-app
 
