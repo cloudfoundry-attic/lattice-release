@@ -1,9 +1,3 @@
----
-title: Getting Started
-weight: 2
-doc_subnav: true
----
-
 # Getting Started
 
 You can run Lattice easily on your laptop with a [Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#local-deployment) or deploy a [cluster of machines](https://github.com/cloudfoundry-incubator/lattice#clustered-deployment) with [AWS](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md), [Digital Ocean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md) or [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md).

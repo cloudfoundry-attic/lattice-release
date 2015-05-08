@@ -1,9 +1,3 @@
----
-title: Troubleshooting
-weight: 6
-doc_subnav: true
----
-
 # Troubleshooting
 
 ## How does Lattice manage applications?

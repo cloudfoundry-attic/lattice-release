@@ -1,9 +1,3 @@
----
-title: Private Docker Registry
-weight: 8
-doc_subnav: true
----
-
 # Private Docker Registries
 
 Lattice does not currently ship with a private Docker registry.  We plan on remedying this soon to improve our developer experience.  Until then, follow these instructions to spin up a Docker registry on boot2docker, configure the Docker daemon on boot2docker, configure Lattice to allow communication with the private registry, and then import a Docker image to the private registry and launch it via Lattice.

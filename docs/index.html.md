@@ -1,9 +1,3 @@
----
-title: Lattice FAQ
-weight: 1
-doc_subnav: true
----
-
 # Lattice FAQ
 
 ## What is Lattice?

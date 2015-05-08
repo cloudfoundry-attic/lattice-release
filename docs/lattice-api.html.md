@@ -1,9 +1,3 @@
----
-title: Lattice API
-weight: 5
-doc_subnav: true
----
-
 # The Lattice API
 
 `ltc` is simply a wrapper around a Lattice's powerful RESTful API.  Whereas `ltc` is geared towards launching Docker images on Lattice, you can use the underlying API to construct and request more elaborate container workloads.
