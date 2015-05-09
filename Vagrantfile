@@ -26,7 +26,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   if Vagrant.has_plugin?("vagrant-proxyconf")
     config.vm.provision "shell" do |s|
-      # s.inline = "ls -l /etc/environment"
       s.inline = "grep -i proxy /etc/environment >> /var/lattice/setup/lattice-environment || true"
     end
   end
