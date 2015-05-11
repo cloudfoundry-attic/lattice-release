@@ -107,6 +107,12 @@ Follow these [instructions](docs/manual-install.html.md) to install a co-located
 
 ### Proxy configuration
 
+Install the `vagrant-proxyconf` plugin as follows:
+
+```bash
+vagrant plugin install vagrant-proxyconf
+```
+
 Copy the following into `~/.vagrant.d/Vagrantfile`:
 
 ```
