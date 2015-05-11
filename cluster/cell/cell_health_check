@@ -1,3 +1,3 @@
 #!/bin/bash
 
-/var/lattice/health_check "auctioneer" "consul" "converger" "executor" "garden-linux" "metron" "rep"
+/var/lattice/health_check "auctioneer" "consul" "converger" "garden-linux" "metron" "rep"

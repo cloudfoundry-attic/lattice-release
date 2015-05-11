@@ -109,7 +109,6 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 
 				Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
 
-				Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("executor.*cell-\\d+"))
 				Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("rep.*cell-\\d+"))
 				Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("garden-linux.*cell-\\d+"))
 				debugLogsStream.Terminate().Wait()

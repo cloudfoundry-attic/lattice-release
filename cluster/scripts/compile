@@ -75,7 +75,6 @@ compile_cell() {
 
     pushd $GOPATH
         go install github.com/cloudfoundry-incubator/rep/cmd/rep
-        go install github.com/cloudfoundry-incubator/executor/cmd/executor
         go install github.com/cloudfoundry-incubator/auctioneer/cmd/auctioneer
         go install github.com/cloudfoundry-incubator/converger/cmd/converger
         go install github.com/cloudfoundry-incubator/lattice/tee2metron

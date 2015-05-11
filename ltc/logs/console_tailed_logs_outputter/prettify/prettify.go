@@ -14,7 +14,6 @@ import (
 )
 
 var colorLookup = map[string]string{
-	"executor":     "\x1b[33m",
 	"rep":          "\x1b[34m",
 	"garden-linux": "\x1b[35m",
 }
@@ -47,7 +46,6 @@ func Prettify(logMessage *events.LogMessage) string {
 }
 
 func prettyPrintLog(entry chug.Entry) []string {
-
 	var logColor, level string
 	switch entry.Log.LogLevel {
 	case lager.INFO:

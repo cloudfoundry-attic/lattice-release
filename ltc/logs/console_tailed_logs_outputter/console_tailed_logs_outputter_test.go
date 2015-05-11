@@ -63,14 +63,14 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 
 		It("tails logs with pretty formatting", func() {
 			now := time.Now()
-			logReader.AddLog(buildLogMessage("executor", "cell-1", now, []byte("First log")))
+			logReader.AddLog(buildLogMessage("rep", "cell-1", now, []byte("First log")))
 			logReader.AddError(errors.New("First Error"))
 
 			go consoleTailedLogsOutputter.OutputDebugLogs(true)
 
 			Eventually(logReader.GetAppGuid).Should(Equal(reserved_app_ids.LatticeDebugLogStreamAppId))
 
-			Eventually(outputBuffer).Should(test_helpers.Say("executor"))
+			Eventually(outputBuffer).Should(test_helpers.Say("rep"))
 			Eventually(outputBuffer).Should(test_helpers.Say("cell-1"))
 			Eventually(outputBuffer).Should(test_helpers.Say(now.Format("01/02 15:04:05.00")))
 			Eventually(outputBuffer).Should(test_helpers.Say("First log"))
@@ -79,7 +79,7 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 
 		It("tails logs without pretty formatting", func() {
 			now := time.Now()
-			logReader.AddLog(buildLogMessage("executor", "cell-1", now, []byte("First log")))
+			logReader.AddLog(buildLogMessage("rep", "cell-1", now, []byte("First log")))
 			logReader.AddError(errors.New("First Error"))
 
 			go consoleTailedLogsOutputter.OutputDebugLogs(false)
@@ -87,7 +87,7 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 			Eventually(logReader.GetAppGuid).Should(Equal(reserved_app_ids.LatticeDebugLogStreamAppId))
 
 			Eventually(outputBuffer).Should(test_helpers.Say(now.Format("01/02 15:04:05.00")))
-			Eventually(outputBuffer).Should(test_helpers.Say("executor"))
+			Eventually(outputBuffer).Should(test_helpers.Say("rep"))
 			Eventually(outputBuffer).Should(test_helpers.Say("cell-1"))
 			Eventually(outputBuffer).Should(test_helpers.Say("First log\n"))
 			Eventually(outputBuffer).Should(test_helpers.Say("First Error\n"))
