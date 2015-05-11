@@ -2,10 +2,10 @@
 
 set -e
 
-extract_deliver_stories_message() {
-    git log origin/master..$GO_REVISION_LATTICE | \
-        egrep -io "\[\s*(?:Finishes|Fixes)\s*(#(\d+)\s*)+\]" | \
-        perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi'
+set_deliver_stories_message() {
+    deliver_stories_message=$(git log origin/master..$GO_REVISION_LATTICE | \
+        egrep -io "\[\s*(Finishes|Fixes)\s*(#([[:digit:]]+)\s*)+\]" | \
+        perl -p -e 's/\[\s*(?:Finishes|Fixes)\s*((?:#[0-9]+\s*)+)\]/\[Delivers $1\]/gi')
 }
 
 update_godeps() {
@@ -73,13 +73,7 @@ bump_unstable_lattice() {
         git pull origin master
         git checkout master
 
-        env
-        echo "origin/master..$GO_REVISION_LATTICE"
-        git log origin/master..$GO_REVISION_LATTICE
-        echo "$GO_REVISION_LATTICE..origin/master"
-        git log $GO_REVISION_LATTICE..origin/master
-
-        deliver_stories_message=$(extract_deliver_stories_message)
+        set_deliver_stories_message
 
         # Most of the time this will be a ff-only merge.
         # It won't be if there is a change to master, eg a README change or a PR merged directly into master
