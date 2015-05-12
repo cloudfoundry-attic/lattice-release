@@ -1,8 +1,16 @@
 #!/bin/bash
 
 if [ -f "$LOCAL_LATTICE_TAR_PATH" ]; then
-    echo "Found existing lattice tar at $LOCAL_LATTICE_TAR_PATH"
-    echo "If you want to redownload lattice, delete the .lattice folder and try again."
+    if [ "$LOCAL_LATTICE_TAR_PATH" == ".lattice/lattice.tgz" ]; then
+        lattice_git_version=$(cat $LATTICE_VERSION_FILE_PATH)
+        lattice_tar_version=$(tar xOzf $LOCAL_LATTICE_TAR_PATH lattice-build/common/LATTICE_VERSION)
+        if [ "$lattice_git_version" != "$lattice_tar_version" ]; then
+            echo "========================================================"
+            echo "Local version of Lattice differs from expected version."
+            echo "If you want to redownload lattice, delete the .lattice folder and try again."
+            echo "========================================================"
+        fi
+    fi
 else
     mkdir -p .lattice
 
