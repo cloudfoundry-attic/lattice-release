@@ -613,4 +613,61 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 	})
+
+	Describe("Cells", func() {
+		var cellsCommand cli.Command
+
+		BeforeEach(func() {
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil)
+			cellsCommand = commandFactory.MakeCellsCommand()
+		})
+
+		It("lists the cells", func() {
+			appExaminer.ListCellsReturns([]app_examiner.CellInfo{
+				app_examiner.CellInfo{
+					CellID:           "cell-one",
+					RunningInstances: 37,
+					ClaimedInstances: 12,
+					Zone:             "z1",
+					MemoryMB:         1229,
+					DiskMB:           4301,
+					Containers:       256,
+				},
+				app_examiner.CellInfo{CellID: "cell-two"},
+			}, nil)
+
+			test_helpers.ExecuteCommandWithArgs(cellsCommand, []string{})
+
+			Expect(appExaminer.ListCellsCallCount()).To(Equal(1))
+
+			Expect(outputBuffer).To(test_helpers.Say("Cells"))
+			Expect(outputBuffer).To(test_helpers.Say("Zone"))
+			Expect(outputBuffer).To(test_helpers.Say("Memory"))
+			Expect(outputBuffer).To(test_helpers.Say("Disk"))
+			Expect(outputBuffer).To(test_helpers.Say("Cell Apps"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+			Expect(outputBuffer).To(test_helpers.Say("cell-one"))
+			Expect(outputBuffer).To(test_helpers.Say("z1"))
+			Expect(outputBuffer).To(test_helpers.Say("1229M"))
+			Expect(outputBuffer).To(test_helpers.Say("4301M"))
+			Expect(outputBuffer).To(test_helpers.Say("37 RUN/12 CLM"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+			Expect(outputBuffer).To(test_helpers.Say("cell-two"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
+		})
+
+		Context("when the receptor returns an error", func() {
+			It("prints an error", func() {
+				appExaminer.ListCellsReturns(nil, errors.New("these are not the cells you're looking for"))
+
+				test_helpers.ExecuteCommandWithArgs(cellsCommand, []string{})
+
+				Expect(outputBuffer).To(test_helpers.Say("these are not the cells you're looking for"))
+				Expect(outputBuffer).NotTo(test_helpers.Say("Cells"))
+			})
+		})
+
+	})
 })

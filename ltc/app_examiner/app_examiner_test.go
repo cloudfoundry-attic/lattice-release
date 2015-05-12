@@ -137,9 +137,9 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
 
 				cells := []receptor.CellResponse{
-					receptor.CellResponse{CellID: "Cell-1"},
-					receptor.CellResponse{CellID: "Cell-2"},
-					receptor.CellResponse{CellID: "Cell-3"},
+					receptor.CellResponse{CellID: "Cell-1", Zone: "z1", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
+					receptor.CellResponse{CellID: "Cell-2", Zone: "z1", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
+					receptor.CellResponse{CellID: "Cell-3", Zone: "z2", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
 				}
 				fakeReceptorClient.CellsReturns(cells, nil)
 			})
@@ -154,16 +154,22 @@ var _ = Describe("AppRunner", func() {
 				Expect(cell1.CellID).To(Equal("Cell-1"))
 				Expect(cell1.RunningInstances).To(Equal(2))
 				Expect(cell1.ClaimedInstances).To(Equal(0))
+				Expect(cell1.Zone).To(Equal("z1"))
+				Expect(cell1.MemoryMB).To(Equal(12394))
+				Expect(cell1.DiskMB).To(Equal(2349083))
+				Expect(cell1.Containers).To(Equal(512))
 
 				cell2 := cellList[1]
 				Expect(cell2.CellID).To(Equal("Cell-2"))
 				Expect(cell2.RunningInstances).To(Equal(1))
 				Expect(cell2.ClaimedInstances).To(Equal(1))
+				Expect(cell2.Zone).To(Equal("z1"))
 
 				cell3 := cellList[2]
 				Expect(cell3.CellID).To(Equal("Cell-3"))
 				Expect(cell3.RunningInstances).To(Equal(0))
 				Expect(cell3.ClaimedInstances).To(Equal(0))
+				Expect(cell3.Zone).To(Equal("z2"))
 			})
 		})
 

@@ -119,6 +119,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner)
 
 	return []cli.Command{
+		appExaminerCommandFactory.MakeCellsCommand(),
 		appRunnerCommandFactory.MakeCreateAppCommand(),
 		appRunnerCommandFactory.MakeCreateLrpCommand(),
 		logsCommandFactory.MakeDebugLogsCommand(),

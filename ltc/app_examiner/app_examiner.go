@@ -76,6 +76,10 @@ type CellInfo struct {
 	RunningInstances int
 	ClaimedInstances int
 	Missing          bool
+	Zone             string
+	MemoryMB         int
+	DiskMB           int
+	Containers       int
 }
 
 //go:generate counterfeiter -o fake_app_examiner/fake_app_examiner.go . AppExaminer
@@ -104,7 +108,13 @@ func (e *appExaminer) ListCells() ([]CellInfo, error) {
 	}
 
 	for _, cell := range cellList {
-		allCells[cell.CellID] = &CellInfo{CellID: cell.CellID}
+		allCells[cell.CellID] = &CellInfo{
+			CellID:     cell.CellID,
+			Zone:       cell.Zone,
+			MemoryMB:   cell.Capacity.MemoryMB,
+			DiskMB:     cell.Capacity.DiskMB,
+			Containers: cell.Capacity.Containers,
+		}
 	}
 
 	actualLRPs, err := e.receptorClient.ActualLRPs()
@@ -333,9 +343,9 @@ func sortCells(allCells map[string]*CellInfo) []CellInfo {
 	return sortedCells
 }
 
-func sortCellKeys(allApps map[string]*CellInfo) []string {
-	keys := make([]string, 0, len(allApps))
-	for key := range allApps {
+func sortCellKeys(allCells map[string]*CellInfo) []string {
+	keys := make([]string, 0, len(allCells))
+	for key := range allCells {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)

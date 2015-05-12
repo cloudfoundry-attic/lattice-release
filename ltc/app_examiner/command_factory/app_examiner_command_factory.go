@@ -109,6 +109,42 @@ func (factory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
 	}
 }
 
+func (factory *AppExaminerCommandFactory) MakeCellsCommand() cli.Command {
+	return cli.Command{
+		Name:        "cells",
+		Aliases:     []string{"ce"},
+		Usage:       "Shows details about lattice cells",
+		Description: "ltc cells",
+		Action:      factory.cells,
+		Flags:       []cli.Flag{},
+	}
+}
+
+func (factory *AppExaminerCommandFactory) cells(context *cli.Context) {
+	cellList, err := factory.appExaminer.ListCells()
+	if err != nil {
+		factory.ui.Say(err.Error())
+		return
+	}
+
+	w := &tabwriter.Writer{}
+	w.Init(factory.ui, 9, 8, 1, '\t', 0)
+
+	fmt.Fprintln(w, "Cells\tZone\tMemory\tDisk\tCell Apps")
+
+	for _, cellInfo := range cellList {
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+			cellInfo.CellID,
+			cellInfo.Zone,
+			fmt.Sprintf("%dM", cellInfo.MemoryMB),
+			fmt.Sprintf("%dM", cellInfo.DiskMB),
+			fmt.Sprintf("%d RUN/%d CLM", cellInfo.RunningInstances, cellInfo.ClaimedInstances),
+		)
+	}
+
+	w.Flush()
+}
+
 func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 	appList, err := factory.appExaminer.ListApps()
 	if err != nil {
