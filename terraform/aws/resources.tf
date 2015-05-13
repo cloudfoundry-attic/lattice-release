@@ -49,6 +49,18 @@ resource "aws_security_group" "lattice-network" {
         to_port = 65535
         cidr_blocks = ["0.0.0.0/0"]
     }
+    egress {
+        protocol = "tcp"
+        from_port = 1
+        to_port = 65535
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    egress {
+        protocol = "udp"
+        from_port = 1
+        to_port = 65535
+        cidr_blocks = ["0.0.0.0/0"]
+    }
     tags {
         Name = "lattice"
     }

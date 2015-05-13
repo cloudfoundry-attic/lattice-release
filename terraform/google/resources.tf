@@ -32,9 +32,11 @@ resource "google_compute_instance" "lattice-brain" {
         image = "${var.gce_image}"
         auto_delete = true
     }
-    network {
-        source = "${google_compute_network.lattice-network.name}"
-        address = "${google_compute_address.lattice-brain.address}"
+    network_interface {
+        network = "${google_compute_network.lattice-network.name}"
+        access_config {
+            nat_ip = "${google_compute_address.lattice-brain.address}"
+        }
     }
 
     connection {
@@ -104,8 +106,11 @@ resource "google_compute_instance" "cell" {
         image = "${var.gce_image}"
         auto_delete = true
     }
-    network {
-        source = "${google_compute_network.lattice-network.name}"
+    network_interface {
+        network = "${google_compute_network.lattice-network.name}"
+        access_config {
+            // ephemeral ip
+        }
     }
 
     connection {
