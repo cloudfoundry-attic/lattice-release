@@ -644,14 +644,14 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("Zone"))
 			Expect(outputBuffer).To(test_helpers.Say("Memory"))
 			Expect(outputBuffer).To(test_helpers.Say("Disk"))
-			Expect(outputBuffer).To(test_helpers.Say("Cell Apps"))
+			Expect(outputBuffer).To(test_helpers.Say("Apps"))
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
 
 			Expect(outputBuffer).To(test_helpers.Say("cell-one"))
 			Expect(outputBuffer).To(test_helpers.Say("z1"))
 			Expect(outputBuffer).To(test_helpers.Say("1229M"))
 			Expect(outputBuffer).To(test_helpers.Say("4301M"))
-			Expect(outputBuffer).To(test_helpers.Say("37 RUN/12 CLM"))
+			Expect(outputBuffer).To(test_helpers.Say("37/12"))
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
 
 			Expect(outputBuffer).To(test_helpers.Say("cell-two"))

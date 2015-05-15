@@ -111,12 +111,17 @@ func (factory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
 
 func (factory *AppExaminerCommandFactory) MakeCellsCommand() cli.Command {
 	return cli.Command{
-		Name:        "cells",
-		Aliases:     []string{"ce"},
-		Usage:       "Shows details about lattice cells",
-		Description: "ltc cells",
-		Action:      factory.cells,
-		Flags:       []cli.Flag{},
+		Name:    "cells",
+		Aliases: []string{"ce"},
+		Usage:   "Shows details about lattice cells",
+		Description: `ltc cells APP_NAME
+ 
+    Output format is:
+
+    Cell	Zone	Memory	Apps (running/claimed)`,
+
+		Action: factory.cells,
+		Flags:  []cli.Flag{},
 	}
 }
 
@@ -130,7 +135,7 @@ func (factory *AppExaminerCommandFactory) cells(context *cli.Context) {
 	w := &tabwriter.Writer{}
 	w.Init(factory.ui, 9, 8, 1, '\t', 0)
 
-	fmt.Fprintln(w, "Cells\tZone\tMemory\tDisk\tCell Apps")
+	fmt.Fprintln(w, "Cells\tZone\tMemory\tDisk\tApps")
 
 	for _, cellInfo := range cellList {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
@@ -138,7 +143,7 @@ func (factory *AppExaminerCommandFactory) cells(context *cli.Context) {
 			cellInfo.Zone,
 			fmt.Sprintf("%dM", cellInfo.MemoryMB),
 			fmt.Sprintf("%dM", cellInfo.DiskMB),
-			fmt.Sprintf("%d RUN/%d CLM", cellInfo.RunningInstances, cellInfo.ClaimedInstances),
+			fmt.Sprintf("%d/%d", cellInfo.RunningInstances, cellInfo.ClaimedInstances),
 		)
 	}
 
