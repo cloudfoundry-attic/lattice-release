@@ -2,7 +2,6 @@ package cli_app_factory_test
 
 import (
 	"errors"
-	"sort"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -63,17 +62,7 @@ var _ = Describe("CliAppFactory", func() {
 			Expect(cliApp.Email).To(Equal("cf-lattice@lists.cloudfoundry.org"))
 			Expect(cliApp.Usage).To(Equal(cli_app_factory.LtcUsage))
 			Expect(cliApp.Commands).NotTo(BeEmpty())
-		})
 
-		It("lists the subcommands in alphabetical order", func() {
-			cliCommands := cliApp.Commands
-			Expect(cliCommands).NotTo(BeEmpty())
-
-			var commandNames []string
-			for _, cmd := range cliCommands {
-				commandNames = append(commandNames, cmd.Name)
-			}
-			Expect(sort.StringsAreSorted(commandNames)).To(BeTrue())
 		})
 
 		Context("when invoked without latticeVersion set", func() {
