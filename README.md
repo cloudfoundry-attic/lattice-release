@@ -249,6 +249,14 @@ details that may be necessary to reproduce the bug including the Lattice version
 5. Commit and push your changes.
 6. Submit a pull request.
 
+## Choosing Stories From our [Tracker](https://www.pivotaltracker.com/n/projects/1183596)
+
+[Pivotal Tracker](http://www.pivotaltracker.com/) is the way that Cloud Foundry projects organize and prioritize work and releases. With Tracker, work is organized into stories that are actionable and have been prioritized.  The team typically works on stories found in the Current and Backlog columns.
+
+Stories not (yet) prioritized are kept in the Icebox. The Icebox is a grab-bag of feature requests, GitHub Issues, or partially-developed ideas. Stories in the Icebox may never be prioritized, and may not always be maintained in the same disciplined manner as the Backlog.
+
+Periodically, the Lattice team goes through through both the Backlog and the Icebox, and tags stories using the 'community' label.   These are stories that are particularly well-suited to community contribution, and make excellent candidates for people to work on. 
+
 # Copyright
 
 See [LICENSE](docs/LICENSE) for details.
