@@ -180,6 +180,8 @@ Here are some step-by-step instructions for deploying a Lattice cluster via Terr
   - [Amazon Web Services](terraform/aws/README.md#configure)
   - [DigitalOcean](terraform/digitalocean/README.md#configure)
   - [Google Cloud](terraform/google/README.md#configure)
+  - [Openstack](terraform/openstack/README.md#configure) 
+      - Note: This is a community-supplied platform. It is not presently supported by the project maintainers.
 5. Run the following commands in the folder containing the `lattice.<platform>.tf` file
 
   ```bash

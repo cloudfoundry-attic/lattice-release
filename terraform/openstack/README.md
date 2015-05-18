@@ -2,7 +2,9 @@
 
 This project contains [Terraform](https://www.terraform.io/) templates to help you deploy
 [Lattice](https://github.com/cloudfoundry-incubator/lattice) on
-[Openstack](http://www.openstack.org/).
+[Openstack](http://www.openstack.org/). 
+
+> Note: This is a community-supplied platform, it is not presently supported by the project maintainers.
 
 ## Usage
 
@@ -15,7 +17,7 @@ This project contains [Terraform](https://www.terraform.io/) templates to help y
 
 Here are some step-by-step instructions for configuring a Lattice cluster via Terraform:
 
-1. Visit the [Lattice GitHub Releases page](https://github.com/cloudfoundry-incubator/lattice/releases#)
+1. Visit the [Lattice GitHub Releases page](https://github.com/cloudfoundry-incubator/lattice/releases)
 2. Select the Lattice version you wish to deploy and download the Terraform example file for your target platform.  The filename will be `lattice.openstack.tf`
 3. Create an empty folder and place the `lattice.openstack.tf` file in that folder.
 4. Update the `lattice.openstack.tf` by filling in the values for the variables.  Details for the values of those variables are below.
@@ -73,7 +75,7 @@ Terraform will generate a `terraform.tfstate` file.  This file describes the clu
 
 ### Use
 
-Refer to the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) documentation.
+Refer to the [Lattice CLI](../../ltc) documentation.
 
 ### Destroy
 
@@ -88,5 +90,5 @@ Sometimes, destroy will need to be run twice to completely destroy all component
 ## Copyright
 Openstack Terraform support for Lattice.cf added by Matt Johnson <matjohn2@cisco.com>.
 
-For Lattice copyright, see [LICENSE](https://github.com/cloudfoundry-incubator/lattice/blob/master/LICENSE) for details.
+For Lattice copyright, see [LICENSE](../../docs/LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).
