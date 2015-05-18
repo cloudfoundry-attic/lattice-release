@@ -47,7 +47,7 @@ generate_terraform_configuration_file(){
 export DIEGO_RELEASE_PATH=$1
 export LATTICE_TAR_PATH=$2
 WORKSPACE_DIR=/workspace
-export TF_WORKING_DIR=/var/tf-working #This is NOT within the shared folder mounted by docker, so that it goes away every run
+export TF_WORKING_DIR=$HOME/terraform-work # ephemeral folder in docker context
 
 mkdir -pv $TF_WORKING_DIR
 
