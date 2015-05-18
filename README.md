@@ -127,7 +127,7 @@ Vagrant.configure("2") do |config|
 end
 ```
 
-Then proceed with `vagrant up`.
+Then proceed with `HTTP_PROXY=http://PROXY_IP:PROXY_PORT vagrant up`.
 
 ## Troubleshooting
 
