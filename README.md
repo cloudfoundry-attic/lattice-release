@@ -36,7 +36,7 @@ More complex workloads can be constructed and submitted directly to Lattice's Re
 
 ## Launching with Vagrant
 
-Make sure you have [Vagrant](https://vagrantup.com/) installed, then:
+Make sure you have [Vagrant](https://vagrantup.com/) installed (version 1.6 or better), then:
 
 ```bash
 git clone https://github.com/cloudfoundry-incubator/lattice.git
@@ -52,6 +52,8 @@ Use the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/mas
 ```bash
 ltc target 192.168.11.11.xip.io
 ```
+
+> NOTE: Ubuntu 14.04 LTS does not install a compatible version of vagrant by default. You can upgrade the version that you get out of the box by downloading the `.deb` file from [Vagrant](http://www.vagrantup.com/downloads.html).
 
 ## Using Different Providers
 
