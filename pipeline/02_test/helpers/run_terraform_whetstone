@@ -12,12 +12,6 @@ cleanup(){
     set +e
     echo "Cleaning up terraform and related artifacts"
     pushd $TF_WORKING_DIR
-        echo "Removing output configuration from local copy of terraform modules, and deleting them from lattice.tf to work around terraform bug"
-        #Terraform has a bug in it where it sees output variables as dependent on resources, but does not destroy them
-        #in the correct order. see: https://github.com/hashicorp/terraform/issues/522 . The work-around is to
-        #remove the outputs from the local copy of the lattice module and the dependent outputs from the lattice.tf configuration file.
-        find -L ./.terraform/modules/ -name "outputs.tf" -exec rm -- {} +
-        generate_terraform_configuration_file --without-outputs
         echo "Destroying once (should delete the instances, but fail to delete vpc resources)..."
         terraform destroy -force
         echo "Destroying one more time to get rid of the remaining vpc resources..."
