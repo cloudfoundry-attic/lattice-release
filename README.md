@@ -251,11 +251,11 @@ details that may be necessary to reproduce the bug including the Lattice version
 
 ## Choosing Stories From our [Tracker](https://www.pivotaltracker.com/n/projects/1183596)
 
-One way to find inspiration for things that the Lattice project would like done is to view our Tracker. Tracker is the way that Cloud Foundry projects organize and prioritize work and releases. In Tracker, work is organized is based on stories that are actionable and have been prioritized. Those are the only stories the team will typically work on, and they're found in the Current and Backlog columns.
+[Pivotal Tracker](http://www.pivotaltracker.com/) is the way that Cloud Foundry projects organize and prioritize work and releases. With Tracker, work is organized into stories that are actionable and have been prioritized.  The team typically works on stories found in the Current and Backlog columns.
 
-Stories that are not prioritized (for any number of reasons) are kept in the Icebox. Those stories are a grab-bag of various stories, from feature requests, new bugs or GitHub Issues, partially developed ideas, or the result of brainstorming. The Icebox is a repository for all stories that are under consideration. Those stories may possibly undergo considerable transformation or be discarded entirely. Stories in the Icebox may never be prioritized, in fact you'll see at the bottom of the Icebox is a section called, 'Graveyard.' Stories are stored there specifically to record that an idea has been considered and discarded. The Icebox is not always maintained in the same disciplined manner of the Backlog.
+Stories not (yet) prioritized are kept in the Icebox. The Icebox is a grab-bag of feature requests, GitHub Issues, or partially-developed ideas. Stories in the Icebox may never be prioritized, and may not always be maintained in the same disciplined manner as the Backlog.
 
-Periodically, the Lattice team goes through through both the Backlog and the Icebox, and taggs stories as 'community.' These are stories that we felt are particularly well-suited to community contribution, and feel would be excellent candidates for people to work on. In the reality that the Icebox will never be a perfectly organized prediction of all the work we'll do, the 'community' tag is a compromise to indicate that there are a variety of features we're confident will be welcomed.
+Periodically, the Lattice team goes through through both the Backlog and the Icebox, and tags stories using the 'community' label.   These are stories that are particularly well-suited to community contribution, and make excellent candidates for people to work on. 
 
 # Copyright
 
