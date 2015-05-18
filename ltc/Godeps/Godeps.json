@@ -21,7 +21,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "6931d81a27465f8fb5d2bb9a781ff7c5f4231136"
+			"Rev": "716f1a64c3ac5c615bef5fc041afb3e6e3aa616f"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
