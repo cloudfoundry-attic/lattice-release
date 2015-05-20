@@ -31,17 +31,28 @@ import (
 	logs_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
 )
 
-var nonTargetVerifiedCommandNames = map[string]struct{}{
-	config_command_factory.TargetCommandName: {},
-	"help": {},
-}
+var (
+	nonTargetVerifiedCommandNames = map[string]struct{}{
+		config_command_factory.TargetCommandName: {},
+		"help": {},
+	}
+
+	defaultAction = func(context *cli.Context) {
+		args := context.Args()
+		if len(args) > 0 {
+			cli.ShowCommandHelp(context, args[0])
+		} else {
+			showAppHelp(appHelpTemplate(), context.App)
+		}
+	}
+)
 
 const (
 	LtcUsage          = "Command line interface for Lattice."
 	AppName           = "ltc"
 	latticeCliAuthor  = "Pivotal"
 	latticeCliHomeVar = "LATTICE_CLI_HOME"
-	UnknownCommand    = "ltc: '%s' is not a registered command. See 'ltc help'"
+	unknownCommand    = "ltc: '%s' is not a registered command. See 'ltc help'"
 )
 
 func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, cliStdout io.Writer) *cli.App {
@@ -77,28 +88,13 @@ func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.E
 		return nil
 	}
 
-	helpCommand := cli.Command{
-		Name:        "help",
-		Aliases:     []string{"h"},
-		Usage:       "Shows a list of commands or help for one command",
-		Description: "ltc help",
-		Action: func(context *cli.Context) {
-			args := context.Args()
-			if len(args) > 0 {
-				cli.ShowCommandHelp(context, args[0])
-			} else {
-				showAppHelp(appHelpTemplate(), context.App)
-			}
-		},
-	}
-	app.Action = helpCommand.Action
+	app.Action = defaultAction
 	app.CommandNotFound = func(c *cli.Context, command string) {
-		fmt.Println(fmt.Sprintf(UnknownCommand, command))
+		fmt.Println(fmt.Sprintf(unknownCommand, command))
 	}
 	cli.AppHelpTemplate = appHelpTemplate()
 	cli.HelpPrinter = ShowHelp
 	app.Commands = cliCommands(ltcConfigRoot, exitHandler, config, logger, targetVerifier, ui)
-	app.Commands = append(app.Commands, helpCommand)
 	return app
 }
 
@@ -139,6 +135,14 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	testRunner := integration_test.NewIntegrationTestRunner(config, ltcConfigRoot)
 	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner)
 
+	helpCommand := cli.Command{
+		Name:        "help",
+		Aliases:     []string{"h"},
+		Usage:       "Shows a list of commands or help for one command",
+		Description: "ltc help",
+		Action:      defaultAction,
+	}
+
 	return []cli.Command{
 		appExaminerCommandFactory.MakeCellsCommand(),
 		appRunnerCommandFactory.MakeCreateAppCommand(),
@@ -153,6 +157,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		integrationTestCommandFactory.MakeIntegrationTestCommand(),
 		appRunnerCommandFactory.MakeUpdateRoutesCommand(),
 		appExaminerCommandFactory.MakeVisualizeCommand(),
+		helpCommand,
 	}
 }
 

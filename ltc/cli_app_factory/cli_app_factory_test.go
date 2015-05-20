@@ -63,6 +63,8 @@ var _ = Describe("CliAppFactory", func() {
 			Expect(cliApp.Usage).To(Equal(cli_app_factory.LtcUsage))
 			Expect(cliApp.Commands).NotTo(BeEmpty())
 
+			Expect(cliApp.Action).ToNot(BeNil())
+			Expect(cliApp.CommandNotFound).ToNot(BeNil())
 		})
 
 		Context("when invoked without latticeVersion set", func() {
