@@ -27,13 +27,17 @@ func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.C
 			Name:  "verbose, v",
 			Usage: "Verbose mode",
 		},
+		cli.BoolFlag{
+			Name:  "cli-help",
+			Usage: "Cli Help Tests",
+		},
 	}
 
 	cliCommand := cli.Command{
 		Name:        "test",
 		Aliases:     []string{"te"},
 		Usage:       "Runs test suite against targeted lattice cluster",
-		Description: "ltc test [-v] [--timeout=TIMEOUT]",
+		Description: "ltc test [-v] [--timeout=TIMEOUT] [--cli-help]",
 		Action:      factory.runIntegrationTests,
 		Flags:       testFlags,
 	}
@@ -42,5 +46,5 @@ func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.C
 }
 
 func (factory *IntegrationTestCommandFactory) runIntegrationTests(context *cli.Context) {
-	factory.integrationTestRunner.Run(context.Duration("timeout"), context.Bool("verbose"))
+	factory.integrationTestRunner.Run(context.Duration("timeout"), context.Bool("verbose"), context.Bool("cli-help"))
 }
