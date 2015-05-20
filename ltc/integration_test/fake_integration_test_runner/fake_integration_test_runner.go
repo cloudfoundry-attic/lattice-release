@@ -13,15 +13,17 @@ type FakeIntegrationTestRunner struct {
 	sync.RWMutex
 	timeout      time.Duration
 	verbose      bool
+	cliHelp      bool
 	runCallCount int
 }
 
-func (fake *FakeIntegrationTestRunner) Run(timeout time.Duration, verbose bool) {
+func (fake *FakeIntegrationTestRunner) Run(timeout time.Duration, verbose bool, cliHelp bool) {
 	fake.Lock()
 	defer fake.Unlock()
 
 	fake.timeout = timeout
 	fake.verbose = verbose
+	fake.cliHelp = cliHelp
 	fake.runCallCount++
 }
 
@@ -31,8 +33,8 @@ func (fake *FakeIntegrationTestRunner) RunCallCount() int {
 	return fake.runCallCount
 }
 
-func (fake *FakeIntegrationTestRunner) GetArgsForRun() (time.Duration, bool) {
+func (fake *FakeIntegrationTestRunner) GetArgsForRun() (time.Duration, bool, bool) {
 	fake.RLock()
 	defer fake.RUnlock()
-	return fake.timeout, fake.verbose
+	return fake.timeout, fake.verbose, fake.cliHelp
 }

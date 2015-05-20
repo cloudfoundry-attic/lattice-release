@@ -32,7 +32,7 @@ func init() {
 }
 
 type IntegrationTestRunner interface {
-	Run(timeout time.Duration, verbose bool)
+	Run(timeout time.Duration, verbose, cliHelp bool)
 }
 
 type integrationTestRunner struct {
@@ -57,11 +57,14 @@ func NewIntegrationTestRunner(config *config.Config, latticeCliHome string) Inte
 	}
 }
 
-func (runner *integrationTestRunner) Run(timeout time.Duration, verbose bool) {
+func (runner *integrationTestRunner) Run(timeout time.Duration, verbose, cliHelp bool) {
 	ginkgo_config.DefaultReporterConfig.Verbose = verbose
 	ginkgo_config.DefaultReporterConfig.SlowSpecThreshold = float64(20)
-	defineTheGinkgoTests(runner, timeout)
-	defineTheMainTests(runner)
+	if cliHelp {
+		defineTheMainTests(runner)
+	} else {
+		defineTheGinkgoTests(runner, timeout)
+	}
 	RegisterFailHandler(Fail)
 	RunSpecs(runner.testingT, "Lattice Integration Tests")
 }

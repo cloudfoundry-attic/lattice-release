@@ -31,21 +31,23 @@ var _ = Describe("IntegrationTestCommandFactory", func() {
 		})
 
 		It("prints the integration test run output and args", func() {
-			test_helpers.ExecuteCommandWithArgs(integrationTestCommand, []string{"--timeout=50s", "--verbose=true"})
+			test_helpers.ExecuteCommandWithArgs(integrationTestCommand, []string{"--timeout=50s", "--verbose=true", "--cli-help"})
 
 			Expect(fakeIntegrationTestRunner.RunCallCount()).To(Equal(1))
-			timeoutArg, verboseArg := fakeIntegrationTestRunner.GetArgsForRun()
+			timeoutArg, verboseArg, cliHelpArg := fakeIntegrationTestRunner.GetArgsForRun()
 			Expect(timeoutArg).To(Equal(time.Second * 50))
 			Expect(verboseArg).To(Equal(true))
+			Expect(cliHelpArg).To(Equal(true))
 		})
 
 		It("has sane defaults", func() {
 			test_helpers.ExecuteCommandWithArgs(integrationTestCommand, []string{})
 
 			Expect(fakeIntegrationTestRunner.RunCallCount()).To(Equal(1))
-			timeoutArg, verboseArg := fakeIntegrationTestRunner.GetArgsForRun()
+			timeoutArg, verboseArg, cliHelpArg := fakeIntegrationTestRunner.GetArgsForRun()
 			Expect(timeoutArg).To(Equal(time.Minute * 2))
 			Expect(verboseArg).To(Equal(false))
+			Expect(cliHelpArg).To(Equal(false))
 		})
 
 	})
