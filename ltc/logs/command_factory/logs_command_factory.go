@@ -29,7 +29,7 @@ func NewLogsCommandFactory(appExaminer app_examiner.AppExaminer, ui terminal.UI,
 func (factory *logsCommandFactory) MakeLogsCommand() cli.Command {
 	var logsCommand = cli.Command{
 		Name:        "logs",
-		Aliases:     []string{"lo"},
+		Aliases:     []string{"lg", "lo"},
 		Usage:       "Streams logs from the specified application",
 		Description: "ltc logs APP_NAME",
 		Action:      factory.tailLogs,

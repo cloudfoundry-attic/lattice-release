@@ -16,6 +16,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/password_reader"
 	"github.com/cloudfoundry-incubator/receptor"
@@ -29,6 +30,7 @@ import (
 	config_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
 	integration_test_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/integration_test/command_factory"
 	logs_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
+	task_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/task_runner/command_factory"
 )
 
 var (
@@ -135,6 +137,9 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	testRunner := integration_test.NewIntegrationTestRunner(config, ltcConfigRoot)
 	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner)
 
+	taskRunner := task_runner.New(receptorClient)
+	taskRunnerCommandFactory := task_runner_command_factory.NewTaskRunnerCommandFactory(taskRunner, ui)
+
 	helpCommand := cli.Command{
 		Name:        "help",
 		Aliases:     []string{"h"},
@@ -153,6 +158,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		appRunnerCommandFactory.MakeRemoveAppCommand(),
 		appRunnerCommandFactory.MakeScaleAppCommand(),
 		appExaminerCommandFactory.MakeStatusCommand(),
+		taskRunnerCommandFactory.MakeSubmitTaskCommand(),
 		configCommandFactory.MakeTargetCommand(),
 		integrationTestCommandFactory.MakeIntegrationTestCommand(),
 		appRunnerCommandFactory.MakeUpdateRoutesCommand(),
