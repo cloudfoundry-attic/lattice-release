@@ -14,7 +14,7 @@ import (
 	"github.com/cloudfoundry/noaa/events"
 )
 
-var _ = Describe("AppRunner", func() {
+var _ = Describe("AppExaminer", func() {
 
 	var (
 		fakeReceptorClient *fake_receptor.FakeClient

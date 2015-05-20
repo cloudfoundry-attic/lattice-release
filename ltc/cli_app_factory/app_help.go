@@ -80,6 +80,14 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 				},
 			},
 		}, {
+			Name: "TASKS",
+			CommandSubGroups: [][]cmdPresenter{
+				{
+					presentCommand("submit-task"),
+					presentCommand("task"),
+				},
+			},
+		}, {
 			Name: "STREAM LOGS",
 			CommandSubGroups: [][]cmdPresenter{
 				{
@@ -101,7 +109,6 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 			CommandSubGroups: [][]cmdPresenter{
 				{
 					presentCommand("create-lrp"),
-					presentCommand("submit-task"),
 				},
 			},
 		}, {
