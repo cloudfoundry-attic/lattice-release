@@ -56,7 +56,7 @@ When desiring an LRP you `POST` a valid `DesiredLRPCreateRequest`.  The [API ref
 
     "log_guid": "some-log-guid",
     "log_source": "some-log-source",
-
+    "metrics_guid": "some-metrics-guid",
     "annotation": "arbitrary metadata",
 
     "egress_rules": [
@@ -122,13 +122,13 @@ these are built to work with the Cloud Foundry buildpacks.
 It is possible to provide a custom root filesystem by specifying a Docker image for `rootfs`:
 
 ```
-"rootfs": "docker:///docker-org/docker-image#docker-tag"
+"rootfs": "docker:///docker-user/docker-image#docker-tag"
 ```
 
 To pull the image from a different registry than the default (Docker Hub), specify it as the host in the URI string, e.g.:
 
 ```
-"rootfs": "docker://index.myregistry.gov/docker-org/docker-image#docker-tag"
+"rootfs": "docker://index.myregistry.gov/docker-user/docker-image#docker-tag"
 ```
 
 > You *must* specify the dockerimage `rootfs` uri as specified, including the leading `docker://`!
@@ -305,6 +305,10 @@ Diego uses [loggregator](https://github.com/cloudfoundry/loggregator) to emit lo
 #### `log_source` [optional]
 
 `log_source` is an identifier emitted with each log line.  Individual `RunAction`s can override the `log_source`.  This allows a consumer of the log stream to distinguish between the logs of different processes.
+
+#### `metrics_guid` [optional]
+
+`metrics_guid` controls the loggregator guid associated with metrics coming from LRP processes.
 
 #### Attaching Arbitrary Metadata
 

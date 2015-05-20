@@ -227,9 +227,14 @@ func initializeDropsonde(logger lager.Logger) {
 }
 
 func initializeReceptorBBS(logger lager.Logger) Bbs.ReceptorBBS {
+	workPool, err := workpool.NewWorkPool(100)
+	if err != nil {
+		logger.Fatal("failed-to-construct-etcd-adapter-workpool", err, lager.Data{"num-workers": 100}) // should never happen
+	}
+
 	etcdAdapter := etcdstoreadapter.NewETCDStoreAdapter(
 		strings.Split(*etcdCluster, ","),
-		workpool.NewWorkPool(100),
+		workPool,
 	)
 
 	client, err := consuladapter.NewClient(*consulCluster)

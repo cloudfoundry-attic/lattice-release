@@ -10,7 +10,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/cf_http"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
-	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
+	"github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-golang/lager"
 	"github.com/tedsuo/ifrit"
@@ -21,7 +21,7 @@ const MAX_RETRIES = 3
 
 const POOL_SIZE = 20
 
-func NewTaskWorkerPool(bbs Bbs.ReceptorBBS, logger lager.Logger) (ifrit.Runner, chan<- models.Task) {
+func NewTaskWorkerPool(receptorBBS bbs.ReceptorBBS, logger lager.Logger) (ifrit.Runner, chan<- models.Task) {
 	taskQueue := make(chan models.Task, POOL_SIZE)
 
 	members := make(grouper.Members, POOL_SIZE)
@@ -29,26 +29,26 @@ func NewTaskWorkerPool(bbs Bbs.ReceptorBBS, logger lager.Logger) (ifrit.Runner, 
 	for i := 0; i < POOL_SIZE; i++ {
 		name := fmt.Sprintf("task-worker-%d", i)
 		members[i].Name = name
-		members[i].Runner = newTaskWorker(taskQueue, bbs, logger.Session(name))
+		members[i].Runner = newTaskWorker(taskQueue, receptorBBS, logger.Session(name))
 	}
 
 	return grouper.NewParallel(os.Interrupt, members), taskQueue
 }
 
-func newTaskWorker(taskQueue <-chan models.Task, bbs Bbs.ReceptorBBS, logger lager.Logger) *taskWorker {
+func newTaskWorker(taskQueue <-chan models.Task, receptorBBS bbs.ReceptorBBS, logger lager.Logger) *taskWorker {
 	return &taskWorker{
-		taskQueue:  taskQueue,
-		bbs:        bbs,
-		logger:     logger,
-		httpClient: cf_http.NewClient(),
+		taskQueue:   taskQueue,
+		receptorBBS: receptorBBS,
+		logger:      logger,
+		httpClient:  cf_http.NewClient(),
 	}
 }
 
 type taskWorker struct {
-	taskQueue  <-chan models.Task
-	bbs        Bbs.ReceptorBBS
-	logger     lager.Logger
-	httpClient *http.Client
+	taskQueue   <-chan models.Task
+	receptorBBS bbs.ReceptorBBS
+	logger      lager.Logger
+	httpClient  *http.Client
 }
 
 func (t *taskWorker) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
@@ -70,7 +70,7 @@ func (t *taskWorker) handleCompletedTask(task models.Task) {
 
 	if task.CompletionCallbackURL != nil {
 		logger.Info("resolving-task")
-		err := t.bbs.ResolvingTask(logger, task.TaskGuid)
+		err := t.receptorBBS.ResolvingTask(logger, task.TaskGuid)
 		if err != nil {
 			logger.Error("marking-task-as-resolving-failed", err)
 			return
@@ -107,7 +107,7 @@ func (t *taskWorker) handleCompletedTask(task models.Task) {
 
 			statusCode = response.StatusCode
 			if shouldResolve(statusCode) {
-				err = t.bbs.ResolveTask(logger, task.TaskGuid)
+				err = t.receptorBBS.ResolveTask(logger, task.TaskGuid)
 				if err != nil {
 					logger.Error("resolving-task-failed", err)
 					return

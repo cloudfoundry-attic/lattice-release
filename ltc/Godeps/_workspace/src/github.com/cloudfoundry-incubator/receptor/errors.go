@@ -21,11 +21,15 @@ const (
 
 	InvalidDomain = "InvalidDomain"
 
-	InvalidJSON    = "InvalidJSON"
-	InvalidRequest = "InvalidRequest"
+	InvalidJSON     = "InvalidJSON"
+	InvalidRequest  = "InvalidRequest"
+	InvalidResponse = "InvalidResponse"
 
 	UnknownError = "UnknownError"
 	Unauthorized = "Unauthorized"
 
 	ActualLRPIndexNotFound = "ActualLRPIndexNotFound"
+
+	ResourceNotFound = "ResourceNotFound"
+	RouterError      = "RouterError"
 )

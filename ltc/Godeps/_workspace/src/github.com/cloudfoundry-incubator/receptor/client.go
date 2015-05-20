@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -22,6 +23,12 @@ var ErrSlowConsumer = errors.New("slow consumer")
 
 var ErrSubscribedToClosedHub = errors.New("subscribed to closed hub")
 var ErrHubAlreadyClosed = errors.New("hub already closed")
+
+const (
+	ContentTypeHeader    = "Content-Type"
+	XCfRouterErrorHeader = "X-Cf-Routererror"
+	JSONContentType      = "application/json"
+)
 
 //go:generate counterfeiter -o fake_receptor/fake_client.go . Client
 
@@ -225,21 +232,52 @@ func (c *client) doRequest(requestName string, params rata.Params, queryParams u
 	return c.do(req, response)
 }
 
-func (c *client) do(req *http.Request, response interface{}) error {
+func (c *client) do(req *http.Request, responseObject interface{}) error {
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 
+	var parsedContentType string
+	if contentType, ok := res.Header[ContentTypeHeader]; ok {
+		parsedContentType, _, _ = mime.ParseMediaType(contentType[0])
+	}
+
+	if routerError, ok := res.Header[XCfRouterErrorHeader]; ok {
+		return Error{Type: RouterError, Message: routerError[0]}
+	}
+
+	if parsedContentType == JSONContentType {
+		return handleJSONResponse(res, responseObject)
+	} else {
+		return handleNonJSONResponse(res)
+	}
+}
+
+func handleJSONResponse(res *http.Response, responseObject interface{}) error {
 	if res.StatusCode > 299 {
 		errResponse := Error{}
-		json.NewDecoder(res.Body).Decode(&errResponse)
+		err := json.NewDecoder(res.Body).Decode(&errResponse)
+		if err != nil {
+			return Error{Type: InvalidJSON, Message: err.Error()}
+		}
 		return errResponse
 	}
 
-	if response != nil {
-		return json.NewDecoder(res.Body).Decode(response)
+	err := json.NewDecoder(res.Body).Decode(responseObject)
+	if err != nil {
+		return Error{Type: InvalidJSON, Message: err.Error()}
+	}
+	return nil
+}
+
+func handleNonJSONResponse(res *http.Response) error {
+	if res.StatusCode > 299 {
+		return Error{
+			Type:    InvalidResponse,
+			Message: fmt.Sprintf("Invalid Response with status code: %d", res.StatusCode),
+		}
 	}
 
 	return nil
