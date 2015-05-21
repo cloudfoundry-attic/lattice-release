@@ -2,7 +2,7 @@ package cli_app_factory
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"reflect"
 	"strings"
 	"text/tabwriter"
@@ -126,41 +126,41 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 	return
 }
 
-func ShowHelp(helpTemplate string, thingToPrint interface{}) {
+func ShowHelp(w io.Writer, helpTemplate string, thingToPrint interface{}) {
 	translatedTemplatedHelp := strings.Replace(helpTemplate, "{{", "[[", -1)
 	translatedTemplatedHelp = strings.Replace(translatedTemplatedHelp, "[[", "{{", -1)
 
 	switch thing := thingToPrint.(type) {
 	case *cli.App:
-		showAppHelp(translatedTemplatedHelp, thing)
+		showAppHelp(w, translatedTemplatedHelp, thing)
 	case cli.Command:
-		commandPrintHelp(translatedTemplatedHelp, thing)
+		commandPrintHelp(w, translatedTemplatedHelp, thing)
 	default:
 		panic(fmt.Sprintf("Help printer has received something that is neither app nor command! The beast (%s) looks like this: %s", reflect.TypeOf(thing), thing))
 	}
 }
 
-func showAppHelp(helpTemplate string, appToPrint *cli.App) {
+func showAppHelp(w io.Writer, helpTemplate string, appToPrint *cli.App) {
 	presenter := newAppPresenter(appToPrint)
-	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
+	tabWriter := tabwriter.NewWriter(w, 0, 8, 1, '\t', 0)
 	t := template.Must(template.New("help").Parse(helpTemplate))
-	err := t.Execute(w, presenter)
+	err := t.Execute(tabWriter, presenter)
 	if err != nil {
 		panic(err)
 	}
-	w.Flush()
+	tabWriter.Flush()
 }
 
-func commandPrintHelp(templ string, data cli.Command) {
+func commandPrintHelp(w io.Writer, templ string, data cli.Command) {
 	funcMap := template.FuncMap{
 		"join": strings.Join,
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
+	tabWriter := tabwriter.NewWriter(w, 0, 8, 1, '\t', 0)
 	t := template.Must(template.New("help").Funcs(funcMap).Parse(templ))
-	err := t.Execute(w, data)
+	err := t.Execute(tabWriter, data)
 	if err != nil {
 		panic(err)
 	}
-	w.Flush()
+	tabWriter.Flush()
 }

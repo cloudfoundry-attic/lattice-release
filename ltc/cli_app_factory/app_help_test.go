@@ -1,6 +1,7 @@
 package cli_app_factory_test
 
 import (
+	"io/ioutil"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
@@ -9,75 +10,49 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/cli_app_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
-	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
-	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/io"
 	"github.com/codegangsta/cli"
 	"github.com/onsi/gomega/gbytes"
-	"github.com/pivotal-golang/lager"
 )
 
 var _ = Describe("AppHelp", func() {
 	var (
-		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
-		memPersister       persister.Persister
-		outputBuffer       *gbytes.Buffer
-		terminalUI         terminal.UI
-		cliApp             *cli.App
-		cliConfig          *config.Config
-		latticeVersion     string
+		cliApp       *cli.App
+		outputBuffer *gbytes.Buffer
 	)
 
-	BeforeEach(func() {
-		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
-		memPersister = persister.NewMemPersister()
-		outputBuffer = gbytes.NewBuffer()
-		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
-		cliConfig = config.New(memPersister)
-		latticeVersion = "v0.2.Test"
-	})
+	dummyTemplate := `
+		{{range .Commands}}{{range .CommandSubGroups}}{{range .}}
+		{{.Name}}
+		{{end}}{{end}}{{end}}`
 
-	JustBeforeEach(func() {
+	BeforeEach(func() {
+		outputBuffer = gbytes.NewBuffer()
+
 		cliApp = cli_app_factory.MakeCliApp(
-			latticeVersion,
+			"",
 			"~/",
-			&fake_exit_handler.FakeExitHandler{},
-			cliConfig,
-			lager.NewLogger("test"),
-			fakeTargetVerifier,
-			terminalUI,
+			nil,
+			config.New(persister.NewMemPersister()),
+			nil,
+			nil,
+			terminal.NewUI(nil, outputBuffer, nil),
 		)
 	})
 
 	It("shows help for all commands", func() {
 
-		dummyTemplate := `
-{{range .Commands}}{{range .CommandSubGroups}}{{range .}}
-{{.Name}}
-{{end}}{{end}}{{end}}
-`
-
 		cliCommands := cliApp.Commands
 		Expect(cliCommands).NotTo(BeEmpty())
 
-		output := io.CaptureOutput(func() {
-			cli_app_factory.ShowHelp(dummyTemplate, cliApp)
-		})
+		cli_app_factory.ShowHelp(outputBuffer, dummyTemplate, cliApp)
 
+		outputBytes, err := ioutil.ReadAll(outputBuffer)
+		Expect(err).NotTo(HaveOccurred())
 		for _, command := range cliCommands {
-			Expect(commandInOutput(command.Names(), output)).To(BeTrue(), command.Name+" not in help")
+			commandName := strings.TrimSpace(strings.Join(command.Names(), ", "))
+			Expect(string(outputBytes)).To(ContainSubstring(commandName))
 		}
 	})
 
 })
-
-func commandInOutput(cmdName []string, output []string) bool {
-	commandName := strings.Join(cmdName, ", ")
-	for _, line := range output {
-		if strings.TrimSpace(line) == strings.TrimSpace(commandName) {
-			return true
-		}
-	}
-	return false
-}

@@ -46,7 +46,7 @@ var (
 		if len(args) > 0 {
 			cli.ShowCommandHelp(context, args[0])
 		} else {
-			showAppHelp(appHelpTemplate(), context.App)
+			showAppHelp(os.Stdout, appHelpTemplate(), context.App)
 		}
 	}
 )
