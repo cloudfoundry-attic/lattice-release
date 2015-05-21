@@ -166,8 +166,14 @@ try upgrading to the latest VirtualBox.
 
 This repository contains several [Terraform](https://www.terraform.io/) templates to help you deploy on your choice of IaaS.  To deploy Lattice in this way you will need:
 
-* [Terraform](https://www.terraform.io/intro/getting-started/install.html) >= 0.4.2 installed on your machine
 * Credentials for your choice of IaaS
+* [Terraform](https://www.terraform.io/intro/getting-started/install.html) >= 0.4.2 installed on your machine
+
+  Lattice | Recommended | Not Supported 
+  ------------|-------------|--------------
+  v0.2.5 | Terraform 0.5.0+ |
+  v0.2.4 | Terraform 0.4.2 | Terraform 0.5
+  v0.2.3 | Terraform 0.3.7 | Terraform 0.4
 
 ## Deploying
 
