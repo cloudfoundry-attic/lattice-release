@@ -114,7 +114,14 @@ func (h *DesiredLRPHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	err = h.bbs.UpdateDesiredLRP(log, processGuid, update)
 	if err == bbserrors.ErrStoreResourceNotFound {
+		log.Error("desired-lrp-not-found", err)
 		writeDesiredLRPNotFoundResponse(w, processGuid)
+		return
+	}
+
+	if err == bbserrors.ErrStoreComparisonFailed {
+		log.Error("failed-to-compare-and-swap", err)
+		writeCompareAndSwapFailedResponse(w, processGuid)
 		return
 	}
 
@@ -186,6 +193,13 @@ func writeDesiredLRPResponse(w http.ResponseWriter, logger lager.Logger, desired
 	}
 
 	writeJSONResponse(w, http.StatusOK, responses)
+}
+
+func writeCompareAndSwapFailedResponse(w http.ResponseWriter, processGuid string) {
+	writeJSONResponse(w, http.StatusConflict, receptor.Error{
+		Type:    receptor.ResourceConflict,
+		Message: fmt.Sprintf("Desired LRP with guid '%s' failed to update", processGuid),
+	})
 }
 
 func writeDesiredLRPNotFoundResponse(w http.ResponseWriter, processGuid string) {

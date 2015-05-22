@@ -380,6 +380,18 @@ var _ = Describe("Desired LRP Handlers", func() {
 			})
 		})
 
+		Context("when the BBS returns a Compare and Swap error", func() {
+			BeforeEach(func(done Done) {
+				defer close(done)
+				fakeBBS.UpdateDesiredLRPReturns(bbserrors.ErrStoreComparisonFailed)
+				handler.Update(responseRecorder, req)
+			})
+
+			It("responds with a 409 Conflict error", func() {
+				Expect(responseRecorder.Code).To(Equal(http.StatusConflict))
+			})
+		})
+
 		Context("when the BBS indicates the LRP was not found", func() {
 			BeforeEach(func(done Done) {
 				defer close(done)
