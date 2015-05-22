@@ -280,12 +280,12 @@ func (appRunner *appRunner) updateLrpRoutes(name string, routes RouteOverrides) 
 	return err
 }
 
-func (appRunner *appRunner) buildDefaultRoutingInfo(appName string, exposedPorts []uint16, monitoredPort uint16) route_helpers.AppRoutes {
+func (appRunner *appRunner) buildDefaultRoutingInfo(appName string, exposedPorts []uint16, monitorPort uint16) route_helpers.AppRoutes {
 	appRoutes := route_helpers.AppRoutes{}
 
 	for _, port := range exposedPorts {
 		hostnames := []string{}
-		if port == monitoredPort {
+		if port == monitorPort {
 			hostnames = append(hostnames, fmt.Sprintf("%s.%s", appName, appRunner.systemDomain))
 		}
 

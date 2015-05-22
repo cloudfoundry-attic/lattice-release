@@ -27,7 +27,7 @@ type pollingAction string
 const (
 	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a comma-delimited list of integers between 0-65535."
 	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format port:route"
-	MustSetMonitoredPortErrorMessage = "Must set monitored-port when specifying multiple exposed ports unless --no-monitor is set."
+	MustSetMonitoredPortErrorMessage = "Must set monitor-port when specifying multiple exposed ports unless --no-monitor is set."
 	MonitorPortNotExposed            = "Must have an exposed port that matches the monitored port"
 
 	DefaultPollingTimeout time.Duration = 2 * time.Minute
@@ -112,16 +112,16 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Usage: "Ports to expose on the container (comma delimited)",
 		},
 		cli.IntFlag{
-			Name:  "monitored-port, M",
+			Name:  "monitor-port, M",
 			Usage: "Selects the port used to healthcheck the app",
 		},
 		cli.StringFlag{
-			Name: "monitored-url, U",
+			Name: "monitor-url, U",
 			Usage: "Uses HTTP to healthcheck the app\n\t\t" +
 				"format is: port:/path/to/endpoint",
 		},
 		cli.DurationFlag{
-			Name:  "monitored-timeout",
+			Name:  "monitor-timeout",
 			Usage: "Timeout for the app healthcheck",
 		},
 		cli.StringFlag{
@@ -253,9 +253,9 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	diskMBFlag := context.Int("disk-mb")
 	portsFlag := context.String("ports")
 	noMonitorFlag := context.Bool("no-monitor")
-	portMonitorFlag := context.Int("monitored-port")
-	urlMonitorFlag := context.String("monitored-url")
-	monitorTimeoutFlag := context.Duration("monitored-timeout")
+	portMonitorFlag := context.Int("monitor-port")
+	urlMonitorFlag := context.String("monitor-url")
+	monitorTimeoutFlag := context.Duration("monitor-timeout")
 	routesFlag := context.String("routes")
 	noRoutesFlag := context.Bool("no-routes")
 	timeoutFlag := context.Duration("timeout")
@@ -297,7 +297,6 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		factory.ui.Say(err.Error())
 		return
 	}
-	// monitoredPort := monitorConfig.Port
 
 	if workingDirFlag == "" {
 		factory.ui.Say("No working directory specified, using working directory from the image metadata...\n")

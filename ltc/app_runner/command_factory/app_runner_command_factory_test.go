@@ -296,7 +296,7 @@ var _ = Describe("CommandFactory", func() {
 						"cool-web-app",
 						"superfun/app",
 						"--ports=8080,65536",
-						"--monitored-port=8080",
+						"--monitor-port=8080",
 						"--",
 						"/start-me-please",
 					}
@@ -385,7 +385,7 @@ var _ = Describe("CommandFactory", func() {
 				It("port-monitors a specified port", func() {
 					args := []string{
 						"--ports=1000,2000",
-						"--monitored-port=2000",
+						"--monitor-port=2000",
 						"cool-web-app",
 						"superfun/app:mycooltag",
 						"--",
@@ -403,7 +403,7 @@ var _ = Describe("CommandFactory", func() {
 				It("prints an error when the monitored port is not exposed", func() {
 					args := []string{
 						"--ports=1000,1200",
-						"--monitored-port=2000",
+						"--monitor-port=2000",
 						"cool-web-app",
 						"superfun/app:mycooltag",
 						"--",
@@ -420,7 +420,7 @@ var _ = Describe("CommandFactory", func() {
 				It("url-monitors a specified url", func() {
 					args := []string{
 						"--ports=1000,2000",
-						"--monitored-url=1000:/sup/yeah",
+						"--monitor-url=1000:/sup/yeah",
 						"cool-web-app",
 						"superfun/app",
 						"--",
@@ -438,7 +438,7 @@ var _ = Describe("CommandFactory", func() {
 				It("prints an error if the url can't be split", func() {
 					args := []string{
 						"--ports=1000,2000",
-						"--monitored-url=1000/sup/yeah",
+						"--monitor-url=1000/sup/yeah",
 						"cool-web-app",
 						"superfun/app:mycooltag",
 						"--",
@@ -454,7 +454,7 @@ var _ = Describe("CommandFactory", func() {
 				It("prints an error if the port is non-numeric", func() {
 					args := []string{
 						"--ports=1000,2000",
-						"--monitored-url=TOTES:/sup/yeah",
+						"--monitor-url=TOTES:/sup/yeah",
 						"cool-web-app",
 						"superfun/app:mycooltag",
 						"--",
@@ -470,7 +470,7 @@ var _ = Describe("CommandFactory", func() {
 				It("prints an error when the monitored url port is not exposed", func() {
 					args := []string{
 						"--ports=1000,2000",
-						"--monitored-url=1200:/sup/yeah",
+						"--monitor-url=1200:/sup/yeah",
 						"cool-web-app",
 						"superfun/app:mycooltag",
 						"--",
@@ -504,7 +504,7 @@ var _ = Describe("CommandFactory", func() {
 
 				It("sets a timeout", func() {
 					args := []string{
-						"--monitored-timeout=5s",
+						"--monitor-timeout=5s",
 						"cool-web-app",
 						"superfun/app",
 						"--",
@@ -523,7 +523,7 @@ var _ = Describe("CommandFactory", func() {
 				It("no-monitor takes precedence", func() {
 					args := []string{
 						"--ports=1200",
-						"--monitored-url=1200:/sup/yeah",
+						"--monitor-url=1200:/sup/yeah",
 						"--no-monitor",
 						"cool-web-app",
 						"superfun/app",
@@ -541,8 +541,8 @@ var _ = Describe("CommandFactory", func() {
 				It("monitor-url takes precedence over monitor-port", func() {
 					args := []string{
 						"--ports=1200",
-						"--monitored-url=1200:/sup/yeah",
-						"--monitored-port=1200",
+						"--monitor-url=1200:/sup/yeah",
+						"--monitor-port=1200",
 						"cool-web-app",
 						"superfun/app",
 						"--",
