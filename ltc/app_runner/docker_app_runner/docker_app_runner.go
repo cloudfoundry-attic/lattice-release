@@ -14,7 +14,13 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
+type MonitorMethod int
+
 const (
+	NoMonitor MonitorMethod = iota
+	PortMonitor
+	URLMonitor
+
 	AttemptedToCreateLatticeDebugErrorMessage = reserved_app_ids.LatticeDebugLogStreamAppId + " is a reserved app name. It is used internally to stream debug logs for lattice components."
 )
 
@@ -27,9 +33,11 @@ type AppRunner interface {
 	RemoveApp(name string) error
 }
 
-type PortConfig struct {
-	Monitored uint16
-	Exposed   []uint16
+type MonitorConfig struct {
+	Method  MonitorMethod
+	URI     string
+	Port    uint16
+	Timeout time.Duration
 }
 
 type RouteOverrides []RouteOverride
@@ -39,10 +47,6 @@ type RouteOverride struct {
 	Port           uint16
 }
 
-func (portConfig PortConfig) IsEmpty() bool {
-	return len(portConfig.Exposed) == 0
-}
-
 type CreateDockerAppParams struct {
 	Name                 string
 	StartCommand         string
@@ -50,12 +54,12 @@ type CreateDockerAppParams struct {
 	AppArgs              []string
 	EnvironmentVariables map[string]string
 	Privileged           bool
-	Monitor              bool
+	Monitor              MonitorConfig
 	Instances            int
 	CPUWeight            uint
 	MemoryMB             int
 	DiskMB               int
-	Ports                PortConfig
+	ExposedPorts         []uint16
 	WorkingDir           string
 	RouteOverrides       RouteOverrides
 	NoRoutes             bool
@@ -172,7 +176,7 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 	}
 
 	envVars := buildEnvironmentVariables(params.EnvironmentVariables)
-	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", params.Ports.Monitored)})
+	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", params.Monitor.Port)})
 
 	var appRoutes route_helpers.AppRoutes
 	if params.NoRoutes {
@@ -189,7 +193,7 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 			})
 		}
 	} else {
-		appRoutes = appRunner.buildDefaultRoutingInfo(params.Name, params.Ports)
+		appRoutes = appRunner.buildDefaultRoutingInfo(params.Name, params.ExposedPorts, params.Monitor.Port)
 	}
 
 	req := receptor.DesiredLRPCreateRequest{
@@ -202,7 +206,7 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
 		Privileged:           true,
-		Ports:                params.Ports.Exposed,
+		Ports:                params.ExposedPorts,
 		LogGuid:              params.Name,
 		LogSource:            "APP",
 		MetricsGuid:          params.Name,
@@ -219,10 +223,21 @@ func (appRunner *appRunner) desireLrp(params CreateDockerAppParams) error {
 		},
 	}
 
-	if params.Monitor {
+	var healthCheckArgs []string
+	if params.Monitor.Timeout != 0 {
+		healthCheckArgs = append(healthCheckArgs, "-timeout", fmt.Sprint(params.Monitor.Timeout))
+	}
+	switch params.Monitor.Method {
+	case PortMonitor:
 		req.Monitor = &models.RunAction{
 			Path:      "/tmp/healthcheck",
-			Args:      []string{"-port", fmt.Sprintf("%d", params.Ports.Monitored)},
+			Args:      append(healthCheckArgs, "-port", fmt.Sprint(params.Monitor.Port)),
+			LogSource: "HEALTH",
+		}
+	case URLMonitor:
+		req.Monitor = &models.RunAction{
+			Path:      "/tmp/healthcheck",
+			Args:      append(healthCheckArgs, "-port", fmt.Sprint(params.Monitor.Port), "-uri", params.Monitor.URI),
 			LogSource: "HEALTH",
 		}
 	}
@@ -265,12 +280,12 @@ func (appRunner *appRunner) updateLrpRoutes(name string, routes RouteOverrides) 
 	return err
 }
 
-func (appRunner *appRunner) buildDefaultRoutingInfo(appName string, portConfig PortConfig) route_helpers.AppRoutes {
+func (appRunner *appRunner) buildDefaultRoutingInfo(appName string, exposedPorts []uint16, monitoredPort uint16) route_helpers.AppRoutes {
 	appRoutes := route_helpers.AppRoutes{}
 
-	for _, port := range portConfig.Exposed {
+	for _, port := range exposedPorts {
 		hostnames := []string{}
-		if port == portConfig.Monitored {
+		if port == monitoredPort {
 			hostnames = append(hostnames, fmt.Sprintf("%s.%s", appName, appRunner.systemDomain))
 		}
 

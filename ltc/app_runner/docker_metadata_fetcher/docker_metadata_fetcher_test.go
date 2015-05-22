@@ -84,8 +84,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
 				Expect(imageMetadata.StartCommand).To(Equal([]string{"/lattice-app", "--enableAwesomeMode=true", "iloveargs"}))
-				Expect(imageMetadata.Ports.Monitored).To(Equal(uint16(27017)))
-				Expect(imageMetadata.Ports.Exposed).To(Equal([]uint16{uint16(27017), uint16(28321)}))
+				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{uint16(27017), uint16(28321)}))
 			})
 		})
 
@@ -149,8 +148,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
 				Expect(imageMetadata.StartCommand).To(Equal([]string{"/savory-app", "--pretzels=salty", "cheesy"}))
-				Expect(imageMetadata.Ports.Monitored).To(Equal(uint16(3333)))
-				Expect(imageMetadata.Ports.Exposed).To(Equal([]uint16{uint16(3333), uint16(4444)}))
+				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{uint16(3333), uint16(4444)}))
 			})
 		})
 
@@ -228,8 +226,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
 				Expect(imageMetadata.StartCommand).To(Equal([]string{"/savory-app", "--pretzels=salty", "cheesy"}))
-				Expect(imageMetadata.Ports.Monitored).To(Equal(uint16(3333)))
-				Expect(imageMetadata.Ports.Exposed).To(Equal([]uint16{uint16(3333), uint16(4444)}))
+				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{uint16(3333), uint16(4444)}))
 			})
 
 			Context("when getting another error after retrying", func() {
@@ -292,8 +289,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				repoName := "cool_user123/sweetapp"
 				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(repoName)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(imageMetadata.Ports.Monitored).To(Equal(uint16(0)))
-				Expect(imageMetadata.Ports.Exposed).To(Equal([]uint16{}))
+				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{}))
 
 			})
 		})

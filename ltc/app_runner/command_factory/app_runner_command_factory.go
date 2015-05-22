@@ -28,6 +28,7 @@ const (
 	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a comma-delimited list of integers between 0-65535."
 	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format port:route"
 	MustSetMonitoredPortErrorMessage = "Must set monitored-port when specifying multiple exposed ports unless --no-monitor is set."
+	MonitorPortNotExposed            = "Must have an exposed port that matches the monitored port"
 
 	DefaultPollingTimeout time.Duration = 2 * time.Minute
 
@@ -108,14 +109,23 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 		},
 		cli.StringFlag{
 			Name:  "ports, p",
-			Usage: "Ports to expose on the container",
+			Usage: "Ports to expose on the container (comma delimited)",
 		},
 		cli.IntFlag{
-			Name:  "monitored-port, M", // -m is already used for memory
-			Usage: "Selects which port is used to healthcheck the app. Required for multiple exposed ports",
+			Name:  "monitored-port, M",
+			Usage: "Selects the port used to healthcheck the app",
 		},
 		cli.StringFlag{
-			Name: "routes, R", // -r is already used for root user
+			Name: "monitored-url, U",
+			Usage: "Uses HTTP to healthcheck the app\n\t\t" +
+				"format is: port:/path/to/endpoint",
+		},
+		cli.DurationFlag{
+			Name:  "monitored-timeout",
+			Usage: "Timeout for the app healthcheck",
+		},
+		cli.StringFlag{
+			Name: "routes, R",
 			Usage: "Route mappings to exposed ports as follows:\n\t\t" +
 				"--routes=80:web,8080:api will route web to 80 and api to 8080",
 		},
@@ -242,9 +252,11 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	memoryMBFlag := context.Int("memory-mb")
 	diskMBFlag := context.Int("disk-mb")
 	portsFlag := context.String("ports")
-	monitoredPortFlag := context.Int("monitored-port")
-	routesFlag := context.String("routes")
 	noMonitorFlag := context.Bool("no-monitor")
+	portMonitorFlag := context.Int("monitored-port")
+	urlMonitorFlag := context.String("monitored-url")
+	monitorTimeoutFlag := context.Duration("monitored-timeout")
+	routesFlag := context.String("routes")
 	noRoutesFlag := context.Bool("no-routes")
 	timeoutFlag := context.Duration("timeout")
 	name := context.Args().Get(0)
@@ -274,11 +286,18 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		return
 	}
 
-	portConfig, err := factory.getPortConfigFromArgs(portsFlag, monitoredPortFlag, noMonitorFlag, imageMetadata)
+	exposedPorts, err := factory.getExposedPortsFromArgs(portsFlag, imageMetadata)
 	if err != nil {
 		factory.ui.Say(err.Error())
 		return
 	}
+
+	monitorConfig, err := factory.getMonitorConfigFromArgs(exposedPorts, portMonitorFlag, noMonitorFlag, urlMonitorFlag, monitorTimeoutFlag, imageMetadata)
+	if err != nil {
+		factory.ui.Say(err.Error())
+		return
+	}
+	// monitoredPort := monitorConfig.Port
 
 	if workingDirFlag == "" {
 		factory.ui.Say("No working directory specified, using working directory from the image metadata...\n")
@@ -292,7 +311,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	}
 
 	if !noMonitorFlag {
-		factory.ui.Say(fmt.Sprintf("Monitoring the app on port %d...\n", portConfig.Monitored))
+		factory.ui.Say(fmt.Sprintf("Monitoring the app on port %d...\n", monitorConfig.Port))
 	} else {
 		factory.ui.Say("No ports will be monitored.\n")
 	}
@@ -325,12 +344,12 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		AppArgs:              appArgs,
 		EnvironmentVariables: factory.buildEnvironment(envVarsFlag, name),
 		Privileged:           context.Bool("run-as-root"),
-		Monitor:              !noMonitorFlag,
+		Monitor:              monitorConfig,
 		Instances:            instancesFlag,
 		CPUWeight:            cpuWeightFlag,
 		MemoryMB:             memoryMBFlag,
 		DiskMB:               diskMBFlag,
-		Ports:                portConfig,
+		ExposedPorts:         exposedPorts,
 		WorkingDir:           workingDirFlag,
 		RouteOverrides:       routeOverrides,
 		NoRoutes:             noRoutesFlag,
@@ -551,60 +570,102 @@ func (factory *AppRunnerCommandFactory) grabVarFromEnv(name string) string {
 	return ""
 }
 
-func (factory *AppRunnerCommandFactory) getPortConfigFromArgs(portsFlag string, monitoredPortFlag int, noMonitorFlag bool, imageMetadata *docker_metadata_fetcher.ImageMetadata) (docker_app_runner.PortConfig, error) {
-
-	var portConfig docker_app_runner.PortConfig
-	if portsFlag == "" && !imageMetadata.Ports.IsEmpty() {
-		portStrs := make([]string, 0)
-		for _, port := range imageMetadata.Ports.Exposed {
-			portStrs = append(portStrs, strconv.Itoa(int(port)))
-		}
-
-		factory.ui.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s\n", strings.Join(portStrs, ", ")))
-		portConfig = imageMetadata.Ports
-	} else if portsFlag == "" && imageMetadata.Ports.IsEmpty() && noMonitorFlag {
-		portConfig = docker_app_runner.PortConfig{
-			Monitored: 0,
-			Exposed:   []uint16{8080},
-		}
-	} else if portsFlag == "" && imageMetadata.Ports.IsEmpty() {
-		factory.ui.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
-		portConfig = docker_app_runner.PortConfig{
-			Monitored: 8080,
-			Exposed:   []uint16{8080},
-		}
-	} else {
+func (factory *AppRunnerCommandFactory) getExposedPortsFromArgs(portsFlag string, imageMetadata *docker_metadata_fetcher.ImageMetadata) ([]uint16, error) {
+	if portsFlag != "" {
 		portStrings := strings.Split(portsFlag, ",")
-		if len(portStrings) > 1 && monitoredPortFlag == 0 && !noMonitorFlag {
-			return docker_app_runner.PortConfig{}, errors.New(MustSetMonitoredPortErrorMessage)
-		}
-
 		sort.Strings(portStrings)
 
 		convertedPorts := []uint16{}
-
 		for _, p := range portStrings {
 			intPort, err := strconv.Atoi(p)
 			if err != nil || intPort > 65535 {
-				return docker_app_runner.PortConfig{}, errors.New(InvalidPortErrorMessage)
+				return []uint16{}, errors.New(InvalidPortErrorMessage)
 			}
 			convertedPorts = append(convertedPorts, uint16(intPort))
 		}
-
-		var monitoredPort uint16
-		if len(portStrings) > 1 {
-			monitoredPort = uint16(monitoredPortFlag)
-		} else {
-			monitoredPort = convertedPorts[0]
-		}
-
-		portConfig = docker_app_runner.PortConfig{
-			Monitored: monitoredPort,
-			Exposed:   convertedPorts,
-		}
+		return convertedPorts, nil
 	}
 
-	return portConfig, nil
+	if len(imageMetadata.ExposedPorts) > 0 {
+		var exposedPortStrings []string
+		for _, port := range imageMetadata.ExposedPorts {
+			exposedPortStrings = append(exposedPortStrings, strconv.Itoa(int(port)))
+		}
+		factory.ui.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s\n", strings.Join(exposedPortStrings, ", ")))
+		return imageMetadata.ExposedPorts, nil
+	}
+
+	factory.ui.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
+	return []uint16{8080}, nil
+}
+
+func (factory *AppRunnerCommandFactory) getMonitorConfigFromArgs(exposedPorts []uint16, portMonitorFlag int, noMonitorFlag bool, urlMonitorFlag string, monitorTimeoutFlag time.Duration, imageMetadata *docker_metadata_fetcher.ImageMetadata) (docker_app_runner.MonitorConfig, error) {
+	if noMonitorFlag {
+		return docker_app_runner.MonitorConfig{
+			Method: docker_app_runner.NoMonitor,
+		}, nil
+	}
+
+	if urlMonitorFlag != "" {
+		urlMonitorArr := strings.Split(urlMonitorFlag, ":")
+		if len(urlMonitorArr) != 2 {
+			return docker_app_runner.MonitorConfig{}, errors.New(InvalidPortErrorMessage)
+		}
+
+		urlMonitorPort, err := strconv.Atoi(urlMonitorArr[0])
+		if err != nil {
+			return docker_app_runner.MonitorConfig{}, errors.New(InvalidPortErrorMessage)
+		}
+
+		if err := checkPortExposed(exposedPorts, uint16(urlMonitorPort)); err != nil {
+			return docker_app_runner.MonitorConfig{}, err
+		}
+
+		return docker_app_runner.MonitorConfig{
+			Method:  docker_app_runner.URLMonitor,
+			Port:    uint16(urlMonitorPort),
+			URI:     urlMonitorArr[1],
+			Timeout: monitorTimeoutFlag,
+		}, nil
+	}
+
+	var sortedPorts []int
+	for _, port := range exposedPorts {
+		sortedPorts = append(sortedPorts, int(port))
+	}
+	sort.Ints(sortedPorts)
+
+	// Unsafe array access:  because we'll default exposing 8080 if
+	// both --ports is empty and docker image has no EXPOSE ports
+	monitorPort := uint16(sortedPorts[0])
+	if portMonitorFlag > 0 {
+		monitorPort = uint16(portMonitorFlag)
+	}
+
+	if err := checkPortExposed(exposedPorts, monitorPort); err != nil {
+		return docker_app_runner.MonitorConfig{}, err
+	}
+
+	return docker_app_runner.MonitorConfig{
+		Method:  docker_app_runner.PortMonitor,
+		Port:    uint16(monitorPort),
+		Timeout: monitorTimeoutFlag,
+	}, nil
+}
+
+func checkPortExposed(exposedPorts []uint16, monitorPort uint16) error {
+	portFound := false
+	for _, port := range exposedPorts {
+		if port == uint16(monitorPort) {
+			portFound = true
+			break
+		}
+	}
+	if !portFound {
+		return errors.New(MonitorPortNotExposed)
+	}
+
+	return nil
 }
 
 func parseRouteOverrides(routes string) (docker_app_runner.RouteOverrides, error) {

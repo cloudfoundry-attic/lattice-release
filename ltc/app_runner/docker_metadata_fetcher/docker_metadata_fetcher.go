@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/nat"
@@ -13,7 +12,7 @@ import (
 
 type ImageMetadata struct {
 	WorkingDir   string
-	Ports        docker_app_runner.PortConfig
+	ExposedPorts []uint16
 	StartCommand []string
 }
 
@@ -94,19 +93,11 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(dockerImageReference string)
 	startCommand := append(img.Config.Entrypoint, img.Config.Cmd...)
 
 	uintExposedPorts := sortPorts(img.ContainerConfig.ExposedPorts)
-	var monitoredPort uint16
-
-	if len(uintExposedPorts) > 0 {
-		monitoredPort = uintExposedPorts[0]
-	}
 
 	return &ImageMetadata{
 		WorkingDir:   img.Config.WorkingDir,
 		StartCommand: startCommand,
-		Ports: docker_app_runner.PortConfig{
-			Monitored: monitoredPort,
-			Exposed:   uintExposedPorts,
-		},
+		ExposedPorts: uintExposedPorts,
 	}, nil
 }
 

@@ -30,30 +30,9 @@ var _ = Describe("DockerAppRunner", func() {
 
 	})
 
-	Describe("PortConfig", func() {
-		Describe("IsEmpty", func() {
-			It("returns true if the port config has no exposed ports", func() {
-				portConfig := docker_app_runner.PortConfig{
-					Monitored: uint16(0),
-					Exposed:   []uint16{},
-				}
-				Expect(portConfig.IsEmpty()).To(BeTrue())
-
-			})
-
-			It("returns false if the port config has exposed ports", func() {
-				portConfig := docker_app_runner.PortConfig{
-					Monitored: uint16(0),
-					Exposed:   []uint16{uint16(1234)},
-				}
-				Expect(portConfig.IsEmpty()).To(BeFalse())
-			})
-		})
-	})
-
 	Describe("CreateDockerApp", func() {
 		It("Upserts lattice domain so that it is always fresh, then starts the Docker App", func() {
-			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
+			// fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 
 			args := []string{"app", "arg1", "--app", "arg 2"}
 			envs := map[string]string{"APPROOT": "/root/env/path"}
@@ -64,13 +43,16 @@ var _ = Describe("DockerAppRunner", func() {
 				AppArgs:              args,
 				EnvironmentVariables: envs,
 				Privileged:           true,
-				Monitor:              true,
-				Instances:            22,
-				CPUWeight:            67,
-				MemoryMB:             128,
-				DiskMB:               1024,
-				Ports:                docker_app_runner.PortConfig{Exposed: []uint16{2000, 4000}, Monitored: 2000},
-				WorkingDir:           "/user/web/myappdir",
+				Monitor: docker_app_runner.MonitorConfig{
+					Method: docker_app_runner.PortMonitor,
+					Port:   2000,
+				},
+				Instances:    22,
+				CPUWeight:    67,
+				MemoryMB:     128,
+				DiskMB:       1024,
+				ExposedPorts: []uint16{2000, 4000},
+				WorkingDir:   "/user/web/myappdir",
 			})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(1))
@@ -124,20 +106,19 @@ var _ = Describe("DockerAppRunner", func() {
 					AppArgs:         []string{},
 				})
 
-				Expect(err.Error()).To(Equal(docker_app_runner.AttemptedToCreateLatticeDebugErrorMessage))
+				Expect(err).To(MatchError(docker_app_runner.AttemptedToCreateLatticeDebugErrorMessage))
 			})
 		})
 
 		Context("when overrideRoutes is not empty", func() {
 			It("uses the override Routes instead of the defaults", func() {
-				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
+				// fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 
 				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 					Name:            "americano-app",
 					StartCommand:    "/app-run-statement",
 					DockerImagePath: "runtest/runner",
 					AppArgs:         []string{},
-					Ports:           docker_app_runner.PortConfig{Exposed: []uint16{2000, 3000, 4000}, Monitored: 2000},
 					RouteOverrides: docker_app_runner.RouteOverrides{
 						docker_app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
 						docker_app_runner.RouteOverride{HostnamePrefix: "swang", Port: 2000},
@@ -155,7 +136,7 @@ var _ = Describe("DockerAppRunner", func() {
 
 		Context("when NoRoutes is true", func() {
 			It("does not register any routes for the app", func() {
-				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
+				// fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 
 				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 					Name:            "americano-app",
@@ -166,7 +147,6 @@ var _ = Describe("DockerAppRunner", func() {
 						docker_app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
 					},
 					NoRoutes: true,
-					Ports:    docker_app_runner.PortConfig{Monitored: 1234, Exposed: []uint16{1234}},
 				})
 
 				Expect(err).ToNot(HaveOccurred())
@@ -175,17 +155,18 @@ var _ = Describe("DockerAppRunner", func() {
 			})
 		})
 
-		Context("when Monitor is false", func() {
-			It("Does not pass a monitor action, regardless of whether or not a monitor port is passed", func() {
-				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
+		Context("when Monitor is NoMonitor", func() {
+			It("does not pass a monitor action, regardless of whether or not a monitor port is passed", func() {
+				// fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 
 				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
 					Name:            "americano-app",
 					StartCommand:    "/app-run-statement",
 					DockerImagePath: "runtest/runner",
 					AppArgs:         []string{},
-					Monitor:         false,
-					Ports:           docker_app_runner.PortConfig{Monitored: 1234, Exposed: []uint16{1234}},
+					Monitor: docker_app_runner.MonitorConfig{
+						Method: docker_app_runner.NoMonitor,
+					},
 				})
 
 				Expect(err).ToNot(HaveOccurred())
@@ -194,45 +175,117 @@ var _ = Describe("DockerAppRunner", func() {
 			})
 		})
 
+		Context("when monitoring a port", func() {
+			It("sets the timeout for the monitor", func() {
+				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
+
+				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
+					Name:            "americano-app",
+					StartCommand:    "/app-run-statement",
+					DockerImagePath: "runtest/runner",
+					AppArgs:         []string{},
+					Monitor: docker_app_runner.MonitorConfig{
+						Method:  docker_app_runner.PortMonitor,
+						Port:    2345,
+						Timeout: 15 * time.Second,
+					},
+					ExposedPorts: []uint16{2345},
+				})
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+				desiredLRPCreateRequest := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+				Expect(desiredLRPCreateRequest.Monitor).ToNot(BeNil())
+				Expect(desiredLRPCreateRequest.Monitor).To(Equal(&models.RunAction{
+					Path:      "/tmp/healthcheck",
+					Args:      []string{"-timeout", "15s", "-port", "2345"},
+					LogSource: "HEALTH",
+				}))
+			})
+		})
+
+		Context("when monitoring a url", func() {
+			It("passes a monitor action", func() {
+				// fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
+
+				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
+					Name:            "americano-app",
+					StartCommand:    "/app-run-statement",
+					DockerImagePath: "runtest/runner",
+					AppArgs:         []string{},
+					Monitor: docker_app_runner.MonitorConfig{
+						Method: docker_app_runner.URLMonitor,
+						Port:   1234,
+						URI:    "/healthy/endpoint",
+					},
+					ExposedPorts: []uint16{1234},
+				})
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+				desiredLRPCreateRequest := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+				Expect(desiredLRPCreateRequest.Monitor).ToNot(BeNil())
+				Expect(desiredLRPCreateRequest.Monitor).To(Equal(&models.RunAction{
+					Path:      "/tmp/healthcheck",
+					Args:      []string{"-port", "1234", "-uri", "/healthy/endpoint"},
+					LogSource: "HEALTH",
+				}))
+			})
+
+			It("sets the timeout for the monitor", func() {
+				// fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
+
+				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
+					Name:            "americano-app",
+					StartCommand:    "/app-run-statement",
+					DockerImagePath: "runtest/runner",
+					AppArgs:         []string{},
+					Monitor: docker_app_runner.MonitorConfig{
+						Method:  docker_app_runner.URLMonitor,
+						Port:    1234,
+						URI:     "/healthy/endpoint",
+						Timeout: 20 * time.Second,
+					},
+					ExposedPorts: []uint16{1234},
+				})
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+				desiredLRPCreateRequest := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+				Expect(desiredLRPCreateRequest.Monitor).ToNot(BeNil())
+				Expect(desiredLRPCreateRequest.Monitor).To(Equal(&models.RunAction{
+					Path:      "/tmp/healthcheck",
+					Args:      []string{"-timeout", "20s", "-port", "1234", "-uri", "/healthy/endpoint"},
+					LogSource: "HEALTH",
+				}))
+			})
+		})
+
 		It("returns errors if the app is already desired", func() {
 			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "app-already-desired", Instances: 1}}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 
 			err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
-				Name:                 "app-already-desired",
-				StartCommand:         "faily/boom",
-				DockerImagePath:      "/app-bork-statement",
-				AppArgs:              []string{},
-				EnvironmentVariables: map[string]string{},
-				Privileged:           false,
-				Instances:            1,
-				MemoryMB:             128,
-				DiskMB:               1024,
-				Ports:                docker_app_runner.PortConfig{Monitored: 8080, Exposed: []uint16{8080}},
+				Name:            "app-already-desired",
+				StartCommand:    "faily/boom",
+				DockerImagePath: "/app-bork-statement",
 			})
 
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("app-already-desired is already running"))
+			Expect(err).To(MatchError("app-already-desired is already running"))
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
 
 		Context("when the docker repo url is malformed", func() {
 			It("Returns an error", func() {
 				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
-					Name:                 "nescafe-app",
-					StartCommand:         "/app",
-					DockerImagePath:      "¥¥¥Bad-Docker¥¥¥",
-					AppArgs:              []string{},
-					EnvironmentVariables: map[string]string{},
-					Privileged:           false,
-					Instances:            1,
-					MemoryMB:             128,
-					DiskMB:               1024,
-					Ports:                docker_app_runner.PortConfig{Exposed: []uint16{8080}, Monitored: 8080},
+					Name:            "nescafe-app",
+					StartCommand:    "/app",
+					DockerImagePath: "¥¥¥Bad-Docker¥¥¥",
 				})
 
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Invalid repository name (¥¥¥Bad-Docker¥¥¥), only [a-z0-9-_.] are allowed"))
+				Expect(err).To(MatchError("Invalid repository name (¥¥¥Bad-Docker¥¥¥), only [a-z0-9-_.] are allowed"))
 			})
 		})
 
@@ -242,20 +295,12 @@ var _ = Describe("DockerAppRunner", func() {
 				fakeReceptorClient.UpsertDomainReturns(upsertError)
 
 				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
-					Name:                 "nescafe-app",
-					StartCommand:         "faily/boom",
-					DockerImagePath:      "borked_app",
-					AppArgs:              []string{},
-					EnvironmentVariables: map[string]string{},
-					Privileged:           false,
-					Instances:            1,
-					MemoryMB:             128,
-					DiskMB:               1024,
-					Ports:                docker_app_runner.PortConfig{Exposed: []uint16{8080}, Monitored: 8080},
+					Name:            "nescafe-app",
+					StartCommand:    "faily/boom",
+					DockerImagePath: "borked_app",
 				})
 
-				Expect(err).To(HaveOccurred())
-				Expect(err).To(Equal(upsertError))
+				Expect(err).To(MatchError(upsertError))
 			})
 
 			It("returns desiring lrp errors", func() {
@@ -263,20 +308,12 @@ var _ = Describe("DockerAppRunner", func() {
 				fakeReceptorClient.CreateDesiredLRPReturns(receptorError)
 
 				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
-					Name:                 "nescafe-app",
-					StartCommand:         "faily/boom",
-					DockerImagePath:      "borked_app",
-					AppArgs:              []string{},
-					EnvironmentVariables: map[string]string{},
-					Privileged:           false,
-					Instances:            1,
-					MemoryMB:             128,
-					DiskMB:               1024,
-					Ports:                docker_app_runner.PortConfig{Exposed: []uint16{8080}, Monitored: 8080},
+					Name:            "nescafe-app",
+					StartCommand:    "faily/boom",
+					DockerImagePath: "borked_app",
 				})
 
-				Expect(err).To(HaveOccurred())
-				Expect(err).To(Equal(receptorError))
+				Expect(err).To(MatchError(receptorError))
 			})
 
 			It("returns existing count errors", func() {
@@ -284,20 +321,12 @@ var _ = Describe("DockerAppRunner", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
 
 				err := appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
-					Name:                 "nescafe-app",
-					StartCommand:         "faily/boom",
-					DockerImagePath:      "/app-bork-statement",
-					AppArgs:              []string{},
-					EnvironmentVariables: map[string]string{},
-					Privileged:           false,
-					Instances:            1,
-					MemoryMB:             128,
-					DiskMB:               1024,
-					Ports:                docker_app_runner.PortConfig{Exposed: []uint16{8080}, Monitored: 8080},
+					Name:            "nescafe-app",
+					StartCommand:    "faily/boom",
+					DockerImagePath: "/app-bork-statement",
 				})
 
-				Expect(err).To(HaveOccurred())
-				Expect(err).To(Equal(receptorError))
+				Expect(err).To(MatchError(receptorError))
 			})
 		})
 	})
