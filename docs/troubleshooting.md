@@ -1,5 +1,6 @@
 # Troubleshooting
 
+<a name="how-does-lattice-manage-applications"></a>
 ## How does Lattice manage applications?
 
 A helpful step when debugging is to have an accurate mental model of the system in question.
@@ -12,6 +13,8 @@ The *actual* state (i.e. the set of running instances), however, is updated **as
 
 Typically, when the user updates *desired* state Lattice immediately takes actions to perform this reconciliation.  Should an action fail (perhaps a network partition occurs) or a running instance be lost (perhaps a Cell explodes) Lattice will eventually attempt to reconcile actual and desired state again (this happens every 30 seconds - though Lattice can detect a missing Cell within ~5 seconds).
 
+<a name="how-does-lattice-work-with-docker-images"></a>
+
 ## How does Lattice work with Docker images?
 
 A Docker image consists of two things: a collection of layers to download and mount (the raw bits that form the file system) and metadata that describes what command should be launched (the `ENTRYPOINT` and `CMD` directives, among others, specified in the Dockerfile).
@@ -22,7 +25,7 @@ This yields a container with contents that exactly match the contents of the ass
 
 Once a container is created Lattice is responsible for running and monitoring processes in the container.  The Lattice API allows the user to define exactly which commands to run within the container; in particular, it is possible to run, monitor, and route to *multiple* processes within a single container.
 
-When launching a Docker image, `ltc` directs Lattice to create a container backed by the Docker image's root fs, and to run the command encoded in the Docker image's metadata.  It does this by fetching the metadata associated with the Docker image (using the same libraries that power Docker) and making the appropriate Lattice API calls.  `ltc` allows users to easily override the values it pulls out of the Docker image metadata.  This is outlined in detail in the [`ltc` documentation](/docs/ltc.html#ltc-start).
+When launching a Docker image, `ltc` directs Lattice to create a container backed by the Docker image's root fs, and to run the command encoded in the Docker image's metadata.  It does this by fetching the metadata associated with the Docker image (using the same libraries that power Docker) and making the appropriate Lattice API calls.  `ltc` allows users to easily override the values it pulls out of the Docker image metadata.  This is outlined in detail in the [`ltc` documentation](/docs/ltc.md#ltc-create).
 
 There are two remaining areas of Docker compatbility that we are working on:
 

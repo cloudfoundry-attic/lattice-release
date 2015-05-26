@@ -1,6 +1,6 @@
 # `ltc` - The Lattice CLI
 
-`ltc` wraps the [Lattice API](/docs/lattice-api.html) and provides a simple interface for launching and managing applications based on Docker images.  This document is a reference detailing all of `ltc`'s subcommands and options.  You may find it helpful to also build a deeper understanding of how Lattice [manages applications](/docs/troubleshooting.html#how-does-lattice-manage-applications) and [Docker images](/docs/troubleshooting.html#how-does-lattice-work-with-docker-images).
+`ltc` wraps the [Lattice API](/docs/lattice-api.md) and provides a simple interface for launching and managing applications based on Docker images.  This document is a reference detailing all of `ltc`'s subcommands and options.  You may find it helpful to also build a deeper understanding of how Lattice [manages applications](/docs/troubleshooting.md#how-does-lattice-manage-applications) and [Docker images](/docs/troubleshooting.md#how-does-lattice-work-with-docker-images).
 
 You can download the CLI from the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page.
 

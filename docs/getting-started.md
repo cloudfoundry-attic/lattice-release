@@ -131,5 +131,5 @@ If you cause an instance of `lattice-app` to exit repeatedly Lattice will eventu
 ## Where to go from here:
 
 - push your own Docker image
-- learn more about [`ltc`](/docs/ltc.html)
-- learn more about the RESTful [`Lattice API`](/docs/lattice-api.html).  This allows you to launch one off tasks in addition to long running processes.
+- learn more about [`ltc`](/docs/ltc.md)
+- learn more about the RESTful [`Lattice API`](/docs/lattice-api.md).  This allows you to launch one off tasks in addition to long running processes.

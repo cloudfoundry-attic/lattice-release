@@ -23,7 +23,7 @@ We also have a strong opinions on the developer and operator experience for scal
 
 Lattice lives up to these principles.
 
-- **Simple**: a [small Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#vagrant) easily fits on most laptops. [Terraform scripts](https://github.com/cloudfoundry-incubator/lattice#terraform-deployment) enable you to easily start a Lattice cluster on your cloud of choice. Very few new concepts are required to use Lattice and you can [get started in minutes](/docs/getting-started.html).
+- **Simple**: a [small Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#vagrant) easily fits on most laptops. [Terraform scripts](https://github.com/cloudfoundry-incubator/lattice#terraform-deployment) enable you to easily start a Lattice cluster on your cloud of choice. Very few new concepts are required to use Lattice and you can [get started in minutes](/docs/getting-started.md).
 - **Comprehensive**: Lattice currently includes load balancing, aggregated logs, health management, and cluster scheduling.
 - **Extensible**: Docker is very popular and we are supporting Docker Images. We also believe in a [pluggable container backend](https://github.com/cloudfoundry-incubator/garden) so there are options to support [Windows](https://www.youtube.com/watch?v=S4U_YyzC5z4), [Rocket](http://blog.pivotal.io/cloud-foundry-pivotal/news-2/launching-rockets-collaborating-on-next-level-linux-containers) or other backends.
 
@@ -35,13 +35,13 @@ Up-to-date installation instructions are on the [GitHub README](https://github.c
 
 ## How do I use Lattice?
 
-Start with the [getting-started tutorial](/docs/getting-started.html) for a brief introduction.
+Start with the [getting-started tutorial](/docs/getting-started.md) for a brief introduction.
 
-Lattice provides an [HTTP API](/docs/lattice-api.html) for scheduling and monitoring work.  [`ltc` (the Lattice CLI)](/docs/ltc.html)  wraps this API and provides basic access to Lattice’s feature-set.
+Lattice provides an [HTTP API](/docs/lattice-api.md) for scheduling and monitoring work.  [`ltc` (the Lattice CLI)](/docs/ltc.md)  wraps this API and provides basic access to Lattice’s feature-set.
 
 ## I'm having trouble launching my Docker image - help!
 
-Check out the [troubleshooting section](/docs/troubleshooting.html).
+Check out the [troubleshooting section](/docs/troubleshooting.md).
 
 ## Is Lattice intended for multi-tenant deployments?
 
@@ -63,7 +63,7 @@ To build a deep understanding of how Lattice works you'll need to learn about Di
 
 Lattice supports Docker images as a format for distributing container root filesystems.  Currently, Docker images must be publicly hosted on the [Docker Hub Registry](https://registry.hub.docker.com) or published to a signed private Docker registry without authentication.  Lattice uses Docker's libraries to fetch Docker image metadata and image layers, but it does *not* use the Docker daemon to run and manage containers.  Instead, Lattice uses [Garden](https://github.com/cloudfoundry-incubator/garden).  Garden provides a *platform-agnostic* API for launching and managing containers and is built to be consumed by a distributed container scheduler like Diego.  [Garden-Linux](https://github.com/cloudfoundry-incubator/garden-linux) is an implementation of the Garden API that provides containers on the Linux platform using kernel namespaces and cgroups - the same technologies used by Docker, LXC and Rocket.
 
-More details about how Lattice works with Docker images can be found [here](/docs/troubleshooting.html#how-does-lattice-work-with-docker-images).
+More details about how Lattice works with Docker images can be found [here](/docs/troubleshooting.md#how-does-lattice-work-with-docker-images).
 
 ## What about Cloud Foundry Elastic Runtime, Kubernetes, Mesos and other clustered Docker projects?
 
@@ -98,6 +98,8 @@ No. Lattice and Cloud Foundry Elastic Runtime serve different purposes with some
 ## What is the Lattice roadmap?
 
 See the public Pivotal Tracker project for [Lattice](https://www.pivotaltracker.com/n/projects/1183596) and [Diego](https://www.pivotaltracker.com/n/projects/1003146)
+
+<a name="is-lattice-ready-for-production"></a>
 
 ## Is Lattice ready for production?
 
