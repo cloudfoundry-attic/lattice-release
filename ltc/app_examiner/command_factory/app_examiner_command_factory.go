@@ -53,7 +53,7 @@ func (factory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
 	var listCommand = cli.Command{
 		Name:        "list",
 		Aliases:     []string{"li", "ls"},
-		Usage:       "Lists applications running on lattice",
+		Usage:       "Lists applications & tasks running on lattice",
 		Description: "ltc list",
 		Action:      factory.listApps,
 		Flags:       []cli.Flag{},
@@ -152,31 +152,64 @@ func (factory *AppExaminerCommandFactory) cells(context *cli.Context) {
 
 func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 	appList, err := factory.appExaminer.ListApps()
-	if err != nil {
-		factory.ui.Say("Error listing apps: " + err.Error())
-		return
-	} else if len(appList) == 0 {
-		factory.ui.Say("No apps to display.")
-		return
-	}
+	if err == nil {
+		w := &tabwriter.Writer{}
+		w.Init(factory.ui, 10+colors.ColorCodeLength, 8, 1, '\t', 0)
+		appTableHeader := strings.Repeat("-", 30) + "= Apps =" + strings.Repeat("-", 31)
+		fmt.Fprintln(w, appTableHeader)
+		if len(appList) != 0 {
+			header := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", colors.Bold("App Name"), colors.Bold("Instances"), colors.Bold("DiskMB"), colors.Bold("MemoryMB"), colors.Bold("Route"))
+			fmt.Fprintln(w, header)
 
-	w := &tabwriter.Writer{}
-	w.Init(factory.ui, 10+colors.ColorCodeLength, 8, 1, '\t', 0)
+			for _, appInfo := range appList {
+				var displayedRoute string
+				if appInfo.Routes != nil && len(appInfo.Routes) > 0 {
+					arbitraryPort := appInfo.Ports[0]
+					displayedRoute = fmt.Sprintf("%s => %d", strings.Join(appInfo.Routes.HostnamesByPort()[arbitraryPort], ", "), arbitraryPort)
+				}
 
-	header := fmt.Sprintf("%s\t%s\t%s\t%s\t%s", colors.Bold("App Name"), colors.Bold("Instances"), colors.Bold("DiskMB"), colors.Bold("MemoryMB"), colors.Bold("Route"))
-	fmt.Fprintln(w, header)
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold(appInfo.ProcessGuid), colorInstances(appInfo), colors.NoColor(strconv.Itoa(appInfo.DiskMB)), colors.NoColor(strconv.Itoa(appInfo.MemoryMB)), colors.Cyan(displayedRoute))
+			}
 
-	for _, appInfo := range appList {
-		var displayedRoute string
-		if appInfo.Routes != nil && len(appInfo.Routes) > 0 {
-			arbitraryPort := appInfo.Ports[0]
-			displayedRoute = fmt.Sprintf("%s => %d", strings.Join(appInfo.Routes.HostnamesByPort()[arbitraryPort], ", "), arbitraryPort)
+		} else {
+			fmt.Fprintf(w, "No apps to display."+"\n")
 		}
-
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", colors.Bold(appInfo.ProcessGuid), colorInstances(appInfo), colors.NoColor(strconv.Itoa(appInfo.DiskMB)), colors.NoColor(strconv.Itoa(appInfo.MemoryMB)), colors.Cyan(displayedRoute))
+		w.Flush()
+	} else {
+		factory.ui.Say("Error listing apps: " + err.Error())
 	}
+	taskList, err := factory.appExaminer.ListTasks()
+	if err == nil {
+		wTask := &tabwriter.Writer{}
+		wTask.Init(factory.ui, 10+colors.ColorCodeLength, 8, 1, '\t', 0)
+		factory.ui.Say("\n")
+		taskTableHeader := strings.Repeat("-", 30) + "= Tasks =" + strings.Repeat("-", 30)
+		fmt.Fprintln(wTask, taskTableHeader)
+		if len(taskList) != 0 {
+			taskHeader := fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t", colors.Bold("Task Name"), colors.Bold("Cell ID"), colors.Bold("Status"), colors.Bold("Result"), colors.Bold("Failure Reason"))
+			fmt.Fprintln(wTask, taskHeader)
 
-	w.Flush()
+			for _, taskInfo := range taskList {
+				if taskInfo.CellID == "" {
+					taskInfo.CellID = "N/A"
+				}
+				if taskInfo.Result == "" {
+					taskInfo.Result = "N/A"
+				}
+				if taskInfo.FailureReason == "" {
+					taskInfo.FailureReason = "N/A"
+				}
+				coloumnInfo := fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t", colors.Bold(taskInfo.TaskGuid), colors.NoColor(taskInfo.CellID), colors.NoColor(taskInfo.State), colors.NoColor(taskInfo.Result), colors.NoColor(taskInfo.FailureReason))
+				fmt.Fprintln(wTask, coloumnInfo)
+			}
+
+		} else {
+			fmt.Fprintf(wTask, "No tasks to display.\n")
+		}
+		wTask.Flush()
+	} else {
+		factory.ui.Say("Error listing tasks: " + err.Error())
+	}
 }
 
 func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
