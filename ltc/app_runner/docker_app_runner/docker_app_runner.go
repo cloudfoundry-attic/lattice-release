@@ -27,7 +27,7 @@ const (
 //go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 type AppRunner interface {
 	CreateDockerApp(params CreateDockerAppParams) error
-	CreateLrp(createLrpJson []byte) (string, error)
+	SubmitLrp(submitLrpJson []byte) (string, error)
 	ScaleApp(name string, instances int) error
 	UpdateAppRoutes(name string, routes RouteOverrides) error
 	RemoveApp(name string) error
@@ -97,11 +97,11 @@ func (appRunner *appRunner) CreateDockerApp(params CreateDockerAppParams) error 
 	return appRunner.desireLrp(params)
 }
 
-func (appRunner *appRunner) CreateLrp(createLrpJson []byte) (string, error) {
+func (appRunner *appRunner) SubmitLrp(submitLrpJson []byte) (string, error) {
 
 	desiredLRP := receptor.DesiredLRPCreateRequest{}
 
-	err := json.Unmarshal(createLrpJson, &desiredLRP)
+	err := json.Unmarshal(submitLrpJson, &desiredLRP)
 	if err != nil {
 		return "", err
 	}

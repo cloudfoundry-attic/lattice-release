@@ -179,16 +179,19 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 	return createAppCommand
 }
 
-func (factory *AppRunnerCommandFactory) MakeCreateLrpCommand() cli.Command {
-	var createLrpCommand = cli.Command{
-		Name:        "create-lrp",
-		Aliases:     []string{"cl"},
-		Usage:       "Creates a docker app from JSON on lattice",
-		Description: "ltc create-lrp /path/to/json",
-		Action:      factory.createLrp,
+func (factory *AppRunnerCommandFactory) MakeSubmitLrpCommand() cli.Command {
+	var submitLrpCommand = cli.Command{
+		Name:    "submit-lrp",
+		Aliases: []string{"create-lrp", "cl", "sl"},
+		Usage:   "Creates a docker app from JSON on lattice",
+		Description: `ltc submit-lrp /path/to/json
+
+	Deprecation Warning: ltc create-lrp will be removed in a future release.
+		`,
+		Action: factory.submitLrp,
 	}
 
-	return createLrpCommand
+	return submitLrpCommand
 }
 
 func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
@@ -385,7 +388,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	}
 }
 
-func (factory *AppRunnerCommandFactory) createLrp(context *cli.Context) {
+func (factory *AppRunnerCommandFactory) submitLrp(context *cli.Context) {
 
 	filePath := context.Args().First()
 	if filePath == "" {
@@ -399,7 +402,7 @@ func (factory *AppRunnerCommandFactory) createLrp(context *cli.Context) {
 		return
 	}
 
-	lrpName, err := factory.appRunner.CreateLrp(jsonBytes)
+	lrpName, err := factory.appRunner.SubmitLrp(jsonBytes)
 	if err != nil {
 		factory.ui.Say(fmt.Sprintf("Error creating %s: %s", lrpName, err.Error()))
 		return

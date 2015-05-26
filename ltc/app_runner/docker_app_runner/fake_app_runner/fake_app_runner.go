@@ -16,12 +16,12 @@ type FakeAppRunner struct {
 	createDockerAppReturns struct {
 		result1 error
 	}
-	CreateLrpStub        func(createLrpJson []byte) (string, error)
-	createLrpMutex       sync.RWMutex
-	createLrpArgsForCall []struct {
-		createLrpJson []byte
+	SubmitLrpStub        func(submitLrpJson []byte) (string, error)
+	submitLrpMutex       sync.RWMutex
+	submitLrpArgsForCall []struct {
+		submitLrpJson []byte
 	}
-	createLrpReturns struct {
+	submitLrpReturns struct {
 		result1 string
 		result2 error
 	}
@@ -85,34 +85,34 @@ func (fake *FakeAppRunner) CreateDockerAppReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeAppRunner) CreateLrp(createLrpJson []byte) (string, error) {
-	fake.createLrpMutex.Lock()
-	fake.createLrpArgsForCall = append(fake.createLrpArgsForCall, struct {
-		createLrpJson []byte
-	}{createLrpJson})
-	fake.createLrpMutex.Unlock()
-	if fake.CreateLrpStub != nil {
-		return fake.CreateLrpStub(createLrpJson)
+func (fake *FakeAppRunner) SubmitLrp(submitLrpJson []byte) (string, error) {
+	fake.submitLrpMutex.Lock()
+	fake.submitLrpArgsForCall = append(fake.submitLrpArgsForCall, struct {
+		submitLrpJson []byte
+	}{submitLrpJson})
+	fake.submitLrpMutex.Unlock()
+	if fake.SubmitLrpStub != nil {
+		return fake.SubmitLrpStub(submitLrpJson)
 	} else {
-		return fake.createLrpReturns.result1, fake.createLrpReturns.result2
+		return fake.submitLrpReturns.result1, fake.submitLrpReturns.result2
 	}
 }
 
-func (fake *FakeAppRunner) CreateLrpCallCount() int {
-	fake.createLrpMutex.RLock()
-	defer fake.createLrpMutex.RUnlock()
-	return len(fake.createLrpArgsForCall)
+func (fake *FakeAppRunner) SubmitLrpCallCount() int {
+	fake.submitLrpMutex.RLock()
+	defer fake.submitLrpMutex.RUnlock()
+	return len(fake.submitLrpArgsForCall)
 }
 
-func (fake *FakeAppRunner) CreateLrpArgsForCall(i int) []byte {
-	fake.createLrpMutex.RLock()
-	defer fake.createLrpMutex.RUnlock()
-	return fake.createLrpArgsForCall[i].createLrpJson
+func (fake *FakeAppRunner) SubmitLrpArgsForCall(i int) []byte {
+	fake.submitLrpMutex.RLock()
+	defer fake.submitLrpMutex.RUnlock()
+	return fake.submitLrpArgsForCall[i].submitLrpJson
 }
 
-func (fake *FakeAppRunner) CreateLrpReturns(result1 string, result2 error) {
-	fake.CreateLrpStub = nil
-	fake.createLrpReturns = struct {
+func (fake *FakeAppRunner) SubmitLrpReturns(result1 string, result2 error) {
+	fake.SubmitLrpStub = nil
+	fake.submitLrpReturns = struct {
 		result1 string
 		result2 error
 	}{result1, result2}

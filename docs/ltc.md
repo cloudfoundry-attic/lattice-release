@@ -88,9 +88,9 @@ The set of routes passed into `ltc update-routes` will *override* the existing s
 
 - **`--no-routes`** specifies that no routes be registered. 
 
-### `ltc create-lrp`
+### `ltc submit-lrp`
 
-`ltc create-lrp /path/to/json` creates an application with the configuration specified in the JSON.  The syntax of the JSON can be found at the [Receptor API docs](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/lrps.md#describing-desiredlrps)
+`ltc submit-lrp /path/to/json` creates an application with the configuration specified in the JSON.  The syntax of the JSON can be found at the [Receptor API docs](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/lrps.md#describing-desiredlrps)
 
 ## Streaming Logs
 

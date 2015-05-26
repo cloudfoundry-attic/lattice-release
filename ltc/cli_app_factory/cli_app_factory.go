@@ -156,7 +156,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	return []cli.Command{
 		appExaminerCommandFactory.MakeCellsCommand(),
 		appRunnerCommandFactory.MakeCreateAppCommand(),
-		appRunnerCommandFactory.MakeCreateLrpCommand(),
+		appRunnerCommandFactory.MakeSubmitLrpCommand(),
 		logsCommandFactory.MakeDebugLogsCommand(),
 		appExaminerCommandFactory.MakeListAppCommand(),
 		logsCommandFactory.MakeLogsCommand(),

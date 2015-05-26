@@ -331,7 +331,7 @@ var _ = Describe("DockerAppRunner", func() {
 		})
 	})
 
-	Describe("CreateLrp", func() {
+	Describe("SubmitLrp", func() {
 
 		It("Creates an app from JSON", func() {
 			fakeReceptorClient.CreateDesiredLRPReturns(nil)
@@ -374,7 +374,7 @@ var _ = Describe("DockerAppRunner", func() {
 			lrpJson, marshalErr := json.Marshal(desiredLRP)
 			Expect(marshalErr).ToNot(HaveOccurred())
 
-			lrpName, err := appRunner.CreateLrp(lrpJson)
+			lrpName, err := appRunner.SubmitLrp(lrpJson)
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(lrpName).To(Equal("americano-app"))
@@ -398,7 +398,7 @@ var _ = Describe("DockerAppRunner", func() {
 			lrpJson, marshalErr := json.Marshal(desiredLRP)
 			Expect(marshalErr).ToNot(HaveOccurred())
 
-			lrpName, err := appRunner.CreateLrp(lrpJson)
+			lrpName, err := appRunner.SubmitLrp(lrpJson)
 
 			Expect(err).To(HaveOccurred())
 			Expect(lrpName).To(Equal("app-already-desired"))
@@ -417,7 +417,7 @@ var _ = Describe("DockerAppRunner", func() {
 				lrpJson, marshalErr := json.Marshal(desiredLRP)
 				Expect(marshalErr).ToNot(HaveOccurred())
 
-				lrpName, err := appRunner.CreateLrp(lrpJson)
+				lrpName, err := appRunner.SubmitLrp(lrpJson)
 
 				Expect(err).To(HaveOccurred())
 				Expect(lrpName).To(Equal("lattice-debug"))
@@ -427,7 +427,7 @@ var _ = Describe("DockerAppRunner", func() {
 		})
 
 		It("returns an error for invalid JSON", func() {
-			lrpName, err := appRunner.CreateLrp([]byte(`{"Value":"test value`))
+			lrpName, err := appRunner.SubmitLrp([]byte(`{"Value":"test value`))
 
 			Expect(err).To(HaveOccurred())
 			Expect(lrpName).To(BeEmpty())
@@ -447,7 +447,7 @@ var _ = Describe("DockerAppRunner", func() {
 				lrpJson, marshalErr := json.Marshal(desiredLRP)
 				Expect(marshalErr).ToNot(HaveOccurred())
 
-				lrpName, err := appRunner.CreateLrp(lrpJson)
+				lrpName, err := appRunner.SubmitLrp(lrpJson)
 
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(Equal(receptorError))
@@ -466,7 +466,7 @@ var _ = Describe("DockerAppRunner", func() {
 				lrpJson, marshalErr := json.Marshal(desiredLRP)
 				Expect(marshalErr).ToNot(HaveOccurred())
 
-				lrpName, err := appRunner.CreateLrp(lrpJson)
+				lrpName, err := appRunner.SubmitLrp(lrpJson)
 
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(Equal(upsertError))
@@ -486,7 +486,7 @@ var _ = Describe("DockerAppRunner", func() {
 				lrpJson, marshalErr := json.Marshal(desiredLRP)
 				Expect(marshalErr).ToNot(HaveOccurred())
 
-				lrpName, err := appRunner.CreateLrp(lrpJson)
+				lrpName, err := appRunner.SubmitLrp(lrpJson)
 
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(Equal(receptorError))

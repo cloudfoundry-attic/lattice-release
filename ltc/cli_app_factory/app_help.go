@@ -108,7 +108,7 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 			Name: "ADVANCED",
 			CommandSubGroups: [][]cmdPresenter{
 				{
-					presentCommand("create-lrp"),
+					presentCommand("submit-lrp"),
 				},
 			},
 		}, {
