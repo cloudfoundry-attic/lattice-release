@@ -13,6 +13,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/presentation"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/cursor"
@@ -42,10 +43,11 @@ type AppExaminerCommandFactory struct {
 	clock               clock.Clock
 	exitHandler         exit_handler.ExitHandler
 	graphicalVisualizer graphical.GraphicalVisualizer
+	taskExaminer        task_examiner.TaskExaminer
 }
 
-func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, ui terminal.UI, clock clock.Clock, exitHandler exit_handler.ExitHandler, graphicalVisualizer graphical.GraphicalVisualizer) *AppExaminerCommandFactory {
-	return &AppExaminerCommandFactory{appExaminer, ui, clock, exitHandler, graphicalVisualizer}
+func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, ui terminal.UI, clock clock.Clock, exitHandler exit_handler.ExitHandler, graphicalVisualizer graphical.GraphicalVisualizer, taskExaminer task_examiner.TaskExaminer) *AppExaminerCommandFactory {
+	return &AppExaminerCommandFactory{appExaminer, ui, clock, exitHandler, graphicalVisualizer, taskExaminer}
 }
 
 func (factory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
@@ -178,7 +180,7 @@ func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 	} else {
 		factory.ui.Say("Error listing apps: " + err.Error())
 	}
-	taskList, err := factory.appExaminer.ListTasks()
+	taskList, err := factory.taskExaminer.ListTasks()
 	if err == nil {
 		wTask := &tabwriter.Writer{}
 		wTask.Init(factory.ui, 10+colors.ColorCodeLength, 8, 1, '\t', 0)

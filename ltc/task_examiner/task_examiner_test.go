@@ -83,59 +83,58 @@ var _ = Describe("TaskExaminer", func() {
 
 	})
 
-	Describe("Delete Task", func() {
-		It("delete task when task in COMPLETED state", func() {
-			getTaskResponse := receptor.TaskResponse{
-				TaskGuid: "task-guid-1",
-				State:    receptor.TaskStateCompleted,
+	Describe("ListTasks", func() {
+		It("returns the list of task", func() {
+			taskListReturns := []receptor.TaskResponse{
+				receptor.TaskResponse{
+					TaskGuid:      "task-guid-1",
+					CellID:        "cell-01",
+					Failed:        false,
+					FailureReason: "",
+					Result:        "Finished",
+					State:         "COMPLETED",
+				},
+				receptor.TaskResponse{
+					TaskGuid:      "task-guid-2",
+					CellID:        "cell-02",
+					Failed:        true,
+					FailureReason: "failed",
+					Result:        "Failed",
+					State:         "COMPLETED",
+				},
 			}
-			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
-			fakeReceptorClient.DeleteTaskReturns(nil)
-			err := taskExaminer.TaskDelete("task-guid-1")
+			fakeReceptorClient.TasksReturns(taskListReturns, nil)
+			taskList, err := taskExaminer.ListTasks()
+
 			Expect(err).ToNot(HaveOccurred())
+			Expect(len(taskList)).To(Equal(2))
+			task1 := taskList[0]
+			Expect(task1.TaskGuid).To(Equal("task-guid-1"))
+			Expect(task1.CellID).To(Equal("cell-01"))
+			Expect(task1.FailureReason).To(Equal(""))
+			Expect(task1.Result).To(Equal("Finished"))
+			Expect(task1.State).To(Equal("COMPLETED"))
+			task2 := taskList[1]
+			Expect(task2.TaskGuid).To(Equal("task-guid-2"))
+			Expect(task2.CellID).To(Equal("cell-02"))
+			Expect(task2.Result).To(Equal("Failed"))
 		})
 
-		It("delete task when task is not in COMPLETED state", func() {
-			getTaskResponse := receptor.TaskResponse{
-				TaskGuid: "task-guid-1",
-				State:    receptor.TaskStatePending,
-			}
-			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
-			fakeReceptorClient.DeleteTaskReturns(nil)
-			fakeReceptorClient.CancelTaskReturns(nil)
+		It("when receptor returns error", func() {
+			fakeReceptorClient.TasksReturns(nil, errors.New("Client not reachable."))
+			taskList, err := taskExaminer.ListTasks()
 
-			err := taskExaminer.TaskDelete("task-guid-1")
+			Expect(taskList).To(BeNil())
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("Client not reachable."))
+		})
+
+		It("when receptor returns empty list", func() {
+			fakeReceptorClient.TasksReturns([]receptor.TaskResponse{}, nil)
+			taskList, err := taskExaminer.ListTasks()
+
 			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("returns error when task not found", func() {
-			fakeReceptorClient.GetTaskReturns(receptor.TaskResponse{}, errors.New("Task not found"))
-			err := taskExaminer.TaskDelete("task-guid-1")
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError("Task not found"))
-		})
-
-		It("returns error when task not able to delete", func() {
-			getTaskResponse := receptor.TaskResponse{
-				TaskGuid: "task-guid-1",
-				State:    receptor.TaskStatePending,
-			}
-			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
-			fakeReceptorClient.CancelTaskReturns(nil)
-			fakeReceptorClient.DeleteTaskReturns(errors.New("task in unknown state"))
-
-			err := taskExaminer.TaskDelete("task-guid-1")
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError("task in unknown state"))
-
-			getTaskResponse = receptor.TaskResponse{
-				TaskGuid: "task-guid-1",
-				State:    receptor.TaskStateCompleted,
-			}
-			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
-			err = taskExaminer.TaskDelete("task-guid-1")
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError("task in unknown state"))
+			Expect(len(taskList)).To(Equal(0))
 		})
 	})
 })

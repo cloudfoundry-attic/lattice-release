@@ -22,7 +22,7 @@ type TaskInfo struct {
 //go:generate counterfeiter -o fake_task_examiner/fake_task_examiner.go . TaskExaminer
 type TaskExaminer interface {
 	TaskStatus(taskName string) (TaskInfo, error)
-	TaskDelete(taskGuid string) error
+	ListTasks() ([]TaskInfo, error)
 }
 
 type taskExaminer struct {
@@ -54,23 +54,22 @@ func (e *taskExaminer) TaskStatus(taskName string) (TaskInfo, error) {
 	}, nil
 }
 
-func (e *taskExaminer) TaskDelete(taskGuid string) error {
-	taskInfo, err := e.TaskStatus(taskGuid)
+func (e *taskExaminer) ListTasks() ([]TaskInfo, error) {
+	taskList, err := e.receptorClient.Tasks()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if taskInfo.State == receptor.TaskStateCompleted {
-		err := e.receptorClient.DeleteTask(taskGuid)
-		if err != nil {
-			return err
+	taskInfoList := make([]TaskInfo, 0, len(taskList))
+	for _, task := range taskList {
+		taskInfo := TaskInfo{
+			TaskGuid:      task.TaskGuid,
+			CellID:        task.CellID,
+			Failed:        task.Failed,
+			FailureReason: task.FailureReason,
+			Result:        task.Result,
+			State:         task.State,
 		}
-		return nil
-	} else {
-		e.receptorClient.CancelTask(taskGuid)
-		err := e.receptorClient.DeleteTask(taskGuid)
-		if err != nil {
-			return err
-		}
-		return nil
+		taskInfoList = append(taskInfoList, taskInfo)
 	}
+	return taskInfoList, err
 }

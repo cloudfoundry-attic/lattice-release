@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
@@ -18,11 +19,13 @@ var _ = Describe("TaskRunner", func() {
 	var (
 		fakeReceptorClient *fake_receptor.FakeClient
 		taskRunner         task_runner.TaskRunner
+		taskExaminer       task_examiner.TaskExaminer
 	)
 
 	BeforeEach(func() {
 		fakeReceptorClient = &fake_receptor.FakeClient{}
-		taskRunner = task_runner.New(fakeReceptorClient)
+		taskExaminer = task_examiner.New(fakeReceptorClient)
+		taskRunner = task_runner.New(fakeReceptorClient, taskExaminer)
 	})
 
 	Describe("SubmitTask", func() {
@@ -217,4 +220,73 @@ var _ = Describe("TaskRunner", func() {
 
 		})
 	})
+	Describe("Delete Task", func() {
+		It("delete task when task in COMPLETED state", func() {
+			getTaskResponse := receptor.TaskResponse{
+				TaskGuid: "task-guid-1",
+				State:    receptor.TaskStateCompleted,
+			}
+			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
+			fakeReceptorClient.DeleteTaskReturns(nil)
+			err := taskRunner.DeleteTask("task-guid-1")
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("delete task when task is not in COMPLETED state", func() {
+			getTaskResponse := receptor.TaskResponse{
+				TaskGuid: "task-guid-1",
+				State:    receptor.TaskStatePending,
+			}
+			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
+			fakeReceptorClient.DeleteTaskReturns(nil)
+			fakeReceptorClient.CancelTaskReturns(nil)
+
+			err := taskRunner.DeleteTask("task-guid-1")
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("returns error when task not found", func() {
+			fakeReceptorClient.GetTaskReturns(receptor.TaskResponse{}, errors.New("Task not found"))
+			err := taskRunner.DeleteTask("task-guid-1")
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("Task not found"))
+		})
+
+		It("returns error when task not able to delete", func() {
+			getTaskResponse := receptor.TaskResponse{
+				TaskGuid: "task-guid-1",
+				State:    receptor.TaskStatePending,
+			}
+			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
+			fakeReceptorClient.CancelTaskReturns(nil)
+			fakeReceptorClient.DeleteTaskReturns(errors.New("task in unknown state"))
+
+			err := taskRunner.DeleteTask("task-guid-1")
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("task in unknown state"))
+
+			getTaskResponse = receptor.TaskResponse{
+				TaskGuid: "task-guid-1",
+				State:    receptor.TaskStateCompleted,
+			}
+			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
+			err = taskRunner.DeleteTask("task-guid-1")
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("task in unknown state"))
+		})
+
+		It("returns error when cancel task returns an error", func() {
+			getTaskResponse := receptor.TaskResponse{
+				TaskGuid: "task-guid-1",
+				State:    receptor.TaskStatePending,
+			}
+			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
+			fakeReceptorClient.CancelTaskReturns(errors.New("task in unknown state"))
+
+			err := taskRunner.DeleteTask("task-guid-1")
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("task in unknown state"))
+		})
+	})
+
 })

@@ -17,13 +17,12 @@ type FakeTaskExaminer struct {
 		result1 task_examiner.TaskInfo
 		result2 error
 	}
-	TaskDeleteStub        func(taskGuid string) error
-	taskDeleteMutex       sync.RWMutex
-	taskDeleteArgsForCall []struct {
-		taskGuid string
-	}
-	taskDeleteReturns struct {
-		result1 error
+	ListTasksStub        func() ([]task_examiner.TaskInfo, error)
+	listTasksMutex       sync.RWMutex
+	listTasksArgsForCall []struct{}
+	listTasksReturns     struct {
+		result1 []task_examiner.TaskInfo
+		result2 error
 	}
 }
 
@@ -60,36 +59,29 @@ func (fake *FakeTaskExaminer) TaskStatusReturns(result1 task_examiner.TaskInfo, 
 	}{result1, result2}
 }
 
-func (fake *FakeTaskExaminer) TaskDelete(taskGuid string) error {
-	fake.taskDeleteMutex.Lock()
-	fake.taskDeleteArgsForCall = append(fake.taskDeleteArgsForCall, struct {
-		taskGuid string
-	}{taskGuid})
-	fake.taskDeleteMutex.Unlock()
-	if fake.TaskDeleteStub != nil {
-		return fake.TaskDeleteStub(taskGuid)
+func (fake *FakeTaskExaminer) ListTasks() ([]task_examiner.TaskInfo, error) {
+	fake.listTasksMutex.Lock()
+	fake.listTasksArgsForCall = append(fake.listTasksArgsForCall, struct{}{})
+	fake.listTasksMutex.Unlock()
+	if fake.ListTasksStub != nil {
+		return fake.ListTasksStub()
 	} else {
-		return fake.taskDeleteReturns.result1
+		return fake.listTasksReturns.result1, fake.listTasksReturns.result2
 	}
 }
 
-func (fake *FakeTaskExaminer) TaskDeleteCallCount() int {
-	fake.taskDeleteMutex.RLock()
-	defer fake.taskDeleteMutex.RUnlock()
-	return len(fake.taskDeleteArgsForCall)
+func (fake *FakeTaskExaminer) ListTasksCallCount() int {
+	fake.listTasksMutex.RLock()
+	defer fake.listTasksMutex.RUnlock()
+	return len(fake.listTasksArgsForCall)
 }
 
-func (fake *FakeTaskExaminer) TaskDeleteArgsForCall(i int) string {
-	fake.taskDeleteMutex.RLock()
-	defer fake.taskDeleteMutex.RUnlock()
-	return fake.taskDeleteArgsForCall[i].taskGuid
-}
-
-func (fake *FakeTaskExaminer) TaskDeleteReturns(result1 error) {
-	fake.TaskDeleteStub = nil
-	fake.taskDeleteReturns = struct {
-		result1 error
-	}{result1}
+func (fake *FakeTaskExaminer) ListTasksReturns(result1 []task_examiner.TaskInfo, result2 error) {
+	fake.ListTasksStub = nil
+	fake.listTasksReturns = struct {
+		result1 []task_examiner.TaskInfo
+		result2 error
+	}{result1, result2}
 }
 
 var _ task_examiner.TaskExaminer = new(FakeTaskExaminer)

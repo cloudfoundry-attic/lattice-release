@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/receptor"
 )
 
@@ -15,14 +16,16 @@ const (
 //go:generate counterfeiter -o fake_task_runner/fake_task_runner.go . TaskRunner
 type TaskRunner interface {
 	SubmitTask(submitTaskJson []byte) (string, error)
+	DeleteTask(taskGuid string) error
 }
 
 type taskRunner struct {
 	receptorClient receptor.Client
+	taskExaminer   task_examiner.TaskExaminer
 }
 
-func New(receptorClient receptor.Client) TaskRunner {
-	return &taskRunner{receptorClient}
+func New(receptorClient receptor.Client, taskExaminer task_examiner.TaskExaminer) TaskRunner {
+	return &taskRunner{receptorClient, taskExaminer}
 }
 
 func (taskRunner *taskRunner) SubmitTask(submitTaskJson []byte) (string, error) {
@@ -50,4 +53,28 @@ func (taskRunner *taskRunner) SubmitTask(submitTaskJson []byte) (string, error) 
 	}
 
 	return task.TaskGuid, taskRunner.receptorClient.CreateTask(task)
+}
+
+func (e *taskRunner) DeleteTask(taskGuid string) error {
+	taskInfo, err := e.taskExaminer.TaskStatus(taskGuid)
+	if err != nil {
+		return err
+	}
+	if taskInfo.State == receptor.TaskStateCompleted {
+		err := e.receptorClient.DeleteTask(taskGuid)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else {
+		err := e.receptorClient.CancelTask(taskGuid)
+		if err != nil {
+			return err
+		}
+		err = e.receptorClient.DeleteTask(taskGuid)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 }
