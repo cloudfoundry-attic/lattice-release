@@ -82,4 +82,60 @@ var _ = Describe("TaskExaminer", func() {
 		})
 
 	})
+
+	Describe("Delete Task", func() {
+		It("delete task when task in COMPLETED state", func() {
+			getTaskResponse := receptor.TaskResponse{
+				TaskGuid: "task-guid-1",
+				State:    receptor.TaskStateCompleted,
+			}
+			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
+			fakeReceptorClient.DeleteTaskReturns(nil)
+			err := taskExaminer.TaskDelete("task-guid-1")
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("delete task when task is not in COMPLETED state", func() {
+			getTaskResponse := receptor.TaskResponse{
+				TaskGuid: "task-guid-1",
+				State:    receptor.TaskStatePending,
+			}
+			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
+			fakeReceptorClient.DeleteTaskReturns(nil)
+			fakeReceptorClient.CancelTaskReturns(nil)
+
+			err := taskExaminer.TaskDelete("task-guid-1")
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("returns error when task not found", func() {
+			fakeReceptorClient.GetTaskReturns(receptor.TaskResponse{}, errors.New("Task not found"))
+			err := taskExaminer.TaskDelete("task-guid-1")
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("Task not found"))
+		})
+
+		It("returns error when task not able to delete", func() {
+			getTaskResponse := receptor.TaskResponse{
+				TaskGuid: "task-guid-1",
+				State:    receptor.TaskStatePending,
+			}
+			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
+			fakeReceptorClient.CancelTaskReturns(nil)
+			fakeReceptorClient.DeleteTaskReturns(errors.New("task in unknown state"))
+
+			err := taskExaminer.TaskDelete("task-guid-1")
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("task in unknown state"))
+
+			getTaskResponse = receptor.TaskResponse{
+				TaskGuid: "task-guid-1",
+				State:    receptor.TaskStateCompleted,
+			}
+			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
+			err = taskExaminer.TaskDelete("task-guid-1")
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("task in unknown state"))
+		})
+	})
 })

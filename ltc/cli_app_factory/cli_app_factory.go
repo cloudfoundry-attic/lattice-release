@@ -166,6 +166,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		taskRunnerCommandFactory.MakeSubmitTaskCommand(),
 		configCommandFactory.MakeTargetCommand(),
 		taskExaminerCommandFactory.MakeTaskCommand(),
+		taskExaminerCommandFactory.MakeTaskDeleteCommand(),
 		integrationTestCommandFactory.MakeIntegrationTestCommand(),
 		appRunnerCommandFactory.MakeUpdateRoutesCommand(),
 		appExaminerCommandFactory.MakeVisualizeCommand(),

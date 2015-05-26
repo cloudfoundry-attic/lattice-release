@@ -33,6 +33,18 @@ func (factory *TaskExaminerCommandFactory) MakeTaskCommand() cli.Command {
 	return taskCommand
 }
 
+func (factory *TaskExaminerCommandFactory) MakeTaskDeleteCommand() cli.Command {
+	var taskDeleteCommand = cli.Command{
+		Name:        "delete-task",
+		Aliases:     []string{"dt"},
+		Usage:       "Deletes the given task",
+		Description: "ltc delete-task TASK_NAME",
+		Action:      factory.taskDelete,
+		Flags:       []cli.Flag{},
+	}
+	return taskDeleteCommand
+}
+
 func (factory *TaskExaminerCommandFactory) task(context *cli.Context) {
 	taskName := context.Args().First()
 	if taskName == "" {
@@ -66,4 +78,20 @@ func (factory *TaskExaminerCommandFactory) task(context *cli.Context) {
 	}
 
 	w.Flush()
+}
+
+func (factory *TaskExaminerCommandFactory) taskDelete(context *cli.Context) {
+	taskGuid := context.Args().First()
+	if taskGuid == "" {
+		factory.ui.SayIncorrectUsage("Please input a valid TASK_GUID")
+		return
+	}
+	factory.ui.Say("Deleting the task " + colors.Bold(taskGuid) + "\n")
+	err := factory.taskExaminer.TaskDelete(taskGuid)
+	if err != nil {
+		factory.ui.Say("Error Deleting the task " + colors.Bold(taskGuid) + "\n")
+		factory.ui.Say("Failiure Reason :" + colors.Red(err.Error()) + "\n")
+		return
+	}
+	factory.ui.Say(colors.Green("OK"))
 }

@@ -22,6 +22,7 @@ type TaskInfo struct {
 //go:generate counterfeiter -o fake_task_examiner/fake_task_examiner.go . TaskExaminer
 type TaskExaminer interface {
 	TaskStatus(taskName string) (TaskInfo, error)
+	TaskDelete(taskGuid string) error
 }
 
 type taskExaminer struct {
@@ -51,4 +52,25 @@ func (e *taskExaminer) TaskStatus(taskName string) (TaskInfo, error) {
 		FailureReason: taskResponse.FailureReason,
 		Result:        taskResponse.Result,
 	}, nil
+}
+
+func (e *taskExaminer) TaskDelete(taskGuid string) error {
+	taskInfo, err := e.TaskStatus(taskGuid)
+	if err != nil {
+		return err
+	}
+	if taskInfo.State == receptor.TaskStateCompleted {
+		err := e.receptorClient.DeleteTask(taskGuid)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else {
+		e.receptorClient.CancelTask(taskGuid)
+		err := e.receptorClient.DeleteTask(taskGuid)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 }
