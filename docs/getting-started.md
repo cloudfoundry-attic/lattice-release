@@ -56,13 +56,13 @@ For Linux:
 
 Further instructions can be found [here](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc).
 
-## Targetting Lattice
+## Targeting Lattice
 
 You need to tell `ltc` how to connect to your Lattice deployment.  The target domain should be printed out when you `vagrant up`.  If you have not changed the default settings you can:
 
     ltc target 192.168.11.11.xip.io
 
-## Launching and Routing to a Dockerimage
+## Launching and Routing to a Container
 
 We have a simple Go-based demo web application hosted on the Docker registry at [`cloudfoundry/lattice-app`](https://registry.hub.docker.com/u/cloudfoundry/lattice-app).  You can launch this image by running:
 
@@ -130,6 +130,6 @@ If you cause an instance of `lattice-app` to exit repeatedly Lattice will eventu
 
 ## Where to go from here:
 
-- push your own Dockerimage
+- push your own Docker image
 - learn more about [`ltc`](/docs/ltc.html)
 - learn more about the RESTful [`Lattice API`](/docs/lattice-api.html).  This allows you to launch one off tasks in addition to long running processes.

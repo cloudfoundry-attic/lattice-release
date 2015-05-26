@@ -35,7 +35,7 @@
 			"doc_subnav": "true"
 	},
 	"dnsmasq-readme.md": {
-			"title": "DNSMasq Configuration on OSX",
+			"title": "DNSMasq Configuration",
 			"weight": "8",
 			"doc_subnav": "true"
 	},

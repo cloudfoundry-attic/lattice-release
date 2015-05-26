@@ -8,15 +8,18 @@ After following these instructions, wherever you see `servicename.IP-ADDRESS.xip
 
 ## Installation 
 
-- Use Homebrew to install `dnsmasq`
+- Use Homebrew to install `dnsmasq`:
+
 ```bash
 # Update your homebrew installation
 $ brew up
 # Install dnsmasq
 $ brew install dnsmasq
 ```
+
 - Use the commands provided by `brew info dnsmasq` to configure and start the service.<br>
   As of dnsmasq v2.72, `brew info dnsmasq` returned:
+
 ```bash
 $ brew info dnsmasq
 dnsmasq: stable 2.72 (bottled)
@@ -41,11 +44,14 @@ Then to load dnsmasq now:
 ## Configuration
 
 ### Set up dnsmasq to resolve lattice.dev
-- Using your favorite text editor, append the following line to `/usr/local/etc/dnsmasq.conf`. Make sure to replace `<LATTICE_SYSTEM_IP>` with your Lattice target IP address. 
+- Using your favorite text editor, append the following line to `/usr/local/etc/dnsmasq.conf`. Make sure to replace `<LATTICE_SYSTEM_IP>` with your Lattice target IP address.
+
 ```bash
 address=/lattice.dev/<LATTICE_SYSTEM_IP> # i.e., 192.168.11.11
 ```
+
 - Restart the dnsmasq service
+
 ```bash
 $ sudo launchctl stop homebrew.mxcl.dnsmasq
 $ sudo launchctl start homebrew.mxcl.dnsmasq
@@ -53,10 +59,13 @@ $ sudo launchctl start homebrew.mxcl.dnsmasq
 
 ### Configure your workstation to use the dnsmasq resolver for lattice.dev
 - Create `/etc/resolver` folder
+
 ```bash
 $ sudo mkdir /etc/resolver
 ```
+
 - Create a file that defines the resolver for `lattice.dev`
+
 ```bash
 $ sudo tee /etc/resolver/lattice.dev >/dev/null <<EOF
 nameserver 127.0.0.1
@@ -65,12 +74,14 @@ EOF
 
 ## Starting Lattice cluster with alternate name
 - Set `LATTICE_SYSTEM_DOMAIN` environment variable during `vagrant up`:
-```
+
+```bash
 LATTICE_SYSTEM_DOMAIN=lattice.dev vagrant up --provider=<PROVIDER> 
 ```
 
 ### Validating your dnsmasq setup
 Here's how you can prove that you're set up to redirect requests for the lattice.dev domain, as well as make sure that regular DNS resolution has not been affected.
+
 ```bash
 $ host www.lattice.dev 127.0.0.1
 Using domain server:
