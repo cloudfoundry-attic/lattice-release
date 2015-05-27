@@ -54,7 +54,6 @@ func (factory *TaskExaminerCommandFactory) task(context *cli.Context) {
 
 	fmt.Fprintf(w, "%s\t%s\n", "Task Name", taskInfo.TaskGuid)
 	fmt.Fprintf(w, "%s\t%s\n", "Cell ID", taskInfo.CellID)
-	fmt.Fprintf(w, "%s\t%s\n", "Status", taskInfo.State)
 	if taskInfo.State == "PENDING" || taskInfo.State == "CLAIMED" || taskInfo.State == "RUNNING" {
 		fmt.Fprintf(w, "%s\t%s\n", "Status", colors.Yellow(taskInfo.State))
 	} else if (taskInfo.State == "COMPLETED" || taskInfo.State == "RESOLVING") && !taskInfo.Failed {
