@@ -113,9 +113,15 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	logReader := logs.NewLogReader(noaaConsumer)
 	tailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(ui, logReader)
 
+	taskExaminer := task_examiner.New(receptorClient)
+	taskExaminerCommandFactory := task_examiner_command_factory.NewTaskExaminerCommandFactory(taskExaminer, ui)
+
+	taskRunner := task_runner.New(receptorClient, taskExaminer)
+	taskRunnerCommandFactory := task_runner_command_factory.NewTaskRunnerCommandFactory(taskRunner, ui)
+
 	appExaminer := app_examiner.New(receptorClient, app_examiner.NewNoaaConsumer(noaaConsumer))
 	graphicalVisualizer := graphical.NewGraphicalVisualizer(appExaminer)
-	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, ui, clock, exitHandler, graphicalVisualizer)
+	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, ui, clock, exitHandler, graphicalVisualizer, taskExaminer)
 
 	appRunnerCommandFactoryConfig := app_runner_command_factory.AppRunnerCommandFactoryConfig{
 		AppRunner:             appRunner,
@@ -139,12 +145,6 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	testRunner := integration_test.NewIntegrationTestRunner(config, ltcConfigRoot)
 	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner)
 
-	taskExaminer := task_examiner.New(receptorClient)
-	taskExaminerCommandFactory := task_examiner_command_factory.NewTaskExaminerCommandFactory(taskExaminer, ui)
-
-	taskRunner := task_runner.New(receptorClient)
-	taskRunnerCommandFactory := task_runner_command_factory.NewTaskRunnerCommandFactory(taskRunner, ui)
-
 	helpCommand := cli.Command{
 		Name:        "help",
 		Aliases:     []string{"h"},
@@ -166,6 +166,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		taskRunnerCommandFactory.MakeSubmitTaskCommand(),
 		configCommandFactory.MakeTargetCommand(),
 		taskExaminerCommandFactory.MakeTaskCommand(),
+		taskRunnerCommandFactory.MakeDeleteTaskCommand(),
 		integrationTestCommandFactory.MakeIntegrationTestCommand(),
 		appRunnerCommandFactory.MakeUpdateRoutesCommand(),
 		appExaminerCommandFactory.MakeVisualizeCommand(),

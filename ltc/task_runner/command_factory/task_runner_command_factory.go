@@ -39,6 +39,18 @@ func (factory *TaskRunnerCommandFactory) MakeSubmitTaskCommand() cli.Command {
 	return submitTaskCommand
 }
 
+func (factory *TaskRunnerCommandFactory) MakeDeleteTaskCommand() cli.Command {
+	var taskDeleteCommand = cli.Command{
+		Name:        "delete-task",
+		Aliases:     []string{"dt"},
+		Usage:       "Deletes the given task",
+		Description: "ltc delete-task TASK_NAME",
+		Action:      factory.deleteTask,
+		Flags:       []cli.Flag{},
+	}
+	return taskDeleteCommand
+}
+
 func (factory *TaskRunnerCommandFactory) submitTask(context *cli.Context) {
 	filePath := context.Args().First()
 	if filePath == "" {
@@ -58,4 +70,20 @@ func (factory *TaskRunnerCommandFactory) submitTask(context *cli.Context) {
 		return
 	}
 	factory.ui.Say(colors.Green("Successfully submitted "+taskName) + "\n")
+}
+
+func (factory *TaskRunnerCommandFactory) deleteTask(context *cli.Context) {
+	taskGuid := context.Args().First()
+	if taskGuid == "" {
+		factory.ui.SayIncorrectUsage("Please input a valid TASK_GUID")
+		return
+	}
+	factory.ui.Say("Deleting the task " + colors.Bold(taskGuid) + "\n")
+	err := factory.taskRunner.DeleteTask(taskGuid)
+	if err != nil {
+		factory.ui.Say("Error Deleting the task " + colors.Bold(taskGuid) + "\n")
+		factory.ui.Say("Failiure Reason :" + colors.Red(err.Error()) + "\n")
+		return
+	}
+	factory.ui.Say(colors.Green("OK"))
 }

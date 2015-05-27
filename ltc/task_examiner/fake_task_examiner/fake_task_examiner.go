@@ -17,6 +17,13 @@ type FakeTaskExaminer struct {
 		result1 task_examiner.TaskInfo
 		result2 error
 	}
+	ListTasksStub        func() ([]task_examiner.TaskInfo, error)
+	listTasksMutex       sync.RWMutex
+	listTasksArgsForCall []struct{}
+	listTasksReturns     struct {
+		result1 []task_examiner.TaskInfo
+		result2 error
+	}
 }
 
 func (fake *FakeTaskExaminer) TaskStatus(taskName string) (task_examiner.TaskInfo, error) {
@@ -48,6 +55,31 @@ func (fake *FakeTaskExaminer) TaskStatusReturns(result1 task_examiner.TaskInfo, 
 	fake.TaskStatusStub = nil
 	fake.taskStatusReturns = struct {
 		result1 task_examiner.TaskInfo
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeTaskExaminer) ListTasks() ([]task_examiner.TaskInfo, error) {
+	fake.listTasksMutex.Lock()
+	fake.listTasksArgsForCall = append(fake.listTasksArgsForCall, struct{}{})
+	fake.listTasksMutex.Unlock()
+	if fake.ListTasksStub != nil {
+		return fake.ListTasksStub()
+	} else {
+		return fake.listTasksReturns.result1, fake.listTasksReturns.result2
+	}
+}
+
+func (fake *FakeTaskExaminer) ListTasksCallCount() int {
+	fake.listTasksMutex.RLock()
+	defer fake.listTasksMutex.RUnlock()
+	return len(fake.listTasksArgsForCall)
+}
+
+func (fake *FakeTaskExaminer) ListTasksReturns(result1 []task_examiner.TaskInfo, result2 error) {
+	fake.ListTasksStub = nil
+	fake.listTasksReturns = struct {
+		result1 []task_examiner.TaskInfo
 		result2 error
 	}{result1, result2}
 }

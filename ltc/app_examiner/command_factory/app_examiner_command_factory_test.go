@@ -18,6 +18,8 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/fake_task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/cursor"
@@ -38,10 +40,12 @@ var _ = Describe("CommandFactory", func() {
 		osSignalChan        chan os.Signal
 		exitHandler         *fake_exit_handler.FakeExitHandler
 		graphicalVisualizer *fake_graphical_visualizer.FakeGraphicalVisualizer
+		taskExaminer        *fake_task_examiner.FakeTaskExaminer
 	)
 
 	BeforeEach(func() {
 		appExaminer = &fake_app_examiner.FakeAppExaminer{}
+		taskExaminer = &fake_task_examiner.FakeTaskExaminer{}
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		osSignalChan = make(chan os.Signal, 1)
@@ -54,18 +58,25 @@ var _ = Describe("CommandFactory", func() {
 		var listAppsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil, taskExaminer)
 			listAppsCommand = commandFactory.MakeListAppCommand()
 		})
 
-		It("displays all the existing apps, making sure output spacing is correct", func() {
+		It("displays all the existing apps & tasks, making sure output spacing is correct", func() {
 			listApps := []app_examiner.AppInfo{
 				app_examiner.AppInfo{ProcessGuid: "process1", DesiredInstances: 21, ActualRunningInstances: 0, DiskMB: 100, MemoryMB: 50, Ports: []uint16{54321}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"alldaylong.com"}, Port: 54321}}},
 				app_examiner.AppInfo{ProcessGuid: "process2", DesiredInstances: 8, ActualRunningInstances: 9, DiskMB: 400, MemoryMB: 30, Ports: []uint16{1234}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"never.io"}, Port: 1234}}},
 				app_examiner.AppInfo{ProcessGuid: "process3", DesiredInstances: 5, ActualRunningInstances: 5, DiskMB: 600, MemoryMB: 90, Ports: []uint16{1234}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"allthetime.com", "herewego.org"}, Port: 1234}}},
 				app_examiner.AppInfo{ProcessGuid: "process4", DesiredInstances: 0, ActualRunningInstances: 0, DiskMB: 10, MemoryMB: 10, Routes: route_helpers.AppRoutes{}},
 			}
+
+			listTasks := []task_examiner.TaskInfo{
+				task_examiner.TaskInfo{TaskGuid: "task-guid-1", CellID: "cell-01", Failed: false, FailureReason: "", Result: "Finished", State: "COMPLETED"},
+				task_examiner.TaskInfo{TaskGuid: "task-guid-2", CellID: "cell-02", Failed: true, FailureReason: "No compatible container", Result: "Finished", State: "COMPLETED"},
+				task_examiner.TaskInfo{TaskGuid: "task-guid-3", CellID: "", Failed: true, FailureReason: "", Result: "", State: "COMPLETED"},
+			}
 			appExaminer.ListAppsReturns(listApps, nil)
+			taskExaminer.ListTasksReturns(listTasks, nil)
 
 			test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
 
@@ -98,25 +109,94 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("10")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("10")))
 
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Task Name")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Cell ID")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Status")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Result")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Failure Reason")))
+
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("task-guid-1")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("cell-01")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("COMPLETED")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("Finished")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("N/A")))
+
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("task-guid-2")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("cell-02")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("COMPLETED")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("Finished")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("No compatible container")))
+
+			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("task-guid-3")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("N/A")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("COMPLETED")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("N/A")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("N/A")))
 		})
 
-		It("alerts the user if there are no apps", func() {
+		It("alerts the user if there are no apps or tasks", func() {
 			listApps := []app_examiner.AppInfo{}
+			listTasks := []task_examiner.TaskInfo{}
 			appExaminer.ListAppsReturns(listApps, nil)
+			taskExaminer.ListTasksReturns(listTasks, nil)
 
 			test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
 
 			Expect(outputBuffer).To(test_helpers.Say("No apps to display."))
+			Expect(outputBuffer).To(test_helpers.Say("No tasks to display."))
+
 		})
 
 		Context("when the app examiner returns an error", func() {
-			It("alerts the user fetching the list returns an error", func() {
+			It("alerts the user fetching the app list returns an error", func() {
 				listApps := []app_examiner.AppInfo{}
 				appExaminer.ListAppsReturns(listApps, errors.New("The list was lost"))
+				listTasks := []task_examiner.TaskInfo{
+					task_examiner.TaskInfo{TaskGuid: "task-guid-1", CellID: "cell-01", Failed: false, FailureReason: "", Result: "Finished", State: "COMPLETED"},
+				}
+				taskExaminer.ListTasksReturns(listTasks, nil)
 
 				test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
 
 				Expect(outputBuffer).To(test_helpers.Say("Error listing apps: The list was lost"))
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Task Name")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Cell ID")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Status")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Result")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Failure Reason")))
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("task-guid-1")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("cell-01")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("COMPLETED")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("Finished")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("N/A")))
+
+			})
+
+			It("alerts the user fetching the task list returns an error", func() {
+				listApps := []app_examiner.AppInfo{
+					app_examiner.AppInfo{ProcessGuid: "process1", DesiredInstances: 21, ActualRunningInstances: 0, DiskMB: 100, MemoryMB: 50, Ports: []uint16{54321}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"alldaylong.com"}, Port: 54321}}},
+				}
+				appExaminer.ListAppsReturns(listApps, nil)
+				listTasks := []task_examiner.TaskInfo{}
+				taskExaminer.ListTasksReturns(listTasks, errors.New("The list was lost"))
+
+				test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("App Name")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Instances")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("DiskMB")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("MemoryMB")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Route")))
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process1")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.Red("0/21")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("100")))
+				Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("50")))
+				Expect(outputBuffer).To(test_helpers.Say("alldaylong.com => 54321"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Error listing tasks: The list was lost"))
 			})
 		})
 	})
@@ -125,7 +205,7 @@ var _ = Describe("CommandFactory", func() {
 		var visualizeCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, graphicalVisualizer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, graphicalVisualizer, taskExaminer)
 			visualizeCommand = commandFactory.MakeVisualizeCommand()
 		})
 
@@ -270,7 +350,7 @@ var _ = Describe("CommandFactory", func() {
 		}
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil, taskExaminer)
 			statusCommand = commandFactory.MakeStatusCommand()
 
 			sampleAppInfo = app_examiner.AppInfo{
@@ -618,7 +698,7 @@ var _ = Describe("CommandFactory", func() {
 		var cellsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil, taskExaminer)
 			cellsCommand = commandFactory.MakeCellsCommand()
 		})
 
