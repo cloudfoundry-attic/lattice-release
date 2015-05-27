@@ -22,6 +22,7 @@ type TaskInfo struct {
 //go:generate counterfeiter -o fake_task_examiner/fake_task_examiner.go . TaskExaminer
 type TaskExaminer interface {
 	TaskStatus(taskName string) (TaskInfo, error)
+	ListTasks() ([]TaskInfo, error)
 }
 
 type taskExaminer struct {
@@ -51,4 +52,24 @@ func (e *taskExaminer) TaskStatus(taskName string) (TaskInfo, error) {
 		FailureReason: taskResponse.FailureReason,
 		Result:        taskResponse.Result,
 	}, nil
+}
+
+func (e *taskExaminer) ListTasks() ([]TaskInfo, error) {
+	taskList, err := e.receptorClient.Tasks()
+	if err != nil {
+		return nil, err
+	}
+	taskInfoList := make([]TaskInfo, 0, len(taskList))
+	for _, task := range taskList {
+		taskInfo := TaskInfo{
+			TaskGuid:      task.TaskGuid,
+			CellID:        task.CellID,
+			Failed:        task.Failed,
+			FailureReason: task.FailureReason,
+			Result:        task.Result,
+			State:         task.State,
+		}
+		taskInfoList = append(taskInfoList, taskInfo)
+	}
+	return taskInfoList, err
 }

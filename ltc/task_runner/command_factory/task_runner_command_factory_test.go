@@ -11,6 +11,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/fake_task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner/fake_task_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
@@ -22,15 +24,17 @@ import (
 var _ = Describe("CommandFactory", func() {
 
 	var (
-		outputBuffer   *gbytes.Buffer
-		terminalUI     terminal.UI
-		fakeTaskRunner *fake_task_runner.FakeTaskRunner
+		outputBuffer     *gbytes.Buffer
+		terminalUI       terminal.UI
+		fakeTaskRunner   *fake_task_runner.FakeTaskRunner
+		fakeTaskExaminer *fake_task_examiner.FakeTaskExaminer
 	)
 
 	BeforeEach(func() {
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		fakeTaskRunner = new(fake_task_runner.FakeTaskRunner)
+		fakeTaskExaminer = new(fake_task_examiner.FakeTaskExaminer)
 	})
 
 	Describe("SubmitTask", func() {
@@ -102,6 +106,45 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
+	})
+	Describe("DeleteTaskCommand", func() {
+		var deleteTaskCommand cli.Command
+
+		BeforeEach(func() {
+			commandFactory := command_factory.NewTaskRunnerCommandFactory(fakeTaskRunner, terminalUI)
+			deleteTaskCommand = commandFactory.MakeDeleteTaskCommand()
+		})
+
+		It("Deletes the given task", func() {
+			taskInfo := task_examiner.TaskInfo{
+				TaskGuid: "task-guid-1",
+				State:    "COMPLETED",
+			}
+			fakeTaskExaminer.TaskStatusReturns(taskInfo, nil)
+			fakeTaskRunner.DeleteTaskReturns(nil)
+			test_helpers.ExecuteCommandWithArgs(deleteTaskCommand, []string{"task-guid-1"})
+
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("OK")))
+		})
+
+		It("returns error while deleting the task", func() {
+			taskInfo := task_examiner.TaskInfo{
+				TaskGuid: "task-guid-1",
+				State:    "COMPLETED",
+			}
+			fakeTaskExaminer.TaskStatusReturns(taskInfo, nil)
+			fakeTaskRunner.DeleteTaskReturns(errors.New("task in unknown state"))
+			test_helpers.ExecuteCommandWithArgs(deleteTaskCommand, []string{"task-guid-1"})
+
+			Expect(outputBuffer).To(test_helpers.Say("Error Deleting the task " + colors.Bold("task-guid-1")))
+			Expect(outputBuffer).To(test_helpers.Say("Failiure Reason :" + colors.Red("task in unknown state")))
+		})
+
+		It("fails with usage", func() {
+			test_helpers.ExecuteCommandWithArgs(deleteTaskCommand, []string{})
+
+			Expect(outputBuffer).To(test_helpers.Say("Please input a valid TASK_GUID"))
+		})
 	})
 
 })
