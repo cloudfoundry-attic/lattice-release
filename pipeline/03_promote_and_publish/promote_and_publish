@@ -212,6 +212,11 @@ copy_docs_to_lattice_website() {
     echo "Merging metadata into docs"
     $LATTICE_SRC_PATH/pipeline/helpers/merge-metadata-into-docs.rb $docspath/lattice $docspath/lattice-website
 
+    echo "Rewriting hyperlinks"
+    pushd $docspath/lattice-website/middleman/source/docs
+        perl -pi -e 's/\(\/docs\/(.*?).md/\(\/docs\/$1.html/g' *md
+    popd
+
     echo "Committing"
     pushd $docspath/lattice-website
         git add middleman/source/docs
