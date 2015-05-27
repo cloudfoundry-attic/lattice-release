@@ -17,15 +17,15 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/receptor",
-			"Rev": "cee9b9a88d5a4ce43313d13972328c71209c64e4"
+			"Rev": "455dbfcf903ab28ee5d61f6ed151ea21923462c8"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "d8fd104996eea1f9f6aef3d262921ee62d1bd75c"
+			"Rev": "8dbce913f886a115fc65b15396d8caff54c4e806"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
-			"Rev": "884d827ea89217f0e45af6e5e5ac4205e26380dc"
+			"Rev": "9e379db26bbd042ec0202d9679ed8d753b64e0df"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
@@ -167,7 +167,7 @@
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
-			"Rev": "b9e369e8ffb6773efc654ea13594566404314ee1"
+			"Rev": "0ac967c269268f1af7d9bcc7927ccc9a589b2b36"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",

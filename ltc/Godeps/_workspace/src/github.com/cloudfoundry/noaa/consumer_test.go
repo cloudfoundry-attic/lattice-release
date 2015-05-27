@@ -1213,9 +1213,6 @@ func createContainerMetric(instanceIndex int32, timestamp int64) *events.Envelop
 	cm := &events.ContainerMetric{
 		ApplicationId: proto.String("appId"),
 		InstanceIndex: proto.Int32(instanceIndex),
-		CpuPercentage: proto.Float64(1),
-		MemoryBytes: proto.Uint64(2),
-		DiskBytes: proto.Uint64(3),
 	}
 
 	return &events.Envelope{
@@ -1275,7 +1272,7 @@ func createHeartbeat(sentCount, receivedCount, errorCount uint64, timestamp int6
 func marshalMessage(message *events.Envelope) []byte {
 	data, err := proto.Marshal(message)
 	if err != nil {
-		println(err.Error())
+		log.Println(err.Error())
 	}
 
 	return data
