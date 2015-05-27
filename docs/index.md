@@ -100,7 +100,6 @@ No. Lattice and Cloud Foundry Elastic Runtime serve different purposes with some
 See the public Pivotal Tracker project for [Lattice](https://www.pivotaltracker.com/n/projects/1183596) and [Diego](https://www.pivotaltracker.com/n/projects/1003146)
 
 <a name="is-lattice-ready-for-production"></a>
-
 ## Is Lattice ready for production?
 
 Diego, the runtime component of Lattice is not in full production yet with Cloud Foundry, but is running a subset of [Pivotal Web Services](https://run.pivotal.io/) deployments. Diego is planned for full production use sometime early in Q2 of 2015.

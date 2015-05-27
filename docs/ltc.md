@@ -40,7 +40,6 @@ The default behavior of `ltc create`, outlined above, can be modified via a seri
 - **`--memory-mb=128`** specifies the memory limit to apply to the container.  To allow unlimited memory usage, set this to 0.
 - **`--disk-mb=1024`** specifies the disk limit to apply to the container.  This governs any writes *on top of* the root filesystem mounted into the container.  To allow unlimited disk usage, set this to 0.
 - **`--instances=1`** specifies the number of instances of the application to launch.  This can also be modified after the application is started.
-- **`--no-monitor`** disables health monitoring.  Lattice will consider the application crashed only if it exits.
 - **`--timeout=2m`** sets the maximum polling duration for starting the app.
 
 Finally, one can override the default start command by specifiying a start command after a `--` separator.  This can be followed by any arguments one wishes to pass to the app.  For example:
@@ -55,17 +54,23 @@ By default, `ltc` requests that Lattice open up all ports specified by the `EXPO
 - `my-app-8080.192.168.11.11.xip.io` will map to port `8080`
 - `my-app-9000.192.168.11.11.xip.io` will map to port `9000`
 
-In addition to setting up these routes, `ltc` will set up a health check that verifies the application is listening on port `8080` (the healthcheck is always bound to the *lowest* port).
-
 You can modify all of this behavior from the command line:
 
-- **`--port=8080,9000`** allows you to specify the set of ports to open on the container.  This overrides any `EXPOSE` directives associated with the Docker image.  When specifying multiple ports via `--port` you must also specify a `--monitored-port` to perform the health-check on (or, alternatively, turn off the health-check via `--no-monitor`).
-- **`--monitored-port=8080`** allows you to modify the port that `ltc` chooses to perform the health-check on.
+- **`--ports=8080,9000`** allows you to specify the set of ports to open on the container.  This overrides any `EXPOSE` directives associated with the Docker image.  
+    - When specifying multiple ports via `--port` you should also specify a `--monitor-port` or `--monitor-url` to perform the healthcheck on (or, alternatively, turn off the health-check via `--no-monitor`).
 - **`--routes=8080:my-app,9000:my-app-admin`** allows you to specify the routes to map to the requested ports.  In this example, `my-app.192.168.11.11.xip.io` will map to port `8080` and `my-app-admin.192.168.11.11.xip.io` will map to port `9000`.
   - You can comma-delimit multiple routes to the same port (e.g. `--routes=8080:my-app,8080:my-app-alias`).
 - **`--no-routes`** allows you to specify that no routes be registered. 
 
-> For instances with *multiple* `EXPOSE` directives, `ltc` selects the *lowest* port for the purposes of routing traffic and performing the health check.
+#### Managing Healthchecks
+
+In addition, `ltc` sets up a healthcheck that verifies the application responds on a given port or to a specified HTTP request. 
+
+By default, `ltc` selects the *lowest* exposed port to healthcheck against;  if no monitoring options are specified, 8080 is the default unless `--no-monitor` is set.
+
+- **`--monitor-port=8080`** sets the port that `ltc` performs a port healthcheck against.
+- **`--monitor-url=PORT:/path/to/endpoint`** performs an HTTP roundtrip to check whether a given endpoint returns a **200 OK** result.
+- **`--no-monitor`** disables health monitoring.  Lattice will consider the application crashed only if it exits.
 
 ### `ltc remove`
 
@@ -92,6 +97,20 @@ The set of routes passed into `ltc update-routes` will *override* the existing s
 
 `ltc submit-lrp /path/to/json` creates an application with the configuration specified in the JSON.  The syntax of the JSON can be found at the [Receptor API docs](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/lrps.md#describing-desiredlrps)
 
+## Launching and Managing Tasks
+
+### `ltc submit-task`
+
+`ltc submit-task /path/to/json` creates a task with the configuration specified in the JSON.  The syntax of the task JSON can be found at the [Receptor API docs](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/tasks.md#describing-tasks)
+
+### `ltc task`
+
+`ltc task TASK_GUID` retrieves the assigned cell and task status, along with the result or failure if it's completed.
+
+### `ltc delete-task`
+
+`ltc delete-task TASK_GUID` deletes a completed task.  If a task has not compeleted yet, it will cancel and then delete the task.
+
 ## Streaming Logs
 
 ### `ltc logs`
@@ -100,9 +119,13 @@ The set of routes passed into `ltc update-routes` will *override* the existing s
 
 ## What's Running on Lattice?
 
+### `ltc cells`
+
+`ltc cells` lists each Lattice cell that is joined to the cluster.  It provides the available memory and disk capacity for each cell.
+
 ### `ltc list`
 
-`ltc list` displays all applications currently running on the targetted Lattice deployment.  This includes information on the number of requested and running instances for each application, and routing information for accessing the application.
+`ltc list` displays currently running applications and tasks not yet deleted on the targeted Lattice deployment.  For applications, this includes information on the number of requested and running instances, and routing information for accessing the application.  For tasks, the assigned cell, task status, result and/or failure reason are shown.
 
 ### `ltc status`
 
@@ -146,6 +169,7 @@ This indicates that instance 0 of the application has been `RUNNING` on `lattice
 
 - **`--verbose`** verbose mode.  shows application output during test suite.
 - **`--timeout=30s`** sets the wait time for Lattice to respond.
+- **`--cli-help`** runs additional tests for CLI output formatting.
 
 ### `ltc debug-logs`
 

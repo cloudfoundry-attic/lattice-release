@@ -14,12 +14,11 @@ The *actual* state (i.e. the set of running instances), however, is updated **as
 Typically, when the user updates *desired* state Lattice immediately takes actions to perform this reconciliation.  Should an action fail (perhaps a network partition occurs) or a running instance be lost (perhaps a Cell explodes) Lattice will eventually attempt to reconcile actual and desired state again (this happens every 30 seconds - though Lattice can detect a missing Cell within ~5 seconds).
 
 <a name="how-does-lattice-work-with-docker-images"></a>
-
 ## How does Lattice work with Docker images?
 
 A Docker image consists of two things: a collection of layers to download and mount (the raw bits that form the file system) and metadata that describes what command should be launched (the `ENTRYPOINT` and `CMD` directives, among others, specified in the Dockerfile).
 
-Lattice uses [Garden-Linux](https://github.com/cloudfoundry-incubator/garden-Linux) to construct Linux containers.  These containers are built on the same Linux kernel technologies that power all Linux containers: namespaces and cgroups.  When a container is created a file system must be mounted as the root file system of the container.  Garden-Linux supports mounting Docker images as root file systems for the containers it constructs.  Garden-Linux takes care of fetching and caching the individual layers associated with the Docker image and combining and mounting them as the root file system - it does this using the same libraries that power Docker.
+Lattice uses [Garden-Linux](https://github.com/cloudfoundry-incubator/garden-linux) to construct Linux containers.  These containers are built on the same Linux kernel technologies that power all Linux containers: namespaces and cgroups.  When a container is created a file system must be mounted as the root file system of the container.  Garden-Linux supports mounting Docker images as root file systems for the containers it constructs.  Garden-Linux takes care of fetching and caching the individual layers associated with the Docker image and combining and mounting them as the root file system - it does this using the same libraries that power Docker.
 
 This yields a container with contents that exactly match the contents of the associated Docker image.
 
@@ -38,11 +37,13 @@ Here are a few pointers to help you debug and fix some common issues:
 
 ### Increase `ltc`'s Timeout
 
-`ltc create` will wait up to one minute for your application to start.  If this fails it may be that your Docker container is large and has not downloaded yet.  You can set the `LATTICE_CLI_TIMEOUT` environment variable (in seconds) to instruct `ltc` to wait longer.  Note that `ltc` does not remove your application when this timeout occurs, so your application may eventually start in the background.
+`ltc create` will wait up to two minutes for your application(s) to start.  If this fails, it may be that your Docker container is large and has not downloaded yet.  You can pass the `--timeout`flag to instruct `ltc` to wait longer.  Note that `ltc` does not remove your application when this timeout occurs, so your application may eventually start in the background.
 
 ### Increase Memory and Disk Limits
 
-By default, `ltc` applies a memory limit of 128MB and a disk limit of 1024MB to the container.  If your process is exiting prematurely it may be attempting to consume more than 128MB of memory.  You can increase the limit using the `--memory-mb` flag.  To turn off memory and disk limits set `--memory-mb` and `--disk-mb` to `0`.
+By default, `ltc` applies a memory limit of 128MB to the container.  If your process is exiting prematurely, it may be attempting to consume more than 128MB of memory.  You can increase the limit using the `--memory-mb` flag.  To turn off memory limits, set `--memory-mb` to `0`.
+
+> Disk limits are configurable via `ltc` but quotas are currently disabled on the Lattice cluster.  
 
 ### Check the Application Logs
 
@@ -60,7 +61,7 @@ By default, `ltc` requests that Lattice perform a periodic health check agains t
 
 ### Watch Lattice Component Logs
 
-If you're still stuck you can try streaming the Lattice debug-logs with `ltc debug-logs` while launching your application. [The veritas cli](https://github.com/pivotal-cf-experimental/veritas) is helpful for pretty printing the json log format from `ltc debug-logs` into something more human readable with a command like `ltc debug-logs | veritas chug`.
+If you're still stuck you can try streaming the Lattice cluster logs with `ltc debug-logs` while launching your application.  If you're still stuck and want to submit a [bug report](https://github.com/cloudfoundry-incubator/lattice/issues/new), please include the relevant output from `ltc debug-logs`.
 
 ### How do I get a shell inside a lattice container.
 
