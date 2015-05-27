@@ -5,17 +5,18 @@ import (
 
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/event"
-	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
+	"github.com/cloudfoundry-incubator/runtime-schema/bbs"
+	"github.com/cloudfoundry/dropsonde"
 	"github.com/pivotal-golang/lager"
 	"github.com/tedsuo/rata"
 )
 
-func New(bbs Bbs.ReceptorBBS, hub event.Hub, logger lager.Logger, username, password string, corsEnabled bool) http.Handler {
-	taskHandler := NewTaskHandler(bbs, logger)
-	desiredLRPHandler := NewDesiredLRPHandler(bbs, logger)
-	actualLRPHandler := NewActualLRPHandler(bbs, logger)
-	cellHandler := NewCellHandler(bbs, logger)
-	domainHandler := NewDomainHandler(bbs, logger)
+func New(receptorBBS bbs.ReceptorBBS, hub event.Hub, logger lager.Logger, username, password string, corsEnabled bool) http.Handler {
+	taskHandler := NewTaskHandler(receptorBBS, logger)
+	desiredLRPHandler := NewDesiredLRPHandler(receptorBBS, logger)
+	actualLRPHandler := NewActualLRPHandler(receptorBBS, logger)
+	cellHandler := NewCellHandler(receptorBBS, logger)
+	domainHandler := NewDomainHandler(receptorBBS, logger)
 	eventStreamHandler := NewEventStreamHandler(hub, logger)
 	authCookieHandler := NewAuthCookieHandler(logger)
 
@@ -67,7 +68,7 @@ func New(bbs Bbs.ReceptorBBS, hub event.Hub, logger lager.Logger, username, pass
 		handler = CORSWrapper(handler)
 	}
 
-	return handler
+	return dropsonde.InstrumentedHandler(handler)
 }
 
 func route(f func(w http.ResponseWriter, r *http.Request)) http.Handler {
