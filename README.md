@@ -219,6 +219,19 @@ To destroy the cluster go to the folder containing the `terraform.tfstate` file 
 terraform destroy
 ```
 
+## Updating
+
+The provided examples (i.e., `lattice.<platform>.tf`) are pinned to a specific Bump commit or release tag in order to maintain compatibility between the Lattice build (`lattice.tgz`) and the Terraform definitions.  Currently, Terraform does not automatically update to newer revisions of Lattice.  
+
+If you want to update to the latest version of Lattice:  
+  - Update the `ref` in the `source` directive of your `lattice.<platform>.tf` to `master`.
+  - Run `terraform get -update` to update the modules under the `.terraform/` folder.
+ 
+If you want to update to a specific version of Lattice:
+  - Choose a version from either the [Bump commits](https://github.com/cloudfoundry-incubator/lattice/commits/master) or [Releases](https://github.com/cloudfoundry-incubator/lattice/releases).
+  - Update the `ref` in the `source` directive of your `lattice.<platform>.tf` to that version.
+  - Run `terraform get -update` to update the modules under the `.terraform/` folder.
+
 # Contributing
 
 In the spirit of [free software](http://www.fsf.org/licensing/essays/free-sw.html), **everyone** is encouraged to help improve this project.

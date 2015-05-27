@@ -80,7 +80,20 @@ Destroy the cluster:
 terraform destroy
 ```
 
-### Notes
+## Updating
+
+The provided examples (i.e., `lattice.aws.tf`) are pinned to a specific Bump commit or release tag in order to maintain compatibility between the Lattice build (`lattice.tgz`) and the Terraform definitions.  Currently, Terraform does not automatically update to newer revisions of Lattice.  
+
+If you want to update to the latest version of Lattice:  
+  - Update the `ref` in the `source` directive of your `lattice.aws.tf` to `master`.
+  - Run `terraform get -update` to update the modules under the `.terraform/` folder.
+ 
+If you want to update to a specific version of Lattice:
+  - Choose a version from either the [Bump commits](https://github.com/cloudfoundry-incubator/lattice/commits/master) or [Releases](https://github.com/cloudfoundry-incubator/lattice/releases).
+  - Update the `ref` in the `source` directive of your `lattice.aws.tf` to that version.
+  - Run `terraform get -update` to update the modules under the `.terraform/` folder.
+
+## Notes
 
 The AWS Terraform configs now support Elastic IPs.  This means the cluster can be stopped  when it's not in-use (e.g., overnight to save on usage fees), and the Lattice cluster will retain the same target address when the instances are restarted.  In order to do this, use the [AWS EC2 Console](console.aws.amazon.com/ec2/), browse to Instances, and go to Instance State > Stop (or Start when reactivating) on the Lattice instances. 
 

@@ -87,6 +87,21 @@ terraform destroy
 
 Sometimes, destroy will need to be run twice to completely destroy all components, as openstack networking components are often seen as 'still in use' when destroyed immidietley after the instances that relied on them.
 
+
+## Updating
+
+The provided examples (i.e., `lattice.openstack.tf`) are pinned to a specific Bump commit or release tag in order to maintain compatibility between the Lattice build (`lattice.tgz`) and the Terraform definitions.  Currently, Terraform does not automatically update to newer revisions of Lattice.  
+
+If you want to update to the latest version of Lattice:  
+  - Update the `ref` in the `source` directive of your `lattice.openstack.tf` to `master`.
+  - Run `terraform get -update` to update the modules under the `.terraform/` folder.
+ 
+If you want to update to a specific version of Lattice:
+  - Choose a version from either the [Bump commits](https://github.com/cloudfoundry-incubator/lattice/commits/master) or [Releases](https://github.com/cloudfoundry-incubator/lattice/releases).
+  - Update the `ref` in the `source` directive of your `lattice.openstack.tf` to that version.
+  - Run `terraform get -update` to update the modules under the `.terraform/` folder.
+
+
 ## Copyright
 Openstack Terraform support for Lattice.cf added by Matt Johnson <matjohn2@cisco.com>.
 
