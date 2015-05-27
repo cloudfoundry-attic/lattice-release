@@ -201,4 +201,8 @@ rewrite_terraform_examples() {
         sed -i 's/source = "github\.com.*$/source = "github\.com\/cloudfoundry-incubator\/lattice\/\/terraform\/\/google\?ref='"$lattice_version"'"/' lattice.google.tf
         git add lattice.google.tf
     popd > /dev/null
+    pushd $LATTICE_SRC_PATH/terraform/openstack/example > /dev/null
+        sed -i 's/source = "github\.com.*$/source = "github\.com\/cloudfoundry-incubator\/lattice\/\/terraform\/\/openstack\?ref='"$lattice_version"'"/' lattice.openstack.tf
+        git add lattice.openstack.tf
+    popd > /dev/null
 }
