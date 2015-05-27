@@ -70,6 +70,7 @@ By default, `ltc` selects the *lowest* exposed port to healthcheck against;  if 
 
 - **`--monitor-port=8080`** sets the port that `ltc` performs a port healthcheck against.
 - **`--monitor-url=PORT:/path/to/endpoint`** performs an HTTP roundtrip to check whether a given endpoint returns a **200 OK** result.
+- **`--monitor-timeout=1s`** sets the wait time for the application to respond to the healthcheck.
 - **`--no-monitor`** disables health monitoring.  Lattice will consider the application crashed only if it exits.
 
 ### `ltc remove`

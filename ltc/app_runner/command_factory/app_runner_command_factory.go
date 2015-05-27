@@ -123,6 +123,7 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 		cli.DurationFlag{
 			Name:  "monitor-timeout",
 			Usage: "Timeout for the app healthcheck",
+			Value: time.Second,
 		},
 		cli.StringFlag{
 			Name: "routes, R",
