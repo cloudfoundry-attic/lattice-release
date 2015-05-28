@@ -282,7 +282,7 @@ func defineTheMainTests(runner *integrationTestRunner) {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(session, 3*time.Second).Should(gbytes.Say("not a registered command"))
-			Eventually(session).Should(gexec.Exit(0))
+			Eventually(session).Should(gexec.Exit(1))
 		})
 
 		It("exits non-zero when known command is invoked with invalid option", func() {
@@ -290,84 +290,6 @@ func defineTheMainTests(runner *integrationTestRunner) {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(session, 3*time.Second).Should(gexec.Exit(1))
-		})
-	})
-
-	Describe("Flag verification", func() {
-		It("informs user for any incorrect provided flags", func() {
-			command := runner.command("create", "--instances", "--bad-flag")
-			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(session.Out).Should(gbytes.Say("\"--bad-flag\""))
-			Consistently(session.Out).ShouldNot(gbytes.Say("\"--instances\""))
-		})
-
-		It("checks flags with prefix '--'", func() {
-			command := runner.command("create", "not-a-flag", "--invalid-flag")
-			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(session.Out).Should(gbytes.Say("Unknown flag \"--invalid-flag\""))
-			Consistently(session.Out).ShouldNot(gbytes.Say("Unknown flag \"not-a-flag\""))
-		})
-
-		It("checks flags with prefix '-'", func() {
-			command := runner.command("create", "not-a-flag", "-invalid-flag")
-			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(session.Out).Should(gbytes.Say("\"-invalid-flag\""))
-			Consistently(session.Out).ShouldNot(gbytes.Say("\"not-a-flag\""))
-		})
-
-		It("checks flags but ignores the value after '=' ", func() {
-			command := runner.command("create", "-i=1", "-invalid-flag=blarg")
-			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(session.Out).Should(gbytes.Say("\"-invalid-flag\""))
-			Consistently(session.Out).ShouldNot(gbytes.Say("Unknown flag \"-p\""))
-		})
-
-		It("outputs all unknown flags in single sentence", func() {
-			command := runner.command("create", "--bad-flag1", "--bad-flag2", "--bad-flag3")
-			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(session.Out).Should(gbytes.Say("\"--bad-flag1\", \"--bad-flag2\", \"--bad-flag3\""))
-		})
-
-		It("only checks input flags against flags from the provided command", func() {
-			command := runner.command("create", "--instances", "--skip-ssl-validation")
-			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(session.Out).Should(gbytes.Say("\"--skip-ssl-validation\""))
-		})
-
-		It("accepts -h and --h flags for all commands", func() {
-			command := runner.command("create", "-h")
-			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-			Consistently(session.Out).ShouldNot(gbytes.Say("Unknown flag \"-h\""))
-			command = runner.command("target", "--h")
-			session, err = gexec.Start(command, GinkgoWriter, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-			Consistently(session.Out).ShouldNot(gbytes.Say("Unknown flag \"--h\""))
-		})
-
-		Context("When a negative integer is preceeded by a valid flag", func() {
-			It("skips validation for negative integer flag values", func() {
-				command := runner.command("create", "-i", "-10")
-				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-				Expect(err).ToNot(HaveOccurred())
-				Eventually(session.Out).ShouldNot(gbytes.Say("\"-10\""))
-			})
-		})
-
-		Context("When a negative integer is preceeded by a invalid flag", func() {
-			It("validates the negative integer as a flag", func() {
-				command := runner.command("create", "-badflag", "-10")
-				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-				Expect(err).ToNot(HaveOccurred())
-				Eventually(session.Out).Should(gbytes.Say("\"-badflag\""))
-				Eventually(session.Out).Should(gbytes.Say("\"-10\""))
-			})
 		})
 	})
 }

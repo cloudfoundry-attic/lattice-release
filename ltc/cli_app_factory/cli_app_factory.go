@@ -56,7 +56,7 @@ const (
 	AppName           = "ltc"
 	latticeCliAuthor  = "Pivotal"
 	latticeCliHomeVar = "LATTICE_CLI_HOME"
-	unknownCommand    = "ltc: '%s' is not a registered command. See 'ltc help'"
+	unknownCommand    = "ltc: '%s' is not a registered command. See 'ltc help'\n\n"
 )
 
 func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, cliStdout io.Writer) *cli.App {
@@ -94,7 +94,8 @@ func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.E
 
 	app.Action = defaultAction
 	app.CommandNotFound = func(c *cli.Context, command string) {
-		fmt.Println(fmt.Sprintf(unknownCommand, command))
+		ui.Say(fmt.Sprintf(unknownCommand, command))
+		os.Exit(1)
 	}
 	cli.AppHelpTemplate = appHelpTemplate()
 	cli.HelpPrinter = ShowHelp
