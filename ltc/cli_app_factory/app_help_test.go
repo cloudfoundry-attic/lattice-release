@@ -26,6 +26,11 @@ var _ = Describe("AppHelp", func() {
 		{{.Name}}
 		{{end}}{{end}}{{end}}`
 
+	subCommandTemplate := `NAME:
+   {{.Name}} - {{.Usage}}
+USAGE:
+   {{.Name}} command{{if .Flags}} [command options]{{end}} [arguments...]
+`
 	BeforeEach(func() {
 		outputBuffer = gbytes.NewBuffer()
 
@@ -55,4 +60,21 @@ var _ = Describe("AppHelp", func() {
 		}
 	})
 
+	Describe("commandPrintHelp", func() {
+		It("Shows help for particular command", func() {
+			commandRan := false
+			subCommand := cli.Command{
+				Name:        "print-a-command",
+				ShortName:   "p",
+				Description: "Print command",
+				Usage:       "print-a-command [arguments]",
+				Action:      func(ctx *cli.Context) { commandRan = true },
+			}
+
+			cli_app_factory.ShowHelp(outputBuffer, subCommandTemplate, subCommand)
+			outputBytes, err := ioutil.ReadAll(outputBuffer)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(outputBytes)).To(ContainSubstring(subCommand.Name))
+		})
+	})
 })
