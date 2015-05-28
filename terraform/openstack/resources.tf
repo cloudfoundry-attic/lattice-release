@@ -106,7 +106,7 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
 
     #COMMON
     provisioner "local-exec" {
-      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../local-scripts/download-lattice-tar"
+      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
     }
 
     provisioner "file" {
@@ -115,7 +115,7 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
     }
 
     provisioner "file" {
-      source = "${path.module}/../remote-scripts/install_from_tar"
+      source = "${path.module}/../scripts/remote/install_from_tar"
       destination = "/tmp/install_from_tar"
     }
 
@@ -138,7 +138,7 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
     }
 
     provisioner "remote-exec" {
-        script = "${path.module}/../remote-scripts/install-lattice-coordinator"
+        script = "${path.module}/../scripts/remote/install-lattice-coordinator"
     }
 }
 
@@ -169,7 +169,7 @@ resource "openstack_compute_instance_v2" "lattice-cell" {
 
     #COMMON
     provisioner "local-exec" {
-      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../local-scripts/download-lattice-tar"
+      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
     }
 
     provisioner "file" {
@@ -178,7 +178,7 @@ resource "openstack_compute_instance_v2" "lattice-cell" {
     }
 
     provisioner "file" {
-      source = "${path.module}/../remote-scripts/install_from_tar"
+      source = "${path.module}/../scripts/remote/install_from_tar"
       destination = "/tmp/install_from_tar"
     }
 
@@ -201,7 +201,7 @@ resource "openstack_compute_instance_v2" "lattice-cell" {
     }
 
     provisioner "remote-exec" {
-        script = "${path.module}/../remote-scripts/install-lattice-cell"
+        script = "${path.module}/../scripts/remote/install-lattice-cell"
     }
 
 }
