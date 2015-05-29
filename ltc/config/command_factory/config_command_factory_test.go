@@ -118,6 +118,7 @@ var _ = Describe("CommandFactory", func() {
 
 					Eventually(outputBuffer).Should(test_helpers.Say("FAILURE setting api"))
 					verifyOldTargetStillSet()
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
 				})
 			})
 		})
@@ -156,7 +157,7 @@ var _ = Describe("CommandFactory", func() {
 
 				AfterEach(func() {
 					verifyOldTargetStillSet()
-					Expect(fakeExitHandler.ExitCalledWith[0]).To(Equal(exit_codes.BadTarget))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 				})
 
 				It("does not save the config if the receptor is never authorized", func() {
@@ -199,7 +200,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
 
 				verifyOldTargetStillSet()
-				Expect(fakeExitHandler.ExitCalledWith[0]).To(Equal(exit_codes.BadTarget))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 			})
 		})
 	})

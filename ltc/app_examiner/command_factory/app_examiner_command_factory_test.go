@@ -38,7 +38,7 @@ var _ = Describe("CommandFactory", func() {
 		terminalUI          terminal.UI
 		clock               *fakeclock.FakeClock
 		osSignalChan        chan os.Signal
-		exitHandler         *fake_exit_handler.FakeExitHandler
+		fakeExitHandler     *fake_exit_handler.FakeExitHandler
 		graphicalVisualizer *fake_graphical_visualizer.FakeGraphicalVisualizer
 		taskExaminer        *fake_task_examiner.FakeTaskExaminer
 	)
@@ -50,7 +50,7 @@ var _ = Describe("CommandFactory", func() {
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		osSignalChan = make(chan os.Signal, 1)
 		clock = fakeclock.NewFakeClock(time.Now())
-		exitHandler = &fake_exit_handler.FakeExitHandler{}
+		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 		graphicalVisualizer = &fake_graphical_visualizer.FakeGraphicalVisualizer{}
 	})
 
@@ -58,7 +58,7 @@ var _ = Describe("CommandFactory", func() {
 		var listAppsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil, taskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, fakeExitHandler, nil, taskExaminer)
 			listAppsCommand = commandFactory.MakeListAppCommand()
 		})
 
@@ -144,7 +144,6 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).To(test_helpers.Say("No apps to display."))
 			Expect(outputBuffer).To(test_helpers.Say("No tasks to display."))
-
 		})
 
 		Context("when the app examiner returns an error", func() {
@@ -172,6 +171,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("Finished")))
 				Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("N/A")))
 
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 
 			It("alerts the user fetching the task list returns an error", func() {
@@ -197,6 +197,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("alldaylong.com => 54321"))
 
 				Expect(outputBuffer).To(test_helpers.Say("Error listing tasks: The list was lost"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
 	})
@@ -205,7 +206,7 @@ var _ = Describe("CommandFactory", func() {
 		var visualizeCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, graphicalVisualizer, taskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, fakeExitHandler, graphicalVisualizer, taskExaminer)
 			visualizeCommand = commandFactory.MakeVisualizeCommand()
 		})
 
@@ -233,6 +234,9 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{})
 
 				Expect(outputBuffer).To(test_helpers.Say("Error visualizing: The list was lost"))
+
+				// TODO: this should return non-zero, but it's shared with refresh view
+				//   which should continue to retry in the event on an error and not exit
 			})
 		})
 
@@ -240,7 +244,7 @@ var _ = Describe("CommandFactory", func() {
 			var closeChan chan struct{}
 
 			AfterEach(func() {
-				go exitHandler.Exit(exit_codes.SigInt)
+				go fakeExitHandler.Exit(exit_codes.SigInt)
 				Eventually(closeChan).Should(BeClosed())
 			})
 
@@ -290,10 +294,11 @@ var _ = Describe("CommandFactory", func() {
 
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 
-				exitHandler.Exit(exit_codes.SigInt)
+				fakeExitHandler.Exit(exit_codes.SigInt)
 
 				Eventually(closeChan).Should(BeClosed())
 				Expect(outputBuffer).Should(test_helpers.Say(cursor.Show()))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.SigInt}))
 			})
 		})
 
@@ -317,6 +322,7 @@ var _ = Describe("CommandFactory", func() {
 				Consistently(outputBuffer).ShouldNot(test_helpers.Say("Distribution"))
 				Eventually(outputBuffer).Should(test_helpers.Say("Error Visualization: errored"))
 				Expect(graphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 
 			Context("when the rate flag is also passed", func() {
@@ -350,7 +356,7 @@ var _ = Describe("CommandFactory", func() {
 		}
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil, taskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, fakeExitHandler, nil, taskExaminer)
 			statusCommand = commandFactory.MakeStatusCommand()
 
 			sampleAppInfo = app_examiner.AppInfo{
@@ -510,7 +516,6 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).NotTo(test_helpers.Say("CPU"))
 			Expect(outputBuffer).NotTo(test_helpers.Say("Memory"))
-
 		})
 
 		Context("when there is a placement error on an actualLRP", func() {
@@ -539,7 +544,6 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.Say("Placement Error"))
 				Expect(outputBuffer).To(test_helpers.Say("insufficient resources."))
-
 			})
 		})
 
@@ -587,7 +591,7 @@ var _ = Describe("CommandFactory", func() {
 			var closeChan chan struct{}
 
 			AfterEach(func() {
-				go exitHandler.Exit(exit_codes.SigInt)
+				go fakeExitHandler.Exit(exit_codes.SigInt)
 				Eventually(closeChan).Should(BeClosed())
 
 				_, err := fmt.Print(cursor.Show())
@@ -659,10 +663,11 @@ var _ = Describe("CommandFactory", func() {
 
 					Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 
-					exitHandler.Exit(exit_codes.SigInt)
+					fakeExitHandler.Exit(exit_codes.SigInt)
 
 					Eventually(closeChan).Should(BeClosed())
 					Expect(outputBuffer).To(test_helpers.Say(cursor.Show()))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.SigInt}))
 				})
 			})
 		})
@@ -681,6 +686,7 @@ var _ = Describe("CommandFactory", func() {
 			It("prints usage information", func() {
 				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{})
 				Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
 
@@ -690,6 +696,7 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"zany-app"})
 
 			Expect(outputBuffer).To(test_helpers.Say("You want the status?? ...YOU CAN'T HANDLE THE STATUS!!!"))
+			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 		})
 
 	})
@@ -698,7 +705,7 @@ var _ = Describe("CommandFactory", func() {
 		var cellsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, exitHandler, nil, taskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, fakeExitHandler, nil, taskExaminer)
 			cellsCommand = commandFactory.MakeCellsCommand()
 		})
 
@@ -746,6 +753,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.Say("these are not the cells you're looking for"))
 				Expect(outputBuffer).NotTo(test_helpers.Say("Cells"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
 

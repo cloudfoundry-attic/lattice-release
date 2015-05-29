@@ -13,6 +13,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/presentation"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
@@ -131,6 +132,7 @@ func (factory *AppExaminerCommandFactory) cells(context *cli.Context) {
 	cellList, err := factory.appExaminer.ListCells()
 	if err != nil {
 		factory.ui.Say(err.Error())
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
@@ -179,6 +181,7 @@ func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 		w.Flush()
 	} else {
 		factory.ui.Say("Error listing apps: " + err.Error())
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
 	}
 	taskList, err := factory.taskExaminer.ListTasks()
 	if err == nil {
@@ -211,6 +214,7 @@ func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 		wTask.Flush()
 	} else {
 		factory.ui.Say("Error listing tasks: " + err.Error())
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
 	}
 }
 
@@ -221,6 +225,7 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 
 	if len(context.Args()) < 1 {
 		factory.ui.SayIncorrectUsage("App Name required")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
@@ -229,6 +234,7 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 	appInfo, err := factory.appExaminer.AppStatus(appName)
 	if err != nil {
 		factory.ui.Say(err.Error())
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
@@ -426,6 +432,7 @@ func (factory *AppExaminerCommandFactory) visualizeCells(context *cli.Context) {
 		err := factory.graphicalVisualizer.PrintDistributionChart(rate)
 		if err != nil {
 			factory.ui.SayLine("Error Visualization: " + err.Error())
+			factory.exitHandler.Exit(exit_codes.CommandFailed)
 		}
 		return
 	}
@@ -443,6 +450,7 @@ func (factory *AppExaminerCommandFactory) visualizeCells(context *cli.Context) {
 	factory.exitHandler.OnExit(func() {
 		closeChan <- struct{}{}
 		factory.ui.Say(cursor.Show())
+
 	})
 
 	for {

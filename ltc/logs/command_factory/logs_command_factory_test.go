@@ -9,7 +9,7 @@ import (
 	"github.com/onsi/gomega/gbytes"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
@@ -25,7 +25,7 @@ var _ = Describe("CommandFactory", func() {
 		terminalUI              terminal.UI
 		fakeTailedLogsOutputter *fake_tailed_logs_outputter.FakeTailedLogsOutputter
 		signalChan              chan os.Signal
-		exitHandler             exit_handler.ExitHandler
+		fakeExitHandler         *fake_exit_handler.FakeExitHandler
 	)
 
 	BeforeEach(func() {
@@ -34,7 +34,7 @@ var _ = Describe("CommandFactory", func() {
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
 		signalChan = make(chan os.Signal)
-		exitHandler = &fake_exit_handler.FakeExitHandler{}
+		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 	})
 
 	Describe("LogsCommand", func() {
@@ -42,7 +42,7 @@ var _ = Describe("CommandFactory", func() {
 		var logsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewLogsCommandFactory(appExaminer, terminalUI, fakeTailedLogsOutputter, exitHandler)
+			commandFactory := command_factory.NewLogsCommandFactory(appExaminer, terminalUI, fakeTailedLogsOutputter, fakeExitHandler)
 			logsCommand = commandFactory.MakeLogsCommand()
 		})
 
@@ -62,6 +62,7 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(logsCommand, []string{})
 
 			Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
+			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
 
 		It("handles non existent application", func() {
@@ -90,6 +91,7 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(commandDone).Should(BeClosed())
 				Expect(outputBuffer).To(test_helpers.Say("Error: can't log this"))
 				Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(BeZero())
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
 	})
@@ -99,7 +101,7 @@ var _ = Describe("CommandFactory", func() {
 		var debugLogsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewLogsCommandFactory(appExaminer, terminalUI, fakeTailedLogsOutputter, exitHandler)
+			commandFactory := command_factory.NewLogsCommandFactory(appExaminer, terminalUI, fakeTailedLogsOutputter, fakeExitHandler)
 			debugLogsCommand = commandFactory.MakeDebugLogsCommand()
 		})
 

@@ -7,6 +7,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/fake_task_examiner"
@@ -22,19 +24,21 @@ var _ = Describe("CommandFactory", func() {
 		fakeTaskExaminer *fake_task_examiner.FakeTaskExaminer
 		outputBuffer     *gbytes.Buffer
 		terminalUI       terminal.UI
+		fakeExitHandler  *fake_exit_handler.FakeExitHandler
 	)
 
 	BeforeEach(func() {
 		fakeTaskExaminer = new(fake_task_examiner.FakeTaskExaminer)
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
+		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 	})
 
 	Describe("TaskCommand", func() {
 		var taskCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewTaskExaminerCommandFactory(fakeTaskExaminer, terminalUI)
+			commandFactory := command_factory.NewTaskExaminerCommandFactory(fakeTaskExaminer, terminalUI, fakeExitHandler)
 			taskCommand = commandFactory.MakeTaskCommand()
 		})
 
@@ -123,6 +127,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(0))
 			Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
+			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
 
 		Context("when the task examiner returns errors", func() {
@@ -134,7 +139,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
 				Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("boop"))
 				Expect(outputBuffer).To(test_helpers.Say(colors.Red("No task 'boop' was found")))
-
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 
 			It("prints random errors", func() {
@@ -145,7 +150,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
 				Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("boop"))
 				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error fetching task result: muhaha")))
-
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
 	})

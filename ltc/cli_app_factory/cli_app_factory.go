@@ -115,10 +115,10 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	tailedLogsOutputter := console_tailed_logs_outputter.NewConsoleTailedLogsOutputter(ui, logReader)
 
 	taskExaminer := task_examiner.New(receptorClient)
-	taskExaminerCommandFactory := task_examiner_command_factory.NewTaskExaminerCommandFactory(taskExaminer, ui)
+	taskExaminerCommandFactory := task_examiner_command_factory.NewTaskExaminerCommandFactory(taskExaminer, ui, exitHandler)
 
 	taskRunner := task_runner.New(receptorClient, taskExaminer)
-	taskRunnerCommandFactory := task_runner_command_factory.NewTaskRunnerCommandFactory(taskRunner, ui)
+	taskRunnerCommandFactory := task_runner_command_factory.NewTaskRunnerCommandFactory(taskRunner, ui, exitHandler)
 
 	appExaminer := app_examiner.New(receptorClient, app_examiner.NewNoaaConsumer(noaaConsumer))
 	graphicalVisualizer := graphical.NewGraphicalVisualizer(appExaminer)

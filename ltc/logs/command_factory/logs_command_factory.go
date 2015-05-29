@@ -5,6 +5,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/codegangsta/cli"
@@ -50,7 +51,6 @@ func (factory *logsCommandFactory) MakeDebugLogsCommand() cli.Command {
 		Name:    "debug-logs",
 		Aliases: []string{"dl"},
 		Usage:   "Streams logs from the lattice cluster components",
-		// Description: "ltc debug-logs",
 		Description: `ltc debug-logs [--raw]
 
    Output format is:
@@ -68,11 +68,14 @@ func (factory *logsCommandFactory) tailLogs(context *cli.Context) {
 
 	if appGuid == "" {
 		factory.ui.SayIncorrectUsage("APP_NAME required")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	if appExists, err := factory.appExaminer.AppExists(appGuid); err != nil {
 		factory.ui.SayLine(fmt.Sprintf("Error: %s", err.Error()))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
+
 		return
 	} else if !appExists {
 		factory.ui.SayLine(fmt.Sprintf("Application %s not found.", appGuid))

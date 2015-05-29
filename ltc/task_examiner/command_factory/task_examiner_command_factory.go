@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"text/tabwriter"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
@@ -13,10 +15,11 @@ import (
 type TaskExaminerCommandFactory struct {
 	taskExaminer task_examiner.TaskExaminer
 	ui           terminal.UI
+	exitHandler  exit_handler.ExitHandler
 }
 
-func NewTaskExaminerCommandFactory(taskExaminer task_examiner.TaskExaminer, ui terminal.UI) *TaskExaminerCommandFactory {
-	return &TaskExaminerCommandFactory{taskExaminer, ui}
+func NewTaskExaminerCommandFactory(taskExaminer task_examiner.TaskExaminer, ui terminal.UI, exitHandler exit_handler.ExitHandler) *TaskExaminerCommandFactory {
+	return &TaskExaminerCommandFactory{taskExaminer, ui, exitHandler}
 }
 
 func (factory *TaskExaminerCommandFactory) MakeTaskCommand() cli.Command {
@@ -37,6 +40,7 @@ func (factory *TaskExaminerCommandFactory) task(context *cli.Context) {
 	taskName := context.Args().First()
 	if taskName == "" {
 		factory.ui.SayIncorrectUsage("")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
@@ -44,9 +48,11 @@ func (factory *TaskExaminerCommandFactory) task(context *cli.Context) {
 	if err != nil {
 		if err.Error() == task_examiner.TaskNotFoundErrorMessage {
 			factory.ui.Say(colors.Red(fmt.Sprintf("No task '%s' was found", taskName)))
+			factory.exitHandler.Exit(exit_codes.CommandFailed)
 			return
 		}
 		factory.ui.Say(colors.Red("Error fetching task result: " + err.Error()))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 

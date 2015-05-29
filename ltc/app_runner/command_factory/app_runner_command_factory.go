@@ -172,7 +172,8 @@ func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
    ltc create APP_NAME DOCKER_IMAGE --working-dir=/foo/app-folder -- START_COMMAND APP_ARG1 APP_ARG2 ...
 
    To specify environment variables:
-   ltc create APP_NAME DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE`,
+   ltc create APP_NAME DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE
+`,
 		Action: factory.createApp,
 		Flags:  createFlags,
 	}
@@ -273,32 +274,42 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	switch {
 	case len(context.Args()) < 2:
 		factory.ui.SayIncorrectUsage("APP_NAME and DOCKER_IMAGE are required")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	case startCommand != "" && terminator != "--":
 		factory.ui.SayIncorrectUsage("'--' Required before start command")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	case len(context.Args()) > 4:
 		appArgs = context.Args()[4:]
 	case cpuWeightFlag < 1 || cpuWeightFlag > 100:
 		factory.ui.SayIncorrectUsage("Invalid CPU Weight")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	imageMetadata, err := factory.dockerMetadataFetcher.FetchMetadata(dockerImage)
 	if err != nil {
 		factory.ui.Say(fmt.Sprintf("Error fetching image metadata: %s", err))
+		factory.exitHandler.Exit(exit_codes.BadDocker)
 		return
 	}
 
 	exposedPorts, err := factory.getExposedPortsFromArgs(portsFlag, imageMetadata)
 	if err != nil {
 		factory.ui.Say(err.Error())
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	monitorConfig, err := factory.getMonitorConfigFromArgs(exposedPorts, portMonitorFlag, noMonitorFlag, urlMonitorFlag, monitorTimeoutFlag, imageMetadata)
 	if err != nil {
 		factory.ui.Say(err.Error())
+		if err.Error() == MonitorPortNotExposed {
+			factory.exitHandler.Exit(exit_codes.CommandFailed)
+		} else {
+			factory.exitHandler.Exit(exit_codes.InvalidSyntax)
+		}
 		return
 	}
 
@@ -322,6 +333,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	if startCommand == "" {
 		if len(imageMetadata.StartCommand) == 0 {
 			factory.ui.SayLine("Unable to determine start command from image metadata.")
+			factory.exitHandler.Exit(exit_codes.BadDocker)
 			return
 		}
 
@@ -337,6 +349,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	routeOverrides, err := parseRouteOverrides(routesFlag)
 	if err != nil {
 		factory.ui.Say(err.Error())
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
@@ -360,6 +373,7 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 	})
 	if err != nil {
 		factory.ui.Say(fmt.Sprintf("Error creating app: %s", err))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
@@ -394,18 +408,21 @@ func (factory *AppRunnerCommandFactory) submitLrp(context *cli.Context) {
 	filePath := context.Args().First()
 	if filePath == "" {
 		factory.ui.Say("Path to JSON is required")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	jsonBytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		factory.ui.Say(fmt.Sprintf("Error reading file: %s", err.Error()))
+		factory.exitHandler.Exit(exit_codes.FileSystemError)
 		return
 	}
 
 	lrpName, err := factory.appRunner.SubmitLrp(jsonBytes)
 	if err != nil {
 		factory.ui.Say(fmt.Sprintf("Error creating %s: %s", lrpName, err.Error()))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
@@ -419,12 +436,14 @@ func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
 	timeoutFlag := c.Duration("timeout")
 	if appName == "" || instancesArg == "" {
 		factory.ui.SayIncorrectUsage("Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	instances, err := strconv.Atoi(instancesArg)
 	if err != nil {
 		factory.ui.SayIncorrectUsage("Number of Instances must be an integer")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
@@ -438,6 +457,7 @@ func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
 
 	if appName == "" || (userDefinedRoutes == "" && !noRoutesFlag) {
 		factory.ui.SayIncorrectUsage("Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag.")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
@@ -447,6 +467,7 @@ func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
 		desiredRoutes, err = parseRouteOverrides(userDefinedRoutes)
 		if err != nil {
 			factory.ui.Say(err.Error())
+			factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 			return
 		}
 	}
@@ -454,6 +475,7 @@ func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
 	err = factory.appRunner.UpdateAppRoutes(appName, desiredRoutes)
 	if err != nil {
 		factory.ui.Say(fmt.Sprintf("Error updating routes: %s", err))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
@@ -465,6 +487,7 @@ func (factory *AppRunnerCommandFactory) setAppInstances(pollTimeout time.Duratio
 
 	if err != nil {
 		factory.ui.Say(fmt.Sprintf("Error Scaling App to %d instances: %s", instances, err))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
@@ -482,6 +505,7 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 
 	if len(appNames) == 0 {
 		factory.ui.SayIncorrectUsage("App Name required")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
@@ -490,6 +514,7 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 		err := factory.appRunner.RemoveApp(appName)
 		if err != nil {
 			factory.ui.SayLine(fmt.Sprintf("Error stopping %s: %s", appName, err))
+			factory.exitHandler.Exit(exit_codes.CommandFailed) // TODO: how to handle partial failure
 		}
 	}
 }

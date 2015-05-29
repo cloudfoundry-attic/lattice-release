@@ -11,6 +11,8 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/fake_task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner/command_factory"
@@ -28,6 +30,7 @@ var _ = Describe("CommandFactory", func() {
 		terminalUI       terminal.UI
 		fakeTaskRunner   *fake_task_runner.FakeTaskRunner
 		fakeTaskExaminer *fake_task_examiner.FakeTaskExaminer
+		fakeExitHandler  *fake_exit_handler.FakeExitHandler
 	)
 
 	BeforeEach(func() {
@@ -35,6 +38,7 @@ var _ = Describe("CommandFactory", func() {
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		fakeTaskRunner = new(fake_task_runner.FakeTaskRunner)
 		fakeTaskExaminer = new(fake_task_examiner.FakeTaskExaminer)
+		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 	})
 
 	Describe("SubmitTask", func() {
@@ -47,7 +51,7 @@ var _ = Describe("CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewTaskRunnerCommandFactory(fakeTaskRunner, terminalUI)
+			commandFactory := command_factory.NewTaskRunnerCommandFactory(fakeTaskRunner, terminalUI, fakeExitHandler)
 			submitTaskCommand = commandFactory.MakeSubmitTaskCommand()
 		})
 
@@ -84,6 +88,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTaskRunner.SubmitTaskArgsForCall(0)).To(Equal(jsonContents))
 
 				Expect(outputBuffer).To(test_helpers.Say("Error submitting some-task: taskypoo"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 
 		})
@@ -93,6 +98,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).To(test_helpers.Say("Path to JSON is required"))
 			Expect(fakeTaskRunner.SubmitTaskCallCount()).To(BeZero())
+			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
 
 		Context("when the file cannot be read", func() {
@@ -103,6 +109,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.Say(fmt.Sprintf("Error reading file: open %s: no such file or directory", filepath.Join(tmpDir, "file-no-existy"))))
 				Expect(fakeTaskRunner.SubmitTaskCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
 			})
 		})
 
@@ -111,7 +118,7 @@ var _ = Describe("CommandFactory", func() {
 		var deleteTaskCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewTaskRunnerCommandFactory(fakeTaskRunner, terminalUI)
+			commandFactory := command_factory.NewTaskRunnerCommandFactory(fakeTaskRunner, terminalUI, fakeExitHandler)
 			deleteTaskCommand = commandFactory.MakeDeleteTaskCommand()
 		})
 
@@ -137,13 +144,15 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(deleteTaskCommand, []string{"task-guid-1"})
 
 			Expect(outputBuffer).To(test_helpers.Say("Error Deleting the task " + colors.Bold("task-guid-1")))
-			Expect(outputBuffer).To(test_helpers.Say("Failiure Reason :" + colors.Red("task in unknown state")))
+			Expect(outputBuffer).To(test_helpers.Say("Failure Reason:" + colors.Red("task in unknown state")))
+			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 		})
 
 		It("fails with usage", func() {
 			test_helpers.ExecuteCommandWithArgs(deleteTaskCommand, []string{})
 
 			Expect(outputBuffer).To(test_helpers.Say("Please input a valid TASK_GUID"))
+			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
 	})
 

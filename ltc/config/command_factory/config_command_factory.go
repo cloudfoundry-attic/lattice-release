@@ -77,6 +77,7 @@ func (factory *ConfigCommandFactory) save() {
 	err := factory.config.Save()
 	if err != nil {
 		factory.ui.Say(err.Error())
+		factory.exitHandler.Exit(exit_codes.FileSystemError)
 		return
 	}
 
