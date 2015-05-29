@@ -2,6 +2,7 @@ package exit_handler
 
 import (
 	"os"
+	"sync"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 )
@@ -28,6 +29,7 @@ type exitHandler struct {
 	signalChan      chan os.Signal
 	systemExit      func(int)
 	exitCode        int
+	sync.RWMutex
 }
 
 func (e *exitHandler) Run() {
@@ -35,23 +37,23 @@ func (e *exitHandler) Run() {
 		select {
 		case signal := <-e.signalChan:
 			if signal == os.Interrupt {
-				for _, exitFunc := range e.onExitFuncs {
-					exitFunc()
-				}
-				e.systemExit(e.exitCode)
-				return
+				e.Exit(e.exitCode)
 			}
-		case exitFunc := <-e.onExitFuncsChan:
-			e.onExitFuncs = append(e.onExitFuncs, exitFunc)
 		}
 	}
 }
 
 func (e *exitHandler) OnExit(exitFunc func()) {
-	e.onExitFuncsChan <- exitFunc
+	defer e.Unlock()
+	e.Lock()
+	e.onExitFuncs = append(e.onExitFuncs, exitFunc)
 }
 
 func (e *exitHandler) Exit(code int) {
-	e.exitCode = code
-	e.signalChan <- os.Interrupt
+	e.RLock()
+	for _, exitFunc := range e.onExitFuncs {
+		exitFunc()
+	}
+	e.RUnlock()
+	e.systemExit(code)
 }
