@@ -1,18 +1,19 @@
 package cli_app_factory_test
 
 import (
+	"errors"
 	"io/ioutil"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/cli_app_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/codegangsta/cli"
-	"github.com/onsi/gomega/gbytes"
 )
 
 var _ = Describe("AppHelp", func() {
@@ -45,36 +46,62 @@ USAGE:
 		)
 	})
 
-	It("shows help for all commands", func() {
+	Describe("ShowHelp", func() {
 
-		cliCommands := cliApp.Commands
-		Expect(cliCommands).NotTo(BeEmpty())
+		It("shows help for all commands", func() {
+			Expect(cliApp.Commands).NotTo(BeEmpty())
 
-		cli_app_factory.ShowHelp(outputBuffer, dummyTemplate, cliApp)
+			cli_app_factory.ShowHelp(outputBuffer, dummyTemplate, cliApp)
 
-		outputBytes, err := ioutil.ReadAll(outputBuffer)
-		Expect(err).NotTo(HaveOccurred())
-		for _, command := range cliCommands {
-			commandName := strings.TrimSpace(strings.Join(command.Names(), ", "))
-			Expect(string(outputBytes)).To(ContainSubstring(commandName))
-		}
-	})
-
-	Describe("commandPrintHelp", func() {
-		It("Shows help for particular command", func() {
-			commandRan := false
-			subCommand := cli.Command{
-				Name:        "print-a-command",
-				ShortName:   "p",
-				Description: "Print command",
-				Usage:       "print-a-command [arguments]",
-				Action:      func(ctx *cli.Context) { commandRan = true },
+			outputBytes, err := ioutil.ReadAll(outputBuffer)
+			Expect(err).NotTo(HaveOccurred())
+			for _, command := range cliApp.Commands {
+				commandName := strings.TrimSpace(strings.Join(command.Names(), ", "))
+				Expect(string(outputBytes)).To(ContainSubstring(commandName))
 			}
+		})
+
+		It("shows help for a specific command", func() {
+			subCommand := cli.Command{Name: "print-a-command"}
 
 			cli_app_factory.ShowHelp(outputBuffer, subCommandTemplate, subCommand)
+
 			outputBytes, err := ioutil.ReadAll(outputBuffer)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(string(outputBytes)).To(ContainSubstring(subCommand.Name))
 		})
+
+		It("panics for other type", func() {
+			showHelp := func() func() {
+				return func() { cli_app_factory.ShowHelp(outputBuffer, dummyTemplate, struct{}{}) }
+			}
+
+			Consistently(showHelp).Should(Panic())
+		})
+
+		Context("when writer is busted", func() {
+			It("panics showing help for all commands", func() {
+				showHelp := func() func() {
+					return func() { cli_app_factory.ShowHelp(errorWriter{}, dummyTemplate, cliApp) }
+				}
+
+				Consistently(showHelp).Should(Panic())
+			})
+
+			It("panics showing help for a specific command", func() {
+				showHelp := func() func() {
+					return func() { cli_app_factory.ShowHelp(errorWriter{}, dummyTemplate, cli.Command{}) }
+				}
+
+				Consistently(showHelp).Should(Panic())
+			})
+		})
+
 	})
 })
+
+type errorWriter struct{}
+
+func (errorWriter) Write(p []byte) (n int, err error) {
+	return -1, errors.New("no bueno")
+}

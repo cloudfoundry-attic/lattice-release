@@ -137,7 +137,7 @@ func ShowHelp(w io.Writer, helpTemplate string, thingToPrint interface{}) {
 	case cli.Command:
 		commandPrintHelp(w, translatedTemplatedHelp, thing)
 	default:
-		panic(fmt.Sprintf("Help printer has received something that is neither app nor command! The beast (%s) looks like this: %s", reflect.TypeOf(thing), thing))
+		panic(fmt.Errorf("Help printer has received something that is neither app nor command! The beast (%s) looks like this: %s", reflect.TypeOf(thing), thing))
 	}
 }
 

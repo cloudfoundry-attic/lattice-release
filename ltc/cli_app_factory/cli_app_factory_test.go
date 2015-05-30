@@ -2,6 +2,7 @@ package cli_app_factory_test
 
 import (
 	"errors"
+	"flag"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -24,6 +25,7 @@ var _ = Describe("CliAppFactory", func() {
 
 	var (
 		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
+		fakeExitHandler    *fake_exit_handler.FakeExitHandler
 		memPersister       persister.Persister
 		outputBuffer       *gbytes.Buffer
 		terminalUI         terminal.UI
@@ -34,6 +36,7 @@ var _ = Describe("CliAppFactory", func() {
 
 	BeforeEach(func() {
 		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
+		fakeExitHandler = new(fake_exit_handler.FakeExitHandler)
 		memPersister = persister.NewMemPersister()
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
@@ -45,7 +48,7 @@ var _ = Describe("CliAppFactory", func() {
 		cliApp = cli_app_factory.MakeCliApp(
 			latticeVersion,
 			"~/",
-			&fake_exit_handler.FakeExitHandler{},
+			fakeExitHandler,
 			cliConfig,
 			lager.NewLogger("test"),
 			fakeTargetVerifier,
@@ -62,9 +65,14 @@ var _ = Describe("CliAppFactory", func() {
 			Expect(cliApp.Email).To(Equal("cf-lattice@lists.cloudfoundry.org"))
 			Expect(cliApp.Usage).To(Equal(cli_app_factory.LtcUsage))
 			Expect(cliApp.Commands).NotTo(BeEmpty())
-
 			Expect(cliApp.Action).ToNot(BeNil())
 			Expect(cliApp.CommandNotFound).ToNot(BeNil())
+
+			By("writing to the App.Writer", func() {
+				cliApp.Writer.Write([]byte("write_sample"))
+				Expect(outputBuffer).To(test_helpers.Say("write_sample"))
+			})
+
 		})
 
 		Context("when invoked without latticeVersion set", func() {
@@ -78,7 +86,45 @@ var _ = Describe("CliAppFactory", func() {
 			})
 		})
 
-		Describe("App's Before Action", func() {
+		Describe("App.Action", func() {
+			Context("when ltc is run without argument(s)", func() {
+				It("prints app help", func() {
+					cli.AppHelpTemplate = "HELP_TEMPLATE"
+					flagSet := flag.NewFlagSet("flag_set", flag.ContinueOnError)
+					flagSet.Parse([]string{})
+					testContext := cli.NewContext(cliApp, flagSet, &flag.FlagSet{})
+
+					cliApp.Action(testContext)
+
+					Expect(outputBuffer).To(test_helpers.Say("ltc - Command line interface for Lattice."))
+				})
+			})
+
+			Context("when ltc is run with argument(s)", func() {
+				It("prints unknown command message", func() {
+					flagSet := flag.NewFlagSet("flag_set", flag.ContinueOnError)
+					flagSet.Parse([]string{"one_arg"})
+					testContext := cli.NewContext(cliApp, flagSet, &flag.FlagSet{})
+
+					cliApp.Action(testContext)
+
+					Expect(outputBuffer).To(test_helpers.Say("ltc: 'one_arg' is not a registered command. See 'ltc help'"))
+				})
+			})
+		})
+
+		Describe("App.CommandNotFound", func() {
+			It("prints unknown command message and exits nonzero", func() {
+				testContext := cli.NewContext(cliApp, &flag.FlagSet{}, &flag.FlagSet{})
+
+				cliApp.CommandNotFound(testContext, "do_it")
+
+				Expect(outputBuffer).To(test_helpers.Say("ltc: 'do_it' is not a registered command. See 'ltc help'\n\n"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{1}))
+			})
+		})
+
+		Describe("App.Before", func() {
 			Context("when running the target command", func() {
 				It("does not verify the current target", func() {
 					cliConfig.SetTarget("my-lattice.example.com")
@@ -180,9 +226,14 @@ var _ = Describe("CliAppFactory", func() {
 						cliConfig.Save()
 
 						commandRan := false
-						cliApp.Commands = []cli.Command{cli.Command{Name: "print-a-unicorn", Action: func(ctx *cli.Context) {
-							commandRan = true
-						}}}
+						cliApp.Commands = []cli.Command{
+							cli.Command{
+								Name: "print-a-unicorn",
+								Action: func(ctx *cli.Context) {
+									commandRan = true
+								},
+							},
+						}
 
 						cliAppArgs := []string{"ltc", "print-a-unicorn"}
 
@@ -202,7 +253,12 @@ var _ = Describe("CliAppFactory", func() {
 						cliConfig.Save()
 
 						commandRan := false
-						cliApp.Commands = []cli.Command{cli.Command{Name: "print-a-unicorn", Action: func(ctx *cli.Context) { commandRan = true }}}
+						cliApp.Commands = []cli.Command{
+							cli.Command{
+								Name:   "print-a-unicorn",
+								Action: func(ctx *cli.Context) { commandRan = true },
+							},
+						}
 
 						cliAppArgs := []string{"ltc", "print-a-unicorn"}
 
@@ -224,7 +280,12 @@ var _ = Describe("CliAppFactory", func() {
 						cliConfig.Save()
 
 						commandRan := false
-						cliApp.Commands = []cli.Command{cli.Command{Name: "print-a-unicorn", Action: func(ctx *cli.Context) { commandRan = true }}}
+						cliApp.Commands = []cli.Command{
+							cli.Command{
+								Name:   "print-a-unicorn",
+								Action: func(ctx *cli.Context) { commandRan = true },
+							},
+						}
 
 						cliAppArgs := []string{"ltc", "print-a-unicorn"}
 

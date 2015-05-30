@@ -46,7 +46,7 @@ var (
 		if len(args) > 0 {
 			cli.ShowCommandHelp(context, args[0])
 		} else {
-			showAppHelp(os.Stdout, appHelpTemplate(), context.App)
+			showAppHelp(context.App.Writer, appHelpTemplate(), context.App)
 		}
 	}
 )
@@ -59,6 +59,11 @@ const (
 	unknownCommand    = "ltc: '%s' is not a registered command. See 'ltc help'\n\n"
 )
 
+func init() {
+	cli.AppHelpTemplate = appHelpTemplate()
+	cli.HelpPrinter = ShowHelp
+}
+
 func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, cliStdout io.Writer) *cli.App {
 	config.Load()
 	app := cli.NewApp()
@@ -69,6 +74,7 @@ func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.E
 	app.Email = "cf-lattice@lists.cloudfoundry.org"
 
 	ui := terminal.NewUI(os.Stdin, cliStdout, password_reader.NewPasswordReader(exitHandler))
+	app.Writer = ui
 
 	app.Before = func(context *cli.Context) error {
 		args := context.Args()
@@ -95,10 +101,8 @@ func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.E
 	app.Action = defaultAction
 	app.CommandNotFound = func(c *cli.Context, command string) {
 		ui.Say(fmt.Sprintf(unknownCommand, command))
-		os.Exit(1)
+		exitHandler.Exit(1)
 	}
-	cli.AppHelpTemplate = appHelpTemplate()
-	cli.HelpPrinter = ShowHelp
 	app.Commands = cliCommands(ltcConfigRoot, exitHandler, config, logger, targetVerifier, ui)
 	return app
 }
