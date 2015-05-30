@@ -23,7 +23,7 @@ We also have a strong opinions on the developer and operator experience for scal
 
 Lattice lives up to these principles.
 
-- **Simple**: a [small Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#vagrant) easily fits on most laptops. [Terraform scripts](https://github.com/cloudfoundry-incubator/lattice#clustered-deployment) enable you to easily start a Lattice cluster on your cloud of choice. Very few new concepts are required to use Lattice and you can [get started in minutes](/docs/getting-started.md).
+- **Simple**: a [small Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#local-deployment) easily fits on most laptops. [Terraform scripts](https://github.com/cloudfoundry-incubator/lattice#clustered-deployment) enable you to easily start a Lattice cluster on your cloud of choice. Very few new concepts are required to use Lattice and you can [get started in minutes](/docs/getting-started.md).
 - **Comprehensive**: Lattice currently includes load balancing, aggregated logs, health management, and cluster scheduling.
 - **Extensible**: Docker is very popular and we are supporting Docker Images. We also believe in a [pluggable container backend](https://github.com/cloudfoundry-incubator/garden) so there are options to support [Windows](https://www.youtube.com/watch?v=S4U_YyzC5z4), [Rocket](http://blog.pivotal.io/cloud-foundry-pivotal/news-2/launching-rockets-collaborating-on-next-level-linux-containers) or other backends.
 

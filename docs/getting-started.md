@@ -1,6 +1,6 @@
 # Getting Started
 
-You can run Lattice easily on your laptop with a [Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#local-deployment) or deploy a [cluster of machines](https://github.com/cloudfoundry-incubator/lattice#clustered-deployment) with [AWS](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md), [Digital Ocean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md) or [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md).
+You can run Lattice easily on your laptop with a [Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#local-deployment) or deploy a [cluster of machines](https://github.com/cloudfoundry-incubator/lattice#clustered-deployment) with [AWS](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md), [Digital Ocean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md), [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md) or [Openstack](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/openstack/README.md).
 
 This tutorial walks you through the Vagrant VM flow and using Lattice to start applications based on a docker image, scale them up and down and retrieve logs.
 

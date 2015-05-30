@@ -1,6 +1,6 @@
 # Docker Image Examples
 
-Lattice supports docker images. Lattice containers currently use ephemeral disk and therefore are only suitable for running workloads that can have persistent disk reset on restart events, which works fine for many development and testing scenarios. After a container referencing a docker image with well-known ports is running, use the `ltc status APPNAME` command to see the port mapping. See the [troubleshooting](../troubleshooting) docs if necessary.
+Lattice supports docker images. Lattice containers currently use ephemeral disk and therefore are only suitable for running workloads that can have persistent disk reset on restart events, which works fine for many development and testing scenarios. After a container referencing a docker image with well-known ports is running, use the `ltc status APPNAME` command to see the port mapping. See the [troubleshooting](/docs/troubleshooting.md) docs if necessary.
 
 ### Redis
 `ltc create redis redis -r`
