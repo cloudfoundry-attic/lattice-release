@@ -83,10 +83,6 @@ var _ = Describe("Prettify", func() {
 				regexPattern := strings.Join(outputExpects, ".*")
 
 				Expect(prettyLog).To(MatchRegexp(regexPattern))
-
-				// Expect(prettyLog).To(ContainSubstring("\n"))
-				// Expect(prettyLog).To(ContainSubstring("error: unicorns can fly"))
-				// Expect(prettyLog).To(ContainSubstring("\n"))
 			})
 
 			It("prints a newline for non-empty data", func() {
@@ -233,11 +229,6 @@ var _ = Describe("Prettify", func() {
 			regexPattern := strings.Join(outputExpects, ".*")
 
 			Expect(prettyLog).To(MatchRegexp(regexPattern))
-
-			// Expect(prettyLog).To(MatchRegexp(`\S{4}rep\S{4}\s{9}`))
-			// Expect(prettyLog).To(MatchRegexp(`^.{22}cell-77\s{2}`))
-			// Expect(prettyLog).To(MatchRegexp(fmt.Sprintf(`^.{39}%s`, now.Format("01/02 15:04:05.00"))))
-			// Expect(prettyLog).To(MatchRegexp(`^.{72}ABC 123`))
 		})
 	})
 })

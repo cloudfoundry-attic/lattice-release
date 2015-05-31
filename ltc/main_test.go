@@ -9,23 +9,9 @@ import (
 	"github.com/onsi/gomega/gexec"
 )
 
-var (
-	cli string
-)
-
-var _ = BeforeSuite(func() {
-	var err error
-	cli, err = gexec.Build("github.com/cloudfoundry-incubator/lattice/ltc")
-	Expect(err).ToNot(HaveOccurred())
-})
-
-var _ = AfterSuite(func() {
-	gexec.CleanupBuildArtifacts()
-})
-
-var _ = Describe("lattice-cli", func() {
+var _ = Describe("LatticeCli Main", func() {
 	It("compiles and displays help text", func() {
-		command := exec.Command(cli)
+		command := exec.Command(ltcPath)
 
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 

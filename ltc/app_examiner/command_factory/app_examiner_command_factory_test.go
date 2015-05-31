@@ -273,6 +273,8 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say("cell-0: " + colors.Green("••") + cursor.ClearToEndOfLine() + "\n"))
 				Eventually(outputBuffer).Should(test_helpers.Say("cell-1" + colors.Red("[MISSING]") + ": " + colors.Green("••") + cursor.ClearToEndOfLine() + "\n"))
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.ClearToEndOfDisplay()))
+
+				Consistently(closeChan).ShouldNot(BeClosed())
 			})
 
 			It("dynamically displays any errors", func() {
@@ -287,6 +289,8 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(1)))
 				Eventually(outputBuffer).Should(test_helpers.Say("Error visualizing: Spilled the Paint" + cursor.ClearToEndOfLine() + "\n"))
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.ClearToEndOfDisplay()))
+
+				Consistently(closeChan).ShouldNot(BeClosed())
 			})
 
 			It("ensures the user's cursor is visible even if they interrupt ltc", func() {

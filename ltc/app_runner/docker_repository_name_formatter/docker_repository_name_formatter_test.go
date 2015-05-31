@@ -75,24 +75,22 @@ var _ = Describe("DockerRepositoryNameFormatter", func() {
 			Context("when the docker image reference contains the scheme", func() {
 				It("returns an error", func() {
 					_, err := docker_repository_name_formatter.FormatForReceptor("docker:///library/ubuntu")
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(Equal("docker URI [docker:///library/ubuntu] should not contain scheme"))
+
+					Expect(err).To(MatchError("docker URI [docker:///library/ubuntu] should not contain scheme"))
 				})
 			})
 
 			It("returns an error for an invalid repository name", func() {
 				_, err := docker_repository_name_formatter.FormatForReceptor("¥¥¥¥¥suchabadname¥¥¥¥¥")
 
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Invalid repository name (¥¥¥¥¥suchabadname¥¥¥¥¥), only [a-z0-9-_.] are allowed"))
+				Expect(err).To(MatchError("Invalid repository name (¥¥¥¥¥suchabadname¥¥¥¥¥), only [a-z0-9-_.] are allowed"))
 			})
 
 			It("returns an error for an invalid namespace name", func() {
 				dockerImageReference := "jim/my-docker-app"
 				_, err := docker_repository_name_formatter.FormatForReceptor(dockerImageReference)
 
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Invalid namespace name (jim). Cannot be fewer than 4 or more than 30 characters."))
+				Expect(err).To(MatchError("Invalid namespace name (jim). Cannot be fewer than 4 or more than 30 characters."))
 			})
 		})
 	})
@@ -106,7 +104,7 @@ var _ = Describe("DockerRepositoryNameFormatter", func() {
 					dockerImageReference := "my-docker-app:test"
 					indexName, remoteName, tag, err := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImageReference)
 
-					Expect(err).ToNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(indexName).To(BeEmpty())
 					Expect(remoteName).To(Equal("library/my-docker-app"))
 					Expect(tag).To(Equal("test"))
@@ -116,7 +114,7 @@ var _ = Describe("DockerRepositoryNameFormatter", func() {
 					dockerImageReference := "my-docker-app"
 					indexName, remoteName, tag, err := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImageReference)
 
-					Expect(err).ToNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(indexName).To(BeEmpty())
 					Expect(remoteName).To(Equal("library/my-docker-app"))
 					Expect(tag).To(Equal("latest"))
@@ -128,7 +126,7 @@ var _ = Describe("DockerRepositoryNameFormatter", func() {
 					dockerImageReference := "jimbo/my-docker-app:test"
 					indexName, remoteName, tag, err := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImageReference)
 
-					Expect(err).ToNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(indexName).To(BeEmpty())
 					Expect(remoteName).To(Equal("jimbo/my-docker-app"))
 					Expect(tag).To(Equal("test"))
@@ -138,7 +136,7 @@ var _ = Describe("DockerRepositoryNameFormatter", func() {
 					dockerImageReference := "jimbo/my-docker-app"
 					indexName, remoteName, tag, err := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImageReference)
 
-					Expect(err).ToNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(indexName).To(BeEmpty())
 					Expect(remoteName).To(Equal("jimbo/my-docker-app"))
 					Expect(tag).To(Equal("latest"))
@@ -150,7 +148,7 @@ var _ = Describe("DockerRepositoryNameFormatter", func() {
 					dockerImageReference := "docker.io/app-name"
 					indexName, remoteName, tag, err := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImageReference)
 
-					Expect(err).ToNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(indexName).To(Equal("docker.io"))
 					Expect(remoteName).To(Equal("library/app-name"))
 					Expect(tag).To(Equal("latest"))
@@ -184,16 +182,14 @@ var _ = Describe("DockerRepositoryNameFormatter", func() {
 			It("returns an error for an invalid repository name", func() {
 				_, _, _, err := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference("¥¥¥¥¥suchabadname¥¥¥¥¥")
 
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Invalid repository name (¥¥¥¥¥suchabadname¥¥¥¥¥), only [a-z0-9-_.] are allowed"))
+				Expect(err).To(MatchError(ContainSubstring("Invalid repository name (¥¥¥¥¥suchabadname¥¥¥¥¥), only [a-z0-9-_.] are allowed")))
 			})
 
 			It("returns an error for an invalid namespace name", func() {
 				dockerImageReference := "jim/my-docker-app"
 				_, _, _, err := docker_repository_name_formatter.ParseRepoNameAndTagFromImageReference(dockerImageReference)
 
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Invalid namespace name (jim). Cannot be fewer than 4 or more than 30 characters."))
+				Expect(err).To(MatchError(ContainSubstring("Invalid namespace name (jim). Cannot be fewer than 4 or more than 30 characters.")))
 			})
 		})
 

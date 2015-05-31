@@ -9,11 +9,10 @@ import (
 
 func New(signalChan chan os.Signal, systemExit func(code int)) ExitHandler {
 	return &exitHandler{
-		signalChan:      signalChan,
-		systemExit:      systemExit,
-		onExitFuncs:     make([]func(), 0),
-		onExitFuncsChan: make(chan func()),
-		exitCode:        exit_codes.SigInt,
+		signalChan:  signalChan,
+		systemExit:  systemExit,
+		onExitFuncs: make([]func(), 0),
+		exitCode:    exit_codes.SigInt,
 	}
 }
 
@@ -24,11 +23,10 @@ type ExitHandler interface {
 }
 
 type exitHandler struct {
-	onExitFuncs     []func()
-	onExitFuncsChan chan func()
-	signalChan      chan os.Signal
-	systemExit      func(int)
-	exitCode        int
+	onExitFuncs []func()
+	signalChan  chan os.Signal
+	systemExit  func(int)
+	exitCode    int
 	sync.RWMutex
 }
 
@@ -50,10 +48,10 @@ func (e *exitHandler) OnExit(exitFunc func()) {
 }
 
 func (e *exitHandler) Exit(code int) {
+	defer e.RUnlock()
 	e.RLock()
 	for _, exitFunc := range e.onExitFuncs {
 		exitFunc()
 	}
-	e.RUnlock()
 	e.systemExit(code)
 }

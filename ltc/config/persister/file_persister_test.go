@@ -120,7 +120,7 @@ var _ = Describe("filePersister", func() {
 		It("Saves valid JSON to the filepath", func() {
 			jsonBytes, err := ioutil.ReadFile(tmpFile.Name())
 			Expect(err).ToNot(HaveOccurred())
-			Expect(string(jsonBytes)).To(Equal(`{"Value":"Some Value to be written in json"}`))
+			Expect(jsonBytes).To(MatchJSON(`{"Value":"Some Value to be written in json"}`))
 		})
 
 		It("Returns an error rather than save invalid JSON", func() {

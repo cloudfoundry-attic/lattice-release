@@ -75,8 +75,7 @@ var _ = Describe("config", func() {
 
 			err := testConfig.Save()
 
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(Equal(errors.New("Error")))
+			Expect(err).To(MatchError("Error"))
 		})
 	})
 
@@ -96,8 +95,7 @@ var _ = Describe("config", func() {
 
 			err := testConfig.Load()
 
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(Equal(errors.New("Error")))
+			Expect(err).To(MatchError("Error"))
 		})
 	})
 })

@@ -73,7 +73,7 @@ var _ = Describe("CliAppFactory", func() {
 			})
 
 			It("defaults the version", func() {
-				Expect(cliApp).ToNot(BeNil())
+				Expect(cliApp).NotTo(BeNil())
 				Expect(cliApp.Version).To(Equal("development (not versioned)"))
 			})
 		})

@@ -165,7 +165,6 @@ var _ = Describe("TaskRunner", func() {
 			It("returns upsert domain errors", func() {
 				upsertError := errors.New("You're not that fresh, buddy.")
 				fakeReceptorClient.UpsertDomainReturns(upsertError)
-
 				task := receptor.TaskCreateRequest{
 					TaskGuid: "whatever-task",
 				}
@@ -176,14 +175,12 @@ var _ = Describe("TaskRunner", func() {
 
 				Expect(err).To(MatchError(upsertError))
 				Expect(taskName).To(Equal("whatever-task"))
-
 				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(0))
 			})
 
 			It("returns tasks errors", func() {
 				tasksResponseError := errors.New("wut")
 				fakeReceptorClient.TasksReturns(nil, tasksResponseError)
-
 				task := receptor.TaskCreateRequest{
 					TaskGuid: "whatever-task",
 				}
@@ -194,16 +191,12 @@ var _ = Describe("TaskRunner", func() {
 
 				Expect(err).To(MatchError(tasksResponseError))
 				Expect(taskName).To(Equal("whatever-task"))
-
 				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(0))
 			})
 
 			It("returns create task errors", func() {
-				fakeReceptorClient.UpsertDomainReturns(nil)
-
 				receptorError := errors.New("you got tasked")
 				fakeReceptorClient.CreateTaskReturns(receptorError)
-
 				task := receptor.TaskCreateRequest{
 					TaskGuid: "whatever-task",
 				}
@@ -214,7 +207,6 @@ var _ = Describe("TaskRunner", func() {
 
 				Expect(err).To(MatchError(receptorError))
 				Expect(taskName).To(Equal("whatever-task"))
-
 				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(1))
 			})
 
@@ -227,8 +219,9 @@ var _ = Describe("TaskRunner", func() {
 				State:    receptor.TaskStateCompleted,
 			}
 			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
-			fakeReceptorClient.DeleteTaskReturns(nil)
+
 			err := taskRunner.DeleteTask("task-guid-1")
+
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -238,8 +231,6 @@ var _ = Describe("TaskRunner", func() {
 				State:    receptor.TaskStatePending,
 			}
 			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
-			fakeReceptorClient.DeleteTaskReturns(nil)
-			fakeReceptorClient.CancelTaskReturns(nil)
 
 			err := taskRunner.DeleteTask("task-guid-1")
 			Expect(err).ToNot(HaveOccurred())
@@ -247,8 +238,9 @@ var _ = Describe("TaskRunner", func() {
 
 		It("returns error when task not found", func() {
 			fakeReceptorClient.GetTaskReturns(receptor.TaskResponse{}, errors.New("Task not found"))
+
 			err := taskRunner.DeleteTask("task-guid-1")
-			Expect(err).To(HaveOccurred())
+
 			Expect(err).To(MatchError("Task not found"))
 		})
 
@@ -258,11 +250,9 @@ var _ = Describe("TaskRunner", func() {
 				State:    receptor.TaskStatePending,
 			}
 			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
-			fakeReceptorClient.CancelTaskReturns(nil)
 			fakeReceptorClient.DeleteTaskReturns(errors.New("task in unknown state"))
 
 			err := taskRunner.DeleteTask("task-guid-1")
-			Expect(err).To(HaveOccurred())
 			Expect(err).To(MatchError("task in unknown state"))
 
 			getTaskResponse = receptor.TaskResponse{
@@ -270,8 +260,9 @@ var _ = Describe("TaskRunner", func() {
 				State:    receptor.TaskStateCompleted,
 			}
 			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
+
 			err = taskRunner.DeleteTask("task-guid-1")
-			Expect(err).To(HaveOccurred())
+
 			Expect(err).To(MatchError("task in unknown state"))
 		})
 
@@ -284,7 +275,7 @@ var _ = Describe("TaskRunner", func() {
 			fakeReceptorClient.CancelTaskReturns(errors.New("task in unknown state"))
 
 			err := taskRunner.DeleteTask("task-guid-1")
-			Expect(err).To(HaveOccurred())
+
 			Expect(err).To(MatchError("task in unknown state"))
 		})
 	})

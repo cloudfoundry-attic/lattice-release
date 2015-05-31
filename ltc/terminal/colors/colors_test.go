@@ -50,8 +50,16 @@ var _ = Describe("colors", func() {
 		itShouldNotColorizeWhitespace(colors.Yellow)
 	})
 
+	Describe("Gray", func() {
+		It("adds the gray color code", func() {
+			Expect(colors.Gray("INFO")).To(Equal("\x1b[90mINFO\x1b[0m"))
+		})
+
+		itShouldNotColorizeWhitespace(colors.Gray)
+	})
+
 	Describe("Bold", func() {
-		It("adds the yellow color code", func() {
+		It("adds the bold color code", func() {
 			Expect(colors.Bold("Bold")).To(Equal("\x1b[1mBold\x1b[0m"))
 		})
 
@@ -67,7 +75,7 @@ var _ = Describe("colors", func() {
 	})
 
 	Describe("NoColor", func() {
-		It("adds the yellow color code", func() {
+		It("adds no color code", func() {
 			Expect(colors.NoColor("None")).To(Equal("\x1b[0mNone\x1b[0m"))
 		})
 

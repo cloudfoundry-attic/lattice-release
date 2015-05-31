@@ -184,7 +184,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 			})
 
 			It("errors out when there is no colon", func() {
@@ -201,7 +200,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 			})
 		})
 
@@ -362,7 +360,6 @@ var _ = Describe("CommandFactory", func() {
 					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say("Error fetching image metadata: Docker Says No."))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadDocker}))
-
 				})
 			})
 		})
@@ -424,7 +421,6 @@ var _ = Describe("CommandFactory", func() {
 					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(command_factory.MonitorPortNotExposed))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
-
 				})
 			})
 
@@ -462,7 +458,6 @@ var _ = Describe("CommandFactory", func() {
 					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 				})
 
 				It("prints an error if the port is non-numeric", func() {
@@ -480,7 +475,6 @@ var _ = Describe("CommandFactory", func() {
 					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 				})
 
 				It("prints an error when the monitored url port is not exposed", func() {
@@ -498,7 +492,6 @@ var _ = Describe("CommandFactory", func() {
 					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(command_factory.MonitorPortNotExposed))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
-
 				})
 			})
 
@@ -860,7 +853,6 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.Say("Error creating app: Major Fault"))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
-
 			})
 		})
 	})
@@ -911,7 +903,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(appRunner.SubmitLrpArgsForCall(0)).To(Equal([]byte(`{"Value":"test value"}`)))
 				Expect(outputBuffer).To(test_helpers.Say(colors.Green("Successfully submitted my-json-app.")))
 				Expect(outputBuffer).To(test_helpers.Say("To view the status of your application: ltc status my-json-app"))
-
 			})
 
 			It("prints an error returned by the app_runner", func() {
@@ -925,7 +916,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Error creating app-that-broke: some error"))
 				Expect(appRunner.SubmitLrpCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
-
 			})
 		})
 
@@ -935,7 +925,6 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("Path to JSON is required"))
 			Expect(appRunner.SubmitLrpCallCount()).To(BeZero())
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 		})
 
 		Context("when the file cannot be read", func() {
@@ -947,7 +936,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say(fmt.Sprintf("Error reading file: open %s: no such file or directory", filepath.Join(tmpDir, "file-no-existy"))))
 				Expect(appRunner.SubmitLrpCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
-
 			})
 		})
 	})
@@ -1061,7 +1049,6 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.Say("Error Scaling App to 22 instances: Major Fault"))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
-
 			})
 		})
 
@@ -1076,7 +1063,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'"))
 				Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 			})
 
 			It("validates that the number of instances is passed in", func() {
@@ -1089,7 +1075,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'"))
 				Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 			})
 
 			It("validates that the number of instances is an integer", func() {
@@ -1103,7 +1088,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Number of Instances must be an integer"))
 				Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 			})
 		})
 
@@ -1222,7 +1206,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Error updating routes: Major Fault"))
 				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
-
 			})
 		})
 
@@ -1237,7 +1220,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag."))
 				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 			})
 
 			It("validates that the routes are passed in", func() {
@@ -1250,7 +1232,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag."))
 				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 			})
 		})
 
@@ -1266,7 +1247,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 			})
 
 			It("errors out when there is no colon", func() {
@@ -1280,7 +1260,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 			})
 		})
 
@@ -1348,7 +1327,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
 				Expect(appRunner.RemoveAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 			})
 		})
 
@@ -1364,7 +1342,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Error stopping cool-web-app: Major Fault"))
 				Expect(appRunner.RemoveAppCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
-
 			})
 
 			It("outputs error messages when trying to remove the app", func() {
@@ -1390,7 +1367,6 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(appRunner.RemoveAppCallCount()).To(Equal(3))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
-
 			})
 		})
 

@@ -96,7 +96,7 @@ type appExaminer struct {
 	noaaConsumer   NoaaConsumer
 }
 
-func New(receptorClient receptor.Client, noaaConsumer NoaaConsumer) *appExaminer {
+func New(receptorClient receptor.Client, noaaConsumer NoaaConsumer) AppExaminer {
 	return &appExaminer{receptorClient, noaaConsumer}
 }
 

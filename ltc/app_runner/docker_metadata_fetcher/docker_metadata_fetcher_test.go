@@ -236,8 +236,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 					dockerSessionFactory.MakeSessionReturns(fakeDockerSession, errors.New(insecureRegistryErrorMessage))
 					_, err := dockerMetadataFetcher.FetchMetadata(dockerImageReference)
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(MatchRegexp("private registry supports only HTTP or HTTPS with an unknown CA certificate"))
+					Expect(err).To(MatchError(ContainSubstring("private registry supports only HTTP or HTTPS with an unknown CA certificate")))
 
 					Expect(dockerSessionFactory.MakeSessionCallCount()).To(Equal(2))
 
@@ -288,6 +287,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 				repoName := "cool_user123/sweetapp"
 				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(repoName)
+
 				Expect(err).NotTo(HaveOccurred())
 				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{}))
 
@@ -305,9 +305,10 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 		Context("when there is an error making the session", func() {
 			It("returns an error", func() {
 				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, errors.New("Couldn't make a session."))
+
 				_, err := dockerMetadataFetcher.FetchMetadata("verybad/apple")
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Couldn't make a session."))
+
+				Expect(err).To(MatchError("Couldn't make a session."))
 			})
 		})
 
@@ -318,8 +319,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 				_, err := dockerMetadataFetcher.FetchMetadata("cloud_flounder/fishy")
 
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("We floundered getting your repo data."))
+				Expect(err).To(MatchError("We floundered getting your repo data."))
 			})
 		})
 
@@ -332,13 +332,11 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 						Endpoints: []string{},
 						Tokens:    []string{},
 					}, nil)
-
 				fakeDockerSession.GetRemoteTagsReturns(nil, errors.New("Can't get tags!"))
 
 				_, err := dockerMetadataFetcher.FetchMetadata("tagless/inseattle")
 
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Can't get tags!"))
+				Expect(err).To(MatchError("Can't get tags!"))
 			})
 		})
 
@@ -365,15 +363,13 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 				_, err := dockerMetadataFetcher.FetchMetadata("wiggle/app:some-unknown-tag-v3245")
 
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Unknown tag: wiggle/app:some-unknown-tag-v3245"))
+				Expect(err).To(MatchError("Unknown tag: wiggle/app:some-unknown-tag-v3245"))
 			})
 		})
 
 		Describe("Handling image JSON errors", func() {
 			BeforeEach(func() {
 				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
-
 				imageList := map[string]*registry.ImgData{
 					"29d531509fb": &registry.ImgData{
 						ID:              "29d531509fb",
@@ -397,8 +393,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 					_, err := dockerMetadataFetcher.FetchMetadata("wiggle/app")
 
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(Equal("JSON? What's that!???"))
+					Expect(err).To(MatchError("JSON? What's that!???"))
 				})
 			})
 
@@ -408,8 +403,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 					_, err := dockerMetadataFetcher.FetchMetadata("wiggle/app")
 
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(Equal("Error parsing remote image json for specified docker image:\ninvalid character 'i' looking for beginning of value"))
+					Expect(err).To(MatchError("Error parsing remote image json for specified docker image:\ninvalid character 'i' looking for beginning of value"))
 				})
 			})
 
@@ -419,8 +413,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 					_, err := dockerMetadataFetcher.FetchMetadata("wiggle/app")
 
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(Equal("Parsing start command failed"))
+					Expect(err).To(MatchError("Parsing start command failed"))
 				})
 			})
 		})

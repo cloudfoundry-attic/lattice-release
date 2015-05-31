@@ -47,12 +47,9 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		It("tails logs", func() {
-			args := []string{
-				"my-app-guid",
-			}
 			appExaminer.AppExistsReturns(true, nil)
 
-			test_helpers.AsyncExecuteCommandWithArgs(logsCommand, args)
+			test_helpers.AsyncExecuteCommandWithArgs(logsCommand, []string{"my-app-guid"})
 
 			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
 			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("my-app-guid"))
@@ -66,12 +63,7 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		It("handles non existent application", func() {
-			args := []string{
-				"non_existent_app",
-			}
-			appExaminer.AppExistsReturns(false, nil)
-
-			test_helpers.AsyncExecuteCommandWithArgs(logsCommand, args)
+			test_helpers.AsyncExecuteCommandWithArgs(logsCommand, []string{"non_existent_app"})
 
 			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
 			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("non_existent_app"))
@@ -81,12 +73,9 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("when the receptor returns an error", func() {
 			It("displays an error and exits", func() {
-				args := []string{
-					"non_existent_app",
-				}
 				appExaminer.AppExistsReturns(false, errors.New("can't log this"))
 
-				commandDone := test_helpers.AsyncExecuteCommandWithArgs(logsCommand, args)
+				commandDone := test_helpers.AsyncExecuteCommandWithArgs(logsCommand, []string{"non_existent_app"})
 
 				Eventually(commandDone).Should(BeClosed())
 				Expect(outputBuffer).To(test_helpers.Say("Error: can't log this"))
@@ -109,7 +98,7 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{})
 
 			Eventually(fakeTailedLogsOutputter.OutputDebugLogsCallCount).Should(Equal(1))
-			Expect(fakeTailedLogsOutputter.OutputDebugLogsArgsForCall(0)).To(Equal(true))
+			Expect(fakeTailedLogsOutputter.OutputDebugLogsArgsForCall(0)).To(BeTrue())
 		})
 
 		Context("when the --raw flag is passed", func() {
@@ -117,7 +106,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{"--raw"})
 
 				Eventually(fakeTailedLogsOutputter.OutputDebugLogsCallCount).Should(Equal(1))
-				Expect(fakeTailedLogsOutputter.OutputDebugLogsArgsForCall(0)).To(Equal(false))
+				Expect(fakeTailedLogsOutputter.OutputDebugLogsArgsForCall(0)).To(BeFalse())
 			})
 		})
 

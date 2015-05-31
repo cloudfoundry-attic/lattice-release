@@ -95,7 +95,7 @@ var _ = Describe("UI", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say("Nickname: "))
 				stdinWriter.Write([]byte("RockStar\n"))
 
-				Expect(<-answerChan).To(Equal("RockStar"))
+				Eventually(answerChan).Should(Receive(Equal("RockStar")))
 				Eventually(answerChan).Should(BeClosed())
 			})
 		})

@@ -1,7 +1,7 @@
 package setup_cli_test
 
 import (
-	. "github.com/cloudfoundry-incubator/lattice/ltc/setup_cli"
+	"github.com/cloudfoundry-incubator/lattice/ltc/setup_cli"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -17,8 +17,7 @@ var _ = Describe("SetupCli", func() {
 
 	Describe("NewCliApp", func() {
 		It("Runs registered command without error", func() {
-
-			cliApp = NewCliApp()
+			cliApp = setup_cli.NewCliApp()
 
 			Expect(cliApp).NotTo(BeNil())
 		})
