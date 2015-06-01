@@ -7,7 +7,8 @@
     </td>
     <td>
       Website: <a href="http://lattice.cf">http://lattice.cf</a><br>
-      Mailing List: <a href="https://groups.google.com/a/cloudfoundry.org/forum/#!forum/lattice">Google Groups</a>
+      Mailing List: <a href="https://lists.cloudfoundry.org/mailman/listinfo/cf-lattice">Subscribe</a><br>
+      Archives: [ <a href="http://cf-lattice.70370.x6.nabble.com/">Nabble</a> | <a href="https://groups.google.com/a/cloudfoundry.org/forum/#!forum/lattice">Google Groups</a> ]
     </td>
   </tr>
 </table>

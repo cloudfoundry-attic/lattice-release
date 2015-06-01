@@ -92,7 +92,7 @@ No. Lattice and Cloud Foundry Elastic Runtime serve different purposes with some
 ## How do I contribute or get involved with Lattice?
 
 - Review the public [Lattice](https://www.pivotaltracker.com/n/projects/1183596) and [Diego](https://www.pivotaltracker.com/n/projects/1003146) Pivotal Tracker projects
-- Get involved on the [Google Groups mailing list](https://groups.google.com/a/cloudfoundry.org/forum/#!forum/lattice)
+- Get involved on the [mailing list](https://lists.cloudfoundry.org/mailman/listinfo/cf-lattice) ([archives](http://cf-lattice.70370.x6.nabble.com/))
 - Open issues on the GitHub repository for [Lattice](https://github.com/cloudfoundry-incubator/lattice)
 
 ## What is the Lattice roadmap?
