@@ -226,12 +226,16 @@ The provided examples (i.e., `lattice.<platform>.tf`) are pinned to a specific B
 
 If you want to update to the latest version of Lattice:  
   - Update the `ref` in the `source` directive of your `lattice.<platform>.tf` to `master`.
-  - Run `terraform get -update` to update the modules under the `.terraform/` folder.
- 
+      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=master"`
+
 If you want to update to a specific version of Lattice:
   - Choose a version from either the [Bump commits](https://github.com/cloudfoundry-incubator/lattice/commits/master) or [Releases](https://github.com/cloudfoundry-incubator/lattice/releases).
   - Update the `ref` in the `source` directive of your `lattice.<platform>.tf` to that version.
-  - Run `terraform get -update` to update the modules under the `.terraform/` folder.
+  - Examples:
+      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=aa1b301"`
+      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=v0.2.4"`
+
+**Note**: Whenever the source directive is changed, make sure to run `terraform get -update` This updates the version of Lattice in the `.terraform/` folder, which is used by Terraform to distribute to each of the VMs.
 
 # Contributing
 
