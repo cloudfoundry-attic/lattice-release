@@ -2,7 +2,7 @@
 
 [ -z "$DEBUG" ] || set -x
 
-go_version=$(grep -o "[[:digit:]]\.[[:digit:]]\.[[:digit:]]" <<< $(go version))
+go_version=$(grep -o "[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+" <<< $(go version))
 go_version_num=$(tr -d '.' <<< $go_version)
 
 if [ $go_version_num -lt 140 ]
