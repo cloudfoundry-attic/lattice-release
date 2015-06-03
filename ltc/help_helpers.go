@@ -1,4 +1,4 @@
-package setup_cli
+package main
 
 import (
 	"errors"
