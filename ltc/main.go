@@ -12,18 +12,18 @@ func main() {
 	cliApp := setup_cli.NewCliApp()
 
 	if len(os.Args) > 1 {
-		flags := setup_cli.GetCommandFlags(cliApp, os.Args[1])
-		badFlags = setup_cli.MatchArgAndFlags(flags, os.Args[2:])
+		flags := GetCommandFlags(cliApp, os.Args[1])
+		badFlags = MatchArgAndFlags(flags, os.Args[2:])
 		if badFlags != "" {
 			badFlags = badFlags + "\n\n"
 		}
 	}
 
-	setup_cli.InjectHelpTemplate(badFlags)
+	InjectHelpTemplate(badFlags)
 
-	if len(os.Args) == 1 || os.Args[1] == "help" || os.Args[1] == "h" || setup_cli.RequestHelp(os.Args[1:]) {
+	if len(os.Args) == 1 || os.Args[1] == "help" || os.Args[1] == "h" || RequestHelp(os.Args[1:]) {
 		cliApp.Run(os.Args)
 	} else {
-		setup_cli.CallCoreCommand(os.Args[0:], cliApp)
+		CallCoreCommand(os.Args[0:], cliApp)
 	}
 }
