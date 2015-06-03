@@ -4,7 +4,7 @@ ENV HOME /root
 ENV PATH /usr/local/go/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 ENV GOROOT /usr/local/go
 ENV GO_VERSION 1.4.2
-ENV TERRAFORM_VERSION 0.5.1
+ENV TERRAFORM_VERSION 0.5.3
 
 RUN \
   apt-get update; \
