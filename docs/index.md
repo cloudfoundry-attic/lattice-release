@@ -87,7 +87,7 @@ No. Lattice and Cloud Foundry Elastic Runtime serve different purposes with some
 
 ## How is Lattice governed?
 
-[Pivotal](http://www.pivotal.io) plans on submitting Lattice to the [Cloud Foundry Foundation incubation process](https://docs.google.com/a/pivotal.io/document/d/1_Jh-Dobalgie-w6Yp1-QSGKf0LEpBBit-mB3oYCBbtg/edit#heading=h.gjdgxs). Product direction is provided by a Product Manager, currently Onsi Fakhouri. Engineering governance is handled like other projects at Cloud Foundry Foundation which include Test Driven Development, Continuous Integration and other quality standards. [See CONTRIBUTING.md](https://github.com/cloudfoundry/cf-release/blob/master/CONTRIBUTING.md) for more detail.
+[Pivotal](http://www.pivotal.io) plans on submitting Lattice to the [Cloud Foundry Foundation incubation process](https://docs.google.com/a/pivotal.io/document/d/1_Jh-Dobalgie-w6Yp1-QSGKf0LEpBBit-mB3oYCBbtg/edit#heading=h.gjdgxs). Product direction is provided by a Product Manager, currently Marco Nicosia. Engineering governance is handled like other projects at Cloud Foundry Foundation which include Test Driven Development, Continuous Integration and other quality standards. [See CONTRIBUTING.md](https://github.com/cloudfoundry/cf-release/blob/master/CONTRIBUTING.md) for more detail.
 
 ## How do I contribute or get involved with Lattice?
 
