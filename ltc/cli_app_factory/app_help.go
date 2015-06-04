@@ -86,6 +86,7 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 					presentCommand("submit-task"),
 					presentCommand("task"),
 					presentCommand("delete-task"),
+					presentCommand("cancel-task"),
 				},
 			},
 		}, {
