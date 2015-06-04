@@ -55,6 +55,18 @@ func (factory *TaskRunnerCommandFactory) MakeDeleteTaskCommand() cli.Command {
 	return taskDeleteCommand
 }
 
+func (factory *TaskRunnerCommandFactory) MakeCancelTaskCommand() cli.Command {
+	var taskDeleteCommand = cli.Command{
+		Name:        "cancel-task",
+		Aliases:     []string{"ct"},
+		Usage:       "Cancels the given task",
+		Description: "ltc cancel-task TASK_NAME",
+		Action:      factory.cancelTask,
+		Flags:       []cli.Flag{},
+	}
+	return taskDeleteCommand
+}
+
 func (factory *TaskRunnerCommandFactory) submitTask(context *cli.Context) {
 	filePath := context.Args().First()
 	if filePath == "" {
@@ -90,7 +102,25 @@ func (factory *TaskRunnerCommandFactory) deleteTask(context *cli.Context) {
 	err := factory.taskRunner.DeleteTask(taskGuid)
 	if err != nil {
 		factory.ui.Say("Error Deleting the task " + colors.Bold(taskGuid) + "\n")
-		factory.ui.Say("Failure Reason:" + colors.Red(err.Error()) + "\n")
+		factory.ui.Say("Failure Reason :" + colors.Red(err.Error()) + "\n")
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+	factory.ui.Say(colors.Green("OK"))
+}
+
+func (factory *TaskRunnerCommandFactory) cancelTask(context *cli.Context) {
+	taskGuid := context.Args().First()
+	if taskGuid == "" {
+		factory.ui.SayIncorrectUsage("Please input a valid TASK_GUID")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+	factory.ui.Say("Cancelling the task " + colors.Bold(taskGuid) + "\n")
+	err := factory.taskRunner.CancelTask(taskGuid)
+	if err != nil {
+		factory.ui.Say("Error Cancelling the task " + colors.Bold(taskGuid) + "\n")
+		factory.ui.Say("Failure Reason :" + colors.Red(err.Error()) + "\n")
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}

@@ -25,6 +25,14 @@ type FakeTaskRunner struct {
 	deleteTaskReturns struct {
 		result1 error
 	}
+	CancelTaskStub        func(taskGuid string) error
+	cancelTaskMutex       sync.RWMutex
+	cancelTaskArgsForCall []struct {
+		taskGuid string
+	}
+	cancelTaskReturns struct {
+		result1 error
+	}
 }
 
 func (fake *FakeTaskRunner) SubmitTask(submitTaskJson []byte) (string, error) {
@@ -88,6 +96,38 @@ func (fake *FakeTaskRunner) DeleteTaskArgsForCall(i int) string {
 func (fake *FakeTaskRunner) DeleteTaskReturns(result1 error) {
 	fake.DeleteTaskStub = nil
 	fake.deleteTaskReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeTaskRunner) CancelTask(taskGuid string) error {
+	fake.cancelTaskMutex.Lock()
+	fake.cancelTaskArgsForCall = append(fake.cancelTaskArgsForCall, struct {
+		taskGuid string
+	}{taskGuid})
+	fake.cancelTaskMutex.Unlock()
+	if fake.CancelTaskStub != nil {
+		return fake.CancelTaskStub(taskGuid)
+	} else {
+		return fake.cancelTaskReturns.result1
+	}
+}
+
+func (fake *FakeTaskRunner) CancelTaskCallCount() int {
+	fake.cancelTaskMutex.RLock()
+	defer fake.cancelTaskMutex.RUnlock()
+	return len(fake.cancelTaskArgsForCall)
+}
+
+func (fake *FakeTaskRunner) CancelTaskArgsForCall(i int) string {
+	fake.cancelTaskMutex.RLock()
+	defer fake.cancelTaskMutex.RUnlock()
+	return fake.cancelTaskArgsForCall[i].taskGuid
+}
+
+func (fake *FakeTaskRunner) CancelTaskReturns(result1 error) {
+	fake.CancelTaskStub = nil
+	fake.cancelTaskReturns = struct {
 		result1 error
 	}{result1}
 }

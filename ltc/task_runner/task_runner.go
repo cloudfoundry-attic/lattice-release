@@ -17,6 +17,7 @@ const (
 type TaskRunner interface {
 	SubmitTask(submitTaskJson []byte) (string, error)
 	DeleteTask(taskGuid string) error
+	CancelTask(taskGuid string) error
 }
 
 type taskRunner struct {
@@ -60,21 +61,21 @@ func (e *taskRunner) DeleteTask(taskGuid string) error {
 	if err != nil {
 		return err
 	}
+
+	if taskInfo.State != receptor.TaskStateCompleted {
+		return errors.New(taskGuid + " has not completed")
+	}
+	return e.receptorClient.DeleteTask(taskGuid)
+}
+
+func (e *taskRunner) CancelTask(taskGuid string) error {
+	taskInfo, err := e.taskExaminer.TaskStatus(taskGuid)
+	if err != nil {
+		return err
+	}
+
 	if taskInfo.State == receptor.TaskStateCompleted {
-		err := e.receptorClient.DeleteTask(taskGuid)
-		if err != nil {
-			return err
-		}
-		return nil
-	} else {
-		err := e.receptorClient.CancelTask(taskGuid)
-		if err != nil {
-			return err
-		}
-		err = e.receptorClient.DeleteTask(taskGuid)
-		if err != nil {
-			return err
-		}
 		return nil
 	}
+	return e.receptorClient.CancelTask(taskGuid)
 }

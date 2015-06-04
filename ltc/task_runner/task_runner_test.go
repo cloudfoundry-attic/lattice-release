@@ -225,7 +225,7 @@ var _ = Describe("TaskRunner", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("delete task when task is not in COMPLETED state", func() {
+		It("return error when task is not in COMPLETED state", func() {
 			getTaskResponse := receptor.TaskResponse{
 				TaskGuid: "task-guid-1",
 				State:    receptor.TaskStatePending,
@@ -233,7 +233,7 @@ var _ = Describe("TaskRunner", func() {
 			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
 
 			err := taskRunner.DeleteTask("task-guid-1")
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).To(MatchError("task-guid-1 has not completed"))
 		})
 
 		It("returns error when task not found", func() {
@@ -244,29 +244,52 @@ var _ = Describe("TaskRunner", func() {
 			Expect(err).To(MatchError("Task not found"))
 		})
 
-		It("returns error when task not able to delete", func() {
+		It("returns error when not able to delete the task", func() {
 			getTaskResponse := receptor.TaskResponse{
 				TaskGuid: "task-guid-1",
-				State:    receptor.TaskStatePending,
+				State:    receptor.TaskStateCompleted,
 			}
 			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
 			fakeReceptorClient.DeleteTaskReturns(errors.New("task in unknown state"))
 
 			err := taskRunner.DeleteTask("task-guid-1")
 			Expect(err).To(MatchError("task in unknown state"))
+		})
+	})
+	Describe("Cancel Task", func() {
+		It("cancel task when task not in COMPLETED state", func() {
+			getTaskResponse := receptor.TaskResponse{
+				TaskGuid: "task-guid-1",
+				State:    receptor.TaskStatePending,
+			}
+			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
 
-			getTaskResponse = receptor.TaskResponse{
+			err := taskRunner.CancelTask("task-guid-1")
+
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("return success when task in COMPLETED state", func() {
+			getTaskResponse := receptor.TaskResponse{
 				TaskGuid: "task-guid-1",
 				State:    receptor.TaskStateCompleted,
 			}
 			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
 
-			err = taskRunner.DeleteTask("task-guid-1")
+			err := taskRunner.CancelTask("task-guid-1")
 
-			Expect(err).To(MatchError("task in unknown state"))
+			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("returns error when cancel task returns an error", func() {
+		It("returns error when task not found", func() {
+			fakeReceptorClient.GetTaskReturns(receptor.TaskResponse{}, errors.New("Task not found"))
+
+			err := taskRunner.CancelTask("task-guid-1")
+
+			Expect(err).To(MatchError("Task not found"))
+		})
+
+		It("returns error when not able to cancel the task", func() {
 			getTaskResponse := receptor.TaskResponse{
 				TaskGuid: "task-guid-1",
 				State:    receptor.TaskStatePending,
@@ -274,8 +297,7 @@ var _ = Describe("TaskRunner", func() {
 			fakeReceptorClient.GetTaskReturns(getTaskResponse, nil)
 			fakeReceptorClient.CancelTaskReturns(errors.New("task in unknown state"))
 
-			err := taskRunner.DeleteTask("task-guid-1")
-
+			err := taskRunner.CancelTask("task-guid-1")
 			Expect(err).To(MatchError("task in unknown state"))
 		})
 	})
