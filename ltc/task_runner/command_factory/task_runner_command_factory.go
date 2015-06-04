@@ -98,11 +98,9 @@ func (factory *TaskRunnerCommandFactory) deleteTask(context *cli.Context) {
 		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
-	factory.ui.Say("Deleting the task " + colors.Bold(taskGuid) + "\n")
 	err := factory.taskRunner.DeleteTask(taskGuid)
 	if err != nil {
-		factory.ui.Say("Error Deleting the task " + colors.Bold(taskGuid) + "\n")
-		factory.ui.Say("Failure Reason :" + colors.Red(err.Error()) + "\n")
+		factory.ui.Say(fmt.Sprintf(colors.Red("Error deleting %s: %s\n"), taskGuid, err.Error()))
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -116,11 +114,9 @@ func (factory *TaskRunnerCommandFactory) cancelTask(context *cli.Context) {
 		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
-	factory.ui.Say("Cancelling the task " + colors.Bold(taskGuid) + "\n")
 	err := factory.taskRunner.CancelTask(taskGuid)
 	if err != nil {
-		factory.ui.Say("Error Cancelling the task " + colors.Bold(taskGuid) + "\n")
-		factory.ui.Say("Failure Reason :" + colors.Red(err.Error()) + "\n")
+		factory.ui.Say(fmt.Sprintf(colors.Red("Error cancelling %s: %s\n"), taskGuid, err.Error()))
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}

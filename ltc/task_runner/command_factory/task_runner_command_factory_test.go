@@ -114,6 +114,7 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 	})
+
 	Describe("DeleteTaskCommand", func() {
 		var deleteTaskCommand cli.Command
 
@@ -143,8 +144,7 @@ var _ = Describe("CommandFactory", func() {
 			fakeTaskRunner.DeleteTaskReturns(errors.New("task in unknown state"))
 			test_helpers.ExecuteCommandWithArgs(deleteTaskCommand, []string{"task-guid-1"})
 
-			Expect(outputBuffer).To(test_helpers.Say("Error Deleting the task " + colors.Bold("task-guid-1")))
-			Expect(outputBuffer).To(test_helpers.Say("Failure Reason :" + colors.Red("task in unknown state")))
+			Expect(outputBuffer).To(test_helpers.Say("Error deleting task-guid-1: " + "task in unknown state"))
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 		})
 
@@ -155,6 +155,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
 	})
+
 	Describe("CancelTaskCommand", func() {
 		var cancelTaskCommand cli.Command
 
@@ -184,8 +185,7 @@ var _ = Describe("CommandFactory", func() {
 			fakeTaskRunner.CancelTaskReturns(errors.New("task in unknown state"))
 			test_helpers.ExecuteCommandWithArgs(cancelTaskCommand, []string{"task-guid-1"})
 
-			Expect(outputBuffer).To(test_helpers.Say("Error Cancelling the task " + colors.Bold("task-guid-1")))
-			Expect(outputBuffer).To(test_helpers.Say("Failure Reason :" + colors.Red("task in unknown state")))
+			Expect(outputBuffer).To(test_helpers.Say("Error cancelling task-guid-1: " + "task in unknown state"))
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 		})
 
