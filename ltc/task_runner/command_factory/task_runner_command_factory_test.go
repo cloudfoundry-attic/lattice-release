@@ -134,7 +134,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("OK")))
 		})
 
-		It("returns error while deleting the task", func() {
+		It("returns error when fail to delete the task", func() {
 			taskInfo := task_examiner.TaskInfo{
 				TaskGuid: "task-guid-1",
 				State:    "COMPLETED",
@@ -144,12 +144,53 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(deleteTaskCommand, []string{"task-guid-1"})
 
 			Expect(outputBuffer).To(test_helpers.Say("Error Deleting the task " + colors.Bold("task-guid-1")))
-			Expect(outputBuffer).To(test_helpers.Say("Failure Reason:" + colors.Red("task in unknown state")))
+			Expect(outputBuffer).To(test_helpers.Say("Failure Reason :" + colors.Red("task in unknown state")))
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 		})
 
 		It("fails with usage", func() {
 			test_helpers.ExecuteCommandWithArgs(deleteTaskCommand, []string{})
+
+			Expect(outputBuffer).To(test_helpers.Say("Please input a valid TASK_GUID"))
+			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+		})
+	})
+	Describe("CancelTaskCommand", func() {
+		var cancelTaskCommand cli.Command
+
+		BeforeEach(func() {
+			commandFactory := command_factory.NewTaskRunnerCommandFactory(fakeTaskRunner, terminalUI, fakeExitHandler)
+			cancelTaskCommand = commandFactory.MakeCancelTaskCommand()
+		})
+
+		It("Cancels the given task", func() {
+			taskInfo := task_examiner.TaskInfo{
+				TaskGuid: "task-guid-1",
+				State:    "COMPLETED",
+			}
+			fakeTaskExaminer.TaskStatusReturns(taskInfo, nil)
+			fakeTaskRunner.CancelTaskReturns(nil)
+			test_helpers.ExecuteCommandWithArgs(cancelTaskCommand, []string{"task-guid-1"})
+
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("OK")))
+		})
+
+		It("returns error when fail to cancel the task", func() {
+			taskInfo := task_examiner.TaskInfo{
+				TaskGuid: "task-guid-1",
+				State:    "COMPLETED",
+			}
+			fakeTaskExaminer.TaskStatusReturns(taskInfo, nil)
+			fakeTaskRunner.CancelTaskReturns(errors.New("task in unknown state"))
+			test_helpers.ExecuteCommandWithArgs(cancelTaskCommand, []string{"task-guid-1"})
+
+			Expect(outputBuffer).To(test_helpers.Say("Error Cancelling the task " + colors.Bold("task-guid-1")))
+			Expect(outputBuffer).To(test_helpers.Say("Failure Reason :" + colors.Red("task in unknown state")))
+			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+		})
+
+		It("fails with usage", func() {
+			test_helpers.ExecuteCommandWithArgs(cancelTaskCommand, []string{})
 
 			Expect(outputBuffer).To(test_helpers.Say("Please input a valid TASK_GUID"))
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
