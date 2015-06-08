@@ -13,4 +13,4 @@ popd
     /workspace/diego-release/src/github.com/cloudfoundry-incubator/lattice
 
 echo "Creating lattice.tgz"
-tar cvzf lattice.tgz lattice-build
+tar czf lattice.tgz lattice-build
