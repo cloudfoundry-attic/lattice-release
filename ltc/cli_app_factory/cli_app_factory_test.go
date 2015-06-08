@@ -92,7 +92,7 @@ var _ = Describe("CliAppFactory", func() {
 					cli.AppHelpTemplate = "HELP_TEMPLATE"
 					flagSet := flag.NewFlagSet("flag_set", flag.ContinueOnError)
 					flagSet.Parse([]string{})
-					testContext := cli.NewContext(cliApp, flagSet, &flag.FlagSet{})
+					testContext := cli.NewContext(cliApp, flagSet, nil)
 
 					cliApp.Action(testContext)
 
@@ -104,7 +104,7 @@ var _ = Describe("CliAppFactory", func() {
 				It("prints unknown command message", func() {
 					flagSet := flag.NewFlagSet("flag_set", flag.ContinueOnError)
 					flagSet.Parse([]string{"one_arg"})
-					testContext := cli.NewContext(cliApp, flagSet, &flag.FlagSet{})
+					testContext := cli.NewContext(cliApp, flagSet, nil)
 
 					cliApp.Action(testContext)
 
@@ -115,7 +115,7 @@ var _ = Describe("CliAppFactory", func() {
 
 		Describe("App.CommandNotFound", func() {
 			It("prints unknown command message and exits nonzero", func() {
-				testContext := cli.NewContext(cliApp, &flag.FlagSet{}, &flag.FlagSet{})
+				testContext := cli.NewContext(cliApp, &flag.FlagSet{}, nil)
 
 				cliApp.CommandNotFound(testContext, "do_it")
 
