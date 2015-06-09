@@ -1,5 +1,5 @@
 module "lattice-aws" {
-    source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=v0.2.5"
+    source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=v0.2.5-19-g08b3df2"
 
     # AWS access key
     aws_access_key = "<CHANGE-ME>"
