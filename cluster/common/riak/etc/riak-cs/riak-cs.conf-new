@@ -1,0 +1,469 @@
+## Riak CS http/https port and IP address to listen at for object
+## storage activity
+## 
+## Default: 127.0.0.1:8080
+## 
+## Acceptable values:
+##   - an IP/port pair, e.g. 127.0.0.1:10011
+#listener = 127.0.0.1:8080
+
+## Riak node to which Riak CS accesses
+## 
+## Default: 127.0.0.1:8087
+## 
+## Acceptable values:
+##   - an IP/port pair, e.g. 127.0.0.1:10011
+#riak_host = 127.0.0.1:8087
+
+## Configuration for access to request
+## serialization service
+## 
+## Default: 127.0.0.1:8085
+## 
+## Acceptable values:
+##   - an IP/port pair, e.g. 127.0.0.1:10011
+#stanchion_host = 127.0.0.1:8085
+
+## SSL configuration for access to request serialization
+## service. With `on`, Riak CS connects to Stanchion with SSL.
+## 
+## Default: off
+## 
+## Acceptable values:
+##   - on or off
+stanchion.ssl = off
+
+## Default cert location for https can be overridden
+## with the ssl config variable, for example:
+## 
+## Acceptable values:
+##   - the path to a file
+## ssl.certfile = $(platform_etc_dir)/cert.pem
+
+## Default key location for https can be overridden with the ssl
+## config variable, for example:
+## 
+## Acceptable values:
+##   - the path to a file
+## ssl.keyfile = $(platform_etc_dir)/key.pem
+
+## Enable this to allow the creation of an admin user when
+## setting up a system. It is recommended to only enable this
+## temporarily unless your use-case specifically dictates letting
+## anonymous users to create accounts.
+## 
+## Default: off
+## 
+## Acceptable values:
+##   - on or off
+anonymous_user_creation = off
+
+## IP address and port number to listen on for system
+## administration tasks.
+## 
+## Acceptable values:
+##   - an IP/port pair, e.g. 127.0.0.1:10011
+## admin.listener = 127.0.0.1:8000
+
+## Admin user credentials. Admin access like /riak-cs/stats
+## requires this entry to be set properly. The credentials specified
+## here must match the admin credentials specified in the stanchion
+## app.config for the system to function properly.
+## 
+## Default: admin-key
+## 
+## Acceptable values:
+##   - text
+admin.key = admin-key
+
+## 
+## Default: admin-secret
+## 
+## Acceptable values:
+##   - text
+admin.secret = admin-secret
+
+## Root host name which Riak CS accepts.
+## Your CS bucket at s3.example.com will be accessible
+## via URL like http://bucket.s3.example.com/object/name
+## 
+## Default: s3.amazonaws.com
+## 
+## Acceptable values:
+##   - text
+root_host = s3.amazonaws.com
+
+## Fixed pool size of primary connection pool which is used
+## to service the majority of API requests related to the upload
+## or retrieval of objects.
+## 
+## Default: 128
+## 
+## Acceptable values:
+##   - an integer
+pool.request.size = 128
+
+## Fixed pool size of secondary connection pool which is used
+## strictly for requests to list the contents.
+## 
+## Default: 5
+## 
+## Acceptable values:
+##   - an integer
+pool.list.size = 5
+
+## Switch whether Riak CS trusts 'X-Forwarded-For' header.
+## If your load balancer adds 'X-Forwarded-For' header
+## and it is reliable (able to gaurantee it is not added
+## by malicious user), turn this true. Otherwise, by
+## default, Riak CS takes source IP address as an input.
+## 
+## Default: off
+## 
+## Acceptable values:
+##   - on or off
+trust_x_forwarded_for = off
+
+## The time to retain the block for an object after it has been
+## deleted.  This leeway time is set to give the delete indication
+## time to propogate to all replicas.
+## 
+## Default: 24h
+## 
+## Acceptable values:
+##   - a time duration with units, e.g. '10s' for 10 seconds
+gc.leeway_period = 24h
+
+## How often the garbage collection daemon
+## waits in-between gc batches.
+## 
+## Default: 15m
+## 
+## Acceptable values:
+##   - a time duration with units, e.g. '10s' for 10 seconds
+gc.interval = 15m
+
+## How long a move to the garbage
+## collection to do list can remain
+## failed, before we retry it.
+## 
+## Default: 6h
+## 
+## Acceptable values:
+##   - a time duration with units, e.g. '10s' for 10 seconds
+gc.retry_interval = 6h
+
+## How often to flush the access log; integer factor of
+## access_archive_period (1 == once per period; 2 == twice per period,
+## etc.)
+## 
+## Default: 1
+## 
+## Acceptable values:
+##   - an integer
+stats.access.flush_factor = 1
+
+## Additional access log flush trigger - flush after
+## this many accesses are recorded, even if the flush
+## interval has not expired; integer number of accesses
+## 
+## Default: 1000000
+## 
+## Acceptable values:
+##   - an integer
+stats.access.flush_size = 1000000
+
+## How large each access archive object is. Should be a
+## multiple of stats.access.flush_factor.
+## 
+## Default: 1h
+## 
+## Acceptable values:
+##   - a time duration with units, e.g. '10s' for 10 seconds
+stats.access.archive_period = 1h
+
+## How many access logs are allowed to pile up in the
+## archiver's queue before it starts skipping to catch
+## up; integer number of logs
+## 
+## Default: 2
+## 
+## Acceptable values:
+##   - an integer
+stats.access.archiver.max_backlog = 2
+
+## How many workers to put access log data to Riak are
+## allowed to run concurrently
+## 
+## Default: 2
+## 
+## Acceptable values:
+##   - an integer
+stats.access.archiver.max_workers = 2
+
+## How large each storage archive object is. Should be
+## chosen such that each storage_schedule entry falls in
+## a different period.
+## 
+## Default: 1d
+## 
+## Acceptable values:
+##   - a time duration with units, e.g. '10s' for 10 seconds
+stats.storage.archive_period = 1d
+
+## How many archive periods a user can request in one usage read,
+## applied independently to access and storage.  If archive_periods
+## are defined as 1 hour, then 744 * 1 hour = 31 days will be the
+## longest limit.
+## 
+## Default: 744
+## 
+## Acceptable values:
+##   - an integer
+stats.usage_request_limit = 744
+
+## custom server name at http response header "Server: Riak CS"
+## 
+## Default: Riak CS
+## 
+## Acceptable values:
+##   - text
+server.name = Riak CS
+
+## Access log directory.
+## 
+## Default: $(platform_log_dir)
+## 
+## Acceptable values:
+##   - text
+log.access.dir = $(platform_log_dir)
+
+## URL rewrite module.
+## 
+## Acceptable values:
+##   - text
+## rewrite_module = riak_cs_s3_rewrite
+
+## Authentication module.
+## 
+## Acceptable values:
+##   - text
+## auth_module = riak_cs_s3_auth
+
+## Riak CS version number. This is used to selectively
+## enable new features for the current version to better
+## support rolling upgrades. New installs should not
+## need to modify this. If peforming a rolling upgrade
+## then keep the original value (if not defined, Riak CS
+## uses 0 instead) of old app.config until all nodes
+## have been upgraded and then set to the new value.
+## 
+## Default: 10300
+## 
+## Acceptable values:
+##   - an integer
+cs_version = 10300
+
+## If your Erlang virtual machine supports DTrace (or
+## user-space SystemTap), set dtrace_support to true.
+## 
+## Default: off
+## 
+## Acceptable values:
+##   - on or off
+dtrace = off
+
+## Where to emit the default log messages (typically at 'info'
+## severity):
+## off: disabled
+## file: the file specified by log.console.file
+## console: to standard output (seen when using `riak attach-direct`)
+## both: log.console.file and standard out.
+## 
+## Default: file
+## 
+## Acceptable values:
+##   - one of: off, file, console, both
+log.console = file
+
+## The severity level of the console log, default is 'info'.
+## 
+## Default: info
+## 
+## Acceptable values:
+##   - one of: debug, info, notice, warning, error, critical, alert, emergency, none
+log.console.level = info
+
+## When 'log.console' is set to 'file' or 'both', the file where
+## console messages will be logged.
+## 
+## Default: $(platform_log_dir)/console.log
+## 
+## Acceptable values:
+##   - the path to a file
+log.console.file = $(platform_log_dir)/console.log
+
+## The file where error messages will be logged.
+## 
+## Default: $(platform_log_dir)/error.log
+## 
+## Acceptable values:
+##   - the path to a file
+log.error.file = $(platform_log_dir)/error.log
+
+## When set to 'on', enables log output to syslog.
+## 
+## Default: off
+## 
+## Acceptable values:
+##   - on or off
+log.syslog = off
+
+## Whether to enable the crash log.
+## 
+## Default: on
+## 
+## Acceptable values:
+##   - on or off
+log.crash = on
+
+## If the crash log is enabled, the file where its messages will
+## be written.
+## 
+## Default: $(platform_log_dir)/crash.log
+## 
+## Acceptable values:
+##   - the path to a file
+log.crash.file = $(platform_log_dir)/crash.log
+
+## Maximum size in bytes of individual messages in the crash log
+## 
+## Default: 64KB
+## 
+## Acceptable values:
+##   - a byte size with units, e.g. 10GB
+log.crash.maximum_message_size = 64KB
+
+## Maximum size of the crash log in bytes, before it is rotated
+## 
+## Default: 10MB
+## 
+## Acceptable values:
+##   - a byte size with units, e.g. 10GB
+log.crash.size = 10MB
+
+## The schedule on which to rotate the crash log.  For more
+## information see:
+## https://github.com/basho/lager/blob/master/README.md#internal-log-rotation
+## 
+## Default: $D0
+## 
+## Acceptable values:
+##   - text
+log.crash.rotation = $D0
+
+## The number of rotated crash logs to keep. When set to
+## 'current', only the current open log file is kept.
+## 
+## Default: 5
+## 
+## Acceptable values:
+##   - an integer
+##   - the text "current"
+log.crash.rotation.keep = 5
+
+## 
+## Default: /var/log/riak-cs
+## 
+## Acceptable values:
+##   - the path to a directory
+platform_log_dir = /var/log/riak-cs
+
+## Name of the Erlang node
+## 
+## Default: riak-cs@127.0.0.1
+## 
+## Acceptable values:
+##   - text
+nodename = riak-cs@127.0.0.1
+
+## Cookie for distributed node communication.  All nodes in the
+## same cluster should use the same cookie or they will not be able to
+## communicate.
+## 
+## Default: riak
+## 
+## Acceptable values:
+##   - text
+distributed_cookie = riak
+
+## Sets the number of threads in async thread pool, valid range
+## is 0-1024. If thread support is available, the default is 64.
+## More information at: http://erlang.org/doc/man/erl.html
+## 
+## Default: 64
+## 
+## Acceptable values:
+##   - an integer
+erlang.async_threads = 64
+
+## The number of concurrent ports/sockets
+## Valid range is 1024-134217727
+## 
+## Default: 65536
+## 
+## Acceptable values:
+##   - an integer
+erlang.max_ports = 65536
+
+## Set scheduler forced wakeup interval. All run queues will be
+## scanned each Interval milliseconds. While there are sleeping
+## schedulers in the system, one scheduler will be woken for each
+## non-empty run queue found. An Interval of zero disables this
+## feature, which also is the default.
+## This feature is a workaround for lengthy executing native code, and
+## native code that do not bump reductions properly.
+## More information: http://www.erlang.org/doc/man/erl.html#+sfwi
+## 
+## Default: 500
+## 
+## Acceptable values:
+##   - an integer
+## erlang.schedulers.force_wakeup_interval = 500
+
+## Enable or disable scheduler compaction of load. By default
+## scheduler compaction of load is enabled. When enabled, load
+## balancing will strive for a load distribution which causes as many
+## scheduler threads as possible to be fully loaded (i.e., not run out
+## of work). This is accomplished by migrating load (e.g. runnable
+## processes) into a smaller set of schedulers when schedulers
+## frequently run out of work. When disabled, the frequency with which
+## schedulers run out of work will not be taken into account by the
+## load balancing logic.
+## More information: http://www.erlang.org/doc/man/erl.html#+scl
+## 
+## Default: false
+## 
+## Acceptable values:
+##   - one of: true, false
+## erlang.schedulers.compaction_of_load = false
+
+## Enable or disable scheduler utilization balancing of load. By
+## default scheduler utilization balancing is disabled and instead
+## scheduler compaction of load is enabled which will strive for a
+## load distribution which causes as many scheduler threads as
+## possible to be fully loaded (i.e., not run out of work). When
+## scheduler utilization balancing is enabled the system will instead
+## try to balance scheduler utilization between schedulers. That is,
+## strive for equal scheduler utilization on all schedulers.
+## More information: http://www.erlang.org/doc/man/erl.html#+sub
+## 
+## Acceptable values:
+##   - one of: true, false
+## erlang.schedulers.utilization_balancing = true
+
+
+## custom settings
+listener = 0.0.0.0:8080
+riak_host = 127.0.0.1:8087
+stanchion_host = 127.0.0.1:8085

@@ -2,6 +2,69 @@
 
 set -e
 
+condense_it() {
+    set -x
+    ## move into upstart, too
+    ulimit -n 65536
+
+    mkdir -pv riak-dl
+    pushd riak-dl
+        wget --quiet http://s3.amazonaws.com/downloads.basho.com/riak/2.1/2.1.1/ubuntu/trusty/riak_2.1.1-1_amd64.deb
+        wget --quiet http://s3.amazonaws.com/downloads.basho.com/stanchion/2.0/2.0.0/ubuntu/trusty/stanchion_2.0.0-1_amd64.deb
+        wget --quiet http://s3.amazonaws.com/downloads.basho.com/riak-cs/2.0/2.0.0/ubuntu/trusty/riak-cs_2.0.0-1_amd64.deb
+
+        sudo dpkg -i riak_2.1.1-1_amd64.deb
+        sudo dpkg -i stanchion_2.0.0-1_amd64.deb
+        sudo dpkg -i riak-cs_2.0.0-1_amd64.deb
+    popd 
+    ## TODO: bake me
+    apt-get install jq
+
+    ## TODO: change up port binds
+    ## UP NEXT:  putting the template in /var/lattice somewhere!!!
+    ## get config files w/ anonymous user creation enabled
+    cp -av /tmp/lattice-build/common/riak/etc/* /etc/
+    sed "s/%%ANONYMOUS_CONFIG%%/anonymous_user_creation = on/" /tmp/lattice-build/common/riak/templates/riak-cs.conf-template | 
+        sed "s/%%ADMIN_KEY%%/\#admin.key=/" | 
+        sed "s/%%ADMIN_SECRET%%/\#admin.secret=/" > /etc/riak-cs/riak-cs.conf
+
+    ## do this in upstart
+    riak start && riak ping
+    stanchion start && stanchion ping
+    riak-cs start && riak-cs ping
+
+    ## take a nap
+    sleep 10
+
+    ## user creation
+    ## TODO:  save off curl, check exit code (or http status), then pretty-print
+    ## so we don't ignore non-zero return from curl
+    curl -s -H 'Content-Type: application/json' \
+        -XPOST http://localhost:8181/riak-cs/user \
+        --data '{"email":"admin@lattice.cf", "name":"admin_user"}' > riak-admin_user.json
+
+    ## parse json
+    ## TODO: strip out quotes
+    access_key=$(jq '.key_id'  riak-admin_user.json)
+    secret_key=$(jq '.key_secret'  riak-admin_user.json)
+
+    ## disable anon, set access_key / secret_key in riak-cs.conf 
+    sed "s/%%ANONYMOUS_CONFIG%%/anonymous_user_creation = off/" /tmp/lattice-build/common/riak/templates/riak-cs.conf-template |
+        sed "s/%%ADMIN_KEY%%/admin.key=$access_key/" |
+        sed "s/%%ADMIN_SECRET%%/admin.secret=$secret_key/" > /etc/riak-cs/riak-cs.conf
+    ## set access_key / secret_key stanchion.conf
+    sed "s/%%ADMIN_KEY%%/admin.key=$access_key/" /tmp/lattice-build/common/riak/templates/stanchion.conf-template |
+        sed "s/%%ADMIN_SECRET%%/admin.secret=$secret_key/" > /etc/stanchion/stanchion.conf
+
+    ## restart stanchion and riak-cs
+    riak-cs restart && riak-cs ping
+    stanchion restart && stanchion ping
+
+    ## output keys to console
+    echo "ACCESS_KEY = " $access_key
+    echo "SECRET_KEY = " $secret_key
+}
+
 COMPONENT_TO_INSTALL=$1
 PATH_TO_LATTICE_TAR=$2
 LATTICE_TAR_URL=$3
@@ -46,3 +109,8 @@ else
     /tmp/lattice-build/scripts/install-$COMPONENT_TO_INSTALL
 fi
 
+# do the condensing
+export $(cat /var/lattice/setup/lattice-environment)
+if [[ ! -z "$CONDENSER_ON" ]]; then
+    condense_it
+fi
