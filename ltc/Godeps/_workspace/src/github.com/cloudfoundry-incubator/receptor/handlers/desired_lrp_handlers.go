@@ -62,25 +62,25 @@ func (h *DesiredLRPHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *DesiredLRPHandler) Get(w http.ResponseWriter, r *http.Request) {
 	processGuid := r.FormValue(":process_guid")
-	log := h.logger.Session("get", lager.Data{
+	logger := h.logger.Session("get", lager.Data{
 		"ProcessGuid": processGuid,
 	})
 
 	if processGuid == "" {
 		err := errors.New("process_guid missing from request")
-		log.Error("missing-process-guid", err)
+		logger.Error("missing-process-guid", err)
 		writeBadRequestResponse(w, receptor.InvalidRequest, err)
 		return
 	}
 
-	desiredLRP, err := h.bbs.DesiredLRPByProcessGuid(processGuid)
+	desiredLRP, err := h.bbs.DesiredLRPByProcessGuid(logger, processGuid)
 	if err == bbserrors.ErrStoreResourceNotFound {
 		writeDesiredLRPNotFoundResponse(w, processGuid)
 		return
 	}
 
 	if err != nil {
-		log.Error("unknown-error", err)
+		logger.Error("unknown-error", err)
 		writeUnknownErrorResponse(w, err)
 		return
 	}
@@ -90,13 +90,13 @@ func (h *DesiredLRPHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 func (h *DesiredLRPHandler) Update(w http.ResponseWriter, r *http.Request) {
 	processGuid := r.FormValue(":process_guid")
-	log := h.logger.Session("update", lager.Data{
+	logger := h.logger.Session("update", lager.Data{
 		"ProcessGuid": processGuid,
 	})
 
 	if processGuid == "" {
 		err := errors.New("process_guid missing from request")
-		log.Error("missing-process-guid", err)
+		logger.Error("missing-process-guid", err)
 		writeBadRequestResponse(w, receptor.InvalidRequest, err)
 		return
 	}
@@ -105,28 +105,39 @@ func (h *DesiredLRPHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&desireLRPRequest)
 	if err != nil {
-		log.Error("invalid-json", err)
+		logger.Error("invalid-json", err)
 		writeBadRequestResponse(w, receptor.InvalidJSON, err)
 		return
 	}
 
 	update := serialization.DesiredLRPUpdateFromRequest(desireLRPRequest)
 
-	err = h.bbs.UpdateDesiredLRP(log, processGuid, update)
+	updateAttempts := 0
+	for updateAttempts < 2 {
+		err = h.bbs.UpdateDesiredLRP(logger, processGuid, update)
+		if err != bbserrors.ErrStoreComparisonFailed {
+			// we only want to retry on compare and swap errors
+			break
+		}
+
+		updateAttempts++
+		logger.Error("failed-to-compare-and-swap", err, lager.Data{"Attempt": updateAttempts})
+	}
+
 	if err == bbserrors.ErrStoreResourceNotFound {
-		log.Error("desired-lrp-not-found", err)
+		logger.Error("desired-lrp-not-found", err)
 		writeDesiredLRPNotFoundResponse(w, processGuid)
 		return
 	}
 
 	if err == bbserrors.ErrStoreComparisonFailed {
-		log.Error("failed-to-compare-and-swap", err)
+		logger.Error("failed-to-compare-and-swap", err)
 		writeCompareAndSwapFailedResponse(w, processGuid)
 		return
 	}
 
 	if err != nil {
-		log.Error("unknown-error", err)
+		logger.Error("unknown-error", err)
 		writeUnknownErrorResponse(w, err)
 		return
 	}
@@ -136,25 +147,25 @@ func (h *DesiredLRPHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 func (h *DesiredLRPHandler) Delete(w http.ResponseWriter, req *http.Request) {
 	processGuid := req.FormValue(":process_guid")
-	log := h.logger.Session("delete", lager.Data{
+	logger := h.logger.Session("delete", lager.Data{
 		"ProcessGuid": processGuid,
 	})
 
 	if processGuid == "" {
 		err := errors.New("process_guid missing from request")
-		log.Error("missing-process-guid", err)
+		logger.Error("missing-process-guid", err)
 		writeBadRequestResponse(w, receptor.InvalidRequest, err)
 		return
 	}
 
-	err := h.bbs.RemoveDesiredLRPByProcessGuid(log, processGuid)
+	err := h.bbs.RemoveDesiredLRPByProcessGuid(logger, processGuid)
 	if err == bbserrors.ErrStoreResourceNotFound {
 		writeDesiredLRPNotFoundResponse(w, processGuid)
 		return
 	}
 
 	if err != nil {
-		log.Error("unknown-error", err)
+		logger.Error("unknown-error", err)
 		writeUnknownErrorResponse(w, err)
 		return
 	}
@@ -172,9 +183,9 @@ func (h *DesiredLRPHandler) GetAll(w http.ResponseWriter, req *http.Request) {
 	var err error
 
 	if domain == "" {
-		desiredLRPs, err = h.bbs.DesiredLRPs()
+		desiredLRPs, err = h.bbs.DesiredLRPs(logger)
 	} else {
-		desiredLRPs, err = h.bbs.DesiredLRPsByDomain(domain)
+		desiredLRPs, err = h.bbs.DesiredLRPsByDomain(logger, domain)
 	}
 
 	writeDesiredLRPResponse(w, logger, desiredLRPs, err)
@@ -196,7 +207,7 @@ func writeDesiredLRPResponse(w http.ResponseWriter, logger lager.Logger, desired
 }
 
 func writeCompareAndSwapFailedResponse(w http.ResponseWriter, processGuid string) {
-	writeJSONResponse(w, http.StatusConflict, receptor.Error{
+	writeJSONResponse(w, http.StatusInternalServerError, receptor.Error{
 		Type:    receptor.ResourceConflict,
 		Message: fmt.Sprintf("Desired LRP with guid '%s' failed to update", processGuid),
 	})

@@ -112,9 +112,8 @@ Preloaded root filesystems look like:
 "rootfs": "preloaded:ROOTFS-NAME"
 ```
 
-On Cloud Foundry, Diego ships with two root filesystems:
+Diego ships with a root filesystem:
 ```
-"rootfs": "preloaded:lucid64"
 "rootfs": "preloaded:cflinuxfs2"
 ```
 these are built to work with the Cloud Foundry buildpacks.
@@ -133,7 +132,7 @@ To pull the image from a different registry than the default (Docker Hub), speci
 
 > You *must* specify the dockerimage `rootfs` uri as specified, including the leading `docker://`!
 
-> [Lattice](https://github.com/pivotal-cf-experimental/lattice) does not ship with any preloaded root filesystems. You must specify a Docker image when using Lattice. You can mount the filesystem provided by diego-release by specifying `"rootfs": "docker:///cloudfoundry/lucid64"` or `"rootfs": "docker:///cloudfoundry/cflinuxfs2"`.
+> [Lattice](https://github.com/pivotal-cf-experimental/lattice) does not ship with any preloaded root filesystems. You must specify a Docker image when using Lattice. You can mount the filesystem provided by diego-release by specifying `"rootfs": "docker:///cloudfoundry/cflinuxfs2"`.
 
 #### `env` [optional]
 

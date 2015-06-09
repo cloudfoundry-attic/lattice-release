@@ -114,7 +114,7 @@ var _ = Describe("Event", func() {
 			err := bbs.DesireLRP(logger, desiredLRP)
 			Expect(err).NotTo(HaveOccurred())
 
-			desiredLRP, err := bbs.DesiredLRPByProcessGuid(desiredLRP.ProcessGuid)
+			desiredLRP, err := bbs.DesiredLRPByProcessGuid(logger, desiredLRP.ProcessGuid)
 			Expect(err).NotTo(HaveOccurred())
 
 			var event receptor.Event
@@ -186,7 +186,7 @@ var _ = Describe("Event", func() {
 			err := bbs.DesireLRP(logger, desiredLRP)
 			Expect(err).NotTo(HaveOccurred())
 
-			actualLRPGroup, err := bbs.ActualLRPGroupByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
+			actualLRPGroup, err := bbs.ActualLRPGroupByProcessGuidAndIndex(logger, desiredLRP.ProcessGuid, 0)
 			Expect(err).NotTo(HaveOccurred())
 			actualLRP := *actualLRPGroup.Instance
 
@@ -204,7 +204,7 @@ var _ = Describe("Event", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			before := actualLRP
-			actualLRPGroup, err = bbs.ActualLRPGroupByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
+			actualLRPGroup, err = bbs.ActualLRPGroupByProcessGuidAndIndex(logger, desiredLRP.ProcessGuid, 0)
 			Expect(err).NotTo(HaveOccurred())
 			actualLRP = *actualLRPGroup.Instance
 
@@ -221,7 +221,7 @@ var _ = Describe("Event", func() {
 			_, err = bbs.EvacuateRunningActualLRP(logger, key, instanceKey, netInfo, 0)
 			Expect(err).To(Equal(bbserrors.ErrServiceUnavailable))
 
-			evacuatingLRP, err := bbs.EvacuatingActualLRPByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
+			evacuatingLRP, err := bbs.EvacuatingActualLRPByProcessGuidAndIndex(logger, desiredLRP.ProcessGuid, 0)
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(func() receptor.Event {
@@ -252,7 +252,7 @@ var _ = Describe("Event", func() {
 			_, err = bbs.EvacuateRunningActualLRP(logger, key, newInstanceKey, netInfo, 0)
 			Expect(err).To(Equal(bbserrors.ErrServiceUnavailable))
 
-			evacuatingLRP, err = bbs.EvacuatingActualLRPByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
+			evacuatingLRP, err = bbs.EvacuatingActualLRPByProcessGuidAndIndex(logger, desiredLRP.ProcessGuid, 0)
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(func() receptor.Event {
@@ -271,7 +271,7 @@ var _ = Describe("Event", func() {
 			}).Should(BeAssignableToTypeOf(receptor.ActualLRPChangedEvent{}))
 
 			By("removing the instance ActualLRP")
-			actualLRPGroup, err = bbs.ActualLRPGroupByProcessGuidAndIndex(desiredLRP.ProcessGuid, 0)
+			actualLRPGroup, err = bbs.ActualLRPGroupByProcessGuidAndIndex(logger, desiredLRP.ProcessGuid, 0)
 			Expect(err).NotTo(HaveOccurred())
 			actualLRP = *actualLRPGroup.Instance
 

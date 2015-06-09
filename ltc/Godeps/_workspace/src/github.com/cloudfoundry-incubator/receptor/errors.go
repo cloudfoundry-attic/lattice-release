@@ -30,7 +30,6 @@ const (
 
 	ActualLRPIndexNotFound = "ActualLRPIndexNotFound"
 
-	ResourceNotFound = "ResourceNotFound"
 	ResourceConflict = "ResourceConflict"
 	RouterError      = "RouterError"
 )

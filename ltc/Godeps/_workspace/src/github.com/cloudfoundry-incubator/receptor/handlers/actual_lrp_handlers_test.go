@@ -195,7 +195,8 @@ var _ = Describe("Actual LRP Handlers", func() {
 
 			It("calls the BBS to retrieve the actual LRPs", func() {
 				Expect(fakeBBS.ActualLRPGroupsByProcessGuidCallCount()).To(Equal(1))
-				Expect(fakeBBS.ActualLRPGroupsByProcessGuidArgsForCall(0)).To(Equal("process-guid-0"))
+				_, actualProcessGuid := fakeBBS.ActualLRPGroupsByProcessGuidArgsForCall(0)
+				Expect(actualProcessGuid).To(Equal("process-guid-0"))
 			})
 
 			It("responds with 200 Status OK", func() {
@@ -223,7 +224,8 @@ var _ = Describe("Actual LRP Handlers", func() {
 
 				It("calls the BBS to retrieve the actual LRPs", func() {
 					Expect(fakeBBS.ActualLRPGroupsByProcessGuidCallCount()).To(Equal(1))
-					Expect(fakeBBS.ActualLRPGroupsByProcessGuidArgsForCall(0)).To(Equal("process-guid-1"))
+					_, actualProcessGuid := fakeBBS.ActualLRPGroupsByProcessGuidArgsForCall(0)
+					Expect(actualProcessGuid).To(Equal("process-guid-1"))
 				})
 
 				It("responds with 200 Status OK", func() {
@@ -324,7 +326,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 
 			It("calls the BBS to retrieve the actual LRPs", func() {
 				Expect(fakeBBS.ActualLRPGroupByProcessGuidAndIndexCallCount()).To(Equal(1))
-				processGuid, index := fakeBBS.ActualLRPGroupByProcessGuidAndIndexArgsForCall(0)
+				_, processGuid, index := fakeBBS.ActualLRPGroupByProcessGuidAndIndexArgsForCall(0)
 				Expect(processGuid).To(Equal("process-guid-1"))
 				Expect(index).To(Equal(2))
 			})
@@ -439,7 +441,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 
 				It("calls the BBS to retrieve the actual LRPs", func() {
 					Expect(fakeBBS.ActualLRPGroupByProcessGuidAndIndexCallCount()).To(Equal(1))
-					processGuid, index := fakeBBS.ActualLRPGroupByProcessGuidAndIndexArgsForCall(0)
+					_, processGuid, index := fakeBBS.ActualLRPGroupByProcessGuidAndIndexArgsForCall(0)
 					Expect(processGuid).To(Equal("process-guid-1"))
 					Expect(index).To(Equal(0))
 				})

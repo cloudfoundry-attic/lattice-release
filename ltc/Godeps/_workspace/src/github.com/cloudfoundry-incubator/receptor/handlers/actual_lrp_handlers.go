@@ -36,9 +36,9 @@ func (h *ActualLRPHandler) GetAll(w http.ResponseWriter, req *http.Request) {
 	var err error
 
 	if domain == "" {
-		actualLRPGroups, err = h.bbs.ActualLRPGroups()
+		actualLRPGroups, err = h.bbs.ActualLRPGroups(logger)
 	} else {
-		actualLRPGroups, err = h.bbs.ActualLRPGroupsByDomain(domain)
+		actualLRPGroups, err = h.bbs.ActualLRPGroupsByDomain(logger, domain)
 	}
 
 	if err != nil {
@@ -72,7 +72,7 @@ func (h *ActualLRPHandler) GetAllByProcessGuid(w http.ResponseWriter, req *http.
 		return
 	}
 
-	actualLRPGroupsByIndex, err := h.bbs.ActualLRPGroupsByProcessGuid(processGuid)
+	actualLRPGroupsByIndex, err := h.bbs.ActualLRPGroupsByProcessGuid(logger, processGuid)
 	if err != nil {
 		logger.Error("failed-to-fetch-actual-lrp-groups-by-process-guid", err)
 		writeUnknownErrorResponse(w, err)
@@ -124,7 +124,7 @@ func (h *ActualLRPHandler) GetByProcessGuidAndIndex(w http.ResponseWriter, req *
 		return
 	}
 
-	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(processGuid, index)
+	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(logger, processGuid, index)
 	if err == bbserrors.ErrStoreResourceNotFound {
 		writeJSONResponse(w, http.StatusNotFound, nil)
 		return
@@ -171,7 +171,7 @@ func (h *ActualLRPHandler) KillByProcessGuidAndIndex(w http.ResponseWriter, req 
 		return
 	}
 
-	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(processGuid, index)
+	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(logger, processGuid, index)
 	if err != nil {
 		if err == bbserrors.ErrStoreResourceNotFound {
 			responseErr := fmt.Errorf("process-guid '%s' does not exist or has no instance at index %d", processGuid, index)

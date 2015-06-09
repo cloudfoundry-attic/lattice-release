@@ -258,15 +258,13 @@ func (c *client) do(req *http.Request, responseObject interface{}) error {
 func handleJSONResponse(res *http.Response, responseObject interface{}) error {
 	if res.StatusCode > 299 {
 		errResponse := Error{}
-		err := json.NewDecoder(res.Body).Decode(&errResponse)
-		if err != nil {
+		if err := json.NewDecoder(res.Body).Decode(&errResponse); err != nil {
 			return Error{Type: InvalidJSON, Message: err.Error()}
 		}
 		return errResponse
 	}
 
-	err := json.NewDecoder(res.Body).Decode(responseObject)
-	if err != nil {
+	if err := json.NewDecoder(res.Body).Decode(responseObject); err != nil {
 		return Error{Type: InvalidJSON, Message: err.Error()}
 	}
 	return nil
@@ -279,6 +277,5 @@ func handleNonJSONResponse(res *http.Response) error {
 			Message: fmt.Sprintf("Invalid Response with status code: %d", res.StatusCode),
 		}
 	}
-
 	return nil
 }

@@ -59,7 +59,7 @@ You can only resolve a task in the `COMPLETED` state.  Anything else is an error
 
 ## Cancelling Inflight Tasks
 
-Tasks in the `PENDING`, `CLAIMED`, and `RUNNING` states (see [The Task Lifecycle](tasks.md#the-task-lifecycle) for details) can be cancelled. This results in a Task in the `COMPLETED` state with `failed = true`.
+Tasks in the `PENDING` and `RUNNING` states (see [The Task Lifecycle](tasks.md#the-task-lifecycle) for details) can be cancelled. This results in a Task in the `COMPLETED` state with `failed = true`.
 
 To cancel a task:
 

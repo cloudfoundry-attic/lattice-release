@@ -3,7 +3,7 @@ notifications:
   email:
   - cf-lamb@pivotallabs.com
 before_install:
-- 'if [[ "${TRAVIS_GO_VERSION}" =~ 1.[2-3] ]]; then go get code.google.com/p/go.tools/cmd/cover; else go get golang.org/x/tools/cmd/cover; fi'
+- go get golang.org/x/tools/cmd/cover golang.org/x/tools/cmd/vet
 - go get github.com/mattn/goveralls
 - go get github.com/onsi/ginkgo/ginkgo
 after_success:
@@ -13,17 +13,14 @@ after_success:
 install:
 - go get -d -v -t ./...
 
-script: PATH=$HOME/gopath/bin:$PATH ginkgo --race --randomizeAllSpecs --failOnPending --skipMeasurements --cover
+script: PATH=$HOME/gopath/bin:$PATH bin/test
 
 go:
-- 1.2
-- 1.3
 - 1.4
 - tip
 
 matrix:
   allow_failures:
-    - go: 1.3
     - go: tip
 
 env:
