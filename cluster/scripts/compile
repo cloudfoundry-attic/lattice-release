@@ -13,8 +13,8 @@ setup_go_env() {
 
 construct_temp_workspace() {
     echo "copying diego release"
-    mkdir -p ${temp_workspace}/diego-release
-    cp -a ${diego_release_path}/src/ ${temp_workspace}/diego-release/
+    # mkdir -p ${temp_workspace}/diego-release
+    cp -a ${diego_release_path}/ ${temp_workspace}/
     rm -rf ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator/lattice
     echo "copying cf release"
     mkdir -p ${temp_workspace}/cf-release/src
@@ -153,7 +153,7 @@ export GOARCH=amd64
 declare -r temp_workspace=~/workspace
 export GOPATH=${temp_workspace}/diego-release
 
-if [ -z "$DEBUG" ]; then
+if [ -n "$DEBUG" ]; then
     set -x
 fi
 
