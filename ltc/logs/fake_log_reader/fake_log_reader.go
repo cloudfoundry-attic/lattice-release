@@ -3,7 +3,7 @@ package fake_log_reader
 import (
 	"sync"
 
-	"github.com/cloudfoundry/noaa/events"
+	"github.com/cloudfoundry/sonde-go/events"
 )
 
 type FakeLogReader struct {

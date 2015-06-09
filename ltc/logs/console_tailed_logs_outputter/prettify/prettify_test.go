@@ -12,7 +12,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/prettify"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
-	"github.com/cloudfoundry/noaa/events"
+	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/pivotal-golang/lager"
 )
 

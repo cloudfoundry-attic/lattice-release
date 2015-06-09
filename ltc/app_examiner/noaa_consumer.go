@@ -2,7 +2,7 @@ package app_examiner
 
 import (
 	"github.com/cloudfoundry/noaa"
-	"github.com/cloudfoundry/noaa/events"
+	"github.com/cloudfoundry/sonde-go/events"
 )
 
 //go:generate counterfeiter -o fake_noaa_consumer/fake_noaa_consumer.go . NoaaConsumer

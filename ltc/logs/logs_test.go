@@ -8,26 +8,29 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
-	"github.com/cloudfoundry/noaa/events"
+	"github.com/cloudfoundry/sonde-go/events"
 )
 
 func NewFakeConsumer() *fakeConsumer {
 	return &fakeConsumer{
 		inboundLogStream:   make(chan *events.LogMessage),
 		inboundErrorStream: make(chan error),
+		stopChan:           make(chan struct{}),
 	}
 }
 
 type fakeConsumer struct {
 	inboundLogStream   chan *events.LogMessage
 	inboundErrorStream chan error
+	stopChan           chan struct{}
 }
 
-func (consumer *fakeConsumer) TailingLogs(appGuid string, authToken string, outputChan chan<- *events.LogMessage, errorChan chan<- error, stopChan chan struct{}) {
+func (consumer *fakeConsumer) TailingLogs(appGuid string, authToken string, outputChan chan<- *events.LogMessage, errorChan chan<- error) {
 	for {
 		select {
-		case <-stopChan:
+		case <-consumer.stopChan:
 			defer close(errorChan)
+			defer close(outputChan)
 			return
 		case err := <-consumer.inboundErrorStream:
 			errorChan <- err
@@ -35,6 +38,11 @@ func (consumer *fakeConsumer) TailingLogs(appGuid string, authToken string, outp
 			outputChan <- logMessage
 		}
 	}
+}
+
+func (consumer *fakeConsumer) Close() error {
+	defer close(consumer.stopChan)
+	return nil
 }
 
 func (consumer *fakeConsumer) sendToInboundLogStream(logMessage *events.LogMessage) {
@@ -116,7 +124,6 @@ var _ = Describe("logs", func() {
 			go consumer.sendToInboundLogStream(logMessageThree)
 
 			Consistently(messageReceiver.GetMessages).ShouldNot(ContainElement(logMessageThree))
-
 		})
 
 		It("provides the errorCallback with the pending errors until StopTailing is called.", func() {
@@ -166,7 +173,7 @@ var _ = Describe("logs", func() {
 
 			logReader.StopTailing()
 
-			Expect(doneChan).To(BeClosed())
+			Eventually(doneChan).Should(BeClosed())
 		})
 	})
 
