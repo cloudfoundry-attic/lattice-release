@@ -6,7 +6,8 @@ import (
 
 //go:generate counterfeiter -o fake_target_verifier/fake_target_verifier.go . TargetVerifier
 type TargetVerifier interface {
-	VerifyTarget(name string) (receptorUp bool, authorized bool, err error)
+	VerifyTarget(name string) (up bool, auth bool, err error)
+	VerifyBlobTarget(host string, port uint16, accessKey, secretKey string) (up bool, auth bool, err error)
 }
 
 func New(receptorClientFactory func(target string) receptor.Client) TargetVerifier {
@@ -17,7 +18,7 @@ type targetVerifier struct {
 	receptorClientFactory func(target string) receptor.Client
 }
 
-func (t *targetVerifier) VerifyTarget(target string) (receptorUp bool, authorized bool, err error) {
+func (t *targetVerifier) VerifyTarget(target string) (up, auth bool, err error) {
 	receptorClient := t.receptorClientFactory(target)
 	_, err = receptorClient.DesiredLRPs()
 

@@ -31,49 +31,51 @@ var _ = Describe("TargetVerifier", func() {
 			targets = []string{}
 		})
 
-		It("returns receptorUp=true, authorized=true if the receptor does not return an error", func() {
-			receptorUp, authorized, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
+		It("returns up=true, auth=true if the receptor does not return an error", func() {
+			up, auth, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
 
-			Expect(receptorUp).To(BeTrue())
-			Expect(authorized).To(BeTrue())
+			Expect(up).To(BeTrue())
+			Expect(auth).To(BeTrue())
 			Expect(err).ToNot(HaveOccurred())
 			Expect(targets).To(ConsistOf("http://receptor.mylattice.com"))
 		})
 
-		It("returns receptorUp=true, authorized=false if the receptor returns an authorization error", func() {
+		It("returns up=true, auth=false if the receptor returns an authorization error", func() {
 			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptor.Error{
 				Type:    receptor.Unauthorized,
 				Message: "Go home. You're not welcome here.",
 			})
 
-			receptorUp, authorized, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
+			up, auth, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
 
-			Expect(receptorUp).To(BeTrue())
-			Expect(authorized).To(BeFalse())
+			Expect(up).To(BeTrue())
+			Expect(auth).To(BeFalse())
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("returns receptorUp=true, authorized=false, err=(the bubbled up error) if there is a receptor error other than unauthorized", func() {
+		It("returns up=true, auth=false, err=(the bubbled up error) if there is a receptor error other than unauthorized", func() {
 			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptor.Error{
 				Type:    receptor.UnknownError,
 				Message: "It all happened so fast... I just dunno what went wrong.",
 			})
 
-			receptorUp, authorized, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
+			up, auth, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
 
+			Expect(err).To(BeAssignableToTypeOf(receptor.Error{}))
 			Expect(err).To(MatchError("It all happened so fast... I just dunno what went wrong."))
-			Expect(receptorUp).To(BeTrue())
-			Expect(authorized).To(BeFalse())
+			Expect(up).To(BeTrue())
+			Expect(auth).To(BeFalse())
 		})
 
-		It("returns receptorUp=false, authorized=false, err=(the bubbled up error) if there is a non-receptor error", func() {
+		// TODO: receptor really shouldn't give us non-receptor.Error
+		It("returns up=false, auth=false, err=(the bubbled up error) if there is a non-receptor error", func() {
 			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, errors.New("Couldn't connect to the receptor."))
 
-			receptorUp, authorized, err := targetVerifier.VerifyTarget("http://receptor.my-borked-lattice.com")
+			up, auth, err := targetVerifier.VerifyTarget("http://receptor.my-borked-lattice.com")
 
 			Expect(err).To(MatchError("Couldn't connect to the receptor."))
-			Expect(receptorUp).To(BeFalse())
-			Expect(authorized).To(BeFalse())
+			Expect(up).To(BeFalse())
+			Expect(auth).To(BeFalse())
 		})
 	})
 })

@@ -2,6 +2,7 @@ package blob_store
 
 import (
 	"io"
+	"net/http"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/goamz/goamz/s3"
@@ -24,7 +25,7 @@ type BlobStore interface {
 
 //go:generate counterfeiter -o fake_blob_bucket/fake_blob_bucket.go . BlobBucket
 type BlobBucket interface {
-	Exists(path string) (bool, error)
+	Head(path string, headers map[string][]string) (*http.Response, error)
 	Put(path string, data []byte, contType string, perm s3.ACL, options s3.Options) error
 	PutReader(path string, r io.Reader, length int64, contType string, perm s3.ACL, options s3.Options) error
 }

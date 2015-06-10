@@ -3,6 +3,7 @@ package fake_blob_bucket
 
 import (
 	"io"
+	"net/http"
 	"sync"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
@@ -10,13 +11,14 @@ import (
 )
 
 type FakeBlobBucket struct {
-	ExistsStub        func(path string) (bool, error)
-	existsMutex       sync.RWMutex
-	existsArgsForCall []struct {
-		path string
+	HeadStub        func(path string, headers map[string][]string) (*http.Response, error)
+	headMutex       sync.RWMutex
+	headArgsForCall []struct {
+		path    string
+		headers map[string][]string
 	}
-	existsReturns struct {
-		result1 bool
+	headReturns struct {
+		result1 *http.Response
 		result2 error
 	}
 	PutStub        func(path string, data []byte, contType string, perm s3.ACL, options s3.Options) error
@@ -46,35 +48,36 @@ type FakeBlobBucket struct {
 	}
 }
 
-func (fake *FakeBlobBucket) Exists(path string) (bool, error) {
-	fake.existsMutex.Lock()
-	fake.existsArgsForCall = append(fake.existsArgsForCall, struct {
-		path string
-	}{path})
-	fake.existsMutex.Unlock()
-	if fake.ExistsStub != nil {
-		return fake.ExistsStub(path)
+func (fake *FakeBlobBucket) Head(path string, headers map[string][]string) (*http.Response, error) {
+	fake.headMutex.Lock()
+	fake.headArgsForCall = append(fake.headArgsForCall, struct {
+		path    string
+		headers map[string][]string
+	}{path, headers})
+	fake.headMutex.Unlock()
+	if fake.HeadStub != nil {
+		return fake.HeadStub(path, headers)
 	} else {
-		return fake.existsReturns.result1, fake.existsReturns.result2
+		return fake.headReturns.result1, fake.headReturns.result2
 	}
 }
 
-func (fake *FakeBlobBucket) ExistsCallCount() int {
-	fake.existsMutex.RLock()
-	defer fake.existsMutex.RUnlock()
-	return len(fake.existsArgsForCall)
+func (fake *FakeBlobBucket) HeadCallCount() int {
+	fake.headMutex.RLock()
+	defer fake.headMutex.RUnlock()
+	return len(fake.headArgsForCall)
 }
 
-func (fake *FakeBlobBucket) ExistsArgsForCall(i int) string {
-	fake.existsMutex.RLock()
-	defer fake.existsMutex.RUnlock()
-	return fake.existsArgsForCall[i].path
+func (fake *FakeBlobBucket) HeadArgsForCall(i int) (string, map[string][]string) {
+	fake.headMutex.RLock()
+	defer fake.headMutex.RUnlock()
+	return fake.headArgsForCall[i].path, fake.headArgsForCall[i].headers
 }
 
-func (fake *FakeBlobBucket) ExistsReturns(result1 bool, result2 error) {
-	fake.ExistsStub = nil
-	fake.existsReturns = struct {
-		result1 bool
+func (fake *FakeBlobBucket) HeadReturns(result1 *http.Response, result2 error) {
+	fake.HeadStub = nil
+	fake.headReturns = struct {
+		result1 *http.Response
 		result2 error
 	}{result1, result2}
 }
