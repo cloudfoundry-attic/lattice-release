@@ -60,6 +60,15 @@ condense_it() {
     riak-cs restart && riak-cs ping
     stanchion restart && stanchion ping
 
+    ## download the cflinuxfs2 rootfs tarball
+    wget http://cf-runtime-stacks.s3.amazonaws.com/cflinuxfs2.dev.tgz --quiet -O cflinuxfs2.tar.gz && echo "Downloaded RootFS!"
+
+    ## unpack to some fixed folder
+    mkdir -p /var/lattice/rootfs_cflinuxfs2
+    pushd /var/lattice/rootfs_cflinuxfs2
+        tar xzf $OLDPWD/cflinuxfs2.tar.gz
+    popd
+
     ## output keys to console
     echo "ACCESS_KEY = " $access_key
     echo "SECRET_KEY = " $secret_key
