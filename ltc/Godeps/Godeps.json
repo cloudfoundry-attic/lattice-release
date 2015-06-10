@@ -170,6 +170,14 @@
 			"Rev": "ce9bf21e3a5dd9e751030b4c55b00279c6d2fec0"
 		},
 		{
+			"ImportPath": "github.com/goamz/goamz/aws",
+			"Rev": "760aa2f8a491b6019dcf2df81d913927cb25fbc6"
+		},
+		{
+			"ImportPath": "github.com/goamz/goamz/s3",
+			"Rev": "760aa2f8a491b6019dcf2df81d913927cb25fbc6"
+		},
+		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
 			"Rev": "b9e369e8ffb6773efc654ea13594566404314ee1"
 		},
@@ -223,6 +231,10 @@
 		{
 			"ImportPath": "github.com/tedsuo/rata",
 			"Rev": "6197c97c67a03bfd4d6977a3b6060d6c6b3d581f"
+		},
+		{
+			"ImportPath": "github.com/vaughan0/go-ini",
+			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
 		},
 		{
 			"ImportPath": "github.com/vito/go-sse/sse",
