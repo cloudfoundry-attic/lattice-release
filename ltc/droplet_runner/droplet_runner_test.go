@@ -83,17 +83,19 @@ var _ = Describe("DropletRunner", func() {
 			Expect(fakeBlobBucket.PutReaderCallCount()).To(BeZero())
 		})
 
-		It("errors when file can be Stat'ed but not Opened", func() {
-			tmpFile, err := ioutil.TempFile(os.TempDir(), "stat")
-			Expect(err).ToNot(HaveOccurred())
+		// FIXME: This strategy doesn't work when run as root on CI.
+		//
+		// It("errors when file can be Stat'ed but not Opened", func() {
+		// 	tmpFile, err := ioutil.TempFile(os.TempDir(), "stat")
+		// 	Expect(err).ToNot(HaveOccurred())
 
-			Expect(os.Chmod(tmpFile.Name(), 0)).To(Succeed())
+		// 	Expect(os.Chmod(tmpFile.Name(), 0)).To(Succeed())
 
-			err = dropletRunner.UploadBits("droplet-name", tmpFile.Name())
+		// 	err = dropletRunner.UploadBits("droplet-name", tmpFile.Name())
 
-			Expect(err).To(HaveOccurred())
-			Expect(fakeBlobBucket.PutReaderCallCount()).To(BeZero())
-		})
+		// 	Expect(err).To(HaveOccurred())
+		// 	Expect(fakeBlobBucket.PutReaderCallCount()).To(BeZero())
+		// })
 	})
 
 })
