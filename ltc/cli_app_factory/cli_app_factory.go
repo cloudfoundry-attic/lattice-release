@@ -37,7 +37,8 @@ import (
 
 var (
 	nonTargetVerifiedCommandNames = map[string]struct{}{
-		config_command_factory.TargetCommandName: {},
+		config_command_factory.TargetCommandName:     {},
+		config_command_factory.TargetBlobCommandName: {},
 		"help": {},
 	}
 
@@ -170,6 +171,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		appExaminerCommandFactory.MakeStatusCommand(),
 		taskRunnerCommandFactory.MakeSubmitTaskCommand(),
 		configCommandFactory.MakeTargetCommand(),
+		configCommandFactory.MakeTargetBlobCommand(),
 		taskExaminerCommandFactory.MakeTaskCommand(),
 		taskRunnerCommandFactory.MakeDeleteTaskCommand(),
 		taskRunnerCommandFactory.MakeCancelTaskCommand(),

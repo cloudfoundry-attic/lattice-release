@@ -26,7 +26,6 @@ var _ = Describe("CommandFactory", func() {
 		stdinWriter        *io.PipeWriter
 		outputBuffer       *gbytes.Buffer
 		terminalUI         terminal.UI
-		targetCommand      cli.Command
 		config             *config_package.Config
 		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
 		fakeExitHandler    *fake_exit_handler.FakeExitHandler
@@ -44,6 +43,8 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("TargetCommand", func() {
+		var targetCommand cli.Command
+
 		verifyOldTargetStillSet := func() {
 			config.Load()
 			Expect(config.Receptor()).To(Equal("http://olduser:oldpass@receptor.oldtarget.com"))

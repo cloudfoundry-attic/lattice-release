@@ -67,6 +67,7 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 			CommandSubGroups: [][]cmdPresenter{
 				{
 					presentCommand("target"),
+					presentCommand("target-blob"),
 				},
 			},
 		}, {

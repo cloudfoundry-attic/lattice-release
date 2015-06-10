@@ -25,7 +25,7 @@ func NewConfigCommandFactory(config *config.Config, ui terminal.UI, targetVerifi
 }
 
 func (factory *ConfigCommandFactory) MakeTargetCommand() cli.Command {
-	var startCommand = cli.Command{
+	var targetCommand = cli.Command{
 		Name:        TargetCommandName,
 		Aliases:     []string{"ta"},
 		Usage:       "Targets a lattice cluster",
@@ -33,7 +33,7 @@ func (factory *ConfigCommandFactory) MakeTargetCommand() cli.Command {
 		Action:      factory.target,
 	}
 
-	return startCommand
+	return targetCommand
 }
 
 func (factory *ConfigCommandFactory) target(context *cli.Context) {

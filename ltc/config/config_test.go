@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"errors"
+	"net/http"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -9,10 +10,15 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
-var _ = Describe("config", func() {
+var _ = Describe("Config", func() {
+	var testConfig *config.Config
+
+	BeforeEach(func() {
+		testConfig = config.New(&fakePersister{})
+	})
+
 	Describe("Target", func() {
 		It("sets the target", func() {
-			testConfig := config.New(&fakePersister{})
 			testConfig.SetTarget("mynewapi.com")
 
 			Expect(testConfig.Target()).To(Equal("mynewapi.com"))
@@ -21,7 +27,6 @@ var _ = Describe("config", func() {
 
 	Describe("Username", func() {
 		It("sets the target", func() {
-			testConfig := config.New(&fakePersister{})
 			testConfig.SetLogin("ausername", "apassword")
 
 			Expect(testConfig.Username()).To(Equal("ausername"))
@@ -30,7 +35,6 @@ var _ = Describe("config", func() {
 
 	Describe("Receptor", func() {
 		It("returns the Receptor with a username and password", func() {
-			testConfig := config.New(&fakePersister{})
 			testConfig.SetTarget("mynewapi.com")
 			testConfig.SetLogin("testusername", "testpassword")
 
@@ -38,7 +42,6 @@ var _ = Describe("config", func() {
 		})
 
 		It("returns a Receptor without a username and password", func() {
-			testConfig := config.New(&fakePersister{})
 			testConfig.SetTarget("mynewapi.com")
 			testConfig.SetLogin("", "")
 
@@ -48,7 +51,6 @@ var _ = Describe("config", func() {
 
 	Describe("Loggregator", func() {
 		It("provides the loggregator doppler path", func() {
-			testConfig := config.New(&fakePersister{})
 			testConfig.SetTarget("mytestapi.com")
 
 			Expect(testConfig.Loggregator()).To(Equal("doppler.mytestapi.com"))
@@ -58,7 +60,7 @@ var _ = Describe("config", func() {
 	Describe("Save", func() {
 		It("Saves the target with the persistor", func() {
 			fakePersister := &fakePersister{}
-			testConfig := config.New(fakePersister)
+			testConfig = config.New(fakePersister)
 
 			testConfig.SetTarget("mynewapi.com")
 			testConfig.SetLogin("testusername", "testpassword")
@@ -71,7 +73,7 @@ var _ = Describe("config", func() {
 		})
 
 		It("returns errors from the persistor", func() {
-			testConfig := config.New(&fakePersister{err: errors.New("Error")})
+			testConfig = config.New(&fakePersister{err: errors.New("Error")})
 
 			err := testConfig.Save()
 
@@ -82,7 +84,7 @@ var _ = Describe("config", func() {
 	Describe("Load", func() {
 		It("loads the target, username, and password from the persister", func() {
 			fakePersister := &fakePersister{target: "mysavedapi.com", username: "saveduser", password: "password"}
-			testConfig := config.New(fakePersister)
+			testConfig = config.New(fakePersister)
 
 			testConfig.Load()
 
@@ -91,13 +93,88 @@ var _ = Describe("config", func() {
 		})
 
 		It("returns errors from loading the config", func() {
-			testConfig := config.New(&fakePersister{err: errors.New("Error")})
+			testConfig = config.New(&fakePersister{err: errors.New("Error")})
 
 			err := testConfig.Load()
 
 			Expect(err).To(MatchError("Error"))
 		})
 	})
+
+	Describe("TargetBlob", func() {
+		It("sets the blob target", func() {
+			testConfig.SetTargetBlob("s3-compatible-store", 7474, "NUYP3C_MBM-WDDWYKIUN", "Nb5vjT2V-ZX0O0s00xURSsg2Se0w-bmX40IQNg4==")
+
+			blobTarget := testConfig.BlobTarget()
+			Expect(blobTarget.TargetHost).To(Equal("s3-compatible-store"))
+			Expect(blobTarget.TargetPort).To(Equal(uint16(7474)))
+			Expect(blobTarget.AccessKey).To(Equal("NUYP3C_MBM-WDDWYKIUN"))
+			Expect(blobTarget.SecretKey).To(Equal("Nb5vjT2V-ZX0O0s00xURSsg2Se0w-bmX40IQNg4=="))
+		})
+
+		Describe("ProxyFunc", func() {
+			It("proxies the funk", func() {
+				testConfig.SetBlobTarget("s3-compatible-store", 7474, "NUYP3C_MBM-WDDWYKIUN", "Nb5vjT2V-ZX0O0s00xURSsg2Se0w-bmX40IQNg4==")
+
+				proxyFunc := testConfig.BlobTarget().Proxy()
+				Expect(proxyFunc).ToNot(BeNil())
+
+				proxyURL, err := proxyFunc(&http.Request{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(proxyURL.Host).To(Equal("s3-compatible-store:7474"))
+			})
+		})
+
+	})
+
+	Describe("BlobTargetInfo", func() {
+		var blobTargetInfo config.BlobTargetInfo
+
+		Describe("Proxy", func() {
+			It("returns the proxy func", func() {
+				blobTargetInfo = config.BlobTargetInfo{
+					TargetHost: "success",
+					TargetPort: 1818,
+				}
+
+				proxyURL, err := blobTargetInfo.Proxy()(&http.Request{})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(proxyURL.Host).To(Equal("success:1818"))
+			})
+			Context("when the target host is empty", func() {
+				It("returns an func that returns an error", func() {
+					blobTargetInfo = config.BlobTargetInfo{
+						TargetPort: 1818,
+					}
+
+					_, err := blobTargetInfo.Proxy()(&http.Request{})
+					Expect(err).To(MatchError("missing proxy host"))
+				})
+			})
+			Context("when the target port is zero", func() {
+				It("returns an func that returns an error", func() {
+					blobTargetInfo = config.BlobTargetInfo{
+						TargetHost: "success",
+					}
+
+					_, err := blobTargetInfo.Proxy()(&http.Request{})
+					Expect(err).To(MatchError("missing proxy port"))
+				})
+			})
+			Context("when the url is malformed", func() {
+				It("returns a func that returns an error", func() {
+					blobTargetInfo = config.BlobTargetInfo{
+						TargetHost: "succ%2Fess",
+						TargetPort: 1818,
+					}
+
+					_, err := blobTargetInfo.Proxy()(&http.Request{})
+					Expect(err).To(MatchError(ContainSubstring("invalid proxy address")))
+				})
+			})
+		})
+	})
+
 })
 
 type fakePersister struct {

@@ -1,13 +1,25 @@
 package config
 
 import (
+	"fmt"
+	"net/http"
+	"net/url"
+
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 )
 
 type Data struct {
-	Target   string
-	Username string
-	Password string
+	Target     string         `json:"target"`
+	Username   string         `json:"username,omitempty"`
+	Password   string         `json:"password,omitempty"`
+	BlobTarget BlobTargetInfo `json:"blob_target_info"`
+}
+
+type BlobTargetInfo struct {
+	TargetHost string `json:"host,omitempty"`
+	TargetPort uint16 `json:"port,omitempty"`
+	AccessKey  string `json:"access_key,omitempty"`
+	SecretKey  string `json:"secret_key,omitempty"`
 }
 
 type Config struct {
@@ -16,8 +28,7 @@ type Config struct {
 }
 
 func New(persister persister.Persister) *Config {
-	config := &Config{persister: persister, data: &Data{}}
-	return config
+	return &Config{persister: persister, data: &Data{}}
 }
 
 func (c *Config) SetTarget(target string) {
@@ -55,4 +66,43 @@ func (c *Config) Load() error {
 
 func (c *Config) Save() error {
 	return c.persister.Save(c.data)
+}
+
+func (c *Config) SetTargetBlob(host string, port uint16, accessKey, secretKey string) {
+	c.data.BlobTarget.TargetHost = host
+	c.data.BlobTarget.TargetPort = port
+	c.data.BlobTarget.AccessKey = accessKey
+	c.data.BlobTarget.SecretKey = secretKey
+}
+
+func (c *Config) SetBlobTarget(host string, port uint16, accessKey, secretKey string) {
+	c.data.BlobTarget.TargetHost = host
+	c.data.BlobTarget.TargetPort = port
+	c.data.BlobTarget.AccessKey = accessKey
+	c.data.BlobTarget.SecretKey = secretKey
+}
+
+func (c *Config) BlobTarget() BlobTargetInfo {
+	return c.data.BlobTarget
+}
+
+func (bti BlobTargetInfo) Proxy() func(req *http.Request) (*url.URL, error) {
+	if bti.TargetHost == "" {
+		return func(*http.Request) (*url.URL, error) {
+			return nil, fmt.Errorf("missing proxy host")
+		}
+	}
+	if bti.TargetPort == 0 {
+		return func(*http.Request) (*url.URL, error) {
+			return nil, fmt.Errorf("missing proxy port")
+		}
+	}
+	return func(req *http.Request) (*url.URL, error) {
+		proxy := fmt.Sprintf("http://%s:%d", bti.TargetHost, bti.TargetPort)
+		proxyURL, err := url.Parse(proxy)
+		if err != nil {
+			return nil, fmt.Errorf("invalid proxy address %q: %v", proxy, err)
+		}
+		return proxyURL, nil
+	}
 }
