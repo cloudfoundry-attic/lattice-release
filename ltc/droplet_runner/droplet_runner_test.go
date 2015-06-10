@@ -29,7 +29,7 @@ var _ = Describe("DropletRunner", func() {
 	})
 
 	Describe("UploadBits", func() {
-		Context("when the passed file exists", func() {
+		Context("when the archive path is a file and exists", func() {
 			var (
 				tmpFile *os.File
 				err     error
@@ -49,7 +49,7 @@ var _ = Describe("DropletRunner", func() {
 			})
 
 			It("uploads the file to the bucket", func() {
-				err = dropletRunner.UploadBits("droplet-name", tmpFile)
+				err = dropletRunner.UploadBits("droplet-name", tmpFile.Name())
 
 				Expect(err).NotTo(HaveOccurred())
 
@@ -58,7 +58,7 @@ var _ = Describe("DropletRunner", func() {
 				Expect(path).To(Equal("droplet-name"))
 				Expect(reader).ToNot(BeNil())
 				Expect(length).ToNot(BeZero())
-				Expect(contType).To(Equal(blob_store.TarContentType))
+				Expect(contType).To(Equal(blob_store.DropletContentType))
 				Expect(perm).To(Equal(blob_store.DefaultPrivilege))
 				Expect(options).To(BeZero())
 			})
@@ -66,7 +66,7 @@ var _ = Describe("DropletRunner", func() {
 			It("errors when Bucket.PutReader fails", func() {
 				fakeBlobBucket.PutReaderReturns(errors.New("winter is coming yo"))
 
-				err = dropletRunner.UploadBits("droplet-name", tmpFile)
+				err = dropletRunner.UploadBits("droplet-name", tmpFile.Name())
 
 				Expect(err).To(MatchError("winter is coming yo"))
 				Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(1))
@@ -77,7 +77,19 @@ var _ = Describe("DropletRunner", func() {
 			// name doesn't match file descriptor
 			osFile := os.NewFile(os.Stdout.Fd(), "new-file-yo")
 
-			err := dropletRunner.UploadBits("droplet-name", osFile)
+			err := dropletRunner.UploadBits("droplet-name", osFile.Name())
+
+			Expect(err).To(HaveOccurred())
+			Expect(fakeBlobBucket.PutReaderCallCount()).To(BeZero())
+		})
+
+		It("errors when file can be Stat'ed but not Opened", func() {
+			tmpFile, err := ioutil.TempFile(os.TempDir(), "stat")
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(os.Chmod(tmpFile.Name(), 0)).To(Succeed())
+
+			err = dropletRunner.UploadBits("droplet-name", tmpFile.Name())
 
 			Expect(err).To(HaveOccurred())
 			Expect(fakeBlobBucket.PutReaderCallCount()).To(BeZero())

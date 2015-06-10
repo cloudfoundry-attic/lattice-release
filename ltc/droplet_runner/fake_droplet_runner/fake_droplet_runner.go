@@ -2,33 +2,32 @@
 package fake_droplet_runner
 
 import (
-	"os"
 	"sync"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 )
 
 type FakeDropletRunner struct {
-	UploadBitsStub        func(dropletName string, uploadFile *os.File) error
+	UploadBitsStub        func(dropletName, uploadPath string) error
 	uploadBitsMutex       sync.RWMutex
 	uploadBitsArgsForCall []struct {
 		dropletName string
-		uploadFile  *os.File
+		uploadPath  string
 	}
 	uploadBitsReturns struct {
 		result1 error
 	}
 }
 
-func (fake *FakeDropletRunner) UploadBits(dropletName string, uploadFile *os.File) error {
+func (fake *FakeDropletRunner) UploadBits(dropletName string, uploadPath string) error {
 	fake.uploadBitsMutex.Lock()
 	fake.uploadBitsArgsForCall = append(fake.uploadBitsArgsForCall, struct {
 		dropletName string
-		uploadFile  *os.File
-	}{dropletName, uploadFile})
+		uploadPath  string
+	}{dropletName, uploadPath})
 	fake.uploadBitsMutex.Unlock()
 	if fake.UploadBitsStub != nil {
-		return fake.UploadBitsStub(dropletName, uploadFile)
+		return fake.UploadBitsStub(dropletName, uploadPath)
 	} else {
 		return fake.uploadBitsReturns.result1
 	}
@@ -40,10 +39,10 @@ func (fake *FakeDropletRunner) UploadBitsCallCount() int {
 	return len(fake.uploadBitsArgsForCall)
 }
 
-func (fake *FakeDropletRunner) UploadBitsArgsForCall(i int) (string, *os.File) {
+func (fake *FakeDropletRunner) UploadBitsArgsForCall(i int) (string, string) {
 	fake.uploadBitsMutex.RLock()
 	defer fake.uploadBitsMutex.RUnlock()
-	return fake.uploadBitsArgsForCall[i].dropletName, fake.uploadBitsArgsForCall[i].uploadFile
+	return fake.uploadBitsArgsForCall[i].dropletName, fake.uploadBitsArgsForCall[i].uploadPath
 }
 
 func (fake *FakeDropletRunner) UploadBitsReturns(result1 error) {

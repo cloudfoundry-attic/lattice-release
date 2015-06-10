@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	BucketName     = "condenser-bucket"
-	TarContentType = "application/x-tar"
+	BucketName         = "condenser-bucket"
+	DropletContentType = "application/octet-stream"
 )
 
 var (

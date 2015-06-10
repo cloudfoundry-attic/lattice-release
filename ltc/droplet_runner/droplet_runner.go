@@ -9,7 +9,7 @@ import (
 
 //go:generate counterfeiter -o fake_droplet_runner/fake_droplet_runner.go . DropletRunner
 type DropletRunner interface {
-	UploadBits(dropletName string, uploadFile *os.File) error
+	UploadBits(dropletName, uploadPath string) error
 }
 
 type dropletRunner struct {
@@ -24,12 +24,16 @@ func New(blobStore blob_store.BlobStore, blobBucket blob_store.BlobBucket) *drop
 	}
 }
 
-func (dr *dropletRunner) UploadBits(dropletName string, uploadFile *os.File) error {
-	fileInfo, err := os.Stat(uploadFile.Name())
+func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
+	fileInfo, err := os.Stat(uploadPath)
 	if err != nil {
 		return err
 	}
 
-	// TODO: figure out proper mime content-type
-	return dr.blobBucket.PutReader(dropletName, uploadFile, fileInfo.Size(), blob_store.TarContentType, blob_store.DefaultPrivilege, s3.Options{})
+	uploadFile, err := os.Open(uploadPath)
+	if err != nil {
+		return err
+	}
+
+	return dr.blobBucket.PutReader(dropletName, uploadFile, fileInfo.Size(), blob_store.DropletContentType, blob_store.DefaultPrivilege, s3.Options{})
 }
