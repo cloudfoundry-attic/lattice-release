@@ -4,14 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
+	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
@@ -23,12 +28,15 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry/noaa"
 	"github.com/codegangsta/cli"
+	"github.com/goamz/goamz/aws"
+	"github.com/goamz/goamz/s3"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 
 	app_examiner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory"
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	config_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
+	droplet_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
 	integration_test_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/integration_test/command_factory"
 	logs_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
 	task_examiner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/command_factory"
@@ -50,6 +58,8 @@ var (
 			showAppHelp(context.App.Writer, appHelpTemplate(), context.App)
 		}
 	}
+
+	awsRegion = aws.Region{Name: "riak-region-1", S3Endpoint: "http://s3.amazonaws.com"}
 )
 
 const (
@@ -151,6 +161,28 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	testRunner := integration_test.NewIntegrationTestRunner(config, ltcConfigRoot)
 	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner)
 
+	s3Auth := aws.Auth{
+		AccessKey: config.BlobTarget().AccessKey,
+		SecretKey: config.BlobTarget().SecretKey,
+	}
+
+	s3S3 := s3.New(s3Auth, awsRegion, &http.Client{
+		Transport: &http.Transport{
+			Proxy: config.BlobTarget().Proxy(),
+			Dial: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: 10 * time.Second,
+		},
+	})
+
+	blobStore := blob_store.NewBlobStore(config, s3S3)
+	blobBucket := blobStore.Bucket(blob_store.BucketName)
+
+	dropletRunner := droplet_runner.New(blobStore, blobBucket)
+	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(dropletRunner, ui, exitHandler)
+
 	helpCommand := cli.Command{
 		Name:        "help",
 		Aliases:     []string{"h"},
@@ -178,6 +210,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		integrationTestCommandFactory.MakeIntegrationTestCommand(),
 		appRunnerCommandFactory.MakeUpdateRoutesCommand(),
 		appExaminerCommandFactory.MakeVisualizeCommand(),
+		dropletRunnerCommandFactory.MakeUploadBitsCommand(),
 		helpCommand,
 	}
 }

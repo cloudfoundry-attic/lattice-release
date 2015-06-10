@@ -112,6 +112,7 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 			CommandSubGroups: [][]cmdPresenter{
 				{
 					presentCommand("submit-lrp"),
+					presentCommand("upload-bits"),
 				},
 			},
 		}, {
