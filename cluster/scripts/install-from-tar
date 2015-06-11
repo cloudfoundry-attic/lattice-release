@@ -60,18 +60,27 @@ condense_it() {
     riak-cs restart && riak-cs ping
     stanchion restart && stanchion ping
 
-    ## download the cflinuxfs2 rootfs tarball
-    wget http://cf-runtime-stacks.s3.amazonaws.com/cflinuxfs2.dev.tgz --quiet -O cflinuxfs2.tar.gz && echo "Downloaded RootFS!"
-
-    ## unpack to some fixed folder
-    mkdir -p /var/lattice/rootfs_cflinuxfs2
-    pushd /var/lattice/rootfs_cflinuxfs2
-        tar xzf $OLDPWD/cflinuxfs2.tar.gz
-    popd
+    stage_cflinuxfs2_rootfs
 
     ## output keys to console
     echo "ACCESS_KEY = " $access_key
     echo "SECRET_KEY = " $secret_key
+}
+
+stage_cflinuxfs2_rootfs() {
+    set -x
+
+    ## download the cflinuxfs2 rootfs tarball
+    wget http://cf-runtime-stacks.s3.amazonaws.com/cflinuxfs2.dev.tgz --quiet -O cflinuxfs2.tar.gz && echo "Downloaded RootFS!"
+
+    ## unpack to some fixed folder
+    mkdir -p /var/lattice/rootfs/cflinuxfs2
+    pushd /var/lattice/rootfs/cflinuxfs2
+        tar xzf $OLDPWD/cflinuxfs2.tar.gz
+    popd
+
+    ## since args depend on folder existing
+    restart rep
 }
 
 COMPONENT_TO_INSTALL=$1
@@ -120,6 +129,9 @@ fi
 
 # do the condensing
 export $(cat /var/lattice/setup/lattice-environment)
-if [[ ! -z "$CONDENSER_ON" ]]; then
+if [[ -n "$CONDENSER_ON" ]]; then
     condense_it
+elif [[ -n "$DOWNLOAD_ROOTFS" ]]; then
+    stage_cflinuxfs2_rootfs
 fi
+
