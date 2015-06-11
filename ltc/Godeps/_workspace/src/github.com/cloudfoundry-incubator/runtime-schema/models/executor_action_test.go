@@ -659,4 +659,115 @@ var _ = Describe("Actions", func() {
 			}
 		})
 	})
+
+	Describe("Codependent", func() {
+		itSerializesAndDeserializes(
+			`{
+					"actions": [
+						{
+							"download": {
+								"cache_key": "elephant",
+								"to": "local_location",
+								"from": "web_location"
+							}
+						},
+						{
+							"run": {
+								"resource_limits": {},
+								"env": null,
+								"path": "echo",
+								"args": null
+							}
+						}
+					]
+			}`,
+			models.Codependent(
+				&models.DownloadAction{
+					From:     "web_location",
+					To:       "local_location",
+					CacheKey: "elephant",
+				},
+				&models.RunAction{Path: "echo"},
+			),
+		)
+
+		itDeserializes(
+			`{}`,
+			&models.CodependentAction{},
+		)
+
+		itSerializesAndDeserializes(
+			`{
+				"actions": null
+			}`,
+			&models.CodependentAction{},
+		)
+
+		itSerializesAndDeserializes(
+			`{
+				"actions": []
+			}`,
+			&models.CodependentAction{
+				Actions: []models.Action{},
+			},
+		)
+
+		itSerializesAndDeserializes(
+			`{
+				"actions": [null]
+			}`,
+			&models.CodependentAction{
+				Actions: []models.Action{
+					nil,
+				},
+			},
+		)
+
+		Describe("Validate", func() {
+			var codependentAction models.CodependentAction
+
+			Context("when the action has 'actions' as a slice of valid actions", func() {
+				It("is valid", func() {
+					codependentAction = models.CodependentAction{
+						Actions: []models.Action{
+							&models.UploadAction{
+								From: "local_location",
+								To:   "web_location",
+							},
+						},
+					}
+
+					err := codependentAction.Validate()
+					Expect(err).NotTo(HaveOccurred())
+				})
+			})
+
+			for _, testCase := range []ValidatorErrorCase{
+				{
+					"actions",
+					models.CodependentAction{},
+				},
+				{
+					"action at index 0",
+					models.CodependentAction{
+						Actions: []models.Action{
+							nil,
+						},
+					},
+				},
+				{
+					"from",
+					models.CodependentAction{
+						Actions: []models.Action{
+							&models.UploadAction{
+								To: "web_location",
+							},
+						},
+					},
+				},
+			} {
+				testValidatorErrorCase(testCase)
+			}
+		})
+	})
 })

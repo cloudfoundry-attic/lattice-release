@@ -21,6 +21,7 @@ const (
 	ActionTypeTry                     = "try"
 	ActionTypeParallel                = "parallel"
 	ActionTypeSerial                  = "serial"
+	ActionTypeCodependent             = "codependent"
 )
 
 type Action interface {
@@ -349,6 +350,78 @@ type mParallelAction struct {
 	LogSource string `json:"log_source,omitempty"`
 }
 
+type CodependentAction struct {
+	Actions []Action
+
+	LogSource string
+}
+
+func (a *CodependentAction) ActionType() ActionType {
+	return ActionTypeCodependent
+}
+
+func (a CodependentAction) Validate() error {
+	var validationError ValidationError
+
+	if a.Actions == nil {
+		validationError = validationError.Append(ErrInvalidField{"actions"})
+	} else {
+		for index, action := range a.Actions {
+			if action == nil {
+				errorString := fmt.Sprintf("action at index %d", index)
+				validationError = validationError.Append(ErrInvalidField{errorString})
+			} else {
+				err := action.Validate()
+				if err != nil {
+					validationError = validationError.Append(err)
+				}
+			}
+		}
+	}
+
+	if !validationError.Empty() {
+		return validationError
+	}
+
+	return nil
+}
+
+func (a *CodependentAction) MarshalJSON() ([]byte, error) {
+	mActions, err := marshalActions(a.Actions)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(&mCodependentAction{
+		Actions:   mActions,
+		LogSource: a.LogSource,
+	})
+}
+
+func (a *CodependentAction) UnmarshalJSON(data []byte) error {
+	m := mCodependentAction{}
+	err := json.Unmarshal(data, &m)
+	if err != nil {
+		return err
+	}
+
+	actions, err := unmarshalActions(m.Actions)
+	if err != nil {
+		return err
+	}
+
+	a.Actions = actions
+	a.LogSource = m.LogSource
+
+	return nil
+}
+
+type mCodependentAction struct {
+	Actions []*json.RawMessage `json:"actions"`
+
+	LogSource string `json:"log_source,omitempty"`
+}
+
 type SerialAction struct {
 	Actions []Action
 
@@ -522,6 +595,12 @@ func Parallel(actions ...Action) *ParallelAction {
 	}
 }
 
+func Codependent(actions ...Action) *CodependentAction {
+	return &CodependentAction{
+		Actions: actions,
+	}
+}
+
 func Serial(actions ...Action) *SerialAction {
 	return &SerialAction{
 		Actions: actions,
@@ -537,6 +616,7 @@ var actionMap = map[ActionType]Action{
 	ActionTypeTry:          &TryAction{},
 	ActionTypeParallel:     &ParallelAction{},
 	ActionTypeSerial:       &SerialAction{},
+	ActionTypeCodependent:  &CodependentAction{},
 }
 
 func marshalActions(actions []Action) ([]*json.RawMessage, error) {

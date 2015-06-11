@@ -8,6 +8,7 @@ The following actions are available.  The details are presented below:
 - [`DownloadAction`](#downloadaction): fetches an archive (`.tgz` or `.zip`) and extracts it into the container
 - [`UploadAction`](#uploadaction): uploads a single file, in the container, to a URL via POST
 - [`ParallelAction`](#parallelaction): runs multiple actions in parallel.
+- [`CodependentAction`](#codependentaction): runs multiple actions in parallel and exits all actions after any action exits
 - [`SerialAction`](#serialaction): runs multiple actions in order.
 - [`EmitProgressAction`](#emitprogressaction): wraps another action and logs messages when the wrapped action begins and ends.
 - [`TimeoutAction`](#timeoutaction): fails if the wrapped action does not exit within a time interval.
@@ -174,6 +175,31 @@ If provided, logs emitted by this action and its subactions will be tagged with 
 An array of embedded actions to run.  The actions are run in parallel.
 
 The parallel action returns after all actions have returned.  The parallel action errors if any of the actions error, returning the first error it sees.
+
+#### `log_source` [optional]
+
+If provided, logs emitted by this action and its subactions will be tagged with the provided `log_source`.  Otherwise the container-level `log_source` is used.
+
+## `CodependentAction`
+
+```
+{
+    "codependent": {
+        "actions": [
+            { ...an embedded action... },
+            { ...an embedded action... },
+            ...
+        ]
+        "log_source": "some-log-source"
+    }
+}
+```
+
+#### `actions` [required]
+
+An array of embedded actions to run.  The actions are run in parallel.
+
+The codependent action returns after any action exits.  The codependent action always errors as it is intended to run indefinitely.  
 
 #### `log_source` [optional]
 
