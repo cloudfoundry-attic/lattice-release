@@ -1,5 +1,5 @@
 module "lattice-openstack" {
-    source = "github.com/cloudfoundry-incubator/lattice//terraform//openstack?ref=v0.2.5-36-gf6e1426"
+    source = "github.com/cloudfoundry-incubator/lattice//terraform//openstack?ref=v0.2.5-40-g352417e"
 
     # OpenStack User Account
     openstack_access_key = "<CHANGE-ME>"
