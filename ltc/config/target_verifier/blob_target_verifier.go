@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	awsRegion = aws.Region{Name: "faux-region-1", S3Endpoint: "http://s3.amazonaws.com"}
+	awsRegion = aws.Region{Name: "riak-region-1", S3Endpoint: "http://s3.amazonaws.com"}
 )
 
 func (t *targetVerifier) VerifyBlobTarget(host string, port uint16, accessKey, secretKey string) (bool, bool, error) {

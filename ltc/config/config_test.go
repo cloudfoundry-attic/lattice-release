@@ -103,7 +103,7 @@ var _ = Describe("Config", func() {
 
 	Describe("TargetBlob", func() {
 		It("sets the blob target", func() {
-			testConfig.SetTargetBlob("s3-compatible-store", 7474, "NUYP3C_MBM-WDDWYKIUN", "Nb5vjT2V-ZX0O0s00xURSsg2Se0w-bmX40IQNg4==")
+			testConfig.SetBlobTarget("s3-compatible-store", 7474, "NUYP3C_MBM-WDDWYKIUN", "Nb5vjT2V-ZX0O0s00xURSsg2Se0w-bmX40IQNg4==")
 
 			blobTarget := testConfig.BlobTarget()
 			Expect(blobTarget.TargetHost).To(Equal("s3-compatible-store"))

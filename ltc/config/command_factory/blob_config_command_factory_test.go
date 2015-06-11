@@ -49,7 +49,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("displaying the blob target", func() {
 			It("outputs the current target", func() {
-				config.SetTargetBlob("192.168.11.11", 8181, "datkeyyo", "supersecretJKJK")
+				config.SetBlobTarget("192.168.11.11", 8181, "datkeyyo", "supersecretJKJK")
 				config.Save()
 
 				test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{})
@@ -60,7 +60,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("alerts the user if no target is set", func() {
-				config.SetTargetBlob("", 0, "", "")
+				config.SetBlobTarget("", 0, "", "")
 				config.Save()
 
 				test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{})
