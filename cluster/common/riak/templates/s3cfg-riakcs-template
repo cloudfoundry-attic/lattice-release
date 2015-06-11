@@ -1,0 +1,7 @@
+[default]
+access_key = %%ACCESS_KEY%%
+proxy_host = %%PROXY_HOST%%
+proxy_port = %%PROXY_PORT%%
+secret_key = %%SECRET_KEY%%
+signature_v2 = True
+use_https = False

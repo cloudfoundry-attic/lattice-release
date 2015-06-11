@@ -44,9 +44,8 @@ condense_it() {
         --data '{"email":"admin@lattice.cf", "name":"admin_user"}' > riak-admin_user.json
 
     ## parse json
-    ## TODO: strip out quotes
-    access_key=$(jq '.key_id'  riak-admin_user.json)
-    secret_key=$(jq '.key_secret'  riak-admin_user.json)
+    access_key=$(jq -r '.key_id'  riak-admin_user.json)
+    secret_key=$(jq -r '.key_secret'  riak-admin_user.json)
 
     ## disable anon, set access_key / secret_key in riak-cs.conf 
     sed "s/%%ANONYMOUS_CONFIG%%/anonymous_user_creation = off/" /tmp/lattice-build/common/riak/templates/riak-cs.conf-template |
@@ -60,11 +59,20 @@ condense_it() {
     riak-cs restart && riak-cs ping
     stanchion restart && stanchion ping
 
+    ## create default condenser-bucket bucket
+    apt-get install s3cmd
+    sed "s/%%ACCESS_KEY%%/$access_key/" /tmp/lattice-build/common/riak/templates/s3cfg-riakcs-template |
+        sed "s/%%SECRET_KEY%%/$secret_key/" |
+        sed "s/%%PROXY_HOST%%/localhost/" |
+        sed "s/%%PROXY_PORT%%/8181/" > /tmp/s3cfg-riakcs
+    s3cmd -c /tmp/s3cfg-riakcs mb s3://condenser-bucket
+
     stage_cflinuxfs2_rootfs
 
     ## output keys to console
     echo "ACCESS_KEY = " $access_key
     echo "SECRET_KEY = " $secret_key
+    echo "BUCKET_NAME = condenser-bucket" 
 }
 
 stage_cflinuxfs2_rootfs() {
