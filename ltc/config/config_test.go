@@ -103,28 +103,15 @@ var _ = Describe("Config", func() {
 
 	Describe("TargetBlob", func() {
 		It("sets the blob target", func() {
-			testConfig.SetBlobTarget("s3-compatible-store", 7474, "NUYP3C_MBM-WDDWYKIUN", "Nb5vjT2V-ZX0O0s00xURSsg2Se0w-bmX40IQNg4==")
+			testConfig.SetBlobTarget("s3-compatible-store", 7474, "NUYP3C_MBM-WDDWYKIUN", "Nb5vjT2V-ZX0O0s00xURSsg2Se0w-bmX40IQNg4==", "the-bucket")
 
 			blobTarget := testConfig.BlobTarget()
 			Expect(blobTarget.TargetHost).To(Equal("s3-compatible-store"))
 			Expect(blobTarget.TargetPort).To(Equal(uint16(7474)))
 			Expect(blobTarget.AccessKey).To(Equal("NUYP3C_MBM-WDDWYKIUN"))
 			Expect(blobTarget.SecretKey).To(Equal("Nb5vjT2V-ZX0O0s00xURSsg2Se0w-bmX40IQNg4=="))
+			Expect(blobTarget.BucketName).To(Equal("the-bucket"))
 		})
-
-		Describe("ProxyFunc", func() {
-			It("proxies the funk", func() {
-				testConfig.SetBlobTarget("s3-compatible-store", 7474, "NUYP3C_MBM-WDDWYKIUN", "Nb5vjT2V-ZX0O0s00xURSsg2Se0w-bmX40IQNg4==")
-
-				proxyFunc := testConfig.BlobTarget().Proxy()
-				Expect(proxyFunc).ToNot(BeNil())
-
-				proxyURL, err := proxyFunc(&http.Request{})
-				Expect(err).NotTo(HaveOccurred())
-				Expect(proxyURL.Host).To(Equal("s3-compatible-store:7474"))
-			})
-		})
-
 	})
 
 	Describe("BlobTargetInfo", func() {

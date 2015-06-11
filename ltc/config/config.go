@@ -20,6 +20,7 @@ type BlobTargetInfo struct {
 	TargetPort uint16 `json:"port,omitempty"`
 	AccessKey  string `json:"access_key,omitempty"`
 	SecretKey  string `json:"secret_key,omitempty"`
+	BucketName string `json:"bucket_name,omitempty"`
 }
 
 type Config struct {
@@ -68,11 +69,12 @@ func (c *Config) Save() error {
 	return c.persister.Save(c.data)
 }
 
-func (c *Config) SetBlobTarget(host string, port uint16, accessKey, secretKey string) {
+func (c *Config) SetBlobTarget(host string, port uint16, accessKey, secretKey, bucketName string) {
 	c.data.BlobTarget.TargetHost = host
 	c.data.BlobTarget.TargetPort = port
 	c.data.BlobTarget.AccessKey = accessKey
 	c.data.BlobTarget.SecretKey = secretKey
+	c.data.BlobTarget.BucketName = bucketName
 }
 
 func (c *Config) BlobTarget() BlobTargetInfo {

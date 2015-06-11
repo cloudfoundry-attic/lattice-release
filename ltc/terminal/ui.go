@@ -14,6 +14,7 @@ type UI interface {
 	password_reader.PasswordReader
 
 	Prompt(promptText string, args ...interface{}) string
+	PromptWithDefault(promptText, defaultValue string, args ...interface{}) string
 	Say(message string)
 	SayIncorrectUsage(message string)
 	SayLine(message string)
@@ -36,11 +37,25 @@ func NewUI(input io.Reader, output io.Writer, passwordReader password_reader.Pas
 
 func (t *terminalUI) Prompt(promptText string, args ...interface{}) (answer string) {
 	reader := bufio.NewReader(t)
-	fmt.Fprintf(t.Writer, promptText, args...)
+	fmt.Fprintf(t.Writer, promptText+": ", args...)
 
 	result, _ := reader.ReadString('\n')
 
 	return strings.TrimSuffix(result, "\n")
+}
+
+func (t *terminalUI) PromptWithDefault(promptText, defaultValue string, args ...interface{}) (answer string) {
+	reader := bufio.NewReader(t)
+	fmt.Fprintf(t.Writer, promptText+fmt.Sprintf(" [%s]: ", defaultValue), args...)
+
+	result, _ := reader.ReadString('\n')
+	result = strings.TrimSuffix(result, "\n")
+
+	if result == "" {
+		return defaultValue
+	}
+
+	return result
 }
 
 func (t *terminalUI) Say(message string) {

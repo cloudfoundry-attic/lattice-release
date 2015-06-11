@@ -144,7 +144,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Api Location Set"))
 
 				Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
-				Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
+				Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password"))
 
 				Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(2))
 				Expect(fakeTargetVerifier.VerifyTargetArgsForCall(0)).To(Equal("http://receptor.myapi.com"))
@@ -170,7 +170,7 @@ var _ = Describe("CommandFactory", func() {
 					Eventually(commandFinishChan).Should(BeClosed())
 
 					Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
-					Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
+					Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password"))
 
 					Expect(outputBuffer).To(test_helpers.Say("Could not authorize target."))
 				})
@@ -185,7 +185,7 @@ var _ = Describe("CommandFactory", func() {
 					Eventually(commandFinishChan).Should(BeClosed())
 
 					Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
-					Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
+					Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password"))
 
 					Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
 				})

@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
-	"github.com/goamz/goamz/s3"
 )
 
 type FakeBlobStore struct {
@@ -16,12 +15,6 @@ type FakeBlobStore struct {
 	}
 	bucketReturns struct {
 		result1 blob_store.BlobBucket
-	}
-	S3EndpointStub        func() *s3.S3
-	s3EndpointMutex       sync.RWMutex
-	s3EndpointArgsForCall []struct{}
-	s3EndpointReturns struct {
-		result1 *s3.S3
 	}
 }
 
@@ -54,30 +47,6 @@ func (fake *FakeBlobStore) BucketReturns(result1 blob_store.BlobBucket) {
 	fake.BucketStub = nil
 	fake.bucketReturns = struct {
 		result1 blob_store.BlobBucket
-	}{result1}
-}
-
-func (fake *FakeBlobStore) S3Endpoint() *s3.S3 {
-	fake.s3EndpointMutex.Lock()
-	fake.s3EndpointArgsForCall = append(fake.s3EndpointArgsForCall, struct{}{})
-	fake.s3EndpointMutex.Unlock()
-	if fake.S3EndpointStub != nil {
-		return fake.S3EndpointStub()
-	} else {
-		return fake.s3EndpointReturns.result1
-	}
-}
-
-func (fake *FakeBlobStore) S3EndpointCallCount() int {
-	fake.s3EndpointMutex.RLock()
-	defer fake.s3EndpointMutex.RUnlock()
-	return len(fake.s3EndpointArgsForCall)
-}
-
-func (fake *FakeBlobStore) S3EndpointReturns(result1 *s3.S3) {
-	fake.S3EndpointStub = nil
-	fake.s3EndpointReturns = struct {
-		result1 *s3.S3
 	}{result1}
 }
 

@@ -49,7 +49,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("displaying the blob target", func() {
 			It("outputs the current target", func() {
-				config.SetBlobTarget("192.168.11.11", 8181, "datkeyyo", "supersecretJKJK")
+				config.SetBlobTarget("192.168.11.11", 8181, "datkeyyo", "supersecretJKJK", "bucket")
 				config.Save()
 
 				test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{})
@@ -57,10 +57,11 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("Blob Target:\t192.168.11.11:8181\n"))
 				Expect(outputBuffer).To(test_helpers.Say("Access Key:\tdatkeyyo"))
 				Expect(outputBuffer).To(test_helpers.Say("Secret Key:\tsupersecretJKJK"))
+				Expect(outputBuffer).To(test_helpers.Say("Bucket Name:\tbucket"))
 			})
 
 			It("alerts the user if no target is set", func() {
-				config.SetBlobTarget("", 0, "", "")
+				config.SetBlobTarget("", 0, "", "", "")
 				config.Save()
 
 				test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{})
@@ -71,7 +72,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("setting the blob target", func() {
 			It("sets the blob target and credentials", func() {
-				fakeTargetVerifier.VerifyBlobTargetReturns(true, true, nil)
+				fakeTargetVerifier.VerifyBlobTargetReturns(true, nil)
 
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8181"})
 
@@ -79,15 +80,48 @@ var _ = Describe("CommandFactory", func() {
 				stdinWriter.Write([]byte("yaykey\n"))
 				Eventually(outputBuffer).Should(test_helpers.Say("Secret Key: "))
 				stdinWriter.Write([]byte("superserial\n"))
+				Eventually(outputBuffer).Should(test_helpers.Say("Bucket Name [condenser-bucket]: "))
+				stdinWriter.Write([]byte("bhuket\n"))
 
 				Eventually(commandFinishChan).Should(BeClosed())
 
 				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
-				host, port, accessKey, secretKey := fakeTargetVerifier.VerifyBlobTargetArgsForCall(0)
+				host, port, accessKey, secretKey, bucketName := fakeTargetVerifier.VerifyBlobTargetArgsForCall(0)
 				Expect(host).To(Equal("192.168.11.11"))
 				Expect(port).To(Equal(uint16(8181)))
 				Expect(accessKey).To(Equal("yaykey"))
 				Expect(secretKey).To(Equal("superserial"))
+				Expect(bucketName).To(Equal("bhuket"))
+
+				blobTarget := config.BlobTarget()
+				Expect(outputBuffer).To(test_helpers.Say("Blob Location Set"))
+				Expect(blobTarget.TargetHost).To(Equal("192.168.11.11"))
+				Expect(blobTarget.TargetPort).To(Equal(uint16(8181)))
+				Expect(blobTarget.AccessKey).To(Equal("yaykey"))
+				Expect(blobTarget.SecretKey).To(Equal("superserial"))
+			})
+
+			It("sets the blob target and credentials using the default bucket name", func() {
+				fakeTargetVerifier.VerifyBlobTargetReturns(true, nil)
+
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8181"})
+
+				Eventually(outputBuffer).Should(test_helpers.Say("Access Key: "))
+				stdinWriter.Write([]byte("yaykey\n"))
+				Eventually(outputBuffer).Should(test_helpers.Say("Secret Key: "))
+				stdinWriter.Write([]byte("superserial\n"))
+				Eventually(outputBuffer).Should(test_helpers.Say("Bucket Name [condenser-bucket]: "))
+				stdinWriter.Write([]byte("\n"))
+
+				Eventually(commandFinishChan).Should(BeClosed())
+
+				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
+				host, port, accessKey, secretKey, bucketName := fakeTargetVerifier.VerifyBlobTargetArgsForCall(0)
+				Expect(host).To(Equal("192.168.11.11"))
+				Expect(port).To(Equal(uint16(8181)))
+				Expect(accessKey).To(Equal("yaykey"))
+				Expect(secretKey).To(Equal("superserial"))
+				Expect(bucketName).To(Equal("condenser-bucket"))
 
 				blobTarget := config.BlobTarget()
 				Expect(outputBuffer).To(test_helpers.Say("Blob Location Set"))
@@ -134,50 +168,17 @@ var _ = Describe("CommandFactory", func() {
 					Expect(blobTarget.TargetPort).To(Equal(uint16(8989)))
 					Expect(blobTarget.AccessKey).To(Equal("original-key"))
 					Expect(blobTarget.SecretKey).To(Equal("original-secret"))
+					Expect(blobTarget.BucketName).To(Equal("original-bucket"))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 				}
 
 				BeforeEach(func() {
-					config.SetBlobTarget("original-host", 8989, "original-key", "original-secret")
+					config.SetBlobTarget("original-host", 8989, "original-key", "original-secret", "original-bucket")
 					config.Save()
 				})
 
-				It("does not save the config when the target is down", func() {
-					fakeTargetVerifier.VerifyBlobTargetReturns(false, false, nil)
-
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8181"})
-
-					Eventually(outputBuffer).Should(test_helpers.Say("Access Key: "))
-					stdinWriter.Write([]byte("yaykey\n"))
-					Eventually(outputBuffer).Should(test_helpers.Say("Secret Key: "))
-					stdinWriter.Write([]byte("superserial\n"))
-
-					Eventually(commandFinishChan).Should(BeClosed())
-
-					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
-
-					verifyConfigNotSaved("Unable to verify blob store: blob target is down")
-				})
-
-				It("does not save the config when target can't be authorized", func() {
-					fakeTargetVerifier.VerifyBlobTargetReturns(true, false, nil)
-
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8181"})
-
-					Eventually(outputBuffer).Should(test_helpers.Say("Access Key: "))
-					stdinWriter.Write([]byte("yaykey\n"))
-					Eventually(outputBuffer).Should(test_helpers.Say("Secret Key: "))
-					stdinWriter.Write([]byte("superserial\n"))
-
-					Eventually(commandFinishChan).Should(BeClosed())
-
-					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
-
-					verifyConfigNotSaved("Unable to verify blob store: unauthorized")
-				})
-
 				It("does not save the config when there is an error connecting to the target", func() {
-					fakeTargetVerifier.VerifyBlobTargetReturns(false, false, errors.New("fail"))
+					fakeTargetVerifier.VerifyBlobTargetReturns(false, errors.New("fail"))
 
 					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8181"})
 
@@ -185,6 +186,8 @@ var _ = Describe("CommandFactory", func() {
 					stdinWriter.Write([]byte("yaykey\n"))
 					Eventually(outputBuffer).Should(test_helpers.Say("Secret Key: "))
 					stdinWriter.Write([]byte("superserial\n"))
+					Eventually(outputBuffer).Should(test_helpers.Say("Bucket Name [condenser-bucket]: "))
+					stdinWriter.Write([]byte("buckit\n"))
 
 					Eventually(commandFinishChan).Should(BeClosed())
 
@@ -195,7 +198,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Context("when the persister returns errors", func() {
 					BeforeEach(func() {
-						fakeTargetVerifier.VerifyBlobTargetReturns(true, true, nil)
+						fakeTargetVerifier.VerifyBlobTargetReturns(true, nil)
 						commandFactory := command_factory.NewConfigCommandFactory(
 							config_package.New(errorPersister("Failure setting blob target")),
 							terminalUI,
@@ -205,7 +208,7 @@ var _ = Describe("CommandFactory", func() {
 						targetBlobCommand = commandFactory.MakeTargetBlobCommand()
 					})
 					It("bubbles up errors from saving the config", func() {
-						config.SetBlobTarget("192.168.11.11", 8181, "datkeyyo", "supersecretJKJK")
+						config.SetBlobTarget("192.168.11.11", 8181, "datkeyyo", "supersecretJKJK", "buckit")
 						config.Save()
 
 						commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"199.112.3432:8181"})
@@ -213,6 +216,8 @@ var _ = Describe("CommandFactory", func() {
 						stdinWriter.Write([]byte("booookey\n"))
 						Eventually(outputBuffer).Should(test_helpers.Say("Secret Key: "))
 						stdinWriter.Write([]byte("unicorns\n"))
+						Eventually(outputBuffer).Should(test_helpers.Say("Bucket Name [condenser-bucket]: "))
+						stdinWriter.Write([]byte("bkkt\n"))
 
 						Eventually(commandFinishChan).Should(BeClosed())
 
@@ -224,6 +229,7 @@ var _ = Describe("CommandFactory", func() {
 						Expect(blobTarget.TargetPort).To(Equal(uint16(8181)))
 						Expect(blobTarget.AccessKey).To(Equal("datkeyyo"))
 						Expect(blobTarget.SecretKey).To(Equal("supersecretJKJK"))
+						Expect(blobTarget.BucketName).To(Equal("buckit"))
 
 						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
 						Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))

@@ -7,7 +7,7 @@ import (
 //go:generate counterfeiter -o fake_target_verifier/fake_target_verifier.go . TargetVerifier
 type TargetVerifier interface {
 	VerifyTarget(name string) (up bool, auth bool, err error)
-	VerifyBlobTarget(host string, port uint16, accessKey, secretKey string) (up bool, auth bool, err error)
+	VerifyBlobTarget(host string, port uint16, accessKey, secretKey, bucketName string) (ok bool, err error)
 }
 
 func New(receptorClientFactory func(target string) receptor.Client) TargetVerifier {

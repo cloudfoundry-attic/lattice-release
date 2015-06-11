@@ -35,6 +35,7 @@ func (factory *ConfigCommandFactory) targetBlob(context *cli.Context) {
 		factory.ui.Say(fmt.Sprintf("Blob Target:\t%s:%d\n", blobTarget.TargetHost, blobTarget.TargetPort))
 		factory.ui.Say(fmt.Sprintf("Access Key:\t%s\n", blobTarget.AccessKey))
 		factory.ui.Say(fmt.Sprintf("Secret Key:\t%s\n", blobTarget.SecretKey))
+		factory.ui.Say(fmt.Sprintf("Bucket Name:\t%s\n", blobTarget.BucketName))
 		return
 	}
 
@@ -54,23 +55,17 @@ func (factory *ConfigCommandFactory) targetBlob(context *cli.Context) {
 		return
 	}
 
-	accessKey := factory.ui.Prompt("Access Key: ")
-	secretKey := factory.ui.Prompt("Secret Key: ")
+	accessKey := factory.ui.Prompt("Access Key")
+	secretKey := factory.ui.Prompt("Secret Key")
+	bucketName := factory.ui.PromptWithDefault("Bucket Name", "condenser-bucket")
 
-	if blobTargetUp, blobTargetAuthed, err := factory.targetVerifier.VerifyBlobTarget(host, uint16(port), accessKey, secretKey); !blobTargetUp || !blobTargetAuthed || err != nil {
-		if err != nil {
-			factory.ui.Say("Unable to verify blob store: " + err.Error())
-		} else if !blobTargetUp {
-			factory.ui.Say("Unable to verify blob store: blob target is down")
-		} else {
-			factory.ui.Say("Unable to verify blob store: unauthorized")
-		}
-
+	if ok, err := factory.targetVerifier.VerifyBlobTarget(host, uint16(port), accessKey, secretKey, bucketName); !ok {
+		factory.ui.Say("Unable to verify blob store: " + err.Error())
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	}
 
-	factory.config.SetBlobTarget(host, uint16(port), accessKey, secretKey)
+	factory.config.SetBlobTarget(host, uint16(port), accessKey, secretKey, bucketName)
 	if err := factory.config.Save(); err != nil {
 		factory.ui.SayLine(err.Error())
 		factory.exitHandler.Exit(exit_codes.FileSystemError)

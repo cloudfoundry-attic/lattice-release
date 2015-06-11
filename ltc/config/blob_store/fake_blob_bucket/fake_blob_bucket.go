@@ -3,7 +3,6 @@ package fake_blob_bucket
 
 import (
 	"io"
-	"net/http"
 	"sync"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
@@ -11,14 +10,16 @@ import (
 )
 
 type FakeBlobBucket struct {
-	HeadStub        func(path string, headers map[string][]string) (*http.Response, error)
-	headMutex       sync.RWMutex
-	headArgsForCall []struct {
-		path    string
-		headers map[string][]string
+	ListStub        func(prefix, delim, marker string, max int) (result *s3.ListResp, err error)
+	listMutex       sync.RWMutex
+	listArgsForCall []struct {
+		prefix string
+		delim  string
+		marker string
+		max    int
 	}
-	headReturns struct {
-		result1 *http.Response
+	listReturns struct {
+		result1 *s3.ListResp
 		result2 error
 	}
 	PutStub        func(path string, data []byte, contType string, perm s3.ACL, options s3.Options) error
@@ -48,36 +49,38 @@ type FakeBlobBucket struct {
 	}
 }
 
-func (fake *FakeBlobBucket) Head(path string, headers map[string][]string) (*http.Response, error) {
-	fake.headMutex.Lock()
-	fake.headArgsForCall = append(fake.headArgsForCall, struct {
-		path    string
-		headers map[string][]string
-	}{path, headers})
-	fake.headMutex.Unlock()
-	if fake.HeadStub != nil {
-		return fake.HeadStub(path, headers)
+func (fake *FakeBlobBucket) List(prefix string, delim string, marker string, max int) (result *s3.ListResp, err error) {
+	fake.listMutex.Lock()
+	fake.listArgsForCall = append(fake.listArgsForCall, struct {
+		prefix string
+		delim  string
+		marker string
+		max    int
+	}{prefix, delim, marker, max})
+	fake.listMutex.Unlock()
+	if fake.ListStub != nil {
+		return fake.ListStub(prefix, delim, marker, max)
 	} else {
-		return fake.headReturns.result1, fake.headReturns.result2
+		return fake.listReturns.result1, fake.listReturns.result2
 	}
 }
 
-func (fake *FakeBlobBucket) HeadCallCount() int {
-	fake.headMutex.RLock()
-	defer fake.headMutex.RUnlock()
-	return len(fake.headArgsForCall)
+func (fake *FakeBlobBucket) ListCallCount() int {
+	fake.listMutex.RLock()
+	defer fake.listMutex.RUnlock()
+	return len(fake.listArgsForCall)
 }
 
-func (fake *FakeBlobBucket) HeadArgsForCall(i int) (string, map[string][]string) {
-	fake.headMutex.RLock()
-	defer fake.headMutex.RUnlock()
-	return fake.headArgsForCall[i].path, fake.headArgsForCall[i].headers
+func (fake *FakeBlobBucket) ListArgsForCall(i int) (string, string, string, int) {
+	fake.listMutex.RLock()
+	defer fake.listMutex.RUnlock()
+	return fake.listArgsForCall[i].prefix, fake.listArgsForCall[i].delim, fake.listArgsForCall[i].marker, fake.listArgsForCall[i].max
 }
 
-func (fake *FakeBlobBucket) HeadReturns(result1 *http.Response, result2 error) {
-	fake.HeadStub = nil
-	fake.headReturns = struct {
-		result1 *http.Response
+func (fake *FakeBlobBucket) ListReturns(result1 *s3.ListResp, result2 error) {
+	fake.ListStub = nil
+	fake.listReturns = struct {
+		result1 *s3.ListResp
 		result2 error
 	}{result1, result2}
 }

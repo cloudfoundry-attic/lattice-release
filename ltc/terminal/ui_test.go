@@ -83,12 +83,11 @@ var _ = Describe("UI", func() {
 	Describe("Input Methods", func() {
 		Describe("Prompt", func() {
 			It("Prompts the user for input", func() {
-
 				answerChan := make(chan string)
 				go func() {
 					defer GinkgoRecover()
 
-					answerChan <- terminalUI.Prompt("Nickname: ")
+					answerChan <- terminalUI.Prompt("Nickname")
 					close(answerChan)
 				}()
 
@@ -100,12 +99,37 @@ var _ = Describe("UI", func() {
 			})
 		})
 
-		Describe("PasswordReader PromptForPassword", func() {
-			It("Calls to PasswordReader, which contains untested content", func() {
-				fakePasswordReader.PromptForPassword("Password: ")
+		Describe("PromptWithDefault", func() {
+			It("Prompts the user for input", func() {
+				answerChan := make(chan string)
+				go func() {
+					defer GinkgoRecover()
 
-				Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
-				Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password: "))
+					answerChan <- terminalUI.PromptWithDefault("Nickname", "x")
+					close(answerChan)
+				}()
+
+				Eventually(outputBuffer).Should(test_helpers.Say("Nickname [x]: "))
+				stdinWriter.Write([]byte("RockStar\n"))
+
+				Eventually(answerChan).Should(Receive(Equal("RockStar")))
+				Eventually(answerChan).Should(BeClosed())
+			})
+
+			It("Prompts the user for input and uses the default value if enter is pressed", func() {
+				answerChan := make(chan string)
+				go func() {
+					defer GinkgoRecover()
+
+					answerChan <- terminalUI.PromptWithDefault("Nickname", "damon")
+					close(answerChan)
+				}()
+
+				Eventually(outputBuffer).Should(test_helpers.Say("Nickname [damon]: "))
+				stdinWriter.Write([]byte("\n"))
+
+				Eventually(answerChan).Should(Receive(Equal("damon")))
+				Eventually(answerChan).Should(BeClosed())
 			})
 		})
 	})

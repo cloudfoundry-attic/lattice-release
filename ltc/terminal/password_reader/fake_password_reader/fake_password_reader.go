@@ -8,7 +8,7 @@ import (
 )
 
 type FakePasswordReader struct {
-	PromptForPasswordStub        func(promptText string, args ...interface{}) (passwd string)
+	PromptForPasswordStub        func(promptText string, args ...interface{}) string
 	promptForPasswordMutex       sync.RWMutex
 	promptForPasswordArgsForCall []struct {
 		promptText string
@@ -19,7 +19,7 @@ type FakePasswordReader struct {
 	}
 }
 
-func (fake *FakePasswordReader) PromptForPassword(promptText string, args ...interface{}) (passwd string) {
+func (fake *FakePasswordReader) PromptForPassword(promptText string, args ...interface{}) string {
 	fake.promptForPasswordMutex.Lock()
 	fake.promptForPasswordArgsForCall = append(fake.promptForPasswordArgsForCall, struct {
 		promptText string

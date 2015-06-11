@@ -18,18 +18,18 @@ type FakeTargetVerifier struct {
 		result2 bool
 		result3 error
 	}
-	VerifyBlobTargetStub        func(host string, port uint16, accessKey, secretKey string) (up bool, auth bool, err error)
+	VerifyBlobTargetStub        func(host string, port uint16, accessKey, secretKey, bucketName string) (ok bool, err error)
 	verifyBlobTargetMutex       sync.RWMutex
 	verifyBlobTargetArgsForCall []struct {
-		host      string
-		port      uint16
-		accessKey string
-		secretKey string
+		host       string
+		port       uint16
+		accessKey  string
+		secretKey  string
+		bucketName string
 	}
 	verifyBlobTargetReturns struct {
 		result1 bool
-		result2 bool
-		result3 error
+		result2 error
 	}
 }
 
@@ -67,19 +67,20 @@ func (fake *FakeTargetVerifier) VerifyTargetReturns(result1 bool, result2 bool, 
 	}{result1, result2, result3}
 }
 
-func (fake *FakeTargetVerifier) VerifyBlobTarget(host string, port uint16, accessKey string, secretKey string) (up bool, auth bool, err error) {
+func (fake *FakeTargetVerifier) VerifyBlobTarget(host string, port uint16, accessKey string, secretKey string, bucketName string) (ok bool, err error) {
 	fake.verifyBlobTargetMutex.Lock()
 	fake.verifyBlobTargetArgsForCall = append(fake.verifyBlobTargetArgsForCall, struct {
-		host      string
-		port      uint16
-		accessKey string
-		secretKey string
-	}{host, port, accessKey, secretKey})
+		host       string
+		port       uint16
+		accessKey  string
+		secretKey  string
+		bucketName string
+	}{host, port, accessKey, secretKey, bucketName})
 	fake.verifyBlobTargetMutex.Unlock()
 	if fake.VerifyBlobTargetStub != nil {
-		return fake.VerifyBlobTargetStub(host, port, accessKey, secretKey)
+		return fake.VerifyBlobTargetStub(host, port, accessKey, secretKey, bucketName)
 	} else {
-		return fake.verifyBlobTargetReturns.result1, fake.verifyBlobTargetReturns.result2, fake.verifyBlobTargetReturns.result3
+		return fake.verifyBlobTargetReturns.result1, fake.verifyBlobTargetReturns.result2
 	}
 }
 
@@ -89,19 +90,18 @@ func (fake *FakeTargetVerifier) VerifyBlobTargetCallCount() int {
 	return len(fake.verifyBlobTargetArgsForCall)
 }
 
-func (fake *FakeTargetVerifier) VerifyBlobTargetArgsForCall(i int) (string, uint16, string, string) {
+func (fake *FakeTargetVerifier) VerifyBlobTargetArgsForCall(i int) (string, uint16, string, string, string) {
 	fake.verifyBlobTargetMutex.RLock()
 	defer fake.verifyBlobTargetMutex.RUnlock()
-	return fake.verifyBlobTargetArgsForCall[i].host, fake.verifyBlobTargetArgsForCall[i].port, fake.verifyBlobTargetArgsForCall[i].accessKey, fake.verifyBlobTargetArgsForCall[i].secretKey
+	return fake.verifyBlobTargetArgsForCall[i].host, fake.verifyBlobTargetArgsForCall[i].port, fake.verifyBlobTargetArgsForCall[i].accessKey, fake.verifyBlobTargetArgsForCall[i].secretKey, fake.verifyBlobTargetArgsForCall[i].bucketName
 }
 
-func (fake *FakeTargetVerifier) VerifyBlobTargetReturns(result1 bool, result2 bool, result3 error) {
+func (fake *FakeTargetVerifier) VerifyBlobTargetReturns(result1 bool, result2 error) {
 	fake.VerifyBlobTargetStub = nil
 	fake.verifyBlobTargetReturns = struct {
 		result1 bool
-		result2 bool
-		result3 error
-	}{result1, result2, result3}
+		result2 error
+	}{result1, result2}
 }
 
 var _ target_verifier.TargetVerifier = new(FakeTargetVerifier)

@@ -1,6 +1,7 @@
 package target_verifier
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -16,14 +17,14 @@ var (
 	awsRegion = aws.Region{Name: "riak-region-1", S3Endpoint: "http://s3.amazonaws.com"}
 )
 
-func (t *targetVerifier) VerifyBlobTarget(host string, port uint16, accessKey, secretKey string) (bool, bool, error) {
+func (t *targetVerifier) VerifyBlobTarget(host string, port uint16, accessKey, secretKey, bucketName string) (bool, error) {
 	s3Auth := aws.Auth{
 		AccessKey: accessKey,
 		SecretKey: secretKey,
 	}
 
 	config := config.New(persister.NewMemPersister())
-	config.SetBlobTarget(host, port, accessKey, secretKey)
+	config.SetBlobTarget(host, port, accessKey, secretKey, bucketName)
 
 	s3S3 := s3.New(s3Auth, awsRegion, &http.Client{
 		Transport: &http.Transport{
@@ -35,22 +36,26 @@ func (t *targetVerifier) VerifyBlobTarget(host string, port uint16, accessKey, s
 			TLSHandshakeTimeout: 10 * time.Second,
 		},
 	})
+	s3S3.AttemptStrategy = aws.AttemptStrategy{}
 
 	blobStore := blob_store.NewBlobStore(config, s3S3)
-	blobBucket := blobStore.Bucket(blob_store.BucketName)
+	blobBucket := blobStore.Bucket(config.BlobTarget().BucketName)
 
-	if _, err := blobBucket.Head("/verifier/invalid-path", map[string][]string{}); err != nil {
+	if _, err := blobBucket.List("", "/", "", 1); err != nil {
 		httpError, ok := err.(*s3.Error)
 		if ok {
-			if httpError.StatusCode == 403 {
-				return true, false, nil
-			} else {
-				return true, true, nil
+			switch httpError.StatusCode {
+			case 200:
+				return true, nil
+			case 403:
+				return false, fmt.Errorf("unauthorized")
+			default:
+				return false, fmt.Errorf("%s", httpError.Error())
 			}
 		}
 
-		return false, false, err
+		return false, fmt.Errorf("blob target is down: %s", err)
 	}
 
-	return true, true, nil
+	return true, nil
 }

@@ -39,7 +39,7 @@ var _ = Describe("BlobStore", func() {
 		Expect(proxyHostArr).To(HaveLen(2))
 		proxyHostPort, err := strconv.Atoi(proxyHostArr[1])
 		Expect(err).NotTo(HaveOccurred())
-		config.SetBlobTarget(proxyHostArr[0], uint16(proxyHostPort), "V8GDQFR_VDOGM55IV8OH", "Wv_kltnl98hNWNdNwyQPYnFhK4gVPTxVS3NNMg==")
+		config.SetBlobTarget(proxyHostArr[0], uint16(proxyHostPort), "V8GDQFR_VDOGM55IV8OH", "Wv_kltnl98hNWNdNwyQPYnFhK4gVPTxVS3NNMg==", "buck")
 
 		httpClient = &http.Client{
 			Transport: &http.Transport{

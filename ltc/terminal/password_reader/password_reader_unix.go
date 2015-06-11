@@ -27,7 +27,7 @@ var ws syscall.WaitStatus = 0
 func (pr passwordReader) PromptForPassword(promptText string, args ...interface{}) (passwd string) {
 
 	// Display the prompt.
-	fmt.Printf(promptText, args...)
+	fmt.Printf(promptText+": ", args...)
 
 	// File descriptors for stdin, stdout, and stderr.
 	fd := []uintptr{os.Stdin.Fd(), os.Stdout.Fd(), os.Stderr.Fd()}
