@@ -16,6 +16,7 @@ mkdir -p /var/lattice/static-files
 
 pushd $lattice_brain_path/bin > /dev/null
     tar czf /var/lattice/static-files/healthcheck.tgz healthcheck
+    tar czf /var/lattice/static-files/s3downloader.tgz s3downloader
 popd > /dev/null
 
 mkdir -p /var/lattice/config
