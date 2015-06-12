@@ -265,7 +265,7 @@ var _ = Describe("Task API", func() {
 				err := client.DeleteTask("task-guid-1")
 				Expect(err).NotTo(HaveOccurred())
 
-				_, err = bbs.TaskByGuid("task-guid-1")
+				_, err = bbs.TaskByGuid(logger, "task-guid-1")
 				Expect(err).To(Equal(bbserrors.ErrStoreResourceNotFound))
 			})
 		})
@@ -278,7 +278,7 @@ var _ = Describe("Task API", func() {
 
 			It("does not delete the task", func() {
 				client.DeleteTask("task-guid-1")
-				_, err := bbs.TaskByGuid("task-guid-1")
+				_, err := bbs.TaskByGuid(logger, "task-guid-1")
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})
@@ -313,7 +313,7 @@ var _ = Describe("Task API", func() {
 		})
 
 		It("cancels the task", func() {
-			task, err := bbs.TaskByGuid("task-guid-1")
+			task, err := bbs.TaskByGuid(logger, "task-guid-1")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(task.State).To(Equal(models.TaskStateCompleted))
 		})

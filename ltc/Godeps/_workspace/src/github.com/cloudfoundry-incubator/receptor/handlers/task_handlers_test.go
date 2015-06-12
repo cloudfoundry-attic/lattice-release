@@ -385,7 +385,8 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("retrieves the task by the given guid", func() {
-				Expect(fakeBBS.TaskByGuidArgsForCall(0)).To(Equal("the-task-guid"))
+				_, guid := fakeBBS.TaskByGuidArgsForCall(0)
+				Expect(guid).To(Equal("the-task-guid"))
 			})
 
 			It("gets the task", func() {

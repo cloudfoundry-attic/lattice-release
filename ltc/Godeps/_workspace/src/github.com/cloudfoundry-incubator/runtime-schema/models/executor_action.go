@@ -690,6 +690,9 @@ func UnmarshalAction(data []byte) (Action, error) {
 	if len(wrapped) == 1 {
 		for k, v := range wrapped {
 			action := actionMap[k]
+			if action == nil {
+				return nil, errors.New("Unknown action: " + string(k))
+			}
 			st := reflect.TypeOf(action).Elem()
 			p := reflect.New(st)
 			err = json.Unmarshal(v, p.Interface())

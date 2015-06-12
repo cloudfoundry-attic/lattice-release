@@ -51,6 +51,13 @@ var _ = Describe("Actions", func() {
 		itDeserializes(actionPayload, action)
 	}
 
+	Describe("UnmarshalAction", func() {
+		It("returns an error when the action is not registered", func() {
+			_, err := models.UnmarshalAction([]byte(`{"bogusAction": {}}`))
+			Expect(err).To(MatchError("Unknown action: bogusAction"))
+		})
+	})
+
 	Describe("Download", func() {
 		itSerializesAndDeserializes(
 			`{

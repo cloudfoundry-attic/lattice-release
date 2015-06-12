@@ -110,7 +110,7 @@ func (h *TaskHandler) GetByGuid(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	task, err := h.bbs.TaskByGuid(guid)
+	task, err := h.bbs.TaskByGuid(logger, guid)
 	if err == bbserrors.ErrStoreResourceNotFound {
 		h.logger.Error("failed-to-fetch-task", err)
 		writeTaskNotFoundResponse(w, guid)
