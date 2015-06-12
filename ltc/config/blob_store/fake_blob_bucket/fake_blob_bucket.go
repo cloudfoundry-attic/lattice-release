@@ -22,18 +22,6 @@ type FakeBlobBucket struct {
 		result1 *s3.ListResp
 		result2 error
 	}
-	PutStub        func(path string, data []byte, contType string, perm s3.ACL, options s3.Options) error
-	putMutex       sync.RWMutex
-	putArgsForCall []struct {
-		path     string
-		data     []byte
-		contType string
-		perm     s3.ACL
-		options  s3.Options
-	}
-	putReturns struct {
-		result1 error
-	}
 	PutReaderStub        func(path string, r io.Reader, length int64, contType string, perm s3.ACL, options s3.Options) error
 	putReaderMutex       sync.RWMutex
 	putReaderArgsForCall []struct {
@@ -83,42 +71,6 @@ func (fake *FakeBlobBucket) ListReturns(result1 *s3.ListResp, result2 error) {
 		result1 *s3.ListResp
 		result2 error
 	}{result1, result2}
-}
-
-func (fake *FakeBlobBucket) Put(path string, data []byte, contType string, perm s3.ACL, options s3.Options) error {
-	fake.putMutex.Lock()
-	fake.putArgsForCall = append(fake.putArgsForCall, struct {
-		path     string
-		data     []byte
-		contType string
-		perm     s3.ACL
-		options  s3.Options
-	}{path, data, contType, perm, options})
-	fake.putMutex.Unlock()
-	if fake.PutStub != nil {
-		return fake.PutStub(path, data, contType, perm, options)
-	} else {
-		return fake.putReturns.result1
-	}
-}
-
-func (fake *FakeBlobBucket) PutCallCount() int {
-	fake.putMutex.RLock()
-	defer fake.putMutex.RUnlock()
-	return len(fake.putArgsForCall)
-}
-
-func (fake *FakeBlobBucket) PutArgsForCall(i int) (string, []byte, string, s3.ACL, s3.Options) {
-	fake.putMutex.RLock()
-	defer fake.putMutex.RUnlock()
-	return fake.putArgsForCall[i].path, fake.putArgsForCall[i].data, fake.putArgsForCall[i].contType, fake.putArgsForCall[i].perm, fake.putArgsForCall[i].options
-}
-
-func (fake *FakeBlobBucket) PutReturns(result1 error) {
-	fake.PutStub = nil
-	fake.putReturns = struct {
-		result1 error
-	}{result1}
 }
 
 func (fake *FakeBlobBucket) PutReader(path string, r io.Reader, length int64, contType string, perm s3.ACL, options s3.Options) error {

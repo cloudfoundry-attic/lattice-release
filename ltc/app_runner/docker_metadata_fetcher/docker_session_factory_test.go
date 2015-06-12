@@ -46,6 +46,7 @@ var _ = Describe("DockerSessionFactory", func() {
 					Expect(ok).To(BeTrue())
 
 					Expect(*registrySession.GetAuthConfig(true)).To(Equal(registry.AuthConfig{}))
+					Expect(dockerRegistryServer.ReceivedRequests()).To(HaveLen(2))
 				})
 			})
 
@@ -58,6 +59,7 @@ var _ = Describe("DockerSessionFactory", func() {
 					Expect(ok).To(BeTrue())
 
 					Expect(*registrySession.GetAuthConfig(true)).To(Equal(registry.AuthConfig{}))
+					Expect(dockerRegistryServer.ReceivedRequests()).To(HaveLen(2))
 				})
 			})
 		})
@@ -67,6 +69,7 @@ var _ = Describe("DockerSessionFactory", func() {
 				_, err := sessionFactory.MakeSession("¥Not-A-Valid-Repo-Name¥"+"/lattice-mappppppppppppappapapa", false)
 
 				Expect(err).To(MatchError(ContainSubstring("Error resolving Docker repository name:\nInvalid namespace name")))
+				Expect(dockerRegistryServer.ReceivedRequests()).To(HaveLen(0))
 			})
 		})
 
@@ -75,6 +78,7 @@ var _ = Describe("DockerSessionFactory", func() {
 				_, err := sessionFactory.MakeSession("nonexistantregistry.example.com/lattice-mappppppppppppappapapa", false)
 
 				Expect(err).To(MatchError(ContainSubstring("Error Connecting to Docker registry:\ninvalid registry endpoint")))
+				Expect(dockerRegistryServer.ReceivedRequests()).To(HaveLen(0))
 			})
 		})
 

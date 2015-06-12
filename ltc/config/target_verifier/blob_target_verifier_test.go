@@ -41,7 +41,7 @@ var _ = Describe("TargetVerifier", func() {
 			proxyHostPort, _ := strconv.Atoi(proxyHostArr[1])
 			config.SetBlobTarget(proxyHostArr[0], uint16(proxyHostPort), "V8GDQFR_VDOGM55IV8OH", "Wv_kltnl98hNWNdNwyQPYnFhK4gVPTxVS3NNMg==", "bucket")
 
-			httpHeader := map[string][]string{
+			httpHeader := http.Header{
 				"Content-Type": []string{"application/xml"},
 			}
 
@@ -59,6 +59,7 @@ var _ = Describe("TargetVerifier", func() {
 
 			Expect(ok).To(BeTrue())
 			Expect(err).ToNot(HaveOccurred())
+			Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
 		})
 
 		It("returns ok=false if able to connect but can't auth", func() {
@@ -68,15 +69,16 @@ var _ = Describe("TargetVerifier", func() {
 
 			Expect(ok).To(BeFalse())
 			Expect(err).To(MatchError("unauthorized"))
+			Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
 		})
 
-		It("returns ok=false, err=(the bubbled up error) if there is a non-receptor error", func() {
+		It("returns ok=false if the server is down", func() {
 			fakeServer.Close()
 
 			ok, err := targetVerifier.VerifyBlobTarget(config.BlobTarget().TargetHost, config.BlobTarget().TargetPort, "V8GDQFR_VDOGM55IV8OH", "Wv_kltnl98hNWNdNwyQPYnFhK4gVPTxVS3NNMg==", "bucket")
 
 			Expect(ok).To(BeFalse())
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError(HavePrefix("blob target is down")))
 		})
 	})
 })

@@ -23,7 +23,6 @@ type BlobStore interface {
 //go:generate counterfeiter -o fake_blob_bucket/fake_blob_bucket.go . BlobBucket
 type BlobBucket interface {
 	List(prefix, delim, marker string, max int) (result *s3.ListResp, err error)
-	Put(path string, data []byte, contType string, perm s3.ACL, options s3.Options) error
 	PutReader(path string, r io.Reader, length int64, contType string, perm s3.ACL, options s3.Options) error
 }
 
