@@ -118,7 +118,7 @@ compile_brain() {
         go install github.com/cloudfoundry-incubator/file-server/cmd/file-server
         go install github.com/cloudfoundry-incubator/buildpack_app_lifecycle/healthcheck
 
-        go get -v -d github.com/goamz/goamz || true
+        go get -v -d github.com/goamz/goamz/... || true
         go install github.com/cloudfoundry-incubator/lattice/s3downloader
 
 
