@@ -31,6 +31,31 @@ There are two remaining areas of Docker compatbility that we are working on:
 - Removing assumptions about container contents.  Currently, Garden-Linux makes some assumptions about what is available inside the container.  Some Docker images do not satisfy these assumptions though most do (the liteweight busybox base image, for example).
 - Supporting arbitrary UIDs and GIDs.  Currently Garden-Linux runs applications as the `vcap` user (a historical holdover).  One can side-step this with `--run-as-root` (see below) though this is suboptimal.  We intend to fully support the USER directive and (moreover) to improve our API around specifying which user should run the command.
 
+## `ltc` is giving `no such host` errors.  Help!
+
+DNS resolution for `xip.io` addresses can sometimes be flaky, resulting in errors such as the following:
+
+```bash
+ ltc target 192.168.11.11.xip.io
+ Error verifying target: Get http://receptor.192.168.11.11.xip.io/v1/desired_lrps:
+ dial tcp: lookup receptor.192.168.11.11.xip.io: no such host
+```
+
+### Resolution Steps
+
+1. Follow [these instructions](https://support.apple.com/en-us/HT202516) to reset the DNS cache in OS X.  There have been several reported [issues](http://arstechnica.com/apple/2015/01/why-dns-in-os-x-10-10-is-broken-and-what-you-can-do-to-fix-it/) with DNS resolution on OS X, specifically on Yosemite, insofar as the latest beta build of OS X 10.10.4 has [replaced `discoveryd` with `mDNSResponder`](http://arstechnica.com/apple/2015/05/new-os-x-beta-dumps-discoveryd-restores-mdnsresponder-to-fix-dns-bugs/).
+
+1. Check your networking DNS settings. Local "forwarding DNS" servers provided by some home routers can have trouble resolving `xip.io` addresses. Try setting your DNS to point to your real upstream DNS servers, or alternatively try using [Google DNS](https://developers.google.com/speed/public-dns/) by using `8.8.8.8` and/or `8.8.4.4`.
+
+1. If the above steps don't work (or if you must use a DNS server that doesn't work with `xip.io`), our recommended alternative is to follow the [dnsmasq instructions](docs/dnsmasq-readme.md), pass the `LATTICE_SYSTEM_DOMAIN` environment variable to the vagrant up command, and target using `lattice.dev` instead of `192.168.11.11.xip.io` to point to the cluster, as follows:
+
+```
+LATTICE_SYSTEM_DOMAIN=lattice.dev vagrant up
+ltc target lattice.dev
+```
+
+> `dnsmasq` is currently only supported for **vagrant** deployments.
+
 ## I can't run my Docker image.  Help!
 
 Here are a few pointers to help you debug and fix some common issues:
