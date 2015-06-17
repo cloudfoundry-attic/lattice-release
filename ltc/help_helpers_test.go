@@ -18,7 +18,6 @@ import (
 var _ = Describe("HelpHelpers", func() {
 	var (
 		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
-		memPersister       persister.Persister
 		outputBuffer       *gbytes.Buffer
 		terminalUI         terminal.UI
 		cliConfig          *config.Config
@@ -27,10 +26,9 @@ var _ = Describe("HelpHelpers", func() {
 
 	BeforeEach(func() {
 		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
-		memPersister = persister.NewMemPersister()
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
-		cliConfig = config.New(memPersister)
+		cliConfig = config.New(persister.NewMemPersister())
 		cliApp = cli_app_factory.MakeCliApp(
 			"",
 			"~/",
@@ -62,24 +60,41 @@ var _ = Describe("HelpHelpers", func() {
 	})
 
 	Describe("GetCommandFlags", func() {
-		It("returns list of type Flag", func() {
-			flaglist := main.GetCommandFlags(cliApp, "create")
+		It("returns flags string slice for a given command list of type Flag", func() {
+			flagList := main.GetCommandFlags(cliApp, "create")
 			cmd := cliApp.Command("create")
 			for _, flag := range cmd.Flags {
 				switch t := flag.(type) {
 				default:
+					Fail("unhandled flag type")
 				case cli.StringSliceFlag:
-					Expect(flaglist).Should(ContainElement(t.Name))
+					Expect(flagList).Should(ContainElement(t.Name))
 				case cli.IntFlag:
-					Expect(flaglist).Should(ContainElement(t.Name))
+					Expect(flagList).Should(ContainElement(t.Name))
 				case cli.StringFlag:
-					Expect(flaglist).Should(ContainElement(t.Name))
+					Expect(flagList).Should(ContainElement(t.Name))
 				case cli.BoolFlag:
-					Expect(flaglist).Should(ContainElement(t.Name))
+					Expect(flagList).Should(ContainElement(t.Name))
 				case cli.DurationFlag:
-					Expect(flaglist).Should(ContainElement(t.Name))
+					Expect(flagList).Should(ContainElement(t.Name))
 				}
 			}
+		})
+
+		It("does not append unexpected flag types", func() {
+			cliApp = cli.NewApp()
+			cliGenericFlag := cli.GenericFlag{Name: "capture-the-flag"}
+			cliApp.Commands = []cli.Command{
+				cli.Command{
+					Name: "commander-keen",
+					Flags: []cli.Flag{
+						cliGenericFlag,
+					},
+				},
+			}
+
+			flagList := main.GetCommandFlags(cliApp, "commander-keen")
+			Expect(flagList).ToNot(ContainElement(cliGenericFlag.Name))
 		})
 	})
 
