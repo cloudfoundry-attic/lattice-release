@@ -14,6 +14,7 @@ ltc/ltc
 tee2metron/tee2metron
 tee2metron/test_helpers/chatty_process/chatty_process
 s3downloader/s3downloader
+s3uploader/s3uploader
 *.test
 *.coverprofile
 coverage.out
