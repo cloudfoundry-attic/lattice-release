@@ -117,10 +117,14 @@ compile_brain() {
         go install github.com/cloudfoundry-incubator/receptor/cmd/receptor
         go install github.com/cloudfoundry-incubator/file-server/cmd/file-server
         go install github.com/cloudfoundry-incubator/buildpack_app_lifecycle/healthcheck
+        go install github.com/cloudfoundry-incubator/buildpack_app_lifecycle/builder
 
-        go get -v -d github.com/goamz/goamz/... || true
+        go get -v -d github.com/goamz/goamz/...
         go install github.com/cloudfoundry-incubator/lattice/s3downloader
+        go install github.com/cloudfoundry-incubator/lattice/s3uploader
 
+        ## TODO:  put me somewhere else
+        cp -v $GOPATH/src/github.com/cloudfoundry-incubator/lattice/cluster/common/lrp-launcher ${GOBIN}
 
         pushd src/github.com/coreos/etcd
             ./build

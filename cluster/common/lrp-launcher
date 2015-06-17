@@ -1,0 +1,18 @@
+#!/bin/sh
+
+export HOME=$PWD/app
+
+unset GEM_PATH
+if [ -d app/.profile.d ]; then
+        for i in app/.profile.d/*.sh; do
+                if [ -r $i ]; then
+                        . $i
+                fi
+        done
+        unset i
+fi
+
+DROPLET_BASE_DIR=$PWD
+cd app
+echo $$ >> $DROPLET_BASE_DIR/run.pid
+exec bash -c $1
