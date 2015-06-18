@@ -77,6 +77,7 @@ var _ = Describe("CommandFactory", func() {
 					test_helpers.ExecuteCommandWithArgs(uploadBitsCommand, []string{"droplet-name", tmpFile.Name()})
 
 					Expect(outputBuffer).To(test_helpers.Say("Error uploading to droplet-name: uploading bits failed"))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 					Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
 				})
 			})
@@ -187,5 +188,146 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
+	})
+
+	Describe("BuildDropletCommand", func() {
+		var (
+			buildDropletCommand cli.Command
+		)
+
+		BeforeEach(func() {
+			commandFactory := command_factory.NewDropletRunnerCommandFactory(fakeDropletRunner, terminalUI, fakeExitHandler)
+			buildDropletCommand = commandFactory.MakeBuildDropletCommand()
+		})
+
+		Context("when the archive path is a folder and exists", func() {
+			var (
+				prevDir string
+				tmpDir  string
+				err     error
+			)
+
+			BeforeEach(func() {
+				tmpDir, err = ioutil.TempDir(os.TempDir(), "tar_contents")
+				Expect(err).NotTo(HaveOccurred())
+
+				err = ioutil.WriteFile(filepath.Join(tmpDir, "aaa"), []byte("AAAAAAAAA"), 0700)
+				Expect(err).NotTo(HaveOccurred())
+				err = ioutil.WriteFile(filepath.Join(tmpDir, "bbb"), []byte("BBBBBBB"), 0750)
+				Expect(err).NotTo(HaveOccurred())
+				err = ioutil.WriteFile(filepath.Join(tmpDir, "ccc"), []byte("CCCCCC"), 0644)
+				Expect(err).NotTo(HaveOccurred())
+
+				err = os.Mkdir(filepath.Join(tmpDir, "subfolder"), 0755)
+				Expect(err).NotTo(HaveOccurred())
+				err = ioutil.WriteFile(filepath.Join(tmpDir, "subfolder", "sub"), []byte("SUBSUB"), 0644)
+				Expect(err).NotTo(HaveOccurred())
+
+				prevDir, err = os.Getwd()
+				Expect(err).ToNot(HaveOccurred())
+				Expect(os.Chdir(tmpDir)).To(Succeed())
+			})
+
+			AfterEach(func() {
+				Expect(os.Chdir(prevDir)).To(Succeed())
+				Expect(os.RemoveAll(tmpDir)).To(Succeed())
+			})
+
+			It("tars up the folder and uploads as the droplet name", func() {
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
+
+				Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
+				dropletName, uploadPath := fakeDropletRunner.UploadBitsArgsForCall(0)
+				Expect(dropletName).To(Equal("droplet-name"))
+
+				Expect(uploadPath).ToNot(BeNil())
+				Expect(uploadPath).To(HaveSuffix(".tar"))
+
+				file, err := os.Open(uploadPath)
+				Expect(err).ToNot(HaveOccurred())
+				tarReader := tar.NewReader(file)
+
+				var h *tar.Header
+				h, err = tarReader.Next()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(h.FileInfo().Name()).To(Equal("aaa"))
+				Expect(h.FileInfo().IsDir()).To(BeFalse())
+				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0700)))
+
+				h, err = tarReader.Next()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(h.FileInfo().Name()).To(Equal("bbb"))
+				Expect(h.FileInfo().IsDir()).To(BeFalse())
+				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0750)))
+
+				h, err = tarReader.Next()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(h.FileInfo().Name()).To(Equal("ccc"))
+				Expect(h.FileInfo().IsDir()).To(BeFalse())
+				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
+
+				h, err = tarReader.Next()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(h.FileInfo().Name()).To(Equal("subfolder"))
+				Expect(h.FileInfo().IsDir()).To(BeTrue())
+				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(os.ModeDir | 0755)))
+
+				h, err = tarReader.Next()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(h.FileInfo().Name()).To(Equal("sub"))
+				Expect(h.FileInfo().IsDir()).To(BeFalse())
+				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
+
+				_, err = tarReader.Next()
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("when the droplet runner returns an error", func() {
+			It("prints the error from upload bits", func() {
+				fakeDropletRunner.UploadBitsReturns(errors.New("uploading bits failed"))
+
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
+
+				Expect(outputBuffer).To(test_helpers.Say("Error uploading to droplet-name: uploading bits failed"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
+				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
+			})
+
+			It("prints the error from build droplet", func() {
+				fakeDropletRunner.BuildDropletReturns(errors.New("failed"))
+
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
+
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
+				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(1))
+
+				Expect(outputBuffer).To(test_helpers.Say("Error submitting build of droplet-name: failed"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+			})
+		})
+
+		Context("invalid syntax", func() {
+			It("rejects less than two positional arguments", func() {
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name"})
+
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
+				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
+
+				Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+
+			It("tests for an empty droplet name", func() {
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"", "buildpack-name"})
+
+				Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
+				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
+			})
+		})
 	})
 })

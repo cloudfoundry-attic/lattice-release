@@ -41,6 +41,18 @@ func (factory *DropletRunnerCommandFactory) MakeUploadBitsCommand() cli.Command 
 	return uploadBitsCommand
 }
 
+func (factory *DropletRunnerCommandFactory) MakeBuildDropletCommand() cli.Command {
+	var buildDropletCommand = cli.Command{
+		Name:        "build-droplet",
+		Aliases:     []string{"bd"},
+		Usage:       "Build droplet",
+		Description: "ltc build-droplet DROPLET_NAME http://buildpack/uri",
+		Action:      factory.buildDroplet,
+	}
+
+	return buildDropletCommand
+}
+
 func (factory *DropletRunnerCommandFactory) uploadBits(context *cli.Context) {
 	dropletName := context.Args().First()
 	archivePath := context.Args().Get(1)
@@ -68,19 +80,52 @@ func (factory *DropletRunnerCommandFactory) uploadBits(context *cli.Context) {
 
 	if err := factory.dropletRunner.UploadBits(dropletName, archivePath); err != nil {
 		factory.ui.Say(fmt.Sprintf("Error uploading to %s: %s", dropletName, err))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
 	factory.ui.Say("Successfully uploaded " + dropletName)
 }
 
+func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
+	dropletName := context.Args().First()
+	buildpackUrl := context.Args().Get(1)
+
+	if dropletName == "" || buildpackUrl == "" {
+		factory.ui.SayIncorrectUsage("")
+		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	archivePath, err := makeTar(".")
+	if err != nil {
+		factory.ui.Say(fmt.Sprintf("Error tarring . to %s: %s", archivePath, err))
+		factory.exitHandler.Exit(exit_codes.FileSystemError)
+		return
+	}
+
+	if err = factory.dropletRunner.UploadBits(dropletName, archivePath); err != nil {
+		factory.ui.Say(fmt.Sprintf("Error uploading to %s: %s", dropletName, err))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
+	if err = factory.dropletRunner.BuildDroplet(dropletName, buildpackUrl); err != nil {
+		factory.ui.Say(fmt.Sprintf("Error submitting build of %s: %s", dropletName, err))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
+	factory.ui.Say(fmt.Sprintf("Submitted build of %s", dropletName))
+}
+
 func makeTar(path string) (string, error) {
-	tmpPath, err := ioutil.TempDir(os.TempDir(), "droplet")
+	tmpPath, err := ioutil.TempDir(os.TempDir(), "build-bits")
 	if err != nil {
 		return "", err
 	}
 
-	fileWriter, err := os.OpenFile(filepath.Join(tmpPath, "droplet.tar"), os.O_CREATE|os.O_WRONLY, 0600)
+	fileWriter, err := os.OpenFile(filepath.Join(tmpPath, "build-bits.tar"), os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return "", err
 	}

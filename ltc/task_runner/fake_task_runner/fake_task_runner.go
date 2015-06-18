@@ -8,6 +8,14 @@ import (
 )
 
 type FakeTaskRunner struct {
+	CreateTaskStub        func(createTaskParams task_runner.CreateTaskParams) error
+	createTaskMutex       sync.RWMutex
+	createTaskArgsForCall []struct {
+		createTaskParams task_runner.CreateTaskParams
+	}
+	createTaskReturns struct {
+		result1 error
+	}
 	SubmitTaskStub        func(submitTaskJson []byte) (string, error)
 	submitTaskMutex       sync.RWMutex
 	submitTaskArgsForCall []struct {
@@ -33,6 +41,38 @@ type FakeTaskRunner struct {
 	cancelTaskReturns struct {
 		result1 error
 	}
+}
+
+func (fake *FakeTaskRunner) CreateTask(createTaskParams task_runner.CreateTaskParams) error {
+	fake.createTaskMutex.Lock()
+	fake.createTaskArgsForCall = append(fake.createTaskArgsForCall, struct {
+		createTaskParams task_runner.CreateTaskParams
+	}{createTaskParams})
+	fake.createTaskMutex.Unlock()
+	if fake.CreateTaskStub != nil {
+		return fake.CreateTaskStub(createTaskParams)
+	} else {
+		return fake.createTaskReturns.result1
+	}
+}
+
+func (fake *FakeTaskRunner) CreateTaskCallCount() int {
+	fake.createTaskMutex.RLock()
+	defer fake.createTaskMutex.RUnlock()
+	return len(fake.createTaskArgsForCall)
+}
+
+func (fake *FakeTaskRunner) CreateTaskArgsForCall(i int) task_runner.CreateTaskParams {
+	fake.createTaskMutex.RLock()
+	defer fake.createTaskMutex.RUnlock()
+	return fake.createTaskArgsForCall[i].createTaskParams
+}
+
+func (fake *FakeTaskRunner) CreateTaskReturns(result1 error) {
+	fake.CreateTaskStub = nil
+	fake.createTaskReturns = struct {
+		result1 error
+	}{result1}
 }
 
 func (fake *FakeTaskRunner) SubmitTask(submitTaskJson []byte) (string, error) {

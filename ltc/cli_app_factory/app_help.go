@@ -113,6 +113,7 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 				{
 					presentCommand("submit-lrp"),
 					presentCommand("upload-bits"),
+					presentCommand("build-droplet"),
 				},
 			},
 		}, {

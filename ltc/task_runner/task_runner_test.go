@@ -31,6 +31,146 @@ var _ = Describe("TaskRunner", func() {
 		taskRunner = task_runner.New(fakeReceptorClient, fakeTaskExaminer)
 	})
 
+	Describe("CreateTask", func() {
+
+		var (
+			action             models.Action
+			securityGroupRules []models.SecurityGroupRule
+			createTaskParams   task_runner.CreateTaskParams
+		)
+
+		BeforeEach(func() {
+			action = &models.RunAction{
+				Path: "/my/path",
+				Args: []string{"happy", "sad"},
+				Dir:  "/my",
+				Env: []models.EnvironmentVariable{
+					models.EnvironmentVariable{"env-name", "env-value"},
+				},
+				ResourceLimits: models.ResourceLimits{},
+				Privileged:     true,
+				LogSource:      "log-source",
+			}
+			securityGroupRules = []models.SecurityGroupRule{
+				models.SecurityGroupRule{
+					Protocol:     models.TCPProtocol,
+					Destinations: []string{"bermuda", "bahamas"},
+					Ports:        []uint16{4242, 5353},
+					PortRange:    &models.PortRange{6666, 7777},
+					Log:          true,
+				},
+			}
+			createTaskParams = task_runner.NewCreateTaskParams(
+				action,
+				"task-name",
+				"preloaded:my-rootfs",
+				"task-domain",
+				"log-source",
+				securityGroupRules,
+			)
+		})
+
+		It("creates a task", func() {
+			err := taskRunner.CreateTask(createTaskParams)
+
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeReceptorClient.TasksCallCount()).To(Equal(1))
+
+			Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(1))
+			domain, ttl := fakeReceptorClient.UpsertDomainArgsForCall(0)
+			Expect(domain).To(Equal("lattice"))
+			Expect(ttl).To(BeZero())
+
+			Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(1))
+			createTaskRequest := fakeReceptorClient.CreateTaskArgsForCall(0)
+			Expect(createTaskRequest).ToNot(BeNil())
+			Expect(createTaskRequest.Action).To(Equal(action))
+			Expect(createTaskRequest.TaskGuid).To(Equal("task-name"))
+			Expect(createTaskRequest.LogGuid).To(Equal("task-name"))
+			Expect(createTaskRequest.MetricsGuid).To(Equal("task-name"))
+			Expect(createTaskRequest.RootFS).To(Equal("preloaded:my-rootfs"))
+			Expect(createTaskRequest.Domain).To(Equal("task-domain"))
+			Expect(createTaskRequest.LogSource).To(Equal("log-source"))
+			Expect(createTaskRequest.EgressRules).To(Equal(securityGroupRules))
+		})
+
+		Context("when the task already exists", func() {
+			It("doesn't allow you", func() {
+				tasksResponse := []receptor.TaskResponse{
+					receptor.TaskResponse{TaskGuid: "task-name"},
+				}
+				fakeReceptorClient.TasksReturns(tasksResponse, nil)
+
+				err := taskRunner.CreateTask(createTaskParams)
+
+				Expect(err).To(MatchError("task-name has already been submitted"))
+
+				Expect(fakeReceptorClient.TasksCallCount()).To(Equal(1))
+				Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(0))
+				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(0))
+			})
+		})
+
+		Context("when the guid is the reserved name lattice-debug", func() {
+			It("doesn't allow you", func() {
+				createTaskParams = task_runner.NewCreateTaskParams(
+					action,
+					"lattice-debug",
+					"preloaded:my-rootfs",
+					"task-domain",
+					"log-source",
+					securityGroupRules,
+				)
+
+				err := taskRunner.CreateTask(createTaskParams)
+
+				Expect(err).To(MatchError(task_runner.AttemptedToCreateLatticeDebugErrorMessage))
+
+				Expect(fakeReceptorClient.TasksCallCount()).To(Equal(0))
+				Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(0))
+				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(0))
+			})
+		})
+
+		Context("when the receptor returns errors", func() {
+			It("returns error when getting existing tasks", func() {
+				fakeReceptorClient.TasksReturns(nil, errors.New("unable to fetch tasks"))
+
+				err := taskRunner.CreateTask(createTaskParams)
+
+				Expect(err).To(MatchError("unable to fetch tasks"))
+
+				Expect(fakeReceptorClient.TasksCallCount()).To(Equal(1))
+				Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(0))
+				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(0))
+			})
+
+			It("returns error when upserting the domain", func() {
+				upsertError := errors.New("You're not that fresh, buddy.")
+				fakeReceptorClient.UpsertDomainReturns(upsertError)
+
+				err := taskRunner.CreateTask(createTaskParams)
+
+				Expect(err).To(MatchError(upsertError))
+				Expect(fakeReceptorClient.TasksCallCount()).To(Equal(1))
+				Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(1))
+				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(0))
+			})
+
+			It("returns error when creating the task fails", func() {
+				fakeReceptorClient.CreateTaskReturns(errors.New("not making your task"))
+
+				err := taskRunner.CreateTask(createTaskParams)
+
+				Expect(err).To(MatchError("not making your task"))
+				Expect(fakeReceptorClient.TasksCallCount()).To(Equal(1))
+				Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(1))
+				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(1))
+			})
+		})
+	})
+
 	Describe("SubmitTask", func() {
 		It("Submits a task from JSON", func() {
 			environmentVariables := []receptor.EnvironmentVariable{

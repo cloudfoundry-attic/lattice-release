@@ -17,6 +17,15 @@ type FakeDropletRunner struct {
 	uploadBitsReturns struct {
 		result1 error
 	}
+	BuildDropletStub        func(dropletName, buildpackUrl string) error
+	buildDropletMutex       sync.RWMutex
+	buildDropletArgsForCall []struct {
+		dropletName  string
+		buildpackUrl string
+	}
+	buildDropletReturns struct {
+		result1 error
+	}
 }
 
 func (fake *FakeDropletRunner) UploadBits(dropletName string, uploadPath string) error {
@@ -48,6 +57,39 @@ func (fake *FakeDropletRunner) UploadBitsArgsForCall(i int) (string, string) {
 func (fake *FakeDropletRunner) UploadBitsReturns(result1 error) {
 	fake.UploadBitsStub = nil
 	fake.uploadBitsReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDropletRunner) BuildDroplet(dropletName string, buildpackUrl string) error {
+	fake.buildDropletMutex.Lock()
+	fake.buildDropletArgsForCall = append(fake.buildDropletArgsForCall, struct {
+		dropletName  string
+		buildpackUrl string
+	}{dropletName, buildpackUrl})
+	fake.buildDropletMutex.Unlock()
+	if fake.BuildDropletStub != nil {
+		return fake.BuildDropletStub(dropletName, buildpackUrl)
+	} else {
+		return fake.buildDropletReturns.result1
+	}
+}
+
+func (fake *FakeDropletRunner) BuildDropletCallCount() int {
+	fake.buildDropletMutex.RLock()
+	defer fake.buildDropletMutex.RUnlock()
+	return len(fake.buildDropletArgsForCall)
+}
+
+func (fake *FakeDropletRunner) BuildDropletArgsForCall(i int) (string, string) {
+	fake.buildDropletMutex.RLock()
+	defer fake.buildDropletMutex.RUnlock()
+	return fake.buildDropletArgsForCall[i].dropletName, fake.buildDropletArgsForCall[i].buildpackUrl
+}
+
+func (fake *FakeDropletRunner) BuildDropletReturns(result1 error) {
+	fake.BuildDropletStub = nil
+	fake.buildDropletReturns = struct {
 		result1 error
 	}{result1}
 }
