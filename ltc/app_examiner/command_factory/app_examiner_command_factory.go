@@ -357,7 +357,7 @@ func (factory *AppExaminerCommandFactory) printInstanceSummary(actualInstances [
 			}
 		}
 		if instance.PlacementError == "" && instance.State != "CRASHED" {
-			uptime := time.Since(time.Unix(0, instance.Since))
+			uptime := factory.clock.Now().Sub(time.Unix(0, instance.Since))
 			roundedUptime := uptime - (uptime % time.Second)
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 				strconv.Itoa(instance.Index),
@@ -404,7 +404,7 @@ func (factory *AppExaminerCommandFactory) printInstanceInfo(actualInstances []ap
 				portMappingStrings = append(portMappingStrings, fmt.Sprintf("%d:%d", portMapping.HostPort, portMapping.ContainerPort))
 			}
 			fmt.Fprintf(w, "%s\t%s\n", "Port Mapping", strings.Join(portMappingStrings, ";"))
-			uptime := time.Since(time.Unix(0, instance.Since))
+			uptime := factory.clock.Now().Sub(time.Unix(0, instance.Since))
 			roundedUptime := uptime - (uptime % time.Second)
 			fmt.Fprintf(w, "%s\t%s\n", "Uptime", fmt.Sprint(roundedUptime))
 

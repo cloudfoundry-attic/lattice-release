@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -49,7 +48,9 @@ var _ = Describe("CommandFactory", func() {
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		osSignalChan = make(chan os.Signal, 1)
-		clock = fakeclock.NewFakeClock(time.Now())
+		location, err := time.LoadLocation("Africa/Djibouti")
+		Expect(err).NotTo(HaveOccurred())
+		clock = fakeclock.NewFakeClock(time.Date(2012, time.February, 29, 6, 45, 30, 820, location))
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 		graphicalVisualizer = &fake_graphical_visualizer.FakeGraphicalVisualizer{}
 	})
@@ -353,10 +354,10 @@ var _ = Describe("CommandFactory", func() {
 			sampleAppInfo app_examiner.AppInfo
 		)
 
-		// TODO: use stricter testing than just to the minute
+		epochTime := int64(401120627)
 		roundTime := func(now, since time.Time) string {
-			uptime := (now.Sub(since) - (now.Sub(since) % time.Minute)).String()
-			return strings.TrimSuffix(uptime, "0s")
+			uptime := (now.Sub(since) - (now.Sub(since) % time.Second)).String()
+			return uptime
 		}
 
 		BeforeEach(func() {
@@ -406,7 +407,7 @@ var _ = Describe("CommandFactory", func() {
 							},
 						},
 						State:      "RUNNING",
-						Since:      401120627 * 1e9,
+						Since:      epochTime * 1e9,
 						HasMetrics: true,
 						Metrics: app_examiner.InstanceMetrics{
 							CpuPercentage: 23.45678,
@@ -488,7 +489,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).To(test_helpers.Say("Uptime"))
 
-			roundedTimeSince := roundTime(time.Now(), time.Unix(0, 401120627*1e9))
+			roundedTimeSince := roundTime(clock.Now(), time.Unix(0, epochTime*1e9))
 			Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
 
 			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
@@ -573,7 +574,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("23.46%"))
 				Expect(outputBuffer).To(test_helpers.Say("640K"))
 
-				roundedTimeSince := roundTime(time.Now(), time.Unix(0, 401120627*1e9))
+				roundedTimeSince := roundTime(clock.Now(), time.Unix(0, epochTime*1e9))
 				Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
 
 				Expect(outputBuffer).To(test_helpers.Say("4"))
@@ -609,13 +610,14 @@ var _ = Describe("CommandFactory", func() {
 
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
 
-				roundedTimeSince := roundTime(clock.Now(), time.Unix(0, 401120627*1e9))
+				roundedTimeSince := roundTime(clock.Now(), time.Unix(0, epochTime*1e9))
 				Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
 
 				clock.IncrementBySeconds(1)
 
 				Consistently(outputBuffer).ShouldNot(test_helpers.Say("wompy-app"))
 
+				refreshTime := int64(405234567)
 				refreshAppInfo := app_examiner.AppInfo{
 					ProcessGuid:            "wompy-app",
 					DesiredInstances:       1,
@@ -625,7 +627,7 @@ var _ = Describe("CommandFactory", func() {
 							InstanceGuid: "a0s9f-u9a8sf-aasdioasdjoi",
 							Index:        1,
 							State:        "RUNNING",
-							Since:        405234567 * 1e9,
+							Since:        refreshTime * 1e9,
 						},
 					},
 				}
@@ -637,8 +639,7 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(24)))
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
-
-				roundedTimeSince = roundTime(clock.Now().Add(-1*time.Second), time.Unix(0, 405234567*1e9))
+				roundedTimeSince = roundTime(clock.Now(), time.Unix(0, refreshTime*1e9))
 				Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
 			})
 
