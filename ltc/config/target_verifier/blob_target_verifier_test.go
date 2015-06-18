@@ -1,6 +1,7 @@
 package target_verifier_test
 
 import (
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -73,7 +74,13 @@ var _ = Describe("TargetVerifier", func() {
 		})
 
 		It("returns ok=false if the server is down", func() {
+			listenerAddr := fakeServer.HTTPTestServer.Listener.Addr().String()
 			fakeServer.Close()
+
+			Eventually(func() error {
+				_, err := net.Dial("tcp", listenerAddr)
+				return err
+			}).Should(HaveOccurred())
 
 			ok, err := targetVerifier.VerifyBlobTarget(config.BlobTarget().TargetHost, config.BlobTarget().TargetPort, "V8GDQFR_VDOGM55IV8OH", "Wv_kltnl98hNWNdNwyQPYnFhK4gVPTxVS3NNMg==", "bucket")
 
