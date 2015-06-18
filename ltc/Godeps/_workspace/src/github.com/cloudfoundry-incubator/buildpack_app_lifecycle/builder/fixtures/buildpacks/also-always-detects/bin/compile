@@ -1,0 +1,5 @@
+#!/bin/bash
+# vim: set ft=sh
+
+echo WOO
+touch $1/compiled

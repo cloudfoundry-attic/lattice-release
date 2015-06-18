@@ -1,0 +1,6 @@
+#!/bin/bash
+# vim: set ft=sh
+
+echo WOO
+touch $1/compiled
+touch $2/build-artifact

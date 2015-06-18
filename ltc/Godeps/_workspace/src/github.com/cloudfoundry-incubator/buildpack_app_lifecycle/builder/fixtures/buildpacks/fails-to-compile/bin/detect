@@ -1,0 +1,5 @@
+#!/bin/bash
+# vim: set ft=sh
+
+echo Fails To Compile
+exit 0

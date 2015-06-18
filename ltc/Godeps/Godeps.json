@@ -12,6 +12,10 @@
 			"Rev": "b8a35001b773c267eb260a691f4e5499a3531600"
 		},
 		{
+			"ImportPath": "github.com/cloudfoundry-incubator/buildpack_app_lifecycle",
+			"Rev": "06b8dc88b7922597ccdce747faff1c31707c1746"
+		},
+		{
 			"ImportPath": "github.com/cloudfoundry-incubator/cf_http",
 			"Rev": "ff7e3614c359812c9903a1e611619cd1f3dd4d97"
 		},

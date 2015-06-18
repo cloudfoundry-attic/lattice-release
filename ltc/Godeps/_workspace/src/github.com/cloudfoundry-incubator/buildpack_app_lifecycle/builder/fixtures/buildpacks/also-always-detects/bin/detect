@@ -1,0 +1,5 @@
+#!/bin/bash
+# vim: set ft=sh
+
+echo Also Always Matching
+exit 0

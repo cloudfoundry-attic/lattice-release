@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cat <<EOF
+---
+default_process_types:
+  web: the start command
+EOF

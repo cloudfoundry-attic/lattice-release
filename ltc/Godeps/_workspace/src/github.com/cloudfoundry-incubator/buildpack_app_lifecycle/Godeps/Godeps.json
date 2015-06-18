@@ -1,0 +1,35 @@
+{
+	"ImportPath": "github.com/cloudfoundry-incubator/buildpack_app_lifecycle",
+	"GoVersion": "go1.4",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/cloudfoundry-incubator/candiedyaml",
+			"Rev": "150e4e8f749b21a7f0de8e3cfd885143fcea6b32"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo",
+			"Comment": "v1.1.0-33-g17ea479",
+			"Rev": "17ea479729ee427265ac1e913443018350946ddf"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega",
+			"Comment": "v1.0-28-g8adf9e1",
+			"Rev": "8adf9e1730c55cdc590de7d49766cb2acc88d8f2"
+		},
+		{
+			"ImportPath": "github.com/pivotal-golang/archiver/extractor",
+			"Rev": "cdabc654f61ff99a82622c888f738c808c38cfa9"
+		},
+		{
+			"ImportPath": "github.com/pivotal-golang/bytefmt",
+			"Rev": "a8b882b6aa36a96ec3f707ccbd693b11cb383430"
+		},
+		{
+			"ImportPath": "github.com/pivotal-golang/cacheddownloader",
+			"Rev": "4ae9344088cca5e116027e56a687c663014833e1"
+		}
+	]
+}
