@@ -11,6 +11,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
@@ -122,7 +123,8 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	receptorClient := receptor.NewClient(config.Receptor())
 	noaaConsumer := noaa.NewConsumer(LoggregatorUrl(config.Loggregator()), nil, nil)
-	appRunner := docker_app_runner.New(receptorClient, config.Target())
+	appRunner := app_runner.New(receptorClient, config.Target())
+	dockerAppRunner := docker_app_runner.New(appRunner)
 
 	clock := clock.NewClock()
 
@@ -141,6 +143,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	appRunnerCommandFactoryConfig := app_runner_command_factory.AppRunnerCommandFactoryConfig{
 		AppRunner:             appRunner,
+		DockerAppRunner:       dockerAppRunner,
 		AppExaminer:           appExaminer,
 		DockerMetadataFetcher: docker_metadata_fetcher.New(docker_metadata_fetcher.NewDockerSessionFactory()),
 		UI:                  ui,

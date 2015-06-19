@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
@@ -37,7 +38,8 @@ const (
 )
 
 type AppRunnerCommandFactory struct {
-	appRunner             docker_app_runner.AppRunner
+	appRunner             app_runner.AppRunner
+	dockerAppRunner       docker_app_runner.DockerAppRunner
 	appExaminer           app_examiner.AppExaminer
 	ui                    terminal.UI
 	dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
@@ -49,7 +51,8 @@ type AppRunnerCommandFactory struct {
 }
 
 type AppRunnerCommandFactoryConfig struct {
-	AppRunner             docker_app_runner.AppRunner
+	AppRunner             app_runner.AppRunner
+	DockerAppRunner       docker_app_runner.DockerAppRunner
 	AppExaminer           app_examiner.AppExaminer
 	UI                    terminal.UI
 	DockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
@@ -63,9 +66,10 @@ type AppRunnerCommandFactoryConfig struct {
 
 func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunnerCommandFactory {
 	return &AppRunnerCommandFactory{
-		appRunner:   config.AppRunner,
-		appExaminer: config.AppExaminer,
-		ui:          config.UI,
+		appRunner:       config.AppRunner,
+		dockerAppRunner: config.DockerAppRunner,
+		appExaminer:     config.AppExaminer,
+		ui:              config.UI,
 		dockerMetadataFetcher: config.DockerMetadataFetcher,
 		domain:                config.Domain,
 		env:                   config.Env,
@@ -353,9 +357,9 @@ func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
 		return
 	}
 
-	err = factory.appRunner.CreateDockerApp(docker_app_runner.CreateDockerAppParams{
+	err = factory.dockerAppRunner.CreateDockerApp(app_runner.CreateAppParams{
 		Name:                 name,
-		DockerImagePath:      dockerImage,
+		RootFS:               dockerImage,
 		StartCommand:         startCommand,
 		AppArgs:              appArgs,
 		EnvironmentVariables: factory.buildEnvironment(envVarsFlag, name),
@@ -461,7 +465,7 @@ func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
 		return
 	}
 
-	desiredRoutes := docker_app_runner.RouteOverrides{}
+	desiredRoutes := app_runner.RouteOverrides{}
 	var err error
 	if !noRoutesFlag {
 		desiredRoutes, err = parseRouteOverrides(userDefinedRoutes)
@@ -627,30 +631,30 @@ func (factory *AppRunnerCommandFactory) getExposedPortsFromArgs(portsFlag string
 	return []uint16{8080}, nil
 }
 
-func (factory *AppRunnerCommandFactory) getMonitorConfigFromArgs(exposedPorts []uint16, portMonitorFlag int, noMonitorFlag bool, urlMonitorFlag string, monitorTimeoutFlag time.Duration, imageMetadata *docker_metadata_fetcher.ImageMetadata) (docker_app_runner.MonitorConfig, error) {
+func (factory *AppRunnerCommandFactory) getMonitorConfigFromArgs(exposedPorts []uint16, portMonitorFlag int, noMonitorFlag bool, urlMonitorFlag string, monitorTimeoutFlag time.Duration, imageMetadata *docker_metadata_fetcher.ImageMetadata) (app_runner.MonitorConfig, error) {
 	if noMonitorFlag {
-		return docker_app_runner.MonitorConfig{
-			Method: docker_app_runner.NoMonitor,
+		return app_runner.MonitorConfig{
+			Method: app_runner.NoMonitor,
 		}, nil
 	}
 
 	if urlMonitorFlag != "" {
 		urlMonitorArr := strings.Split(urlMonitorFlag, ":")
 		if len(urlMonitorArr) != 2 {
-			return docker_app_runner.MonitorConfig{}, errors.New(InvalidPortErrorMessage)
+			return app_runner.MonitorConfig{}, errors.New(InvalidPortErrorMessage)
 		}
 
 		urlMonitorPort, err := strconv.Atoi(urlMonitorArr[0])
 		if err != nil {
-			return docker_app_runner.MonitorConfig{}, errors.New(InvalidPortErrorMessage)
+			return app_runner.MonitorConfig{}, errors.New(InvalidPortErrorMessage)
 		}
 
 		if err := checkPortExposed(exposedPorts, uint16(urlMonitorPort)); err != nil {
-			return docker_app_runner.MonitorConfig{}, err
+			return app_runner.MonitorConfig{}, err
 		}
 
-		return docker_app_runner.MonitorConfig{
-			Method:  docker_app_runner.URLMonitor,
+		return app_runner.MonitorConfig{
+			Method:  app_runner.URLMonitor,
 			Port:    uint16(urlMonitorPort),
 			URI:     urlMonitorArr[1],
 			Timeout: monitorTimeoutFlag,
@@ -671,11 +675,11 @@ func (factory *AppRunnerCommandFactory) getMonitorConfigFromArgs(exposedPorts []
 	}
 
 	if err := checkPortExposed(exposedPorts, monitorPort); err != nil {
-		return docker_app_runner.MonitorConfig{}, err
+		return app_runner.MonitorConfig{}, err
 	}
 
-	return docker_app_runner.MonitorConfig{
-		Method:  docker_app_runner.PortMonitor,
+	return app_runner.MonitorConfig{
+		Method:  app_runner.PortMonitor,
 		Port:    uint16(monitorPort),
 		Timeout: monitorTimeoutFlag,
 	}, nil
@@ -696,8 +700,8 @@ func checkPortExposed(exposedPorts []uint16, monitorPort uint16) error {
 	return nil
 }
 
-func parseRouteOverrides(routes string) (docker_app_runner.RouteOverrides, error) {
-	var routeOverrides docker_app_runner.RouteOverrides
+func parseRouteOverrides(routes string) (app_runner.RouteOverrides, error) {
+	var routeOverrides app_runner.RouteOverrides
 
 	for _, route := range strings.Split(routes, ",") {
 		if route == "" {
@@ -711,7 +715,7 @@ func parseRouteOverrides(routes string) (docker_app_runner.RouteOverrides, error
 
 		port := uint16(maybePort)
 		hostnamePrefix := routeArr[1]
-		routeOverrides = append(routeOverrides, docker_app_runner.RouteOverride{HostnamePrefix: hostnamePrefix, Port: port})
+		routeOverrides = append(routeOverrides, app_runner.RouteOverride{HostnamePrefix: hostnamePrefix, Port: port})
 	}
 
 	return routeOverrides, nil

@@ -4,16 +4,16 @@ package fake_app_runner
 import (
 	"sync"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 )
 
 type FakeAppRunner struct {
-	CreateDockerAppStub        func(params docker_app_runner.CreateDockerAppParams) error
-	createDockerAppMutex       sync.RWMutex
-	createDockerAppArgsForCall []struct {
-		params docker_app_runner.CreateDockerAppParams
+	CreateAppStub        func(params app_runner.CreateAppParams) error
+	createAppMutex       sync.RWMutex
+	createAppArgsForCall []struct {
+		params app_runner.CreateAppParams
 	}
-	createDockerAppReturns struct {
+	createAppReturns struct {
 		result1 error
 	}
 	SubmitLrpStub        func(submitLrpJson []byte) (string, error)
@@ -34,11 +34,11 @@ type FakeAppRunner struct {
 	scaleAppReturns struct {
 		result1 error
 	}
-	UpdateAppRoutesStub        func(name string, routes docker_app_runner.RouteOverrides) error
+	UpdateAppRoutesStub        func(name string, routes app_runner.RouteOverrides) error
 	updateAppRoutesMutex       sync.RWMutex
 	updateAppRoutesArgsForCall []struct {
 		name   string
-		routes docker_app_runner.RouteOverrides
+		routes app_runner.RouteOverrides
 	}
 	updateAppRoutesReturns struct {
 		result1 error
@@ -53,34 +53,34 @@ type FakeAppRunner struct {
 	}
 }
 
-func (fake *FakeAppRunner) CreateDockerApp(params docker_app_runner.CreateDockerAppParams) error {
-	fake.createDockerAppMutex.Lock()
-	fake.createDockerAppArgsForCall = append(fake.createDockerAppArgsForCall, struct {
-		params docker_app_runner.CreateDockerAppParams
+func (fake *FakeAppRunner) CreateApp(params app_runner.CreateAppParams) error {
+	fake.createAppMutex.Lock()
+	fake.createAppArgsForCall = append(fake.createAppArgsForCall, struct {
+		params app_runner.CreateAppParams
 	}{params})
-	fake.createDockerAppMutex.Unlock()
-	if fake.CreateDockerAppStub != nil {
-		return fake.CreateDockerAppStub(params)
+	fake.createAppMutex.Unlock()
+	if fake.CreateAppStub != nil {
+		return fake.CreateAppStub(params)
 	} else {
-		return fake.createDockerAppReturns.result1
+		return fake.createAppReturns.result1
 	}
 }
 
-func (fake *FakeAppRunner) CreateDockerAppCallCount() int {
-	fake.createDockerAppMutex.RLock()
-	defer fake.createDockerAppMutex.RUnlock()
-	return len(fake.createDockerAppArgsForCall)
+func (fake *FakeAppRunner) CreateAppCallCount() int {
+	fake.createAppMutex.RLock()
+	defer fake.createAppMutex.RUnlock()
+	return len(fake.createAppArgsForCall)
 }
 
-func (fake *FakeAppRunner) CreateDockerAppArgsForCall(i int) docker_app_runner.CreateDockerAppParams {
-	fake.createDockerAppMutex.RLock()
-	defer fake.createDockerAppMutex.RUnlock()
-	return fake.createDockerAppArgsForCall[i].params
+func (fake *FakeAppRunner) CreateAppArgsForCall(i int) app_runner.CreateAppParams {
+	fake.createAppMutex.RLock()
+	defer fake.createAppMutex.RUnlock()
+	return fake.createAppArgsForCall[i].params
 }
 
-func (fake *FakeAppRunner) CreateDockerAppReturns(result1 error) {
-	fake.CreateDockerAppStub = nil
-	fake.createDockerAppReturns = struct {
+func (fake *FakeAppRunner) CreateAppReturns(result1 error) {
+	fake.CreateAppStub = nil
+	fake.createAppReturns = struct {
 		result1 error
 	}{result1}
 }
@@ -151,11 +151,11 @@ func (fake *FakeAppRunner) ScaleAppReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeAppRunner) UpdateAppRoutes(name string, routes docker_app_runner.RouteOverrides) error {
+func (fake *FakeAppRunner) UpdateAppRoutes(name string, routes app_runner.RouteOverrides) error {
 	fake.updateAppRoutesMutex.Lock()
 	fake.updateAppRoutesArgsForCall = append(fake.updateAppRoutesArgsForCall, struct {
 		name   string
-		routes docker_app_runner.RouteOverrides
+		routes app_runner.RouteOverrides
 	}{name, routes})
 	fake.updateAppRoutesMutex.Unlock()
 	if fake.UpdateAppRoutesStub != nil {
@@ -171,7 +171,7 @@ func (fake *FakeAppRunner) UpdateAppRoutesCallCount() int {
 	return len(fake.updateAppRoutesArgsForCall)
 }
 
-func (fake *FakeAppRunner) UpdateAppRoutesArgsForCall(i int) (string, docker_app_runner.RouteOverrides) {
+func (fake *FakeAppRunner) UpdateAppRoutesArgsForCall(i int) (string, app_runner.RouteOverrides) {
 	fake.updateAppRoutesMutex.RLock()
 	defer fake.updateAppRoutesMutex.RUnlock()
 	return fake.updateAppRoutesArgsForCall[i].name, fake.updateAppRoutesArgsForCall[i].routes
@@ -216,4 +216,4 @@ func (fake *FakeAppRunner) RemoveAppReturns(result1 error) {
 	}{result1}
 }
 
-var _ docker_app_runner.AppRunner = new(FakeAppRunner)
+var _ app_runner.AppRunner = new(FakeAppRunner)

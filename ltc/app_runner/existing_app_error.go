@@ -1,4 +1,4 @@
-package docker_app_runner
+package app_runner
 
 import "fmt"
 

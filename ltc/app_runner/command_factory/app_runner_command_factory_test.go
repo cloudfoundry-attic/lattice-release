@@ -13,11 +13,12 @@ import (
 	"github.com/onsi/gomega/gbytes"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner/fake_app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner/fake_docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher/fake_docker_metadata_fetcher"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
@@ -34,6 +35,7 @@ var _ = Describe("CommandFactory", func() {
 
 	var (
 		appRunner                     *fake_app_runner.FakeAppRunner
+		dockerAppRunner               *fake_docker_app_runner.FakeDockerAppRunner
 		appExaminer                   *fake_app_examiner.FakeAppExaminer
 		outputBuffer                  *gbytes.Buffer
 		terminalUI                    terminal.UI
@@ -48,6 +50,7 @@ var _ = Describe("CommandFactory", func() {
 
 	BeforeEach(func() {
 		appRunner = &fake_app_runner.FakeAppRunner{}
+		dockerAppRunner = &fake_docker_app_runner.FakeDockerAppRunner{}
 		appExaminer = &fake_app_examiner.FakeAppExaminer{}
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
@@ -64,9 +67,10 @@ var _ = Describe("CommandFactory", func() {
 		BeforeEach(func() {
 			env := []string{"SHELL=/bin/bash", "COLOR=Blue"}
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:   appRunner,
-				AppExaminer: appExaminer,
-				UI:          terminalUI,
+				AppRunner:       appRunner,
+				DockerAppRunner: dockerAppRunner,
+				AppExaminer:     appExaminer,
+				UI:              terminalUI,
 				DockerMetadataFetcher: dockerMetadataFetcher,
 				Domain:                domain,
 				Env:                   env,
@@ -110,11 +114,11 @@ var _ = Describe("CommandFactory", func() {
 			Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
 			Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("superfun/app:mycooltag"))
 
-			Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-			createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+			Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+			createDockerAppParameters := dockerAppRunner.CreateDockerAppArgsForCall(0)
 			Expect(createDockerAppParameters.Name).To(Equal("cool-web-app"))
 			Expect(createDockerAppParameters.StartCommand).To(Equal("/start-me-please"))
-			Expect(createDockerAppParameters.DockerImagePath).To(Equal("superfun/app:mycooltag"))
+			Expect(createDockerAppParameters.RootFS).To(Equal("superfun/app:mycooltag"))
 			Expect(createDockerAppParameters.AppArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
 			Expect(createDockerAppParameters.Instances).To(Equal(22))
 			Expect(createDockerAppParameters.EnvironmentVariables).To(Equal(map[string]string{
@@ -129,12 +133,12 @@ var _ = Describe("CommandFactory", func() {
 			Expect(createDockerAppParameters.CPUWeight).To(Equal(uint(57)))
 			Expect(createDockerAppParameters.MemoryMB).To(Equal(12))
 			Expect(createDockerAppParameters.DiskMB).To(Equal(12))
-			Expect(createDockerAppParameters.Monitor.Method).To(Equal(docker_app_runner.PortMonitor))
+			Expect(createDockerAppParameters.Monitor.Method).To(Equal(app_runner.PortMonitor))
 			Expect(createDockerAppParameters.Timeout).To(Equal(time.Second * 28))
-			Expect(createDockerAppParameters.RouteOverrides).To(ContainExactly(docker_app_runner.RouteOverrides{
-				docker_app_runner.RouteOverride{HostnamePrefix: "route-3000-yay", Port: 3000},
-				docker_app_runner.RouteOverride{HostnamePrefix: "route-1111-wahoo", Port: 1111},
-				docker_app_runner.RouteOverride{HostnamePrefix: "route-1111-me-too", Port: 1111},
+			Expect(createDockerAppParameters.RouteOverrides).To(ContainExactly(app_runner.RouteOverrides{
+				app_runner.RouteOverride{HostnamePrefix: "route-3000-yay", Port: 3000},
+				app_runner.RouteOverride{HostnamePrefix: "route-1111-wahoo", Port: 1111},
+				app_runner.RouteOverride{HostnamePrefix: "route-1111-me-too", Port: 1111},
 			}))
 			Expect(createDockerAppParameters.NoRoutes).To(BeFalse())
 			Expect(createDockerAppParameters.WorkingDir).To(Equal("/applications"))
@@ -159,8 +163,8 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-				createDockerAppParams := appRunner.CreateDockerAppArgsForCall(0)
+				Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+				createDockerAppParams := dockerAppRunner.CreateDockerAppArgsForCall(0)
 				appEnvVars := createDockerAppParams.EnvironmentVariables
 				processGuidEnvVar, found := appEnvVars["PROCESS_GUID"]
 
@@ -181,7 +185,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+				Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -197,7 +201,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+				Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -219,8 +223,8 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-				createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+				Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+				createDockerAppParameters := dockerAppRunner.CreateDockerAppArgsForCall(0)
 				Expect(createDockerAppParameters.ExposedPorts).To(Equal([]uint16{8080, 9090}))
 			})
 
@@ -238,7 +242,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: 1200, 2701, 4302\n"))
-				createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+				createDockerAppParameters := dockerAppRunner.CreateDockerAppArgsForCall(0)
 				Expect(createDockerAppParameters.ExposedPorts).To(Equal([]uint16{1200, 2701, 4302}))
 			})
 
@@ -256,7 +260,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+				createDockerAppParameters := dockerAppRunner.CreateDockerAppArgsForCall(0)
 				Expect(createDockerAppParameters.ExposedPorts).To(Equal([]uint16{8080, 9090}))
 			})
 
@@ -272,7 +276,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+					createDockerAppParameters := dockerAppRunner.CreateDockerAppArgsForCall(0)
 					Expect(createDockerAppParameters.ExposedPorts).To(Equal([]uint16{8080}))
 				})
 			})
@@ -289,7 +293,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 
@@ -307,7 +311,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 
@@ -332,8 +336,8 @@ var _ = Describe("CommandFactory", func() {
 					Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
 					Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("awesome/app"))
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-					createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+					createDockerAppParameters := dockerAppRunner.CreateDockerAppArgsForCall(0)
 					Expect(outputBuffer).To(test_helpers.Say("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
 					Expect(createDockerAppParameters.Privileged).To(Equal(false))
 					Expect(createDockerAppParameters.MemoryMB).To(Equal(128))
@@ -357,7 +361,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say("Error fetching image metadata: Docker Says No."))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadDocker}))
 				})
@@ -382,9 +386,9 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateDockerAppArgsForCall(0).Monitor
-					Expect(monitorConfig.Method).To(Equal(docker_app_runner.NoMonitor))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+					monitorConfig := dockerAppRunner.CreateDockerAppArgsForCall(0).Monitor
+					Expect(monitorConfig.Method).To(Equal(app_runner.NoMonitor))
 				})
 			})
 
@@ -401,9 +405,9 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateDockerAppArgsForCall(0).Monitor
-					Expect(monitorConfig.Method).To(Equal(docker_app_runner.PortMonitor))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+					monitorConfig := dockerAppRunner.CreateDockerAppArgsForCall(0).Monitor
+					Expect(monitorConfig.Method).To(Equal(app_runner.PortMonitor))
 					Expect(monitorConfig.Port).To(Equal(uint16(2000)))
 				})
 
@@ -418,7 +422,7 @@ var _ = Describe("CommandFactory", func() {
 					}
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(command_factory.MonitorPortNotExposed))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 				})
@@ -437,9 +441,9 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateDockerAppArgsForCall(0).Monitor
-					Expect(monitorConfig.Method).To(Equal(docker_app_runner.URLMonitor))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+					monitorConfig := dockerAppRunner.CreateDockerAppArgsForCall(0).Monitor
+					Expect(monitorConfig.Method).To(Equal(app_runner.URLMonitor))
 					Expect(monitorConfig.Port).To(Equal(uint16(1000)))
 				})
 
@@ -455,7 +459,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 				})
@@ -472,7 +476,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 				})
@@ -489,7 +493,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(command_factory.MonitorPortNotExposed))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 				})
@@ -507,9 +511,9 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateDockerAppArgsForCall(0).Monitor
-					Expect(monitorConfig.Method).To(Equal(docker_app_runner.PortMonitor))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+					monitorConfig := dockerAppRunner.CreateDockerAppArgsForCall(0).Monitor
+					Expect(monitorConfig.Method).To(Equal(app_runner.PortMonitor))
 					Expect(monitorConfig.Port).To(Equal(uint16(1000)))
 				})
 
@@ -524,8 +528,8 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateDockerAppArgsForCall(0).Monitor
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+					monitorConfig := dockerAppRunner.CreateDockerAppArgsForCall(0).Monitor
 					Expect(monitorConfig.Timeout).To(Equal(5 * time.Second))
 				})
 			})
@@ -544,9 +548,9 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateDockerAppArgsForCall(0).Monitor
-					Expect(monitorConfig.Method).To(Equal(docker_app_runner.NoMonitor))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+					monitorConfig := dockerAppRunner.CreateDockerAppArgsForCall(0).Monitor
+					Expect(monitorConfig.Method).To(Equal(app_runner.NoMonitor))
 				})
 
 				It("monitor-url takes precedence over monitor-port", func() {
@@ -562,9 +566,9 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateDockerAppArgsForCall(0).Monitor
-					Expect(monitorConfig.Method).To(Equal(docker_app_runner.URLMonitor))
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+					monitorConfig := dockerAppRunner.CreateDockerAppArgsForCall(0).Monitor
+					Expect(monitorConfig.Method).To(Equal(app_runner.URLMonitor))
 					Expect(monitorConfig.Port).To(Equal(uint16(1200)))
 				})
 			})
@@ -583,8 +587,8 @@ var _ = Describe("CommandFactory", func() {
 				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-				createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+				Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+				createDockerAppParameters := dockerAppRunner.CreateDockerAppArgsForCall(0)
 
 				Expect(createDockerAppParameters.NoRoutes).To(BeTrue())
 
@@ -606,7 +610,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+				createDockerAppParameters := dockerAppRunner.CreateDockerAppArgsForCall(0)
 				Expect(createDockerAppParameters.WorkingDir).To(Equal("/work/it"))
 			})
 		})
@@ -629,12 +633,12 @@ var _ = Describe("CommandFactory", func() {
 				Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
 				Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("fun-org/app"))
 
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-				createDockerAppParameters := appRunner.CreateDockerAppArgsForCall(0)
+				Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+				createDockerAppParameters := dockerAppRunner.CreateDockerAppArgsForCall(0)
 
 				Expect(createDockerAppParameters.StartCommand).To(Equal("/fetch-start"))
 				Expect(createDockerAppParameters.AppArgs).To(Equal([]string{"arg1", "arg2"}))
-				Expect(createDockerAppParameters.DockerImagePath).To(Equal("fun-org/app"))
+				Expect(createDockerAppParameters.RootFS).To(Equal("fun-org/app"))
 				Expect(createDockerAppParameters.WorkingDir).To(Equal("/this/directory/right/here"))
 
 				Expect(outputBuffer).To(test_helpers.Say("No working directory specified, using working directory from the image metadata...\n"))
@@ -652,7 +656,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).ToNot(test_helpers.Say("Working directory is:"))
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
+				Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
 			})
 
 			Context("when the metadata also has no start command", func() {
@@ -662,7 +666,7 @@ var _ = Describe("CommandFactory", func() {
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 					Expect(outputBuffer).To(test_helpers.Say("Unable to determine start command from image metadata.\n"))
-					Expect(appRunner.CreateDockerAppCallCount()).To(BeZero())
+					Expect(dockerAppRunner.CreateDockerAppCallCount()).To(BeZero())
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadDocker}))
 
 				})
@@ -680,8 +684,8 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(1))
-				createDockerAppParams := appRunner.CreateDockerAppArgsForCall(0)
+				Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(1))
+				createDockerAppParams := dockerAppRunner.CreateDockerAppArgsForCall(0)
 				Expect(createDockerAppParams.Timeout).To(Equal(command_factory.DefaultPollingTimeout))
 			})
 		})
@@ -810,7 +814,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Invalid CPU Weight"))
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+				Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 			})
 
 			It("validates that the name and dockerImage are passed in", func() {
@@ -821,7 +825,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: APP_NAME and DOCKER_IMAGE are required"))
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+				Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 			})
 
 			It("validates that the terminator -- is passed in when a start command is specified", func() {
@@ -834,7 +838,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: '--' Required before start command"))
-				Expect(appRunner.CreateDockerAppCallCount()).To(Equal(0))
+				Expect(dockerAppRunner.CreateDockerAppCallCount()).To(Equal(0))
 			})
 		})
 
@@ -847,7 +851,7 @@ var _ = Describe("CommandFactory", func() {
 					"/start-me-please",
 				}
 				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-				appRunner.CreateDockerAppReturns(errors.New("Major Fault"))
+				dockerAppRunner.CreateDockerAppReturns(errors.New("Major Fault"))
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
@@ -1151,12 +1155,12 @@ var _ = Describe("CommandFactory", func() {
 				"8080:foo.com,9090:bar.com",
 			}
 
-			expectedRouteOverrides := docker_app_runner.RouteOverrides{
-				docker_app_runner.RouteOverride{
+			expectedRouteOverrides := app_runner.RouteOverrides{
+				app_runner.RouteOverride{
 					HostnamePrefix: "foo.com",
 					Port:           8080,
 				},
-				docker_app_runner.RouteOverride{
+				app_runner.RouteOverride{
 					HostnamePrefix: "bar.com",
 					Port:           9090,
 				},
@@ -1187,7 +1191,7 @@ var _ = Describe("CommandFactory", func() {
 				name, routeOverrides := appRunner.UpdateAppRoutesArgsForCall(0)
 
 				Expect(name).To(Equal("cool-web-app"))
-				Expect(routeOverrides).To(Equal(docker_app_runner.RouteOverrides{}))
+				Expect(routeOverrides).To(Equal(app_runner.RouteOverrides{}))
 
 				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
 			})
