@@ -100,6 +100,9 @@
                 "apt-get -y install gcc",
                 "apt-get -y install make",
                 "apt-get -y install quota",
+                "apt-get -y install jq",
+                "apt-get -y install s3cmd",
+                "apt-get -y install unzip",
                 "apt-get -y install linux-image-extra-$(uname -r)"
             ]
         },

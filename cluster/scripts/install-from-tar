@@ -17,8 +17,6 @@ condense_it() {
         sudo dpkg -i stanchion_2.0.0-1_amd64.deb
         sudo dpkg -i riak-cs_2.0.0-1_amd64.deb
     popd 
-    ## TODO: bake me
-    apt-get install jq
 
     ## TODO: change up port binds
     ## UP NEXT:  putting the template in /var/lattice somewhere!!!
@@ -60,7 +58,6 @@ condense_it() {
     stanchion restart && stanchion ping
 
     ## create default condenser-bucket bucket
-    apt-get install s3cmd
     sed "s/%%ACCESS_KEY%%/$access_key/" /tmp/lattice-build/common/riak/templates/s3cfg-riakcs-template |
         sed "s/%%SECRET_KEY%%/$secret_key/" |
         sed "s/%%PROXY_HOST%%/localhost/" |
