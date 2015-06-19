@@ -608,6 +608,7 @@ var _ = Describe("CommandFactory", func() {
 
 				closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate", "2s"})
 
+				Consistently(closeChan).ShouldNot(BeClosed())
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
 
 				roundedTimeSince := roundTime(clock.Now(), time.Unix(0, epochTime*1e9))
@@ -640,7 +641,7 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(24)))
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
 				roundedTimeSince = roundTime(clock.Now(), time.Unix(0, refreshTime*1e9))
-				Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
+				Eventually(outputBuffer).Should(test_helpers.Say(roundedTimeSince))
 			})
 
 			It("dynamically displays any errors", func() {
