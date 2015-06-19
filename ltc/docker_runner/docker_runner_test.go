@@ -1,4 +1,4 @@
-package docker_app_runner_test
+package docker_runner_test
 
 import (
 	"errors"
@@ -7,24 +7,24 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/docker_runner"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
-var _ = Describe("DockerAppRunner", func() {
+var _ = Describe("DockerRunner", func() {
 
 	var (
 		fakeReceptorClient *fake_receptor.FakeClient
-		dockerAppRunner    docker_app_runner.DockerAppRunner
+		dockerAppRunner    docker_runner.DockerRunner
 		fakeAppRunner      *fake_app_runner.FakeAppRunner
 	)
 
 	BeforeEach(func() {
 		fakeReceptorClient = &fake_receptor.FakeClient{}
 		fakeAppRunner = &fake_app_runner.FakeAppRunner{}
-		dockerAppRunner = docker_app_runner.New(fakeAppRunner)
+		dockerAppRunner = docker_runner.New(fakeAppRunner)
 	})
 
 	Describe("CreateDockerApp", func() {

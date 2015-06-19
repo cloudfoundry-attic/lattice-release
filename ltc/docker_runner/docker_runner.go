@@ -1,4 +1,4 @@
-package docker_app_runner
+package docker_runner
 
 import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
@@ -6,8 +6,8 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
-//go:generate counterfeiter -o fake_docker_app_runner/fake_docker_app_runner.go . DockerAppRunner
-type DockerAppRunner interface {
+//go:generate counterfeiter -o fake_docker_runner/fake_docker_runner.go . DockerRunner
+type DockerRunner interface {
 	CreateDockerApp(params app_runner.CreateAppParams) error
 }
 
@@ -15,7 +15,7 @@ type dockerAppRunner struct {
 	appRunner app_runner.AppRunner
 }
 
-func New(appRunner app_runner.AppRunner) DockerAppRunner {
+func New(appRunner app_runner.AppRunner) DockerRunner {
 	return &dockerAppRunner{appRunner}
 }
 

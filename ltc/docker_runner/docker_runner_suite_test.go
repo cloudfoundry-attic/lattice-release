@@ -1,4 +1,4 @@
-package docker_app_runner_test
+package docker_runner_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -9,5 +9,5 @@ import (
 
 func TestAppRunning(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "DockerAppRunner Suite")
+	RunSpecs(t, "DockerRunner Suite")
 }

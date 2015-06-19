@@ -11,7 +11,6 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
@@ -39,7 +38,6 @@ const (
 
 type AppRunnerCommandFactory struct {
 	appRunner             app_runner.AppRunner
-	dockerAppRunner       docker_app_runner.DockerAppRunner
 	appExaminer           app_examiner.AppExaminer
 	ui                    terminal.UI
 	dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
@@ -52,7 +50,6 @@ type AppRunnerCommandFactory struct {
 
 type AppRunnerCommandFactoryConfig struct {
 	AppRunner             app_runner.AppRunner
-	DockerAppRunner       docker_app_runner.DockerAppRunner
 	AppExaminer           app_examiner.AppExaminer
 	UI                    terminal.UI
 	DockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
@@ -66,10 +63,9 @@ type AppRunnerCommandFactoryConfig struct {
 
 func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunnerCommandFactory {
 	return &AppRunnerCommandFactory{
-		appRunner:       config.AppRunner,
-		dockerAppRunner: config.DockerAppRunner,
-		appExaminer:     config.AppExaminer,
-		ui:              config.UI,
+		appRunner:   config.AppRunner,
+		appExaminer: config.AppExaminer,
+		ui:          config.UI,
 		dockerMetadataFetcher: config.DockerMetadataFetcher,
 		domain:                config.Domain,
 		env:                   config.Env,
@@ -77,112 +73,6 @@ func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunner
 		tailedLogsOutputter:   config.TailedLogsOutputter,
 		exitHandler:           config.ExitHandler,
 	}
-}
-
-func (factory *AppRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
-
-	var createFlags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "working-dir, w",
-			Usage: "Working directory for container (overrides Docker metadata)",
-			Value: "",
-		},
-		cli.BoolFlag{
-			Name:  "run-as-root, r",
-			Usage: "Runs in the context of the root user",
-		},
-		cli.StringSliceFlag{
-			Name:  "env, e",
-			Usage: "Environment variables (can be passed multiple times)",
-			Value: &cli.StringSlice{},
-		},
-		cli.IntFlag{
-			Name:  "cpu-weight, c",
-			Usage: "Relative CPU weight for the container (valid values: 1-100)",
-			Value: 100,
-		},
-		cli.IntFlag{
-			Name:  "memory-mb, m",
-			Usage: "Memory limit for container in MB",
-			Value: 128,
-		},
-		cli.IntFlag{
-			Name:  "disk-mb, d",
-			Usage: "Disk limit for container in MB",
-			Value: 0,
-		},
-		cli.StringFlag{
-			Name:  "ports, p",
-			Usage: "Ports to expose on the container (comma delimited)",
-		},
-		cli.IntFlag{
-			Name:  "monitor-port, M",
-			Usage: "Selects the port used to healthcheck the app",
-		},
-		cli.StringFlag{
-			Name: "monitor-url, U",
-			Usage: "Uses HTTP to healthcheck the app\n\t\t" +
-				"format is: port:/path/to/endpoint",
-		},
-		cli.DurationFlag{
-			Name:  "monitor-timeout",
-			Usage: "Timeout for the app healthcheck",
-			Value: time.Second,
-		},
-		cli.StringFlag{
-			Name: "routes, R",
-			Usage: "Route mappings to exposed ports as follows:\n\t\t" +
-				"--routes=80:web,8080:api will route web to 80 and api to 8080",
-		},
-		cli.IntFlag{
-			Name:  "instances, i",
-			Usage: "Number of application instances to spawn on launch",
-			Value: 1,
-		},
-		cli.BoolFlag{
-			Name:  "no-monitor",
-			Usage: "Disables healthchecking for the app",
-		},
-		cli.BoolFlag{
-			Name:  "no-routes",
-			Usage: "Registers no routes for the app",
-		},
-		cli.DurationFlag{
-			Name:  "timeout, t",
-			Usage: "Polling timeout for app to start",
-			Value: DefaultPollingTimeout,
-		},
-	}
-
-	var createAppCommand = cli.Command{
-		Name:    "create",
-		Aliases: []string{"cr"},
-		Usage:   "Creates a docker app on lattice",
-		Description: `ltc create APP_NAME DOCKER_IMAGE
-
-   APP_NAME is required and must be unique across the Lattice cluster
-   DOCKER_IMAGE is required and must match the standard docker image format
-   e.g.
-   		1. "cloudfoundry/lattice-app"
-   		2. "redis" - for official images; resolves to library/redis
-
-   ltc will fetch the command associated with your Docker image.
-   To provide a custom command:
-   ltc create APP_NAME DOCKER_IMAGE <optional flags> -- START_COMMAND APP_ARG1 APP_ARG2 ...
-
-   ltc will also fetch the working directory associated with your Docker image.
-   If the image does not specify a working directory, ltc will default the working directory to "/"
-   To provide a custom working directory:
-   ltc create APP_NAME DOCKER_IMAGE --working-dir=/foo/app-folder -- START_COMMAND APP_ARG1 APP_ARG2 ...
-
-   To specify environment variables:
-   ltc create APP_NAME DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE
-`,
-		Action: factory.createApp,
-		Flags:  createFlags,
-	}
-
-	return createAppCommand
 }
 
 func (factory *AppRunnerCommandFactory) MakeSubmitLrpCommand() cli.Command {
@@ -251,160 +141,6 @@ func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	}
 
 	return removeAppCommand
-}
-
-func (factory *AppRunnerCommandFactory) createApp(context *cli.Context) {
-	workingDirFlag := context.String("working-dir")
-	envVarsFlag := context.StringSlice("env")
-	instancesFlag := context.Int("instances")
-	cpuWeightFlag := uint(context.Int("cpu-weight"))
-	memoryMBFlag := context.Int("memory-mb")
-	diskMBFlag := context.Int("disk-mb")
-	portsFlag := context.String("ports")
-	noMonitorFlag := context.Bool("no-monitor")
-	portMonitorFlag := context.Int("monitor-port")
-	urlMonitorFlag := context.String("monitor-url")
-	monitorTimeoutFlag := context.Duration("monitor-timeout")
-	routesFlag := context.String("routes")
-	noRoutesFlag := context.Bool("no-routes")
-	timeoutFlag := context.Duration("timeout")
-	name := context.Args().Get(0)
-	dockerImage := context.Args().Get(1)
-	terminator := context.Args().Get(2)
-	startCommand := context.Args().Get(3)
-
-	var appArgs []string
-
-	switch {
-	case len(context.Args()) < 2:
-		factory.ui.SayIncorrectUsage("APP_NAME and DOCKER_IMAGE are required")
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
-		return
-	case startCommand != "" && terminator != "--":
-		factory.ui.SayIncorrectUsage("'--' Required before start command")
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
-		return
-	case len(context.Args()) > 4:
-		appArgs = context.Args()[4:]
-	case cpuWeightFlag < 1 || cpuWeightFlag > 100:
-		factory.ui.SayIncorrectUsage("Invalid CPU Weight")
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
-		return
-	}
-
-	imageMetadata, err := factory.dockerMetadataFetcher.FetchMetadata(dockerImage)
-	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error fetching image metadata: %s", err))
-		factory.exitHandler.Exit(exit_codes.BadDocker)
-		return
-	}
-
-	exposedPorts, err := factory.getExposedPortsFromArgs(portsFlag, imageMetadata)
-	if err != nil {
-		factory.ui.Say(err.Error())
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
-		return
-	}
-
-	monitorConfig, err := factory.getMonitorConfigFromArgs(exposedPorts, portMonitorFlag, noMonitorFlag, urlMonitorFlag, monitorTimeoutFlag, imageMetadata)
-	if err != nil {
-		factory.ui.Say(err.Error())
-		if err.Error() == MonitorPortNotExposed {
-			factory.exitHandler.Exit(exit_codes.CommandFailed)
-		} else {
-			factory.exitHandler.Exit(exit_codes.InvalidSyntax)
-		}
-		return
-	}
-
-	if workingDirFlag == "" {
-		factory.ui.Say("No working directory specified, using working directory from the image metadata...\n")
-		if imageMetadata.WorkingDir != "" {
-			workingDirFlag = imageMetadata.WorkingDir
-			factory.ui.Say("Working directory is:\n")
-			factory.ui.Say(workingDirFlag + "\n")
-		} else {
-			workingDirFlag = "/"
-		}
-	}
-
-	if !noMonitorFlag {
-		factory.ui.Say(fmt.Sprintf("Monitoring the app on port %d...\n", monitorConfig.Port))
-	} else {
-		factory.ui.Say("No ports will be monitored.\n")
-	}
-
-	if startCommand == "" {
-		if len(imageMetadata.StartCommand) == 0 {
-			factory.ui.SayLine("Unable to determine start command from image metadata.")
-			factory.exitHandler.Exit(exit_codes.BadDocker)
-			return
-		}
-
-		factory.ui.Say("No start command specified, using start command from the image metadata...\n")
-		startCommand = imageMetadata.StartCommand[0]
-
-		factory.ui.Say("Start command is:\n")
-		factory.ui.Say(strings.Join(imageMetadata.StartCommand, " ") + "\n")
-
-		appArgs = imageMetadata.StartCommand[1:]
-	}
-
-	routeOverrides, err := parseRouteOverrides(routesFlag)
-	if err != nil {
-		factory.ui.Say(err.Error())
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
-		return
-	}
-
-	err = factory.dockerAppRunner.CreateDockerApp(app_runner.CreateAppParams{
-		Name:                 name,
-		RootFS:               dockerImage,
-		StartCommand:         startCommand,
-		AppArgs:              appArgs,
-		EnvironmentVariables: factory.buildEnvironment(envVarsFlag, name),
-		Privileged:           context.Bool("run-as-root"),
-		Monitor:              monitorConfig,
-		Instances:            instancesFlag,
-		CPUWeight:            cpuWeightFlag,
-		MemoryMB:             memoryMBFlag,
-		DiskMB:               diskMBFlag,
-		ExposedPorts:         exposedPorts,
-		WorkingDir:           workingDirFlag,
-		RouteOverrides:       routeOverrides,
-		NoRoutes:             noRoutesFlag,
-		Timeout:              timeoutFlag,
-	})
-	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error creating app: %s", err))
-		factory.exitHandler.Exit(exit_codes.CommandFailed)
-		return
-	}
-
-	factory.ui.Say("Creating App: " + name + "\n")
-
-	go factory.tailedLogsOutputter.OutputTailedLogs(name)
-	defer factory.tailedLogsOutputter.StopOutputting()
-
-	ok := factory.pollUntilAllInstancesRunning(timeoutFlag, name, instancesFlag, "start")
-
-	if noRoutesFlag {
-		factory.ui.Say(colors.Green(name + " is now running.\n"))
-		return
-	} else if ok {
-		factory.ui.Say(colors.Green(name + " is now running.\n"))
-		factory.ui.Say("App is reachable at:\n")
-	} else {
-		factory.ui.Say("App will be reachable at:\n")
-	}
-
-	if routeOverrides != nil {
-		for _, route := range strings.Split(routesFlag, ",") {
-			factory.ui.Say(colors.Green(factory.urlForApp(strings.Split(route, ":")[1])))
-		}
-	} else {
-		factory.ui.Say(colors.Green(factory.urlForApp(name)))
-	}
 }
 
 func (factory *AppRunnerCommandFactory) submitLrp(context *cli.Context) {

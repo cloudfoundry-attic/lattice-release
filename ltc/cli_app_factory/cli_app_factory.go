@@ -12,7 +12,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
@@ -37,6 +36,8 @@ import (
 	app_examiner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory"
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	config_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
+	"github.com/cloudfoundry-incubator/lattice/ltc/docker_runner"
+	docker_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/command_factory"
 	droplet_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
 	integration_test_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/integration_test/command_factory"
 	logs_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
@@ -124,7 +125,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	receptorClient := receptor.NewClient(config.Receptor())
 	noaaConsumer := noaa.NewConsumer(LoggregatorUrl(config.Loggregator()), nil, nil)
 	appRunner := app_runner.New(receptorClient, config.Target())
-	dockerAppRunner := docker_app_runner.New(appRunner)
+	dockerRunner := docker_runner.New(appRunner)
 
 	clock := clock.NewClock()
 
@@ -143,7 +144,6 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	appRunnerCommandFactoryConfig := app_runner_command_factory.AppRunnerCommandFactoryConfig{
 		AppRunner:             appRunner,
-		DockerAppRunner:       dockerAppRunner,
 		AppExaminer:           appExaminer,
 		DockerMetadataFetcher: docker_metadata_fetcher.New(docker_metadata_fetcher.NewDockerSessionFactory()),
 		UI:                  ui,
@@ -156,6 +156,21 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	}
 
 	appRunnerCommandFactory := app_runner_command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
+
+	dockerRunnerCommandFactoryConfig := docker_runner_command_factory.DockerRunnerCommandFactoryConfig{
+		AppRunner:             appRunner,
+		DockerRunner:          dockerRunner,
+		AppExaminer:           appExaminer,
+		DockerMetadataFetcher: docker_metadata_fetcher.New(docker_metadata_fetcher.NewDockerSessionFactory()),
+		UI:                  ui,
+		Domain:              config.Target(),
+		Env:                 os.Environ(),
+		Clock:               clock,
+		Logger:              logger,
+		TailedLogsOutputter: tailedLogsOutputter,
+		ExitHandler:         exitHandler,
+	}
+	dockerRunnerCommandFactory := docker_runner_command_factory.NewDockerRunnerCommandFactory(dockerRunnerCommandFactoryConfig)
 
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(appExaminer, ui, tailedLogsOutputter, exitHandler)
 
@@ -196,7 +211,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	return []cli.Command{
 		appExaminerCommandFactory.MakeCellsCommand(),
-		appRunnerCommandFactory.MakeCreateAppCommand(),
+		dockerRunnerCommandFactory.MakeCreateAppCommand(),
 		appRunnerCommandFactory.MakeSubmitLrpCommand(),
 		logsCommandFactory.MakeDebugLogsCommand(),
 		appExaminerCommandFactory.MakeListAppCommand(),
