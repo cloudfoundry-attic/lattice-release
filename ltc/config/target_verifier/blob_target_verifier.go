@@ -50,7 +50,7 @@ func (t *targetVerifier) VerifyBlobTarget(host string, port uint16, accessKey, s
 			case 403:
 				return false, fmt.Errorf("unauthorized")
 			default:
-				return false, fmt.Errorf("%s", httpError.Error())
+				return false, fmt.Errorf("%s", httpError)
 			}
 		}
 

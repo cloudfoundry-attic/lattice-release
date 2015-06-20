@@ -106,11 +106,11 @@ var _ = Describe("BlobStore", func() {
 					ghttp.VerifyHeader(http.Header{"X-Amz-Acl": []string{"private"}}),
 					ghttp.RespondWith(http.StatusOK, "", http.Header{}),
 				))
-
 				bucketBuffer := gbytes.NewBuffer()
 				n, err := bucketBuffer.Write([]byte("sample/data"))
 				Expect(err).NotTo(HaveOccurred())
-				blobBucket.PutReader("object-key", bucketBuffer, int64(n), "text/plain", s3.Private, s3.Options{})
+				err = blobBucket.PutReader("object-key", bucketBuffer, int64(n), "text/plain", s3.Private, s3.Options{})
+				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
 			})
@@ -147,6 +147,25 @@ var _ = Describe("BlobStore", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
 			})
+
+			Context("when the bucket#PutReader returns an error", func() {
+				It("puts an object into the bucket from a reader", func() {
+					fakeServer.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.RespondWith(http.StatusInternalServerError, "", http.Header{}),
+					))
+					bucketBuffer := gbytes.NewBuffer()
+					n, err := bucketBuffer.Write([]byte("sample/data"))
+					Expect(err).NotTo(HaveOccurred())
+
+					err = blobBucket.PutReader("object-key", bucketBuffer, int64(n), "text/plain", s3.PublicReadWrite, s3.Options{})
+					Expect(err).To(HaveOccurred())
+					Expect(err).To(BeAssignableToTypeOf(&s3.Error{}))
+					Expect(err.(*s3.Error).StatusCode).To(Equal(http.StatusInternalServerError))
+
+					Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
+				})
+			})
+
 		})
 
 	})

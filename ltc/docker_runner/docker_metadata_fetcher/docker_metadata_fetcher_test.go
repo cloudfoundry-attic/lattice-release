@@ -13,22 +13,22 @@ import (
 
 var _ = Describe("DockerMetaDataFetcher", func() {
 	var (
-		dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
-		dockerSessionFactory  *fake_docker_session.FakeDockerSessionFactory
-		fakeDockerSession     *fake_docker_session.FakeDockerSession
+		fakeDockerSessionFactory *fake_docker_session.FakeDockerSessionFactory
+		fakeDockerSession        *fake_docker_session.FakeDockerSession
+		dockerMetadataFetcher    docker_metadata_fetcher.DockerMetadataFetcher
 	)
 
 	BeforeEach(func() {
 		fakeDockerSession = &fake_docker_session.FakeDockerSession{}
-		dockerSessionFactory = &fake_docker_session.FakeDockerSessionFactory{}
-		dockerMetadataFetcher = docker_metadata_fetcher.New(dockerSessionFactory)
+		fakeDockerSessionFactory = &fake_docker_session.FakeDockerSessionFactory{}
+		dockerMetadataFetcher = docker_metadata_fetcher.New(fakeDockerSessionFactory)
 	})
 
 	Describe("FetchMetadata", func() {
 
 		Context("when fetching metadata from the docker hub registry", func() {
 			It("returns the ImageMetadata with the WorkingDir, StartCommand, and PortConfig, and sets the monitored port to the lowest exposed tcp port", func() {
-				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
+				fakeDockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
 				imageList := map[string]*registry.ImgData{
 					"29d531509fb": &registry.ImgData{
 						ID:              "29d531509fb",
@@ -65,8 +65,8 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				Expect(imageMetadata.StartCommand).To(ConsistOf("/lattice-app", "--enableAwesomeMode=true", "iloveargs"))
 				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{uint16(27017), uint16(28321)}))
 
-				Expect(dockerSessionFactory.MakeSessionCallCount()).To(Equal(1))
-				Expect(dockerSessionFactory.MakeSessionArgsForCall(0)).To(Equal(dockerImageNoTag))
+				Expect(fakeDockerSessionFactory.MakeSessionCallCount()).To(Equal(1))
+				Expect(fakeDockerSessionFactory.MakeSessionArgsForCall(0)).To(Equal(dockerImageNoTag))
 
 				Expect(fakeDockerSession.GetRepositoryDataCallCount()).To(Equal(1))
 				Expect(fakeDockerSession.GetRepositoryDataArgsForCall(0)).To(Equal(dockerImageNoTag))
@@ -87,7 +87,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 		Context("when fetching metadata from a signed custom registry", func() {
 			It("returns the image metadata", func() {
-				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
+				fakeDockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
 				imageList := map[string]*registry.ImgData{
 					"29d531509fb": &registry.ImgData{
 						ID:              "29d531509fb",
@@ -123,8 +123,8 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				Expect(imageMetadata.StartCommand).To(ConsistOf("/savory-app", "--pretzels=salty", "cheesy"))
 				Expect(imageMetadata.ExposedPorts).To(ConsistOf(uint16(3333), uint16(4444)))
 
-				Expect(dockerSessionFactory.MakeSessionCallCount()).To(Equal(1))
-				Expect(dockerSessionFactory.MakeSessionArgsForCall(0)).To(Equal(dockerPath))
+				Expect(fakeDockerSessionFactory.MakeSessionCallCount()).To(Equal(1))
+				Expect(fakeDockerSessionFactory.MakeSessionArgsForCall(0)).To(Equal(dockerPath))
 
 				Expect(fakeDockerSession.GetRepositoryDataCallCount()).To(Equal(1))
 				Expect(fakeDockerSession.GetRepositoryDataArgsForCall(0)).To(Equal("savory-app"))
@@ -146,7 +146,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 		Context("when fetching metadata from a insecure custom registry", func() {
 			It("retries after getting unknown CA error and returns the image metadata", func() {
 				insecureRegistryErrorMessage := "If this private registry supports only HTTP or HTTPS with an unknown CA certificate, please add `--insecure-registry 192.168.11.1:5000` to the daemon's arguments. In the case of HTTPS, if you have access to the registry's CA certificate, no need for the flag; simply place the CA certificate at /etc/docker/certs.d/192.168.11.1:5000/ca.crt"
-				dockerSessionFactory.MakeSessionStub = func(reposName string, allowInsecure bool) (docker_metadata_fetcher.DockerSession, error) {
+				fakeDockerSessionFactory.MakeSessionStub = func(reposName string, allowInsecure bool) (docker_metadata_fetcher.DockerSession, error) {
 					if !allowInsecure {
 						return fakeDockerSession, errors.New(insecureRegistryErrorMessage)
 					}
@@ -189,13 +189,13 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				Expect(imageMetadata.StartCommand).To(ConsistOf("/savory-app", "--pretzels=salty", "cheesy"))
 				Expect(imageMetadata.ExposedPorts).To(ConsistOf(uint16(3333), uint16(4444)))
 
-				Expect(dockerSessionFactory.MakeSessionCallCount()).To(Equal(2))
+				Expect(fakeDockerSessionFactory.MakeSessionCallCount()).To(Equal(2))
 
-				reposName, allowInsecure := dockerSessionFactory.MakeSessionArgsForCall(0)
+				reposName, allowInsecure := fakeDockerSessionFactory.MakeSessionArgsForCall(0)
 				Expect(reposName).To(Equal(dockerPath))
 				Expect(allowInsecure).To(BeFalse())
 
-				reposName, allowInsecure = dockerSessionFactory.MakeSessionArgsForCall(1)
+				reposName, allowInsecure = fakeDockerSessionFactory.MakeSessionArgsForCall(1)
 				Expect(reposName).To(Equal(dockerPath))
 				Expect(allowInsecure).To(BeTrue())
 
@@ -219,18 +219,18 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				It("returns the error", func() {
 					insecureRegistryErrorMessage := "If this private registry supports only HTTP or HTTPS with an unknown CA certificate, please add `--insecure-registry 192.168.11.1:5000` to the daemon's arguments. In the case of HTTPS, if you have access to the registry's CA certificate, no need for the flag; simply place the CA certificate at /etc/docker/certs.d/192.168.11.1:5000/ca.crt"
 					dockerPath := "verybad/apple"
-					dockerSessionFactory.MakeSessionReturns(fakeDockerSession, errors.New(insecureRegistryErrorMessage))
+					fakeDockerSessionFactory.MakeSessionReturns(fakeDockerSession, errors.New(insecureRegistryErrorMessage))
 
 					_, err := dockerMetadataFetcher.FetchMetadata(dockerPath)
 					Expect(err).To(MatchError(ContainSubstring("private registry supports only HTTP or HTTPS with an unknown CA certificate")))
 
-					Expect(dockerSessionFactory.MakeSessionCallCount()).To(Equal(2))
+					Expect(fakeDockerSessionFactory.MakeSessionCallCount()).To(Equal(2))
 
-					reposName, allowInsecure := dockerSessionFactory.MakeSessionArgsForCall(0)
+					reposName, allowInsecure := fakeDockerSessionFactory.MakeSessionArgsForCall(0)
 					Expect(reposName).To(Equal(dockerPath))
 					Expect(allowInsecure).To(BeFalse())
 
-					reposName, allowInsecure = dockerSessionFactory.MakeSessionArgsForCall(1)
+					reposName, allowInsecure = fakeDockerSessionFactory.MakeSessionArgsForCall(1)
 					Expect(reposName).To(Equal(dockerPath))
 					Expect(allowInsecure).To(BeTrue())
 				})
@@ -239,7 +239,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 		Context("when exposed ports are null in the docker metadata", func() {
 			It("doesn't blow up, and returns zero values", func() {
-				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
+				fakeDockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
 				imageList := map[string]*registry.ImgData{
 					"29d531509fb": &registry.ImgData{
 						ID:              "29d531509fb",
@@ -286,7 +286,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 		Context("when there is an error making the session", func() {
 			It("returns an error", func() {
-				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, errors.New("Couldn't make a session."))
+				fakeDockerSessionFactory.MakeSessionReturns(fakeDockerSession, errors.New("Couldn't make a session."))
 
 				_, err := dockerMetadataFetcher.FetchMetadata("verybad/apple")
 
@@ -296,7 +296,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 		Context("when there is an error getting the repository data", func() {
 			It("returns an error", func() {
-				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
+				fakeDockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
 				fakeDockerSession.GetRepositoryDataReturns(&registry.RepositoryData{}, errors.New("We floundered getting your repo data."))
 
 				_, err := dockerMetadataFetcher.FetchMetadata("cloud_flounder/fishy")
@@ -307,7 +307,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 		Context("when there is an error getting remote tags", func() {
 			It("returns an error", func() {
-				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
+				fakeDockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
 				fakeDockerSession.GetRepositoryDataReturns(
 					&registry.RepositoryData{
 						ImgList:   map[string]*registry.ImgData{},
@@ -324,7 +324,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 		Context("When the requested tag does not exist", func() {
 			It("returns an error", func() {
-				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
+				fakeDockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
 				imageList := map[string]*registry.ImgData{
 					"29d531509fb": &registry.ImgData{
 						ID:              "29d531509fb",
@@ -349,7 +349,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 		Describe("Handling image JSON errors", func() {
 			BeforeEach(func() {
-				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
+				fakeDockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
 				imageList := map[string]*registry.ImgData{
 					"29d531509fb": &registry.ImgData{
 						ID:              "29d531509fb",

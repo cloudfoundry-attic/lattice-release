@@ -17,7 +17,6 @@ type woomap map[woohoo]string
 
 var _ = Describe("ContainExactlyMatcher", func() {
 	It("matches if the array contains exactly the elements in the expected array, but is order independent.", func() {
-
 		Expect([]string{"hi there", "ho there", "hallo"}).To(matchers.ContainExactly([]string{"hi there", "ho there", "hallo"}))
 		Expect([]string{"hi there", "ho there", "hallo"}).To(matchers.ContainExactly([]string{"ho there", "hallo", "hi there"}))
 		Expect([]woohoo{woohoo{Flag: true}}).To(matchers.ContainExactly([]woohoo{woohoo{Flag: true}}))
@@ -57,9 +56,7 @@ var _ = Describe("ContainExactlyMatcher", func() {
 	})
 
 	Context("when the matcher assertion fails", func() {
-		var (
-			sliceA, sliceB []string
-		)
+		var sliceA, sliceB []string
 
 		BeforeEach(func() {
 			sliceA = []string{"hi there", "ho there", "hallo"}

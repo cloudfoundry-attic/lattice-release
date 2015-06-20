@@ -6,19 +6,16 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
-	"time"
-
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
-	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
-	droplet_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
@@ -31,12 +28,14 @@ import (
 	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock/fakeclock"
+
+	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
+	droplet_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
 )
 
 var _ = Describe("CommandFactory", func() {
 	var (
-		outputBuffer *gbytes.Buffer
-
+		outputBuffer            *gbytes.Buffer
 		fakeDropletRunner       *fake_droplet_runner.FakeDropletRunner
 		fakeExitHandler         *fake_exit_handler.FakeExitHandler
 		fakeTailedLogsOutputter *fake_tailed_logs_outputter.FakeTailedLogsOutputter
@@ -56,7 +55,6 @@ var _ = Describe("CommandFactory", func() {
 		fakeTaskExaminer = &fake_task_examiner.FakeTaskExaminer{}
 
 		outputBuffer = gbytes.NewBuffer()
-
 		appRunnerCommandFactory = app_runner_command_factory.AppRunnerCommandFactory{
 			AppRunner:           &fake_app_runner.FakeAppRunner{},
 			AppExaminer:         fakeAppExaminer,
@@ -154,7 +152,8 @@ var _ = Describe("CommandFactory", func() {
 				Expect(uploadPath).ToNot(BeNil())
 				Expect(uploadPath).To(HaveSuffix(".tar"))
 
-				file, _ := os.Open(uploadPath)
+				file, err := os.Open(uploadPath)
+				Expect(err).NotTo(HaveOccurred())
 				tarReader := tar.NewReader(file)
 
 				var h *tar.Header
@@ -334,10 +333,9 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
 
+				Expect(outputBuffer).To(test_helpers.Say("Error submitting build of droplet-name: failed"))
 				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
 				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(1))
-
-				Expect(outputBuffer).To(test_helpers.Say("Error submitting build of droplet-name: failed"))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
@@ -375,9 +373,9 @@ var _ = Describe("CommandFactory", func() {
 
 				fakeClock.IncrementBySeconds(1)
 				Eventually(commandFinishChan).Should(BeClosed())
-				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 
 				Expect(outputBuffer).To(test_helpers.SayLine("Build complete"))
+				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 			})
 
 			Context("when the build doesn't complete before the timeout elapses", func() {
@@ -408,12 +406,11 @@ var _ = Describe("CommandFactory", func() {
 
 			Context("when there is an error when polling for the build to complete", func() {
 				It("prints an error message and exits", func() {
+					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{}, errors.New("dropped the ball"))
 					args := []string{
 						"droppo-the-clown",
 						"http://some.url/for/buildpack",
 					}
-
-					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{}, errors.New("dropped the ball"))
 
 					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
 
@@ -427,11 +424,11 @@ var _ = Describe("CommandFactory", func() {
 
 					fakeClock.IncrementBySeconds(1)
 					Eventually(commandFinishChan).Should(BeClosed())
-					Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
 					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error requesting task status: dropped the ball")))
 					Expect(outputBuffer).ToNot(test_helpers.Say("Timed out waiting for the build to complete."))
+					Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 				})
 			})
 		})
@@ -451,9 +448,9 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"", "buildpack-name"})
 
 				Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
-				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
 				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
 	})
@@ -473,7 +470,6 @@ var _ = Describe("CommandFactory", func() {
 				time.Date(2014, 12, 31, 0, 0, 0, 0, time.Local),
 				time.Date(2015, 6, 15, 0, 0, 0, 0, time.Local),
 			}
-
 			droplets := []droplet_runner.Droplet{
 				droplet_runner.Droplet{
 					Name:    "drop-a",
@@ -518,9 +514,8 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
 
-				Expect(fakeDropletRunner.ListDropletsCallCount()).To(Equal(1))
-
 				Expect(outputBuffer).To(test_helpers.Say("Error listing droplets: failed"))
+				Expect(fakeDropletRunner.ListDropletsCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})

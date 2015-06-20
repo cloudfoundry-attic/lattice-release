@@ -17,7 +17,7 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
-var _ = Describe("DockerAppRunner", func() {
+var _ = Describe("AppRunner", func() {
 
 	var (
 		fakeReceptorClient *fake_receptor.FakeClient

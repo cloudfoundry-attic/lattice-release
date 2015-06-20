@@ -9,6 +9,7 @@ import (
 
 func ExecuteCommandWithArgs(command cli.Command, commandArgs []string) {
 	commandFinishChan := AsyncExecuteCommandWithArgs(command, commandArgs)
+
 	Eventually(commandFinishChan).Should(BeClosed())
 }
 
@@ -28,5 +29,6 @@ func executeCommandWithArgs(command cli.Command, commandArgs []string) {
 	cliApp := cli.NewApp()
 	cliApp.Commands = []cli.Command{command}
 	cliAppArgs := append([]string{"ltc", command.Name}, commandArgs...)
+
 	Expect(cliApp.Run(cliAppArgs)).To(Succeed())
 }

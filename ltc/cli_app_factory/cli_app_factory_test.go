@@ -26,7 +26,6 @@ var _ = Describe("CliAppFactory", func() {
 	var (
 		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
 		fakeExitHandler    *fake_exit_handler.FakeExitHandler
-		memPersister       persister.Persister
 		outputBuffer       *gbytes.Buffer
 		terminalUI         terminal.UI
 		cliApp             *cli.App
@@ -37,7 +36,7 @@ var _ = Describe("CliAppFactory", func() {
 	BeforeEach(func() {
 		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 		fakeExitHandler = new(fake_exit_handler.FakeExitHandler)
-		memPersister = persister.NewMemPersister()
+		memPersister := persister.NewMemPersister()
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		cliConfig = config.New(memPersister)

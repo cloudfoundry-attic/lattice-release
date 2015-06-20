@@ -45,8 +45,7 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(dockerPath string) (*ImageMe
 	}
 
 	var session DockerSession
-	session, err = fetcher.dockerSessionFactory.MakeSession(reposName, false)
-	if err != nil {
+	if session, err = fetcher.dockerSessionFactory.MakeSession(reposName, false); err != nil {
 		if !strings.Contains(err.Error(), "this private registry supports only HTTP or HTTPS with an unknown CA certificate") {
 			return nil, err
 		}
@@ -81,7 +80,7 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(dockerPath string) (*ImageMe
 
 	img, err = image.NewImgJSON(imgJSON)
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing remote image json for specified docker image:\n%s", err.Error())
+		return nil, fmt.Errorf("Error parsing remote image json for specified docker image:\n%s", err)
 	}
 	if img.Config == nil {
 		return nil, fmt.Errorf("Parsing start command failed")

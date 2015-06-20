@@ -30,13 +30,13 @@ import (
 var _ = Describe("CommandFactory", func() {
 
 	var (
-		appRunner                     *fake_app_runner.FakeAppRunner
-		appExaminer                   *fake_app_examiner.FakeAppExaminer
+		fakeAppRunner                 *fake_app_runner.FakeAppRunner
+		fakeAppExaminer               *fake_app_examiner.FakeAppExaminer
 		outputBuffer                  *gbytes.Buffer
 		terminalUI                    terminal.UI
 		domain                        string = "192.168.11.11.xip.io"
-		clock                         *fakeclock.FakeClock
-		dockerMetadataFetcher         *fake_docker_metadata_fetcher.FakeDockerMetadataFetcher
+		fakeClock                     *fakeclock.FakeClock
+		fakeDockerMetadataFetcher     *fake_docker_metadata_fetcher.FakeDockerMetadataFetcher
 		appRunnerCommandFactoryConfig command_factory.DockerRunnerCommandFactoryConfig
 		logger                        lager.Logger
 		fakeTailedLogsOutputter       *fake_tailed_logs_outputter.FakeTailedLogsOutputter
@@ -44,12 +44,12 @@ var _ = Describe("CommandFactory", func() {
 	)
 
 	BeforeEach(func() {
-		appRunner = &fake_app_runner.FakeAppRunner{}
-		appExaminer = &fake_app_examiner.FakeAppExaminer{}
+		fakeAppRunner = &fake_app_runner.FakeAppRunner{}
+		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
-		dockerMetadataFetcher = &fake_docker_metadata_fetcher.FakeDockerMetadataFetcher{}
-		clock = fakeclock.NewFakeClock(time.Now())
+		fakeDockerMetadataFetcher = &fake_docker_metadata_fetcher.FakeDockerMetadataFetcher{}
+		fakeClock = fakeclock.NewFakeClock(time.Now())
 		logger = lager.NewLogger("ltc-test")
 		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
@@ -61,13 +61,13 @@ var _ = Describe("CommandFactory", func() {
 		BeforeEach(func() {
 			env := []string{"SHELL=/bin/bash", "COLOR=Blue"}
 			appRunnerCommandFactoryConfig = command_factory.DockerRunnerCommandFactoryConfig{
-				AppRunner:   appRunner,
-				AppExaminer: appExaminer,
+				AppRunner:   fakeAppRunner,
+				AppExaminer: fakeAppExaminer,
 				UI:          terminalUI,
-				DockerMetadataFetcher: dockerMetadataFetcher,
+				DockerMetadataFetcher: fakeDockerMetadataFetcher,
 				Domain:                domain,
 				Env:                   env,
-				Clock:                 clock,
+				Clock:                 fakeClock,
 				Logger:                logger,
 				TailedLogsOutputter:   fakeTailedLogsOutputter,
 				ExitHandler:           fakeExitHandler,
@@ -76,7 +76,7 @@ var _ = Describe("CommandFactory", func() {
 			commandFactory := command_factory.NewDockerRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			createCommand = commandFactory.MakeCreateAppCommand()
 
-			dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+			fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 		})
 
 		It("creates a Docker based app as specified in the command via the AppRunner", func() {
@@ -101,15 +101,15 @@ var _ = Describe("CommandFactory", func() {
 				"AppArg0",
 				`--appFlavor="purple"`,
 			}
-			appExaminer.RunningAppInstancesInfoReturns(22, false, nil)
+			fakeAppExaminer.RunningAppInstancesInfoReturns(22, false, nil)
 
 			test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-			Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
-			Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("superfun/app:mycooltag"))
+			Expect(fakeDockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
+			Expect(fakeDockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("superfun/app:mycooltag"))
 
-			Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-			createAppParams := appRunner.CreateAppArgsForCall(0)
+			Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+			createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 			Expect(createAppParams.Name).To(Equal("cool-web-app"))
 			Expect(createAppParams.StartCommand).To(Equal("/start-me-please"))
 			Expect(createAppParams.RootFS).To(Equal("docker:///superfun/app#mycooltag"))
@@ -152,13 +152,13 @@ var _ = Describe("CommandFactory", func() {
 					"fun-org/app",
 					"--env=PROCESS_GUID=MyHappyGuid",
 				}
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{StartCommand: []string{""}}, nil)
-				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{StartCommand: []string{""}}, nil)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-				createAppParams := appRunner.CreateAppArgsForCall(0)
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				appEnvVars := createAppParams.EnvironmentVariables
 				processGuidEnvVar, found := appEnvVars["PROCESS_GUID"]
 
@@ -179,7 +179,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -195,7 +195,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -203,7 +203,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Describe("Exposed Ports", func() {
 			BeforeEach(func() {
-				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 			})
 
 			It("exposes ports passed by --ports", func() {
@@ -217,8 +217,8 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-				createAppParams := appRunner.CreateAppArgsForCall(0)
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				Expect(createAppParams.ExposedPorts).To(Equal([]uint16{8080, 9090}))
 			})
 
@@ -229,14 +229,14 @@ var _ = Describe("CommandFactory", func() {
 					"--",
 					"/start-me-please",
 				}
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{
 					ExposedPorts: []uint16{1200, 2701, 4302},
 				}, nil)
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: 1200, 2701, 4302\n"))
-				createAppParams := appRunner.CreateAppArgsForCall(0)
+				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				Expect(createAppParams.ExposedPorts).To(Equal([]uint16{1200, 2701, 4302}))
 			})
 
@@ -248,13 +248,13 @@ var _ = Describe("CommandFactory", func() {
 					"--",
 					"/start-me-please",
 				}
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{
 					ExposedPorts: []uint16{1200, 2701, 4302},
 				}, nil)
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				createAppParams := appRunner.CreateAppArgsForCall(0)
+				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				Expect(createAppParams.ExposedPorts).To(Equal([]uint16{8080, 9090}))
 			})
 
@@ -270,7 +270,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					createAppParams := appRunner.CreateAppArgsForCall(0)
+					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 					Expect(createAppParams.ExposedPorts).To(Equal([]uint16{8080}))
 				})
 			})
@@ -287,7 +287,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 
@@ -305,7 +305,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 
@@ -323,15 +323,15 @@ var _ = Describe("CommandFactory", func() {
 						"--",
 						"/start-me-please",
 					}
-					appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+					fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
-					Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("awesome/app"))
+					Expect(fakeDockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
+					Expect(fakeDockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("awesome/app"))
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-					createAppParams := appRunner.CreateAppArgsForCall(0)
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 					Expect(outputBuffer).To(test_helpers.Say("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
 					Expect(createAppParams.Privileged).To(Equal(false))
 					Expect(createAppParams.MemoryMB).To(Equal(128))
@@ -351,11 +351,11 @@ var _ = Describe("CommandFactory", func() {
 						"--",
 						"/start-me-please",
 					}
-					dockerMetadataFetcher.FetchMetadataReturns(nil, errors.New("Docker Says No."))
+					fakeDockerMetadataFetcher.FetchMetadataReturns(nil, errors.New("Docker Says No."))
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say("Error fetching image metadata: Docker Says No."))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadDocker}))
 				})
@@ -365,7 +365,7 @@ var _ = Describe("CommandFactory", func() {
 		Describe("Monitor Config", func() {
 
 			BeforeEach(func() {
-				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 			})
 
 			Context("when --no-monitor is passed", func() {
@@ -380,8 +380,8 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateAppArgsForCall(0).Monitor
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
 					Expect(monitorConfig.Method).To(Equal(app_runner.NoMonitor))
 				})
 			})
@@ -399,8 +399,8 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateAppArgsForCall(0).Monitor
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
 					Expect(monitorConfig.Method).To(Equal(app_runner.PortMonitor))
 					Expect(monitorConfig.Port).To(Equal(uint16(2000)))
 				})
@@ -416,7 +416,7 @@ var _ = Describe("CommandFactory", func() {
 					}
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MonitorPortNotExposed))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 				})
@@ -435,8 +435,8 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateAppArgsForCall(0).Monitor
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
 					Expect(monitorConfig.Method).To(Equal(app_runner.URLMonitor))
 					Expect(monitorConfig.Port).To(Equal(uint16(1000)))
 				})
@@ -453,7 +453,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 				})
@@ -470,7 +470,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 				})
@@ -487,7 +487,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MonitorPortNotExposed))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 				})
@@ -505,8 +505,8 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateAppArgsForCall(0).Monitor
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
 					Expect(monitorConfig.Method).To(Equal(app_runner.PortMonitor))
 					Expect(monitorConfig.Port).To(Equal(uint16(1000)))
 				})
@@ -522,8 +522,8 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateAppArgsForCall(0).Monitor
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
 					Expect(monitorConfig.Timeout).To(Equal(5 * time.Second))
 				})
 			})
@@ -542,8 +542,8 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateAppArgsForCall(0).Monitor
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
 					Expect(monitorConfig.Method).To(Equal(app_runner.NoMonitor))
 				})
 
@@ -560,8 +560,8 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-					monitorConfig := appRunner.CreateAppArgsForCall(0).Monitor
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
 					Expect(monitorConfig.Method).To(Equal(app_runner.URLMonitor))
 					Expect(monitorConfig.Port).To(Equal(uint16(1200)))
 				})
@@ -577,13 +577,13 @@ var _ = Describe("CommandFactory", func() {
 					"--",
 					"/start-me-please",
 				}
-				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-				createAppParams := appRunner.CreateAppArgsForCall(0)
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 
 				Expect(createAppParams.NoRoutes).To(BeTrue())
 
@@ -600,12 +600,12 @@ var _ = Describe("CommandFactory", func() {
 					"--",
 					"/start-me-please",
 				}
-				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{WorkingDir: "/work/it"}, nil)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{WorkingDir: "/work/it"}, nil)
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				createAppParams := appRunner.CreateAppArgsForCall(0)
+				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				Expect(createAppParams.WorkingDir).To(Equal("/work/it"))
 			})
 		})
@@ -617,19 +617,19 @@ var _ = Describe("CommandFactory", func() {
 			}
 
 			BeforeEach(func() {
-				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 			})
 
 			It("creates a Docker app with the create command retrieved from the docker image metadata", func() {
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{WorkingDir: "/this/directory/right/here", StartCommand: []string{"/fetch-start", "arg1", "arg2"}}, nil)
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{WorkingDir: "/this/directory/right/here", StartCommand: []string{"/fetch-start", "arg1", "arg2"}}, nil)
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
-				Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("fun-org/app"))
+				Expect(fakeDockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
+				Expect(fakeDockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("fun-org/app"))
 
-				Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-				createAppParams := appRunner.CreateAppArgsForCall(0)
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				Expect(createAppParams.StartCommand).To(Equal("/fetch-start"))
 				Expect(createAppParams.AppArgs).To(Equal([]string{"arg1", "arg2"}))
 				Expect(createAppParams.RootFS).To(Equal("docker:///fun-org/app#latest"))
@@ -645,22 +645,22 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("does not output the working directory if it is not set", func() {
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{StartCommand: []string{"/fetch-start"}}, nil)
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{StartCommand: []string{"/fetch-start"}}, nil)
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).ToNot(test_helpers.Say("Working directory is:"))
-				Expect(appRunner.CreateAppCallCount()).To(Equal(1))
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 			})
 
 			Context("when the metadata also has no start command", func() {
 				It("outputs an error message and exits", func() {
-					dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 					Expect(outputBuffer).To(test_helpers.Say("Unable to determine start command from image metadata.\n"))
-					Expect(appRunner.CreateAppCallCount()).To(BeZero())
+					Expect(fakeAppRunner.CreateAppCallCount()).To(BeZero())
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadDocker}))
 
 				})
@@ -673,13 +673,13 @@ var _ = Describe("CommandFactory", func() {
 					"app-to-timeout",
 					"fun-org/app",
 				}
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{StartCommand: []string{""}}, nil)
-				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{StartCommand: []string{""}}, nil)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-				createAppParams := appRunner.CreateAppArgsForCall(0)
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				Expect(createAppParams.Timeout).To(Equal(app_runner_command_factory.DefaultPollingTimeout))
 			})
 		})
@@ -694,8 +694,8 @@ var _ = Describe("CommandFactory", func() {
 					"/start-me-please",
 				}
 
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-				appExaminer.RunningAppInstancesInfoReturns(0, false, nil)
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(0, false, nil)
 
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
 
@@ -704,19 +704,19 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(Equal(1))
 				Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("cool-web-app"))
 
-				Expect(appExaminer.RunningAppInstancesInfoCallCount()).To(Equal(1))
-				Expect(appExaminer.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
+				Expect(fakeAppExaminer.RunningAppInstancesInfoCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
 
-				clock.IncrementBySeconds(1)
+				fakeClock.IncrementBySeconds(1)
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
-				appExaminer.RunningAppInstancesInfoReturns(9, false, nil)
-				clock.IncrementBySeconds(1)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(9, false, nil)
+				fakeClock.IncrementBySeconds(1)
 				Expect(commandFinishChan).ShouldNot(BeClosed())
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
-				appExaminer.RunningAppInstancesInfoReturns(10, false, nil)
-				clock.IncrementBySeconds(1)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(10, false, nil)
+				fakeClock.IncrementBySeconds(1)
 
 				Eventually(commandFinishChan).Should(BeClosed())
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
@@ -734,15 +734,15 @@ var _ = Describe("CommandFactory", func() {
 						"--",
 						"/start-me-please",
 					}
-					dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-					appExaminer.RunningAppInstancesInfoReturns(0, false, nil)
+					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+					fakeAppExaminer.RunningAppInstancesInfoReturns(0, false, nil)
 
 					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
 
 					Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
 
-					clock.IncrementBySeconds(120)
+					fakeClock.IncrementBySeconds(120)
 
 					Eventually(commandFinishChan).Should(BeClosed())
 
@@ -769,23 +769,23 @@ var _ = Describe("CommandFactory", func() {
 						"/start-me-please",
 					}
 
-					dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-					appExaminer.RunningAppInstancesInfoReturns(0, false, nil)
+					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+					fakeAppExaminer.RunningAppInstancesInfoReturns(0, false, nil)
 
 					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
 
 					Eventually(outputBuffer).Should(test_helpers.Say("Monitoring the app on port 3000..."))
 					Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
 
-					Expect(appExaminer.RunningAppInstancesInfoCallCount()).To(Equal(1))
-					Expect(appExaminer.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
+					Expect(fakeAppExaminer.RunningAppInstancesInfoCallCount()).To(Equal(1))
+					Expect(fakeAppExaminer.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
 
-					clock.IncrementBySeconds(1)
+					fakeClock.IncrementBySeconds(1)
 					Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 					Expect(fakeExitHandler.ExitCalledWith).To(BeEmpty())
 
-					appExaminer.RunningAppInstancesInfoReturns(9, true, nil)
-					clock.IncrementBySeconds(1)
+					fakeAppExaminer.RunningAppInstancesInfoReturns(9, true, nil)
+					fakeClock.IncrementBySeconds(1)
 					Eventually(commandFinishChan).Should(BeClosed())
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.PlacementError}))
 					Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
@@ -808,7 +808,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Invalid CPU Weight"))
-				Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 			})
 
 			It("validates that the name and dockerPath are passed in", func() {
@@ -819,7 +819,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: APP_NAME and DOCKER_IMAGE are required"))
-				Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 			})
 
 			It("validates that the terminator -- is passed in when a start command is specified", func() {
@@ -832,7 +832,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: '--' Required before start command"))
-				Expect(appRunner.CreateAppCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 			})
 		})
 
@@ -844,7 +844,7 @@ var _ = Describe("CommandFactory", func() {
 					"--",
 					"/start-me-please",
 				}
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
@@ -861,8 +861,8 @@ var _ = Describe("CommandFactory", func() {
 					"--",
 					"/start-me-please",
 				}
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
-				appRunner.CreateAppReturns(errors.New("Major Fault"))
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+				fakeAppRunner.CreateAppReturns(errors.New("Major Fault"))
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 

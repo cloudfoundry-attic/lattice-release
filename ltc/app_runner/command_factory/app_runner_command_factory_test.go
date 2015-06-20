@@ -27,27 +27,27 @@ import (
 	"github.com/pivotal-golang/lager"
 )
 
-var _ = Describe("CommandFactory", func() {
+var _ = Describe("AppRunner CommandFactory", func() {
 
 	var (
-		appRunner                     *fake_app_runner.FakeAppRunner
-		appExaminer                   *fake_app_examiner.FakeAppExaminer
-		outputBuffer                  *gbytes.Buffer
-		terminalUI                    terminal.UI
-		domain                        string = "192.168.11.11.xip.io"
-		clock                         *fakeclock.FakeClock
-		appRunnerCommandFactoryConfig command_factory.AppRunnerCommandFactoryConfig
-		logger                        lager.Logger
-		fakeTailedLogsOutputter       *fake_tailed_logs_outputter.FakeTailedLogsOutputter
-		fakeExitHandler               *fake_exit_handler.FakeExitHandler
+		fakeAppRunner                     *fake_app_runner.FakeAppRunner
+		fakeAppExaminer                   *fake_app_examiner.FakeAppExaminer
+		outputBuffer                      *gbytes.Buffer
+		terminalUI                        terminal.UI
+		domain                            string = "192.168.11.11.xip.io"
+		fakeClock                         *fakeclock.FakeClock
+		fakeAppRunnerCommandFactoryConfig command_factory.AppRunnerCommandFactoryConfig
+		logger                            lager.Logger
+		fakeTailedLogsOutputter           *fake_tailed_logs_outputter.FakeTailedLogsOutputter
+		fakeExitHandler                   *fake_exit_handler.FakeExitHandler
 	)
 
 	BeforeEach(func() {
-		appRunner = &fake_app_runner.FakeAppRunner{}
-		appExaminer = &fake_app_examiner.FakeAppExaminer{}
+		fakeAppRunner = &fake_app_runner.FakeAppRunner{}
+		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
-		clock = fakeclock.NewFakeClock(time.Now())
+		fakeClock = fakeclock.NewFakeClock(time.Now())
 		logger = lager.NewLogger("ltc-test")
 		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
@@ -62,19 +62,19 @@ var _ = Describe("CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:           appRunner,
-				AppExaminer:         appExaminer,
+			fakeAppRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:           fakeAppRunner,
+				AppExaminer:         fakeAppExaminer,
 				UI:                  terminalUI,
 				Domain:              domain,
 				Env:                 []string{},
-				Clock:               clock,
+				Clock:               fakeClock,
 				Logger:              logger,
 				TailedLogsOutputter: fakeTailedLogsOutputter,
 				ExitHandler:         fakeExitHandler,
 			}
 
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(fakeAppRunnerCommandFactoryConfig)
 			submitLrpCommand = commandFactory.MakeSubmitLrpCommand()
 		})
 
@@ -90,12 +90,12 @@ var _ = Describe("CommandFactory", func() {
 				ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value"}`), 0700)
 				args := []string{tmpFile.Name()}
 
-				appRunner.SubmitLrpReturns("my-json-app", nil)
+				fakeAppRunner.SubmitLrpReturns("my-json-app", nil)
 
 				test_helpers.ExecuteCommandWithArgs(submitLrpCommand, args)
 
-				Expect(appRunner.SubmitLrpCallCount()).To(Equal(1))
-				Expect(appRunner.SubmitLrpArgsForCall(0)).To(Equal([]byte(`{"Value":"test value"}`)))
+				Expect(fakeAppRunner.SubmitLrpCallCount()).To(Equal(1))
+				Expect(fakeAppRunner.SubmitLrpArgsForCall(0)).To(Equal([]byte(`{"Value":"test value"}`)))
 				Expect(outputBuffer).To(test_helpers.Say(colors.Green("Successfully submitted my-json-app.")))
 				Expect(outputBuffer).To(test_helpers.Say("To view the status of your application: ltc status my-json-app"))
 			})
@@ -104,12 +104,12 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					tmpFile.Name(),
 				}
-				appRunner.SubmitLrpReturns("app-that-broke", errors.New("some error"))
+				fakeAppRunner.SubmitLrpReturns("app-that-broke", errors.New("some error"))
 
 				test_helpers.ExecuteCommandWithArgs(submitLrpCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Error creating app-that-broke: some error"))
-				Expect(appRunner.SubmitLrpCallCount()).To(Equal(1))
+				Expect(fakeAppRunner.SubmitLrpCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
@@ -118,7 +118,7 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(submitLrpCommand, []string{})
 
 			Expect(outputBuffer).To(test_helpers.Say("Path to JSON is required"))
-			Expect(appRunner.SubmitLrpCallCount()).To(BeZero())
+			Expect(fakeAppRunner.SubmitLrpCallCount()).To(BeZero())
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
 
@@ -129,7 +129,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(submitLrpCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say(fmt.Sprintf("Error reading file: open %s: no such file or directory", filepath.Join(tmpDir, "file-no-existy"))))
-				Expect(appRunner.SubmitLrpCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.SubmitLrpCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
 			})
 		})
@@ -140,19 +140,19 @@ var _ = Describe("CommandFactory", func() {
 		var scaleCommand cli.Command
 
 		BeforeEach(func() {
-			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:           appRunner,
-				AppExaminer:         appExaminer,
+			fakeAppRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:           fakeAppRunner,
+				AppExaminer:         fakeAppExaminer,
 				UI:                  terminalUI,
 				Domain:              domain,
 				Env:                 []string{},
-				Clock:               clock,
+				Clock:               fakeClock,
 				Logger:              logger,
 				TailedLogsOutputter: fakeTailedLogsOutputter,
 				ExitHandler:         fakeExitHandler,
 			}
 
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(fakeAppRunnerCommandFactoryConfig)
 			scaleCommand = commandFactory.MakeScaleAppCommand()
 		})
 
@@ -162,15 +162,15 @@ var _ = Describe("CommandFactory", func() {
 				"22",
 			}
 
-			appExaminer.RunningAppInstancesInfoReturns(22, false, nil)
+			fakeAppExaminer.RunningAppInstancesInfoReturns(22, false, nil)
 
 			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 			Expect(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("App Scaled Successfully")))
 
-			Expect(appRunner.ScaleAppCallCount()).To(Equal(1))
-			name, instances := appRunner.ScaleAppArgsForCall(0)
+			Expect(fakeAppRunner.ScaleAppCallCount()).To(Equal(1))
+			name, instances := fakeAppRunner.ScaleAppArgsForCall(0)
 			Expect(name).To(Equal("cool-web-app"))
 			Expect(instances).To(Equal(22))
 		})
@@ -181,22 +181,22 @@ var _ = Describe("CommandFactory", func() {
 				"22",
 			}
 
-			appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 
 			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
 			Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
 
-			Expect(appExaminer.RunningAppInstancesInfoCallCount()).To(Equal(1))
-			Expect(appExaminer.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
+			Expect(fakeAppExaminer.RunningAppInstancesInfoCallCount()).To(Equal(1))
+			Expect(fakeAppExaminer.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
 
-			clock.IncrementBySeconds(1)
+			fakeClock.IncrementBySeconds(1)
 			Eventually(outputBuffer).Should(test_helpers.Say("."))
-			clock.IncrementBySeconds(1)
+			fakeClock.IncrementBySeconds(1)
 			Eventually(outputBuffer).Should(test_helpers.Say("."))
 
-			appExaminer.RunningAppInstancesInfoReturns(22, false, nil)
-			clock.IncrementBySeconds(1)
+			fakeAppExaminer.RunningAppInstancesInfoReturns(22, false, nil)
+			fakeClock.IncrementBySeconds(1)
 
 			Eventually(commandFinishChan).Should(BeClosed())
 
@@ -206,7 +206,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("when the app does not scale before the timeout elapses", func() {
 			It("alerts the user the app took too long to scale", func() {
-				appExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 				args := []string{
 					"cool-web-app",
 					"22",
@@ -217,7 +217,7 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
 
-				clock.IncrementBySeconds(120)
+				fakeClock.IncrementBySeconds(120)
 
 				Eventually(commandFinishChan).Should(BeClosed())
 
@@ -236,7 +236,7 @@ var _ = Describe("CommandFactory", func() {
 					"cool-web-app",
 					"22",
 				}
-				appRunner.ScaleAppReturns(errors.New("Major Fault"))
+				fakeAppRunner.ScaleAppReturns(errors.New("Major Fault"))
 
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
@@ -254,7 +254,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'"))
-				Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.ScaleAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
@@ -266,7 +266,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'"))
-				Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.ScaleAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
@@ -279,7 +279,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Number of Instances must be an integer"))
-				Expect(appRunner.ScaleAppCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.ScaleAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
@@ -291,21 +291,21 @@ var _ = Describe("CommandFactory", func() {
 					"3",
 				}
 
-				appExaminer.RunningAppInstancesInfoReturns(0, false, nil)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(0, false, nil)
 
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 3 instances"))
 
-				Expect(appExaminer.RunningAppInstancesInfoCallCount()).To(Equal(1))
-				Expect(appExaminer.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
+				Expect(fakeAppExaminer.RunningAppInstancesInfoCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
 
-				clock.IncrementBySeconds(1)
+				fakeClock.IncrementBySeconds(1)
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(BeEmpty())
 
-				appExaminer.RunningAppInstancesInfoReturns(2, true, nil)
-				clock.IncrementBySeconds(1)
+				fakeAppExaminer.RunningAppInstancesInfoReturns(2, true, nil)
+				fakeClock.IncrementBySeconds(1)
 				Eventually(commandFinishChan).Should(BeClosed())
 
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.PlacementError}))
@@ -321,18 +321,18 @@ var _ = Describe("CommandFactory", func() {
 		var updateRoutesCommand cli.Command
 
 		BeforeEach(func() {
-			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:   appRunner,
-				AppExaminer: appExaminer,
+			fakeAppRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:   fakeAppRunner,
+				AppExaminer: fakeAppExaminer,
 				UI:          terminalUI,
 				Domain:      domain,
 				Env:         []string{},
-				Clock:       clock,
+				Clock:       fakeClock,
 				Logger:      logger,
 				ExitHandler: fakeExitHandler,
 			}
 
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(fakeAppRunnerCommandFactoryConfig)
 			updateRoutesCommand = commandFactory.MakeUpdateRoutesCommand()
 		})
 
@@ -357,9 +357,9 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
 
-			Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(1))
+			Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(1))
 
-			name, routeOverrides := appRunner.UpdateAppRoutesArgsForCall(0)
+			name, routeOverrides := fakeAppRunner.UpdateAppRoutesArgsForCall(0)
 
 			Expect(name).To(Equal("cool-web-app"))
 			Expect(routeOverrides).To(Equal(expectedRouteOverrides))
@@ -374,8 +374,8 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(1))
-				name, routeOverrides := appRunner.UpdateAppRoutesArgsForCall(0)
+				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(1))
+				name, routeOverrides := fakeAppRunner.UpdateAppRoutesArgsForCall(0)
 
 				Expect(name).To(Equal("cool-web-app"))
 				Expect(routeOverrides).To(Equal(app_runner.RouteOverrides{}))
@@ -391,11 +391,11 @@ var _ = Describe("CommandFactory", func() {
 					"8080:foo.com",
 				}
 
-				appRunner.UpdateAppRoutesReturns(errors.New("Major Fault"))
+				fakeAppRunner.UpdateAppRoutesReturns(errors.New("Major Fault"))
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Error updating routes: Major Fault"))
-				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(1))
+				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
@@ -409,7 +409,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag."))
-				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
@@ -421,7 +421,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag."))
-				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
@@ -435,7 +435,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -448,7 +448,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(appRunner.UpdateAppRoutesCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -460,18 +460,18 @@ var _ = Describe("CommandFactory", func() {
 		var removeCommand cli.Command
 
 		BeforeEach(func() {
-			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:   appRunner,
-				AppExaminer: appExaminer,
+			fakeAppRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:   fakeAppRunner,
+				AppExaminer: fakeAppExaminer,
 				UI:          terminalUI,
 				Domain:      domain,
 				Env:         []string{},
-				Clock:       clock,
+				Clock:       fakeClock,
 				Logger:      logger,
 				ExitHandler: fakeExitHandler,
 			}
 
-			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(fakeAppRunnerCommandFactoryConfig)
 			removeCommand = commandFactory.MakeRemoveAppCommand()
 		})
 
@@ -484,8 +484,8 @@ var _ = Describe("CommandFactory", func() {
 
 			Eventually(outputBuffer).Should(test_helpers.Say("Removing cool"))
 
-			Expect(appRunner.RemoveAppCallCount()).To(Equal(1))
-			Expect(appRunner.RemoveAppArgsForCall(0)).To(Equal("cool"))
+			Expect(fakeAppRunner.RemoveAppCallCount()).To(Equal(1))
+			Expect(fakeAppRunner.RemoveAppArgsForCall(0)).To(Equal("cool"))
 		})
 
 		It("removes multiple apps", func() {
@@ -502,10 +502,10 @@ var _ = Describe("CommandFactory", func() {
 			Eventually(outputBuffer).Should(test_helpers.SayLine("Removing app2..."))
 			Eventually(outputBuffer).Should(test_helpers.SayLine("Removing app3..."))
 
-			Expect(appRunner.RemoveAppCallCount()).To(Equal(3))
-			Expect(appRunner.RemoveAppArgsForCall(0)).To(Equal("app1"))
-			Expect(appRunner.RemoveAppArgsForCall(1)).To(Equal("app2"))
-			Expect(appRunner.RemoveAppArgsForCall(2)).To(Equal("app3"))
+			Expect(fakeAppRunner.RemoveAppCallCount()).To(Equal(3))
+			Expect(fakeAppRunner.RemoveAppArgsForCall(0)).To(Equal("app1"))
+			Expect(fakeAppRunner.RemoveAppArgsForCall(1)).To(Equal("app2"))
+			Expect(fakeAppRunner.RemoveAppArgsForCall(2)).To(Equal("app3"))
 		})
 
 		Context("invalid syntax", func() {
@@ -515,7 +515,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
-				Expect(appRunner.RemoveAppCallCount()).To(Equal(0))
+				Expect(fakeAppRunner.RemoveAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
@@ -525,12 +525,12 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 				}
-				appRunner.RemoveAppReturns(errors.New("Major Fault"))
+				fakeAppRunner.RemoveAppReturns(errors.New("Major Fault"))
 
 				test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Error stopping cool-web-app: Major Fault"))
-				Expect(appRunner.RemoveAppCallCount()).To(Equal(1))
+				Expect(fakeAppRunner.RemoveAppCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 
@@ -541,7 +541,7 @@ var _ = Describe("CommandFactory", func() {
 					"app3",
 				}
 
-				appRunner.RemoveAppStub = func(name string) error {
+				fakeAppRunner.RemoveAppStub = func(name string) error {
 					if name == "app2" {
 						return errors.New("Major Fault")
 					}
@@ -555,7 +555,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.SayLine("Error stopping app2: Major Fault"))
 				Expect(outputBuffer).To(test_helpers.SayLine("Removing app3..."))
 
-				Expect(appRunner.RemoveAppCallCount()).To(Equal(3))
+				Expect(fakeAppRunner.RemoveAppCallCount()).To(Equal(3))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})

@@ -32,34 +32,34 @@ const TerminalEsc = "\033["
 var _ = Describe("CommandFactory", func() {
 
 	var (
-		appExaminer         *fake_app_examiner.FakeAppExaminer
-		outputBuffer        *gbytes.Buffer
-		terminalUI          terminal.UI
-		clock               *fakeclock.FakeClock
-		osSignalChan        chan os.Signal
-		fakeExitHandler     *fake_exit_handler.FakeExitHandler
-		graphicalVisualizer *fake_graphical_visualizer.FakeGraphicalVisualizer
-		taskExaminer        *fake_task_examiner.FakeTaskExaminer
+		fakeAppExaminer         *fake_app_examiner.FakeAppExaminer
+		outputBuffer            *gbytes.Buffer
+		terminalUI              terminal.UI
+		fakeClock               *fakeclock.FakeClock
+		osSignalChan            chan os.Signal
+		fakeExitHandler         *fake_exit_handler.FakeExitHandler
+		fakeGraphicalVisualizer *fake_graphical_visualizer.FakeGraphicalVisualizer
+		fakeTaskExaminer        *fake_task_examiner.FakeTaskExaminer
 	)
 
 	BeforeEach(func() {
-		appExaminer = &fake_app_examiner.FakeAppExaminer{}
-		taskExaminer = &fake_task_examiner.FakeTaskExaminer{}
+		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
+		fakeTaskExaminer = &fake_task_examiner.FakeTaskExaminer{}
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		osSignalChan = make(chan os.Signal, 1)
 		location, err := time.LoadLocation("Africa/Djibouti")
 		Expect(err).NotTo(HaveOccurred())
-		clock = fakeclock.NewFakeClock(time.Date(2012, time.February, 29, 6, 45, 30, 820, location))
+		fakeClock = fakeclock.NewFakeClock(time.Date(2012, time.February, 29, 6, 45, 30, 820, location))
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
-		graphicalVisualizer = &fake_graphical_visualizer.FakeGraphicalVisualizer{}
+		fakeGraphicalVisualizer = &fake_graphical_visualizer.FakeGraphicalVisualizer{}
 	})
 
 	Describe("ListAppsCommand", func() {
 		var listAppsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, fakeExitHandler, nil, taskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer)
 			listAppsCommand = commandFactory.MakeListAppCommand()
 		})
 
@@ -76,8 +76,8 @@ var _ = Describe("CommandFactory", func() {
 				task_examiner.TaskInfo{TaskGuid: "task-guid-2", CellID: "cell-02", Failed: true, FailureReason: "No compatible container", Result: "Finished", State: "COMPLETED"},
 				task_examiner.TaskInfo{TaskGuid: "task-guid-3", CellID: "", Failed: true, FailureReason: "", Result: "", State: "COMPLETED"},
 			}
-			appExaminer.ListAppsReturns(listApps, nil)
-			taskExaminer.ListTasksReturns(listTasks, nil)
+			fakeAppExaminer.ListAppsReturns(listApps, nil)
+			fakeTaskExaminer.ListTasksReturns(listTasks, nil)
 
 			test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
 
@@ -138,8 +138,8 @@ var _ = Describe("CommandFactory", func() {
 		It("alerts the user if there are no apps or tasks", func() {
 			listApps := []app_examiner.AppInfo{}
 			listTasks := []task_examiner.TaskInfo{}
-			appExaminer.ListAppsReturns(listApps, nil)
-			taskExaminer.ListTasksReturns(listTasks, nil)
+			fakeAppExaminer.ListAppsReturns(listApps, nil)
+			fakeTaskExaminer.ListTasksReturns(listTasks, nil)
 
 			test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
 
@@ -150,11 +150,11 @@ var _ = Describe("CommandFactory", func() {
 		Context("when the app examiner returns an error", func() {
 			It("alerts the user fetching the app list returns an error", func() {
 				listApps := []app_examiner.AppInfo{}
-				appExaminer.ListAppsReturns(listApps, errors.New("The list was lost"))
+				fakeAppExaminer.ListAppsReturns(listApps, errors.New("The list was lost"))
 				listTasks := []task_examiner.TaskInfo{
 					task_examiner.TaskInfo{TaskGuid: "task-guid-1", CellID: "cell-01", Failed: false, FailureReason: "", Result: "Finished", State: "COMPLETED"},
 				}
-				taskExaminer.ListTasksReturns(listTasks, nil)
+				fakeTaskExaminer.ListTasksReturns(listTasks, nil)
 
 				test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
 
@@ -179,9 +179,9 @@ var _ = Describe("CommandFactory", func() {
 				listApps := []app_examiner.AppInfo{
 					app_examiner.AppInfo{ProcessGuid: "process1", DesiredInstances: 21, ActualRunningInstances: 0, DiskMB: 100, MemoryMB: 50, Ports: []uint16{54321}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"alldaylong.com"}, Port: 54321}}},
 				}
-				appExaminer.ListAppsReturns(listApps, nil)
+				fakeAppExaminer.ListAppsReturns(listApps, nil)
 				listTasks := []task_examiner.TaskInfo{}
-				taskExaminer.ListTasksReturns(listTasks, errors.New("The list was lost"))
+				fakeTaskExaminer.ListTasksReturns(listTasks, errors.New("The list was lost"))
 
 				test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
 
@@ -207,7 +207,7 @@ var _ = Describe("CommandFactory", func() {
 		var visualizeCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, fakeExitHandler, graphicalVisualizer, taskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, fakeGraphicalVisualizer, fakeTaskExaminer)
 			visualizeCommand = commandFactory.MakeVisualizeCommand()
 		})
 
@@ -217,7 +217,7 @@ var _ = Describe("CommandFactory", func() {
 				app_examiner.CellInfo{CellID: "cell-2", RunningInstances: 2, ClaimedInstances: 1},
 				app_examiner.CellInfo{CellID: "cell-3", RunningInstances: 0, ClaimedInstances: 0},
 			}
-			appExaminer.ListCellsReturns(listCells, nil)
+			fakeAppExaminer.ListCellsReturns(listCells, nil)
 
 			test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{})
 
@@ -230,7 +230,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("when the app examiner returns an error", func() {
 			It("alerts the user fetching the cells returns an error", func() {
-				appExaminer.ListCellsReturns(nil, errors.New("The list was lost"))
+				fakeAppExaminer.ListCellsReturns(nil, errors.New("The list was lost"))
 
 				test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{})
 
@@ -251,7 +251,7 @@ var _ = Describe("CommandFactory", func() {
 
 			It("dynamically displays the visualization", func() {
 				setNumberOfRunningInstances := func(count int) {
-					appExaminer.ListCellsReturns([]app_examiner.CellInfo{app_examiner.CellInfo{CellID: "cell-0", RunningInstances: count}, app_examiner.CellInfo{CellID: "cell-1", RunningInstances: count, Missing: true}}, nil)
+					fakeAppExaminer.ListCellsReturns([]app_examiner.CellInfo{app_examiner.CellInfo{CellID: "cell-0", RunningInstances: count}, app_examiner.CellInfo{CellID: "cell-1", RunningInstances: count, Missing: true}}, nil)
 				}
 
 				setNumberOfRunningInstances(0)
@@ -263,11 +263,11 @@ var _ = Describe("CommandFactory", func() {
 
 				setNumberOfRunningInstances(2)
 
-				clock.IncrementBySeconds(1)
+				fakeClock.IncrementBySeconds(1)
 
 				Consistently(outputBuffer).ShouldNot(test_helpers.Say("cell: \n")) // TODO: how would this happen
 
-				clock.IncrementBySeconds(1)
+				fakeClock.IncrementBySeconds(1)
 
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(2)))
@@ -279,13 +279,13 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("dynamically displays any errors", func() {
-				appExaminer.ListCellsReturns(nil, errors.New("Spilled the Paint"))
+				fakeAppExaminer.ListCellsReturns(nil, errors.New("Spilled the Paint"))
 
 				closeChan = test_helpers.AsyncExecuteCommandWithArgs(visualizeCommand, []string{"--rate", "1s"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Error visualizing: Spilled the Paint" + cursor.ClearToEndOfLine() + "\n"))
 
-				clock.IncrementBySeconds(1)
+				fakeClock.IncrementBySeconds(1)
 
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(1)))
 				Eventually(outputBuffer).Should(test_helpers.Say("Error visualizing: Spilled the Paint" + cursor.ClearToEndOfLine() + "\n"))
@@ -310,37 +310,37 @@ var _ = Describe("CommandFactory", func() {
 		Context("when the graphical flag is passed", func() {
 
 			It("makes a successful call to the graphical visualizer and returns", func() {
-				graphicalVisualizer.PrintDistributionChartReturns(nil)
+				fakeGraphicalVisualizer.PrintDistributionChartReturns(nil)
 
 				test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{"--graphical"})
 
 				Consistently(outputBuffer).ShouldNot(test_helpers.Say("Distribution"))
-				Expect(graphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
-				Expect(graphicalVisualizer.PrintDistributionChartArgsForCall(0)).To(BeZero())
+				Expect(fakeGraphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
+				Expect(fakeGraphicalVisualizer.PrintDistributionChartArgsForCall(0)).To(BeZero())
 			})
 
 			It("prints the error from an unsuccessful call to the graphical visualizer", func() {
-				graphicalVisualizer.PrintDistributionChartReturns(errors.New("errored"))
+				fakeGraphicalVisualizer.PrintDistributionChartReturns(errors.New("errored"))
 
 				test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{"--graphical"})
 
 				Consistently(outputBuffer).ShouldNot(test_helpers.Say("Distribution"))
 				Eventually(outputBuffer).Should(test_helpers.Say("Error Visualization: errored"))
-				Expect(graphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
+				Expect(fakeGraphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 
 			Context("when the rate flag is also passed", func() {
 				It("sets the initial rate when calling the graphical visualizer", func() {
-					graphicalVisualizer.PrintDistributionChartReturns(nil)
+					fakeGraphicalVisualizer.PrintDistributionChartReturns(nil)
 
 					test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{"--graphical", "--rate=200ms"})
 
 					Consistently(outputBuffer).ShouldNot(test_helpers.Say("Distribution"))
-					Expect(graphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
+					Expect(fakeGraphicalVisualizer.PrintDistributionChartCallCount()).To(Equal(1))
 					duration, err := time.ParseDuration("200ms")
 					Expect(err).NotTo(HaveOccurred())
-					Expect(graphicalVisualizer.PrintDistributionChartArgsForCall(0)).To(Equal(duration))
+					Expect(fakeGraphicalVisualizer.PrintDistributionChartArgsForCall(0)).To(Equal(duration))
 				})
 			})
 
@@ -361,7 +361,7 @@ var _ = Describe("CommandFactory", func() {
 		}
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, fakeExitHandler, nil, taskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer)
 			statusCommand = commandFactory.MakeStatusCommand()
 
 			sampleAppInfo = app_examiner.AppInfo{
@@ -431,12 +431,12 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		It("emits a pretty representation of the DesiredLRP", func() {
-			appExaminer.AppStatusReturns(sampleAppInfo, nil)
+			fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
 
 			test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
 
-			Expect(appExaminer.AppStatusCallCount()).To(Equal(1))
-			Expect(appExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+			Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+			Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
 
 			Expect(outputBuffer).To(test_helpers.Say("wompy-app"))
 
@@ -489,7 +489,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).To(test_helpers.Say("Uptime"))
 
-			roundedTimeSince := roundTime(clock.Now(), time.Unix(0, epochTime*1e9))
+			roundedTimeSince := roundTime(fakeClock.Now(), time.Unix(0, epochTime*1e9))
 			Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
 
 			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
@@ -525,7 +525,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("when there is a placement error on an actualLRP", func() {
 			It("Displays UNCLAIMED in red, and outputs only the placement error", func() {
-				appExaminer.AppStatusReturns(
+				fakeAppExaminer.AppStatusReturns(
 					app_examiner.AppInfo{
 						ActualInstances: []app_examiner.InstanceInfo{
 							app_examiner.InstanceInfo{
@@ -554,12 +554,12 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("when the --summary flag is passed", func() {
 			It("prints the instance info in summary mode", func() {
-				appExaminer.AppStatusReturns(sampleAppInfo, nil)
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
 
 				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--summary"})
 
-				Expect(appExaminer.AppStatusCallCount()).To(Equal(1))
-				Expect(appExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
 
 				Expect(outputBuffer).To(test_helpers.Say("Instance"))
 				Expect(outputBuffer).To(test_helpers.Say("State"))
@@ -574,7 +574,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.Say("23.46%"))
 				Expect(outputBuffer).To(test_helpers.Say("640K"))
 
-				roundedTimeSince := roundTime(clock.Now(), time.Unix(0, epochTime*1e9))
+				roundedTimeSince := roundTime(fakeClock.Now(), time.Unix(0, epochTime*1e9))
 				Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
 
 				Expect(outputBuffer).To(test_helpers.Say("4"))
@@ -604,17 +604,17 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("refreshes for the designated time", func() {
-				appExaminer.AppStatusReturns(sampleAppInfo, nil)
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
 
 				closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate", "2s"})
 
 				Consistently(closeChan).ShouldNot(BeClosed())
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
 
-				roundedTimeSince := roundTime(clock.Now(), time.Unix(0, epochTime*1e9))
+				roundedTimeSince := roundTime(fakeClock.Now(), time.Unix(0, epochTime*1e9))
 				Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
 
-				clock.IncrementBySeconds(1)
+				fakeClock.IncrementBySeconds(1)
 
 				Consistently(outputBuffer).ShouldNot(test_helpers.Say("wompy-app"))
 
@@ -633,28 +633,28 @@ var _ = Describe("CommandFactory", func() {
 					},
 				}
 
-				appExaminer.AppStatusReturns(refreshAppInfo, nil)
+				fakeAppExaminer.AppStatusReturns(refreshAppInfo, nil)
 
-				clock.IncrementBySeconds(1)
+				fakeClock.IncrementBySeconds(1)
 
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(24)))
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
-				roundedTimeSince = roundTime(clock.Now(), time.Unix(0, refreshTime*1e9))
+				roundedTimeSince = roundTime(fakeClock.Now(), time.Unix(0, refreshTime*1e9))
 				Eventually(outputBuffer).Should(test_helpers.Say(roundedTimeSince))
 			})
 
 			It("dynamically displays any errors", func() {
-				appExaminer.AppStatusReturns(sampleAppInfo, nil)
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
 
 				closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate", "1s"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
 				Expect(outputBuffer).ToNot(test_helpers.Say("Error getting status"))
 
-				appExaminer.AppStatusReturns(app_examiner.AppInfo{}, errors.New("error fetching status"))
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{}, errors.New("error fetching status"))
 
-				clock.IncrementBySeconds(1)
+				fakeClock.IncrementBySeconds(1)
 
 				Eventually(closeChan).Should(BeClosed())
 
@@ -680,7 +680,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("when annotation is empty", func() {
 			It("omits annotation from the output", func() {
-				appExaminer.AppStatusReturns(app_examiner.AppInfo{ProcessGuid: "jumpy-app"}, nil)
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ProcessGuid: "jumpy-app"}, nil)
 
 				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"jumpy-app"})
 
@@ -697,7 +697,7 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		It("prints any errors from app examiner", func() {
-			appExaminer.AppStatusReturns(app_examiner.AppInfo{}, errors.New("You want the status?? ...YOU CAN'T HANDLE THE STATUS!!!"))
+			fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{}, errors.New("You want the status?? ...YOU CAN'T HANDLE THE STATUS!!!"))
 
 			test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"zany-app"})
 
@@ -711,12 +711,12 @@ var _ = Describe("CommandFactory", func() {
 		var cellsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(appExaminer, terminalUI, clock, fakeExitHandler, nil, taskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer)
 			cellsCommand = commandFactory.MakeCellsCommand()
 		})
 
 		It("lists the cells", func() {
-			appExaminer.ListCellsReturns([]app_examiner.CellInfo{
+			fakeAppExaminer.ListCellsReturns([]app_examiner.CellInfo{
 				app_examiner.CellInfo{
 					CellID:           "cell-one",
 					RunningInstances: 37,
@@ -731,7 +731,7 @@ var _ = Describe("CommandFactory", func() {
 
 			test_helpers.ExecuteCommandWithArgs(cellsCommand, []string{})
 
-			Expect(appExaminer.ListCellsCallCount()).To(Equal(1))
+			Expect(fakeAppExaminer.ListCellsCallCount()).To(Equal(1))
 
 			Expect(outputBuffer).To(test_helpers.Say("Cells"))
 			Expect(outputBuffer).To(test_helpers.Say("Zone"))
@@ -753,7 +753,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("when the receptor returns an error", func() {
 			It("prints an error", func() {
-				appExaminer.ListCellsReturns(nil, errors.New("these are not the cells you're looking for"))
+				fakeAppExaminer.ListCellsReturns(nil, errors.New("these are not the cells you're looking for"))
 
 				test_helpers.ExecuteCommandWithArgs(cellsCommand, []string{})
 
