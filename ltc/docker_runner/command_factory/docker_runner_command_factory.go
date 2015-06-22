@@ -183,7 +183,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	noRoutesFlag := context.Bool("no-routes")
 	timeoutFlag := context.Duration("timeout")
 	name := context.Args().Get(0)
-	dockerImage := context.Args().Get(1)
+	dockerPath := context.Args().Get(1)
 	terminator := context.Args().Get(2)
 	startCommand := context.Args().Get(3)
 
@@ -206,7 +206,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		return
 	}
 
-	imageMetadata, err := factory.dockerMetadataFetcher.FetchMetadata(dockerImage)
+	imageMetadata, err := factory.dockerMetadataFetcher.FetchMetadata(dockerPath)
 	if err != nil {
 		factory.UI.Say(fmt.Sprintf("Error fetching image metadata: %s", err))
 		factory.ExitHandler.Exit(exit_codes.BadDocker)
@@ -271,7 +271,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		return
 	}
 
-	rootFS, err := docker_repository_name_formatter.FormatForReceptor(dockerImage)
+	rootFS, err := docker_repository_name_formatter.FormatForReceptor(dockerPath)
 	if err != nil {
 		factory.UI.Say(err.Error())
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)

@@ -8,10 +8,10 @@ import (
 )
 
 type FakeDockerMetadataFetcher struct {
-	FetchMetadataStub        func(dockerImageReference string) (*docker_metadata_fetcher.ImageMetadata, error)
+	FetchMetadataStub        func(dockerPath string) (*docker_metadata_fetcher.ImageMetadata, error)
 	fetchMetadataMutex       sync.RWMutex
 	fetchMetadataArgsForCall []struct {
-		dockerImageReference string
+		dockerPath string
 	}
 	fetchMetadataReturns struct {
 		result1 *docker_metadata_fetcher.ImageMetadata
@@ -19,14 +19,14 @@ type FakeDockerMetadataFetcher struct {
 	}
 }
 
-func (fake *FakeDockerMetadataFetcher) FetchMetadata(dockerImageReference string) (*docker_metadata_fetcher.ImageMetadata, error) {
+func (fake *FakeDockerMetadataFetcher) FetchMetadata(dockerPath string) (*docker_metadata_fetcher.ImageMetadata, error) {
 	fake.fetchMetadataMutex.Lock()
 	fake.fetchMetadataArgsForCall = append(fake.fetchMetadataArgsForCall, struct {
-		dockerImageReference string
-	}{dockerImageReference})
+		dockerPath string
+	}{dockerPath})
 	fake.fetchMetadataMutex.Unlock()
 	if fake.FetchMetadataStub != nil {
-		return fake.FetchMetadataStub(dockerImageReference)
+		return fake.FetchMetadataStub(dockerPath)
 	} else {
 		return fake.fetchMetadataReturns.result1, fake.fetchMetadataReturns.result2
 	}
@@ -41,7 +41,7 @@ func (fake *FakeDockerMetadataFetcher) FetchMetadataCallCount() int {
 func (fake *FakeDockerMetadataFetcher) FetchMetadataArgsForCall(i int) string {
 	fake.fetchMetadataMutex.RLock()
 	defer fake.fetchMetadataMutex.RUnlock()
-	return fake.fetchMetadataArgsForCall[i].dockerImageReference
+	return fake.fetchMetadataArgsForCall[i].dockerPath
 }
 
 func (fake *FakeDockerMetadataFetcher) FetchMetadataReturns(result1 *docker_metadata_fetcher.ImageMetadata, result2 error) {

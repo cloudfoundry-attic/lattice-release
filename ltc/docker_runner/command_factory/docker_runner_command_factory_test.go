@@ -104,6 +104,7 @@ var _ = Describe("CommandFactory", func() {
 			appExaminer.RunningAppInstancesInfoReturns(22, false, nil)
 
 			test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
 			Expect(dockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
 			Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("superfun/app:mycooltag"))
 
@@ -217,8 +218,8 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-				CreateAppParameters := appRunner.CreateAppArgsForCall(0)
-				Expect(CreateAppParameters.ExposedPorts).To(Equal([]uint16{8080, 9090}))
+				createAppParams := appRunner.CreateAppArgsForCall(0)
+				Expect(createAppParams.ExposedPorts).To(Equal([]uint16{8080, 9090}))
 			})
 
 			It("exposes ports from image metadata", func() {
@@ -235,8 +236,8 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: 1200, 2701, 4302\n"))
-				CreateAppParameters := appRunner.CreateAppArgsForCall(0)
-				Expect(CreateAppParameters.ExposedPorts).To(Equal([]uint16{1200, 2701, 4302}))
+				createAppParams := appRunner.CreateAppArgsForCall(0)
+				Expect(createAppParams.ExposedPorts).To(Equal([]uint16{1200, 2701, 4302}))
 			})
 
 			It("exposes --ports ports when both --ports and EXPOSE metadata exist", func() {
@@ -253,8 +254,8 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				CreateAppParameters := appRunner.CreateAppArgsForCall(0)
-				Expect(CreateAppParameters.ExposedPorts).To(Equal([]uint16{8080, 9090}))
+				createAppParams := appRunner.CreateAppArgsForCall(0)
+				Expect(createAppParams.ExposedPorts).To(Equal([]uint16{8080, 9090}))
 			})
 
 			Context("when the metadata does not have EXPOSE ports", func() {
@@ -269,8 +270,8 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-					CreateAppParameters := appRunner.CreateAppArgsForCall(0)
-					Expect(CreateAppParameters.ExposedPorts).To(Equal([]uint16{8080}))
+					createAppParams := appRunner.CreateAppArgsForCall(0)
+					Expect(createAppParams.ExposedPorts).To(Equal([]uint16{8080}))
 				})
 			})
 
@@ -330,15 +331,15 @@ var _ = Describe("CommandFactory", func() {
 					Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("awesome/app"))
 
 					Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-					CreateAppParameters := appRunner.CreateAppArgsForCall(0)
+					createAppParams := appRunner.CreateAppArgsForCall(0)
 					Expect(outputBuffer).To(test_helpers.Say("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
-					Expect(CreateAppParameters.Privileged).To(Equal(false))
-					Expect(CreateAppParameters.MemoryMB).To(Equal(128))
-					Expect(CreateAppParameters.DiskMB).To(Equal(0))
-					Expect(CreateAppParameters.Monitor.Port).To(Equal(uint16(8080)))
-					Expect(CreateAppParameters.ExposedPorts).To(Equal([]uint16{8080}))
-					Expect(CreateAppParameters.Instances).To(Equal(1))
-					Expect(CreateAppParameters.WorkingDir).To(Equal("/"))
+					Expect(createAppParams.Privileged).To(Equal(false))
+					Expect(createAppParams.MemoryMB).To(Equal(128))
+					Expect(createAppParams.DiskMB).To(Equal(0))
+					Expect(createAppParams.Monitor.Port).To(Equal(uint16(8080)))
+					Expect(createAppParams.ExposedPorts).To(Equal([]uint16{8080}))
+					Expect(createAppParams.Instances).To(Equal(1))
+					Expect(createAppParams.WorkingDir).To(Equal("/"))
 				})
 			})
 
@@ -580,10 +581,11 @@ var _ = Describe("CommandFactory", func() {
 				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
-				Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-				CreateAppParameters := appRunner.CreateAppArgsForCall(0)
 
-				Expect(CreateAppParameters.NoRoutes).To(BeTrue())
+				Expect(appRunner.CreateAppCallCount()).To(Equal(1))
+				createAppParams := appRunner.CreateAppArgsForCall(0)
+
+				Expect(createAppParams.NoRoutes).To(BeTrue())
 
 				Expect(outputBuffer).NotTo(test_helpers.Say("App is reachable at:"))
 				Expect(outputBuffer).NotTo(test_helpers.Say("http://cool-web-app.192.168.11.11.xip.io"))
@@ -603,8 +605,8 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				CreateAppParameters := appRunner.CreateAppArgsForCall(0)
-				Expect(CreateAppParameters.WorkingDir).To(Equal("/work/it"))
+				createAppParams := appRunner.CreateAppArgsForCall(0)
+				Expect(createAppParams.WorkingDir).To(Equal("/work/it"))
 			})
 		})
 
@@ -627,12 +629,11 @@ var _ = Describe("CommandFactory", func() {
 				Expect(dockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("fun-org/app"))
 
 				Expect(appRunner.CreateAppCallCount()).To(Equal(1))
-				CreateAppParameters := appRunner.CreateAppArgsForCall(0)
-
-				Expect(CreateAppParameters.StartCommand).To(Equal("/fetch-start"))
-				Expect(CreateAppParameters.AppArgs).To(Equal([]string{"arg1", "arg2"}))
-				Expect(CreateAppParameters.RootFS).To(Equal("docker:///fun-org/app#latest"))
-				Expect(CreateAppParameters.WorkingDir).To(Equal("/this/directory/right/here"))
+				createAppParams := appRunner.CreateAppArgsForCall(0)
+				Expect(createAppParams.StartCommand).To(Equal("/fetch-start"))
+				Expect(createAppParams.AppArgs).To(Equal([]string{"arg1", "arg2"}))
+				Expect(createAppParams.RootFS).To(Equal("docker:///fun-org/app#latest"))
+				Expect(createAppParams.WorkingDir).To(Equal("/this/directory/right/here"))
 
 				Expect(outputBuffer).To(test_helpers.Say("No working directory specified, using working directory from the image metadata...\n"))
 				Expect(outputBuffer).To(test_helpers.Say("Working directory is:\n"))
@@ -810,7 +811,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(appRunner.CreateAppCallCount()).To(Equal(0))
 			})
 
-			It("validates that the name and dockerImage are passed in", func() {
+			It("validates that the name and dockerPath are passed in", func() {
 				args := []string{
 					"justonearg",
 				}

@@ -30,7 +30,8 @@ var _ = Describe("DockerSessionFactory", func() {
 
 		Describe("creating registry sessions", func() {
 			BeforeEach(func() {
-				parts, _ := url.Parse(dockerRegistryServer.URL())
+				parts, err := url.Parse(dockerRegistryServer.URL())
+				Expect(err).NotTo(HaveOccurred())
 				registryHost = parts.Host
 
 				dockerRegistryServer.RouteToHandler("GET", "/v1/_ping", ghttp.VerifyRequest("GET", "/v1/_ping"))

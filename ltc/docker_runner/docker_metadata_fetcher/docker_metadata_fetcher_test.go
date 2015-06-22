@@ -29,7 +29,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 		Context("when fetching metadata from the docker hub registry", func() {
 			It("returns the ImageMetadata with the WorkingDir, StartCommand, and PortConfig, and sets the monitored port to the lowest exposed tcp port", func() {
 				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
-
 				imageList := map[string]*registry.ImgData{
 					"29d531509fb": &registry.ImgData{
 						ID:              "29d531509fb",
@@ -44,9 +43,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 						Endpoints: []string{"https://registry-1.docker.io/v1/"},
 						Tokens:    []string{"signature=abc,repository=\"cloudfoundry/lattice-app\",access=read"},
 					}, nil)
-
 				fakeDockerSession.GetRemoteTagsReturns(map[string]string{"latest": "29d531509fb"}, nil)
-
 				fakeDockerSession.GetRemoteImageJSONReturns(
 					[]byte(`{
 					"container_config":{ "ExposedPorts":{"28321/tcp":{}, "6923/udp":{}, "27017/tcp":{}} },
@@ -58,11 +55,15 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 						}`),
 					0,
 					nil)
-
-				dockerImageReference := "cool_user123/sweetapp:latest"
+				dockerPath := "cool_user123/sweetapp:latest"
 				dockerImageNoTag := "cool_user123/sweetapp"
-				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(dockerImageReference)
+
+				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(dockerPath)
 				Expect(err).ToNot(HaveOccurred())
+				Expect(imageMetadata).ToNot(BeNil())
+				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
+				Expect(imageMetadata.StartCommand).To(ConsistOf("/lattice-app", "--enableAwesomeMode=true", "iloveargs"))
+				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{uint16(27017), uint16(28321)}))
 
 				Expect(dockerSessionFactory.MakeSessionCallCount()).To(Equal(1))
 				Expect(dockerSessionFactory.MakeSessionArgsForCall(0)).To(Equal(dockerImageNoTag))
@@ -72,27 +73,21 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 				Expect(fakeDockerSession.GetRemoteTagsCallCount()).To(Equal(1))
 				registries, repo, tokens := fakeDockerSession.GetRemoteTagsArgsForCall(0)
-				Expect(registries).To(Equal([]string{"https://registry-1.docker.io/v1/"}))
+				Expect(registries).To(ConsistOf("https://registry-1.docker.io/v1/"))
 				Expect(repo).To(Equal("cool_user123/sweetapp"))
-				Expect(tokens).To(Equal([]string{"signature=abc,repository=\"cloudfoundry/lattice-app\",access=read"}))
+				Expect(tokens).To(ConsistOf("signature=abc,repository=\"cloudfoundry/lattice-app\",access=read"))
 
 				Expect(fakeDockerSession.GetRemoteImageJSONCallCount()).To(Equal(1))
 				imgIDParam, remoteImageEndpointParam, remoteImageTokensParam := fakeDockerSession.GetRemoteImageJSONArgsForCall(0)
 				Expect(imgIDParam).To(Equal("29d531509fb"))
 				Expect(remoteImageEndpointParam).To(Equal("https://registry-1.docker.io/v1/"))
-				Expect(remoteImageTokensParam).To(Equal([]string{"signature=abc,repository=\"cloudfoundry/lattice-app\",access=read"}))
-
-				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
-				Expect(imageMetadata.StartCommand).To(Equal([]string{"/lattice-app", "--enableAwesomeMode=true", "iloveargs"}))
-				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{uint16(27017), uint16(28321)}))
+				Expect(remoteImageTokensParam).To(ConsistOf("signature=abc,repository=\"cloudfoundry/lattice-app\",access=read"))
 			})
 		})
 
 		Context("when fetching metadata from a signed custom registry", func() {
 			It("returns the image metadata", func() {
-
 				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
-
 				imageList := map[string]*registry.ImgData{
 					"29d531509fb": &registry.ImgData{
 						ID:              "29d531509fb",
@@ -107,9 +102,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 						Endpoints: []string{"http://my.custom.registry:5000/v1/"},
 						Tokens:    []string{"signature=abc,repository=\"library/savory-app\",access=read"},
 					}, nil)
-
 				fakeDockerSession.GetRemoteTagsReturns(map[string]string{"latest": "29d531509fb"}, nil)
-
 				fakeDockerSession.GetRemoteImageJSONReturns(
 					[]byte(`{
 					"container_config":{ "ExposedPorts":{"4444/tcp":{}, "5555/udp":{}, "3333/tcp":{}} },
@@ -121,41 +114,38 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 						}`),
 					0,
 					nil)
+				dockerPath := "my.custom.registry:5000/savory-app"
 
-				dockerImageReference := "my.custom.registry:5000/savory-app"
-
-				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(dockerImageReference)
+				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(dockerPath)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(imageMetadata).ToNot(BeNil())
+				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
+				Expect(imageMetadata.StartCommand).To(ConsistOf("/savory-app", "--pretzels=salty", "cheesy"))
+				Expect(imageMetadata.ExposedPorts).To(ConsistOf(uint16(3333), uint16(4444)))
 
 				Expect(dockerSessionFactory.MakeSessionCallCount()).To(Equal(1))
-				Expect(dockerSessionFactory.MakeSessionArgsForCall(0)).To(Equal(dockerImageReference))
+				Expect(dockerSessionFactory.MakeSessionArgsForCall(0)).To(Equal(dockerPath))
 
 				Expect(fakeDockerSession.GetRepositoryDataCallCount()).To(Equal(1))
 				Expect(fakeDockerSession.GetRepositoryDataArgsForCall(0)).To(Equal("savory-app"))
 
 				Expect(fakeDockerSession.GetRemoteTagsCallCount()).To(Equal(1))
 				registries, repo, tokens := fakeDockerSession.GetRemoteTagsArgsForCall(0)
-				Expect(registries).To(Equal([]string{"http://my.custom.registry:5000/v1/"}))
+				Expect(registries).To(ConsistOf("http://my.custom.registry:5000/v1/"))
 				Expect(repo).To(Equal("savory-app"))
-				Expect(tokens).To(Equal([]string{"signature=abc,repository=\"library/savory-app\",access=read"}))
+				Expect(tokens).To(ConsistOf("signature=abc,repository=\"library/savory-app\",access=read"))
 
 				Expect(fakeDockerSession.GetRemoteImageJSONCallCount()).To(Equal(1))
 				imgIDParam, remoteImageEndpointParam, remoteImageTokensParam := fakeDockerSession.GetRemoteImageJSONArgsForCall(0)
 				Expect(imgIDParam).To(Equal("29d531509fb"))
 				Expect(remoteImageEndpointParam).To(Equal("http://my.custom.registry:5000/v1/"))
-				Expect(remoteImageTokensParam).To(Equal([]string{"signature=abc,repository=\"library/savory-app\",access=read"}))
-
-				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
-				Expect(imageMetadata.StartCommand).To(Equal([]string{"/savory-app", "--pretzels=salty", "cheesy"}))
-				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{uint16(3333), uint16(4444)}))
+				Expect(remoteImageTokensParam).To(ConsistOf("signature=abc,repository=\"library/savory-app\",access=read"))
 			})
 		})
 
 		Context("when fetching metadata from a insecure custom registry", func() {
 			It("retries after getting unknown CA error and returns the image metadata", func() {
 				insecureRegistryErrorMessage := "If this private registry supports only HTTP or HTTPS with an unknown CA certificate, please add `--insecure-registry 192.168.11.1:5000` to the daemon's arguments. In the case of HTTPS, if you have access to the registry's CA certificate, no need for the flag; simply place the CA certificate at /etc/docker/certs.d/192.168.11.1:5000/ca.crt"
-
 				dockerSessionFactory.MakeSessionStub = func(reposName string, allowInsecure bool) (docker_metadata_fetcher.DockerSession, error) {
 					if !allowInsecure {
 						return fakeDockerSession, errors.New(insecureRegistryErrorMessage)
@@ -178,9 +168,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 						Endpoints: []string{"http://my.custom.registry:5000/v1/"},
 						Tokens:    []string{"signature=abc,repository=\"library/savory-app\",access=read"},
 					}, nil)
-
 				fakeDockerSession.GetRemoteTagsReturns(map[string]string{"latest": "29d531509fb"}, nil)
-
 				fakeDockerSession.GetRemoteImageJSONReturns(
 					[]byte(`{
 					"container_config":{ "ExposedPorts":{"4444/tcp":{}, "5555/udp":{}, "3333/tcp":{}} },
@@ -192,21 +180,23 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 						}`),
 					0,
 					nil)
+				dockerPath := "my.custom.registry:5000/savory-app"
 
-				dockerImageReference := "my.custom.registry:5000/savory-app"
-
-				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(dockerImageReference)
+				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(dockerPath)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(imageMetadata).ToNot(BeNil())
+				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
+				Expect(imageMetadata.StartCommand).To(ConsistOf("/savory-app", "--pretzels=salty", "cheesy"))
+				Expect(imageMetadata.ExposedPorts).To(ConsistOf(uint16(3333), uint16(4444)))
 
 				Expect(dockerSessionFactory.MakeSessionCallCount()).To(Equal(2))
 
 				reposName, allowInsecure := dockerSessionFactory.MakeSessionArgsForCall(0)
-				Expect(reposName).To(Equal(dockerImageReference))
+				Expect(reposName).To(Equal(dockerPath))
 				Expect(allowInsecure).To(BeFalse())
 
 				reposName, allowInsecure = dockerSessionFactory.MakeSessionArgsForCall(1)
-				Expect(reposName).To(Equal(dockerImageReference))
+				Expect(reposName).To(Equal(dockerPath))
 				Expect(allowInsecure).To(BeTrue())
 
 				Expect(fakeDockerSession.GetRepositoryDataCallCount()).To(Equal(1))
@@ -214,38 +204,34 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 				Expect(fakeDockerSession.GetRemoteTagsCallCount()).To(Equal(1))
 				registries, repo, tokens := fakeDockerSession.GetRemoteTagsArgsForCall(0)
-				Expect(registries).To(Equal([]string{"http://my.custom.registry:5000/v1/"}))
+				Expect(registries).To(ConsistOf("http://my.custom.registry:5000/v1/"))
 				Expect(repo).To(Equal("savory-app"))
-				Expect(tokens).To(Equal([]string{"signature=abc,repository=\"library/savory-app\",access=read"}))
+				Expect(tokens).To(ConsistOf("signature=abc,repository=\"library/savory-app\",access=read"))
 
 				Expect(fakeDockerSession.GetRemoteImageJSONCallCount()).To(Equal(1))
 				imgIDParam, remoteImageEndpointParam, remoteImageTokensParam := fakeDockerSession.GetRemoteImageJSONArgsForCall(0)
 				Expect(imgIDParam).To(Equal("29d531509fb"))
 				Expect(remoteImageEndpointParam).To(Equal("http://my.custom.registry:5000/v1/"))
-				Expect(remoteImageTokensParam).To(Equal([]string{"signature=abc,repository=\"library/savory-app\",access=read"}))
-
-				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
-				Expect(imageMetadata.StartCommand).To(Equal([]string{"/savory-app", "--pretzels=salty", "cheesy"}))
-				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{uint16(3333), uint16(4444)}))
+				Expect(remoteImageTokensParam).To(ConsistOf("signature=abc,repository=\"library/savory-app\",access=read"))
 			})
 
 			Context("when getting another error after retrying", func() {
 				It("returns the error", func() {
 					insecureRegistryErrorMessage := "If this private registry supports only HTTP or HTTPS with an unknown CA certificate, please add `--insecure-registry 192.168.11.1:5000` to the daemon's arguments. In the case of HTTPS, if you have access to the registry's CA certificate, no need for the flag; simply place the CA certificate at /etc/docker/certs.d/192.168.11.1:5000/ca.crt"
-					dockerImageReference := "verybad/apple"
-
+					dockerPath := "verybad/apple"
 					dockerSessionFactory.MakeSessionReturns(fakeDockerSession, errors.New(insecureRegistryErrorMessage))
-					_, err := dockerMetadataFetcher.FetchMetadata(dockerImageReference)
+
+					_, err := dockerMetadataFetcher.FetchMetadata(dockerPath)
 					Expect(err).To(MatchError(ContainSubstring("private registry supports only HTTP or HTTPS with an unknown CA certificate")))
 
 					Expect(dockerSessionFactory.MakeSessionCallCount()).To(Equal(2))
 
 					reposName, allowInsecure := dockerSessionFactory.MakeSessionArgsForCall(0)
-					Expect(reposName).To(Equal(dockerImageReference))
+					Expect(reposName).To(Equal(dockerPath))
 					Expect(allowInsecure).To(BeFalse())
 
 					reposName, allowInsecure = dockerSessionFactory.MakeSessionArgsForCall(1)
-					Expect(reposName).To(Equal(dockerImageReference))
+					Expect(reposName).To(Equal(dockerPath))
 					Expect(allowInsecure).To(BeTrue())
 				})
 			})
@@ -253,9 +239,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 		Context("when exposed ports are null in the docker metadata", func() {
 			It("doesn't blow up, and returns zero values", func() {
-
 				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
-
 				imageList := map[string]*registry.ImgData{
 					"29d531509fb": &registry.ImgData{
 						ID:              "29d531509fb",
@@ -272,7 +256,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 					}, nil)
 
 				fakeDockerSession.GetRemoteTagsReturns(map[string]string{"latest": "29d531509fb"}, nil)
-
 				fakeDockerSession.GetRemoteImageJSONReturns(
 					[]byte(`{
 					"container_config":{ "ExposedPorts":null },
@@ -284,13 +267,12 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 						}`),
 					0,
 					nil)
-
 				repoName := "cool_user123/sweetapp"
+
 				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(repoName)
-
 				Expect(err).NotTo(HaveOccurred())
-				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{}))
-
+				Expect(imageMetadata).ToNot(BeNil())
+				Expect(imageMetadata.ExposedPorts).To(BeEmpty())
 			})
 		})
 
@@ -298,7 +280,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 			It("returns an error", func() {
 				_, err := dockerMetadataFetcher.FetchMetadata("bad/appName")
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Invalid namespace name (bad). Cannot be fewer than 4 or more than 30 characters."))
+				Expect(err).To(MatchError("Invalid namespace name (bad). Cannot be fewer than 4 or more than 30 characters."))
 			})
 		})
 
@@ -343,7 +325,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 		Context("When the requested tag does not exist", func() {
 			It("returns an error", func() {
 				dockerSessionFactory.MakeSessionReturns(fakeDockerSession, nil)
-
 				imageList := map[string]*registry.ImgData{
 					"29d531509fb": &registry.ImgData{
 						ID:              "29d531509fb",
@@ -358,7 +339,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 						Endpoints: []string{"https://registry-1.docker.io/v1/"},
 						Tokens:    []string{"signature=abc,repository=\"cloudfoundry/lattice-app\",access=read"},
 					}, nil)
-
 				fakeDockerSession.GetRemoteTagsReturns(map[string]string{"latest": "29d531509fb"}, nil)
 
 				_, err := dockerMetadataFetcher.FetchMetadata("wiggle/app:some-unknown-tag-v3245")

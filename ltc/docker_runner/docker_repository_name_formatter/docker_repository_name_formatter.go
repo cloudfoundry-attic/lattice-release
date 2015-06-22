@@ -13,14 +13,14 @@ const (
 	DockerIndexServer = "docker.io"
 )
 
-func FormatForReceptor(dockerImageReference string) (string, error) {
+func FormatForReceptor(dockerPath string) (string, error) {
 
-	return convertDockerURI(dockerImageReference)
+	return convertDockerURI(dockerPath)
 }
 
-func ParseRepoNameAndTagFromImageReference(dockerImageReference string) (string, string, string, error) {
+func ParseRepoNameAndTagFromImageReference(dockerPath string) (string, string, string, error) {
 
-	return parseDockerRepoUrl(dockerImageReference)
+	return parseDockerRepoUrl(dockerPath)
 }
 
 func convertDockerURI(dockerURI string) (string, error) {
