@@ -113,7 +113,6 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 			Usage: "Registers no routes for the app",
 		},
 	}
-
 	var updateRoutesCommand = cli.Command{
 		Name:        "update-routes",
 		Aliases:     []string{"ur"},
@@ -127,7 +126,6 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 }
 
 func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
-
 	var removeAppCommand = cli.Command{
 		Name:        "remove",
 		Aliases:     []string{"rm"},
@@ -140,7 +138,6 @@ func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 }
 
 func (factory *AppRunnerCommandFactory) submitLrp(context *cli.Context) {
-
 	filePath := context.Args().First()
 	if filePath == "" {
 		factory.UI.Say("Path to JSON is required")
@@ -202,14 +199,13 @@ func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
 	if !noRoutesFlag {
 		desiredRoutes, err = factory.ParseRouteOverrides(userDefinedRoutes)
 		if err != nil {
-			factory.UI.Say(err.Error())
+			factory.UI.Say(fmt.Sprintf("%s", err))
 			factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 			return
 		}
 	}
 
-	err = factory.AppRunner.UpdateAppRoutes(appName, desiredRoutes)
-	if err != nil {
+	if err := factory.AppRunner.UpdateAppRoutes(appName, desiredRoutes); err != nil {
 		factory.UI.Say(fmt.Sprintf("Error updating routes: %s", err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
@@ -219,9 +215,7 @@ func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
 }
 
 func (factory *AppRunnerCommandFactory) setAppInstances(pollTimeout time.Duration, appName string, instances int) {
-	err := factory.AppRunner.ScaleApp(appName, instances)
-
-	if err != nil {
+	if err := factory.AppRunner.ScaleApp(appName, instances); err != nil {
 		factory.UI.Say(fmt.Sprintf("Error Scaling App to %d instances: %s", instances, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
@@ -229,9 +223,7 @@ func (factory *AppRunnerCommandFactory) setAppInstances(pollTimeout time.Duratio
 
 	factory.UI.Say(fmt.Sprintf("Scaling %s to %d instances \n", appName, instances))
 
-	ok := factory.pollUntilAllInstancesRunning(pollTimeout, appName, instances, "scale")
-
-	if ok {
+	if ok := factory.pollUntilAllInstancesRunning(pollTimeout, appName, instances, "scale"); ok {
 		factory.UI.Say(colors.Green("App Scaled Successfully"))
 	}
 }
@@ -262,7 +254,6 @@ func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollT
 	defer factory.TailedLogsOutputter.StopOutputting()
 
 	ok := factory.pollUntilAllInstancesRunning(pollTimeout, appName, instanceCount, "start")
-
 	if noRoutesFlag {
 		factory.UI.Say(colors.Green(appName + " is now running.\n"))
 		return

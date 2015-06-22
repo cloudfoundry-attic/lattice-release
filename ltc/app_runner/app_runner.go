@@ -15,18 +15,10 @@ import (
 
 type MonitorMethod int
 
-const (
-	NoMonitor MonitorMethod = iota
-	PortMonitor
-	URLMonitor
-
-	AttemptedToCreateLatticeDebugErrorMessage = reserved_app_ids.LatticeDebugLogStreamAppId + " is a reserved app name. It is used internally to stream debug logs for lattice components."
-)
-
 //go:generate counterfeiter -o fake_app_runner/fake_app_runner.go . AppRunner
 type AppRunner interface {
 	CreateApp(params CreateAppParams) error
-	SubmitLrp(submitLrpJson []byte) (string, error)
+	SubmitLrp(lrpJSON []byte) (string, error)
 	ScaleApp(name string, instances int) error
 	UpdateAppRoutes(name string, routes RouteOverrides) error
 	RemoveApp(name string) error
@@ -72,6 +64,14 @@ type CreateAppParams struct {
 }
 
 const (
+	NoMonitor MonitorMethod = iota
+	PortMonitor
+	URLMonitor
+
+	AttemptedToCreateLatticeDebugErrorMessage = reserved_app_ids.LatticeDebugLogStreamAppId + " is a reserved app name. It is used internally to stream debug logs for lattice components."
+)
+
+const (
 	healthcheckDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"
 	lrpDomain              string = "lattice"
 )
@@ -102,12 +102,10 @@ func (appRunner *appRunner) CreateApp(params CreateAppParams) error {
 	return appRunner.desireLrp(params)
 }
 
-func (appRunner *appRunner) SubmitLrp(submitLrpJson []byte) (string, error) {
-
+func (appRunner *appRunner) SubmitLrp(lrpJSON []byte) (string, error) {
 	desiredLRP := receptor.DesiredLRPCreateRequest{}
 
-	err := json.Unmarshal(submitLrpJson, &desiredLRP)
-	if err != nil {
+	if err := json.Unmarshal(lrpJSON, &desiredLRP); err != nil {
 		return "", err
 	}
 
@@ -125,8 +123,7 @@ func (appRunner *appRunner) SubmitLrp(submitLrpJson []byte) (string, error) {
 		return desiredLRP.ProcessGuid, err
 	}
 
-	err = appRunner.receptorClient.CreateDesiredLRP(desiredLRP)
-	return desiredLRP.ProcessGuid, err
+	return desiredLRP.ProcessGuid, appRunner.receptorClient.CreateDesiredLRP(desiredLRP)
 }
 
 func (appRunner *appRunner) ScaleApp(name string, instances int) error {
@@ -175,6 +172,7 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 }
 
 func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
+
 	envVars := buildEnvironmentVariables(params.EnvironmentVariables)
 	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", params.Monitor.Port)})
 

@@ -16,10 +16,10 @@ type FakeAppRunner struct {
 	createAppReturns struct {
 		result1 error
 	}
-	SubmitLrpStub        func(submitLrpJson []byte) (string, error)
+	SubmitLrpStub        func(lrpJSON []byte) (string, error)
 	submitLrpMutex       sync.RWMutex
 	submitLrpArgsForCall []struct {
-		submitLrpJson []byte
+		lrpJSON []byte
 	}
 	submitLrpReturns struct {
 		result1 string
@@ -85,14 +85,14 @@ func (fake *FakeAppRunner) CreateAppReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeAppRunner) SubmitLrp(submitLrpJson []byte) (string, error) {
+func (fake *FakeAppRunner) SubmitLrp(lrpJSON []byte) (string, error) {
 	fake.submitLrpMutex.Lock()
 	fake.submitLrpArgsForCall = append(fake.submitLrpArgsForCall, struct {
-		submitLrpJson []byte
-	}{submitLrpJson})
+		lrpJSON []byte
+	}{lrpJSON})
 	fake.submitLrpMutex.Unlock()
 	if fake.SubmitLrpStub != nil {
-		return fake.SubmitLrpStub(submitLrpJson)
+		return fake.SubmitLrpStub(lrpJSON)
 	} else {
 		return fake.submitLrpReturns.result1, fake.submitLrpReturns.result2
 	}
@@ -107,7 +107,7 @@ func (fake *FakeAppRunner) SubmitLrpCallCount() int {
 func (fake *FakeAppRunner) SubmitLrpArgsForCall(i int) []byte {
 	fake.submitLrpMutex.RLock()
 	defer fake.submitLrpMutex.RUnlock()
-	return fake.submitLrpArgsForCall[i].submitLrpJson
+	return fake.submitLrpArgsForCall[i].lrpJSON
 }
 
 func (fake *FakeAppRunner) SubmitLrpReturns(result1 string, result2 error) {
