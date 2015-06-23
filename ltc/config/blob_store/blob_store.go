@@ -12,7 +12,7 @@ const (
 )
 
 var (
-	DefaultPrivilege s3.ACL = s3.PublicReadWrite
+	DefaultPrivilege s3.ACL = s3.Private
 )
 
 //go:generate counterfeiter -o fake_blob_store/fake_blob_store.go . BlobStore
