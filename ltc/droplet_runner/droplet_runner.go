@@ -5,8 +5,10 @@ import (
 	"os"
 
 	"github.com/cloudfoundry-incubator/buildpack_app_lifecycle"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/goamz/goamz/s3"
@@ -16,21 +18,24 @@ import (
 type DropletRunner interface {
 	UploadBits(dropletName, uploadPath string) error
 	BuildDroplet(dropletName, buildpackUrl string) error
+	LaunchDroplet(dropletName string, appEnvironmentParams app_runner.AppEnvironmentParams) error
 }
 
 type dropletRunner struct {
-	taskRunner task_runner.TaskRunner
-	config     *config.Config
-	blobStore  blob_store.BlobStore
-	blobBucket blob_store.BlobBucket
+	taskRunner     task_runner.TaskRunner
+	config         *config.Config
+	blobStore      blob_store.BlobStore
+	blobBucket     blob_store.BlobBucket
+	targetVerifier target_verifier.TargetVerifier
 }
 
-func New(taskRunner task_runner.TaskRunner, config *config.Config, blobStore blob_store.BlobStore, blobBucket blob_store.BlobBucket) *dropletRunner {
+func New(taskRunner task_runner.TaskRunner, config *config.Config, blobStore blob_store.BlobStore, blobBucket blob_store.BlobBucket, targetVerifier target_verifier.TargetVerifier) *dropletRunner {
 	return &dropletRunner{
-		taskRunner: taskRunner,
-		config:     config,
-		blobStore:  blobStore,
-		blobBucket: blobBucket,
+		taskRunner:     taskRunner,
+		config:         config,
+		blobStore:      blobStore,
+		blobBucket:     blobBucket,
+		targetVerifier: targetVerifier,
 	}
 }
 
@@ -42,6 +47,16 @@ func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
 
 	uploadFile, err := os.Open(uploadPath)
 	if err != nil {
+		return err
+	}
+
+	if targetUp, err := dr.targetVerifier.VerifyBlobTarget(
+		dr.config.BlobTarget().TargetHost,
+		dr.config.BlobTarget().TargetPort,
+		dr.config.BlobTarget().AccessKey,
+		dr.config.BlobTarget().SecretKey,
+		dr.config.BlobTarget().BucketName,
+	); !targetUp {
 		return err
 	}
 
@@ -120,4 +135,8 @@ func (dr *dropletRunner) BuildDroplet(dropletName, buildpackUrl string) error {
 	)
 
 	return dr.taskRunner.CreateTask(createTaskParams)
+}
+
+func (dr *dropletRunner) LaunchDroplet(dropletName string, appEnvironmentParams app_runner.AppEnvironmentParams) error {
+	return nil
 }

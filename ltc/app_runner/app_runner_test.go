@@ -34,30 +34,29 @@ var _ = Describe("DockerAppRunner", func() {
 			args := []string{"app", "arg1", "--app", "arg 2"}
 			envs := map[string]string{"APPROOT": "/root/env/path"}
 			err := appRunner.CreateApp(app_runner.CreateAppParams{
-				Name:                 "americano-app",
-				StartCommand:         "/app-run-statement",
-				AppArgs:              args,
-				EnvironmentVariables: envs,
-				Privileged:           true,
-				Monitor: app_runner.MonitorConfig{
-					Method: app_runner.PortMonitor,
-					Port:   2000,
+				AppEnvironmentParams: app_runner.AppEnvironmentParams{
+					EnvironmentVariables: envs,
+					Privileged:           true,
+					Monitor: app_runner.MonitorConfig{
+						Method: app_runner.PortMonitor,
+						Port:   2000,
+					},
+					Instances:    22,
+					CPUWeight:    67,
+					MemoryMB:     128,
+					DiskMB:       1024,
+					ExposedPorts: []uint16{2000, 4000},
+					WorkingDir:   "/user/web/myappdir",
 				},
-				Instances:    22,
-				CPUWeight:    67,
-				MemoryMB:     128,
-				DiskMB:       1024,
-				ExposedPorts: []uint16{2000, 4000},
-				WorkingDir:   "/user/web/myappdir",
 
-				GetRootFS: func() (string, error) {
-					return "/runtest/runner", nil
-				},
-				GetSetupAction: func() models.Action {
-					return &models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-						To:   "/tmp",
-					}
+				Name:         "americano-app",
+				StartCommand: "/app-run-statement",
+				RootFS:       "/runtest/runner",
+				AppArgs:      args,
+
+				Setup: &models.DownloadAction{
+					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+					To:   "/tmp",
 				},
 			})
 			Expect(err).ToNot(HaveOccurred())
@@ -111,8 +110,7 @@ var _ = Describe("DockerAppRunner", func() {
 					StartCommand: "/app-run-statement",
 					AppArgs:      []string{},
 
-					GetRootFS:      func() (string, error) { return "", nil },
-					GetSetupAction: func() models.Action { return &models.DownloadAction{} },
+					Setup: &models.DownloadAction{},
 				})
 
 				Expect(err).To(MatchError(app_runner.AttemptedToCreateLatticeDebugErrorMessage))
@@ -122,23 +120,22 @@ var _ = Describe("DockerAppRunner", func() {
 		Context("when overrideRoutes is not empty", func() {
 			It("uses the override Routes instead of the defaults", func() {
 				err := appRunner.CreateApp(app_runner.CreateAppParams{
-					Name:         "americano-app",
-					StartCommand: "/app-run-statement",
-					AppArgs:      []string{},
-					RouteOverrides: app_runner.RouteOverrides{
-						app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
-						app_runner.RouteOverride{HostnamePrefix: "swang", Port: 2000},
-						app_runner.RouteOverride{HostnamePrefix: "shuffle", Port: 4000},
+					AppEnvironmentParams: app_runner.AppEnvironmentParams{
+						RouteOverrides: app_runner.RouteOverrides{
+							app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
+							app_runner.RouteOverride{HostnamePrefix: "swang", Port: 2000},
+							app_runner.RouteOverride{HostnamePrefix: "shuffle", Port: 4000},
+						},
 					},
 
-					GetRootFS: func() (string, error) {
-						return "runtest/runner", nil
-					},
-					GetSetupAction: func() models.Action {
-						return &models.DownloadAction{
-							From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-							To:   "/tmp",
-						}
+					Name:         "americano-app",
+					StartCommand: "/app-run-statement",
+					RootFS:       "runtest/runner",
+					AppArgs:      []string{},
+
+					Setup: &models.DownloadAction{
+						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						To:   "/tmp",
 					},
 				})
 
@@ -154,22 +151,21 @@ var _ = Describe("DockerAppRunner", func() {
 		Context("when NoRoutes is true", func() {
 			It("does not register any routes for the app", func() {
 				err := appRunner.CreateApp(app_runner.CreateAppParams{
+					AppEnvironmentParams: app_runner.AppEnvironmentParams{
+						RouteOverrides: app_runner.RouteOverrides{
+							app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
+						},
+						NoRoutes: true,
+					},
+
 					Name:         "americano-app",
 					StartCommand: "/app-run-statement",
+					RootFS:       "runtest/runner",
 					AppArgs:      []string{},
-					RouteOverrides: app_runner.RouteOverrides{
-						app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
-					},
-					NoRoutes: true,
 
-					GetRootFS: func() (string, error) {
-						return "runtest/runner", nil
-					},
-					GetSetupAction: func() models.Action {
-						return &models.DownloadAction{
-							From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-							To:   "/tmp",
-						}
+					Setup: &models.DownloadAction{
+						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						To:   "/tmp",
 					},
 				})
 
@@ -182,21 +178,20 @@ var _ = Describe("DockerAppRunner", func() {
 		Context("when Monitor is NoMonitor", func() {
 			It("does not pass a monitor action, regardless of whether or not a monitor port is passed", func() {
 				err := appRunner.CreateApp(app_runner.CreateAppParams{
-					Name:         "americano-app",
-					StartCommand: "/app-run-statement",
-					AppArgs:      []string{},
-					Monitor: app_runner.MonitorConfig{
-						Method: app_runner.NoMonitor,
+					AppEnvironmentParams: app_runner.AppEnvironmentParams{
+						Monitor: app_runner.MonitorConfig{
+							Method: app_runner.NoMonitor,
+						},
 					},
 
-					GetRootFS: func() (string, error) {
-						return "runtest/runner", nil
-					},
-					GetSetupAction: func() models.Action {
-						return &models.DownloadAction{
-							From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-							To:   "/tmp",
-						}
+					Name:         "americano-app",
+					StartCommand: "/app-run-statement",
+					RootFS:       "runtest/runner",
+					AppArgs:      []string{},
+
+					Setup: &models.DownloadAction{
+						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						To:   "/tmp",
 					},
 				})
 
@@ -211,24 +206,23 @@ var _ = Describe("DockerAppRunner", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 
 				err := appRunner.CreateApp(app_runner.CreateAppParams{
+					AppEnvironmentParams: app_runner.AppEnvironmentParams{
+						Monitor: app_runner.MonitorConfig{
+							Method:  app_runner.PortMonitor,
+							Port:    2345,
+							Timeout: 15 * time.Second,
+						},
+						ExposedPorts: []uint16{2345},
+					},
+
 					Name:         "americano-app",
 					StartCommand: "/app-run-statement",
+					RootFS:       "runtest/runner",
 					AppArgs:      []string{},
-					Monitor: app_runner.MonitorConfig{
-						Method:  app_runner.PortMonitor,
-						Port:    2345,
-						Timeout: 15 * time.Second,
-					},
-					ExposedPorts: []uint16{2345},
 
-					GetRootFS: func() (string, error) {
-						return "runtest/runner", nil
-					},
-					GetSetupAction: func() models.Action {
-						return &models.DownloadAction{
-							From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-							To:   "/tmp",
-						}
+					Setup: &models.DownloadAction{
+						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						To:   "/tmp",
 					},
 				})
 
@@ -247,24 +241,23 @@ var _ = Describe("DockerAppRunner", func() {
 		Context("when monitoring a url", func() {
 			It("passes a monitor action", func() {
 				err := appRunner.CreateApp(app_runner.CreateAppParams{
+					AppEnvironmentParams: app_runner.AppEnvironmentParams{
+						Monitor: app_runner.MonitorConfig{
+							Method: app_runner.URLMonitor,
+							Port:   1234,
+							URI:    "/healthy/endpoint",
+						},
+						ExposedPorts: []uint16{1234},
+					},
+
 					Name:         "americano-app",
 					StartCommand: "/app-run-statement",
+					RootFS:       "runtest/runner",
 					AppArgs:      []string{},
-					Monitor: app_runner.MonitorConfig{
-						Method: app_runner.URLMonitor,
-						Port:   1234,
-						URI:    "/healthy/endpoint",
-					},
-					ExposedPorts: []uint16{1234},
 
-					GetRootFS: func() (string, error) {
-						return "runtest/runner", nil
-					},
-					GetSetupAction: func() models.Action {
-						return &models.DownloadAction{
-							From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-							To:   "/tmp",
-						}
+					Setup: &models.DownloadAction{
+						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						To:   "/tmp",
 					},
 				})
 
@@ -281,25 +274,24 @@ var _ = Describe("DockerAppRunner", func() {
 
 			It("sets the timeout for the monitor", func() {
 				err := appRunner.CreateApp(app_runner.CreateAppParams{
+					AppEnvironmentParams: app_runner.AppEnvironmentParams{
+						Monitor: app_runner.MonitorConfig{
+							Method:  app_runner.URLMonitor,
+							Port:    1234,
+							URI:     "/healthy/endpoint",
+							Timeout: 20 * time.Second,
+						},
+						ExposedPorts: []uint16{1234},
+					},
+
 					Name:         "americano-app",
 					StartCommand: "/app-run-statement",
+					RootFS:       "runtest/runner",
 					AppArgs:      []string{},
-					Monitor: app_runner.MonitorConfig{
-						Method:  app_runner.URLMonitor,
-						Port:    1234,
-						URI:     "/healthy/endpoint",
-						Timeout: 20 * time.Second,
-					},
-					ExposedPorts: []uint16{1234},
 
-					GetRootFS: func() (string, error) {
-						return "runtest/runner", nil
-					},
-					GetSetupAction: func() models.Action {
-						return &models.DownloadAction{
-							From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-							To:   "/tmp",
-						}
+					Setup: &models.DownloadAction{
+						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						To:   "/tmp",
 					},
 				})
 
@@ -323,8 +315,7 @@ var _ = Describe("DockerAppRunner", func() {
 				Name:         "app-already-desired",
 				StartCommand: "faily/boom",
 
-				GetRootFS:      func() (string, error) { return "", nil },
-				GetSetupAction: func() models.Action { return &models.DownloadAction{} },
+				Setup: &models.DownloadAction{},
 			})
 
 			Expect(err).To(MatchError("app-already-desired is already running"))
@@ -340,8 +331,7 @@ var _ = Describe("DockerAppRunner", func() {
 					Name:         "nescafe-app",
 					StartCommand: "faily/boom",
 
-					GetRootFS:      func() (string, error) { return "", nil },
-					GetSetupAction: func() models.Action { return &models.DownloadAction{} },
+					Setup: &models.DownloadAction{},
 				})
 
 				Expect(err).To(MatchError(upsertError))
@@ -355,8 +345,7 @@ var _ = Describe("DockerAppRunner", func() {
 					Name:         "nescafe-app",
 					StartCommand: "faily/boom",
 
-					GetRootFS:      func() (string, error) { return "", nil },
-					GetSetupAction: func() models.Action { return &models.DownloadAction{} },
+					Setup: &models.DownloadAction{},
 				})
 
 				Expect(err).To(MatchError(receptorError))
@@ -370,8 +359,7 @@ var _ = Describe("DockerAppRunner", func() {
 					Name:         "nescafe-app",
 					StartCommand: "faily/boom",
 
-					GetRootFS:      func() (string, error) { return "", nil },
-					GetSetupAction: func() models.Action { return &models.DownloadAction{} },
+					Setup: &models.DownloadAction{},
 				})
 
 				Expect(err).To(MatchError(receptorError))

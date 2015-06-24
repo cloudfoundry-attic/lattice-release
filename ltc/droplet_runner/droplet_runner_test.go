@@ -8,11 +8,13 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store/fake_blob_bucket"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store/fake_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner/fake_task_runner"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
@@ -21,11 +23,12 @@ import (
 var _ = Describe("DropletRunner", func() {
 
 	var (
-		fakeTaskRunner *fake_task_runner.FakeTaskRunner
-		config         *config_package.Config
-		fakeBlobStore  *fake_blob_store.FakeBlobStore
-		fakeBlobBucket *fake_blob_bucket.FakeBlobBucket
-		dropletRunner  droplet_runner.DropletRunner
+		fakeTaskRunner     *fake_task_runner.FakeTaskRunner
+		config             *config_package.Config
+		fakeBlobStore      *fake_blob_store.FakeBlobStore
+		fakeBlobBucket     *fake_blob_bucket.FakeBlobBucket
+		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
+		dropletRunner      droplet_runner.DropletRunner
 	)
 
 	BeforeEach(func() {
@@ -33,7 +36,8 @@ var _ = Describe("DropletRunner", func() {
 		config = config_package.New(persister.NewMemPersister())
 		fakeBlobStore = new(fake_blob_store.FakeBlobStore)
 		fakeBlobBucket = new(fake_blob_bucket.FakeBlobBucket)
-		dropletRunner = droplet_runner.New(fakeTaskRunner, config, fakeBlobStore, fakeBlobBucket)
+		fakeTargetVerifier = new(fake_target_verifier.FakeTargetVerifier)
+		dropletRunner = droplet_runner.New(fakeTaskRunner, config, fakeBlobStore, fakeBlobBucket, fakeTargetVerifier)
 	})
 
 	Describe("UploadBits", func() {
@@ -50,6 +54,8 @@ var _ = Describe("DropletRunner", func() {
 
 				err = ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value"}`), 0700)
 				Expect(err).NotTo(HaveOccurred())
+
+				fakeTargetVerifier.VerifyBlobTargetReturns(true, nil)
 			})
 
 			AfterEach(func() {
@@ -61,6 +67,8 @@ var _ = Describe("DropletRunner", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 
+				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
+
 				Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(1))
 				path, reader, length, contType, perm, options := fakeBlobBucket.PutReaderArgsForCall(0)
 				Expect(path).To(Equal("droplet-name/bits.tgz"))
@@ -71,12 +79,24 @@ var _ = Describe("DropletRunner", func() {
 				Expect(options).To(BeZero())
 			})
 
+			It("errors when the blob store verifier fails", func() {
+				fakeTargetVerifier.VerifyBlobTargetReturns(false, errors.New("no blobs here"))
+
+				err = dropletRunner.UploadBits("droplet-name", tmpFile.Name())
+
+				Expect(err).To(MatchError("no blobs here"))
+
+				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
+				Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(0))
+			})
+
 			It("errors when Bucket.PutReader fails", func() {
 				fakeBlobBucket.PutReaderReturns(errors.New("winter is coming yo"))
 
 				err = dropletRunner.UploadBits("droplet-name", tmpFile.Name())
 
 				Expect(err).To(MatchError("winter is coming yo"))
+				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
 				Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(1))
 			})
 		})
@@ -185,6 +205,32 @@ var _ = Describe("DropletRunner", func() {
 
 			Expect(err).To(MatchError("creating task failed"))
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
+		})
+	})
+
+	Describe("LaunchDroplet", func() {
+		It("does the launch droplet lrp task", func() {
+			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
+			config.Save()
+
+			err := dropletRunner.LaunchDroplet("droplet-name", app_runner.AppEnvironmentParams{})
+
+			Expect(err).NotTo(HaveOccurred())
+			//			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
+			//			createTaskParams := fakeTaskRunner.CreateTaskArgsForCall(0)
+			//			Expect(createTaskParams).ToNot(BeNil())
+			//			_ = createTaskParams.GetReceptorRequest()
+
+			//XXX
+		})
+
+		It("returns an error when launch task fails", func() {
+			//			fakeTaskRunner.CreateTaskReturns(errors.New("creating task failed"))
+			//
+			//			err := dropletRunner.BuildDroplet("droplet-name", "buildpack")
+			//
+			//			Expect(err).To(MatchError("creating task failed"))
+			//			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
 		})
 	})
 

@@ -11,7 +11,6 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
@@ -37,41 +36,38 @@ const (
 )
 
 type AppRunnerCommandFactory struct {
-	appRunner             app_runner.AppRunner
-	appExaminer           app_examiner.AppExaminer
-	ui                    terminal.UI
-	dockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
-	domain                string
-	env                   []string
-	clock                 clock.Clock
-	tailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
-	exitHandler           exit_handler.ExitHandler
+	AppRunner           app_runner.AppRunner
+	AppExaminer         app_examiner.AppExaminer
+	UI                  terminal.UI
+	Domain              string
+	Env                 []string
+	Clock               clock.Clock
+	TailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter
+	ExitHandler         exit_handler.ExitHandler
 }
 
 type AppRunnerCommandFactoryConfig struct {
-	AppRunner             app_runner.AppRunner
-	AppExaminer           app_examiner.AppExaminer
-	UI                    terminal.UI
-	DockerMetadataFetcher docker_metadata_fetcher.DockerMetadataFetcher
-	Domain                string
-	Env                   []string
-	Clock                 clock.Clock
-	Logger                lager.Logger
-	TailedLogsOutputter   console_tailed_logs_outputter.TailedLogsOutputter
-	ExitHandler           exit_handler.ExitHandler
+	AppRunner           app_runner.AppRunner
+	AppExaminer         app_examiner.AppExaminer
+	UI                  terminal.UI
+	Domain              string
+	Env                 []string
+	Clock               clock.Clock
+	Logger              lager.Logger
+	TailedLogsOutputter console_tailed_logs_outputter.TailedLogsOutputter
+	ExitHandler         exit_handler.ExitHandler
 }
 
 func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunnerCommandFactory {
 	return &AppRunnerCommandFactory{
-		appRunner:   config.AppRunner,
-		appExaminer: config.AppExaminer,
-		ui:          config.UI,
-		dockerMetadataFetcher: config.DockerMetadataFetcher,
-		domain:                config.Domain,
-		env:                   config.Env,
-		clock:                 config.Clock,
-		tailedLogsOutputter:   config.TailedLogsOutputter,
-		exitHandler:           config.ExitHandler,
+		AppRunner:           config.AppRunner,
+		AppExaminer:         config.AppExaminer,
+		UI:                  config.UI,
+		Domain:              config.Domain,
+		Env:                 config.Env,
+		Clock:               config.Clock,
+		TailedLogsOutputter: config.TailedLogsOutputter,
+		ExitHandler:         config.ExitHandler,
 	}
 }
 
@@ -79,7 +75,7 @@ func (factory *AppRunnerCommandFactory) MakeSubmitLrpCommand() cli.Command {
 	var submitLrpCommand = cli.Command{
 		Name:    "submit-lrp",
 		Aliases: []string{"create-lrp", "cl", "sl"},
-		Usage:   "Creates a docker app from JSON on lattice",
+		Usage:   "Creates an app from JSON on lattice",
 		Description: `ltc submit-lrp /path/to/json
 
 	Deprecation Warning: ltc create-lrp will be removed in a future release.
@@ -101,7 +97,7 @@ func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 	var scaleAppCommand = cli.Command{
 		Name:        "scale",
 		Aliases:     []string{"sc"},
-		Usage:       "Scales a docker app on lattice",
+		Usage:       "Scales an app on lattice",
 		Description: "ltc scale APP_NAME NUM_INSTANCES",
 		Action:      factory.scaleApp,
 		Flags:       scaleFlags,
@@ -136,7 +132,7 @@ func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 		Name:        "remove",
 		Aliases:     []string{"rm"},
 		Description: "ltc remove APP1_NAME [APP2_NAME APP3_NAME...]",
-		Usage:       "Stops and removes docker app(s) from lattice",
+		Usage:       "Stops and removes app(s) from lattice",
 		Action:      factory.removeApp,
 	}
 
@@ -147,27 +143,27 @@ func (factory *AppRunnerCommandFactory) submitLrp(context *cli.Context) {
 
 	filePath := context.Args().First()
 	if filePath == "" {
-		factory.ui.Say("Path to JSON is required")
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
+		factory.UI.Say("Path to JSON is required")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	jsonBytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error reading file: %s", err.Error()))
-		factory.exitHandler.Exit(exit_codes.FileSystemError)
+		factory.UI.Say(fmt.Sprintf("Error reading file: %s", err.Error()))
+		factory.ExitHandler.Exit(exit_codes.FileSystemError)
 		return
 	}
 
-	lrpName, err := factory.appRunner.SubmitLrp(jsonBytes)
+	lrpName, err := factory.AppRunner.SubmitLrp(jsonBytes)
 	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error creating %s: %s", lrpName, err.Error()))
-		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		factory.UI.Say(fmt.Sprintf("Error creating %s: %s", lrpName, err.Error()))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
-	factory.ui.Say(colors.Green(fmt.Sprintf("Successfully submitted %s.", lrpName)) + "\n")
-	factory.ui.Say(fmt.Sprintf("To view the status of your application: ltc status %s\n", lrpName))
+	factory.UI.Say(colors.Green(fmt.Sprintf("Successfully submitted %s.", lrpName)) + "\n")
+	factory.UI.Say(fmt.Sprintf("To view the status of your application: ltc status %s\n", lrpName))
 }
 
 func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
@@ -175,15 +171,15 @@ func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
 	instancesArg := c.Args().Get(1)
 	timeoutFlag := c.Duration("timeout")
 	if appName == "" || instancesArg == "" {
-		factory.ui.SayIncorrectUsage("Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'")
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
+		factory.UI.SayIncorrectUsage("Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	instances, err := strconv.Atoi(instancesArg)
 	if err != nil {
-		factory.ui.SayIncorrectUsage("Number of Instances must be an integer")
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
+		factory.UI.SayIncorrectUsage("Number of Instances must be an integer")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
@@ -196,47 +192,47 @@ func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
 	noRoutesFlag := c.Bool("no-routes")
 
 	if appName == "" || (userDefinedRoutes == "" && !noRoutesFlag) {
-		factory.ui.SayIncorrectUsage("Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag.")
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
+		factory.UI.SayIncorrectUsage("Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag.")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	desiredRoutes := app_runner.RouteOverrides{}
 	var err error
 	if !noRoutesFlag {
-		desiredRoutes, err = parseRouteOverrides(userDefinedRoutes)
+		desiredRoutes, err = factory.ParseRouteOverrides(userDefinedRoutes)
 		if err != nil {
-			factory.ui.Say(err.Error())
-			factory.exitHandler.Exit(exit_codes.InvalidSyntax)
+			factory.UI.Say(err.Error())
+			factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 			return
 		}
 	}
 
-	err = factory.appRunner.UpdateAppRoutes(appName, desiredRoutes)
+	err = factory.AppRunner.UpdateAppRoutes(appName, desiredRoutes)
 	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error updating routes: %s", err))
-		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		factory.UI.Say(fmt.Sprintf("Error updating routes: %s", err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
-	factory.ui.Say(fmt.Sprintf("Updating %s routes. You can check this app's current routes by running 'ltc status %s'", appName, appName))
+	factory.UI.Say(fmt.Sprintf("Updating %s routes. You can check this app's current routes by running 'ltc status %s'", appName, appName))
 }
 
 func (factory *AppRunnerCommandFactory) setAppInstances(pollTimeout time.Duration, appName string, instances int) {
-	err := factory.appRunner.ScaleApp(appName, instances)
+	err := factory.AppRunner.ScaleApp(appName, instances)
 
 	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error Scaling App to %d instances: %s", instances, err))
-		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		factory.UI.Say(fmt.Sprintf("Error Scaling App to %d instances: %s", instances, err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
-	factory.ui.Say(fmt.Sprintf("Scaling %s to %d instances \n", appName, instances))
+	factory.UI.Say(fmt.Sprintf("Scaling %s to %d instances \n", appName, instances))
 
 	ok := factory.pollUntilAllInstancesRunning(pollTimeout, appName, instances, "scale")
 
 	if ok {
-		factory.ui.Say(colors.Green("App Scaled Successfully"))
+		factory.UI.Say(colors.Green("App Scaled Successfully"))
 	}
 }
 
@@ -244,43 +240,58 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	appNames := c.Args()
 
 	if len(appNames) == 0 {
-		factory.ui.SayIncorrectUsage("App Name required")
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
+		factory.UI.SayIncorrectUsage("App Name required")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	for _, appName := range appNames {
-		factory.ui.SayLine(fmt.Sprintf("Removing %s...", appName))
-		err := factory.appRunner.RemoveApp(appName)
+		factory.UI.SayLine(fmt.Sprintf("Removing %s...", appName))
+		err := factory.AppRunner.RemoveApp(appName)
 		if err != nil {
-			factory.ui.SayLine(fmt.Sprintf("Error stopping %s: %s", appName, err))
-			factory.exitHandler.Exit(exit_codes.CommandFailed) // TODO: how to handle partial failure
+			factory.UI.SayLine(fmt.Sprintf("Error stopping %s: %s", appName, err))
+			factory.ExitHandler.Exit(exit_codes.CommandFailed) // TODO: how to handle partial failure
 		}
 	}
 }
 
-func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Duration, pollingFunc func() bool, outputProgress bool) (ok bool) {
-	startingTime := factory.clock.Now()
-	for startingTime.Add(pollTimeout).After(factory.clock.Now()) {
-		if result := pollingFunc(); result {
-			factory.ui.SayNewLine()
-			return true
-		} else if outputProgress {
-			factory.ui.Say(".")
-		}
+func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollTimeout time.Duration, instanceCount int, noRoutesFlag bool, routeOverrides app_runner.RouteOverrides) {
+	factory.UI.Say("Creating App: " + appName + "\n")
 
-		factory.clock.Sleep(1 * time.Second)
+	go factory.TailedLogsOutputter.OutputTailedLogs(appName)
+	defer factory.TailedLogsOutputter.StopOutputting()
+
+	ok := factory.pollUntilAllInstancesRunning(pollTimeout, appName, instanceCount, "start")
+
+	if noRoutesFlag {
+		factory.UI.Say(colors.Green(appName + " is now running.\n"))
+		return
+	} else if ok {
+		factory.UI.Say(colors.Green(appName + " is now running.\n"))
+		factory.UI.Say("App is reachable at:\n")
+	} else {
+		factory.UI.Say("App will be reachable at:\n")
 	}
-	factory.ui.SayNewLine()
-	return false
+
+	if routeOverrides != nil {
+		for _, route := range routeOverrides {
+			factory.UI.Say(colors.Green(factory.urlForAppName(route.HostnamePrefix)))
+		}
+	} else {
+		factory.UI.Say(colors.Green(factory.urlForAppName(appName)))
+	}
+}
+
+func (factory *AppRunnerCommandFactory) urlForAppName(name string) string {
+	return fmt.Sprintf("http://%s.%s\n", name, factory.Domain)
 }
 
 func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout time.Duration, appName string, instances int, action pollingAction) bool {
 	placementErrorOccurred := false
 	ok := factory.pollUntilSuccess(pollTimeout, func() bool {
-		numberOfRunningInstances, placementError, _ := factory.appExaminer.RunningAppInstancesInfo(appName)
+		numberOfRunningInstances, placementError, _ := factory.AppExaminer.RunningAppInstancesInfo(appName)
 		if placementError {
-			factory.ui.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
+			factory.UI.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
 			placementErrorOccurred = true
 			return true
 		}
@@ -288,31 +299,43 @@ func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout
 	}, true)
 
 	if placementErrorOccurred {
-		factory.exitHandler.Exit(exit_codes.PlacementError)
+		factory.ExitHandler.Exit(exit_codes.PlacementError)
 		return false
 	} else if !ok {
 		if action == pollingStart {
-			factory.ui.Say(colors.Red("Timed out waiting for the container to come up."))
-			factory.ui.SayNewLine()
-			factory.ui.SayLine("This typically happens because docker layers can take time to download.")
-			factory.ui.SayLine("Lattice is still downloading your application in the background.")
+			factory.UI.Say(colors.Red("Timed out waiting for the container to come up."))
+			factory.UI.SayNewLine()
+			factory.UI.SayLine("This typically happens because docker layers can take time to download.")
+			factory.UI.SayLine("Lattice is still downloading your application in the background.")
 		} else {
-			factory.ui.Say(colors.Red("Timed out waiting for the container to scale."))
-			factory.ui.SayNewLine()
-			factory.ui.SayLine("Lattice is still scaling your application in the background.")
+			factory.UI.Say(colors.Red("Timed out waiting for the container to scale."))
+			factory.UI.SayNewLine()
+			factory.UI.SayLine("Lattice is still scaling your application in the background.")
 		}
-		factory.ui.SayLine(fmt.Sprintf("To view logs:\n\tltc logs %s", appName))
-		factory.ui.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", appName))
-		factory.ui.SayNewLine()
+		factory.UI.SayLine(fmt.Sprintf("To view logs:\n\tltc logs %s", appName))
+		factory.UI.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", appName))
+		factory.UI.SayNewLine()
 	}
 	return ok
 }
 
-func (factory *AppRunnerCommandFactory) urlForApp(name string) string {
-	return fmt.Sprintf("http://%s.%s\n", name, factory.domain)
+func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Duration, pollingFunc func() bool, outputProgress bool) (ok bool) {
+	startingTime := factory.Clock.Now()
+	for startingTime.Add(pollTimeout).After(factory.Clock.Now()) {
+		if result := pollingFunc(); result {
+			factory.UI.SayNewLine()
+			return true
+		} else if outputProgress {
+			factory.UI.Say(".")
+		}
+
+		factory.Clock.Sleep(1 * time.Second)
+	}
+	factory.UI.SayNewLine()
+	return false
 }
 
-func (factory *AppRunnerCommandFactory) buildEnvironment(envVars []string, appName string) map[string]string {
+func (factory *AppRunnerCommandFactory) BuildEnvironment(envVars []string, appName string) map[string]string {
 	environment := make(map[string]string)
 	environment["PROCESS_GUID"] = appName
 
@@ -329,7 +352,7 @@ func (factory *AppRunnerCommandFactory) buildEnvironment(envVars []string, appNa
 }
 
 func (factory *AppRunnerCommandFactory) grabVarFromEnv(name string) string {
-	for _, envVarPair := range factory.env {
+	for _, envVarPair := range factory.Env {
 		if strings.HasPrefix(envVarPair, name) {
 			_, value := parseEnvVarPair(envVarPair)
 			return value
@@ -338,36 +361,36 @@ func (factory *AppRunnerCommandFactory) grabVarFromEnv(name string) string {
 	return ""
 }
 
-func (factory *AppRunnerCommandFactory) getExposedPortsFromArgs(portsFlag string, imageMetadata *docker_metadata_fetcher.ImageMetadata) ([]uint16, error) {
-	if portsFlag != "" {
-		portStrings := strings.Split(portsFlag, ",")
-		sort.Strings(portStrings)
+func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes string) (app_runner.RouteOverrides, error) {
+	var routeOverrides app_runner.RouteOverrides
 
-		convertedPorts := []uint16{}
-		for _, p := range portStrings {
-			intPort, err := strconv.Atoi(p)
-			if err != nil || intPort > 65535 {
-				return []uint16{}, errors.New(InvalidPortErrorMessage)
-			}
-			convertedPorts = append(convertedPorts, uint16(intPort))
+	for _, route := range strings.Split(routes, ",") {
+		if route == "" {
+			continue
 		}
-		return convertedPorts, nil
+		routeArr := strings.Split(route, ":")
+		maybePort, err := strconv.Atoi(routeArr[0])
+		if err != nil || len(routeArr) < 2 {
+			return nil, errors.New(MalformedRouteErrorMessage)
+		}
+
+		port := uint16(maybePort)
+		hostnamePrefix := routeArr[1]
+		routeOverrides = append(routeOverrides, app_runner.RouteOverride{HostnamePrefix: hostnamePrefix, Port: port})
 	}
 
-	if len(imageMetadata.ExposedPorts) > 0 {
-		var exposedPortStrings []string
-		for _, port := range imageMetadata.ExposedPorts {
-			exposedPortStrings = append(exposedPortStrings, strconv.Itoa(int(port)))
-		}
-		factory.ui.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s\n", strings.Join(exposedPortStrings, ", ")))
-		return imageMetadata.ExposedPorts, nil
-	}
-
-	factory.ui.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
-	return []uint16{8080}, nil
+	return routeOverrides, nil
 }
 
-func (factory *AppRunnerCommandFactory) getMonitorConfigFromArgs(exposedPorts []uint16, portMonitorFlag int, noMonitorFlag bool, urlMonitorFlag string, monitorTimeoutFlag time.Duration, imageMetadata *docker_metadata_fetcher.ImageMetadata) (app_runner.MonitorConfig, error) {
+func parseEnvVarPair(envVarPair string) (name, value string) {
+	s := strings.SplitN(envVarPair, "=", 2)
+	if len(s) > 1 {
+		return s[0], s[1]
+	}
+	return s[0], ""
+}
+
+func (factory *AppRunnerCommandFactory) GetMonitorConfig(exposedPorts []uint16, portMonitorFlag int, noMonitorFlag bool, urlMonitorFlag string, monitorTimeoutFlag time.Duration) (app_runner.MonitorConfig, error) {
 	if noMonitorFlag {
 		return app_runner.MonitorConfig{
 			Method: app_runner.NoMonitor,
@@ -434,33 +457,4 @@ func checkPortExposed(exposedPorts []uint16, monitorPort uint16) error {
 	}
 
 	return nil
-}
-
-func parseRouteOverrides(routes string) (app_runner.RouteOverrides, error) {
-	var routeOverrides app_runner.RouteOverrides
-
-	for _, route := range strings.Split(routes, ",") {
-		if route == "" {
-			continue
-		}
-		routeArr := strings.Split(route, ":")
-		maybePort, err := strconv.Atoi(routeArr[0])
-		if err != nil || len(routeArr) < 2 {
-			return nil, errors.New(MalformedRouteErrorMessage)
-		}
-
-		port := uint16(maybePort)
-		hostnamePrefix := routeArr[1]
-		routeOverrides = append(routeOverrides, app_runner.RouteOverride{HostnamePrefix: hostnamePrefix, Port: port})
-	}
-
-	return routeOverrides, nil
-}
-
-func parseEnvVarPair(envVarPair string) (name, value string) {
-	s := strings.SplitN(envVarPair, "=", 2)
-	if len(s) > 1 {
-		return s[0], s[1]
-	}
-	return s[0], ""
 }

@@ -11,7 +11,10 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
+	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
+	droplet_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
@@ -22,18 +25,24 @@ import (
 
 var _ = Describe("CommandFactory", func() {
 	var (
-		outputBuffer      *gbytes.Buffer
-		terminalUI        terminal.UI
-		fakeDropletRunner *fake_droplet_runner.FakeDropletRunner
-		fakeExitHandler   *fake_exit_handler.FakeExitHandler
+		outputBuffer            *gbytes.Buffer
+		fakeDropletRunner       *fake_droplet_runner.FakeDropletRunner
+		fakeExitHandler         *fake_exit_handler.FakeExitHandler
+		appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory
 	)
 
 	BeforeEach(func() {
 		fakeDropletRunner = &fake_droplet_runner.FakeDropletRunner{}
-		outputBuffer = gbytes.NewBuffer()
-		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 
+		outputBuffer = gbytes.NewBuffer()
+
+		appRunnerCommandFactory = app_runner_command_factory.AppRunnerCommandFactory{
+			AppRunner:   &fake_app_runner.FakeAppRunner{},
+			AppExaminer: &fake_app_examiner.FakeAppExaminer{},
+			UI:          terminal.NewUI(nil, outputBuffer, nil),
+			ExitHandler: fakeExitHandler,
+		}
 	})
 
 	Describe("UploadBitsCommand", func() {
@@ -42,7 +51,7 @@ var _ = Describe("CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewDropletRunnerCommandFactory(fakeDropletRunner, terminalUI, fakeExitHandler)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeDropletRunner)
 			uploadBitsCommand = commandFactory.MakeUploadBitsCommand()
 		})
 
@@ -196,7 +205,7 @@ var _ = Describe("CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewDropletRunnerCommandFactory(fakeDropletRunner, terminalUI, fakeExitHandler)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeDropletRunner)
 			buildDropletCommand = commandFactory.MakeBuildDropletCommand()
 		})
 
@@ -330,4 +339,38 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 	})
+
+	Describe("LaunchDropletCommand", func() {
+		var (
+			launchDropletCommand cli.Command
+		)
+
+		BeforeEach(func() {
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeDropletRunner)
+			launchDropletCommand = commandFactory.MakeLaunchDropletCommand()
+		})
+
+		It("launches the specified droplet", func() {
+			test_helpers.ExecuteCommandWithArgs(launchDropletCommand, []string{"droplet-name"})
+
+			Expect(outputBuffer).To(test_helpers.Say("Droplet launched"))
+
+			Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(1))
+		})
+
+		Context("when the droplet runner returns errors", func() {
+			It("prints an error", func() {
+				fakeDropletRunner.LaunchDropletReturns(errors.New("failed"))
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, []string{"droplet-name"})
+
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(1))
+
+				Expect(outputBuffer).To(test_helpers.Say("Error launching droplet-name: failed"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+			})
+		})
+
+	})
+
 })

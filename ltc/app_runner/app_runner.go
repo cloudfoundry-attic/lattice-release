@@ -46,11 +46,7 @@ type RouteOverride struct {
 	Port           uint16
 }
 
-type CreateAppParams struct {
-	Name                 string
-	StartCommand         string
-	RootFS               string
-	AppArgs              []string
+type AppEnvironmentParams struct {
 	EnvironmentVariables map[string]string
 	Privileged           bool
 	Monitor              MonitorConfig
@@ -62,10 +58,17 @@ type CreateAppParams struct {
 	WorkingDir           string
 	RouteOverrides       RouteOverrides
 	NoRoutes             bool
-	Timeout              time.Duration
+}
 
-	GetRootFS      func() (string, error)
-	GetSetupAction func() models.Action
+type CreateAppParams struct {
+	AppEnvironmentParams
+
+	Name         string
+	StartCommand string
+	RootFS       string
+	AppArgs      []string
+	Timeout      time.Duration
+	Setup        models.Action
 }
 
 const (
@@ -172,11 +175,6 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 }
 
 func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
-	rootFS, err := params.GetRootFS()
-	if err != nil {
-		return err
-	}
-
 	envVars := buildEnvironmentVariables(params.EnvironmentVariables)
 	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", params.Monitor.Port)})
 
@@ -201,7 +199,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 	req := receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
 		Domain:               lrpDomain,
-		RootFS:               rootFS,
+		RootFS:               params.RootFS,
 		Instances:            params.Instances,
 		Routes:               appRoutes.RoutingInfo(),
 		CPUWeight:            params.CPUWeight,
@@ -213,7 +211,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		LogSource:            "APP",
 		MetricsGuid:          params.Name,
 		EnvironmentVariables: envVars,
-		Setup:                params.GetSetupAction(),
+		Setup:                params.Setup,
 		Action: &models.RunAction{
 			Path:       params.StartCommand,
 			Args:       params.AppArgs,

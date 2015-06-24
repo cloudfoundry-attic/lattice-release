@@ -15,8 +15,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher"
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_metadata_fetcher/fake_docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
@@ -38,7 +36,6 @@ var _ = Describe("CommandFactory", func() {
 		terminalUI                    terminal.UI
 		domain                        string = "192.168.11.11.xip.io"
 		clock                         *fakeclock.FakeClock
-		dockerMetadataFetcher         *fake_docker_metadata_fetcher.FakeDockerMetadataFetcher
 		appRunnerCommandFactoryConfig command_factory.AppRunnerCommandFactoryConfig
 		logger                        lager.Logger
 		fakeTailedLogsOutputter       *fake_tailed_logs_outputter.FakeTailedLogsOutputter
@@ -50,7 +47,6 @@ var _ = Describe("CommandFactory", func() {
 		appExaminer = &fake_app_examiner.FakeAppExaminer{}
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
-		dockerMetadataFetcher = &fake_docker_metadata_fetcher.FakeDockerMetadataFetcher{}
 		clock = fakeclock.NewFakeClock(time.Now())
 		logger = lager.NewLogger("ltc-test")
 		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
@@ -67,16 +63,15 @@ var _ = Describe("CommandFactory", func() {
 
 		BeforeEach(func() {
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:   appRunner,
-				AppExaminer: appExaminer,
-				UI:          terminalUI,
-				DockerMetadataFetcher: dockerMetadataFetcher,
-				Domain:                domain,
-				Env:                   []string{},
-				Clock:                 clock,
-				Logger:                logger,
-				TailedLogsOutputter:   fakeTailedLogsOutputter,
-				ExitHandler:           fakeExitHandler,
+				AppRunner:           appRunner,
+				AppExaminer:         appExaminer,
+				UI:                  terminalUI,
+				Domain:              domain,
+				Env:                 []string{},
+				Clock:               clock,
+				Logger:              logger,
+				TailedLogsOutputter: fakeTailedLogsOutputter,
+				ExitHandler:         fakeExitHandler,
 			}
 
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
@@ -146,16 +141,15 @@ var _ = Describe("CommandFactory", func() {
 
 		BeforeEach(func() {
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:   appRunner,
-				AppExaminer: appExaminer,
-				UI:          terminalUI,
-				DockerMetadataFetcher: dockerMetadataFetcher,
-				Domain:                domain,
-				Env:                   []string{},
-				Clock:                 clock,
-				Logger:                logger,
-				TailedLogsOutputter:   fakeTailedLogsOutputter,
-				ExitHandler:           fakeExitHandler,
+				AppRunner:           appRunner,
+				AppExaminer:         appExaminer,
+				UI:                  terminalUI,
+				Domain:              domain,
+				Env:                 []string{},
+				Clock:               clock,
+				Logger:              logger,
+				TailedLogsOutputter: fakeTailedLogsOutputter,
+				ExitHandler:         fakeExitHandler,
 			}
 
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
@@ -217,7 +211,6 @@ var _ = Describe("CommandFactory", func() {
 					"cool-web-app",
 					"22",
 				}
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
@@ -298,7 +291,6 @@ var _ = Describe("CommandFactory", func() {
 					"3",
 				}
 
-				dockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 				appExaminer.RunningAppInstancesInfoReturns(0, false, nil)
 
 				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
@@ -333,12 +325,11 @@ var _ = Describe("CommandFactory", func() {
 				AppRunner:   appRunner,
 				AppExaminer: appExaminer,
 				UI:          terminalUI,
-				DockerMetadataFetcher: dockerMetadataFetcher,
-				Domain:                domain,
-				Env:                   []string{},
-				Clock:                 clock,
-				Logger:                logger,
-				ExitHandler:           fakeExitHandler,
+				Domain:      domain,
+				Env:         []string{},
+				Clock:       clock,
+				Logger:      logger,
+				ExitHandler: fakeExitHandler,
 			}
 
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
@@ -473,12 +464,11 @@ var _ = Describe("CommandFactory", func() {
 				AppRunner:   appRunner,
 				AppExaminer: appExaminer,
 				UI:          terminalUI,
-				DockerMetadataFetcher: dockerMetadataFetcher,
-				Domain:                domain,
-				Env:                   []string{},
-				Clock:                 clock,
-				Logger:                logger,
-				ExitHandler:           fakeExitHandler,
+				Domain:      domain,
+				Env:         []string{},
+				Clock:       clock,
+				Logger:      logger,
+				ExitHandler: fakeExitHandler,
 			}
 
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)

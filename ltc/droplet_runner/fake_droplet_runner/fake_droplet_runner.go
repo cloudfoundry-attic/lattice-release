@@ -4,6 +4,7 @@ package fake_droplet_runner
 import (
 	"sync"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 )
 
@@ -24,6 +25,15 @@ type FakeDropletRunner struct {
 		buildpackUrl string
 	}
 	buildDropletReturns struct {
+		result1 error
+	}
+	LaunchDropletStub        func(dropletName string, appEnvironmentParams app_runner.AppEnvironmentParams) error
+	launchDropletMutex       sync.RWMutex
+	launchDropletArgsForCall []struct {
+		dropletName          string
+		appEnvironmentParams app_runner.AppEnvironmentParams
+	}
+	launchDropletReturns struct {
 		result1 error
 	}
 }
@@ -90,6 +100,39 @@ func (fake *FakeDropletRunner) BuildDropletArgsForCall(i int) (string, string) {
 func (fake *FakeDropletRunner) BuildDropletReturns(result1 error) {
 	fake.BuildDropletStub = nil
 	fake.buildDropletReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeDropletRunner) LaunchDroplet(dropletName string, appEnvironmentParams app_runner.AppEnvironmentParams) error {
+	fake.launchDropletMutex.Lock()
+	fake.launchDropletArgsForCall = append(fake.launchDropletArgsForCall, struct {
+		dropletName          string
+		appEnvironmentParams app_runner.AppEnvironmentParams
+	}{dropletName, appEnvironmentParams})
+	fake.launchDropletMutex.Unlock()
+	if fake.LaunchDropletStub != nil {
+		return fake.LaunchDropletStub(dropletName, appEnvironmentParams)
+	} else {
+		return fake.launchDropletReturns.result1
+	}
+}
+
+func (fake *FakeDropletRunner) LaunchDropletCallCount() int {
+	fake.launchDropletMutex.RLock()
+	defer fake.launchDropletMutex.RUnlock()
+	return len(fake.launchDropletArgsForCall)
+}
+
+func (fake *FakeDropletRunner) LaunchDropletArgsForCall(i int) (string, app_runner.AppEnvironmentParams) {
+	fake.launchDropletMutex.RLock()
+	defer fake.launchDropletMutex.RUnlock()
+	return fake.launchDropletArgsForCall[i].dropletName, fake.launchDropletArgsForCall[i].appEnvironmentParams
+}
+
+func (fake *FakeDropletRunner) LaunchDropletReturns(result1 error) {
+	fake.LaunchDropletStub = nil
+	fake.launchDropletReturns = struct {
 		result1 error
 	}{result1}
 }

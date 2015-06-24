@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/docker_repository_name_formatter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/docker_repository_name_formatter"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/nat"
 )
