@@ -8,6 +8,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"time"
+
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
@@ -18,6 +20,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner/fake_task_runner"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	"github.com/goamz/goamz/s3"
 )
 
 var _ = Describe("DropletRunner", func() {
@@ -38,6 +41,77 @@ var _ = Describe("DropletRunner", func() {
 		fakeBlobBucket = new(fake_blob_bucket.FakeBlobBucket)
 		fakeTargetVerifier = new(fake_target_verifier.FakeTargetVerifier)
 		dropletRunner = droplet_runner.New(fakeTaskRunner, config, fakeBlobStore, fakeBlobBucket, fakeTargetVerifier)
+	})
+
+	Describe("ListDroplets", func() {
+		It("returns a list of droplets in the blob store", func() {
+			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
+			config.Save()
+
+			fakeBlobBucket.ListStub = func(prefix, delim, marker string, max int) (result *s3.ListResp, err error) {
+				if prefix == "" {
+					return &s3.ListResp{
+						Name:           "bucket-name",
+						Prefix:         "",
+						Delimiter:      "/",
+						CommonPrefixes: []string{"X/", "Y/", "Z/"},
+					}, nil
+				} else if prefix == "X/" {
+					return &s3.ListResp{
+						Name:      "bucket-name",
+						Prefix:    "X/",
+						Delimiter: "/",
+						Contents: []s3.Key{
+							s3.Key{Key: "X/bits.tgz", LastModified: "2006-01-02T15:04:05.999Z"},
+							s3.Key{Key: "X/droplet.tgz", LastModified: "2006-01-02T15:04:05.999Z"},
+							s3.Key{Key: "X/result.json", LastModified: "2006-01-02T15:04:05.999Z"},
+						},
+					}, nil
+				} else if prefix == "Y/" {
+					return &s3.ListResp{
+						Name:      "bucket-name",
+						Prefix:    "Y/",
+						Delimiter: "/",
+						Contents: []s3.Key{
+							s3.Key{Key: "Y/bits.tgz"},
+							s3.Key{Key: "Y/droplet.tgz"},
+							s3.Key{Key: "Y/result.json"},
+						},
+					}, nil
+				} else if prefix == "Z/" {
+					return &s3.ListResp{
+						Name:      "bucket-name",
+						Prefix:    "Z/",
+						Delimiter: "/",
+						Contents: []s3.Key{
+							s3.Key{Key: "Z/bits.tgz"},
+						},
+					}, nil
+				} else {
+					panic("no stub for arguments: " + prefix + "," + delim + "," + marker + "," + string(max))
+				}
+			}
+
+			droplets, err := dropletRunner.ListDroplets()
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(droplets)).To(Equal(2))
+			Expect(droplets[0].Name).To(Equal("X"))
+			Expect((*droplets[0].Created).Unix()).To(Equal(time.Date(2006, 1, 2, 15, 4, 5, 999, time.UTC).Unix()))
+			Expect(droplets[1].Name).To(Equal("Y"))
+			Expect(droplets[1].Created).To(BeNil())
+		})
+
+		It("returns an error when querying the blob store fails", func() {
+			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
+			config.Save()
+
+			fakeBlobBucket.ListReturns(nil, errors.New("boom"))
+
+			_, err := dropletRunner.ListDroplets()
+			Expect(err).To(HaveOccurred())
+		})
+
 	})
 
 	Describe("UploadBits", func() {

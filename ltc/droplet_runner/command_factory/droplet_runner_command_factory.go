@@ -14,6 +14,8 @@ import (
 
 	"time"
 
+	"text/tabwriter"
+
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
@@ -27,11 +29,37 @@ type DropletRunnerCommandFactory struct {
 	dropletRunner droplet_runner.DropletRunner
 }
 
+type dropletSliceSortedByCreated []droplet_runner.Droplet
+
+func (ds dropletSliceSortedByCreated) Len() int { return len(ds) }
+func (ds dropletSliceSortedByCreated) Less(i, j int) bool {
+	if ds[j].Created == nil {
+		return false
+	} else if ds[i].Created == nil {
+		return true
+	} else {
+		return (*ds[j].Created).Before(*ds[i].Created)
+	}
+}
+func (ds dropletSliceSortedByCreated) Swap(i, j int) { ds[i], ds[j] = ds[j], ds[i] }
+
 func NewDropletRunnerCommandFactory(appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory, dropletRunner droplet_runner.DropletRunner) *DropletRunnerCommandFactory {
 	return &DropletRunnerCommandFactory{
 		AppRunnerCommandFactory: appRunnerCommandFactory,
 		dropletRunner:           dropletRunner,
 	}
+}
+
+func (factory *DropletRunnerCommandFactory) MakeListDropletsCommand() cli.Command {
+	var listDropletsCommand = cli.Command{
+		Name:        "list-droplets",
+		Aliases:     []string{"lid"},
+		Usage:       "List the droplets available to launch",
+		Description: "ltc list-droplets",
+		Action:      factory.listDroplets,
+	}
+
+	return listDropletsCommand
 }
 
 func (factory *DropletRunnerCommandFactory) MakeUploadBitsCommand() cli.Command {
@@ -142,6 +170,31 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 	}
 
 	return buildDropletCommand
+}
+
+func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
+	droplets, err := factory.dropletRunner.ListDroplets()
+	if err != nil {
+		factory.UI.Say(fmt.Sprintf("Error listing droplets: %s", err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
+	sort.Sort(dropletSliceSortedByCreated(droplets))
+
+	w := &tabwriter.Writer{}
+	w.Init(factory.UI, 12, 8, 1, '\t', 0)
+
+	fmt.Fprintln(w, "Droplet\tCreated At")
+	for _, droplet := range droplets {
+		if droplet.Created != nil {
+			fmt.Fprintf(w, "%s\t%s\n", droplet.Name, droplet.Created.Format("January 2, 2006"))
+		} else {
+			fmt.Fprintf(w, "%s\n", droplet.Name)
+		}
+	}
+
+	w.Flush()
 }
 
 func (factory *DropletRunnerCommandFactory) uploadBits(context *cli.Context) {

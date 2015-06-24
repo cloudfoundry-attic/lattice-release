@@ -11,9 +11,12 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
+	"time"
+
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	droplet_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
@@ -336,6 +339,74 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
 				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
+			})
+		})
+	})
+
+	Describe("ListDropletsCommand", func() {
+		var (
+			listDropletsCommand cli.Command
+		)
+
+		BeforeEach(func() {
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeDropletRunner)
+			listDropletsCommand = commandFactory.MakeListDropletsCommand()
+		})
+
+		It("lists the droplets most recent first", func() {
+			times := []time.Time{
+				time.Date(2014, 12, 31, 0, 0, 0, 0, time.Local),
+				time.Date(2015, 6, 15, 0, 0, 0, 0, time.Local),
+			}
+
+			droplets := []droplet_runner.Droplet{
+				droplet_runner.Droplet{
+					Name:    "drop-a",
+					Created: &times[0],
+				},
+				droplet_runner.Droplet{
+					Name:    "drop-b",
+					Created: &times[1],
+				},
+			}
+			fakeDropletRunner.ListDropletsReturns(droplets, nil)
+
+			test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
+
+			Expect(outputBuffer).To(test_helpers.SayLine("Droplet\t\tCreated At"))
+			Expect(outputBuffer).To(test_helpers.SayLine("drop-b\t\tJune 15, 2015\ndrop-a\t\tDecember 31, 2014"))
+		})
+
+		It("doesn't print a time if Created is nil", func() {
+			time := time.Date(2014, 12, 31, 0, 0, 0, 0, time.Local)
+
+			droplets := []droplet_runner.Droplet{
+				droplet_runner.Droplet{
+					Name:    "drop-a",
+					Created: &time,
+				},
+				droplet_runner.Droplet{
+					Name: "drop-b",
+				},
+			}
+			fakeDropletRunner.ListDropletsReturns(droplets, nil)
+
+			test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
+
+			Expect(outputBuffer).To(test_helpers.SayLine("Droplet\t\tCreated At"))
+			Expect(outputBuffer).To(test_helpers.SayLine("drop-b\ndrop-a\t\tDecember 31, 2014"))
+		})
+
+		Context("when the droplet runner returns errors", func() {
+			It("prints an error", func() {
+				fakeDropletRunner.ListDropletsReturns(nil, errors.New("failed"))
+
+				test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
+
+				Expect(fakeDropletRunner.ListDropletsCallCount()).To(Equal(1))
+
+				Expect(outputBuffer).To(test_helpers.Say("Error listing droplets: failed"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
 	})

@@ -36,6 +36,13 @@ type FakeDropletRunner struct {
 	launchDropletReturns struct {
 		result1 error
 	}
+	ListDropletsStub        func() ([]droplet_runner.Droplet, error)
+	listDropletsMutex       sync.RWMutex
+	listDropletsArgsForCall []struct{}
+	listDropletsReturns     struct {
+		result1 []droplet_runner.Droplet
+		result2 error
+	}
 }
 
 func (fake *FakeDropletRunner) UploadBits(dropletName string, uploadPath string) error {
@@ -135,6 +142,31 @@ func (fake *FakeDropletRunner) LaunchDropletReturns(result1 error) {
 	fake.launchDropletReturns = struct {
 		result1 error
 	}{result1}
+}
+
+func (fake *FakeDropletRunner) ListDroplets() ([]droplet_runner.Droplet, error) {
+	fake.listDropletsMutex.Lock()
+	fake.listDropletsArgsForCall = append(fake.listDropletsArgsForCall, struct{}{})
+	fake.listDropletsMutex.Unlock()
+	if fake.ListDropletsStub != nil {
+		return fake.ListDropletsStub()
+	} else {
+		return fake.listDropletsReturns.result1, fake.listDropletsReturns.result2
+	}
+}
+
+func (fake *FakeDropletRunner) ListDropletsCallCount() int {
+	fake.listDropletsMutex.RLock()
+	defer fake.listDropletsMutex.RUnlock()
+	return len(fake.listDropletsArgsForCall)
+}
+
+func (fake *FakeDropletRunner) ListDropletsReturns(result1 []droplet_runner.Droplet, result2 error) {
+	fake.ListDropletsStub = nil
+	fake.listDropletsReturns = struct {
+		result1 []droplet_runner.Droplet
+		result2 error
+	}{result1, result2}
 }
 
 var _ droplet_runner.DropletRunner = new(FakeDropletRunner)
