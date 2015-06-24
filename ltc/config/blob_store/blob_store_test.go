@@ -98,18 +98,40 @@ var _ = Describe("BlobStore", func() {
 				Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
 			})
 		})
+
 		Describe("PutReader", func() {
 			It("puts an object into the bucket from a reader", func() {
 				fakeServer.AppendHandlers(ghttp.CombineHandlers(
 					ghttp.VerifyRequest("PUT", "/the-bucket-name/object-key"),
-					ghttp.VerifyHeader(http.Header{"X-Amz-Acl": []string{"public-read-write"}}),
+					ghttp.VerifyHeader(http.Header{"X-Amz-Acl": []string{"private"}}),
 					ghttp.RespondWith(http.StatusOK, "", http.Header{}),
 				))
 
 				bucketBuffer := gbytes.NewBuffer()
 				n, err := bucketBuffer.Write([]byte("sample/data"))
 				Expect(err).NotTo(HaveOccurred())
-				blobBucket.PutReader("object-key", bucketBuffer, int64(n), "text/plain", s3.PublicReadWrite, s3.Options{})
+				blobBucket.PutReader("object-key", bucketBuffer, int64(n), "text/plain", s3.Private, s3.Options{})
+
+				Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
+			})
+		})
+
+		Describe("GetReader", func() {
+			It("gets a reader for an object from the bucket", func() {
+				fakeServer.AppendHandlers(ghttp.CombineHandlers(
+					ghttp.VerifyRequest("GET", "/the-bucket-name/object-key"),
+					ghttp.RespondWith(http.StatusOK, "abcd", http.Header{"Content-length": []string{"4"}}),
+				))
+				reader, err := blobBucket.GetReader("object-key")
+				Expect(err).NotTo(HaveOccurred())
+
+				defer reader.Close()
+
+				var buf [5]byte
+				len, err := reader.Read(buf[:])
+				Expect(err).To(MatchError("EOF"))
+				Expect(len).To(Equal(4))
+				Expect(buf).To(Equal([5]byte{'a', 'b', 'c', 'd', 0}))
 
 				Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
 			})

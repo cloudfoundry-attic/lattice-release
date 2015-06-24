@@ -8,9 +8,11 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"bytes"
 	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store/fake_blob_bucket"
@@ -26,6 +28,7 @@ import (
 var _ = Describe("DropletRunner", func() {
 
 	var (
+		fakeAppRunner      *fake_app_runner.FakeAppRunner
 		fakeTaskRunner     *fake_task_runner.FakeTaskRunner
 		config             *config_package.Config
 		fakeBlobStore      *fake_blob_store.FakeBlobStore
@@ -35,12 +38,13 @@ var _ = Describe("DropletRunner", func() {
 	)
 
 	BeforeEach(func() {
+		fakeAppRunner = new(fake_app_runner.FakeAppRunner)
 		fakeTaskRunner = new(fake_task_runner.FakeTaskRunner)
 		config = config_package.New(persister.NewMemPersister())
 		fakeBlobStore = new(fake_blob_store.FakeBlobStore)
 		fakeBlobBucket = new(fake_blob_bucket.FakeBlobBucket)
 		fakeTargetVerifier = new(fake_target_verifier.FakeTargetVerifier)
-		dropletRunner = droplet_runner.New(fakeTaskRunner, config, fakeBlobStore, fakeBlobBucket, fakeTargetVerifier)
+		dropletRunner = droplet_runner.New(fakeAppRunner, fakeTaskRunner, config, fakeBlobStore, fakeBlobBucket, fakeTargetVerifier)
 	})
 
 	Describe("ListDroplets", func() {
@@ -283,28 +287,109 @@ var _ = Describe("DropletRunner", func() {
 	})
 
 	Describe("LaunchDroplet", func() {
-		It("does the launch droplet lrp task", func() {
+		BeforeEach(func() {
 			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
 			config.Save()
-
-			err := dropletRunner.LaunchDroplet("droplet-name", app_runner.AppEnvironmentParams{})
-
-			Expect(err).NotTo(HaveOccurred())
-			//			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
-			//			createTaskParams := fakeTaskRunner.CreateTaskArgsForCall(0)
-			//			Expect(createTaskParams).ToNot(BeNil())
-			//			_ = createTaskParams.GetReceptorRequest()
-
-			//XXX
 		})
 
-		It("returns an error when launch task fails", func() {
-			//			fakeTaskRunner.CreateTaskReturns(errors.New("creating task failed"))
-			//
-			//			err := dropletRunner.BuildDroplet("droplet-name", "buildpack")
-			//
-			//			Expect(err).To(MatchError("creating task failed"))
-			//			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
+		It("launches the droplet lrp task with a start command from buildpack results", func() {
+			js := []byte(`{"detected_start_command":{"web":"start"}}`)
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader(js)), nil)
+
+			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+			createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+			Expect(createAppParams).ToNot(BeNil())
+
+			Expect(createAppParams.Name).To(Equal("app-name"))
+			Expect(createAppParams.RootFS).To(Equal(droplet_runner.DropletRootFS))
+			Expect(createAppParams.StartCommand).To(Equal("/tmp/lrp-launcher"))
+			Expect(createAppParams.AppArgs).To(Equal([]string{"start"}))
+
+			Expect(createAppParams.Setup).To(Equal(&models.SerialAction{
+				LogSource: "app-name",
+				Actions: []models.Action{
+					&models.DownloadAction{
+						From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-support.tgz",
+						To:   "/tmp",
+					},
+					&models.DownloadAction{
+						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						To:   "/tmp",
+					},
+					&models.RunAction{
+						Path: "/tmp/s3downloader",
+						Args: []string{
+							"access-key",
+							"secret-key",
+							"http://blob-host:7474",
+							"bucket-name",
+							"droplet-name/droplet.tgz",
+							"/tmp/droplet.tgz",
+						},
+					},
+					&models.RunAction{
+						Path: "/bin/mkdir",
+						Args: []string{"/tmp/app"},
+					},
+					&models.RunAction{
+						Path: "/bin/tar",
+						Dir:  "/tmp/app",
+						Args: []string{"-zxf", "/tmp/droplet.tgz"},
+					},
+				},
+			}))
+		})
+
+		It("launches the droplet lrp task with the droplet name as the start command", func() {
+			js := []byte(`{}`)
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader(js)), nil)
+
+			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+			createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+			Expect(createAppParams).ToNot(BeNil())
+
+			Expect(createAppParams.Name).To(Equal("app-name"))
+			Expect(createAppParams.StartCommand).To(Equal("/tmp/lrp-launcher"))
+			Expect(createAppParams.AppArgs).To(Equal([]string{"droplet-name"}))
+		})
+
+		It("launches the droplet lrp task with a custom start command", func() {
+			js := []byte(`{}`)
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader(js)), nil)
+
+			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "start-r-up", []string{"-yeah!"}, app_runner.AppEnvironmentParams{})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+			createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+			Expect(createAppParams).ToNot(BeNil())
+
+			Expect(createAppParams.Name).To(Equal("app-name"))
+			Expect(createAppParams.StartCommand).To(Equal("start-r-up"))
+			Expect(createAppParams.AppArgs).To(Equal([]string{"-yeah!"}))
+		})
+
+		It("returns an error when it can't download result.json from the blob store", func() {
+			fakeBlobBucket.GetReaderReturns(nil, errors.New("nope"))
+
+			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
+
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("returns an error when create app fails", func() {
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader([]byte(`{}`))), nil)
+			fakeAppRunner.CreateAppReturns(errors.New("nope"))
+
+			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
+
+			Expect(err).To(HaveOccurred())
 		})
 	})
 

@@ -27,10 +27,13 @@ type FakeDropletRunner struct {
 	buildDropletReturns struct {
 		result1 error
 	}
-	LaunchDropletStub        func(dropletName string, appEnvironmentParams app_runner.AppEnvironmentParams) error
+	LaunchDropletStub        func(appName, dropletName string, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error
 	launchDropletMutex       sync.RWMutex
 	launchDropletArgsForCall []struct {
+		appName              string
 		dropletName          string
+		startCommand         string
+		startArgs            []string
 		appEnvironmentParams app_runner.AppEnvironmentParams
 	}
 	launchDropletReturns struct {
@@ -111,15 +114,18 @@ func (fake *FakeDropletRunner) BuildDropletReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeDropletRunner) LaunchDroplet(dropletName string, appEnvironmentParams app_runner.AppEnvironmentParams) error {
+func (fake *FakeDropletRunner) LaunchDroplet(appName string, dropletName string, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error {
 	fake.launchDropletMutex.Lock()
 	fake.launchDropletArgsForCall = append(fake.launchDropletArgsForCall, struct {
+		appName              string
 		dropletName          string
+		startCommand         string
+		startArgs            []string
 		appEnvironmentParams app_runner.AppEnvironmentParams
-	}{dropletName, appEnvironmentParams})
+	}{appName, dropletName, startCommand, startArgs, appEnvironmentParams})
 	fake.launchDropletMutex.Unlock()
 	if fake.LaunchDropletStub != nil {
-		return fake.LaunchDropletStub(dropletName, appEnvironmentParams)
+		return fake.LaunchDropletStub(appName, dropletName, startCommand, startArgs, appEnvironmentParams)
 	} else {
 		return fake.launchDropletReturns.result1
 	}
@@ -131,10 +137,10 @@ func (fake *FakeDropletRunner) LaunchDropletCallCount() int {
 	return len(fake.launchDropletArgsForCall)
 }
 
-func (fake *FakeDropletRunner) LaunchDropletArgsForCall(i int) (string, app_runner.AppEnvironmentParams) {
+func (fake *FakeDropletRunner) LaunchDropletArgsForCall(i int) (string, string, string, []string, app_runner.AppEnvironmentParams) {
 	fake.launchDropletMutex.RLock()
 	defer fake.launchDropletMutex.RUnlock()
-	return fake.launchDropletArgsForCall[i].dropletName, fake.launchDropletArgsForCall[i].appEnvironmentParams
+	return fake.launchDropletArgsForCall[i].appName, fake.launchDropletArgsForCall[i].dropletName, fake.launchDropletArgsForCall[i].startCommand, fake.launchDropletArgsForCall[i].startArgs, fake.launchDropletArgsForCall[i].appEnvironmentParams
 }
 
 func (fake *FakeDropletRunner) LaunchDropletReturns(result1 error) {

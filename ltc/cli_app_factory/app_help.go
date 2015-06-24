@@ -115,6 +115,7 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 					presentCommand("upload-bits"),
 					presentCommand("build-droplet"),
 					presentCommand("list-droplets"),
+					presentCommand("launch-droplet"),
 				},
 			},
 		}, {

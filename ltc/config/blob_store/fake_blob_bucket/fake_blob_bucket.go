@@ -35,6 +35,15 @@ type FakeBlobBucket struct {
 	putReaderReturns struct {
 		result1 error
 	}
+	GetReaderStub        func(path string) (rc io.ReadCloser, err error)
+	getReaderMutex       sync.RWMutex
+	getReaderArgsForCall []struct {
+		path string
+	}
+	getReaderReturns struct {
+		result1 io.ReadCloser
+		result2 error
+	}
 }
 
 func (fake *FakeBlobBucket) List(prefix string, delim string, marker string, max int) (result *s3.ListResp, err error) {
@@ -108,6 +117,39 @@ func (fake *FakeBlobBucket) PutReaderReturns(result1 error) {
 	fake.putReaderReturns = struct {
 		result1 error
 	}{result1}
+}
+
+func (fake *FakeBlobBucket) GetReader(path string) (rc io.ReadCloser, err error) {
+	fake.getReaderMutex.Lock()
+	fake.getReaderArgsForCall = append(fake.getReaderArgsForCall, struct {
+		path string
+	}{path})
+	fake.getReaderMutex.Unlock()
+	if fake.GetReaderStub != nil {
+		return fake.GetReaderStub(path)
+	} else {
+		return fake.getReaderReturns.result1, fake.getReaderReturns.result2
+	}
+}
+
+func (fake *FakeBlobBucket) GetReaderCallCount() int {
+	fake.getReaderMutex.RLock()
+	defer fake.getReaderMutex.RUnlock()
+	return len(fake.getReaderArgsForCall)
+}
+
+func (fake *FakeBlobBucket) GetReaderArgsForCall(i int) string {
+	fake.getReaderMutex.RLock()
+	defer fake.getReaderMutex.RUnlock()
+	return fake.getReaderArgsForCall[i].path
+}
+
+func (fake *FakeBlobBucket) GetReaderReturns(result1 io.ReadCloser, result2 error) {
+	fake.GetReaderStub = nil
+	fake.getReaderReturns = struct {
+		result1 io.ReadCloser
+		result2 error
+	}{result1, result2}
 }
 
 var _ blob_store.BlobBucket = new(FakeBlobBucket)

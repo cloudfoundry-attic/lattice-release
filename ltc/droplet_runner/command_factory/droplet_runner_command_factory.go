@@ -53,7 +53,7 @@ func NewDropletRunnerCommandFactory(appRunnerCommandFactory app_runner_command_f
 func (factory *DropletRunnerCommandFactory) MakeListDropletsCommand() cli.Command {
 	var listDropletsCommand = cli.Command{
 		Name:        "list-droplets",
-		Aliases:     []string{"lid"},
+		Aliases:     []string{"lid", "lsd"},
 		Usage:       "List the droplets available to launch",
 		Description: "ltc list-droplets",
 		Action:      factory.listDroplets,
@@ -164,7 +164,7 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 		Name:        "launch-droplet",
 		Aliases:     []string{"ld"},
 		Usage:       "Launch droplet",
-		Description: "ltc launch-droplet DROPLET_NAME",
+		Description: "ltc launch-droplet APP_NAME DROPLET_NAME",
 		Action:      factory.launchDroplet,
 		Flags:       launchFlags,
 	}
@@ -278,26 +278,48 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 	monitorTimeoutFlag := context.Duration("monitor-timeout")
 	routesFlag := context.String("routes")
 	noRoutesFlag := context.Bool("no-routes")
-	//	timeoutFlag := context.Duration("timeout")
-	dropletName := context.Args().Get(0)
-	//	terminator := context.Args().Get(1)
-	//	startCommand := context.Args().Get(2)
+	timeoutFlag := context.Duration("timeout")
+	appName := context.Args().Get(0)
+	dropletName := context.Args().Get(1)
+	terminator := context.Args().Get(2)
+	startCommand := context.Args().Get(3)
 
-	// XXX: arg validation
+	var startArgs []string
 
-	if workingDirFlag == "" {
-		workingDirFlag = "/"
+	switch {
+	case len(context.Args()) < 2:
+		factory.UI.SayIncorrectUsage("APP_NAME and DROPLET_NAME are required")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	case startCommand != "" && terminator != "--":
+		factory.UI.SayIncorrectUsage("'--' Required before start command")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	case len(context.Args()) > 4:
+		startArgs = context.Args()[4:]
+	case cpuWeightFlag < 1 || cpuWeightFlag > 100:
+		factory.UI.SayIncorrectUsage("Invalid CPU Weight")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
 	}
 
-	exposedPorts, _ := factory.parsePortsFromArgs(portsFlag)
-	//	if err != nil {
-	//
-	//	}
+	if workingDirFlag == "" {
+		workingDirFlag = "/tmp/app"
+	}
 
-	monitorConfig, _ := factory.GetMonitorConfig(exposedPorts, portMonitorFlag, noMonitorFlag, urlMonitorFlag, monitorTimeoutFlag)
-	//	if err != nil {
-	//
-	//	}
+	exposedPorts, err := factory.parsePortsFromArgs(portsFlag)
+	if err != nil {
+		factory.UI.Say(err.Error())
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	monitorConfig, err := factory.GetMonitorConfig(exposedPorts, portMonitorFlag, noMonitorFlag, urlMonitorFlag, monitorTimeoutFlag)
+	if err != nil {
+		factory.UI.Say(err.Error())
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
 
 	routeOverrides, err := factory.ParseRouteOverrides(routesFlag)
 	if err != nil {
@@ -307,7 +329,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 	}
 
 	appEnvironmentParams := app_runner.AppEnvironmentParams{
-		EnvironmentVariables: factory.BuildEnvironment(envVarsFlag, dropletName),
+		EnvironmentVariables: factory.BuildEnvironment(envVarsFlag, appName),
 		Privileged:           runAsRootFlag,
 		Monitor:              monitorConfig,
 		Instances:            instancesFlag,
@@ -320,13 +342,13 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 		NoRoutes:             noRoutesFlag,
 	}
 
-	if err := factory.dropletRunner.LaunchDroplet(dropletName, appEnvironmentParams); err != nil {
-		factory.UI.Say(fmt.Sprintf("Error launching %s: %s", dropletName, err))
+	if err := factory.dropletRunner.LaunchDroplet(appName, dropletName, startCommand, startArgs, appEnvironmentParams); err != nil {
+		factory.UI.Say(fmt.Sprintf("Error launching app %s from droplet %s: %s", appName, dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
-	factory.UI.Say("Droplet launched")
+	factory.WaitForAppCreation(appName, timeoutFlag, instancesFlag, noRoutesFlag, routeOverrides)
 }
 
 func makeTar(path string) (string, error) {

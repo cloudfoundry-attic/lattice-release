@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
@@ -21,30 +22,46 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
+	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	"github.com/codegangsta/cli"
+	"github.com/pivotal-golang/clock/fakeclock"
 )
 
 var _ = Describe("CommandFactory", func() {
 	var (
-		outputBuffer            *gbytes.Buffer
+		outputBuffer *gbytes.Buffer
+
 		fakeDropletRunner       *fake_droplet_runner.FakeDropletRunner
 		fakeExitHandler         *fake_exit_handler.FakeExitHandler
+		fakeTailedLogsOutputter *fake_tailed_logs_outputter.FakeTailedLogsOutputter
+		fakeClock               *fakeclock.FakeClock
+		fakeAppExaminer         *fake_app_examiner.FakeAppExaminer
+
 		appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory
 	)
 
 	BeforeEach(func() {
 		fakeDropletRunner = &fake_droplet_runner.FakeDropletRunner{}
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
+		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
+		fakeClock = fakeclock.NewFakeClock(time.Now())
+		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
 
 		outputBuffer = gbytes.NewBuffer()
 
 		appRunnerCommandFactory = app_runner_command_factory.AppRunnerCommandFactory{
-			AppRunner:   &fake_app_runner.FakeAppRunner{},
-			AppExaminer: &fake_app_examiner.FakeAppExaminer{},
-			UI:          terminal.NewUI(nil, outputBuffer, nil),
-			ExitHandler: fakeExitHandler,
+			AppRunner:           &fake_app_runner.FakeAppRunner{},
+			AppExaminer:         fakeAppExaminer,
+			UI:                  terminal.NewUI(nil, outputBuffer, nil),
+			ExitHandler:         fakeExitHandler,
+			TailedLogsOutputter: fakeTailedLogsOutputter,
+			Clock:               fakeClock,
+			Domain:              "192.168.11.11.xip.io",
+			Env:                 []string{"SHELL=/bin/bash", "COLOR=Black"},
 		}
 	})
 
@@ -422,26 +439,254 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		It("launches the specified droplet", func() {
-			test_helpers.ExecuteCommandWithArgs(launchDropletCommand, []string{"droplet-name"})
+			args := []string{
+				"--cpu-weight=57",
+				"--memory-mb=12",
+				"--disk-mb=12",
+				"--routes=4444:ninetyninety,9090:fourtyfourfourtyfour",
+				"--working-dir=/app",
+				"--run-as-root=true",
+				"--instances=11",
+				"--env=TIMEZONE=CST",
+				`--env=LANG="Chicago English"`,
+				"--env=COLOR",
+				"--env=UNSET",
+				"--monitor-timeout=4s",
+				"--ports=8081",
+				"droppy",
+				"droplet-name",
+				"--",
+				"start-em",
+				"-app-arg",
+			}
 
-			Expect(outputBuffer).To(test_helpers.Say("Droplet launched"))
+			fakeAppExaminer.RunningAppInstancesInfoReturns(11, false, nil)
+
+			test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 			Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(1))
+			appName, dropletNameParam, startCommandParam, startArgsParam, appEnvParam := fakeDropletRunner.LaunchDropletArgsForCall(0)
+			Expect(appName).To(Equal("droppy"))
+			Expect(dropletNameParam).To(Equal("droplet-name"))
+			Expect(startCommandParam).To(Equal("start-em"))
+			Expect(startArgsParam).To(Equal([]string{"-app-arg"}))
+			Expect(appEnvParam.WorkingDir).To(Equal("/app"))
+			Expect(appEnvParam.CPUWeight).To(Equal(uint(57)))
+			Expect(appEnvParam.MemoryMB).To(Equal(12))
+			Expect(appEnvParam.DiskMB).To(Equal(12))
+			Expect(appEnvParam.Privileged).To(BeTrue())
+			Expect(appEnvParam.Instances).To(Equal(11))
+			Expect(appEnvParam.NoRoutes).To(BeFalse())
+			Expect(appEnvParam.Monitor).To(Equal(app_runner.MonitorConfig{
+				Method:  app_runner.PortMonitor,
+				Port:    8081,
+				Timeout: 4 * time.Second,
+			}))
+			Expect(appEnvParam.EnvironmentVariables).To(Equal(map[string]string{
+				"PROCESS_GUID": "droppy",
+				"TIMEZONE":     "CST",
+				"LANG":         `"Chicago English"`,
+				"COLOR":        "Black",
+				"UNSET":        "",
+			}))
+			Expect(appEnvParam.RouteOverrides).To(ContainExactly(app_runner.RouteOverrides{
+				app_runner.RouteOverride{HostnamePrefix: "ninetyninety", Port: 4444},
+				app_runner.RouteOverride{HostnamePrefix: "fourtyfourfourtyfour", Port: 9090},
+			}))
+
+			Expect(outputBuffer).To(test_helpers.Say("Creating App: droppy\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("droppy is now running.\n")))
+			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://ninetyninety.192.168.11.11.xip.io\n")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://fourtyfourfourtyfour.192.168.11.11.xip.io\n")))
+		})
+
+		It("launches the specified droplet with default values", func() {
+			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+
+			test_helpers.ExecuteCommandWithArgs(launchDropletCommand, []string{"droppy", "droplet-name"})
+
+			Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(1))
+			appName, dropletNameParam, startCommandParam, startArgsParam, appEnvParam := fakeDropletRunner.LaunchDropletArgsForCall(0)
+			Expect(appName).To(Equal("droppy"))
+			Expect(dropletNameParam).To(Equal("droplet-name"))
+			Expect(startCommandParam).To(Equal(""))
+			Expect(startArgsParam).To(BeNil())
+			Expect(appEnvParam.WorkingDir).To(Equal("/tmp/app"))
+			Expect(appEnvParam.Privileged).To(BeFalse())
+			Expect(appEnvParam.Instances).To(Equal(1))
+			Expect(appEnvParam.Monitor).To(Equal(app_runner.MonitorConfig{
+				Method:  app_runner.PortMonitor,
+				Port:    8080,
+				Timeout: 1 * time.Second,
+			}))
+			Expect(appEnvParam.EnvironmentVariables).To(Equal(map[string]string{
+				"PROCESS_GUID": "droppy",
+			}))
+			Expect(appEnvParam.RouteOverrides).To(BeNil())
+
+			Expect(outputBuffer).To(test_helpers.Say("No port specified. Defaulting to 8080.\n"))
+			Expect(outputBuffer).To(test_helpers.Say("Creating App: droppy\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("droppy is now running.\n")))
+			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://droppy.192.168.11.11.xip.io\n")))
+		})
+
+		Context("invalid syntax", func() {
+			It("validates that the name is passed in", func() {
+				args := []string{"appy"}
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: APP_NAME and DROPLET_NAME are required"))
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+			})
+
+			It("validates that the terminator -- is passed in when a start command is specified", func() {
+				args := []string{
+					"cool-web-app",
+					"cool-web-droplet",
+					"not-the-terminator",
+					"start-me-up",
+				}
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: '--' Required before start command"))
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+			})
+
+			It("validates the CPU weight is in 1-100", func() {
+				args := []string{
+					"cool-app",
+					"cool-droplet",
+					"--cpu-weight=0",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Invalid CPU Weight"))
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+			})
+		})
+
+		Context("when a malformed routes flag is passed", func() {
+			It("errors out when the port is not an int", func() {
+				args := []string{
+					"cool-web-app",
+					"cool-web-droplet",
+					"--routes=woo:aahh",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MalformedRouteErrorMessage))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+
+			It("errors out when there is no colon", func() {
+				args := []string{
+					"cool-web-app",
+					"cool-web-droplet",
+					"--routes=8888",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MalformedRouteErrorMessage))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+		})
+
+		Context("when a malformed ports flag is passed", func() {
+			It("errors out when the port is not an int", func() {
+				args := []string{
+					"cool-web-app",
+					"cool-web-droplet",
+					"--ports=kablowww",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+		})
+
+		Context("when a bad monitor config is passed", func() {
+			It("monitor url is malformed", func() {
+				args := []string{
+					"cool-web-app",
+					"cool-web-droplet",
+					"--monitor-url=8080",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+
+			It("monitor url has invalid port", func() {
+				args := []string{
+					"cool-web-app",
+					"cool-web-droplet",
+					"--monitor-url=port:path",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+
+			It("monitor url port isn't exposed", func() {
+				args := []string{
+					"cool-web-app",
+					"cool-web-droplet",
+					"--ports=9090",
+					"--monitor-url=8080:/path",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MonitorPortNotExposed))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+
+			It("monitor port isn't exposed", func() {
+				args := []string{
+					"cool-web-app",
+					"cool-web-droplet",
+					"--ports=9090",
+					"--monitor-port=8080",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MonitorPortNotExposed))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
 		})
 
 		Context("when the droplet runner returns errors", func() {
 			It("prints an error", func() {
 				fakeDropletRunner.LaunchDropletReturns(errors.New("failed"))
 
-				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, []string{"droplet-name"})
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, []string{"droppy", "droplet-name"})
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(1))
 
-				Expect(outputBuffer).To(test_helpers.Say("Error launching droplet-name: failed"))
+				Expect(outputBuffer).To(test_helpers.Say("Error launching app droppy from droplet droplet-name: failed"))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
-
 	})
 
 })

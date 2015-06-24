@@ -194,7 +194,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	blobStore := blob_store.NewBlobStore(config, s3S3)
 	blobBucket := blobStore.Bucket(config.BlobTarget().BucketName)
 
-	dropletRunner := droplet_runner.New(taskRunner, config, blobStore, blobBucket, targetVerifier)
+	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, blobBucket, targetVerifier)
 	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, dropletRunner)
 
 	helpCommand := cli.Command{
@@ -227,6 +227,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		dropletRunnerCommandFactory.MakeUploadBitsCommand(),
 		dropletRunnerCommandFactory.MakeBuildDropletCommand(),
 		dropletRunnerCommandFactory.MakeListDropletsCommand(),
+		dropletRunnerCommandFactory.MakeLaunchDropletCommand(),
 		helpCommand,
 	}
 }
