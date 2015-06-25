@@ -135,6 +135,24 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 				Eventually(errorCheckForRoute(route), timeout, .5).ShouldNot(HaveOccurred())
 			})
 		})
+
+		Context("when uploading bits", func() {
+			It("synchronously uploads to the blob store", func() {})
+		})
+
+		Context("when building a droplet", func() {
+			It("synchronously uploads to the blob store", func() {})
+			It("eventually launches a build task", func() {})
+			It("eventually uploads a droplet to the blob store", func() {})
+		})
+
+		Context("when listing droplets", func() {
+		})
+
+		Context("when launching a droplet", func() {
+			It("eventually launches a build task", func() {})
+			It("eventually uploads a droplet to the blob store", func() {})
+		})
 	})
 }
 

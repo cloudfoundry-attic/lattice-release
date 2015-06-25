@@ -20,12 +20,15 @@ import (
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/codegangsta/cli"
 )
 
 type DropletRunnerCommandFactory struct {
 	app_runner_command_factory.AppRunnerCommandFactory
 
+	taskExaminer  task_examiner.TaskExaminer
 	dropletRunner droplet_runner.DropletRunner
 }
 
@@ -43,9 +46,10 @@ func (ds dropletSliceSortedByCreated) Less(i, j int) bool {
 }
 func (ds dropletSliceSortedByCreated) Swap(i, j int) { ds[i], ds[j] = ds[j], ds[i] }
 
-func NewDropletRunnerCommandFactory(appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory, dropletRunner droplet_runner.DropletRunner) *DropletRunnerCommandFactory {
+func NewDropletRunnerCommandFactory(appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory, taskExaminer task_examiner.TaskExaminer, dropletRunner droplet_runner.DropletRunner) *DropletRunnerCommandFactory {
 	return &DropletRunnerCommandFactory{
 		AppRunnerCommandFactory: appRunnerCommandFactory,
+		taskExaminer:            taskExaminer,
 		dropletRunner:           dropletRunner,
 	}
 }
@@ -260,7 +264,53 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 		return
 	}
 
-	factory.UI.Say(fmt.Sprintf("Submitted build of %s", dropletName))
+	factory.UI.SayLine("Submitted build of " + dropletName)
+
+	go factory.TailedLogsOutputter.OutputTailedLogs(dropletName)
+	defer factory.TailedLogsOutputter.StopOutputting()
+
+	ok := factory.waitForBuildTask(30*time.Second, dropletName)
+
+	if ok {
+		factory.UI.SayLine("Build complete")
+	}
+}
+
+func (factory *DropletRunnerCommandFactory) waitForBuildTask(pollTimeout time.Duration, taskName string) bool {
+	ok := factory.pollUntilSuccess(pollTimeout, func() bool {
+		taskInfo, err := factory.taskExaminer.TaskStatus(taskName)
+		if err != nil {
+			factory.UI.Say(colors.Red("Error requesting task status: " + err.Error()))
+			return true
+		}
+		return taskInfo.State != "RUNNING" && taskInfo.State != "PENDING"
+	})
+
+	if !ok {
+		factory.UI.Say(colors.Red("Timed out waiting for the build to complete."))
+		factory.UI.SayNewLine()
+		factory.UI.SayLine("Lattice is still building your application in the background.")
+
+		factory.UI.SayLine(fmt.Sprintf("To view logs:\n\tltc logs %s", taskName))
+		factory.UI.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", taskName))
+		factory.UI.SayNewLine()
+
+		return false
+	}
+
+	return ok
+}
+
+func (factory *DropletRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Duration, pollingFunc func() bool) (ok bool) {
+	startingTime := factory.Clock.Now()
+	for startingTime.Add(pollTimeout).After(factory.Clock.Now()) {
+		if result := pollingFunc(); result {
+			return true
+		}
+
+		factory.Clock.Sleep(1 * time.Second)
+	}
+	return false
 }
 
 func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) {

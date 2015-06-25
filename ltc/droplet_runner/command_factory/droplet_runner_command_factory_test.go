@@ -23,6 +23,8 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/fake_task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
@@ -40,6 +42,7 @@ var _ = Describe("CommandFactory", func() {
 		fakeTailedLogsOutputter *fake_tailed_logs_outputter.FakeTailedLogsOutputter
 		fakeClock               *fakeclock.FakeClock
 		fakeAppExaminer         *fake_app_examiner.FakeAppExaminer
+		fakeTaskExaminer        *fake_task_examiner.FakeTaskExaminer
 
 		appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory
 	)
@@ -50,6 +53,7 @@ var _ = Describe("CommandFactory", func() {
 		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
 		fakeClock = fakeclock.NewFakeClock(time.Now())
 		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
+		fakeTaskExaminer = &fake_task_examiner.FakeTaskExaminer{}
 
 		outputBuffer = gbytes.NewBuffer()
 
@@ -71,7 +75,7 @@ var _ = Describe("CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeDropletRunner)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
 			uploadBitsCommand = commandFactory.MakeUploadBitsCommand()
 		})
 
@@ -225,7 +229,7 @@ var _ = Describe("CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeDropletRunner)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
 			buildDropletCommand = commandFactory.MakeBuildDropletCommand()
 		})
 
@@ -338,6 +342,100 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
+		Describe("waiting for the build to finish", func() {
+			It("polls for the build to complete, outputting logs while the build runs", func() {
+				args := []string{
+					"droplet-name",
+					"http://some.url/for/buildpack",
+				}
+
+				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "PENDING"}, nil)
+
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
+
+				Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droplet-name"))
+
+				Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(Equal(1))
+				Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("droplet-name"))
+
+				Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
+				Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("droplet-name"))
+
+				fakeClock.IncrementBySeconds(1)
+				Expect(commandFinishChan).ShouldNot(BeClosed())
+				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
+
+				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "RUNNING"}, nil)
+
+				fakeClock.IncrementBySeconds(1)
+				Expect(commandFinishChan).ShouldNot(BeClosed())
+				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
+
+				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "COMPLETED"}, nil)
+
+				fakeClock.IncrementBySeconds(1)
+				Eventually(commandFinishChan).Should(BeClosed())
+				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Build complete"))
+			})
+
+			Context("when the build doesn't complete before the timeout elapses", func() {
+				It("alerts the user the build took too long", func() {
+					args := []string{
+						"droppo-the-clown",
+						"http://some.url/for/buildpack",
+					}
+
+					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "RUNNING"}, nil)
+
+					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
+
+					Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droppo-the-clown"))
+					Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+					fakeClock.IncrementBySeconds(120)
+
+					Eventually(commandFinishChan).Should(BeClosed())
+
+					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the build to complete.")))
+					Expect(outputBuffer).To(test_helpers.SayNewLine())
+					Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still building your application in the background."))
+					Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs droppo-the-clown"))
+					Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status droppo-the-clown"))
+				})
+			})
+
+			Context("when there is an error when polling for the build to complete", func() {
+				It("prints an error message and exits", func() {
+					args := []string{
+						"droppo-the-clown",
+						"http://some.url/for/buildpack",
+					}
+
+					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{}, errors.New("dropped the ball"))
+
+					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
+
+					Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droppo-the-clown"))
+
+					Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
+					Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("droppo-the-clown"))
+
+					fakeClock.IncrementBySeconds(1)
+					Expect(fakeExitHandler.ExitCalledWith).To(BeEmpty())
+
+					fakeClock.IncrementBySeconds(1)
+					Eventually(commandFinishChan).Should(BeClosed())
+					Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
+
+					Expect(outputBuffer).To(test_helpers.SayNewLine())
+					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error requesting task status: dropped the ball")))
+					Expect(outputBuffer).ToNot(test_helpers.Say("Timed out waiting for the build to complete."))
+				})
+			})
+		})
+
 		Context("invalid syntax", func() {
 			It("rejects less than two positional arguments", func() {
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name"})
@@ -366,7 +464,7 @@ var _ = Describe("CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeDropletRunner)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
 			listDropletsCommand = commandFactory.MakeListDropletsCommand()
 		})
 
@@ -434,7 +532,7 @@ var _ = Describe("CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeDropletRunner)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
 			launchDropletCommand = commandFactory.MakeLaunchDropletCommand()
 		})
 
