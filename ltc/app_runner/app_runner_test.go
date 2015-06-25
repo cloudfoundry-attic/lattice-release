@@ -36,7 +36,7 @@ var _ = Describe("DockerAppRunner", func() {
 			err := appRunner.CreateApp(app_runner.CreateAppParams{
 				AppEnvironmentParams: app_runner.AppEnvironmentParams{
 					EnvironmentVariables: envs,
-					Privileged:           true,
+					Privileged:           false,
 					Monitor: app_runner.MonitorConfig{
 						Method: app_runner.PortMonitor,
 						Port:   2000,
@@ -80,7 +80,7 @@ var _ = Describe("DockerAppRunner", func() {
 				CPUWeight:   67,
 				MemoryMB:    128,
 				DiskMB:      1024,
-				Privileged:  true,
+				Privileged:  false,
 				Ports:       []uint16{2000, 4000},
 				LogGuid:     "americano-app",
 				LogSource:   "APP",
@@ -90,10 +90,9 @@ var _ = Describe("DockerAppRunner", func() {
 					To:   "/tmp",
 				},
 				Action: &models.RunAction{
-					Path:       "/app-run-statement",
-					Args:       []string{"app", "arg1", "--app", "arg 2"},
-					Privileged: true,
-					Dir:        "/user/web/myappdir",
+					Path: "/app-run-statement",
+					Args: []string{"app", "arg1", "--app", "arg 2"},
+					Dir:  "/user/web/myappdir",
 				},
 				Monitor: &models.RunAction{
 					Path:      "/tmp/healthcheck",
@@ -392,10 +391,9 @@ var _ = Describe("DockerAppRunner", func() {
 					To:   "/tmp",
 				},
 				Action: &models.RunAction{
-					Path:       "/app-run-statement",
-					Args:       []string{"app", "arg1", "--app", "arg 2"},
-					Privileged: true,
-					Dir:        "/user/web/myappdir",
+					Path: "/app-run-statement",
+					Args: []string{"app", "arg1", "--app", "arg 2"},
+					Dir:  "/user/web/myappdir",
 				},
 				Monitor: &models.RunAction{
 					Path:      "/tmp/healthcheck",

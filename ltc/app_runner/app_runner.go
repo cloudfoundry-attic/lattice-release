@@ -205,7 +205,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		CPUWeight:            params.CPUWeight,
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
-		Privileged:           true,
+		Privileged:           params.Privileged,
 		Ports:                params.ExposedPorts,
 		LogGuid:              params.Name,
 		LogSource:            "APP",
@@ -213,10 +213,9 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		EnvironmentVariables: envVars,
 		Setup:                params.Setup,
 		Action: &models.RunAction{
-			Path:       params.StartCommand,
-			Args:       params.AppArgs,
-			Privileged: params.Privileged,
-			Dir:        params.WorkingDir,
+			Path: params.StartCommand,
+			Args: params.AppArgs,
+			Dir:  params.WorkingDir,
 		},
 	}
 
