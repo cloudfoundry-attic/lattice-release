@@ -21,6 +21,8 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner/fake_task_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
+	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/goamz/goamz/s3"
 )
@@ -270,6 +272,12 @@ var _ = Describe("DropletRunner", func() {
 			Expect(receptorRequest.LogGuid).To(Equal("droplet-name"))
 			Expect(receptorRequest.MetricsGuid).To(Equal("droplet-name"))
 			Expect(receptorRequest.RootFS).To(Equal("preloaded:cflinuxfs2"))
+			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
+				receptor.EnvironmentVariable{
+					Name:  "CF_STACK",
+					Value: "cflinuxfs2",
+				},
+			}))
 			Expect(receptorRequest.LogSource).To(Equal("BUILD"))
 			Expect(receptorRequest.Domain).To(Equal("lattice"))
 			Expect(receptorRequest.EgressRules).ToNot(BeNil())

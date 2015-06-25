@@ -22,7 +22,8 @@ import (
 )
 
 const (
-	DropletRootFS = "preloaded:cflinuxfs2"
+	DropletStack  = "cflinuxfs2"
+	DropletRootFS = "preloaded:" + DropletStack
 )
 
 //go:generate counterfeiter -o fake_droplet_runner/fake_droplet_runner.go . DropletRunner
@@ -193,6 +194,7 @@ func (dr *dropletRunner) BuildDroplet(dropletName, buildpackUrl string) error {
 		DropletRootFS,
 		"lattice",
 		"BUILD",
+		map[string]string{"CF_STACK": DropletStack},
 		[]models.SecurityGroupRule{},
 	)
 

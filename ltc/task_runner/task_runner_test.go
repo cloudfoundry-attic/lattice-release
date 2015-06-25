@@ -66,6 +66,7 @@ var _ = Describe("TaskRunner", func() {
 				"preloaded:my-rootfs",
 				"task-domain",
 				"log-source",
+				nil,
 				securityGroupRules,
 			)
 		})
@@ -120,6 +121,7 @@ var _ = Describe("TaskRunner", func() {
 					"preloaded:my-rootfs",
 					"task-domain",
 					"log-source",
+					nil,
 					securityGroupRules,
 				)
 
