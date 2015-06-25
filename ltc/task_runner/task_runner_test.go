@@ -48,7 +48,6 @@ var _ = Describe("TaskRunner", func() {
 					models.EnvironmentVariable{"env-name", "env-value"},
 				},
 				ResourceLimits: models.ResourceLimits{},
-				Privileged:     true,
 				LogSource:      "log-source",
 			}
 			securityGroupRules = []models.SecurityGroupRule{
