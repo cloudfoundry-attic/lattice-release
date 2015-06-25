@@ -195,7 +195,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	blobBucket := blobStore.Bucket(config.BlobTarget().BucketName)
 
 	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, blobBucket, targetVerifier)
-	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, dropletRunner)
+	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, taskExaminer, dropletRunner)
 
 	helpCommand := cli.Command{
 		Name:        "help",
