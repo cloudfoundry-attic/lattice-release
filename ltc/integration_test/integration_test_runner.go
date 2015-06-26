@@ -156,7 +156,7 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 			})
 		})
 
-		FContext("droplets", func() {
+		Context("droplets", func() {
 			It("uploads a file named bits.tgz to the blob store", func() {
 				tmpFile, err := ioutil.TempFile("", "bits.txt")
 				Expect(err).ToNot(HaveOccurred())
