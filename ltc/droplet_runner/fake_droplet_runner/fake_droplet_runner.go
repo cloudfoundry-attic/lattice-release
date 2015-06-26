@@ -46,6 +46,14 @@ type FakeDropletRunner struct {
 		result1 []droplet_runner.Droplet
 		result2 error
 	}
+	RemoveDropletStub        func(dropletName string) error
+	removeDropletMutex       sync.RWMutex
+	removeDropletArgsForCall []struct {
+		dropletName string
+	}
+	removeDropletReturns struct {
+		result1 error
+	}
 }
 
 func (fake *FakeDropletRunner) UploadBits(dropletName string, uploadPath string) error {
@@ -173,6 +181,38 @@ func (fake *FakeDropletRunner) ListDropletsReturns(result1 []droplet_runner.Drop
 		result1 []droplet_runner.Droplet
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakeDropletRunner) RemoveDroplet(dropletName string) error {
+	fake.removeDropletMutex.Lock()
+	fake.removeDropletArgsForCall = append(fake.removeDropletArgsForCall, struct {
+		dropletName string
+	}{dropletName})
+	fake.removeDropletMutex.Unlock()
+	if fake.RemoveDropletStub != nil {
+		return fake.RemoveDropletStub(dropletName)
+	} else {
+		return fake.removeDropletReturns.result1
+	}
+}
+
+func (fake *FakeDropletRunner) RemoveDropletCallCount() int {
+	fake.removeDropletMutex.RLock()
+	defer fake.removeDropletMutex.RUnlock()
+	return len(fake.removeDropletArgsForCall)
+}
+
+func (fake *FakeDropletRunner) RemoveDropletArgsForCall(i int) string {
+	fake.removeDropletMutex.RLock()
+	defer fake.removeDropletMutex.RUnlock()
+	return fake.removeDropletArgsForCall[i].dropletName
+}
+
+func (fake *FakeDropletRunner) RemoveDropletReturns(result1 error) {
+	fake.RemoveDropletStub = nil
+	fake.removeDropletReturns = struct {
+		result1 error
+	}{result1}
 }
 
 var _ droplet_runner.DropletRunner = new(FakeDropletRunner)

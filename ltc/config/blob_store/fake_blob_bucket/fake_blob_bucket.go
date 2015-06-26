@@ -44,6 +44,14 @@ type FakeBlobBucket struct {
 		result1 io.ReadCloser
 		result2 error
 	}
+	DelStub        func(path string) error
+	delMutex       sync.RWMutex
+	delArgsForCall []struct {
+		path string
+	}
+	delReturns struct {
+		result1 error
+	}
 }
 
 func (fake *FakeBlobBucket) List(prefix string, delim string, marker string, max int) (result *s3.ListResp, err error) {
@@ -150,6 +158,38 @@ func (fake *FakeBlobBucket) GetReaderReturns(result1 io.ReadCloser, result2 erro
 		result1 io.ReadCloser
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakeBlobBucket) Del(path string) error {
+	fake.delMutex.Lock()
+	fake.delArgsForCall = append(fake.delArgsForCall, struct {
+		path string
+	}{path})
+	fake.delMutex.Unlock()
+	if fake.DelStub != nil {
+		return fake.DelStub(path)
+	} else {
+		return fake.delReturns.result1
+	}
+}
+
+func (fake *FakeBlobBucket) DelCallCount() int {
+	fake.delMutex.RLock()
+	defer fake.delMutex.RUnlock()
+	return len(fake.delArgsForCall)
+}
+
+func (fake *FakeBlobBucket) DelArgsForCall(i int) string {
+	fake.delMutex.RLock()
+	defer fake.delMutex.RUnlock()
+	return fake.delArgsForCall[i].path
+}
+
+func (fake *FakeBlobBucket) DelReturns(result1 error) {
+	fake.DelStub = nil
+	fake.delReturns = struct {
+		result1 error
+	}{result1}
 }
 
 var _ blob_store.BlobBucket = new(FakeBlobBucket)

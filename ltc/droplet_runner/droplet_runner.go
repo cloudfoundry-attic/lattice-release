@@ -32,6 +32,7 @@ type DropletRunner interface {
 	BuildDroplet(dropletName, buildpackUrl string) error
 	LaunchDroplet(appName, dropletName string, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error
 	ListDroplets() ([]Droplet, error)
+	RemoveDroplet(dropletName string) error
 }
 
 type Droplet struct {
@@ -277,4 +278,20 @@ func (dr *dropletRunner) downloadJSON(path string) (*BuildResult, error) {
 	}
 
 	return &result, nil
+}
+
+func (dr *dropletRunner) RemoveDroplet(dropletName string) error {
+	listResp, err := dr.blobBucket.List(dropletName+"/", "/", "", 0)
+	if err != nil {
+		return err
+	}
+
+	for _, key := range listResp.Contents {
+		err := dr.blobBucket.Del(key.Key)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

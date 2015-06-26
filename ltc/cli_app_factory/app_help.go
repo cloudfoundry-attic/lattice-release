@@ -116,6 +116,7 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 					presentCommand("build-droplet"),
 					presentCommand("list-droplets"),
 					presentCommand("launch-droplet"),
+					presentCommand("remove-droplet"),
 				},
 			},
 		}, {

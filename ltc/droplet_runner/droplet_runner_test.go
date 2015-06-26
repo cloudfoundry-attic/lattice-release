@@ -401,4 +401,56 @@ var _ = Describe("DropletRunner", func() {
 		})
 	})
 
+	Describe("RemoveDroplet", func() {
+		It("recursively removes a droplets from the blob store", func() {
+			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
+			config.Save()
+
+			dropletContents := &s3.ListResp{
+				Name:      "bucket-name",
+				Prefix:    "drippy/",
+				Delimiter: "/",
+				Contents: []s3.Key{
+					s3.Key{Key: "drippy/bits.tgz"},
+					s3.Key{Key: "drippy/droplet.tgz"},
+					s3.Key{Key: "drippy/result.json"},
+				},
+			}
+			fakeBlobBucket.ListReturns(dropletContents, nil)
+
+			fakeBlobBucket.DelStub = func(path string) error {
+				switch path {
+				case "drippy/bits.tgz":
+					return nil
+				case "drippy/droplet.tgz":
+					return nil
+				case "drippy/result.json":
+					return nil
+				default:
+					return errors.New("bad arg to bucket.Del(): " + path)
+				}
+			}
+
+			err := dropletRunner.RemoveDroplet("drippy")
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(fakeBlobBucket.ListCallCount()).To(Equal(1))
+			prefix, _, _, _ := fakeBlobBucket.ListArgsForCall(0)
+			Expect(prefix).To(Equal("drippy/"))
+
+			Expect(fakeBlobBucket.DelCallCount()).To(Equal(3))
+		})
+
+		It("returns an error when querying the blob store fails", func() {
+			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
+			config.Save()
+
+			fakeBlobBucket.ListReturns(nil, errors.New("boom"))
+
+			err := dropletRunner.RemoveDroplet("drippy")
+			Expect(err).To(HaveOccurred())
+		})
+
+	})
+
 })

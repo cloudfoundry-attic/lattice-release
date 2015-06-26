@@ -176,6 +176,18 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 	return buildDropletCommand
 }
 
+func (factory *DropletRunnerCommandFactory) MakeRemoveDropletCommand() cli.Command {
+	var removeDropletCommand = cli.Command{
+		Name:        "remove-droplet",
+		Aliases:     []string{"rd", "rmd"},
+		Usage:       "Remove droplet",
+		Description: "ltc remove-droplet DROPLET_NAME",
+		Action:      factory.removeDroplet,
+	}
+
+	return removeDropletCommand
+}
+
 func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
 	droplets, err := factory.dropletRunner.ListDroplets()
 	if err != nil {
@@ -399,6 +411,19 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 	}
 
 	factory.WaitForAppCreation(appName, timeoutFlag, instancesFlag, noRoutesFlag, routeOverrides)
+}
+
+func (factory *DropletRunnerCommandFactory) removeDroplet(context *cli.Context) {
+	dropletName := context.Args().First()
+
+	err := factory.dropletRunner.RemoveDroplet(dropletName)
+	if err != nil {
+		factory.UI.Say(fmt.Sprintf("Error removing droplet %s: %s", dropletName, err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
+	factory.UI.SayLine("Droplet removed")
 }
 
 func makeTar(path string) (string, error) {

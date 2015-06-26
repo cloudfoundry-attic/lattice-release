@@ -137,5 +137,17 @@ var _ = Describe("BlobStore", func() {
 			})
 		})
 
+		Describe("Del", func() {
+			It("removes the object from the bucket", func() {
+				fakeServer.AppendHandlers(ghttp.CombineHandlers(
+					ghttp.VerifyRequest("DELETE", "/the-bucket-name/object-key"),
+					ghttp.RespondWith(http.StatusOK, ""),
+				))
+				err := blobBucket.Del("object-key")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
+			})
+		})
+
 	})
 })

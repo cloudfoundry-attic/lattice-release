@@ -787,4 +787,37 @@ var _ = Describe("CommandFactory", func() {
 		})
 	})
 
+	Describe("RemoveDropletCommand", func() {
+		var (
+			removeDropletCommand cli.Command
+		)
+
+		BeforeEach(func() {
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
+			removeDropletCommand = commandFactory.MakeRemoveDropletCommand()
+		})
+
+		It("removes the droplet", func() {
+			fakeDropletRunner.RemoveDropletReturns(nil)
+
+			test_helpers.ExecuteCommandWithArgs(removeDropletCommand, []string{"droppo"})
+
+			Expect(outputBuffer).To(test_helpers.SayLine("Droplet removed"))
+		})
+
+		Context("when the droplet runner returns errors", func() {
+			It("prints an error", func() {
+				fakeDropletRunner.RemoveDropletReturns(errors.New("failed"))
+
+				test_helpers.ExecuteCommandWithArgs(removeDropletCommand, []string{"droppo"})
+
+				Expect(fakeDropletRunner.RemoveDropletCallCount()).To(Equal(1))
+				Expect(fakeDropletRunner.RemoveDropletArgsForCall(0)).To(Equal("droppo"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Error removing droplet droppo: failed"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+			})
+		})
+	})
+
 })

@@ -25,6 +25,7 @@ type BlobBucket interface {
 	List(prefix, delim, marker string, max int) (result *s3.ListResp, err error)
 	PutReader(path string, r io.Reader, length int64, contType string, perm s3.ACL, options s3.Options) error
 	GetReader(path string) (rc io.ReadCloser, err error)
+	Del(path string) error
 }
 
 type blobStore struct {
