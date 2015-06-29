@@ -60,10 +60,18 @@ start_lattice_vagrant
 source $(dirname $0)/helpers/setup_whetstone
 setup_whetstone
 
-printf "{\"Target\":\"%s\",\"Username\":\"%s\",\"Password\":\"%s\"}" \
+pushd $WORKSPACE_DIR/diego-release/src/github.com/cloudfoundry-incubator/lattice
+    blob_access_key=`vagrant ssh -c 'egrep "^admin\.key=" /etc/riak-cs/riak-cs.conf' | awk -Fadmin.key= '{print $2}'`
+    blob_secret_key=`vagrant ssh -c 'egrep "^admin\.secret=" /etc/riak-cs/riak-cs.conf' | awk -Fadmin.secret= '{print $2}'`
+popd
+
+printf "{\"target\":\"%s\",\"blob_target_info\":{\"host\":\"%s\",\"port\":%d,\"access_key\":\"%s\",\"secret_key\":\"%s\",\"bucket_name\":\"%s\"}}" \
     "$SYSTEM_DOMAIN" \
-    "" \
-    "" | json_pp \
+    "$SYSTEM_DOMAIN" \
+    8181 \
+    "${blob_access_key%%[[:space:]]}" \
+    "${blob_secret_key%%[[:space:]]}" \
+    "condenser-bucket" | json_pp \
     > $LATTICE_CLI_HOME/.lattice/config.json
 sync
 
