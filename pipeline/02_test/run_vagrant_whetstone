@@ -67,7 +67,7 @@ popd
 
 printf "{\"target\":\"%s\",\"blob_target_info\":{\"host\":\"%s\",\"port\":%d,\"access_key\":\"%s\",\"secret_key\":\"%s\",\"bucket_name\":\"%s\"}}" \
     "$SYSTEM_DOMAIN" \
-    "$SYSTEM_DOMAIN" \
+    "$SYSTEM_IP" \
     8181 \
     "${blob_access_key%%[[:space:]]}" \
     "${blob_secret_key%%[[:space:]]}" \
