@@ -70,16 +70,37 @@ func (runner *integrationTestRunner) Run(timeout time.Duration, verbose, cliHelp
 }
 
 func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) {
+	var dropletName string
+
 	var _ = BeforeSuite(func() {
 		err := runner.config.Load()
 		if err != nil {
 			fmt.Fprintln(getStyledWriter("test"), "Error loading config")
 			return
 		}
+
+		if runner.config.BlobTarget().AccessKey != "" && runner.config.BlobTarget().SecretKey != "" {
+			// Generate a droplet name up front so that it can persist across droplet tests
+			dropletGuid, err := uuid.NewV4()
+			Expect(err).ToNot(HaveOccurred())
+			dropletName = "droplet-" + dropletGuid.String()
+		}
 	})
 
 	var _ = AfterSuite(func() {
 		gexec.CleanupBuildArtifacts()
+
+		if runner.config.BlobTarget().AccessKey != "" && runner.config.BlobTarget().SecretKey != "" {
+			runner.removeDroplet(timeout, dropletName)
+
+			blobTarget := runner.config.BlobTarget()
+			dropletURL := fmt.Sprintf("%s:%d/%s/%s/",
+				blobTarget.TargetHost,
+				blobTarget.TargetPort,
+				blobTarget.BucketName,
+				dropletName)
+			Eventually(errorCheckURLExists(dropletURL), timeout, 1).Should(HaveOccurred())
+		}
 	})
 
 	var _ = Describe("Lattice", func() {
@@ -139,35 +160,28 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 
 		if runner.config.BlobTarget().AccessKey != "" && runner.config.BlobTarget().SecretKey != "" {
 			Context("droplets", func() {
-				var dropletName, appName, dropletFolderURL, appRoute string
-
-				BeforeEach(func() {
-					// Generate a droplet name up front so that it can persist across droplet tests
-					dropletGuid, err := uuid.NewV4()
+				It("uploads a file named bits.tgz to the blob store", func() {
+					tmpFile, err := ioutil.TempFile("", "bits.txt")
 					Expect(err).ToNot(HaveOccurred())
-					dropletName = "droplet-" + dropletGuid.String()
+					defer os.Remove(tmpFile.Name())
 
-					appName = "running-" + dropletName
+					_, err = tmpFile.WriteString("01001100010000010101010001010100010010010100001101000101")
+					Expect(err).ToNot(HaveOccurred())
+
+					tmpFile.Close()
+
+					runner.uploadBits(timeout, dropletName, tmpFile.Name())
 
 					blobTarget := runner.config.BlobTarget()
-					dropletFolderURL = fmt.Sprintf("%s:%d/%s/%s",
+					bitsURL := fmt.Sprintf("%s:%d/%s/%s/bits.tgz",
 						blobTarget.TargetHost,
 						blobTarget.TargetPort,
 						blobTarget.BucketName,
 						dropletName)
-
-					appRoute = fmt.Sprintf("%s.%s", appName, runner.config.Target())
+					Eventually(errorCheckURLExists(bitsURL), timeout, 1).ShouldNot(HaveOccurred())
 				})
 
-				AfterEach(func() {
-					runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
-					Eventually(errorCheckForRoute(appRoute), timeout, .5).Should(HaveOccurred())
-
-					runner.removeDroplet(timeout, dropletName)
-					Eventually(errorCheckURLExists(dropletFolderURL+"/droplet.tgz"), timeout, 1).Should(HaveOccurred())
-				})
-
-				It("builds, lists and launches a droplet", func() {
+				It("builds a droplet", func() {
 					By("checking out lattice-app from github")
 					gitDir := runner.cloneRepo(timeout, "https://github.com/pivotal-cf-experimental/lattice-app.git")
 					defer os.RemoveAll(gitDir)
@@ -176,18 +190,33 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 					runner.buildDroplet(timeout, dropletName, "https://github.com/cloudfoundry/go-buildpack.git", gitDir)
 
 					By("uploading to the blob store")
-					Eventually(errorCheckURLExists(dropletFolderURL+"/bits.tgz"), timeout, 1).ShouldNot(HaveOccurred())
+					blobTarget := runner.config.BlobTarget()
+					bitsURL := fmt.Sprintf("%s:%d/%s/%s",
+						blobTarget.TargetHost,
+						blobTarget.TargetPort,
+						blobTarget.BucketName,
+						dropletName)
+					Eventually(errorCheckURLExists(bitsURL+"/bits.tgz"), timeout, 1).ShouldNot(HaveOccurred())
 
 					By("uploading a compiled droplet to the blob store")
-					Eventually(errorCheckURLExists(dropletFolderURL+"/droplet.tgz"), timeout, 1).ShouldNot(HaveOccurred())
+					Eventually(errorCheckURLExists(bitsURL+"/droplet.tgz"), timeout, 1).ShouldNot(HaveOccurred())
+				})
 
-					By("listing droplets")
+				It("lists droplets", func() {
 					runner.listDroplets(timeout, dropletName)
+				})
 
-					By("launching the droplet")
+				It("launches a droplet", func() {
+					appName := "running-" + dropletName
+
 					runner.launchDroplet(timeout, appName, dropletName)
 
-					Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
+					route := fmt.Sprintf("%s.%s", appName, runner.config.Target())
+					Eventually(errorCheckForRoute(route), timeout, .5).ShouldNot(HaveOccurred())
+
+					runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
+
+					Eventually(errorCheckForRoute(route), timeout, 1).Should(HaveOccurred())
 				})
 			})
 		}
