@@ -4,7 +4,7 @@
 ## 
 ## Acceptable values:
 ##   - an IP/port pair, e.g. 127.0.0.1:10011
-listener = 127.0.0.1:8085
+listener = 127.0.0.1:8985
 
 ## Default cert location for https can be overridden
 ## with the ssl config variable, for example:
@@ -26,7 +26,7 @@ listener = 127.0.0.1:8085
 ## 
 ## Acceptable values:
 ##   - an IP/port pair, e.g. 127.0.0.1:10011
-riak_host = 127.0.0.1:8087
+riak_host = 127.0.0.1:8987
 
 ## Admin user credentials. The credentials specified here must
 ## match the admin credentials specified in the riak-cs app.config

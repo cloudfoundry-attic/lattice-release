@@ -49,12 +49,12 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("displaying the blob target", func() {
 			It("outputs the current target", func() {
-				config.SetBlobTarget("192.168.11.11", 8181, "datkeyyo", "supersecretJKJK", "bucket")
+				config.SetBlobTarget("192.168.11.11", 8980, "datkeyyo", "supersecretJKJK", "bucket")
 				config.Save()
 
 				test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{})
 
-				Expect(outputBuffer).To(test_helpers.Say("Blob Target:\t192.168.11.11:8181\n"))
+				Expect(outputBuffer).To(test_helpers.Say("Blob Target:\t192.168.11.11:8980\n"))
 				Expect(outputBuffer).To(test_helpers.Say("Access Key:\tdatkeyyo"))
 				Expect(outputBuffer).To(test_helpers.Say("Secret Key:\tsupersecretJKJK"))
 				Expect(outputBuffer).To(test_helpers.Say("Bucket Name:\tbucket"))
@@ -74,7 +74,7 @@ var _ = Describe("CommandFactory", func() {
 			It("sets the blob target and credentials", func() {
 				fakeTargetVerifier.VerifyBlobTargetReturns(true, nil)
 
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8181"})
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8980"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Access Key: "))
 				stdinWriter.Write([]byte("yaykey\n"))
@@ -88,7 +88,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
 				host, port, accessKey, secretKey, bucketName := fakeTargetVerifier.VerifyBlobTargetArgsForCall(0)
 				Expect(host).To(Equal("192.168.11.11"))
-				Expect(port).To(Equal(uint16(8181)))
+				Expect(port).To(Equal(uint16(8980)))
 				Expect(accessKey).To(Equal("yaykey"))
 				Expect(secretKey).To(Equal("superserial"))
 				Expect(bucketName).To(Equal("bhuket"))
@@ -96,7 +96,7 @@ var _ = Describe("CommandFactory", func() {
 				blobTarget := config.BlobTarget()
 				Expect(outputBuffer).To(test_helpers.Say("Blob Location Set"))
 				Expect(blobTarget.TargetHost).To(Equal("192.168.11.11"))
-				Expect(blobTarget.TargetPort).To(Equal(uint16(8181)))
+				Expect(blobTarget.TargetPort).To(Equal(uint16(8980)))
 				Expect(blobTarget.AccessKey).To(Equal("yaykey"))
 				Expect(blobTarget.SecretKey).To(Equal("superserial"))
 			})
@@ -104,7 +104,7 @@ var _ = Describe("CommandFactory", func() {
 			It("sets the blob target and credentials using the default bucket name", func() {
 				fakeTargetVerifier.VerifyBlobTargetReturns(true, nil)
 
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8181"})
+				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8980"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Access Key: "))
 				stdinWriter.Write([]byte("yaykey\n"))
@@ -118,7 +118,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
 				host, port, accessKey, secretKey, bucketName := fakeTargetVerifier.VerifyBlobTargetArgsForCall(0)
 				Expect(host).To(Equal("192.168.11.11"))
-				Expect(port).To(Equal(uint16(8181)))
+				Expect(port).To(Equal(uint16(8980)))
 				Expect(accessKey).To(Equal("yaykey"))
 				Expect(secretKey).To(Equal("superserial"))
 				Expect(bucketName).To(Equal("condenser-bucket"))
@@ -126,14 +126,14 @@ var _ = Describe("CommandFactory", func() {
 				blobTarget := config.BlobTarget()
 				Expect(outputBuffer).To(test_helpers.Say("Blob Location Set"))
 				Expect(blobTarget.TargetHost).To(Equal("192.168.11.11"))
-				Expect(blobTarget.TargetPort).To(Equal(uint16(8181)))
+				Expect(blobTarget.TargetPort).To(Equal(uint16(8980)))
 				Expect(blobTarget.AccessKey).To(Equal("yaykey"))
 				Expect(blobTarget.SecretKey).To(Equal("superserial"))
 			})
 
 			Context("invalid syntax", func() {
 				It("errors when target is malformed", func() {
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"huehue8181"})
+					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"huehue8980"})
 
 					Eventually(commandFinishChan).Should(BeClosed())
 					Expect(outputBuffer).To(test_helpers.SayLine("Error setting blob target: malformed target"))
@@ -180,7 +180,7 @@ var _ = Describe("CommandFactory", func() {
 				It("does not save the config when there is an error connecting to the target", func() {
 					fakeTargetVerifier.VerifyBlobTargetReturns(false, errors.New("fail"))
 
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8181"})
+					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8980"})
 
 					Eventually(outputBuffer).Should(test_helpers.Say("Access Key: "))
 					stdinWriter.Write([]byte("yaykey\n"))
@@ -208,10 +208,10 @@ var _ = Describe("CommandFactory", func() {
 						targetBlobCommand = commandFactory.MakeTargetBlobCommand()
 					})
 					It("bubbles up errors from saving the config", func() {
-						config.SetBlobTarget("192.168.11.11", 8181, "datkeyyo", "supersecretJKJK", "buckit")
+						config.SetBlobTarget("192.168.11.11", 8980, "datkeyyo", "supersecretJKJK", "buckit")
 						config.Save()
 
-						commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"199.112.3432:8181"})
+						commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"199.112.3432:8980"})
 						Eventually(outputBuffer).Should(test_helpers.Say("Access Key: "))
 						stdinWriter.Write([]byte("booookey\n"))
 						Eventually(outputBuffer).Should(test_helpers.Say("Secret Key: "))
@@ -226,7 +226,7 @@ var _ = Describe("CommandFactory", func() {
 
 						blobTarget := config.BlobTarget()
 						Expect(blobTarget.TargetHost).To(Equal("192.168.11.11"))
-						Expect(blobTarget.TargetPort).To(Equal(uint16(8181)))
+						Expect(blobTarget.TargetPort).To(Equal(uint16(8980)))
 						Expect(blobTarget.AccessKey).To(Equal("datkeyyo"))
 						Expect(blobTarget.SecretKey).To(Equal("supersecretJKJK"))
 						Expect(blobTarget.BucketName).To(Equal("buckit"))

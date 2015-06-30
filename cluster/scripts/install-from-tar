@@ -38,7 +38,7 @@ condense_it() {
     ## TODO:  save off curl, check exit code (or http status), then pretty-print
     ## so we don't ignore non-zero return from curl
     curl -s -H 'Content-Type: application/json' \
-        -XPOST http://localhost:8181/riak-cs/user \
+        -XPOST http://localhost:8980/riak-cs/user \
         --data '{"email":"admin@lattice.cf", "name":"admin_user"}' > riak-admin_user.json
 
     ## parse json
@@ -61,7 +61,7 @@ condense_it() {
     sed "s/%%ACCESS_KEY%%/$access_key/" /tmp/lattice-build/common/riak/templates/s3cfg-riakcs-template |
         sed "s/%%SECRET_KEY%%/$secret_key/" |
         sed "s/%%PROXY_HOST%%/localhost/" |
-        sed "s/%%PROXY_PORT%%/8181/" > /tmp/s3cfg-riakcs
+        sed "s/%%PROXY_PORT%%/8980/" > /tmp/s3cfg-riakcs
     s3cmd -c /tmp/s3cfg-riakcs mb s3://condenser-bucket
 
     stage_cflinuxfs2_rootfs
