@@ -66,59 +66,76 @@ var _ = Describe("RoutingInfoHelpers", func() {
 					Expect(payload).To(MatchJSON(`[]`))
 				})
 			})
-
 		})
 	})
 
 	Describe("AppRoutesFromRoutingInfo", func() {
-		var (
-			routesResult route_helpers.AppRoutes
-			routingInfo  receptor.RoutingInfo
-		)
+		var routingInfo receptor.RoutingInfo
 
-		JustBeforeEach(func() {
-			routesResult = route_helpers.AppRoutesFromRoutingInfo(routingInfo)
-		})
+		Context("when the method returns a value", func() {
+			var routesResult route_helpers.AppRoutes
 
-		Context("when lattice app routes are present in the routing info", func() {
-			BeforeEach(func() {
-				routingInfo = routes.RoutingInfo()
+			JustBeforeEach(func() {
+				routesResult = route_helpers.AppRoutesFromRoutingInfo(routingInfo)
 			})
 
-			It("returns the routes", func() {
-				Expect(routes).To(Equal(routesResult))
-			})
-
-			Context("when the lattice routes are nil", func() {
+			Context("when lattice app routes are present in the routing info", func() {
 				BeforeEach(func() {
-					routingInfo = receptor.RoutingInfo{route_helpers.AppRouter: nil}
+					routingInfo = routes.RoutingInfo()
 				})
 
-				It("returns nil routes", func() {
-					Expect(routesResult).To(BeNil())
+				It("returns the routes", func() {
+					Expect(routes).To(Equal(routesResult))
+				})
+			})
+
+			Context("when the result should be nil", func() {
+				itReturnsNilRoutes := func() {
+					It("returns nil routes", func() {
+						Expect(routesResult).To(BeNil())
+					})
+				}
+
+				Context("when the lattice routes are nil", func() {
+					BeforeEach(func() {
+						routingInfo = receptor.RoutingInfo{route_helpers.AppRouter: nil}
+					})
+
+					itReturnsNilRoutes()
+				})
+
+				Context("when lattice app routes are not present in the routing info", func() {
+					BeforeEach(func() {
+						routingInfo = receptor.RoutingInfo{}
+					})
+
+					itReturnsNilRoutes()
+				})
+
+				Context("when the routing info is nil", func() {
+					BeforeEach(func() {
+						routingInfo = nil
+					})
+
+					itReturnsNilRoutes()
 				})
 			})
 		})
 
-		Context("when lattice app routes are not present in the routing info", func() {
+		Context("when the json.RawMessage is malformed", func() {
 			BeforeEach(func() {
 				routingInfo = receptor.RoutingInfo{}
+				jsonMessage := json.RawMessage(`{"what": "up`)
+				routingInfo[route_helpers.AppRouter] = &jsonMessage
 			})
 
-			It("returns nil routes", func() {
-				Expect(routesResult).To(BeNil())
-			})
-		})
+			It("panics at the disco", func() {
+				appRoutesFromRoutingInfo := func() func() {
+					return func() { route_helpers.AppRoutesFromRoutingInfo(routingInfo) }
+				}
 
-		Context("when the routing info is nil", func() {
-			BeforeEach(func() {
-				routingInfo = nil
+				Consistently(appRoutesFromRoutingInfo).Should(Panic(), "invalid json.RawMessage ought to panic")
 			})
-
-			It("returns nil routes", func() {
-				Expect(routesResult).To(BeNil())
-			})
-
 		})
 	})
 

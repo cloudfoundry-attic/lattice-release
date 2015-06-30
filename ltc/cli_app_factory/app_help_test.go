@@ -76,7 +76,7 @@ USAGE:
 				return func() { cli_app_factory.ShowHelp(outputBuffer, dummyTemplate, struct{}{}) }
 			}
 
-			Consistently(showHelp).Should(Panic())
+			Consistently(showHelp).Should(Panic(), "unsupported type but help didn't panic")
 		})
 
 		Context("when writer is busted", func() {
@@ -85,7 +85,7 @@ USAGE:
 					return func() { cli_app_factory.ShowHelp(errorWriter{}, dummyTemplate, cliApp) }
 				}
 
-				Consistently(showHelp).Should(Panic())
+				Consistently(showHelp).Should(Panic(), "writer bailed but help didn't panic")
 			})
 
 			It("panics showing help for a specific command", func() {
@@ -93,7 +93,7 @@ USAGE:
 					return func() { cli_app_factory.ShowHelp(errorWriter{}, dummyTemplate, cli.Command{}) }
 				}
 
-				Consistently(showHelp).Should(Panic())
+				Consistently(showHelp).Should(Panic(), "writer bailed but help didn't panic")
 			})
 		})
 
