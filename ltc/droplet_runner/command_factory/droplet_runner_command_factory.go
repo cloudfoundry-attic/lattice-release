@@ -281,9 +281,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	go factory.TailedLogsOutputter.OutputTailedLogs(dropletName)
 	defer factory.TailedLogsOutputter.StopOutputting()
 
-	ok := factory.waitForBuildTask(30*time.Second, dropletName)
-
-	if ok {
+	if ok := factory.waitForBuildTask(2*time.Minute, dropletName); ok {
 		factory.UI.SayLine("Build complete")
 	}
 }
