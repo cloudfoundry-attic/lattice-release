@@ -69,12 +69,6 @@ var lockTTL = flag.Duration(
 	"TTL for service lock",
 )
 
-var etcdCluster = flag.String(
-	"etcdCluster",
-	"http://127.0.0.1:4001",
-	"Comma-separated list of etcd URLs (scheme://ip:port).",
-)
-
 var corsEnabled = flag.Bool(
 	"corsEnabled",
 	false,
@@ -127,6 +121,7 @@ const (
 func main() {
 	cf_debug_server.AddFlags(flag.CommandLine)
 	cf_lager.AddFlags(flag.CommandLine)
+	etcdFlags := etcdstoreadapter.AddFlags(flag.CommandLine)
 	flag.Parse()
 
 	cf_http.Initialize(*communicationTimeout)
@@ -136,12 +131,17 @@ func main() {
 
 	initializeDropsonde(logger)
 
+	etcdOptions, err := etcdFlags.Validate()
+	if err != nil {
+		logger.Fatal("etcd-validation-failed", err)
+	}
+
 	if err := validateNatsArguments(); err != nil {
 		logger.Error("invalid-nats-flags", err)
 		os.Exit(1)
 	}
 
-	bbs := initializeReceptorBBS(logger)
+	bbs := initializeReceptorBBS(etcdOptions, logger)
 	hub := event.NewHub()
 
 	handler := handlers.New(bbs, hub, logger, *username, *password, *corsEnabled)
@@ -185,7 +185,7 @@ func main() {
 
 	logger.Info("started")
 
-	err := <-monitor.Wait()
+	err = <-monitor.Wait()
 	if err != nil {
 		logger.Error("exited-with-failure", err)
 		os.Exit(1)
@@ -226,16 +226,17 @@ func initializeDropsonde(logger lager.Logger) {
 	}
 }
 
-func initializeReceptorBBS(logger lager.Logger) Bbs.ReceptorBBS {
+func initializeReceptorBBS(etcdOptions *etcdstoreadapter.ETCDOptions, logger lager.Logger) Bbs.ReceptorBBS {
 	workPool, err := workpool.NewWorkPool(100)
 	if err != nil {
 		logger.Fatal("failed-to-construct-etcd-adapter-workpool", err, lager.Data{"num-workers": 100}) // should never happen
 	}
 
-	etcdAdapter := etcdstoreadapter.NewETCDStoreAdapter(
-		strings.Split(*etcdCluster, ","),
-		workPool,
-	)
+	etcdAdapter, err := etcdstoreadapter.New(etcdOptions, workPool)
+
+	if err != nil {
+		logger.Fatal("failed-to-construct-etcd-tls-client", err)
+	}
 
 	client, err := consuladapter.NewClient(*consulCluster)
 	if err != nil {

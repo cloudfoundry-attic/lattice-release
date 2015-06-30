@@ -6,10 +6,12 @@ import (
 	"os"
 
 	"github.com/cloudfoundry-incubator/consuladapter"
+	"github.com/cloudfoundry-incubator/consuladapter/consulrunner"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/cmd/receptor/testrunner"
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry/gunk/diegonats"
+	"github.com/cloudfoundry/gunk/diegonats/gnatsdrunner"
 	"github.com/cloudfoundry/storeadapter"
 	"github.com/cloudfoundry/storeadapter/storerunner/etcdstorerunner"
 	. "github.com/onsi/ginkgo"
@@ -44,7 +46,7 @@ var etcdUrl string
 var etcdRunner *etcdstorerunner.ETCDClusterRunner
 var etcdAdapter storeadapter.StoreAdapter
 
-var consulRunner *consuladapter.ClusterRunner
+var consulRunner *consulrunner.ClusterRunner
 var consulSession *consuladapter.Session
 
 var bbs *Bbs.BBS
@@ -76,10 +78,10 @@ var _ = SynchronizedBeforeSuite(
 
 		etcdPort = 4001 + GinkgoParallelNode()
 		etcdUrl = fmt.Sprintf("http://127.0.0.1:%d", etcdPort)
-		etcdRunner = etcdstorerunner.NewETCDClusterRunner(etcdPort, 1)
+		etcdRunner = etcdstorerunner.NewETCDClusterRunner(etcdPort, 1, nil)
 
-		consulRunner = consuladapter.NewClusterRunner(
-			9001+config.GinkgoConfig.ParallelNode*consuladapter.PortOffsetLength,
+		consulRunner = consulrunner.NewClusterRunner(
+			9001+config.GinkgoConfig.ParallelNode*consulrunner.PortOffsetLength,
 			1,
 			"http",
 		)
@@ -108,7 +110,7 @@ var _ = BeforeEach(func() {
 	receptorAddress = fmt.Sprintf("127.0.0.1:%d", 6700+GinkgoParallelNode())
 	receptorTaskHandlerAddress = fmt.Sprintf("127.0.0.1:%d", 1169+GinkgoParallelNode())
 
-	etcdAdapter = etcdRunner.Adapter()
+	etcdAdapter = etcdRunner.Adapter(nil)
 	bbs = Bbs.NewBBS(etcdAdapter, consulSession, "http://"+receptorTaskHandlerAddress, clock.NewClock(), logger)
 
 	natsPort = 4051 + GinkgoParallelNode()
@@ -146,7 +148,7 @@ var _ = AfterEach(func() {
 })
 
 func newNatsGroup() ifrit.Runner {
-	natsServerRunner = diegonats.NewGnatsdTestRunner(natsPort)
+	natsServerRunner = gnatsdrunner.NewGnatsdTestRunner(natsPort)
 	natsClientRunner = diegonats.NewClientRunner(natsAddress, "", "", logger, natsClient)
 	return grouper.NewOrdered(os.Kill, grouper.Members{
 		{"natsServer", natsServerRunner},
