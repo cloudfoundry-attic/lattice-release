@@ -467,8 +467,8 @@ var _ = Describe("CommandFactory", func() {
 
 		It("lists the droplets most recent first", func() {
 			times := []time.Time{
-				time.Date(2014, 12, 31, 0, 0, 0, 0, time.Local),
-				time.Date(2015, 6, 15, 0, 0, 0, 0, time.Local),
+				time.Date(2014, 12, 31, 8, 22, 44, 0, time.Local),
+				time.Date(2015, 6, 15, 16, 11, 33, 0, time.Local),
 			}
 			droplets := []droplet_runner.Droplet{
 				droplet_runner.Droplet{
@@ -485,11 +485,12 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Droplet\t\tCreated At"))
-			Expect(outputBuffer).To(test_helpers.SayLine("drop-b\t\tJune 15, 2015\ndrop-a\t\tDecember 31, 2014"))
+			Expect(outputBuffer).To(test_helpers.SayLine("drop-b\t\t06/15 16:11:33.00"))
+			Expect(outputBuffer).To(test_helpers.SayLine("drop-a\t\t12/31 08:22:44.00"))
 		})
 
 		It("doesn't print a time if Created is nil", func() {
-			time := time.Date(2014, 12, 31, 0, 0, 0, 0, time.Local)
+			time := time.Date(2014, 12, 31, 14, 33, 52, 0, time.Local)
 
 			droplets := []droplet_runner.Droplet{
 				droplet_runner.Droplet{
@@ -505,7 +506,8 @@ var _ = Describe("CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Droplet\t\tCreated At"))
-			Expect(outputBuffer).To(test_helpers.SayLine("drop-b\ndrop-a\t\tDecember 31, 2014"))
+			Expect(outputBuffer).To(test_helpers.SayLine("drop-b"))
+			Expect(outputBuffer).To(test_helpers.SayLine("drop-a\t\t12/31 14:33:52.00"))
 		})
 
 		Context("when the droplet runner returns errors", func() {

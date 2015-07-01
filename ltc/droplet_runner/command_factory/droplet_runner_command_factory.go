@@ -204,7 +204,7 @@ func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
 	fmt.Fprintln(w, "Droplet\tCreated At")
 	for _, droplet := range droplets {
 		if droplet.Created != nil {
-			fmt.Fprintf(w, "%s\t%s\n", droplet.Name, droplet.Created.Format("January 2, 2006"))
+			fmt.Fprintf(w, "%s\t%s\n", droplet.Name, droplet.Created.Format("01/02 15:04:05.00"))
 		} else {
 			fmt.Fprintf(w, "%s\n", droplet.Name)
 		}
