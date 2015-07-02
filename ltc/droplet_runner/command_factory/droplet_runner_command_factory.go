@@ -270,7 +270,8 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 		return
 	}
 
-	if err = factory.dropletRunner.BuildDroplet(dropletName, buildpackUrl); err != nil {
+	taskName := "build-droplet-" + dropletName
+	if err = factory.dropletRunner.BuildDroplet(taskName, dropletName, buildpackUrl); err != nil {
 		factory.UI.Say(fmt.Sprintf("Error submitting build of %s: %s", dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
@@ -278,10 +279,10 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 
 	factory.UI.SayLine("Submitted build of " + dropletName)
 
-	go factory.TailedLogsOutputter.OutputTailedLogs(dropletName)
+	go factory.TailedLogsOutputter.OutputTailedLogs(taskName)
 	defer factory.TailedLogsOutputter.StopOutputting()
 
-	if ok := factory.waitForBuildTask(2*time.Minute, dropletName); ok {
+	if ok := factory.waitForBuildTask(2*time.Minute, taskName); ok {
 		factory.UI.SayLine("Build complete")
 	}
 }

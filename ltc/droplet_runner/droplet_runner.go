@@ -29,7 +29,7 @@ const (
 //go:generate counterfeiter -o fake_droplet_runner/fake_droplet_runner.go . DropletRunner
 type DropletRunner interface {
 	UploadBits(dropletName, uploadPath string) error
-	BuildDroplet(dropletName, buildpackUrl string) error
+	BuildDroplet(taskName, dropletName, buildpackUrl string) error
 	LaunchDroplet(appName, dropletName string, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error
 	ListDroplets() ([]Droplet, error)
 	RemoveDroplet(dropletName string) error
@@ -127,7 +127,7 @@ func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
 	return dr.blobBucket.PutReader(fmt.Sprintf("%s/bits.tgz", dropletName), uploadFile, fileInfo.Size(), blob_store.DropletContentType, blob_store.DefaultPrivilege, s3.Options{})
 }
 
-func (dr *dropletRunner) BuildDroplet(dropletName, buildpackUrl string) error {
+func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string) error {
 	builderConfig := buildpack_app_lifecycle.NewLifecycleBuilderConfig([]string{buildpackUrl}, false, false)
 
 	action := &models.SerialAction{
@@ -191,7 +191,7 @@ func (dr *dropletRunner) BuildDroplet(dropletName, buildpackUrl string) error {
 	}
 	createTaskParams := task_runner.NewCreateTaskParams(
 		action,
-		dropletName,
+		taskName,
 		DropletRootFS,
 		"lattice",
 		"BUILD",

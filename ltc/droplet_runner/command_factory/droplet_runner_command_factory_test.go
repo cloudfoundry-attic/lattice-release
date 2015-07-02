@@ -354,10 +354,10 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droplet-name"))
 
 				Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(Equal(1))
-				Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("droplet-name"))
+				Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("build-droplet-droplet-name"))
 
 				Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
-				Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("droplet-name"))
+				Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("build-droplet-droplet-name"))
 
 				fakeClock.IncrementBySeconds(1)
 				Expect(commandFinishChan).ShouldNot(BeClosed())
@@ -399,8 +399,8 @@ var _ = Describe("CommandFactory", func() {
 					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the build to complete.")))
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
 					Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still building your application in the background."))
-					Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs droppo-the-clown"))
-					Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status droppo-the-clown"))
+					Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs build-droplet-droppo-the-clown"))
+					Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status build-droplet-droppo-the-clown"))
 				})
 			})
 
@@ -417,7 +417,7 @@ var _ = Describe("CommandFactory", func() {
 					Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droppo-the-clown"))
 
 					Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
-					Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("droppo-the-clown"))
+					Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("build-droplet-droppo-the-clown"))
 
 					fakeClock.IncrementBySeconds(1)
 					Expect(fakeExitHandler.ExitCalledWith).To(BeEmpty())

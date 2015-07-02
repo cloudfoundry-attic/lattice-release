@@ -211,7 +211,7 @@ var _ = Describe("DropletRunner", func() {
 			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
 			config.Save()
 
-			err := dropletRunner.BuildDroplet("droplet-name", "buildpack")
+			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack")
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
@@ -268,9 +268,9 @@ var _ = Describe("DropletRunner", func() {
 				},
 			}
 			Expect(receptorRequest.Action).To(Equal(expectedActions))
-			Expect(receptorRequest.TaskGuid).To(Equal("droplet-name"))
-			Expect(receptorRequest.LogGuid).To(Equal("droplet-name"))
-			Expect(receptorRequest.MetricsGuid).To(Equal("droplet-name"))
+			Expect(receptorRequest.TaskGuid).To(Equal("task-name"))
+			Expect(receptorRequest.LogGuid).To(Equal("task-name"))
+			Expect(receptorRequest.MetricsGuid).To(Equal("task-name"))
 			Expect(receptorRequest.RootFS).To(Equal("preloaded:cflinuxfs2"))
 			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
 				receptor.EnvironmentVariable{
@@ -287,7 +287,7 @@ var _ = Describe("DropletRunner", func() {
 		It("returns an error when create task fails", func() {
 			fakeTaskRunner.CreateTaskReturns(errors.New("creating task failed"))
 
-			err := dropletRunner.BuildDroplet("droplet-name", "buildpack")
+			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack")
 
 			Expect(err).To(MatchError("creating task failed"))
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
