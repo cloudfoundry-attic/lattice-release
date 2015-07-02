@@ -172,10 +172,10 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 }
 
 func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
-	var primaryPort uint16
+	primaryPort := uint16(0)
 	if params.Monitor.Port != 0 {
 		primaryPort = params.Monitor.Port
-	} else {
+	} else if len(params.ExposedPorts) > 0 {
 		primaryPort = params.ExposedPorts[0]
 	}
 
