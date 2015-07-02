@@ -374,7 +374,7 @@ var _ = Describe("CommandFactory", func() {
 				fakeClock.IncrementBySeconds(1)
 				Eventually(commandFinishChan).Should(BeClosed())
 
-				Expect(outputBuffer).To(test_helpers.SayLine("Build complete"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Build completed"))
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 			})
 
@@ -401,6 +401,26 @@ var _ = Describe("CommandFactory", func() {
 					Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still building your application in the background."))
 					Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs build-droplet-droppo-the-clown"))
 					Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status build-droplet-droppo-the-clown"))
+				})
+			})
+
+			Context("when the build completes", func() {
+				It("alerts the user of a complete but failed build", func() {
+					args := []string{"droppo-the-clown", "http://some.url/for/buildpack"}
+
+					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "PENDING"}, nil)
+
+					test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
+
+					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{
+						State:         "COMPLETED",
+						Failed:        true,
+						FailureReason: "oops",
+					}, nil)
+
+					fakeClock.IncrementBySeconds(1)
+
+					Eventually(outputBuffer).Should(test_helpers.SayLine("Build failed: oops"))
 				})
 			})
 

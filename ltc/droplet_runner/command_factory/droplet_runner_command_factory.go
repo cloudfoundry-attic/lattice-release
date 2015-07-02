@@ -282,22 +282,14 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	go factory.TailedLogsOutputter.OutputTailedLogs(taskName)
 	defer factory.TailedLogsOutputter.StopOutputting()
 
-	if ok := factory.waitForBuildTask(2*time.Minute, taskName); ok {
-		factory.UI.SayLine("Build complete")
-	}
-}
-
-func (factory *DropletRunnerCommandFactory) waitForBuildTask(pollTimeout time.Duration, taskName string) bool {
-	ok := factory.pollUntilSuccess(pollTimeout, func() bool {
-		taskInfo, err := factory.taskExaminer.TaskStatus(taskName)
-		if err != nil {
-			factory.UI.Say(colors.Red("Error requesting task status: " + err.Error()))
-			return true
+	ok, taskState := factory.waitForBuildTask(2*time.Minute, taskName)
+	if ok {
+		if taskState.Failed {
+			factory.UI.SayLine("Build failed: " + taskState.FailureReason)
+		} else {
+			factory.UI.SayLine("Build completed")
 		}
-		return taskInfo.State != "RUNNING" && taskInfo.State != "PENDING"
-	})
-
-	if !ok {
+	} else {
 		factory.UI.Say(colors.Red("Timed out waiting for the build to complete."))
 		factory.UI.SayNewLine()
 		factory.UI.SayLine("Lattice is still building your application in the background.")
@@ -305,11 +297,26 @@ func (factory *DropletRunnerCommandFactory) waitForBuildTask(pollTimeout time.Du
 		factory.UI.SayLine(fmt.Sprintf("To view logs:\n\tltc logs %s", taskName))
 		factory.UI.SayLine(fmt.Sprintf("To view status:\n\tltc status %s", taskName))
 		factory.UI.SayNewLine()
-
-		return false
 	}
+}
 
-	return ok
+func (factory *DropletRunnerCommandFactory) waitForBuildTask(pollTimeout time.Duration, taskName string) (bool, task_examiner.TaskInfo) {
+	var (
+		taskInfo task_examiner.TaskInfo
+		err      error
+	)
+
+	ok := factory.pollUntilSuccess(pollTimeout, func() bool {
+		taskInfo, err = factory.taskExaminer.TaskStatus(taskName)
+		if err != nil {
+			factory.UI.Say(colors.Red("Error requesting task status: " + err.Error()))
+			return true
+		}
+
+		return taskInfo.State != "RUNNING" && taskInfo.State != "PENDING"
+	})
+
+	return ok, taskInfo
 }
 
 func (factory *DropletRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Duration, pollingFunc func() bool) (ok bool) {
