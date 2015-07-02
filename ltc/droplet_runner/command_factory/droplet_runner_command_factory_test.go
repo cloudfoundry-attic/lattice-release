@@ -29,6 +29,8 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock/fakeclock"
 
+	"path"
+
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	droplet_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
 )
@@ -308,6 +310,100 @@ var _ = Describe("CommandFactory", func() {
 				h, err = tarReader.Next()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(h.FileInfo().Name()).To(Equal("sub"))
+				Expect(h.FileInfo().IsDir()).To(BeFalse())
+				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
+
+				_, err = tarReader.Next()
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("tars up the specified folder and uploads as the droplet name", func() {
+				Expect(os.Chdir("/tmp")).To(Succeed())
+
+				args := []string{
+					"droplet-name",
+					"http://some.url/for/buildpack",
+					"-p",
+					tmpDir,
+				}
+
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
+				dropletName, uploadPath := fakeDropletRunner.UploadBitsArgsForCall(0)
+				Expect(dropletName).To(Equal("droplet-name"))
+
+				Expect(uploadPath).ToNot(BeNil())
+				Expect(uploadPath).To(HaveSuffix(".tar"))
+
+				file, err := os.Open(uploadPath)
+				Expect(err).ToNot(HaveOccurred())
+				tarReader := tar.NewReader(file)
+
+				var h *tar.Header
+				h, err = tarReader.Next()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(h.FileInfo().Name()).To(Equal("aaa"))
+				Expect(h.FileInfo().IsDir()).To(BeFalse())
+				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0700)))
+
+				h, err = tarReader.Next()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(h.FileInfo().Name()).To(Equal("bbb"))
+				Expect(h.FileInfo().IsDir()).To(BeFalse())
+				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0750)))
+
+				h, err = tarReader.Next()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(h.FileInfo().Name()).To(Equal("ccc"))
+				Expect(h.FileInfo().IsDir()).To(BeFalse())
+				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
+
+				h, err = tarReader.Next()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(h.FileInfo().Name()).To(Equal("subfolder"))
+				Expect(h.FileInfo().IsDir()).To(BeTrue())
+				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(os.ModeDir | 0755)))
+
+				h, err = tarReader.Next()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(h.FileInfo().Name()).To(Equal("sub"))
+				Expect(h.FileInfo().IsDir()).To(BeFalse())
+				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
+
+				_, err = tarReader.Next()
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("tars up the specified single file and uploads as the droplet name", func() {
+				Expect(os.Chdir("/tmp")).To(Succeed())
+
+				args := []string{
+					"droplet-name",
+					"http://some.url/for/buildpack",
+					"-p",
+					path.Join(tmpDir, "ccc"),
+				}
+
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
+				dropletName, uploadPath := fakeDropletRunner.UploadBitsArgsForCall(0)
+				Expect(dropletName).To(Equal("droplet-name"))
+
+				Expect(uploadPath).ToNot(BeNil())
+				Expect(uploadPath).To(HaveSuffix(".tar"))
+
+				file, err := os.Open(uploadPath)
+				Expect(err).ToNot(HaveOccurred())
+				tarReader := tar.NewReader(file)
+
+				var h *tar.Header
+				h, err = tarReader.Next()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(h.FileInfo().Name()).To(Equal("ccc"))
 				Expect(h.FileInfo().IsDir()).To(BeFalse())
 				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
 

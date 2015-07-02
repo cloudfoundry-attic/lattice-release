@@ -16,6 +16,8 @@ import (
 
 	"text/tabwriter"
 
+	"path"
+
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
@@ -79,12 +81,21 @@ func (factory *DropletRunnerCommandFactory) MakeUploadBitsCommand() cli.Command 
 }
 
 func (factory *DropletRunnerCommandFactory) MakeBuildDropletCommand() cli.Command {
+	var launchFlags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "path, p",
+			Usage: "Path to droplet source",
+			Value: ".",
+		},
+	}
+
 	var buildDropletCommand = cli.Command{
 		Name:        "build-droplet",
 		Aliases:     []string{"bd"},
 		Usage:       "Build droplet",
 		Description: "ltc build-droplet DROPLET_NAME http://buildpack/uri",
 		Action:      factory.buildDroplet,
+		Flags:       launchFlags,
 	}
 
 	return buildDropletCommand
@@ -248,6 +259,7 @@ func (factory *DropletRunnerCommandFactory) uploadBits(context *cli.Context) {
 }
 
 func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
+	pathFlag := context.String("path")
 	dropletName := context.Args().First()
 	buildpackUrl := context.Args().Get(1)
 
@@ -257,7 +269,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 		return
 	}
 
-	archivePath, err := makeTar(".")
+	archivePath, err := makeTar(pathFlag)
 	if err != nil {
 		factory.UI.Say(fmt.Sprintf("Error tarring . to %s: %s", archivePath, err))
 		factory.ExitHandler.Exit(exit_codes.FileSystemError)
@@ -432,7 +444,7 @@ func (factory *DropletRunnerCommandFactory) removeDroplet(context *cli.Context) 
 	factory.UI.SayLine("Droplet removed")
 }
 
-func makeTar(path string) (string, error) {
+func makeTar(contentsPath string) (string, error) {
 	tmpPath, err := ioutil.TempDir(os.TempDir(), "build-bits")
 	if err != nil {
 		return "", err
@@ -445,45 +457,67 @@ func makeTar(path string) (string, error) {
 	tarWriter := tar.NewWriter(fileWriter)
 	defer tarWriter.Close()
 
-	err = filepath.Walk(path, func(subpath string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+	contentsFileInfo, err := os.Stat(contentsPath)
+	if err != nil {
+		return "", err
+	}
 
-		var relpath string
-		if relpath, err = filepath.Rel(path, subpath); err != nil {
-			return err
-		}
-
-		if relpath == fileWriter.Name() || relpath == "." || relpath == ".." {
-			return nil
-		}
-
-		if h, _ := tar.FileInfoHeader(info, subpath); h != nil {
-			h.Name = relpath
-			if err := tarWriter.WriteHeader(h); err != nil {
-				return err
-			}
-		}
-
-		if !info.IsDir() {
-			fr, err := os.Open(subpath)
+	if contentsFileInfo.IsDir() {
+		err = filepath.Walk(contentsPath, func(fullPath string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
-			defer fr.Close()
-			if _, err := io.Copy(tarWriter, fr); err != nil {
+
+			if err = addFileToTar(fileWriter, tarWriter, info, contentsPath, fullPath); err != nil {
 				return err
 			}
-		}
 
-		return nil
-	})
+			return nil
+		})
+	} else {
+		err = addFileToTar(fileWriter, tarWriter, contentsFileInfo, path.Dir(contentsPath), contentsPath)
+	}
+
 	if err != nil {
 		return "", err
 	}
 
 	return fileWriter.Name(), nil
+}
+
+func addFileToTar(fileWriter *os.File, tarWriter *tar.Writer, info os.FileInfo, containingPath string, fullPath string) error {
+	var (
+		relpath string
+		err     error
+	)
+
+	if relpath, err = filepath.Rel(containingPath, fullPath); err != nil {
+		return err
+	}
+
+	if relpath == fileWriter.Name() || relpath == "." || relpath == ".." {
+		return nil
+	}
+
+	if h, _ := tar.FileInfoHeader(info, fullPath); h != nil {
+		h.Name = relpath
+		if err := tarWriter.WriteHeader(h); err != nil {
+			return err
+		}
+	}
+
+	if !info.IsDir() {
+		fr, err := os.Open(fullPath)
+		if err != nil {
+			return err
+		}
+		defer fr.Close()
+		if _, err := io.Copy(tarWriter, fr); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (factory *DropletRunnerCommandFactory) parsePortsFromArgs(portsFlag string) ([]uint16, error) {
