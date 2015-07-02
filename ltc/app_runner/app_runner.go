@@ -172,9 +172,15 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 }
 
 func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
+	var primaryPort uint16
+	if params.Monitor.Port != 0 {
+		primaryPort = params.Monitor.Port
+	} else {
+		primaryPort = params.ExposedPorts[0]
+	}
 
 	envVars := buildEnvironmentVariables(params.EnvironmentVariables)
-	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", params.Monitor.Port)})
+	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", primaryPort)})
 
 	var appRoutes route_helpers.AppRoutes
 	if params.NoRoutes {
@@ -191,7 +197,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 			})
 		}
 	} else {
-		appRoutes = appRunner.buildDefaultRoutingInfo(params.Name, params.ExposedPorts, params.Monitor.Port)
+		appRoutes = appRunner.buildDefaultRoutingInfo(params.Name, params.ExposedPorts, primaryPort)
 	}
 
 	req := receptor.DesiredLRPCreateRequest{
@@ -274,12 +280,12 @@ func (appRunner *appRunner) updateLrpRoutes(name string, routes RouteOverrides) 
 	return err
 }
 
-func (appRunner *appRunner) buildDefaultRoutingInfo(appName string, exposedPorts []uint16, monitorPort uint16) route_helpers.AppRoutes {
+func (appRunner *appRunner) buildDefaultRoutingInfo(appName string, exposedPorts []uint16, primaryPort uint16) route_helpers.AppRoutes {
 	appRoutes := route_helpers.AppRoutes{}
 
 	for _, port := range exposedPorts {
 		hostnames := []string{}
-		if port == monitorPort {
+		if port == primaryPort {
 			hostnames = append(hostnames, fmt.Sprintf("%s.%s", appName, appRunner.systemDomain))
 		}
 
