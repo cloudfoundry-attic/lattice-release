@@ -10,7 +10,6 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
-	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/docker_metadata_fetcher"
@@ -25,6 +24,8 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock/fakeclock"
 	"github.com/pivotal-golang/lager"
+
+	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 )
 
 var _ = Describe("CommandFactory", func() {

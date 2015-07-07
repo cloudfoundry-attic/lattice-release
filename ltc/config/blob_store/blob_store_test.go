@@ -13,11 +13,12 @@ import (
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/ghttp"
 
-	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/goamz/goamz/aws"
 	"github.com/goamz/goamz/s3"
+
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
 var _ = Describe("BlobStore", func() {

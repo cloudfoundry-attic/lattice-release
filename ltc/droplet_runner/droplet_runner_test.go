@@ -1,19 +1,17 @@
 package droplet_runner_test
 
 import (
+	"bytes"
 	"errors"
 	"io/ioutil"
 	"os"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"bytes"
-	"time"
-
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
-	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store/fake_blob_bucket"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store/fake_blob_store"
@@ -25,6 +23,8 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/goamz/goamz/s3"
+
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
 var _ = Describe("DropletRunner", func() {

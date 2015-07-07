@@ -1,8 +1,6 @@
 package config_helpers
 
-import (
-	"path/filepath"
-)
+import "path/filepath"
 
 func ConfigFileLocation(homeDir string) string {
 	configDir := filepath.Join(homeDir, ".lattice")

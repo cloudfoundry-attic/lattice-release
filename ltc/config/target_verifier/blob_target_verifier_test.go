@@ -11,11 +11,12 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
-	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
+
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
 var _ = Describe("TargetVerifier", func() {

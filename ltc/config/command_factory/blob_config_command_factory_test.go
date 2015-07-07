@@ -8,7 +8,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
-	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
@@ -17,6 +16,8 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
+
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
 var _ = Describe("CommandFactory", func() {

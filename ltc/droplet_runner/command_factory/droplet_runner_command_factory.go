@@ -7,24 +7,22 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
-
+	"text/tabwriter"
 	"time"
 
-	"text/tabwriter"
-
-	"path"
-
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
-	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/codegangsta/cli"
+
+	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 )
 
 type DropletRunnerCommandFactory struct {

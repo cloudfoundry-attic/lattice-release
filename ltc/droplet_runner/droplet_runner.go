@@ -1,15 +1,12 @@
 package droplet_runner
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-
-	"strings"
-
 	"path"
+	"strings"
 	"time"
-
-	"encoding/json"
 
 	"github.com/cloudfoundry-incubator/buildpack_app_lifecycle"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"

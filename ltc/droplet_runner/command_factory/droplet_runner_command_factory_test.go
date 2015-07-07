@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -28,8 +29,6 @@ import (
 	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock/fakeclock"
-
-	"path"
 
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 	droplet_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
