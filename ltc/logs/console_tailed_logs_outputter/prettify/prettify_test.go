@@ -17,7 +17,6 @@ import (
 )
 
 var _ = Describe("Prettify", func() {
-
 	var (
 		input []byte
 		regex = regexp.MustCompile("[-/\\\\^$*+?.()|[\\]{}]")
@@ -40,7 +39,6 @@ var _ = Describe("Prettify", func() {
 	}
 
 	Context("when the message has lager to chug", func() {
-
 		It("pretties the text for lager message", func() {
 			input = []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298","session":"7.1.10","trace":"trace-me-now"}}`)
 			lagerTimestamp := "1429296198.620077372"
@@ -69,7 +67,6 @@ var _ = Describe("Prettify", func() {
 		})
 
 		Describe("output formatting", func() {
-
 			It("prints a separate line for the error contents", func() {
 				input = []byte(`{"timestamp":"1429296198.620077372","source":"rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":2,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298","error":"unicorns can fly"}}`)
 				logMessage := buildLogMessage("rep", "cell-77", time.Time{}, input)
@@ -206,7 +203,6 @@ var _ = Describe("Prettify", func() {
 				})
 			})
 		})
-
 	})
 
 	Context("when the messages are not lager-formatted", func() {

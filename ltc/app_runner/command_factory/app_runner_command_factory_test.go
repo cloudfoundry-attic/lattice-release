@@ -28,7 +28,6 @@ import (
 )
 
 var _ = Describe("AppRunner CommandFactory", func() {
-
 	var (
 		fakeAppRunner                     *fake_app_runner.FakeAppRunner
 		fakeAppExaminer                   *fake_app_examiner.FakeAppExaminer
@@ -82,7 +81,6 @@ var _ = Describe("AppRunner CommandFactory", func() {
 			BeforeEach(func() {
 				tmpDir = os.TempDir()
 				tmpFile, err = ioutil.TempFile(tmpDir, "tmp_json")
-
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -136,7 +134,6 @@ var _ = Describe("AppRunner CommandFactory", func() {
 	})
 
 	Describe("ScaleAppCommand", func() {
-
 		var scaleCommand cli.Command
 
 		BeforeEach(func() {
@@ -356,11 +353,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 			test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
 			Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
-
 			Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(1))
-
 			name, routeOverrides := fakeAppRunner.UpdateAppRoutesArgsForCall(0)
-
 			Expect(name).To(Equal("cool-web-app"))
 			Expect(routeOverrides).To(Equal(expectedRouteOverrides))
 		})
@@ -376,10 +370,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(1))
 				name, routeOverrides := fakeAppRunner.UpdateAppRoutesArgsForCall(0)
-
 				Expect(name).To(Equal("cool-web-app"))
 				Expect(routeOverrides).To(Equal(app_runner.RouteOverrides{}))
-
 				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
 			})
 		})
@@ -453,7 +445,6 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
-
 	})
 
 	Describe("RemoveAppCommand", func() {
@@ -489,7 +480,6 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		})
 
 		It("removes multiple apps", func() {
-
 			args := []string{
 				"app1",
 				"app2",
@@ -559,6 +549,5 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
-
 	})
 })

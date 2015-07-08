@@ -14,12 +14,10 @@ const (
 )
 
 func FormatForReceptor(dockerPath string) (string, error) {
-
 	return convertDockerURI(dockerPath)
 }
 
 func ParseRepoNameAndTagFromImageReference(dockerPath string) (string, string, string, error) {
-
 	return parseDockerRepoUrl(dockerPath)
 }
 

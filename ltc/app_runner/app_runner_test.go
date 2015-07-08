@@ -265,6 +265,7 @@ var _ = Describe("AppRunner", func() {
 
 				err := appRunner.CreateApp(createAppParams)
 				Expect(err).NotTo(HaveOccurred())
+
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
 				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
 
@@ -286,6 +287,7 @@ var _ = Describe("AppRunner", func() {
 
 			err := appRunner.CreateApp(createAppParams)
 			Expect(err).To(MatchError("app-already-desired is already running"))
+
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
 
@@ -362,13 +364,14 @@ var _ = Describe("AppRunner", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			lrpName, err := appRunner.SubmitLrp(lrpJson)
-
 			Expect(err).NotTo(HaveOccurred())
 			Expect(lrpName).To(Equal("americano-app"))
+
 			Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(1))
 			domain, ttl := fakeReceptorClient.UpsertDomainArgsForCall(0)
 			Expect(domain).To(Equal("lattice"))
 			Expect(ttl).To(BeZero())
+
 			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
 			Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0)).To(Equal(desiredLRP))
 		})
@@ -404,20 +407,20 @@ var _ = Describe("AppRunner", func() {
 				lrpName, err := appRunner.SubmitLrp(lrpJSON)
 				Expect(err).To(MatchError(app_runner.AttemptedToCreateLatticeDebugErrorMessage))
 				Expect(lrpName).To(Equal("lattice-debug"))
+
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(0))
 			})
 		})
 
 		It("returns an error for invalid JSON", func() {
 			lrpName, err := appRunner.SubmitLrp([]byte(`{"Value":"test value`))
-
 			Expect(err).To(MatchError("unexpected end of JSON input"))
 			Expect(lrpName).To(BeEmpty())
+
 			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(0))
 		})
 
 		Context("when the receptor returns errors", func() {
-
 			It("returns existing count errors", func() {
 				receptorError := errors.New("error - Existing Count")
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
@@ -460,7 +463,6 @@ var _ = Describe("AppRunner", func() {
 				Expect(lrpName).To(Equal("nescafe-app"))
 			})
 		})
-
 	})
 
 	Describe("ScaleApp", func() {
@@ -472,8 +474,8 @@ var _ = Describe("AppRunner", func() {
 			instanceCount := 25
 
 			err := appRunner.ScaleApp("americano-app", instanceCount)
-
 			Expect(err).NotTo(HaveOccurred())
+
 			Expect(fakeReceptorClient.UpdateDesiredLRPCallCount()).To(Equal(1))
 			processGuid, updateRequest := fakeReceptorClient.UpdateDesiredLRPArgsForCall(0)
 			Expect(processGuid).To(Equal("americano-app"))
@@ -487,8 +489,8 @@ var _ = Describe("AppRunner", func() {
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 
 			err := appRunner.ScaleApp("app-not-running", 15)
-
 			Expect(err).To(MatchError("app-not-running is not started."))
+
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
 
@@ -500,7 +502,6 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.UpdateDesiredLRPReturns(receptorError)
 
 				err := appRunner.ScaleApp("americano-app", 17)
-
 				Expect(err).To(MatchError(receptorError))
 			})
 
@@ -509,7 +510,6 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
 
 				err := appRunner.ScaleApp("nescafe-app", 2)
-
 				Expect(err).To(MatchError(receptorError))
 			})
 		})
@@ -533,8 +533,8 @@ var _ = Describe("AppRunner", func() {
 			}
 
 			err := appRunner.UpdateAppRoutes("americano-app", expectedRouteOverrides)
-
 			Expect(err).NotTo(HaveOccurred())
+
 			Expect(fakeReceptorClient.UpdateDesiredLRPCallCount()).To(Equal(1))
 			processGuid, updateRequest := fakeReceptorClient.UpdateDesiredLRPArgsForCall(0)
 			Expect(processGuid).To(Equal("americano-app"))
@@ -551,8 +551,8 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 
 				err := appRunner.UpdateAppRoutes("americano-app", app_runner.RouteOverrides{})
-
 				Expect(err).NotTo(HaveOccurred())
+
 				Expect(fakeReceptorClient.UpdateDesiredLRPCallCount()).To(Equal(1))
 				processGuid, updateRequest := fakeReceptorClient.UpdateDesiredLRPArgsForCall(0)
 				Expect(processGuid).To(Equal("americano-app"))
@@ -575,8 +575,8 @@ var _ = Describe("AppRunner", func() {
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 
 			err := appRunner.UpdateAppRoutes("app-not-running", expectedRouteOverrides)
-
 			Expect(err).To(MatchError("app-not-running is not started."))
+
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
 
@@ -590,7 +590,6 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.UpdateDesiredLRPReturns(receptorError)
 
 				err := appRunner.ScaleApp("americano-app", 17)
-
 				Expect(err).To(MatchError(receptorError))
 			})
 
@@ -599,7 +598,6 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
 
 				err := appRunner.UpdateAppRoutes("nescafe-app", nil)
-
 				Expect(err).To(MatchError(receptorError))
 			})
 		})
@@ -614,8 +612,8 @@ var _ = Describe("AppRunner", func() {
 			fakeReceptorClient.DeleteDesiredLRPReturns(nil)
 
 			err := appRunner.RemoveApp("americano-app")
-
 			Expect(err).NotTo(HaveOccurred())
+
 			Expect(fakeReceptorClient.DeleteDesiredLRPCallCount()).To(Equal(1))
 			Expect(fakeReceptorClient.DeleteDesiredLRPArgsForCall(0)).To(Equal("americano-app"))
 		})
@@ -627,8 +625,8 @@ var _ = Describe("AppRunner", func() {
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 
 			err := appRunner.RemoveApp("app-not-running")
-
 			Expect(err).To(MatchError("app-not-running is not started."))
+
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
 
@@ -638,7 +636,6 @@ var _ = Describe("AppRunner", func() {
 					receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1},
 				}
 				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
-
 				deletingError := errors.New("deleting failed")
 				fakeReceptorClient.DeleteDesiredLRPReturns(deletingError)
 
@@ -651,7 +648,6 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
 
 				err := appRunner.RemoveApp("nescafe-app")
-
 				Expect(err).To(MatchError(receptorError))
 			})
 		})

@@ -38,7 +38,6 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("LogsCommand", func() {
-
 		var logsCommand cli.Command
 
 		BeforeEach(func() {
@@ -86,7 +85,6 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("DebugLogsCommand", func() {
-
 		var debugLogsCommand cli.Command
 
 		BeforeEach(func() {
@@ -109,7 +107,5 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTailedLogsOutputter.OutputDebugLogsArgsForCall(0)).To(BeFalse())
 			})
 		})
-
 	})
-
 })

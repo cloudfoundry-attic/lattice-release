@@ -40,7 +40,6 @@ func (t *terminalUI) Prompt(promptText string, args ...interface{}) (answer stri
 	fmt.Fprintf(t.Writer, promptText+": ", args...)
 
 	result, _ := reader.ReadString('\n')
-
 	return strings.TrimSuffix(result, "\n")
 }
 

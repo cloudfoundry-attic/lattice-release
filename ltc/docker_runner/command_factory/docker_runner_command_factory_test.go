@@ -29,7 +29,6 @@ import (
 )
 
 var _ = Describe("CommandFactory", func() {
-
 	var (
 		fakeAppRunner                 *fake_app_runner.FakeAppRunner
 		fakeAppExaminer               *fake_app_examiner.FakeAppExaminer
@@ -162,7 +161,6 @@ var _ = Describe("CommandFactory", func() {
 				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				appEnvVars := createAppParams.EnvironmentVariables
 				processGuidEnvVar, found := appEnvVars["PROCESS_GUID"]
-
 				Expect(found).To(BeTrue())
 				Expect(processGuidEnvVar).To(Equal("MyHappyGuid"))
 			})
@@ -309,7 +307,6 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 					Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-
 				})
 			})
 		})
@@ -364,7 +361,6 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		Describe("Monitor Config", func() {
-
 			BeforeEach(func() {
 				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 			})
@@ -585,9 +581,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
-
 				Expect(createAppParams.NoRoutes).To(BeTrue())
-
 				Expect(outputBuffer).NotTo(test_helpers.Say("App is reachable at:"))
 				Expect(outputBuffer).NotTo(test_helpers.Say("http://cool-web-app.192.168.11.11.xip.io"))
 			})
@@ -872,5 +866,4 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 	})
-
 })

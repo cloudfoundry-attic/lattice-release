@@ -13,9 +13,7 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-const (
-	AttemptedToCreateLatticeDebugErrorMessage = reserved_app_ids.LatticeDebugLogStreamAppId + " is a reserved app name. It is used internally to stream debug logs for lattice components."
-)
+const AttemptedToCreateLatticeDebugErrorMessage = reserved_app_ids.LatticeDebugLogStreamAppId + " is a reserved app name. It is used internally to stream debug logs for lattice components."
 
 type TaskRunnerCommandFactory struct {
 	taskRunner  task_runner.TaskRunner
@@ -98,8 +96,8 @@ func (factory *TaskRunnerCommandFactory) deleteTask(context *cli.Context) {
 		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
-	err := factory.taskRunner.DeleteTask(taskGuid)
-	if err != nil {
+
+	if err := factory.taskRunner.DeleteTask(taskGuid); err != nil {
 		factory.ui.Say(fmt.Sprintf(colors.Red("Error deleting %s: %s\n"), taskGuid, err.Error()))
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
@@ -114,8 +112,8 @@ func (factory *TaskRunnerCommandFactory) cancelTask(context *cli.Context) {
 		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
-	err := factory.taskRunner.CancelTask(taskGuid)
-	if err != nil {
+
+	if err := factory.taskRunner.CancelTask(taskGuid); err != nil {
 		factory.ui.Say(fmt.Sprintf(colors.Red("Error cancelling %s: %s\n"), taskGuid, err.Error()))
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return

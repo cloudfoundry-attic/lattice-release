@@ -22,9 +22,7 @@ import (
 	"github.com/nu7hatch/gouuid"
 )
 
-var (
-	numCpu int
-)
+var numCpu int
 
 func init() {
 	numCpu = runtime.NumCPU()

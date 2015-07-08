@@ -13,9 +13,7 @@ import (
 	"github.com/goamz/goamz/s3"
 )
 
-var (
-	awsRegion = aws.Region{Name: "riak-region-1", S3Endpoint: "http://s3.amazonaws.com"}
-)
+var awsRegion = aws.Region{Name: "riak-region-1", S3Endpoint: "http://s3.amazonaws.com"}
 
 func (t *targetVerifier) VerifyBlobTarget(host string, port uint16, accessKey, secretKey, bucketName string) (bool, error) {
 	s3Auth := aws.Auth{

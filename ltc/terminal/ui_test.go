@@ -14,7 +14,6 @@ import (
 )
 
 var _ = Describe("UI", func() {
-
 	var (
 		stdinReader        *io.PipeReader
 		stdinWriter        *io.PipeWriter

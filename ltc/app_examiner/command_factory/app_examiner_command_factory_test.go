@@ -592,7 +592,6 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		Context("when a rate flag is passed", func() {
-
 			var closeChan chan struct{}
 
 			AfterEach(func() {
@@ -691,6 +690,7 @@ var _ = Describe("CommandFactory", func() {
 		Context("when no app name is specified", func() {
 			It("prints usage information", func() {
 				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{})
+
 				Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -704,7 +704,6 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("You want the status?? ...YOU CAN'T HANDLE THE STATUS!!!"))
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 		})
-
 	})
 
 	Describe("Cells", func() {

@@ -13,7 +13,6 @@ import (
 )
 
 var _ = Describe("ChugLogMessage", func() {
-
 	var (
 		entry chug.Entry
 		input []byte
@@ -149,5 +148,4 @@ var _ = Describe("ChugLogMessage", func() {
 			})
 		})
 	})
-
 })

@@ -13,16 +13,13 @@ import (
 )
 
 var _ = Describe("IntegrationTestCommandFactory", func() {
-	var (
-		fakeIntegrationTestRunner *fake_integration_test_runner.FakeIntegrationTestRunner
-	)
+	var fakeIntegrationTestRunner *fake_integration_test_runner.FakeIntegrationTestRunner
 
 	BeforeEach(func() {
 		fakeIntegrationTestRunner = fake_integration_test_runner.NewFakeIntegrationTestRunner()
 	})
 
 	Describe("MakeIntegrationTestCommand", func() {
-
 		var integrationTestCommand cli.Command
 
 		BeforeEach(func() {
@@ -49,6 +46,5 @@ var _ = Describe("IntegrationTestCommandFactory", func() {
 			Expect(verboseArg).To(BeFalse())
 			Expect(cliHelpArg).To(BeFalse())
 		})
-
 	})
 })

@@ -28,7 +28,6 @@ import (
 )
 
 var _ = Describe("DropletRunner", func() {
-
 	var (
 		fakeAppRunner      *fake_app_runner.FakeAppRunner
 		fakeTaskRunner     *fake_task_runner.FakeTaskRunner
@@ -117,7 +116,6 @@ var _ = Describe("DropletRunner", func() {
 			_, err := dropletRunner.ListDroplets()
 			Expect(err).To(HaveOccurred())
 		})
-
 	})
 
 	Describe("UploadBits", func() {
@@ -450,7 +448,5 @@ var _ = Describe("DropletRunner", func() {
 			err := dropletRunner.RemoveDroplet("drippy")
 			Expect(err).To(HaveOccurred())
 		})
-
 	})
-
 })

@@ -127,7 +127,6 @@ var _ = Describe("logs", func() {
 		})
 
 		It("provides the errorCallback with the pending errors until StopTailing is called.", func() {
-
 			errorReceiver := &errorReceiver{}
 
 			errorFunc := func(err error) {

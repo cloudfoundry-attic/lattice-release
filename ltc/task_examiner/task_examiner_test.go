@@ -12,7 +12,6 @@ import (
 )
 
 var _ = Describe("TaskExaminer", func() {
-
 	var (
 		fakeReceptorClient *fake_receptor.FakeClient
 		taskExaminer       task_examiner.TaskExaminer
@@ -24,7 +23,6 @@ var _ = Describe("TaskExaminer", func() {
 	})
 
 	Describe("TaskStatus", func() {
-
 		BeforeEach(func() {
 			getTaskResponse := receptor.TaskResponse{
 				TaskGuid:      "boop",
@@ -39,7 +37,6 @@ var _ = Describe("TaskExaminer", func() {
 
 		It("returns a task status", func() {
 			taskInfo, err := taskExaminer.TaskStatus("boop")
-
 			Expect(err).ToNot(HaveOccurred())
 			Expect(taskInfo.TaskGuid).To(Equal("boop"))
 			Expect(taskInfo.State).To(Equal(receptor.TaskStateCompleted))
@@ -47,6 +44,7 @@ var _ = Describe("TaskExaminer", func() {
 			Expect(taskInfo.Failed).To(BeFalse())
 			Expect(taskInfo.FailureReason).To(BeEmpty())
 			Expect(taskInfo.Result).To(Equal("some-result"))
+
 			Expect(fakeReceptorClient.GetTaskCallCount()).To(Equal(1))
 			Expect(fakeReceptorClient.GetTaskArgsForCall(0)).To(Equal("boop"))
 		})
@@ -57,7 +55,6 @@ var _ = Describe("TaskExaminer", func() {
 				fakeReceptorClient.GetTaskReturns(receptor.TaskResponse{}, receptorError)
 
 				_, err := taskExaminer.TaskStatus("boop1")
-
 				Expect(err).To(MatchError(task_examiner.TaskNotFoundErrorMessage))
 			})
 
@@ -66,7 +63,6 @@ var _ = Describe("TaskExaminer", func() {
 				fakeReceptorClient.GetTaskReturns(receptor.TaskResponse{}, receptorError)
 
 				_, err := taskExaminer.TaskStatus("boop1")
-
 				Expect(err).To(MatchError(receptorError))
 			})
 
@@ -74,11 +70,9 @@ var _ = Describe("TaskExaminer", func() {
 				fakeReceptorClient.GetTaskReturns(receptor.TaskResponse{}, errors.New("you done goofed"))
 
 				_, err := taskExaminer.TaskStatus("boop")
-
 				Expect(err).To(MatchError("you done goofed"))
 			})
 		})
-
 	})
 
 	Describe("ListTasks", func() {
@@ -104,7 +98,6 @@ var _ = Describe("TaskExaminer", func() {
 			fakeReceptorClient.TasksReturns(taskListReturns, nil)
 
 			taskList, err := taskExaminer.ListTasks()
-
 			Expect(err).ToNot(HaveOccurred())
 			Expect(taskList).To(HaveLen(2))
 
@@ -125,7 +118,6 @@ var _ = Describe("TaskExaminer", func() {
 			fakeReceptorClient.TasksReturns(nil, errors.New("Client not reachable."))
 
 			_, err := taskExaminer.ListTasks()
-
 			Expect(err).To(MatchError("Client not reachable."))
 		})
 
@@ -133,7 +125,6 @@ var _ = Describe("TaskExaminer", func() {
 			fakeReceptorClient.TasksReturns([]receptor.TaskResponse{}, nil)
 
 			taskList, err := taskExaminer.ListTasks()
-
 			Expect(err).ToNot(HaveOccurred())
 			Expect(taskList).To(HaveLen(0))
 		})

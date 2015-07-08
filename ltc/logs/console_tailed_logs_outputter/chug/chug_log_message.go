@@ -55,7 +55,6 @@ func ChugLogMessage(logMessage *events.LogMessage) Entry {
 }
 
 func convertLagerLog(lagerLog lager.LogFormat) (LogEntry, bool) {
-
 	timestamp, err := strconv.ParseFloat(lagerLog.Timestamp, 64)
 	if err != nil {
 		return LogEntry{}, false
@@ -106,5 +105,4 @@ func convertLagerLog(lagerLog lager.LogFormat) (LogEntry, bool) {
 		Trace:     logTrace,
 		Data:      data,
 	}, true
-
 }

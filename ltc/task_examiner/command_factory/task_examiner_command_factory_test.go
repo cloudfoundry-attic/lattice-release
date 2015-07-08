@@ -18,8 +18,7 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-var _ = Describe("CommandFactory", func() {
-
+var _ = Describe("TaskExaminer CommandFactory", func() {
 	var (
 		fakeTaskExaminer *fake_task_examiner.FakeTaskExaminer
 		outputBuffer     *gbytes.Buffer

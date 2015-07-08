@@ -69,9 +69,7 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("UploadBitsCommand", func() {
-		var (
-			uploadBitsCommand cli.Command
-		)
+		var uploadBitsCommand cli.Command
 
 		BeforeEach(func() {
 			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
@@ -224,9 +222,7 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("BuildDropletCommand", func() {
-		var (
-			buildDropletCommand cli.Command
-		)
+		var buildDropletCommand cli.Command
 
 		BeforeEach(func() {
 			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
@@ -571,9 +567,7 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("ListDropletsCommand", func() {
-		var (
-			listDropletsCommand cli.Command
-		)
+		var listDropletsCommand cli.Command
 
 		BeforeEach(func() {
 			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
@@ -639,9 +633,7 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("LaunchDropletCommand", func() {
-		var (
-			launchDropletCommand cli.Command
-		)
+		var launchDropletCommand cli.Command
 
 		BeforeEach(func() {
 			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
@@ -900,9 +892,7 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("RemoveDropletCommand", func() {
-		var (
-			removeDropletCommand cli.Command
-		)
+		var removeDropletCommand cli.Command
 
 		BeforeEach(func() {
 			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)

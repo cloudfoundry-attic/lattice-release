@@ -60,7 +60,6 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 	})
 
 	Describe("OutputDebugLogs", func() {
-
 		It("tails logs with pretty formatting", func() {
 			now := time.Now()
 			logReader.AddLog(buildLogMessage("rep", "cell-1", now, []byte("First log")))
@@ -99,7 +98,6 @@ var _ = Describe("ConsoleTailedLogsOutputter", func() {
 			go consoleTailedLogsOutputter.OutputTailedLogs("my-app-guid")
 
 			consoleTailedLogsOutputter.StopOutputting()
-
 			Expect(logReader.IsLogTailStopped()).To(BeTrue())
 		})
 	})

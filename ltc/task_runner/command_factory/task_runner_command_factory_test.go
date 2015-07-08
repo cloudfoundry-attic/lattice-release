@@ -24,7 +24,6 @@ import (
 )
 
 var _ = Describe("CommandFactory", func() {
-
 	var (
 		outputBuffer     *gbytes.Buffer
 		terminalUI       terminal.UI
@@ -42,7 +41,6 @@ var _ = Describe("CommandFactory", func() {
 	})
 
 	Describe("SubmitTask", func() {
-
 		var (
 			submitTaskCommand cli.Command
 			tmpDir            string
@@ -196,5 +194,4 @@ var _ = Describe("CommandFactory", func() {
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
 	})
-
 })

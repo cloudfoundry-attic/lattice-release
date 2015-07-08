@@ -7,13 +7,9 @@ import (
 	"github.com/goamz/goamz/s3"
 )
 
-const (
-	DropletContentType = "application/octet-stream"
-)
+const DropletContentType = "application/octet-stream"
 
-var (
-	DefaultPrivilege s3.ACL = s3.Private
-)
+var DefaultPrivilege s3.ACL = s3.Private
 
 //go:generate counterfeiter -o fake_blob_store/fake_blob_store.go . BlobStore
 type BlobStore interface {

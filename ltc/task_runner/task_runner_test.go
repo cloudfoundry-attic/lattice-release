@@ -16,7 +16,6 @@ import (
 )
 
 var _ = Describe("TaskRunner", func() {
-
 	var (
 		fakeReceptorClient *fake_receptor.FakeClient
 		taskRunner         task_runner.TaskRunner
@@ -30,7 +29,6 @@ var _ = Describe("TaskRunner", func() {
 	})
 
 	Describe("CreateTask", func() {
-
 		var (
 			action             models.Action
 			securityGroupRules []models.SecurityGroupRule
@@ -101,7 +99,6 @@ var _ = Describe("TaskRunner", func() {
 				fakeReceptorClient.TasksReturns(tasksResponse, nil)
 
 				err := taskRunner.CreateTask(createTaskParams)
-
 				Expect(err).To(MatchError("task-name has already been submitted"))
 
 				Expect(fakeReceptorClient.TasksCallCount()).To(Equal(1))
@@ -123,7 +120,6 @@ var _ = Describe("TaskRunner", func() {
 				)
 
 				err := taskRunner.CreateTask(createTaskParams)
-
 				Expect(err).To(MatchError(task_runner.AttemptedToCreateLatticeDebugErrorMessage))
 
 				Expect(fakeReceptorClient.TasksCallCount()).To(Equal(0))
@@ -137,7 +133,6 @@ var _ = Describe("TaskRunner", func() {
 				fakeReceptorClient.TasksReturns(nil, errors.New("unable to fetch tasks"))
 
 				err := taskRunner.CreateTask(createTaskParams)
-
 				Expect(err).To(MatchError("unable to fetch tasks"))
 
 				Expect(fakeReceptorClient.TasksCallCount()).To(Equal(1))
@@ -150,8 +145,8 @@ var _ = Describe("TaskRunner", func() {
 				fakeReceptorClient.UpsertDomainReturns(upsertError)
 
 				err := taskRunner.CreateTask(createTaskParams)
-
 				Expect(err).To(MatchError(upsertError))
+
 				Expect(fakeReceptorClient.TasksCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(0))
@@ -161,8 +156,8 @@ var _ = Describe("TaskRunner", func() {
 				fakeReceptorClient.CreateTaskReturns(errors.New("not making your task"))
 
 				err := taskRunner.CreateTask(createTaskParams)
-
 				Expect(err).To(MatchError("not making your task"))
+
 				Expect(fakeReceptorClient.TasksCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(1))
@@ -264,15 +259,13 @@ var _ = Describe("TaskRunner", func() {
 				task := receptor.TaskCreateRequest{
 					TaskGuid: "task-already-submitted",
 				}
-				taskJson, marshalErr := json.Marshal(task)
-				Expect(marshalErr).ToNot(HaveOccurred())
+				taskJson, err := json.Marshal(task)
+				Expect(err).ToNot(HaveOccurred())
 
 				taskName, err := taskRunner.SubmitTask(taskJson)
-
-				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError("task-already-submitted has already been submitted"))
 				Expect(taskName).To(Equal("task-already-submitted"))
 
-				Expect(err).To(MatchError("task-already-submitted has already been submitted"))
 				Expect(fakeReceptorClient.TasksCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(0))
 			})
@@ -283,8 +276,8 @@ var _ = Describe("TaskRunner", func() {
 				task := receptor.TaskCreateRequest{
 					TaskGuid: "lattice-debug",
 				}
-				taskJson, marshalErr := json.Marshal(task)
-				Expect(marshalErr).ToNot(HaveOccurred())
+				taskJson, err := json.Marshal(task)
+				Expect(err).ToNot(HaveOccurred())
 
 				taskName, err := taskRunner.SubmitTask(taskJson)
 				Expect(err).To(MatchError(task_runner.AttemptedToCreateLatticeDebugErrorMessage))
@@ -296,9 +289,9 @@ var _ = Describe("TaskRunner", func() {
 
 		It("returns an error for invalid JSON", func() {
 			taskName, err := taskRunner.SubmitTask([]byte(`{"Value":"test value`))
-
 			Expect(err).To(MatchError("unexpected end of JSON input"))
 			Expect(taskName).To(BeEmpty())
+
 			Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(0))
 		})
 
@@ -310,13 +303,13 @@ var _ = Describe("TaskRunner", func() {
 				task := receptor.TaskCreateRequest{
 					TaskGuid: "whatever-task",
 				}
-				taskJson, marshalErr := json.Marshal(task)
-				Expect(marshalErr).ToNot(HaveOccurred())
+				taskJson, err := json.Marshal(task)
+				Expect(err).ToNot(HaveOccurred())
 
 				taskName, err := taskRunner.SubmitTask(taskJson)
-
 				Expect(err).To(MatchError(upsertError))
 				Expect(taskName).To(Equal("whatever-task"))
+
 				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(0))
 			})
 
@@ -326,13 +319,13 @@ var _ = Describe("TaskRunner", func() {
 				task := receptor.TaskCreateRequest{
 					TaskGuid: "whatever-task",
 				}
-				taskJson, marshalErr := json.Marshal(task)
-				Expect(marshalErr).ToNot(HaveOccurred())
+				taskJson, err := json.Marshal(task)
+				Expect(err).ToNot(HaveOccurred())
 
 				taskName, err := taskRunner.SubmitTask(taskJson)
-
 				Expect(err).To(MatchError(tasksResponseError))
 				Expect(taskName).To(Equal("whatever-task"))
+
 				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(0))
 			})
 
@@ -342,13 +335,13 @@ var _ = Describe("TaskRunner", func() {
 				task := receptor.TaskCreateRequest{
 					TaskGuid: "whatever-task",
 				}
-				taskJson, marshalErr := json.Marshal(task)
-				Expect(marshalErr).ToNot(HaveOccurred())
+				taskJson, err := json.Marshal(task)
+				Expect(err).ToNot(HaveOccurred())
 
 				taskName, err := taskRunner.SubmitTask(taskJson)
-
 				Expect(err).To(MatchError(receptorError))
 				Expect(taskName).To(Equal("whatever-task"))
+
 				Expect(fakeReceptorClient.CreateTaskCallCount()).To(Equal(1))
 			})
 
@@ -367,7 +360,6 @@ var _ = Describe("TaskRunner", func() {
 			fakeTaskExaminer.TaskStatusReturns(getTaskStatus(receptor.TaskStateCompleted), nil)
 
 			err := taskRunner.DeleteTask("task-guid-1")
-
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -375,7 +367,6 @@ var _ = Describe("TaskRunner", func() {
 			fakeTaskExaminer.TaskStatusReturns(getTaskStatus(receptor.TaskStatePending), nil)
 
 			err := taskRunner.DeleteTask("task-guid-1")
-
 			Expect(err).To(MatchError("task-guid-1 is not in COMPLETED state"))
 		})
 
@@ -384,7 +375,6 @@ var _ = Describe("TaskRunner", func() {
 				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{}, errors.New("Task not found"))
 
 				err := taskRunner.DeleteTask("task-guid-1")
-
 				Expect(err).To(MatchError("Task not found"))
 			})
 
@@ -410,7 +400,6 @@ var _ = Describe("TaskRunner", func() {
 			fakeTaskExaminer.TaskStatusReturns(getTaskStatus(receptor.TaskStatePending), nil)
 
 			err := taskRunner.CancelTask("task-guid-1")
-
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -418,7 +407,6 @@ var _ = Describe("TaskRunner", func() {
 			fakeTaskExaminer.TaskStatusReturns(getTaskStatus(receptor.TaskStateCompleted), nil)
 
 			err := taskRunner.CancelTask("task-guid-1")
-
 			Expect(err).To(MatchError("Unable to cancel COMPLETED task"))
 		})
 
@@ -426,7 +414,6 @@ var _ = Describe("TaskRunner", func() {
 			fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{}, errors.New("Task not found"))
 
 			err := taskRunner.CancelTask("task-guid-1")
-
 			Expect(err).To(MatchError("Task not found"))
 		})
 
@@ -436,10 +423,8 @@ var _ = Describe("TaskRunner", func() {
 				fakeReceptorClient.CancelTaskReturns(errors.New("task in unknown state"))
 
 				err := taskRunner.CancelTask("task-guid-1")
-
 				Expect(err).To(MatchError("task in unknown state"))
 			})
 		})
 	})
-
 })

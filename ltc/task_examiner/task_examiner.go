@@ -6,9 +6,7 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 )
 
-const (
-	TaskNotFoundErrorMessage = "Task not found."
-)
+const TaskNotFoundErrorMessage = "Task not found."
 
 type TaskInfo struct {
 	TaskGuid      string

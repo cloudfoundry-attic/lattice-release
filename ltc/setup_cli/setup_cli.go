@@ -15,13 +15,9 @@ import (
 	"github.com/pivotal-golang/lager"
 )
 
-const (
-	latticeCliHomeVar = "LATTICE_CLI_HOME"
-)
+const latticeCliHomeVar = "LATTICE_CLI_HOME"
 
-var (
-	latticeVersion string // provided by linker argument at compile-time
-)
+var latticeVersion string // provided by linker argument at compile-time
 
 func NewCliApp() *cli.App {
 	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(ltcConfigRoot())))

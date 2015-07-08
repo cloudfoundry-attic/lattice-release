@@ -131,7 +131,6 @@ var _ = Describe("AppExaminer", func() {
 					receptor.ActualLRPResponse{CellID: "Cell-2", State: receptor.ActualLRPStateClaimed},
 					receptor.ActualLRPResponse{CellID: "Cell-2", State: receptor.ActualLRPStateRunning},
 				}
-
 				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
 
 				cells := []receptor.CellResponse{
@@ -144,7 +143,6 @@ var _ = Describe("AppExaminer", func() {
 
 			It("returns a list of alphabetically sorted examined cells", func() {
 				cellList, err := appExaminer.ListCells()
-
 				Expect(err).ToNot(HaveOccurred())
 				Expect(cellList).To(HaveLen(3))
 
@@ -178,9 +176,7 @@ var _ = Describe("AppExaminer", func() {
 					receptor.ActualLRPResponse{CellID: "Cell-0", State: receptor.ActualLRPStateClaimed},
 					receptor.ActualLRPResponse{CellID: "Cell-1", State: receptor.ActualLRPStateRunning},
 				}
-
 				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
-
 				cells := []receptor.CellResponse{
 					receptor.CellResponse{CellID: "Cell-1"},
 				}
@@ -189,7 +185,6 @@ var _ = Describe("AppExaminer", func() {
 
 			It("returns a list of alphabetically sorted examined cells", func() {
 				cellList, err := appExaminer.ListCells()
-
 				Expect(err).ToNot(HaveOccurred())
 				Expect(cellList).To(HaveLen(2))
 
@@ -207,15 +202,12 @@ var _ = Describe("AppExaminer", func() {
 					receptor.ActualLRPResponse{State: receptor.ActualLRPStateUnclaimed},
 					receptor.ActualLRPResponse{State: receptor.ActualLRPStateUnclaimed},
 				}
-
 				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
-
 				fakeReceptorClient.CellsReturns([]receptor.CellResponse{}, nil)
 			})
 
 			It("ignores unclaimed actual lrps", func() {
 				cellList, err := appExaminer.ListCells()
-
 				Expect(err).NotTo(HaveOccurred())
 				Expect(cellList).To(HaveLen(0))
 			})
@@ -224,15 +216,15 @@ var _ = Describe("AppExaminer", func() {
 		Context("with the receptor returning errors", func() {
 			It("returns errors from from fetching the Cells", func() {
 				fakeReceptorClient.CellsReturns(nil, errors.New("You should go catch it."))
-				_, err := appExaminer.ListCells()
 
+				_, err := appExaminer.ListCells()
 				Expect(err).To(MatchError("You should go catch it."))
 			})
 
 			It("returns errors from fetching the ActualLRPs", func() {
 				fakeReceptorClient.ActualLRPsReturns(nil, errors.New("Receptor is Running."))
-				_, err := appExaminer.ListCells()
 
+				_, err := appExaminer.ListCells()
 				Expect(err).To(MatchError("Receptor is Running."))
 			})
 
@@ -240,7 +232,6 @@ var _ = Describe("AppExaminer", func() {
 	})
 
 	Describe("AppStatus", func() {
-
 		var (
 			getDesiredLRPResponse           receptor.DesiredLRPResponse
 			actualLRPsByProcessGuidResponse []receptor.ActualLRPResponse
@@ -258,7 +249,6 @@ var _ = Describe("AppExaminer", func() {
 		}
 
 		Context("When receptor successfully responds to all requests", func() {
-
 			BeforeEach(func() {
 				getDesiredLRPResponse = receptor.DesiredLRPResponse{
 					ProcessGuid: "peekaboo-app",
@@ -335,7 +325,6 @@ var _ = Describe("AppExaminer", func() {
 				fakeReceptorClient.GetDesiredLRPReturns(getDesiredLRPResponse, nil)
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPsByProcessGuidResponse, nil)
 				fakeNoaaConsumer.GetContainerMetricsReturns(containerMetrics, nil)
-
 
 				appInfo, err := appExaminer.AppStatus("peekaboo-app")
 				Expect(err).ToNot(HaveOccurred())
@@ -434,7 +423,6 @@ var _ = Describe("AppExaminer", func() {
 					fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPsByProcessGuidResponse, nil)
 					fakeNoaaConsumer.GetContainerMetricsReturns(containerMetrics, nil)
 
-
 					appInfo, err := appExaminer.AppStatus("peekaboo-app")
 					Expect(err).NotTo(HaveOccurred())
 
@@ -506,7 +494,6 @@ var _ = Describe("AppExaminer", func() {
 				fakeReceptorClient.GetDesiredLRPReturns(receptor.DesiredLRPResponse{}, nil)
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(make([]receptor.ActualLRPResponse, 0), nil)
 
-
 				appInfo, err := appExaminer.AppStatus("peekaboo-app")
 				Expect(err).To(MatchError(app_examiner.AppNotFoundErrorMessage))
 				Expect(appInfo).To(BeZero())
@@ -527,7 +514,6 @@ var _ = Describe("AppExaminer", func() {
 				getDesiredLRPResponse := receptor.DesiredLRPResponse{
 					ProcessGuid: "peekaboo-app",
 				}
-
 				actualLRPs := []receptor.ActualLRPResponse{
 					receptor.ActualLRPResponse{
 						ProcessGuid: "peekaboo-app",
@@ -540,7 +526,6 @@ var _ = Describe("AppExaminer", func() {
 				fakeReceptorClient.GetDesiredLRPReturns(getDesiredLRPResponse, nil)
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPs, nil)
 				fakeNoaaConsumer.GetContainerMetricsReturns(containerMetrics, nil)
-
 
 				appInfo, err := appExaminer.AppStatus("peekaboo-app")
 				Expect(err).NotTo(HaveOccurred())
@@ -589,7 +574,6 @@ var _ = Describe("AppExaminer", func() {
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPs, nil)
 				fakeNoaaConsumer.GetContainerMetricsReturns(nil, errors.New("no metrics 4 you"))
 
-
 				appInfo, err := appExaminer.AppStatus("peekaboo-app")
 				Expect(err).NotTo(HaveOccurred())
 
@@ -610,7 +594,6 @@ var _ = Describe("AppExaminer", func() {
 			fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
 
 			count, placementError, err := appExaminer.RunningAppInstancesInfo("americano-app")
-
 			Expect(err).NotTo(HaveOccurred())
 			Expect(count).To(Equal(2))
 			Expect(placementError).To(BeFalse())
@@ -624,7 +607,6 @@ var _ = Describe("AppExaminer", func() {
 			fakeReceptorClient.ActualLRPsByProcessGuidReturns([]receptor.ActualLRPResponse{}, receptorError)
 
 			_, _, err := appExaminer.RunningAppInstancesInfo("nescafe-app")
-
 			Expect(err).To(MatchError(receptorError))
 		})
 
@@ -638,7 +620,6 @@ var _ = Describe("AppExaminer", func() {
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
 
 				count, placementError, err := appExaminer.RunningAppInstancesInfo("americano-app")
-
 				Expect(err).NotTo(HaveOccurred())
 				Expect(count).To(Equal(2))
 				Expect(placementError).To(BeTrue())
@@ -652,7 +633,6 @@ var _ = Describe("AppExaminer", func() {
 			fakeReceptorClient.ActualLRPsReturns(actualLRPs, nil)
 
 			exists, err := appExaminer.AppExists("americano-app")
-
 			Expect(err).NotTo(HaveOccurred())
 			Expect(exists).To(BeTrue())
 		})
@@ -662,7 +642,6 @@ var _ = Describe("AppExaminer", func() {
 			fakeReceptorClient.ActualLRPsReturns(actualLRPs, nil)
 
 			exists, err := appExaminer.AppExists("americano-app")
-
 			Expect(err).NotTo(HaveOccurred())
 			Expect(exists).To(BeFalse())
 		})
@@ -673,7 +652,6 @@ var _ = Describe("AppExaminer", func() {
 				fakeReceptorClient.ActualLRPsReturns(actualLRPs, errors.New("Something Bad"))
 
 				exists, err := appExaminer.AppExists("americano-app")
-
 				Expect(err).To(MatchError("Something Bad"))
 				Expect(exists).To(BeFalse())
 			})
