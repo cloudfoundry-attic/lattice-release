@@ -220,6 +220,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 			Path: params.StartCommand,
 			Args: params.AppArgs,
 			Dir:  params.WorkingDir,
+			User: userForPrivilege(params.Privileged),
 		},
 	}
 
@@ -233,12 +234,14 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 			Path:      "/tmp/healthcheck",
 			Args:      append(healthCheckArgs, "-port", fmt.Sprint(params.Monitor.Port)),
 			LogSource: "HEALTH",
+			User:      userForPrivilege(params.Privileged),
 		}
 	case URLMonitor:
 		req.Monitor = &models.RunAction{
 			Path:      "/tmp/healthcheck",
 			Args:      append(healthCheckArgs, "-port", fmt.Sprint(params.Monitor.Port), "-uri", params.Monitor.URI),
 			LogSource: "HEALTH",
+			User:      userForPrivilege(params.Privileged),
 		}
 	}
 
@@ -305,4 +308,13 @@ func buildEnvironmentVariables(environmentVariables map[string]string) []recepto
 		appEnvVars = append(appEnvVars, receptor.EnvironmentVariable{Name: name, Value: value})
 	}
 	return appEnvVars
+}
+
+func userForPrivilege(privilege bool) string {
+	switch privilege {
+	case true:
+		return "root"
+	default:
+		return "vcap"
+	}
 }

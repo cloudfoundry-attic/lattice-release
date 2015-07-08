@@ -144,21 +144,25 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 					fmt.Sprintf("%s/bits.tgz", dropletName),
 					"/tmp/bits.tgz",
 				},
+				User: "vcap",
 			},
 			&models.RunAction{
 				Path: "/bin/mkdir",
 				Dir:  "/",
 				Args: []string{"/tmp/app"},
+				User: "vcap",
 			},
 			&models.RunAction{
 				Path: "/bin/tar",
 				Dir:  "/",
 				Args: []string{"-C", "/tmp/app", "-xf", "/tmp/bits.tgz"},
+				User: "vcap",
 			},
 			&models.RunAction{
 				Path: "/tmp/builder",
 				Dir:  "/",
 				Args: builderConfig.Args(),
+				User: "vcap",
 			},
 			&models.RunAction{
 				Path: "/tmp/s3uploader",
@@ -171,6 +175,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 					fmt.Sprintf("%s/droplet.tgz", dropletName),
 					"/tmp/droplet",
 				},
+				User: "vcap",
 			},
 			&models.RunAction{
 				Path: "/tmp/s3uploader",
@@ -183,6 +188,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 					fmt.Sprintf("%s/result.json", dropletName),
 					"/tmp/result.json",
 				},
+				User: "vcap",
 			},
 		},
 	}
@@ -245,11 +251,13 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 						dropletName + "/droplet.tgz",
 						"/tmp/droplet.tgz",
 					},
+					User: "vcap",
 				},
 				&models.RunAction{
 					Path: "/bin/tar",
 					Dir:  "/home/vcap",
 					Args: []string{"-zxf", "/tmp/droplet.tgz"},
+					User: "vcap",
 				},
 			},
 		},

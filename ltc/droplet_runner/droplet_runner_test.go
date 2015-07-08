@@ -227,16 +227,19 @@ var _ = Describe("DropletRunner", func() {
 						Path: "/tmp/s3downloader",
 						Dir:  "/",
 						Args: []string{"access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.tgz", "/tmp/bits.tgz"},
+						User: "vcap",
 					},
 					&models.RunAction{
 						Path: "/bin/mkdir",
 						Dir:  "/",
 						Args: []string{"/tmp/app"},
+						User: "vcap",
 					},
 					&models.RunAction{
 						Path: "/bin/tar",
 						Dir:  "/",
 						Args: []string{"-C", "/tmp/app", "-xf", "/tmp/bits.tgz"},
+						User: "vcap",
 					},
 					&models.RunAction{
 						Path: "/tmp/builder",
@@ -252,16 +255,19 @@ var _ = Describe("DropletRunner", func() {
 							"-skipCertVerify=false",
 							"-skipDetect=true",
 						},
+						User: "vcap",
 					},
 					&models.RunAction{
 						Path: "/tmp/s3uploader",
 						Dir:  "/",
 						Args: []string{"access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/droplet.tgz", "/tmp/droplet"},
+						User: "vcap",
 					},
 					&models.RunAction{
 						Path: "/tmp/s3uploader",
 						Dir:  "/",
 						Args: []string{"access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/result.json", "/tmp/result.json"},
+						User: "vcap",
 					},
 				},
 			}
@@ -335,18 +341,20 @@ var _ = Describe("DropletRunner", func() {
 							"droplet-name/droplet.tgz",
 							"/tmp/droplet.tgz",
 						},
+						User: "vcap",
 					},
 					&models.RunAction{
 						Path: "/bin/tar",
 						Dir:  "/home/vcap",
 						Args: []string{"-zxf", "/tmp/droplet.tgz"},
+						User: "vcap",
 					},
 				},
 			}))
 		})
 
 		It("launches the droplet lrp task with the droplet name as the start command", func() {
-			js := []byte(`{}`)
+			js := []byte("{}")
 			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader(js)), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
@@ -362,7 +370,7 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("launches the droplet lrp task with a custom start command", func() {
-			js := []byte(`{}`)
+			js := []byte("{}")
 			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader(js)), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "start-r-up", []string{"-yeah!"}, app_runner.AppEnvironmentParams{})
@@ -381,7 +389,6 @@ var _ = Describe("DropletRunner", func() {
 			fakeBlobBucket.GetReaderReturns(nil, errors.New("nope"))
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
-
 			Expect(err).To(HaveOccurred())
 		})
 
@@ -390,7 +397,6 @@ var _ = Describe("DropletRunner", func() {
 			fakeAppRunner.CreateAppReturns(errors.New("nope"))
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
-
 			Expect(err).To(HaveOccurred())
 		})
 	})

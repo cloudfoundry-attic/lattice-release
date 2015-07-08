@@ -22,44 +22,47 @@ var _ = Describe("AppRunner", func() {
 	var (
 		fakeReceptorClient *fake_receptor.FakeClient
 		appRunner          app_runner.AppRunner
-		createAppParams    app_runner.CreateAppParams
 	)
 
 	BeforeEach(func() {
 		fakeReceptorClient = &fake_receptor.FakeClient{}
 		appRunner = app_runner.New(fakeReceptorClient, "myDiegoInstall.com")
-
-		appArgs := []string{"app", "arg1", "--app", "arg 2"}
-		appEnv := map[string]string{"APPROOT": "/root/env/path"}
-		createAppParams = app_runner.CreateAppParams{
-			AppEnvironmentParams: app_runner.AppEnvironmentParams{
-				EnvironmentVariables: appEnv,
-				Privileged:           false,
-				Monitor: app_runner.MonitorConfig{
-					Method: app_runner.PortMonitor,
-					Port:   2000,
-				},
-				Instances:    22,
-				CPUWeight:    67,
-				MemoryMB:     128,
-				DiskMB:       1024,
-				ExposedPorts: []uint16{2000, 4000},
-				WorkingDir:   "/user/web/myappdir",
-			},
-
-			Name:         "americano-app",
-			StartCommand: "/app-run-statement",
-			RootFS:       "/runtest/runner",
-			AppArgs:      appArgs,
-
-			Setup: &models.DownloadAction{
-				From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-				To:   "/tmp",
-			},
-		}
 	})
 
 	Describe("CreateApp", func() {
+		var createAppParams app_runner.CreateAppParams
+
+		BeforeEach(func() {
+			appArgs := []string{"app", "arg1", "--app", "arg 2"}
+			appEnv := map[string]string{"APPROOT": "/root/env/path"}
+			createAppParams = app_runner.CreateAppParams{
+				AppEnvironmentParams: app_runner.AppEnvironmentParams{
+					EnvironmentVariables: appEnv,
+					Privileged:           false,
+					Monitor: app_runner.MonitorConfig{
+						Method: app_runner.PortMonitor,
+						Port:   2000,
+					},
+					Instances:    22,
+					CPUWeight:    67,
+					MemoryMB:     128,
+					DiskMB:       1024,
+					ExposedPorts: []uint16{2000, 4000},
+					WorkingDir:   "/user/web/myappdir",
+				},
+
+				Name:         "americano-app",
+				StartCommand: "/app-run-statement",
+				RootFS:       "/runtest/runner",
+				AppArgs:      appArgs,
+
+				Setup: &models.DownloadAction{
+					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+					To:   "/tmp",
+				},
+			}
+		})
+
 		It("Upserts lattice domain so that it is always fresh, then starts the Docker App", func() {
 			err := appRunner.CreateApp(createAppParams)
 			Expect(err).ToNot(HaveOccurred())
@@ -104,6 +107,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(reqAction.Path).To(Equal("/app-run-statement"))
 			Expect(reqAction.Args).To(Equal([]string{"app", "arg1", "--app", "arg 2"}))
 			Expect(reqAction.Dir).To(Equal("/user/web/myappdir"))
+			Expect(reqAction.User).To(Equal("vcap"))
 
 			Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
 			reqMonitor, ok := req.Monitor.(*models.RunAction)
@@ -111,6 +115,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 			Expect(reqMonitor.Args).To(Equal([]string{"-port", "2000"}))
 			Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
+			Expect(reqMonitor.User).To(Equal("vcap"))
 		})
 
 		Context("when 'lattice-debug' is passed as the appId", func() {
@@ -121,6 +126,27 @@ var _ = Describe("AppRunner", func() {
 
 				err := appRunner.CreateApp(createAppParams)
 				Expect(err).To(MatchError(app_runner.AttemptedToCreateLatticeDebugErrorMessage))
+			})
+		})
+
+		Context("when Privileged is true on the CreateAppParams", func() {
+			It("sets Privileged=true and User=root on the lrp request and RunActions, respectively", func() {
+				createAppParams.Privileged = true
+
+				err := appRunner.CreateApp(createAppParams)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+				Expect(req.Privileged).To(BeTrue())
+
+				reqAction, ok := req.Action.(*models.RunAction)
+				Expect(ok).To(BeTrue())
+				Expect(reqAction.User).To(Equal("root"))
+
+				reqMonitor, ok := req.Monitor.(*models.RunAction)
+				Expect(ok).To(BeTrue())
+				Expect(reqMonitor.User).To(Equal("root"))
 			})
 		})
 
@@ -219,6 +245,7 @@ var _ = Describe("AppRunner", func() {
 				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-timeout", "15s", "-port", "2345"}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
+				Expect(reqMonitor.User).To(Equal("vcap"))
 			})
 		})
 
@@ -247,6 +274,7 @@ var _ = Describe("AppRunner", func() {
 				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-port", "1234", "-uri", "/healthy/endpoint"}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
+				Expect(reqMonitor.User).To(Equal("vcap"))
 			})
 
 			It("sets the timeout for the monitor", func() {
@@ -274,6 +302,7 @@ var _ = Describe("AppRunner", func() {
 				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-timeout", "20s", "-port", "1234", "-uri", "/healthy/endpoint"}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
+				Expect(reqMonitor.User).To(Equal("vcap"))
 			})
 		})
 
@@ -351,6 +380,7 @@ var _ = Describe("AppRunner", func() {
 					Path: "/app-run-statement",
 					Args: []string{"app", "arg1", "--app", "arg 2"},
 					Dir:  "/user/web/myappdir",
+					User: "vcap",
 				},
 				Monitor: &models.RunAction{
 					Path:      "/tmp/healthcheck",
