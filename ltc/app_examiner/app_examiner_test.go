@@ -336,88 +336,86 @@ var _ = Describe("AppExaminer", func() {
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPsByProcessGuidResponse, nil)
 				fakeNoaaConsumer.GetContainerMetricsReturns(containerMetrics, nil)
 
-				result, err := appExaminer.AppStatus("peekaboo-app")
 
+				appInfo, err := appExaminer.AppStatus("peekaboo-app")
 				Expect(err).ToNot(HaveOccurred())
-				Expect(result).To(Equal(app_examiner.AppInfo{
-					ProcessGuid:            "peekaboo-app",
-					DesiredInstances:       4,
-					ActualRunningInstances: 1,
-					EnvironmentVariables: []app_examiner.EnvironmentVariable{
-						app_examiner.EnvironmentVariable{
-							Name:  "API_TOKEN",
-							Value: "98weufsa",
-						},
-						app_examiner.EnvironmentVariable{
-							Name:  "PEEKABOO_APP_NICKNAME",
-							Value: "Bugs McGee",
-						},
+
+				Expect(appInfo.ProcessGuid).To(Equal("peekaboo-app"))
+				Expect(appInfo.DesiredInstances).To(Equal(4))
+				Expect(appInfo.ActualRunningInstances).To(Equal(1))
+				Expect(appInfo.EnvironmentVariables).To(ConsistOf(
+					app_examiner.EnvironmentVariable{
+						Name:  "API_TOKEN",
+						Value: "98weufsa",
 					},
-					StartTimeout: 5,
-					DiskMB:       256,
-					MemoryMB:     128,
-					CPUWeight:    77,
-					Ports:        []uint16{8765, 2300},
-					Routes:       route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}}},
-					LogGuid:      "9832-ur98j-idsckl",
-					LogSource:    "peekaboo-lawgz",
-					Annotation:   "best. game. ever.",
-					ActualInstances: []app_examiner.InstanceInfo{
-						app_examiner.InstanceInfo{
-							InstanceGuid: "98s98a-xcvcx4-93isl",
-							CellID:       "cell-2",
-							Index:        0,
-							Ip:           "211.94.88.63",
-							Ports: []app_examiner.PortMapping{
-								app_examiner.PortMapping{
-									HostPort:      2786,
-									ContainerPort: 2020,
-								},
-							},
-							State:      "RUNNING",
-							Since:      2002,
-							HasMetrics: true,
-							Metrics: app_examiner.InstanceMetrics{
-								CpuPercentage: 0.018138574,
-								MemoryBytes:   798729,
-								DiskBytes:     32768,
-							},
-						},
-						app_examiner.InstanceInfo{
-							InstanceGuid: "aisu-8dfy8-9dhu",
-							CellID:       "cell-3",
-							Index:        1,
-							Ip:           "212.38.11.83",
-							Ports: []app_examiner.PortMapping{
-								app_examiner.PortMapping{
-									HostPort:      2983,
-									ContainerPort: 2001,
-								},
-							},
-							State:      "CLAIMED",
-							Since:      1982,
-							CrashCount: 3,
-							HasMetrics: false,
-						},
-						app_examiner.InstanceInfo{
-							Index:          2,
-							State:          "UNCLAIMED",
-							Ports:          []app_examiner.PortMapping{},
-							PlacementError: "not enough resources. eek.",
-							HasMetrics:     false,
-						},
-						app_examiner.InstanceInfo{
-							Index:      3,
-							State:      "CRASHED",
-							Ports:      []app_examiner.PortMapping{},
-							CrashCount: 7,
-							HasMetrics: false,
-						},
+					app_examiner.EnvironmentVariable{
+						Name:  "PEEKABOO_APP_NICKNAME",
+						Value: "Bugs McGee",
 					},
+				))
+				Expect(appInfo.StartTimeout).To(Equal(uint(5)))
+				Expect(appInfo.DiskMB).To(Equal(256))
+				Expect(appInfo.MemoryMB).To(Equal(128))
+				Expect(appInfo.CPUWeight).To(Equal(uint(77)))
+				Expect(appInfo.Ports).To(ConsistOf(uint16(8765), uint16(2300)))
+				Expect(appInfo.Routes).To(Equal(route_helpers.AppRoutes{
+					route_helpers.AppRoute{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}}},
+				))
+				Expect(appInfo.LogGuid).To(Equal("9832-ur98j-idsckl"))
+				Expect(appInfo.LogSource).To(Equal("peekaboo-lawgz"))
+				Expect(appInfo.Annotation).To(Equal("best. game. ever."))
+
+				Expect(appInfo.ActualInstances).To(HaveLen(4))
+
+				instanceZero := appInfo.ActualInstances[0]
+				Expect(instanceZero.InstanceGuid).To(Equal("98s98a-xcvcx4-93isl"))
+				Expect(instanceZero.CellID).To(Equal("cell-2"))
+				Expect(instanceZero.Index).To(Equal(0))
+				Expect(instanceZero.Ip).To(Equal("211.94.88.63"))
+				Expect(instanceZero.Ports).To(ConsistOf(app_examiner.PortMapping{
+					HostPort:      2786,
+					ContainerPort: 2020,
 				}))
+				Expect(instanceZero.State).To(Equal("RUNNING"))
+				Expect(instanceZero.Since).To(Equal(int64(2002)))
+				Expect(instanceZero.HasMetrics).To(BeTrue())
+				Expect(instanceZero.Metrics).To(Equal(app_examiner.InstanceMetrics{
+					CpuPercentage: 0.018138574,
+					MemoryBytes:   798729,
+					DiskBytes:     32768,
+				}))
+
+				instanceOne := appInfo.ActualInstances[1]
+				Expect(instanceOne.InstanceGuid).To(Equal("aisu-8dfy8-9dhu"))
+				Expect(instanceOne.CellID).To(Equal("cell-3"))
+				Expect(instanceOne.Index).To(Equal(1))
+				Expect(instanceOne.Ip).To(Equal("212.38.11.83"))
+				Expect(instanceOne.Ports).To(ConsistOf(app_examiner.PortMapping{
+					HostPort:      2983,
+					ContainerPort: 2001,
+				}))
+				Expect(instanceOne.State).To(Equal("CLAIMED"))
+				Expect(instanceOne.Since).To(Equal(int64(1982)))
+				Expect(instanceOne.CrashCount).To(Equal(3))
+				Expect(instanceOne.HasMetrics).To(BeFalse())
+
+				instanceTwo := appInfo.ActualInstances[2]
+				Expect(instanceTwo.Index).To(Equal(2))
+				Expect(instanceTwo.Ports).To(BeEmpty())
+				Expect(instanceTwo.State).To(Equal("UNCLAIMED"))
+				Expect(instanceTwo.PlacementError).To(Equal("not enough resources. eek."))
+				Expect(instanceTwo.HasMetrics).To(BeFalse())
+
+				instanceThree := appInfo.ActualInstances[3]
+				Expect(instanceThree.Index).To(Equal(3))
+				Expect(instanceThree.Ports).To(BeEmpty())
+				Expect(instanceThree.State).To(Equal("CRASHED"))
+				Expect(instanceThree.CrashCount).To(Equal(7))
+				Expect(instanceThree.HasMetrics).To(BeFalse())
 
 				Expect(fakeReceptorClient.GetDesiredLRPCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.GetDesiredLRPArgsForCall(0)).To(Equal("peekaboo-app"))
+
 				Expect(fakeReceptorClient.ActualLRPsByProcessGuidCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.ActualLRPsByProcessGuidArgsForCall(0)).To(Equal("peekaboo-app"))
 
@@ -429,72 +427,71 @@ var _ = Describe("AppExaminer", func() {
 
 			Context("when desired LRP is not found, but there are actual LRPs for the process GUID (App stopping)", func() {
 				It("returns AppInfo that has ActualInstances, but is missing desiredlrp specific data", func() {
-					fakeReceptorClient.GetDesiredLRPReturns(receptor.DesiredLRPResponse{}, receptor.Error{Type: receptor.DesiredLRPNotFound, Message: "Desired LRP with guid 'peekaboo-app' not found"})
+					fakeReceptorClient.GetDesiredLRPReturns(receptor.DesiredLRPResponse{}, receptor.Error{
+						Type:    receptor.DesiredLRPNotFound,
+						Message: "Desired LRP with guid 'peekaboo-app' not found"},
+					)
 					fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPsByProcessGuidResponse, nil)
 					fakeNoaaConsumer.GetContainerMetricsReturns(containerMetrics, nil)
 
-					result, err := appExaminer.AppStatus("peekaboo-app")
 
+					appInfo, err := appExaminer.AppStatus("peekaboo-app")
 					Expect(err).NotTo(HaveOccurred())
-					Expect(result).To(Equal(app_examiner.AppInfo{
-						ProcessGuid:            "peekaboo-app",
-						ActualRunningInstances: 1,
-						ActualInstances: []app_examiner.InstanceInfo{
-							app_examiner.InstanceInfo{
-								InstanceGuid: "98s98a-xcvcx4-93isl",
-								CellID:       "cell-2",
-								Index:        0,
-								Ip:           "211.94.88.63",
-								Ports: []app_examiner.PortMapping{
-									app_examiner.PortMapping{
-										HostPort:      2786,
-										ContainerPort: 2020,
-									},
-								},
-								State:      "RUNNING",
-								Since:      2002,
-								HasMetrics: true,
-								Metrics: app_examiner.InstanceMetrics{
-									CpuPercentage: 0.018138574,
-									MemoryBytes:   798729,
-									DiskBytes:     32768,
-								},
-							},
-							app_examiner.InstanceInfo{
-								InstanceGuid: "aisu-8dfy8-9dhu",
-								CellID:       "cell-3",
-								Index:        1,
-								Ip:           "212.38.11.83",
-								Ports: []app_examiner.PortMapping{
-									app_examiner.PortMapping{
-										HostPort:      2983,
-										ContainerPort: 2001,
-									},
-								},
-								State:      "CLAIMED",
-								Since:      1982,
-								CrashCount: 3,
-								HasMetrics: false,
-							},
-							app_examiner.InstanceInfo{
-								Index:          2,
-								State:          "UNCLAIMED",
-								Ports:          []app_examiner.PortMapping{},
-								PlacementError: "not enough resources. eek.",
-								HasMetrics:     false,
-							},
-							app_examiner.InstanceInfo{
-								Index:      3,
-								State:      "CRASHED",
-								Ports:      []app_examiner.PortMapping{},
-								CrashCount: 7,
-								HasMetrics: false,
-							},
-						},
+
+					Expect(appInfo.ProcessGuid).To(Equal("peekaboo-app"))
+					Expect(appInfo.ActualRunningInstances).To(Equal(1))
+
+					Expect(appInfo.ActualInstances).To(HaveLen(4))
+
+					instanceZero := appInfo.ActualInstances[0]
+					Expect(instanceZero.InstanceGuid).To(Equal("98s98a-xcvcx4-93isl"))
+					Expect(instanceZero.CellID).To(Equal("cell-2"))
+					Expect(instanceZero.Index).To(Equal(0))
+					Expect(instanceZero.Ip).To(Equal("211.94.88.63"))
+					Expect(instanceZero.Ports).To(ConsistOf(app_examiner.PortMapping{
+						HostPort:      2786,
+						ContainerPort: 2020,
 					}))
+					Expect(instanceZero.State).To(Equal("RUNNING"))
+					Expect(instanceZero.Since).To(Equal(int64(2002)))
+					Expect(instanceZero.HasMetrics).To(BeTrue())
+					Expect(instanceZero.Metrics).To(Equal(app_examiner.InstanceMetrics{
+						CpuPercentage: 0.018138574,
+						MemoryBytes:   798729,
+						DiskBytes:     32768,
+					}))
+
+					instanceOne := appInfo.ActualInstances[1]
+					Expect(instanceOne.InstanceGuid).To(Equal("aisu-8dfy8-9dhu"))
+					Expect(instanceOne.CellID).To(Equal("cell-3"))
+					Expect(instanceOne.Index).To(Equal(1))
+					Expect(instanceOne.Ip).To(Equal("212.38.11.83"))
+					Expect(instanceOne.Ports).To(ConsistOf(app_examiner.PortMapping{
+						HostPort:      2983,
+						ContainerPort: 2001,
+					}))
+					Expect(instanceOne.State).To(Equal("CLAIMED"))
+					Expect(instanceOne.Since).To(Equal(int64(1982)))
+					Expect(instanceOne.CrashCount).To(Equal(3))
+					Expect(instanceOne.HasMetrics).To(BeFalse())
+
+					instanceTwo := appInfo.ActualInstances[2]
+					Expect(instanceTwo.Index).To(Equal(2))
+					Expect(instanceTwo.Ports).To(BeEmpty())
+					Expect(instanceTwo.State).To(Equal("UNCLAIMED"))
+					Expect(instanceTwo.PlacementError).To(Equal("not enough resources. eek."))
+					Expect(instanceTwo.HasMetrics).To(BeFalse())
+
+					instanceThree := appInfo.ActualInstances[3]
+					Expect(instanceThree.Index).To(Equal(3))
+					Expect(instanceThree.Ports).To(BeEmpty())
+					Expect(instanceThree.State).To(Equal("CRASHED"))
+					Expect(instanceThree.CrashCount).To(Equal(7))
+					Expect(instanceThree.HasMetrics).To(BeFalse())
 
 					Expect(fakeReceptorClient.GetDesiredLRPCallCount()).To(Equal(1))
 					Expect(fakeReceptorClient.ActualLRPsByProcessGuidCallCount()).To(Equal(1))
+
 					Expect(fakeReceptorClient.GetDesiredLRPArgsForCall(0)).To(Equal("peekaboo-app"))
 					Expect(fakeReceptorClient.ActualLRPsByProcessGuidArgsForCall(0)).To(Equal("peekaboo-app"))
 
@@ -509,14 +506,17 @@ var _ = Describe("AppExaminer", func() {
 				fakeReceptorClient.GetDesiredLRPReturns(receptor.DesiredLRPResponse{}, nil)
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(make([]receptor.ActualLRPResponse, 0), nil)
 
-				result, err := appExaminer.AppStatus("peekaboo-app")
 
+				appInfo, err := appExaminer.AppStatus("peekaboo-app")
 				Expect(err).To(MatchError(app_examiner.AppNotFoundErrorMessage))
-				Expect(result).To(BeZero())
+				Expect(appInfo).To(BeZero())
+
 				Expect(fakeReceptorClient.GetDesiredLRPCallCount()).To(Equal(1))
-				Expect(fakeReceptorClient.ActualLRPsByProcessGuidCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.GetDesiredLRPArgsForCall(0)).To(Equal("peekaboo-app"))
+
+				Expect(fakeReceptorClient.ActualLRPsByProcessGuidCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.ActualLRPsByProcessGuidArgsForCall(0)).To(Equal("peekaboo-app"))
+
 				Expect(fakeNoaaConsumer.GetContainerMetricsCallCount()).To(Equal(0))
 			})
 
@@ -524,7 +524,7 @@ var _ = Describe("AppExaminer", func() {
 
 		Context("when noaa returns container metrics without an associated actual lrp", func() {
 			It("doesn't blow up", func() {
-				getDesiredLRPResponse = receptor.DesiredLRPResponse{
+				getDesiredLRPResponse := receptor.DesiredLRPResponse{
 					ProcessGuid: "peekaboo-app",
 				}
 
@@ -534,35 +534,42 @@ var _ = Describe("AppExaminer", func() {
 						Index:       6,
 					},
 				}
-				containerMetrics = []*events.ContainerMetric{
+				containerMetrics := []*events.ContainerMetric{
 					buildContainerMetric("peekaboo-app", 42, 0.018138574, 798729, 32768),
 				}
 				fakeReceptorClient.GetDesiredLRPReturns(getDesiredLRPResponse, nil)
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPs, nil)
 				fakeNoaaConsumer.GetContainerMetricsReturns(containerMetrics, nil)
 
-				result, err := appExaminer.AppStatus("peekaboo-app")
 
+				appInfo, err := appExaminer.AppStatus("peekaboo-app")
 				Expect(err).NotTo(HaveOccurred())
-				Expect(result).ToNot(BeZero())
-				Expect(result.ActualInstances).To(HaveLen(1))
-				Expect(result.ActualInstances[0].HasMetrics).To(BeFalse())
+
+				Expect(appInfo).ToNot(BeZero())
+				Expect(appInfo.ActualInstances).To(HaveLen(1))
+				Expect(appInfo.ActualInstances[0].HasMetrics).To(BeFalse())
 			})
 		})
 
 		Context("when the receptor returns errors", func() {
 			It("returns errors from from fetching the DesiredLRPs", func() {
-				fakeReceptorClient.GetDesiredLRPReturns(receptor.DesiredLRPResponse{}, receptor.Error{Type: receptor.UnknownError, Message: "Oops."})
-				_, err := appExaminer.AppStatus("app-to-status")
+				fakeReceptorClient.GetDesiredLRPReturns(receptor.DesiredLRPResponse{}, receptor.Error{
+					Type:    receptor.UnknownError,
+					Message: "Oops."},
+				)
 
+				_, err := appExaminer.AppStatus("app-to-status")
 				Expect(err).To(MatchError("Oops."))
 			})
 
 			It("returns errors from fetching the ActualLRPs", func() {
 				fakeReceptorClient.GetDesiredLRPReturns(receptor.DesiredLRPResponse{}, nil)
-				fakeReceptorClient.ActualLRPsByProcessGuidReturns(nil, receptor.Error{Type: receptor.UnknownError, Message: "ABANDON SHIP!!!!"})
-				_, err := appExaminer.AppStatus("kiss-my-bumper")
+				fakeReceptorClient.ActualLRPsByProcessGuidReturns(nil, receptor.Error{
+					Type:    receptor.UnknownError,
+					Message: "ABANDON SHIP!!!!"},
+				)
 
+				_, err := appExaminer.AppStatus("kiss-my-bumper")
 				Expect(err).To(MatchError("ABANDON SHIP!!!!"))
 			})
 		})
@@ -582,12 +589,13 @@ var _ = Describe("AppExaminer", func() {
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPs, nil)
 				fakeNoaaConsumer.GetContainerMetricsReturns(nil, errors.New("no metrics 4 you"))
 
-				result, err := appExaminer.AppStatus("peekaboo-app")
 
+				appInfo, err := appExaminer.AppStatus("peekaboo-app")
 				Expect(err).NotTo(HaveOccurred())
-				Expect(result).ToNot(BeZero())
-				Expect(result.ActualInstances).To(HaveLen(1))
-				Expect(result.ActualInstances[0].HasMetrics).To(BeFalse())
+
+				Expect(appInfo).ToNot(BeZero())
+				Expect(appInfo.ActualInstances).To(HaveLen(1))
+				Expect(appInfo.ActualInstances[0].HasMetrics).To(BeFalse())
 			})
 		})
 	})
@@ -604,8 +612,9 @@ var _ = Describe("AppExaminer", func() {
 			count, placementError, err := appExaminer.RunningAppInstancesInfo("americano-app")
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(placementError).To(BeFalse())
 			Expect(count).To(Equal(2))
+			Expect(placementError).To(BeFalse())
+
 			Expect(fakeReceptorClient.ActualLRPsByProcessGuidCallCount()).To(Equal(1))
 			Expect(fakeReceptorClient.ActualLRPsByProcessGuidArgsForCall(0)).To(Equal("americano-app"))
 		})
@@ -631,8 +640,8 @@ var _ = Describe("AppExaminer", func() {
 				count, placementError, err := appExaminer.RunningAppInstancesInfo("americano-app")
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(placementError).To(BeTrue())
 				Expect(count).To(Equal(2))
+				Expect(placementError).To(BeTrue())
 			})
 		})
 	})

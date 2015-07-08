@@ -22,103 +22,112 @@ var _ = Describe("AppRunner", func() {
 	var (
 		fakeReceptorClient *fake_receptor.FakeClient
 		appRunner          app_runner.AppRunner
+		createAppParams    app_runner.CreateAppParams
 	)
 
 	BeforeEach(func() {
 		fakeReceptorClient = &fake_receptor.FakeClient{}
 		appRunner = app_runner.New(fakeReceptorClient, "myDiegoInstall.com")
+
+		appArgs := []string{"app", "arg1", "--app", "arg 2"}
+		appEnv := map[string]string{"APPROOT": "/root/env/path"}
+		createAppParams = app_runner.CreateAppParams{
+			AppEnvironmentParams: app_runner.AppEnvironmentParams{
+				EnvironmentVariables: appEnv,
+				Privileged:           false,
+				Monitor: app_runner.MonitorConfig{
+					Method: app_runner.PortMonitor,
+					Port:   2000,
+				},
+				Instances:    22,
+				CPUWeight:    67,
+				MemoryMB:     128,
+				DiskMB:       1024,
+				ExposedPorts: []uint16{2000, 4000},
+				WorkingDir:   "/user/web/myappdir",
+			},
+
+			Name:         "americano-app",
+			StartCommand: "/app-run-statement",
+			RootFS:       "/runtest/runner",
+			AppArgs:      appArgs,
+
+			Setup: &models.DownloadAction{
+				From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+				To:   "/tmp",
+			},
+		}
 	})
 
 	Describe("CreateApp", func() {
 		It("Upserts lattice domain so that it is always fresh, then starts the Docker App", func() {
-			args := []string{"app", "arg1", "--app", "arg 2"}
-			envs := map[string]string{"APPROOT": "/root/env/path"}
-			err := appRunner.CreateApp(app_runner.CreateAppParams{
-				AppEnvironmentParams: app_runner.AppEnvironmentParams{
-					EnvironmentVariables: envs,
-					Privileged:           false,
-					Monitor: app_runner.MonitorConfig{
-						Method: app_runner.PortMonitor,
-						Port:   2000,
-					},
-					Instances:    22,
-					CPUWeight:    67,
-					MemoryMB:     128,
-					DiskMB:       1024,
-					ExposedPorts: []uint16{2000, 4000},
-					WorkingDir:   "/user/web/myappdir",
-				},
-
-				Name:         "americano-app",
-				StartCommand: "/app-run-statement",
-				RootFS:       "/runtest/runner",
-				AppArgs:      args,
-
-				Setup: &models.DownloadAction{
-					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-					To:   "/tmp",
-				},
-			})
+			err := appRunner.CreateApp(createAppParams)
 			Expect(err).ToNot(HaveOccurred())
+
 			Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(1))
 			domain, ttl := fakeReceptorClient.UpsertDomainArgsForCall(0)
 			Expect(domain).To(Equal("lattice"))
 			Expect(ttl).To(Equal(time.Duration(0)))
 
 			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+			req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+			Expect(req.ProcessGuid).To(Equal("americano-app"))
+			Expect(req.Domain).To(Equal("lattice"))
+			Expect(req.RootFS).To(Equal("/runtest/runner"))
+			Expect(req.Instances).To(Equal(22))
+			Expect(req.EnvironmentVariables).To(ConsistOf(
+				receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"},
+				receptor.EnvironmentVariable{Name: "PORT", Value: "2000"},
+			))
+			Expect(req.Routes).To(Equal(route_helpers.AppRoutes{
+				route_helpers.AppRoute{Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"}, Port: 2000},
+				route_helpers.AppRoute{Hostnames: []string{"americano-app-4000.myDiegoInstall.com"}, Port: 4000},
+			}.RoutingInfo()))
+			Expect(req.CPUWeight).To(Equal(uint(67)))
+			Expect(req.MemoryMB).To(Equal(128))
+			Expect(req.DiskMB).To(Equal(1024))
+			Expect(req.Privileged).To(BeFalse())
+			Expect(req.Ports).To(ConsistOf(uint16(2000), uint16(4000)))
+			Expect(req.LogGuid).To(Equal("americano-app"))
+			Expect(req.LogSource).To(Equal("APP"))
+			Expect(req.MetricsGuid).To(Equal("americano-app"))
 
-			Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0)).To(Equal(receptor.DesiredLRPCreateRequest{
-				ProcessGuid:          "americano-app",
-				Domain:               "lattice",
-				RootFS:               "/runtest/runner",
-				Instances:            22,
-				EnvironmentVariables: []receptor.EnvironmentVariable{receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"}, receptor.EnvironmentVariable{Name: "PORT", Value: "2000"}},
-				Routes: route_helpers.AppRoutes{
-					route_helpers.AppRoute{Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"}, Port: 2000},
-					route_helpers.AppRoute{Hostnames: []string{"americano-app-4000.myDiegoInstall.com"}, Port: 4000},
-				}.RoutingInfo(),
-				CPUWeight:   67,
-				MemoryMB:    128,
-				DiskMB:      1024,
-				Privileged:  false,
-				Ports:       []uint16{2000, 4000},
-				LogGuid:     "americano-app",
-				LogSource:   "APP",
-				MetricsGuid: "americano-app",
-				Setup: &models.DownloadAction{
-					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-					To:   "/tmp",
-				},
-				Action: &models.RunAction{
-					Path: "/app-run-statement",
-					Args: []string{"app", "arg1", "--app", "arg 2"},
-					Dir:  "/user/web/myappdir",
-				},
-				Monitor: &models.RunAction{
-					Path:      "/tmp/healthcheck",
-					Args:      []string{"-port", "2000"},
-					LogSource: "HEALTH",
-				},
-			}))
+			Expect(req.Setup).To(BeAssignableToTypeOf(&models.DownloadAction{}))
+			reqSetup, ok := req.Setup.(*models.DownloadAction)
+			Expect(ok).To(BeTrue())
+			Expect(reqSetup.From).To(Equal("http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"))
+			Expect(reqSetup.To).To(Equal("/tmp"))
+
+			Expect(req.Action).To(BeAssignableToTypeOf(&models.RunAction{}))
+			reqAction, ok := req.Action.(*models.RunAction)
+			Expect(ok).To(BeTrue())
+			Expect(reqAction.Path).To(Equal("/app-run-statement"))
+			Expect(reqAction.Args).To(Equal([]string{"app", "arg1", "--app", "arg 2"}))
+			Expect(reqAction.Privileged).To(BeFalse())
+			Expect(reqAction.Dir).To(Equal("/user/web/myappdir"))
+
+			Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
+			reqMonitor, ok := req.Monitor.(*models.RunAction)
+			Expect(ok).To(BeTrue())
+			Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
+			Expect(reqMonitor.Args).To(Equal([]string{"-port", "2000"}))
+			Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
 		})
 
 		Context("when 'lattice-debug' is passed as the appId", func() {
 			It("is an error because that id is reserved for the lattice-debug log stream", func() {
-				err := appRunner.CreateApp(app_runner.CreateAppParams{
-					Name:         reserved_app_ids.LatticeDebugLogStreamAppId,
-					StartCommand: "/app-run-statement",
-					AppArgs:      []string{},
+				createAppParams = app_runner.CreateAppParams{
+					Name: reserved_app_ids.LatticeDebugLogStreamAppId,
+				}
 
-					Setup: &models.DownloadAction{},
-				})
-
+				err := appRunner.CreateApp(createAppParams)
 				Expect(err).To(MatchError(app_runner.AttemptedToCreateLatticeDebugErrorMessage))
 			})
 		})
 
-		Context("when overrideRoutes is not empty", func() {
-			It("uses the override Routes instead of the defaults", func() {
-				err := appRunner.CreateApp(app_runner.CreateAppParams{
+		Context("when route overrides are not empty", func() {
+			It("uses the overriden routes instead of the defaults", func() {
+				createAppParams = app_runner.CreateAppParams{
 					AppEnvironmentParams: app_runner.AppEnvironmentParams{
 						RouteOverrides: app_runner.RouteOverrides{
 							app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
@@ -126,49 +135,41 @@ var _ = Describe("AppRunner", func() {
 							app_runner.RouteOverride{HostnamePrefix: "shuffle", Port: 4000},
 						},
 					},
+				}
 
-					Name:         "americano-app",
-					StartCommand: "/app-run-statement",
-					RootFS:       "runtest/runner",
-					AppArgs:      []string{},
-
-					Setup: &models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-						To:   "/tmp",
-					},
-				})
-
+				err := appRunner.CreateApp(createAppParams)
 				Expect(err).NotTo(HaveOccurred())
+
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				Expect(route_helpers.AppRoutesFromRoutingInfo(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes)).To(ContainExactly(route_helpers.AppRoutes{
-					route_helpers.AppRoute{Hostnames: []string{"wiggle.myDiegoInstall.com", "swang.myDiegoInstall.com"}, Port: 2000},
-					route_helpers.AppRoute{Hostnames: []string{"shuffle.myDiegoInstall.com"}, Port: 4000},
-				}))
+				appRoutes := route_helpers.AppRoutesFromRoutingInfo(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes)
+				Expect(appRoutes).To(ContainExactly(
+					route_helpers.AppRoutes{
+						route_helpers.AppRoute{
+							Hostnames: []string{"wiggle.myDiegoInstall.com", "swang.myDiegoInstall.com"},
+							Port:      2000,
+						},
+						route_helpers.AppRoute{
+							Hostnames: []string{"shuffle.myDiegoInstall.com"},
+							Port:      4000,
+						},
+					}))
 			})
 		})
 
 		Context("when NoRoutes is true", func() {
 			It("does not register any routes for the app", func() {
-				err := appRunner.CreateApp(app_runner.CreateAppParams{
+				createAppParams = app_runner.CreateAppParams{
 					AppEnvironmentParams: app_runner.AppEnvironmentParams{
 						RouteOverrides: app_runner.RouteOverrides{
 							app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
 						},
 						NoRoutes: true,
 					},
+				}
 
-					Name:         "americano-app",
-					StartCommand: "/app-run-statement",
-					RootFS:       "runtest/runner",
-					AppArgs:      []string{},
-
-					Setup: &models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-						To:   "/tmp",
-					},
-				})
-
+				err := appRunner.CreateApp(createAppParams)
 				Expect(err).NotTo(HaveOccurred())
+
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes).To(Equal(route_helpers.AppRoutes{}.RoutingInfo()))
 			})
@@ -176,25 +177,18 @@ var _ = Describe("AppRunner", func() {
 
 		Context("when Monitor is NoMonitor", func() {
 			It("does not pass a monitor action, regardless of whether or not a monitor port is passed", func() {
-				err := appRunner.CreateApp(app_runner.CreateAppParams{
+				createAppParams = app_runner.CreateAppParams{
 					AppEnvironmentParams: app_runner.AppEnvironmentParams{
 						Monitor: app_runner.MonitorConfig{
 							Method: app_runner.NoMonitor,
+							Port:   uint16(4444),
 						},
 					},
+				}
 
-					Name:         "americano-app",
-					StartCommand: "/app-run-statement",
-					RootFS:       "runtest/runner",
-					AppArgs:      []string{},
-
-					Setup: &models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-						To:   "/tmp",
-					},
-				})
-
+				err := appRunner.CreateApp(createAppParams)
 				Expect(err).NotTo(HaveOccurred())
+
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Monitor).To(BeExactlyNil())
 			})
@@ -203,8 +197,7 @@ var _ = Describe("AppRunner", func() {
 		Context("when monitoring a port", func() {
 			It("sets the timeout for the monitor", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
-
-				err := appRunner.CreateApp(app_runner.CreateAppParams{
+				createAppParams = app_runner.CreateAppParams{
 					AppEnvironmentParams: app_runner.AppEnvironmentParams{
 						Monitor: app_runner.MonitorConfig{
 							Method:  app_runner.PortMonitor,
@@ -213,33 +206,26 @@ var _ = Describe("AppRunner", func() {
 						},
 						ExposedPorts: []uint16{2345},
 					},
+				}
 
-					Name:         "americano-app",
-					StartCommand: "/app-run-statement",
-					RootFS:       "runtest/runner",
-					AppArgs:      []string{},
-
-					Setup: &models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-						To:   "/tmp",
-					},
-				})
-
+				err := appRunner.CreateApp(createAppParams)
 				Expect(err).NotTo(HaveOccurred())
+
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				desiredLRPCreateRequest := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
-				Expect(desiredLRPCreateRequest.Monitor).ToNot(BeNil())
-				Expect(desiredLRPCreateRequest.Monitor).To(Equal(&models.RunAction{
-					Path:      "/tmp/healthcheck",
-					Args:      []string{"-timeout", "15s", "-port", "2345"},
-					LogSource: "HEALTH",
-				}))
+				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+
+				Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
+				reqMonitor, ok := req.Monitor.(*models.RunAction)
+				Expect(ok).To(BeTrue())
+				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
+				Expect(reqMonitor.Args).To(Equal([]string{"-timeout", "15s", "-port", "2345"}))
+				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
 			})
 		})
 
 		Context("when monitoring a url", func() {
 			It("passes a monitor action", func() {
-				err := appRunner.CreateApp(app_runner.CreateAppParams{
+				createAppParams = app_runner.CreateAppParams{
 					AppEnvironmentParams: app_runner.AppEnvironmentParams{
 						Monitor: app_runner.MonitorConfig{
 							Method: app_runner.URLMonitor,
@@ -248,31 +234,24 @@ var _ = Describe("AppRunner", func() {
 						},
 						ExposedPorts: []uint16{1234},
 					},
+				}
 
-					Name:         "americano-app",
-					StartCommand: "/app-run-statement",
-					RootFS:       "runtest/runner",
-					AppArgs:      []string{},
-
-					Setup: &models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-						To:   "/tmp",
-					},
-				})
-
+				err := appRunner.CreateApp(createAppParams)
 				Expect(err).NotTo(HaveOccurred())
+
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				desiredLRPCreateRequest := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
-				Expect(desiredLRPCreateRequest.Monitor).ToNot(BeNil())
-				Expect(desiredLRPCreateRequest.Monitor).To(Equal(&models.RunAction{
-					Path:      "/tmp/healthcheck",
-					Args:      []string{"-port", "1234", "-uri", "/healthy/endpoint"},
-					LogSource: "HEALTH",
-				}))
+				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+
+				Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
+				reqMonitor, ok := req.Monitor.(*models.RunAction)
+				Expect(ok).To(BeTrue())
+				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
+				Expect(reqMonitor.Args).To(Equal([]string{"-port", "1234", "-uri", "/healthy/endpoint"}))
+				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
 			})
 
 			It("sets the timeout for the monitor", func() {
-				err := appRunner.CreateApp(app_runner.CreateAppParams{
+				createAppParams = app_runner.CreateAppParams{
 					AppEnvironmentParams: app_runner.AppEnvironmentParams{
 						Monitor: app_runner.MonitorConfig{
 							Method:  app_runner.URLMonitor,
@@ -282,41 +261,30 @@ var _ = Describe("AppRunner", func() {
 						},
 						ExposedPorts: []uint16{1234},
 					},
+				}
 
-					Name:         "americano-app",
-					StartCommand: "/app-run-statement",
-					RootFS:       "runtest/runner",
-					AppArgs:      []string{},
-
-					Setup: &models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-						To:   "/tmp",
-					},
-				})
-
+				err := appRunner.CreateApp(createAppParams)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				desiredLRPCreateRequest := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
-				Expect(desiredLRPCreateRequest.Monitor).ToNot(BeNil())
-				Expect(desiredLRPCreateRequest.Monitor).To(Equal(&models.RunAction{
-					Path:      "/tmp/healthcheck",
-					Args:      []string{"-timeout", "20s", "-port", "1234", "-uri", "/healthy/endpoint"},
-					LogSource: "HEALTH",
-				}))
+				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+
+				Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
+				reqMonitor, ok := req.Monitor.(*models.RunAction)
+				Expect(ok).To(BeTrue())
+				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
+				Expect(reqMonitor.Args).To(Equal([]string{"-timeout", "20s", "-port", "1234", "-uri", "/healthy/endpoint"}))
+				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
 			})
 		})
 
 		It("returns errors if the app is already desired", func() {
 			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "app-already-desired", Instances: 1}}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+			createAppParams = app_runner.CreateAppParams{
+				Name: "app-already-desired",
+			}
 
-			err := appRunner.CreateApp(app_runner.CreateAppParams{
-				Name:         "app-already-desired",
-				StartCommand: "faily/boom",
-
-				Setup: &models.DownloadAction{},
-			})
-
+			err := appRunner.CreateApp(createAppParams)
 			Expect(err).To(MatchError("app-already-desired is already running"))
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})
@@ -325,42 +293,27 @@ var _ = Describe("AppRunner", func() {
 			It("returns upsert domain errors", func() {
 				upsertError := errors.New("You're not that fresh, buddy.")
 				fakeReceptorClient.UpsertDomainReturns(upsertError)
+				createAppParams = app_runner.CreateAppParams{}
 
-				err := appRunner.CreateApp(app_runner.CreateAppParams{
-					Name:         "nescafe-app",
-					StartCommand: "faily/boom",
-
-					Setup: &models.DownloadAction{},
-				})
-
+				err := appRunner.CreateApp(createAppParams)
 				Expect(err).To(MatchError(upsertError))
 			})
 
 			It("returns desiring lrp errors", func() {
 				receptorError := errors.New("error - Desiring an LRP")
 				fakeReceptorClient.CreateDesiredLRPReturns(receptorError)
+				createAppParams = app_runner.CreateAppParams{}
 
-				err := appRunner.CreateApp(app_runner.CreateAppParams{
-					Name:         "nescafe-app",
-					StartCommand: "faily/boom",
-
-					Setup: &models.DownloadAction{},
-				})
-
+				err := appRunner.CreateApp(createAppParams)
 				Expect(err).To(MatchError(receptorError))
 			})
 
 			It("returns existing count errors", func() {
 				receptorError := errors.New("error - Existing Count")
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
+				createAppParams = app_runner.CreateAppParams{}
 
-				err := appRunner.CreateApp(app_runner.CreateAppParams{
-					Name:         "nescafe-app",
-					StartCommand: "faily/boom",
-
-					Setup: &models.DownloadAction{},
-				})
-
+				err := appRunner.CreateApp(createAppParams)
 				Expect(err).To(MatchError(receptorError))
 			})
 		})
@@ -369,11 +322,14 @@ var _ = Describe("AppRunner", func() {
 	Describe("SubmitLrp", func() {
 		It("Creates an app from JSON", func() {
 			desiredLRP := receptor.DesiredLRPCreateRequest{
-				ProcessGuid:          "americano-app",
-				Domain:               "lattice",
-				RootFS:               "docker:///runtest/runner#latest",
-				Instances:            22,
-				EnvironmentVariables: []receptor.EnvironmentVariable{receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"}, receptor.EnvironmentVariable{Name: "PORT", Value: "2000"}},
+				ProcessGuid: "americano-app",
+				Domain:      "lattice",
+				RootFS:      "docker:///runtest/runner#latest",
+				Instances:   22,
+				EnvironmentVariables: []receptor.EnvironmentVariable{
+					receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"},
+					receptor.EnvironmentVariable{Name: "PORT", Value: "2000"},
+				},
 				Routes: route_helpers.AppRoutes{
 					route_helpers.AppRoute{Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"}, Port: 2000},
 					route_helpers.AppRoute{Hostnames: []string{"americano-app-4000.myDiegoInstall.com"}, Port: 4000},
@@ -402,8 +358,8 @@ var _ = Describe("AppRunner", func() {
 				},
 			}
 
-			lrpJson, marshalErr := json.Marshal(desiredLRP)
-			Expect(marshalErr).NotTo(HaveOccurred())
+			lrpJson, err := json.Marshal(desiredLRP)
+			Expect(err).NotTo(HaveOccurred())
 
 			lrpName, err := appRunner.SubmitLrp(lrpJson)
 
@@ -418,18 +374,21 @@ var _ = Describe("AppRunner", func() {
 		})
 
 		It("returns errors if the app is already desired", func() {
-			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "app-already-desired", Instances: 1}}
+			desiredLRPs := []receptor.DesiredLRPResponse{
+				receptor.DesiredLRPResponse{ProcessGuid: "app-already-desired", Instances: 1},
+			}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 			desiredLRP := receptor.DesiredLRPCreateRequest{
 				ProcessGuid: "app-already-desired",
 			}
-			lrpJson, marshalErr := json.Marshal(desiredLRP)
-			Expect(marshalErr).NotTo(HaveOccurred())
 
-			lrpName, err := appRunner.SubmitLrp(lrpJson)
+			lrpJSON, err := json.Marshal(desiredLRP)
+			Expect(err).NotTo(HaveOccurred())
 
+			lrpName, err := appRunner.SubmitLrp(lrpJSON)
 			Expect(err).To(MatchError("app-already-desired is already running"))
 			Expect(lrpName).To(Equal("app-already-desired"))
+
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(0))
 		})
@@ -439,11 +398,10 @@ var _ = Describe("AppRunner", func() {
 				desiredLRP := receptor.DesiredLRPCreateRequest{
 					ProcessGuid: "lattice-debug",
 				}
-				lrpJson, marshalErr := json.Marshal(desiredLRP)
-				Expect(marshalErr).NotTo(HaveOccurred())
+				lrpJSON, err := json.Marshal(desiredLRP)
+				Expect(err).NotTo(HaveOccurred())
 
-				lrpName, err := appRunner.SubmitLrp(lrpJson)
-
+				lrpName, err := appRunner.SubmitLrp(lrpJSON)
 				Expect(err).To(MatchError(app_runner.AttemptedToCreateLatticeDebugErrorMessage))
 				Expect(lrpName).To(Equal("lattice-debug"))
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(0))
@@ -466,11 +424,10 @@ var _ = Describe("AppRunner", func() {
 				desiredLRP := receptor.DesiredLRPCreateRequest{
 					ProcessGuid: "nescafe-app",
 				}
-				lrpJson, marshalErr := json.Marshal(desiredLRP)
-				Expect(marshalErr).NotTo(HaveOccurred())
+				lrpJSON, err := json.Marshal(desiredLRP)
+				Expect(err).NotTo(HaveOccurred())
 
-				lrpName, err := appRunner.SubmitLrp(lrpJson)
-
+				lrpName, err := appRunner.SubmitLrp(lrpJSON)
 				Expect(err).To(MatchError(receptorError))
 				Expect(lrpName).To(Equal("nescafe-app"))
 			})
@@ -481,11 +438,10 @@ var _ = Describe("AppRunner", func() {
 				desiredLRP := receptor.DesiredLRPCreateRequest{
 					ProcessGuid: "whatever-app",
 				}
-				lrpJson, marshalErr := json.Marshal(desiredLRP)
-				Expect(marshalErr).NotTo(HaveOccurred())
+				lrpJSON, err := json.Marshal(desiredLRP)
+				Expect(err).NotTo(HaveOccurred())
 
-				lrpName, err := appRunner.SubmitLrp(lrpJson)
-
+				lrpName, err := appRunner.SubmitLrp(lrpJSON)
 				Expect(err).To(MatchError(upsertError))
 				Expect(lrpName).To(Equal("whatever-app"))
 			})
@@ -496,11 +452,10 @@ var _ = Describe("AppRunner", func() {
 				desiredLRP := receptor.DesiredLRPCreateRequest{
 					ProcessGuid: "nescafe-app",
 				}
-				lrpJson, marshalErr := json.Marshal(desiredLRP)
-				Expect(marshalErr).NotTo(HaveOccurred())
+				lrpJSON, err := json.Marshal(desiredLRP)
+				Expect(err).NotTo(HaveOccurred())
 
-				lrpName, err := appRunner.SubmitLrp(lrpJson)
-
+				lrpName, err := appRunner.SubmitLrp(lrpJSON)
 				Expect(err).To(MatchError(receptorError))
 				Expect(lrpName).To(Equal("nescafe-app"))
 			})
@@ -509,9 +464,10 @@ var _ = Describe("AppRunner", func() {
 	})
 
 	Describe("ScaleApp", func() {
-
-		It("Scales a Docker App", func() {
-			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
+		It("scales a Docker App", func() {
+			desiredLRPs := []receptor.DesiredLRPResponse{
+				receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1},
+			}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 			instanceCount := 25
 
@@ -521,11 +477,13 @@ var _ = Describe("AppRunner", func() {
 			Expect(fakeReceptorClient.UpdateDesiredLRPCallCount()).To(Equal(1))
 			processGuid, updateRequest := fakeReceptorClient.UpdateDesiredLRPArgsForCall(0)
 			Expect(processGuid).To(Equal("americano-app"))
-			Expect(updateRequest).To(Equal(receptor.DesiredLRPUpdateRequest{Instances: &instanceCount}))
+			Expect(*updateRequest.Instances).To(Equal(instanceCount))
 		})
 
 		It("returns errors if the app is NOT already started", func() {
-			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
+			desiredLRPs := []receptor.DesiredLRPResponse{
+				receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1},
+			}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 
 			err := appRunner.ScaleApp("app-not-running", 15)
@@ -558,8 +516,10 @@ var _ = Describe("AppRunner", func() {
 	})
 
 	Describe("UpdateAppRoutes", func() {
-		It("Updates the Routes", func() {
-			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app"}}
+		It("updates the Routes", func() {
+			desiredLRPs := []receptor.DesiredLRPResponse{
+				receptor.DesiredLRPResponse{ProcessGuid: "americano-app"},
+			}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 			expectedRouteOverrides := app_runner.RouteOverrides{
 				app_runner.RouteOverride{
@@ -622,7 +582,9 @@ var _ = Describe("AppRunner", func() {
 
 		Context("returning errors from the receptor", func() {
 			It("returns desiring lrp errors", func() {
-				desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
+				desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{
+					ProcessGuid: "americano-app", Instances: 1},
+				}
 				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 				receptorError := errors.New("error - Updating an LRP")
 				fakeReceptorClient.UpdateDesiredLRPReturns(receptorError)
@@ -645,7 +607,9 @@ var _ = Describe("AppRunner", func() {
 
 	Describe("RemoveApp", func() {
 		It("Removes a Docker App", func() {
-			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
+			desiredLRPs := []receptor.DesiredLRPResponse{
+				receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1},
+			}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 			fakeReceptorClient.DeleteDesiredLRPReturns(nil)
 
@@ -657,7 +621,9 @@ var _ = Describe("AppRunner", func() {
 		})
 
 		It("returns errors if the app is NOT already started", func() {
-			desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
+			desiredLRPs := []receptor.DesiredLRPResponse{
+				receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1},
+			}
 			fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 
 			err := appRunner.RemoveApp("app-not-running")
@@ -668,7 +634,9 @@ var _ = Describe("AppRunner", func() {
 
 		Describe("returning errors from the receptor", func() {
 			It("returns deleting lrp errors", func() {
-				desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1}}
+				desiredLRPs := []receptor.DesiredLRPResponse{
+					receptor.DesiredLRPResponse{ProcessGuid: "americano-app", Instances: 1},
+				}
 				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
 
 				deletingError := errors.New("deleting failed")
