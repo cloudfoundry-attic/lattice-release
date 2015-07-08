@@ -51,6 +51,7 @@ var _ = Describe("Event", func() {
 				"router": &rawMessage,
 			},
 			Action: &models.RunAction{
+				User: "me",
 				Path: "true",
 			},
 		}
@@ -104,6 +105,7 @@ var _ = Describe("Event", func() {
 				RootFS:      "some:rootfs",
 				Routes:      routes,
 				Action: &models.RunAction{
+					User: "me",
 					Path: "true",
 				},
 			}
@@ -172,6 +174,7 @@ var _ = Describe("Event", func() {
 				Instances:   1,
 				Action: &models.RunAction{
 					Path: "true",
+					User: "me",
 				},
 			}
 

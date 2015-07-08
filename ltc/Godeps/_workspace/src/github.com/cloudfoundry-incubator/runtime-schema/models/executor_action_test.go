@@ -158,7 +158,8 @@ var _ = Describe("Actions", func() {
 
 	Describe("Run", func() {
 		itSerializesAndDeserializes(
-			`{
+			`{	
+					"user": "me",
 					"path": "rm",
 					"args": ["-rf", "/"],
 					"dir": "./some-dir",
@@ -166,10 +167,10 @@ var _ = Describe("Actions", func() {
 						{"name":"FOO", "value":"1"},
 						{"name":"BAR", "value":"2"}
 					],
-					"resource_limits":{},
-					"privileged": true
+					"resource_limits":{}
 			}`,
 			&models.RunAction{
+				User: "me",
 				Path: "rm",
 				Dir:  "./some-dir",
 				Args: []string{"-rf", "/"},
@@ -177,17 +178,17 @@ var _ = Describe("Actions", func() {
 					{"FOO", "1"},
 					{"BAR", "2"},
 				},
-				Privileged: true,
 			},
 		)
 
 		Describe("Validate", func() {
 			var runAction models.RunAction
 
-			Context("when the action has 'path' specified", func() {
+			Context("when the action has the required fields", func() {
 				It("is valid", func() {
 					runAction = models.RunAction{
 						Path: "ls",
+						User: "foo",
 					}
 
 					err := runAction.Validate()
@@ -198,7 +199,15 @@ var _ = Describe("Actions", func() {
 			for _, testCase := range []ValidatorErrorCase{
 				{
 					"path",
-					models.RunAction{},
+					models.RunAction{
+						User: "me",
+					},
+				},
+				{
+					"user",
+					models.RunAction{
+						Path: "ls",
+					},
 				},
 			} {
 				testValidatorErrorCase(testCase)
@@ -212,6 +221,7 @@ var _ = Describe("Actions", func() {
 				"action": {
 					"run": {
 						"path": "echo",
+						"user": "someone",
 						"args": null,
 						"env": null,
 						"resource_limits":{}
@@ -222,6 +232,7 @@ var _ = Describe("Actions", func() {
 			models.Timeout(
 				&models.RunAction{
 					Path: "echo",
+					User: "someone",
 				},
 				10*time.Millisecond,
 			),
@@ -305,11 +316,12 @@ var _ = Describe("Actions", func() {
 							"path": "echo",
 							"args": null,
 							"env": null,
-							"resource_limits":{}
+							"resource_limits":{},
+							"user": "me"
 						}
 					}
 			}`,
-			models.Try(&models.RunAction{Path: "echo"}),
+			models.Try(&models.RunAction{Path: "echo", User: "me"}),
 		)
 
 		itSerializesAndDeserializes(
@@ -376,7 +388,8 @@ var _ = Describe("Actions", func() {
 								"resource_limits": {},
 								"env": null,
 								"path": "echo",
-								"args": null
+								"args": null,
+								"user": "me"
 							}
 						}
 					]
@@ -387,7 +400,7 @@ var _ = Describe("Actions", func() {
 					To:       "local_location",
 					CacheKey: "elephant",
 				},
-				&models.RunAction{Path: "echo"},
+				&models.RunAction{Path: "echo", User: "me"},
 			),
 		)
 
@@ -487,7 +500,8 @@ var _ = Describe("Actions", func() {
 								"resource_limits": {},
 								"env": null,
 								"path": "echo",
-								"args": null
+								"args": null,
+								"user": "me"
 							}
 						}
 					]
@@ -498,7 +512,7 @@ var _ = Describe("Actions", func() {
 					To:       "local_location",
 					CacheKey: "elephant",
 				},
-				&models.RunAction{Path: "echo"},
+				&models.RunAction{Path: "echo", User: "me"},
 			),
 		)
 
@@ -594,13 +608,15 @@ var _ = Describe("Actions", func() {
 							"path": "echo",
 							"args": null,
 							"env": null,
-							"resource_limits":{}
+							"resource_limits":{},
+							"user": "me"
 						}
 					}
 			}`,
 			models.EmitProgressFor(
 				&models.RunAction{
 					Path: "echo",
+					User: "me",
 				},
 				"reticulating splines", "reticulated splines", "reticulation failed",
 			),
@@ -683,7 +699,8 @@ var _ = Describe("Actions", func() {
 								"resource_limits": {},
 								"env": null,
 								"path": "echo",
-								"args": null
+								"args": null,
+								"user": "me"
 							}
 						}
 					]
@@ -694,7 +711,7 @@ var _ = Describe("Actions", func() {
 					To:       "local_location",
 					CacheKey: "elephant",
 				},
-				&models.RunAction{Path: "echo"},
+				&models.RunAction{Path: "echo", User: "me"},
 			),
 		)
 

@@ -208,6 +208,7 @@ func newValidDesiredLRPCreateRequest() receptor.DesiredLRPCreateRequest {
 		Instances:   1,
 		Ports:       []uint16{1234, 5678},
 		Action: &models.RunAction{
+			User: "me",
 			Path: "/bin/bash",
 		},
 	}

@@ -55,7 +55,7 @@ var _ = Describe("Task API", func() {
 				Domain:                "test-domain",
 				RootFS:                "some:rootfs",
 				CompletionCallbackURL: testServer.URL() + "/the/callback/path",
-				Action:                &models.RunAction{Path: "/bin/bash", Args: []string{"echo", "hi"}},
+				Action:                &models.RunAction{User: "me", Path: "/bin/bash", Args: []string{"echo", "hi"}},
 			}
 
 			err = client.CreateTask(taskToCreate)
@@ -102,7 +102,7 @@ var _ = Describe("Task API", func() {
 						Expect(taskResponse.Result).To(Equal("the-result"))
 						Expect(taskResponse.Failed).To(Equal(true))
 						Expect(taskResponse.FailureReason).To(Equal("the-failure-reason"))
-						Expect(taskResponse.Action).To(Equal(&models.RunAction{Path: "/bin/bash", Args: []string{"echo", "hi"}}))
+						Expect(taskResponse.Action).To(Equal(&models.RunAction{User: "me", Path: "/bin/bash", Args: []string{"echo", "hi"}}))
 					},
 				))
 
@@ -131,7 +131,7 @@ var _ = Describe("Task API", func() {
 					TaskGuid: "task-guid-1",
 					Domain:   "test-domain",
 					RootFS:   "some:rootfs",
-					Action:   &models.RunAction{Path: "/bin/true"},
+					Action:   &models.RunAction{User: "me", Path: "/bin/true"},
 				})
 				Expect(err).NotTo(HaveOccurred())
 
@@ -139,7 +139,7 @@ var _ = Describe("Task API", func() {
 					TaskGuid: "task-guid-2",
 					Domain:   "test-domain",
 					RootFS:   "some:rootfs",
-					Action:   &models.RunAction{Path: "/bin/true"},
+					Action:   &models.RunAction{User: "me", Path: "/bin/true"},
 				})
 				Expect(err).NotTo(HaveOccurred())
 			})
@@ -164,7 +164,7 @@ var _ = Describe("Task API", func() {
 				TaskGuid: "task-guid-1",
 				Domain:   "test-domain",
 				RootFS:   "some:rootfs",
-				Action:   &models.RunAction{Path: "/bin/true"},
+				Action:   &models.RunAction{User: "me", Path: "/bin/true"},
 			})
 			Expect(err).NotTo(HaveOccurred())
 
@@ -172,7 +172,7 @@ var _ = Describe("Task API", func() {
 				TaskGuid: "task-guid-2",
 				Domain:   "other-domain",
 				RootFS:   "some:rootfs",
-				Action:   &models.RunAction{Path: "/bin/true"},
+				Action:   &models.RunAction{User: "me", Path: "/bin/true"},
 			})
 			Expect(err).NotTo(HaveOccurred())
 
@@ -180,7 +180,7 @@ var _ = Describe("Task API", func() {
 				TaskGuid: "task-guid-3",
 				Domain:   "test-domain",
 				RootFS:   "some:rootfs",
-				Action:   &models.RunAction{Path: "/bin/true"},
+				Action:   &models.RunAction{User: "me", Path: "/bin/true"},
 			})
 			Expect(err).NotTo(HaveOccurred())
 		})
@@ -203,7 +203,7 @@ var _ = Describe("Task API", func() {
 				TaskGuid: "task-guid-1",
 				Domain:   "test-domain",
 				RootFS:   "some:rootfs",
-				Action:   &models.RunAction{Path: "/bin/true"},
+				Action:   &models.RunAction{User: "me", Path: "/bin/true"},
 			}
 			err := bbs.DesireTask(logger, task)
 			Expect(err).NotTo(HaveOccurred())
@@ -245,7 +245,7 @@ var _ = Describe("Task API", func() {
 				TaskGuid: "task-guid-1",
 				Domain:   "test-domain",
 				RootFS:   "some:rootfs",
-				Action:   &models.RunAction{Path: "/bin/true"},
+				Action:   &models.RunAction{User: "me", Path: "/bin/true"},
 			}
 
 			err := bbs.DesireTask(logger, task)
@@ -300,7 +300,7 @@ var _ = Describe("Task API", func() {
 				TaskGuid: "task-guid-1",
 				Domain:   "test-domain",
 				RootFS:   "some:rootfs",
-				Action:   &models.RunAction{Path: "/bin/true"},
+				Action:   &models.RunAction{User: "me", Path: "/bin/true"},
 			}
 
 			err := bbs.DesireTask(logger, task)

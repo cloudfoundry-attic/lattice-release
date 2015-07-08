@@ -39,7 +39,8 @@ var _ = Describe("DesiredLRP", func() {
 				"path": "ls",
 				"args": null,
 				"env": null,
-				"resource_limits":{}
+				"resource_limits":{},
+				"user": "me"
 			}
 		},
 		"monitor": {
@@ -47,7 +48,8 @@ var _ = Describe("DesiredLRP", func() {
 				"path": "reboot",
 				"args": null,
 				"env": null,
-				"resource_limits":{}
+				"resource_limits":{},
+				"user": "someone"
 			}
 		},
 	  "disk_mb": 512,
@@ -124,9 +126,11 @@ var _ = Describe("DesiredLRP", func() {
 			},
 			Action: &RunAction{
 				Path: "ls",
+				User: "me",
 			},
 			Monitor: &RunAction{
 				Path: "reboot",
+				User: "someone",
 			},
 			EgressRules: []SecurityGroupRule{
 				{

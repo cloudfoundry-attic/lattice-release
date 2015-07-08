@@ -132,6 +132,7 @@ var _ = Describe("Task", func() {
 					RootFS:   "some:rootfs",
 					Action: &models.RunAction{
 						Path: "ls",
+						User: "me",
 					},
 				}
 
@@ -148,6 +149,7 @@ var _ = Describe("Task", func() {
 					RootFS:   "some:rootfs",
 					Action: &models.RunAction{
 						Path: "ls",
+						User: "me",
 					},
 				}
 
@@ -165,6 +167,7 @@ var _ = Describe("Task", func() {
 					RootFS: "some:rootfs",
 					Action: &models.RunAction{
 						Path: "ls",
+						User: "me",
 					},
 				},
 			},
@@ -175,6 +178,7 @@ var _ = Describe("Task", func() {
 					TaskGuid: "task-guid",
 					Action: &models.RunAction{
 						Path: "ls",
+						User: "me",
 					},
 				},
 			},
@@ -186,6 +190,7 @@ var _ = Describe("Task", func() {
 					RootFS:   ":invalid-url",
 					Action: &models.RunAction{
 						Path: "ls",
+						User: "me",
 					},
 				},
 			},
@@ -197,6 +202,7 @@ var _ = Describe("Task", func() {
 					RootFS:   "invalid-absolute-url",
 					Action: &models.RunAction{
 						Path: "ls",
+						User: "me",
 					},
 				},
 			},
@@ -207,6 +213,7 @@ var _ = Describe("Task", func() {
 					RootFS:   "some:rootfs",
 					Action: &models.RunAction{
 						Path: "ls",
+						User: "me",
 					},
 				},
 			},
@@ -223,7 +230,7 @@ var _ = Describe("Task", func() {
 					Domain:   "some-domain",
 					TaskGuid: "task-guid",
 					RootFS:   "some:rootfs",
-					Action:   &models.RunAction{},
+					Action:   &models.RunAction{User: "me"},
 				},
 			},
 			{
@@ -234,6 +241,7 @@ var _ = Describe("Task", func() {
 					RootFS:   "some:rootfs",
 					Action: &models.RunAction{
 						Path: "ls",
+						User: "me",
 					},
 					Annotation: strings.Repeat("a", 10*1024+1),
 				},
@@ -246,6 +254,7 @@ var _ = Describe("Task", func() {
 					RootFS:   "some:rootfs",
 					Action: &models.RunAction{
 						Path: "ls",
+						User: "me",
 					},
 					CPUWeight: 101,
 				},
@@ -258,6 +267,7 @@ var _ = Describe("Task", func() {
 					RootFS:   "some:rootfs",
 					Action: &models.RunAction{
 						Path: "ls",
+						User: "me",
 					},
 					EgressRules: []models.SecurityGroupRule{
 						{Protocol: "invalid"},

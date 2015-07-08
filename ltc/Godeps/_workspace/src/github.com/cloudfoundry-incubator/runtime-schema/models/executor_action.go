@@ -96,7 +96,7 @@ type RunAction struct {
 	Dir            string                `json:"dir,omitempty"`
 	Env            []EnvironmentVariable `json:"env"`
 	ResourceLimits ResourceLimits        `json:"resource_limits"`
-	Privileged     bool                  `json:"privileged,omitempty"`
+	User           string                `json:"user"`
 
 	LogSource string `json:"log_source,omitempty"`
 }
@@ -110,6 +110,10 @@ func (a RunAction) Validate() error {
 
 	if a.Path == "" {
 		validationError = validationError.Append(ErrInvalidField{"path"})
+	}
+
+	if a.User == "" {
+		validationError = validationError.Append(ErrInvalidField{"user"})
 	}
 
 	if !validationError.Empty() {

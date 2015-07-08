@@ -105,6 +105,7 @@ var _ = Describe("TaskWorker", func() {
 				TaskGuid:              "the-task-guid",
 				CompletionCallbackURL: callbackURL,
 				Action: &models.RunAction{
+					User: "me",
 					Path: "lol",
 				},
 			}

@@ -40,7 +40,7 @@ var _ = Describe("TaskHandler", func() {
 			TaskGuid:   "task-guid-1",
 			Domain:     "test-domain",
 			RootFS:     "docker://docker",
-			Action:     &models.RunAction{Path: "/bin/bash", Args: []string{"echo", "hi"}},
+			Action:     &models.RunAction{User: "me", Path: "/bin/bash", Args: []string{"echo", "hi"}},
 			MemoryMB:   24,
 			DiskMB:     12,
 			CPUWeight:  10,
@@ -55,7 +55,7 @@ var _ = Describe("TaskHandler", func() {
 			TaskGuid:   "task-guid-1",
 			Domain:     "test-domain",
 			RootFS:     "docker://docker",
-			Action:     &models.RunAction{Path: "/bin/bash", Args: []string{"echo", "hi"}},
+			Action:     &models.RunAction{User: "me", Path: "/bin/bash", Args: []string{"echo", "hi"}},
 			MemoryMB:   24,
 			DiskMB:     12,
 			CPUWeight:  10,
@@ -210,6 +210,7 @@ var _ = Describe("TaskHandler", func() {
 					TaskGuid: "task-guid-1",
 					Domain:   "domain-1",
 					Action: &models.RunAction{
+						User: "me",
 						Path: "the-path",
 					},
 					State: models.TaskStatePending,
@@ -219,6 +220,7 @@ var _ = Describe("TaskHandler", func() {
 					TaskGuid: "task-guid-2",
 					Domain:   "domain-2",
 					Action: &models.RunAction{
+						User: "me",
 						Path: "the-path",
 					},
 					State: models.TaskStatePending,
@@ -369,6 +371,7 @@ var _ = Describe("TaskHandler", func() {
 					TaskGuid: "task-guid-1",
 					Domain:   "domain-1",
 					Action: &models.RunAction{
+						User: "me",
 						Path: "the-path",
 					},
 					State: models.TaskStateRunning,

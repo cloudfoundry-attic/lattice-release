@@ -45,6 +45,7 @@ var _ = Describe("DesiredLRP Serialization", func() {
 				Instances:   1,
 				Ports:       []uint16{2345, 6789},
 				Action: &models.RunAction{
+					User: "me",
 					Path: "the-path",
 				},
 				StartTimeout: 4,

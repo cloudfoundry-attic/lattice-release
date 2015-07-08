@@ -51,7 +51,7 @@ var _ = Describe("TaskHandler", func() {
 			Result:        "some result",
 			RootFS:        "some:rootfs",
 			Domain:        "some-domain",
-			Action:        &models.RunAction{Path: "true"},
+			Action:        &models.RunAction{Path: "true", User: "me"},
 		}
 
 		BeforeEach(func() {

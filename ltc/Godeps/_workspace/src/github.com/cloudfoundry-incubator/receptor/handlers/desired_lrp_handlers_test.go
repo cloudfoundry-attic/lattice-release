@@ -41,6 +41,7 @@ var _ = Describe("Desired LRP Handlers", func() {
 			Privileged:  true,
 			Instances:   1,
 			Action: &models.RunAction{
+				User: "me",
 				Path: "the-path",
 			},
 		}
@@ -52,6 +53,7 @@ var _ = Describe("Desired LRP Handlers", func() {
 			Privileged:  true,
 			Instances:   1,
 			Action: &models.RunAction{
+				User: "me",
 				Path: "the-path",
 			},
 		}
@@ -193,6 +195,7 @@ var _ = Describe("Desired LRP Handlers", func() {
 					ProcessGuid: "process-guid-0",
 					Domain:      "domain-1",
 					Action: &models.RunAction{
+						User: "me",
 						Path: "the-path",
 					},
 				}, nil)
@@ -593,6 +596,7 @@ var _ = Describe("Desired LRP Handlers", func() {
 						ProcessGuid: "process-guid-1",
 						Domain:      "domain-1",
 						Action: &models.RunAction{
+							User: "me",
 							Path: "the-path",
 						},
 					},
@@ -600,6 +604,7 @@ var _ = Describe("Desired LRP Handlers", func() {
 						ProcessGuid: "process-guid-2",
 						Domain:      "domain-2",
 						Action: &models.RunAction{
+							User: "me",
 							Path: "the-path",
 						},
 					},
@@ -610,6 +615,7 @@ var _ = Describe("Desired LRP Handlers", func() {
 						ProcessGuid: "process-guid-2",
 						Domain:      "domain-2",
 						Action: &models.RunAction{
+							User: "me",
 							Path: "the-path",
 						},
 					},

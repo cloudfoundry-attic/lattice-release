@@ -21,11 +21,11 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/receptor",
-			"Rev": "0ca514af7090c25faa0a111bc72412926c6a5992"
+			"Rev": "d830130c453d4258cc36fccd2e211e98689f85b9"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "354a4ebc08e250451ce53d8618171950c061336d"
+			"Rev": "e343d0bd881d806c0d0eae6afdccafb7fbf56990"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",

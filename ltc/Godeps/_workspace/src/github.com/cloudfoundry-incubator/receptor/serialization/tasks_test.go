@@ -143,6 +143,7 @@ var _ = Describe("Task Serialization", func() {
 				Domain:   "the-domain",
 				RootFS:   "the-rootfs",
 				Action: &models.RunAction{
+					User: "me",
 					Path: "the-path",
 				},
 				MemoryMB:    100,
@@ -175,6 +176,7 @@ var _ = Describe("Task Serialization", func() {
 				Domain:   "the-domain",
 				RootFS:   "the-rootfs",
 				Action: &models.RunAction{
+					User: "me",
 					Path: "the-path",
 				},
 				MemoryMB:    100,

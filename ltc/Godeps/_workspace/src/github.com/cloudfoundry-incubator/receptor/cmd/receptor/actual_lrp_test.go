@@ -46,7 +46,7 @@ var _ = Describe("Actual LRP API", func() {
 			Instances:   1,
 			RootFS:      "some:rootfs",
 			Ports:       []uint16{80},
-			Action:      &models.RunAction{Path: "/bin/true"},
+			Action:      &models.RunAction{User: "me", Path: "/bin/true"},
 		}
 
 		err := bbs.DesireLRP(logger, desiredLRP)

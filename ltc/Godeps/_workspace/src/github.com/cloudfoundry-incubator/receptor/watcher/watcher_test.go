@@ -259,6 +259,7 @@ var _ = Describe("Watcher", func() {
 			BeforeEach(func() {
 				desiredLRP = models.DesiredLRP{
 					Action: &models.RunAction{
+						User: "me",
 						Path: "ls",
 					},
 					Domain:      "tests",

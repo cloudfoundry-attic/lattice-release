@@ -11,8 +11,6 @@ When submitting a Task you `POST` a valid `TaskCreateRequest`.  The [API referen
     "task_guid": "some-guid",
     "domain": "some-domain",
 
-    "stack": "cflinuxfs2",
-
     "rootfs": "docker:///docker-org/docker-image",
     "env": [
         {"name": "ENV_NAME_A", "value": "ENV_VALUE_A"},
