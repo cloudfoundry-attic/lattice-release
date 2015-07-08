@@ -103,7 +103,6 @@ var _ = Describe("AppRunner", func() {
 			Expect(ok).To(BeTrue())
 			Expect(reqAction.Path).To(Equal("/app-run-statement"))
 			Expect(reqAction.Args).To(Equal([]string{"app", "arg1", "--app", "arg 2"}))
-			Expect(reqAction.Privileged).To(BeFalse())
 			Expect(reqAction.Dir).To(Equal("/user/web/myappdir"))
 
 			Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
