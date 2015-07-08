@@ -125,7 +125,7 @@ func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
 }
 
 func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string) error {
-	builderConfig := buildpack_app_lifecycle.NewLifecycleBuilderConfig([]string{buildpackUrl}, false, false)
+	builderConfig := buildpack_app_lifecycle.NewLifecycleBuilderConfig([]string{buildpackUrl}, true, false)
 
 	action := &models.SerialAction{
 		Actions: []models.Action{
