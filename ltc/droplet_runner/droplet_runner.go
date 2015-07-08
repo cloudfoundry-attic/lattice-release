@@ -27,7 +27,7 @@ const (
 type DropletRunner interface {
 	UploadBits(dropletName, uploadPath string) error
 	BuildDroplet(taskName, dropletName, buildpackUrl string) error
-	LaunchDroplet(appName, dropletName string, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error
+	LaunchDroplet(appName, dropletName, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error
 	ListDroplets() ([]Droplet, error)
 	RemoveDroplet(dropletName string) error
 }
@@ -85,13 +85,11 @@ func (dr *dropletRunner) ListDroplets() ([]Droplet, error) {
 			if key.Key == prefix+"droplet.tgz" {
 				droplet := Droplet{Name: strings.TrimRight(prefix, "/")}
 
-				modTime, err := time.Parse("2006-01-02T15:04:05.999Z", key.LastModified)
-				if err == nil {
+				if modTime, err := time.Parse("2006-01-02T15:04:05.999Z", key.LastModified); err == nil {
 					droplet.Created = &modTime
 				}
 
 				droplets = append(droplets, droplet)
-
 				break
 			}
 		}

@@ -519,6 +519,7 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		It("launches the specified droplet", func() {
+			fakeAppExaminer.RunningAppInstancesInfoReturns(11, false, nil)
 			args := []string{
 				"--cpu-weight=57",
 				"--memory-mb=12",
@@ -540,9 +541,13 @@ var _ = Describe("CommandFactory", func() {
 				"-app-arg",
 			}
 
-			fakeAppExaminer.RunningAppInstancesInfoReturns(11, false, nil)
-
 			test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+			Expect(outputBuffer).To(test_helpers.Say("Creating App: droppy\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("droppy is now running.\n")))
+			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://ninetyninety.192.168.11.11.xip.io\n")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://fourtyfourfourtyfour.192.168.11.11.xip.io\n")))
 
 			Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(1))
 			appName, dropletNameParam, startCommandParam, startArgsParam, appEnvParam := fakeDropletRunner.LaunchDropletArgsForCall(0)
@@ -573,18 +578,18 @@ var _ = Describe("CommandFactory", func() {
 				app_runner.RouteOverride{HostnamePrefix: "ninetyninety", Port: 4444},
 				app_runner.RouteOverride{HostnamePrefix: "fourtyfourfourtyfour", Port: 9090},
 			}))
-
-			Expect(outputBuffer).To(test_helpers.Say("Creating App: droppy\n"))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("droppy is now running.\n")))
-			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://ninetyninety.192.168.11.11.xip.io\n")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://fourtyfourfourtyfour.192.168.11.11.xip.io\n")))
 		})
 
 		It("launches the specified droplet with default values", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 
 			test_helpers.ExecuteCommandWithArgs(launchDropletCommand, []string{"droppy", "droplet-name"})
+
+			Expect(outputBuffer).To(test_helpers.Say("No port specified. Defaulting to 8080.\n"))
+			Expect(outputBuffer).To(test_helpers.Say("Creating App: droppy\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("droppy is now running.\n")))
+			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://droppy.192.168.11.11.xip.io\n")))
 
 			Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(1))
 			appName, dropletNameParam, startCommandParam, startArgsParam, appEnvParam := fakeDropletRunner.LaunchDropletArgsForCall(0)
@@ -604,12 +609,6 @@ var _ = Describe("CommandFactory", func() {
 				"PROCESS_GUID": "droppy",
 			}))
 			Expect(appEnvParam.RouteOverrides).To(BeNil())
-
-			Expect(outputBuffer).To(test_helpers.Say("No port specified. Defaulting to 8080.\n"))
-			Expect(outputBuffer).To(test_helpers.Say("Creating App: droppy\n"))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("droppy is now running.\n")))
-			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://droppy.192.168.11.11.xip.io\n")))
 		})
 
 		Context("invalid syntax", func() {
@@ -778,11 +777,11 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		It("removes the droplet", func() {
-			fakeDropletRunner.RemoveDropletReturns(nil)
-
 			test_helpers.ExecuteCommandWithArgs(removeDropletCommand, []string{"droppo"})
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Droplet removed"))
+			Expect(fakeDropletRunner.RemoveDropletCallCount()).To(Equal(1))
+			Expect(fakeDropletRunner.RemoveDropletArgsForCall(0)).To(Equal("droppo"))
 		})
 
 		Context("when the droplet runner returns errors", func() {
@@ -791,13 +790,10 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(removeDropletCommand, []string{"droppo"})
 
-				Expect(fakeDropletRunner.RemoveDropletCallCount()).To(Equal(1))
-				Expect(fakeDropletRunner.RemoveDropletArgsForCall(0)).To(Equal("droppo"))
-
 				Expect(outputBuffer).To(test_helpers.Say("Error removing droplet droppo: failed"))
+				Expect(fakeDropletRunner.RemoveDropletCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
 	})
-
 })

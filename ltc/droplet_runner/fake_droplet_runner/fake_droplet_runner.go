@@ -28,7 +28,7 @@ type FakeDropletRunner struct {
 	buildDropletReturns struct {
 		result1 error
 	}
-	LaunchDropletStub        func(appName, dropletName string, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error
+	LaunchDropletStub        func(appName, dropletName, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error
 	launchDropletMutex       sync.RWMutex
 	launchDropletArgsForCall []struct {
 		appName              string
@@ -43,7 +43,7 @@ type FakeDropletRunner struct {
 	ListDropletsStub        func() ([]droplet_runner.Droplet, error)
 	listDropletsMutex       sync.RWMutex
 	listDropletsArgsForCall []struct{}
-	listDropletsReturns     struct {
+	listDropletsReturns struct {
 		result1 []droplet_runner.Droplet
 		result2 error
 	}

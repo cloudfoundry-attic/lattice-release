@@ -23,7 +23,7 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-var _ = Describe("CommandFactory", func() {
+var _ = Describe("TaskRunner CommandFactory", func() {
 	var (
 		outputBuffer     *gbytes.Buffer
 		terminalUI       terminal.UI
@@ -40,12 +40,12 @@ var _ = Describe("CommandFactory", func() {
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 	})
 
-	Describe("SubmitTask", func() {
+	Describe("SubmitTaskCommand", func() {
 		var (
 			submitTaskCommand cli.Command
-			tmpDir            string
 			tmpFile           *os.File
 			err               error
+			jsonContents      []byte
 		)
 
 		BeforeEach(func() {
@@ -55,17 +55,16 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("when the json file exists", func() {
 			BeforeEach(func() {
-				tmpDir = os.TempDir()
-				tmpFile, err = ioutil.TempFile(tmpDir, "tmp_json")
-
+				tmpFile, err = ioutil.TempFile("", "tmp_json")
 				Expect(err).ToNot(HaveOccurred())
+
+				jsonContents = []byte(`{"Value":"test value"}`)
+				Expect(ioutil.WriteFile(tmpFile.Name(), jsonContents, 0700)).To(Succeed())
 			})
 
 			It("submits a task from json", func() {
-				jsonContents := []byte(`{"Value":"test value"}`)
-				ioutil.WriteFile(tmpFile.Name(), jsonContents, 0700)
-				args := []string{tmpFile.Name()}
 				fakeTaskRunner.SubmitTaskReturns("some-task", nil)
+				args := []string{tmpFile.Name()}
 
 				test_helpers.ExecuteCommandWithArgs(submitTaskCommand, args)
 
@@ -75,10 +74,8 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("prints an error returned by the task_runner", func() {
-				jsonContents := []byte(`{"Value":"test value"}`)
-				ioutil.WriteFile(tmpFile.Name(), jsonContents, 0700)
-				args := []string{tmpFile.Name()}
 				fakeTaskRunner.SubmitTaskReturns("some-task", errors.New("taskypoo"))
+				args := []string{tmpFile.Name()}
 
 				test_helpers.ExecuteCommandWithArgs(submitTaskCommand, args)
 
@@ -101,11 +98,11 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("when the file cannot be read", func() {
 			It("prints an error", func() {
-				args := []string{filepath.Join(tmpDir, "file-no-existy")}
+				args := []string{filepath.Join(os.TempDir(), "file-no-existy")}
 
 				test_helpers.ExecuteCommandWithArgs(submitTaskCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say(fmt.Sprintf("Error reading file: open %s: no such file or directory", filepath.Join(tmpDir, "file-no-existy"))))
+				Expect(outputBuffer).To(test_helpers.Say(fmt.Sprintf("Error reading file: open %s: no such file or directory", filepath.Join(os.TempDir(), "file-no-existy"))))
 				Expect(fakeTaskRunner.SubmitTaskCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
 			})

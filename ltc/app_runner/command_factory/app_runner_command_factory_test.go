@@ -24,21 +24,18 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock/fakeclock"
-	"github.com/pivotal-golang/lager"
 )
 
 var _ = Describe("AppRunner CommandFactory", func() {
 	var (
-		fakeAppRunner                     *fake_app_runner.FakeAppRunner
-		fakeAppExaminer                   *fake_app_examiner.FakeAppExaminer
-		outputBuffer                      *gbytes.Buffer
-		terminalUI                        terminal.UI
-		domain                            string = "192.168.11.11.xip.io"
-		fakeClock                         *fakeclock.FakeClock
-		fakeAppRunnerCommandFactoryConfig command_factory.AppRunnerCommandFactoryConfig
-		logger                            lager.Logger
-		fakeTailedLogsOutputter           *fake_tailed_logs_outputter.FakeTailedLogsOutputter
-		fakeExitHandler                   *fake_exit_handler.FakeExitHandler
+		fakeAppRunner                 *fake_app_runner.FakeAppRunner
+		fakeAppExaminer               *fake_app_examiner.FakeAppExaminer
+		outputBuffer                  *gbytes.Buffer
+		terminalUI                    terminal.UI
+		fakeClock                     *fakeclock.FakeClock
+		fakeTailedLogsOutputter       *fake_tailed_logs_outputter.FakeTailedLogsOutputter
+		fakeExitHandler               *fake_exit_handler.FakeExitHandler
+		appRunnerCommandFactoryConfig command_factory.AppRunnerCommandFactoryConfig
 	)
 
 	BeforeEach(func() {
@@ -47,7 +44,6 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		fakeClock = fakeclock.NewFakeClock(time.Now())
-		logger = lager.NewLogger("ltc-test")
 		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 	})
@@ -61,19 +57,13 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			fakeAppRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:           fakeAppRunner,
-				AppExaminer:         fakeAppExaminer,
-				UI:                  terminalUI,
-				Domain:              domain,
-				Env:                 []string{},
-				Clock:               fakeClock,
-				Logger:              logger,
-				TailedLogsOutputter: fakeTailedLogsOutputter,
-				ExitHandler:         fakeExitHandler,
+			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:   fakeAppRunner,
+				UI:          terminalUI,
+				ExitHandler: fakeExitHandler,
 			}
 
-			commandFactory := command_factory.NewAppRunnerCommandFactory(fakeAppRunnerCommandFactoryConfig)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			submitLrpCommand = commandFactory.MakeSubmitLrpCommand()
 		})
 
@@ -82,27 +72,25 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				tmpDir = os.TempDir()
 				tmpFile, err = ioutil.TempFile(tmpDir, "tmp_json")
 				Expect(err).ToNot(HaveOccurred())
+
+				Expect(ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value"}`), 0700)).To(Succeed())
 			})
 
 			It("creates an app from json", func() {
-				ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value"}`), 0700)
-				args := []string{tmpFile.Name()}
-
 				fakeAppRunner.SubmitLrpReturns("my-json-app", nil)
+				args := []string{tmpFile.Name()}
 
 				test_helpers.ExecuteCommandWithArgs(submitLrpCommand, args)
 
-				Expect(fakeAppRunner.SubmitLrpCallCount()).To(Equal(1))
-				Expect(fakeAppRunner.SubmitLrpArgsForCall(0)).To(Equal([]byte(`{"Value":"test value"}`)))
 				Expect(outputBuffer).To(test_helpers.Say(colors.Green("Successfully submitted my-json-app.")))
 				Expect(outputBuffer).To(test_helpers.Say("To view the status of your application: ltc status my-json-app"))
+				Expect(fakeAppRunner.SubmitLrpCallCount()).To(Equal(1))
+				Expect(fakeAppRunner.SubmitLrpArgsForCall(0)).To(Equal([]byte(`{"Value":"test value"}`)))
 			})
 
 			It("prints an error returned by the app_runner", func() {
-				args := []string{
-					tmpFile.Name(),
-				}
 				fakeAppRunner.SubmitLrpReturns("app-that-broke", errors.New("some error"))
+				args := []string{tmpFile.Name()}
 
 				test_helpers.ExecuteCommandWithArgs(submitLrpCommand, args)
 
@@ -137,29 +125,24 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		var scaleCommand cli.Command
 
 		BeforeEach(func() {
-			fakeAppRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
-				AppRunner:           fakeAppRunner,
-				AppExaminer:         fakeAppExaminer,
-				UI:                  terminalUI,
-				Domain:              domain,
-				Env:                 []string{},
-				Clock:               fakeClock,
-				Logger:              logger,
-				TailedLogsOutputter: fakeTailedLogsOutputter,
-				ExitHandler:         fakeExitHandler,
+			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:   fakeAppRunner,
+				AppExaminer: fakeAppExaminer,
+				UI:          terminalUI,
+				Clock:       fakeClock,
+				ExitHandler: fakeExitHandler,
 			}
 
-			commandFactory := command_factory.NewAppRunnerCommandFactory(fakeAppRunnerCommandFactoryConfig)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			scaleCommand = commandFactory.MakeScaleAppCommand()
 		})
 
 		It("scales an with the specified number of instances", func() {
+			fakeAppExaminer.RunningAppInstancesInfoReturns(22, false, nil)
 			args := []string{
 				"cool-web-app",
 				"22",
 			}
-
-			fakeAppExaminer.RunningAppInstancesInfoReturns(22, false, nil)
 
 			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
@@ -173,14 +156,13 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		})
 
 		It("polls until the required number of instances are running", func() {
+			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 			args := []string{
 				"cool-web-app",
 				"22",
 			}
 
-			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
-
-			commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
+			doneChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
 			Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
 
@@ -195,7 +177,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(22, false, nil)
 			fakeClock.IncrementBySeconds(1)
 
-			Eventually(commandFinishChan).Should(BeClosed())
+			Eventually(doneChan).Should(BeClosed())
 
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("App Scaled Successfully")))
@@ -209,14 +191,14 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					"22",
 				}
 
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
+				doneChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Eventually(outputBuffer).Should(test_helpers.SayNewLine())
 
 				fakeClock.IncrementBySeconds(120)
 
-				Eventually(commandFinishChan).Should(BeClosed())
+				Eventually(doneChan).Should(BeClosed())
 
 				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to scale.")))
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
@@ -229,24 +211,23 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		Context("when the receptor returns errors", func() {
 			It("outputs error messages", func() {
+				fakeAppRunner.ScaleAppReturns(errors.New("Major Fault"))
 				args := []string{
 					"cool-web-app",
 					"22",
 				}
-				fakeAppRunner.ScaleAppReturns(errors.New("Major Fault"))
 
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Error Scaling App to 22 instances: Major Fault"))
+				Expect(fakeAppRunner.ScaleAppCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
 
 		Context("invalid syntax", func() {
 			It("validates that the name is passed in", func() {
-				args := []string{
-					"",
-				}
+				args := []string{""}
 
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
@@ -256,9 +237,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 			})
 
 			It("validates that the number of instances is passed in", func() {
-				args := []string{
-					"cool-web-app",
-				}
+				args := []string{"cool-web-app"}
 
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
@@ -282,15 +261,14 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		})
 
 		Context("when there is a placement error when polling for the app to scale", func() {
-			It("Prints an error message and exits", func() {
+			It("prints an error message and exits", func() {
+				fakeAppExaminer.RunningAppInstancesInfoReturns(0, false, nil)
 				args := []string{
 					"cool-web-app",
 					"3",
 				}
 
-				fakeAppExaminer.RunningAppInstancesInfoReturns(0, false, nil)
-
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
+				doneChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 3 instances"))
 
@@ -303,13 +281,13 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				fakeAppExaminer.RunningAppInstancesInfoReturns(2, true, nil)
 				fakeClock.IncrementBySeconds(1)
-				Eventually(commandFinishChan).Should(BeClosed())
-
-				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.PlacementError}))
+				Eventually(doneChan).Should(BeClosed())
 
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
 				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
 				Expect(outputBuffer).ToNot(test_helpers.Say("Timed out waiting for the container"))
+
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.PlacementError}))
 			})
 		})
 	})
@@ -318,27 +296,17 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		var updateRoutesCommand cli.Command
 
 		BeforeEach(func() {
-			fakeAppRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
 				AppRunner:   fakeAppRunner,
-				AppExaminer: fakeAppExaminer,
 				UI:          terminalUI,
-				Domain:      domain,
-				Env:         []string{},
-				Clock:       fakeClock,
-				Logger:      logger,
 				ExitHandler: fakeExitHandler,
 			}
 
-			commandFactory := command_factory.NewAppRunnerCommandFactory(fakeAppRunnerCommandFactoryConfig)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			updateRoutesCommand = commandFactory.MakeUpdateRoutesCommand()
 		})
 
 		It("updates the routes", func() {
-			args := []string{
-				"cool-web-app",
-				"8080:foo.com,9090:bar.com",
-			}
-
 			expectedRouteOverrides := app_runner.RouteOverrides{
 				app_runner.RouteOverride{
 					HostnamePrefix: "foo.com",
@@ -348,6 +316,11 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					HostnamePrefix: "bar.com",
 					Port:           9090,
 				},
+			}
+
+			args := []string{
+				"cool-web-app",
+				"8080:foo.com,9090:bar.com",
 			}
 
 			test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
@@ -368,22 +341,23 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
+				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+
 				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(1))
 				name, routeOverrides := fakeAppRunner.UpdateAppRoutesArgsForCall(0)
 				Expect(name).To(Equal("cool-web-app"))
 				Expect(routeOverrides).To(Equal(app_runner.RouteOverrides{}))
-				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
 			})
 		})
 
 		Context("when the receptor returns errors", func() {
 			It("outputs error messages", func() {
+				fakeAppRunner.UpdateAppRoutesReturns(errors.New("Major Fault"))
 				args := []string{
 					"cool-web-app",
 					"8080:foo.com",
 				}
 
-				fakeAppRunner.UpdateAppRoutesReturns(errors.New("Major Fault"))
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Error updating routes: Major Fault"))
@@ -394,9 +368,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		Context("invalid syntax", func() {
 			It("validates that the name is passed in", func() {
-				args := []string{
-					"",
-				}
+				args := []string{""}
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
@@ -406,9 +378,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 			})
 
 			It("validates that the routes are passed in", func() {
-				args := []string{
-					"cool-web-app",
-				}
+				args := []string{"cool-web-app"}
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
@@ -427,8 +397,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
+				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
@@ -440,8 +410,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
+				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
@@ -451,25 +421,18 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		var removeCommand cli.Command
 
 		BeforeEach(func() {
-			fakeAppRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
 				AppRunner:   fakeAppRunner,
-				AppExaminer: fakeAppExaminer,
 				UI:          terminalUI,
-				Domain:      domain,
-				Env:         []string{},
-				Clock:       fakeClock,
-				Logger:      logger,
 				ExitHandler: fakeExitHandler,
 			}
 
-			commandFactory := command_factory.NewAppRunnerCommandFactory(fakeAppRunnerCommandFactoryConfig)
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			removeCommand = commandFactory.MakeRemoveAppCommand()
 		})
 
 		It("removes an app", func() {
-			args := []string{
-				"cool",
-			}
+			args := []string{"cool"}
 
 			test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
@@ -488,9 +451,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 			test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
-			Eventually(outputBuffer).Should(test_helpers.SayLine("Removing app1..."))
-			Eventually(outputBuffer).Should(test_helpers.SayLine("Removing app2..."))
-			Eventually(outputBuffer).Should(test_helpers.SayLine("Removing app3..."))
+			Expect(outputBuffer).To(test_helpers.SayLine("Removing app1..."))
+			Expect(outputBuffer).To(test_helpers.SayLine("Removing app2..."))
+			Expect(outputBuffer).To(test_helpers.SayLine("Removing app3..."))
 
 			Expect(fakeAppRunner.RemoveAppCallCount()).To(Equal(3))
 			Expect(fakeAppRunner.RemoveAppArgsForCall(0)).To(Equal("app1"))
@@ -512,10 +475,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		Context("when the receptor returns an error", func() {
 			It("outputs error messages when trying to remove the app", func() {
-				args := []string{
-					"cool-web-app",
-				}
 				fakeAppRunner.RemoveAppReturns(errors.New("Major Fault"))
+				args := []string{"cool-web-app"}
 
 				test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
@@ -525,17 +486,17 @@ var _ = Describe("AppRunner CommandFactory", func() {
 			})
 
 			It("outputs error messages when trying to remove the app", func() {
-				args := []string{
-					"app1",
-					"app2",
-					"app3",
-				}
-
 				fakeAppRunner.RemoveAppStub = func(name string) error {
 					if name == "app2" {
 						return errors.New("Major Fault")
 					}
 					return nil
+				}
+
+				args := []string{
+					"app1",
+					"app2",
+					"app3",
 				}
 
 				test_helpers.ExecuteCommandWithArgs(removeCommand, args)

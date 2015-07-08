@@ -65,18 +65,84 @@ var _ = Describe("CommandFactory", func() {
 
 		It("displays all the existing apps & tasks, making sure output spacing is correct", func() {
 			listApps := []app_examiner.AppInfo{
-				app_examiner.AppInfo{ProcessGuid: "process1", DesiredInstances: 21, ActualRunningInstances: 0, DiskMB: 100, MemoryMB: 50, Ports: []uint16{54321}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"alldaylong.com"}, Port: 54321}}},
-				app_examiner.AppInfo{ProcessGuid: "process2", DesiredInstances: 8, ActualRunningInstances: 9, DiskMB: 400, MemoryMB: 30, Ports: []uint16{1234}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"never.io"}, Port: 1234}}},
-				app_examiner.AppInfo{ProcessGuid: "process3", DesiredInstances: 5, ActualRunningInstances: 5, DiskMB: 600, MemoryMB: 90, Ports: []uint16{1234}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"allthetime.com", "herewego.org"}, Port: 1234}}},
-				app_examiner.AppInfo{ProcessGuid: "process4", DesiredInstances: 0, ActualRunningInstances: 0, DiskMB: 10, MemoryMB: 10, Routes: route_helpers.AppRoutes{}},
-			}
-
-			listTasks := []task_examiner.TaskInfo{
-				task_examiner.TaskInfo{TaskGuid: "task-guid-1", CellID: "cell-01", Failed: false, FailureReason: "", Result: "Finished", State: "COMPLETED"},
-				task_examiner.TaskInfo{TaskGuid: "task-guid-2", CellID: "cell-02", Failed: true, FailureReason: "No compatible container", Result: "Finished", State: "COMPLETED"},
-				task_examiner.TaskInfo{TaskGuid: "task-guid-3", CellID: "", Failed: true, FailureReason: "", Result: "", State: "COMPLETED"},
+				app_examiner.AppInfo{
+					ProcessGuid:            "process1",
+					DesiredInstances:       21,
+					ActualRunningInstances: 0,
+					DiskMB:                 100,
+					MemoryMB:               50,
+					Ports:                  []uint16{54321},
+					Routes: route_helpers.AppRoutes{
+						route_helpers.AppRoute{
+							Hostnames: []string{"alldaylong.com"},
+							Port:      54321,
+						},
+					},
+				},
+				app_examiner.AppInfo{
+					ProcessGuid:            "process2",
+					DesiredInstances:       8,
+					ActualRunningInstances: 9,
+					DiskMB:                 400,
+					MemoryMB:               30,
+					Ports:                  []uint16{1234},
+					Routes: route_helpers.AppRoutes{
+						route_helpers.AppRoute{
+							Hostnames: []string{"never.io"},
+							Port:      1234,
+						},
+					},
+				},
+				app_examiner.AppInfo{
+					ProcessGuid:            "process3",
+					DesiredInstances:       5,
+					ActualRunningInstances: 5,
+					DiskMB:                 600,
+					MemoryMB:               90,
+					Ports:                  []uint16{1234},
+					Routes: route_helpers.AppRoutes{
+						route_helpers.AppRoute{
+							Hostnames: []string{"allthetime.com", "herewego.org"},
+							Port:      1234,
+						},
+					},
+				},
+				app_examiner.AppInfo{
+					ProcessGuid:            "process4",
+					DesiredInstances:       0,
+					ActualRunningInstances: 0,
+					DiskMB:                 10,
+					MemoryMB:               10,
+					Routes:                 route_helpers.AppRoutes{},
+				},
 			}
 			fakeAppExaminer.ListAppsReturns(listApps, nil)
+			listTasks := []task_examiner.TaskInfo{
+				task_examiner.TaskInfo{
+					TaskGuid:      "task-guid-1",
+					CellID:        "cell-01",
+					Failed:        false,
+					FailureReason: "",
+					Result:        "Finished",
+					State:         "COMPLETED",
+				},
+				task_examiner.TaskInfo{
+					TaskGuid:      "task-guid-2",
+					CellID:        "cell-02",
+					Failed:        true,
+					FailureReason: "No compatible container",
+					Result:        "Finished",
+					State:         "COMPLETED",
+				},
+				task_examiner.TaskInfo{
+					TaskGuid:      "task-guid-3",
+					CellID:        "",
+					Failed:        true,
+					FailureReason: "",
+					Result:        "",
+					State:         "COMPLETED",
+				},
+			}
 			fakeTaskExaminer.ListTasksReturns(listTasks, nil)
 
 			test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
@@ -149,10 +215,16 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("when the app examiner returns an error", func() {
 			It("alerts the user fetching the app list returns an error", func() {
-				listApps := []app_examiner.AppInfo{}
-				fakeAppExaminer.ListAppsReturns(listApps, errors.New("The list was lost"))
+				fakeAppExaminer.ListAppsReturns(nil, errors.New("The list was lost"))
 				listTasks := []task_examiner.TaskInfo{
-					task_examiner.TaskInfo{TaskGuid: "task-guid-1", CellID: "cell-01", Failed: false, FailureReason: "", Result: "Finished", State: "COMPLETED"},
+					task_examiner.TaskInfo{
+						TaskGuid:      "task-guid-1",
+						CellID:        "cell-01",
+						Failed:        false,
+						FailureReason: "",
+						Result:        "Finished",
+						State:         "COMPLETED",
+					},
 				}
 				fakeTaskExaminer.ListTasksReturns(listTasks, nil)
 
@@ -177,11 +249,23 @@ var _ = Describe("CommandFactory", func() {
 
 			It("alerts the user fetching the task list returns an error", func() {
 				listApps := []app_examiner.AppInfo{
-					app_examiner.AppInfo{ProcessGuid: "process1", DesiredInstances: 21, ActualRunningInstances: 0, DiskMB: 100, MemoryMB: 50, Ports: []uint16{54321}, Routes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"alldaylong.com"}, Port: 54321}}},
+					app_examiner.AppInfo{
+						ProcessGuid:            "process1",
+						DesiredInstances:       21,
+						ActualRunningInstances: 0,
+						DiskMB:                 100,
+						MemoryMB:               50,
+						Ports:                  []uint16{54321},
+						Routes: route_helpers.AppRoutes{
+							route_helpers.AppRoute{
+								Hostnames: []string{"alldaylong.com"},
+								Port:      54321,
+							},
+						},
+					},
 				}
 				fakeAppExaminer.ListAppsReturns(listApps, nil)
-				listTasks := []task_examiner.TaskInfo{}
-				fakeTaskExaminer.ListTasksReturns(listTasks, errors.New("The list was lost"))
+				fakeTaskExaminer.ListTasksReturns(nil, errors.New("The list was lost"))
 
 				test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
 
@@ -730,8 +814,6 @@ var _ = Describe("CommandFactory", func() {
 
 			test_helpers.ExecuteCommandWithArgs(cellsCommand, []string{})
 
-			Expect(fakeAppExaminer.ListCellsCallCount()).To(Equal(1))
-
 			Expect(outputBuffer).To(test_helpers.Say("Cells"))
 			Expect(outputBuffer).To(test_helpers.Say("Zone"))
 			Expect(outputBuffer).To(test_helpers.Say("Memory"))
@@ -748,6 +830,8 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).To(test_helpers.Say("cell-two"))
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+			Expect(fakeAppExaminer.ListCellsCallCount()).To(Equal(1))
 		})
 
 		Context("when the receptor returns an error", func() {
@@ -761,6 +845,5 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
-
 	})
 })

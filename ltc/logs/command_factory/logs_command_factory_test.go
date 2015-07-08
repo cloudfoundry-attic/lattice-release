@@ -48,10 +48,12 @@ var _ = Describe("CommandFactory", func() {
 		It("tails logs", func() {
 			appExaminer.AppExistsReturns(true, nil)
 
-			test_helpers.AsyncExecuteCommandWithArgs(logsCommand, []string{"my-app-guid"})
+			doneChan := test_helpers.AsyncExecuteCommandWithArgs(logsCommand, []string{"my-app-guid"})
 
 			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
 			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("my-app-guid"))
+
+			Consistently(doneChan).ShouldNot(BeClosed())
 		})
 
 		It("handles invalid appguids", func() {
@@ -62,21 +64,22 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		It("handles non existent application", func() {
-			test_helpers.AsyncExecuteCommandWithArgs(logsCommand, []string{"non_existent_app"})
+			doneChan := test_helpers.AsyncExecuteCommandWithArgs(logsCommand, []string{"non_existent_app"})
 
 			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
 			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("non_existent_app"))
 			Expect(outputBuffer).To(test_helpers.Say("Application non_existent_app not found."))
 			Expect(outputBuffer).To(test_helpers.Say("Tailing logs and waiting for non_existent_app to appear..."))
+
+			Consistently(doneChan).ShouldNot(BeClosed())
 		})
 
 		Context("when the receptor returns an error", func() {
 			It("displays an error and exits", func() {
 				appExaminer.AppExistsReturns(false, errors.New("can't log this"))
 
-				commandDone := test_helpers.AsyncExecuteCommandWithArgs(logsCommand, []string{"non_existent_app"})
+				test_helpers.ExecuteCommandWithArgs(logsCommand, []string{"non_existent_app"})
 
-				Eventually(commandDone).Should(BeClosed())
 				Expect(outputBuffer).To(test_helpers.Say("Error: can't log this"))
 				Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(BeZero())
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
@@ -93,18 +96,22 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		It("tails logs from the lattice-debug stream", func() {
-			test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{})
+			doneChan := test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{})
 
 			Eventually(fakeTailedLogsOutputter.OutputDebugLogsCallCount).Should(Equal(1))
 			Expect(fakeTailedLogsOutputter.OutputDebugLogsArgsForCall(0)).To(BeTrue())
+
+			Consistently(doneChan).ShouldNot(BeClosed())
 		})
 
 		Context("when the --raw flag is passed", func() {
 			It("tails the debug logs without pretty print", func() {
-				test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{"--raw"})
+				doneChan := test_helpers.AsyncExecuteCommandWithArgs(debugLogsCommand, []string{"--raw"})
 
 				Eventually(fakeTailedLogsOutputter.OutputDebugLogsCallCount).Should(Equal(1))
 				Expect(fakeTailedLogsOutputter.OutputDebugLogsArgsForCall(0)).To(BeFalse())
+
+				Consistently(doneChan).ShouldNot(BeClosed())
 			})
 		})
 	})

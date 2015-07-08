@@ -9,5 +9,5 @@ import (
 
 func TestCommandFactory(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "CommandFactory Suite")
+	RunSpecs(t, "TaskRunner CommandFactory Suite")
 }

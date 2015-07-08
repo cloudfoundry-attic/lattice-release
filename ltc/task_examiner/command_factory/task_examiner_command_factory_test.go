@@ -54,9 +54,6 @@ var _ = Describe("TaskExaminer CommandFactory", func() {
 
 			test_helpers.ExecuteCommandWithArgs(taskCommand, []string{"boop"})
 
-			Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
-			Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("boop"))
-
 			Expect(outputBuffer).To(test_helpers.Say("Task Name"))
 			Expect(outputBuffer).To(test_helpers.Say("boop"))
 			Expect(outputBuffer).To(test_helpers.Say("Cell ID"))
@@ -65,6 +62,9 @@ var _ = Describe("TaskExaminer CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Yellow("PENDING")))
 			Expect(outputBuffer).NotTo(test_helpers.Say("Result"))
 			Expect(outputBuffer).NotTo(test_helpers.Say("Failure Reason"))
+
+			Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
+			Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("boop"))
 		})
 
 		It("displays result for a non-failed completed task", func() {
@@ -80,9 +80,6 @@ var _ = Describe("TaskExaminer CommandFactory", func() {
 
 			test_helpers.ExecuteCommandWithArgs(taskCommand, []string{"boop"})
 
-			Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
-			Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("boop"))
-
 			Expect(outputBuffer).To(test_helpers.Say("Task Name"))
 			Expect(outputBuffer).To(test_helpers.Say("boop"))
 			Expect(outputBuffer).To(test_helpers.Say("Cell ID"))
@@ -92,6 +89,9 @@ var _ = Describe("TaskExaminer CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("Result"))
 			Expect(outputBuffer).To(test_helpers.Say("some-result"))
 			Expect(outputBuffer).NotTo(test_helpers.Say("Failure Reason"))
+
+			Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
+			Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("boop"))
 		})
 
 		It("displays failure reason for a failed task result", func() {
@@ -107,9 +107,6 @@ var _ = Describe("TaskExaminer CommandFactory", func() {
 
 			test_helpers.ExecuteCommandWithArgs(taskCommand, []string{"boop"})
 
-			Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
-			Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("boop"))
-
 			Expect(outputBuffer).To(test_helpers.Say("Task Name"))
 			Expect(outputBuffer).To(test_helpers.Say("boop"))
 			Expect(outputBuffer).To(test_helpers.Say("Cell ID"))
@@ -119,13 +116,16 @@ var _ = Describe("TaskExaminer CommandFactory", func() {
 			Expect(outputBuffer).NotTo(test_helpers.Say("Result"))
 			Expect(outputBuffer).To(test_helpers.Say("Failure Reason"))
 			Expect(outputBuffer).To(test_helpers.Say("womp womp"))
+
+			Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
+			Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("boop"))
 		})
 
 		It("bails out when no task name passed", func() {
 			test_helpers.ExecuteCommandWithArgs(taskCommand, []string{})
 
-			Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(0))
 			Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
+			Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(0))
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
 
@@ -135,9 +135,9 @@ var _ = Describe("TaskExaminer CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(taskCommand, []string{"boop"})
 
+				Expect(outputBuffer).To(test_helpers.Say(colors.Red("No task 'boop' was found")))
 				Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
 				Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("boop"))
-				Expect(outputBuffer).To(test_helpers.Say(colors.Red("No task 'boop' was found")))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 
@@ -146,9 +146,9 @@ var _ = Describe("TaskExaminer CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(taskCommand, []string{"boop"})
 
+				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error fetching task result: muhaha")))
 				Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
 				Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("boop"))
-				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error fetching task result: muhaha")))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})

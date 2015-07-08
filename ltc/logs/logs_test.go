@@ -87,17 +87,18 @@ func (e *errorReceiver) GetErrors() []error {
 	return e.receivedErrors
 }
 
-var _ = Describe("logs", func() {
-	Describe("TailLogs", func() {
-		var (
-			consumer  *fakeConsumer
-			logReader logs.LogReader
-		)
+var _ = Describe("Logs", func() {
+	var (
+		consumer  *fakeConsumer
+		logReader logs.LogReader
+	)
 
-		BeforeEach(func() {
-			consumer = NewFakeConsumer()
-			logReader = logs.NewLogReader(consumer)
-		})
+	BeforeEach(func() {
+		consumer = NewFakeConsumer()
+		logReader = logs.NewLogReader(consumer)
+	})
+
+	Describe("TailLogs", func() {
 
 		It("provides the logCallback with logs until StopTailing is called", func() {
 			messageReceiver := &messageReceiver{}
@@ -151,16 +152,6 @@ var _ = Describe("logs", func() {
 	})
 
 	Describe("StopTailing", func() {
-		var (
-			consumer  *fakeConsumer
-			logReader logs.LogReader
-		)
-
-		BeforeEach(func() {
-			consumer = NewFakeConsumer()
-			logReader = logs.NewLogReader(consumer)
-		})
-
 		It("stops tailing logs when requested", func() {
 			doneChan := make(chan struct{})
 			go func() {
