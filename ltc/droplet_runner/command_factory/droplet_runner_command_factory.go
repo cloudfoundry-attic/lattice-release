@@ -94,8 +94,8 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 	var launchFlags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "working-dir, w",
-			Usage: "Working directory for container (overrides Docker metadata)",
-			Value: "",
+			Usage: "Working directory for container",
+			Value: "/home/vcap/app",
 		},
 		cli.BoolFlag{
 			Name:  "run-as-root, r",
@@ -336,10 +336,6 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 		factory.UI.SayIncorrectUsage("Invalid CPU Weight")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
-	}
-
-	if workingDirFlag == "" {
-		workingDirFlag = "/tmp/app"
 	}
 
 	exposedPorts, err := factory.parsePortsFromArgs(portsFlag)

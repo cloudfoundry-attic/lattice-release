@@ -210,6 +210,8 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 		if result.DetectedStartCommand.Web != "" {
 			startArgs = []string{result.DetectedStartCommand.Web}
 		} else {
+			// This is go buildpack-specific behavior where the executable
+			// happens to match the droplet name.
 			startArgs = []string{dropletName}
 		}
 	}
@@ -245,12 +247,8 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 					},
 				},
 				&models.RunAction{
-					Path: "/bin/mkdir",
-					Args: []string{"/tmp/app"},
-				},
-				&models.RunAction{
 					Path: "/bin/tar",
-					Dir:  "/tmp/app",
+					Dir:  "/home/vcap",
 					Args: []string{"-zxf", "/tmp/droplet.tgz"},
 				},
 			},

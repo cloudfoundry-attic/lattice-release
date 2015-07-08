@@ -524,7 +524,7 @@ var _ = Describe("CommandFactory", func() {
 				"--memory-mb=12",
 				"--disk-mb=12",
 				"--routes=4444:ninetyninety,9090:fourtyfourfourtyfour",
-				"--working-dir=/app",
+				"--working-dir=/xxx",
 				"--run-as-root=true",
 				"--instances=11",
 				"--env=TIMEZONE=CST",
@@ -550,7 +550,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(dropletNameParam).To(Equal("droplet-name"))
 			Expect(startCommandParam).To(Equal("start-em"))
 			Expect(startArgsParam).To(Equal([]string{"-app-arg"}))
-			Expect(appEnvParam.WorkingDir).To(Equal("/app"))
+			Expect(appEnvParam.WorkingDir).To(Equal("/xxx"))
 			Expect(appEnvParam.CPUWeight).To(Equal(uint(57)))
 			Expect(appEnvParam.MemoryMB).To(Equal(12))
 			Expect(appEnvParam.DiskMB).To(Equal(12))
@@ -592,7 +592,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(dropletNameParam).To(Equal("droplet-name"))
 			Expect(startCommandParam).To(Equal(""))
 			Expect(startArgsParam).To(BeNil())
-			Expect(appEnvParam.WorkingDir).To(Equal("/tmp/app"))
+			Expect(appEnvParam.WorkingDir).To(Equal("/home/vcap/app"))
 			Expect(appEnvParam.Privileged).To(BeFalse())
 			Expect(appEnvParam.Instances).To(Equal(1))
 			Expect(appEnvParam.Monitor).To(Equal(app_runner.MonitorConfig{

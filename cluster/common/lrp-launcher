@@ -1,10 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
-export HOME=$PWD/app
+export HOME=/home/vcap/app
 
 unset GEM_PATH
-if [ -d app/.profile.d ]; then
-        for i in app/.profile.d/*.sh; do
+
+if [ -d $HOME/.profile.d ]; then
+        for i in $HOME/.profile.d/*.sh; do
                 if [ -r $i ]; then
                         . $i
                 fi
@@ -12,7 +13,6 @@ if [ -d app/.profile.d ]; then
         unset i
 fi
 
-DROPLET_BASE_DIR=$PWD
-cd app
+DROPLET_BASE_DIR=$HOME
 echo $$ >> $DROPLET_BASE_DIR/run.pid
-exec bash -c $1
+exec bash -c "$*"
