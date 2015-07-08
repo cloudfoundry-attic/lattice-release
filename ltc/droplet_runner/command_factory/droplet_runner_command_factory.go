@@ -66,18 +66,6 @@ func (factory *DropletRunnerCommandFactory) MakeListDropletsCommand() cli.Comman
 	return listDropletsCommand
 }
 
-func (factory *DropletRunnerCommandFactory) MakeUploadBitsCommand() cli.Command {
-	var uploadBitsCommand = cli.Command{
-		Name:        "upload-bits",
-		Aliases:     []string{"ub"},
-		Usage:       "Upload bits to the blob store",
-		Description: "ltc upload-bits BLOB_KEY /path/to/file-or-folder",
-		Action:      factory.uploadBits,
-	}
-
-	return uploadBitsCommand
-}
-
 func (factory *DropletRunnerCommandFactory) MakeBuildDropletCommand() cli.Command {
 	var launchFlags = []cli.Flag{
 		cli.StringFlag{
@@ -220,40 +208,6 @@ func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
 	}
 
 	w.Flush()
-}
-
-func (factory *DropletRunnerCommandFactory) uploadBits(context *cli.Context) {
-	dropletName := context.Args().First()
-	archivePath := context.Args().Get(1)
-
-	if dropletName == "" || archivePath == "" {
-		factory.UI.SayIncorrectUsage("")
-		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
-		return
-	}
-
-	fileInfo, err := os.Stat(archivePath)
-	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error opening %s: %s", archivePath, err))
-		factory.ExitHandler.Exit(exit_codes.FileSystemError)
-		return
-	}
-
-	if fileInfo.IsDir() {
-		if archivePath, err = makeTar(archivePath); err != nil {
-			factory.UI.Say(fmt.Sprintf("Error archiving %s: %s", context.Args().Get(1), err))
-			factory.ExitHandler.Exit(exit_codes.FileSystemError)
-			return
-		}
-	}
-
-	if err := factory.dropletRunner.UploadBits(dropletName, archivePath); err != nil {
-		factory.UI.Say(fmt.Sprintf("Error uploading to %s: %s", dropletName, err))
-		factory.ExitHandler.Exit(exit_codes.CommandFailed)
-		return
-	}
-
-	factory.UI.Say("Successfully uploaded " + dropletName)
 }
 
 func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
