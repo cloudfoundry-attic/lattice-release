@@ -9,14 +9,11 @@ import (
 	"path/filepath"
 	"time"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gbytes"
-
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/cf_ignore/fake_cf_ignore"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
@@ -28,6 +25,9 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	"github.com/codegangsta/cli"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-golang/clock/fakeclock"
 
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
@@ -43,6 +43,7 @@ var _ = Describe("CommandFactory", func() {
 		fakeClock               *fakeclock.FakeClock
 		fakeAppExaminer         *fake_app_examiner.FakeAppExaminer
 		fakeTaskExaminer        *fake_task_examiner.FakeTaskExaminer
+		fakeCFIgnore            *fake_cf_ignore.FakeCFIgnore
 
 		appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory
 	)
@@ -54,6 +55,7 @@ var _ = Describe("CommandFactory", func() {
 		fakeClock = fakeclock.NewFakeClock(time.Now())
 		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
 		fakeTaskExaminer = &fake_task_examiner.FakeTaskExaminer{}
+		fakeCFIgnore = &fake_cf_ignore.FakeCFIgnore{}
 
 		outputBuffer = gbytes.NewBuffer()
 		appRunnerCommandFactory = app_runner_command_factory.AppRunnerCommandFactory{
@@ -72,36 +74,35 @@ var _ = Describe("CommandFactory", func() {
 		var buildDropletCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner, fakeCFIgnore)
 			buildDropletCommand = commandFactory.MakeBuildDropletCommand()
 		})
 
 		Context("when the archive path is a folder and exists", func() {
 			var (
-				prevDir string
-				tmpDir  string
-				err     error
+				prevDir, tmpDir string
+				err             error
 			)
 
 			BeforeEach(func() {
 				tmpDir, err = ioutil.TempDir(os.TempDir(), "tar_contents")
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(filepath.Join(tmpDir, "aaa"), []byte("AAAAAAAAA"), 0700)
-				Expect(err).NotTo(HaveOccurred())
-				err = ioutil.WriteFile(filepath.Join(tmpDir, "bbb"), []byte("BBBBBBB"), 0750)
-				Expect(err).NotTo(HaveOccurred())
-				err = ioutil.WriteFile(filepath.Join(tmpDir, "ccc"), []byte("CCCCCC"), 0644)
-				Expect(err).NotTo(HaveOccurred())
+				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "aaa"), nil, 0700)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "bbb"), nil, 0750)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "ccc"), nil, 0644)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "some-ignored-file"), nil, 0644)).To(Succeed())
 
-				err = os.Mkdir(filepath.Join(tmpDir, "subfolder"), 0755)
-				Expect(err).NotTo(HaveOccurred())
-				err = ioutil.WriteFile(filepath.Join(tmpDir, "subfolder", "sub"), []byte("SUBSUB"), 0644)
-				Expect(err).NotTo(HaveOccurred())
+				Expect(os.Mkdir(filepath.Join(tmpDir, "subfolder"), 0755)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "subfolder", "sub"), nil, 0644)).To(Succeed())
 
 				prevDir, err = os.Getwd()
 				Expect(err).ToNot(HaveOccurred())
 				Expect(os.Chdir(tmpDir)).To(Succeed())
+
+				fakeCFIgnore.ShouldIgnoreStub = func(path string) bool {
+					return path == "some-ignored-file"
+				}
 			})
 
 			AfterEach(func() {
@@ -109,7 +110,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(os.RemoveAll(tmpDir)).To(Succeed())
 			})
 
-			It("tars up the folder and uploads as the droplet name", func() {
+			It("tars up current working folder and uploads as the droplet name", func() {
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
 
 				Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
@@ -124,8 +125,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(err).ToNot(HaveOccurred())
 				tarReader := tar.NewReader(file)
 
-				var h *tar.Header
-				h, err = tarReader.Next()
+				h, err := tarReader.Next()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(h.FileInfo().Name()).To(Equal("aaa"))
 				Expect(h.FileInfo().IsDir()).To(BeFalse())
@@ -159,7 +159,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(err).To(HaveOccurred())
 			})
 
-			It("tars up the specified folder and uploads as the droplet name", func() {
+			It("tars up a manually-specified folder and uploads as the droplet name", func() {
 				Expect(os.Chdir("/tmp")).To(Succeed())
 
 				args := []string{
@@ -183,8 +183,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(err).ToNot(HaveOccurred())
 				tarReader := tar.NewReader(file)
 
-				var h *tar.Header
-				h, err = tarReader.Next()
+				h, err := tarReader.Next()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(h.FileInfo().Name()).To(Equal("aaa"))
 				Expect(h.FileInfo().IsDir()).To(BeFalse())
@@ -218,7 +217,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(err).To(HaveOccurred())
 			})
 
-			It("tars up the specified single file and uploads as the droplet name", func() {
+			It("tars up a manually-specified single file and uploads as the droplet name", func() {
 				Expect(os.Chdir("/tmp")).To(Succeed())
 
 				args := []string{
@@ -242,8 +241,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(err).ToNot(HaveOccurred())
 				tarReader := tar.NewReader(file)
 
-				var h *tar.Header
-				h, err = tarReader.Next()
+				h, err := tarReader.Next()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(h.FileInfo().Name()).To(Equal("ccc"))
 				Expect(h.FileInfo().IsDir()).To(BeFalse())
@@ -251,6 +249,39 @@ var _ = Describe("CommandFactory", func() {
 
 				_, err = tarReader.Next()
 				Expect(err).To(HaveOccurred())
+			})
+
+			Describe(".cfignore", func() {
+				Context("when a .cfignore file is present", func() {
+					BeforeEach(func() {
+						Expect(ioutil.WriteFile(filepath.Join(tmpDir, ".cfignore"), []byte("cfignore contents"), 0644)).To(Succeed())
+					})
+
+					It("parses a .cfignore file if present", func() {
+						test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
+
+						Expect(fakeCFIgnore.ParseCallCount()).To(Equal(1))
+						Expect(ioutil.ReadAll(fakeCFIgnore.ParseArgsForCall(0))).To(Equal([]byte("cfignore contents")))
+					})
+
+					Context("when parsing the .cfignore file fails", func() {
+						It("returns an error without uploading any bits", func() {
+							fakeCFIgnore.ParseReturns(errors.New("some cfignore parse error"))
+
+							test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
+
+							Expect(outputBuffer).To(test_helpers.Say("some cfignore parse error"))
+							Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
+							Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
+						})
+					})
+				})
+
+				It("does not parse a .cfignore file when missing", func() {
+					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
+
+					Expect(fakeCFIgnore.ParseCallCount()).To(Equal(0))
+				})
 			})
 		})
 
@@ -417,7 +448,7 @@ var _ = Describe("CommandFactory", func() {
 		var listDropletsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner, nil)
 			listDropletsCommand = commandFactory.MakeListDropletsCommand()
 		})
 
@@ -483,7 +514,7 @@ var _ = Describe("CommandFactory", func() {
 		var launchDropletCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner, nil)
 			launchDropletCommand = commandFactory.MakeLaunchDropletCommand()
 		})
 
@@ -742,7 +773,7 @@ var _ = Describe("CommandFactory", func() {
 		var removeDropletCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner, nil)
 			removeDropletCommand = commandFactory.MakeRemoveDropletCommand()
 		})
 

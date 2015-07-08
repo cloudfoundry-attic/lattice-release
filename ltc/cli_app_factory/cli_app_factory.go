@@ -17,6 +17,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/cf_ignore"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
@@ -195,7 +196,8 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	blobBucket := blobStore.Bucket(config.BlobTarget().BucketName)
 
 	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, blobBucket, targetVerifier)
-	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, taskExaminer, dropletRunner)
+	cfIgnore := cf_ignore.New()
+	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, taskExaminer, dropletRunner, cfIgnore)
 
 	helpCommand := cli.Command{
 		Name:        "help",

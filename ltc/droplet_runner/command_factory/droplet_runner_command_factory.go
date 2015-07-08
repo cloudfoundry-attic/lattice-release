@@ -17,6 +17,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/cf_ignore"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
@@ -30,6 +31,7 @@ type DropletRunnerCommandFactory struct {
 
 	taskExaminer  task_examiner.TaskExaminer
 	dropletRunner droplet_runner.DropletRunner
+	cfIgnore      cf_ignore.CFIgnore
 }
 
 type dropletSliceSortedByCreated []droplet_runner.Droplet
@@ -46,11 +48,12 @@ func (ds dropletSliceSortedByCreated) Less(i, j int) bool {
 }
 func (ds dropletSliceSortedByCreated) Swap(i, j int) { ds[i], ds[j] = ds[j], ds[i] }
 
-func NewDropletRunnerCommandFactory(appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory, taskExaminer task_examiner.TaskExaminer, dropletRunner droplet_runner.DropletRunner) *DropletRunnerCommandFactory {
+func NewDropletRunnerCommandFactory(appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory, taskExaminer task_examiner.TaskExaminer, dropletRunner droplet_runner.DropletRunner, cfIgnore cf_ignore.CFIgnore) *DropletRunnerCommandFactory {
 	return &DropletRunnerCommandFactory{
 		AppRunnerCommandFactory: appRunnerCommandFactory,
 		taskExaminer:            taskExaminer,
 		dropletRunner:           dropletRunner,
+		cfIgnore:                cfIgnore,
 	}
 }
 
@@ -221,9 +224,9 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 		return
 	}
 
-	archivePath, err := makeTar(pathFlag)
+	archivePath, err := factory.makeTar(pathFlag)
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error tarring . to %s: %s", archivePath, err))
+		factory.UI.Say(fmt.Sprintf("Error tarring %s to %s: %s", pathFlag, archivePath, err))
 		factory.ExitHandler.Exit(exit_codes.FileSystemError)
 		return
 	}
@@ -396,7 +399,7 @@ func (factory *DropletRunnerCommandFactory) removeDroplet(context *cli.Context) 
 	factory.UI.SayLine("Droplet removed")
 }
 
-func makeTar(contentsPath string) (string, error) {
+func (factory *DropletRunnerCommandFactory) makeTar(contentsPath string) (string, error) {
 	tmpPath, err := ioutil.TempDir(os.TempDir(), "build-bits")
 	if err != nil {
 		return "", err
@@ -415,44 +418,46 @@ func makeTar(contentsPath string) (string, error) {
 	}
 
 	if contentsFileInfo.IsDir() {
+		if ignoreFile, err := os.Open(filepath.Join(contentsPath, ".cfignore")); err == nil {
+			if err := factory.cfIgnore.Parse(ignoreFile); err != nil {
+				return "", err
+			}
+		}
+
 		err = filepath.Walk(contentsPath, func(fullPath string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
 
-			if err = addFileToTar(fileWriter, tarWriter, info, contentsPath, fullPath); err != nil {
+			relativePath, err := filepath.Rel(contentsPath, fullPath)
+			if err != nil {
+				return err
+			}
+
+			if factory.cfIgnore.ShouldIgnore(relativePath) {
+				return nil
+			}
+
+			if err := addFileToTar(fileWriter, tarWriter, info, relativePath, fullPath); err != nil {
 				return err
 			}
 
 			return nil
 		})
 	} else {
-		err = addFileToTar(fileWriter, tarWriter, contentsFileInfo, path.Dir(contentsPath), contentsPath)
+		err = addFileToTar(fileWriter, tarWriter, contentsFileInfo, path.Base(contentsPath), contentsPath)
 	}
 
-	if err != nil {
-		return "", err
-	}
-
-	return fileWriter.Name(), nil
+	return fileWriter.Name(), err
 }
 
-func addFileToTar(fileWriter *os.File, tarWriter *tar.Writer, info os.FileInfo, containingPath string, fullPath string) error {
-	var (
-		relpath string
-		err     error
-	)
-
-	if relpath, err = filepath.Rel(containingPath, fullPath); err != nil {
-		return err
-	}
-
-	if relpath == fileWriter.Name() || relpath == "." || relpath == ".." {
+func addFileToTar(fileWriter *os.File, tarWriter *tar.Writer, info os.FileInfo, relativePath, fullPath string) error {
+	if relativePath == fileWriter.Name() || relativePath == "." || relativePath == ".." {
 		return nil
 	}
 
-	if h, _ := tar.FileInfoHeader(info, fullPath); h != nil {
-		h.Name = relpath
+	if h, err := tar.FileInfoHeader(info, fullPath); err == nil {
+		h.Name = relativePath
 		if err := tarWriter.WriteHeader(h); err != nil {
 			return err
 		}
