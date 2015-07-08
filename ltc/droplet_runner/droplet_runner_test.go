@@ -250,7 +250,7 @@ var _ = Describe("DropletRunner", func() {
 							"-outputDroplet=/tmp/droplet",
 							"-outputMetadata=/tmp/result.json",
 							"-skipCertVerify=false",
-							"-skipDetect=false",
+							"-skipDetect=true",
 						},
 					},
 					&models.RunAction{
