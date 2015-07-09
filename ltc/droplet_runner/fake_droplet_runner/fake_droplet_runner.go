@@ -43,7 +43,7 @@ type FakeDropletRunner struct {
 	ListDropletsStub        func() ([]droplet_runner.Droplet, error)
 	listDropletsMutex       sync.RWMutex
 	listDropletsArgsForCall []struct{}
-	listDropletsReturns struct {
+	listDropletsReturns     struct {
 		result1 []droplet_runner.Droplet
 		result2 error
 	}
