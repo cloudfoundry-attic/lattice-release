@@ -26,6 +26,7 @@ popd
     /run/build/lattice-build \
     /run/build/diego-release \
     /run/build/cf-release \
+    /run/build/cf-routing-release \
     /run
 
 stage_version_files
