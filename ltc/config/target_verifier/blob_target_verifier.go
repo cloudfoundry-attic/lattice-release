@@ -40,11 +40,8 @@ func (t *targetVerifier) VerifyBlobTarget(host string, port uint16, accessKey, s
 	blobBucket := blobStore.Bucket(config.BlobTarget().BucketName)
 
 	if _, err := blobBucket.List("", "/", "", 1); err != nil {
-		httpError, ok := err.(*s3.Error)
-		if ok {
+		if httpError, ok := err.(*s3.Error); ok {
 			switch httpError.StatusCode {
-			case 200:
-				return true, nil
 			case 403:
 				return false, fmt.Errorf("unauthorized")
 			default:
