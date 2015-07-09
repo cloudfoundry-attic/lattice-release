@@ -34,7 +34,8 @@ type DropletRunner interface {
 
 type Droplet struct {
 	Name    string
-	Created *time.Time
+	Created time.Time
+	Size    int64
 }
 
 type dropletRunner struct {
@@ -83,10 +84,10 @@ func (dr *dropletRunner) ListDroplets() ([]Droplet, error) {
 
 		for _, key := range subList.Contents {
 			if key.Key == prefix+"droplet.tgz" {
-				droplet := Droplet{Name: strings.TrimRight(prefix, "/")}
+				droplet := Droplet{Name: strings.TrimRight(prefix, "/"), Size: key.Size}
 
 				if modTime, err := time.Parse("2006-01-02T15:04:05.999Z", key.LastModified); err == nil {
-					droplet.Created = &modTime
+					droplet.Created = modTime
 				}
 
 				droplets = append(droplets, droplet)

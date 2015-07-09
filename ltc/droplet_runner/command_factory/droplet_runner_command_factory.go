@@ -22,6 +22,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/codegangsta/cli"
+	"github.com/pivotal-golang/bytefmt"
 
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 )
@@ -38,12 +39,12 @@ type dropletSliceSortedByCreated []droplet_runner.Droplet
 
 func (ds dropletSliceSortedByCreated) Len() int { return len(ds) }
 func (ds dropletSliceSortedByCreated) Less(i, j int) bool {
-	if ds[j].Created == nil {
+	if ds[j].Created.IsZero() {
 		return false
-	} else if ds[i].Created == nil {
+	} else if ds[i].Created.IsZero() {
 		return true
 	} else {
-		return (*ds[j].Created).Before(*ds[i].Created)
+		return ds[j].Created.Before(ds[i].Created)
 	}
 }
 func (ds dropletSliceSortedByCreated) Swap(i, j int) { ds[i], ds[j] = ds[j], ds[i] }
@@ -201,12 +202,13 @@ func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
 	w := &tabwriter.Writer{}
 	w.Init(factory.UI, 12, 8, 1, '\t', 0)
 
-	fmt.Fprintln(w, "Droplet\tCreated At")
+	fmt.Fprintln(w, "Droplet\tCreated At\tSize")
 	for _, droplet := range droplets {
-		if droplet.Created != nil {
-			fmt.Fprintf(w, "%s\t%s\n", droplet.Name, droplet.Created.Format("01/02 15:04:05.00"))
+		size := bytefmt.ByteSize(uint64(droplet.Size))
+		if !droplet.Created.IsZero() {
+			fmt.Fprintf(w, "%s\t%s\t%s\n", droplet.Name, droplet.Created.Format("01/02 15:04:05.00"), size)
 		} else {
-			fmt.Fprintf(w, "%s\n", droplet.Name)
+			fmt.Fprintf(w, "%s\t\t%s\n", droplet.Name, size)
 		}
 	}
 

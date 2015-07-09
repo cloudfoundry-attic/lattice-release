@@ -54,25 +54,26 @@ var _ = Describe("DropletRunner", func() {
 			config.Save()
 
 			fakeBlobBucket.ListStub = func(prefix, delim, marker string, max int) (result *s3.ListResp, err error) {
-				if prefix == "" {
+				switch prefix {
+				case "":
 					return &s3.ListResp{
 						Name:           "bucket-name",
 						Prefix:         "",
 						Delimiter:      "/",
 						CommonPrefixes: []string{"X/", "Y/", "Z/"},
 					}, nil
-				} else if prefix == "X/" {
+				case "X/":
 					return &s3.ListResp{
 						Name:      "bucket-name",
 						Prefix:    "X/",
 						Delimiter: "/",
 						Contents: []s3.Key{
-							s3.Key{Key: "X/bits.tgz", LastModified: "2006-01-02T15:04:05.999Z"},
-							s3.Key{Key: "X/droplet.tgz", LastModified: "2006-01-02T15:04:05.999Z"},
-							s3.Key{Key: "X/result.json", LastModified: "2006-01-02T15:04:05.999Z"},
+							s3.Key{Key: "X/bits.tgz", LastModified: "2006-01-02T15:04:05.999Z", Size: 100},
+							s3.Key{Key: "X/droplet.tgz", LastModified: "2006-01-02T15:04:05.999Z", Size: 200},
+							s3.Key{Key: "X/result.json", LastModified: "2006-01-02T15:04:05.999Z", Size: 300},
 						},
 					}, nil
-				} else if prefix == "Y/" {
+				case "Y/":
 					return &s3.ListResp{
 						Name:      "bucket-name",
 						Prefix:    "Y/",
@@ -83,7 +84,7 @@ var _ = Describe("DropletRunner", func() {
 							s3.Key{Key: "Y/result.json"},
 						},
 					}, nil
-				} else if prefix == "Z/" {
+				case "Z/":
 					return &s3.ListResp{
 						Name:      "bucket-name",
 						Prefix:    "Z/",
@@ -92,9 +93,10 @@ var _ = Describe("DropletRunner", func() {
 							s3.Key{Key: "Z/bits.tgz"},
 						},
 					}, nil
-				} else {
-					panic("no stub for arguments: " + prefix + "," + delim + "," + marker + "," + string(max))
 				}
+
+				Fail("no stub for arguments: " + prefix + "," + delim + "," + marker + "," + string(max))
+				return nil, nil
 			}
 
 			droplets, err := dropletRunner.ListDroplets()
@@ -102,9 +104,11 @@ var _ = Describe("DropletRunner", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(droplets)).To(Equal(2))
 			Expect(droplets[0].Name).To(Equal("X"))
-			Expect((*droplets[0].Created).Unix()).To(Equal(time.Date(2006, 1, 2, 15, 4, 5, 999, time.UTC).Unix()))
+			Expect(droplets[0].Created.Unix()).To(Equal(time.Date(2006, 1, 2, 15, 4, 5, 999, time.UTC).Unix()))
+			Expect(droplets[0].Size).To(Equal(int64(200)))
 			Expect(droplets[1].Name).To(Equal("Y"))
-			Expect(droplets[1].Created).To(BeNil())
+			Expect(droplets[1].Created).To(BeZero())
+			Expect(droplets[1].Size).To(Equal(int64(0)))
 		})
 
 		It("returns an error when querying the blob store fails", func() {

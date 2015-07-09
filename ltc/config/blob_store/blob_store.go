@@ -29,7 +29,7 @@ type blobStore struct {
 	s3Endpoint *s3.S3
 }
 
-func NewBlobStore(config *config.Config, s3S3 *s3.S3) *blobStore {
+func NewBlobStore(config *config.Config, s3S3 *s3.S3) BlobStore {
 	return &blobStore{
 		config:     config,
 		s3Endpoint: s3S3,

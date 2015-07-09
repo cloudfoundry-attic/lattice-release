@@ -452,20 +452,22 @@ var _ = Describe("CommandFactory", func() {
 			droplets := []droplet_runner.Droplet{
 				droplet_runner.Droplet{
 					Name:    "drop-a",
-					Created: &times[0],
+					Created: times[0],
+					Size:    789 * 1024 * 1024,
 				},
 				droplet_runner.Droplet{
 					Name:    "drop-b",
-					Created: &times[1],
+					Created: times[1],
+					Size:    456 * 1024,
 				},
 			}
 			fakeDropletRunner.ListDropletsReturns(droplets, nil)
 
 			test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
 
-			Expect(outputBuffer).To(test_helpers.SayLine("Droplet\t\tCreated At"))
-			Expect(outputBuffer).To(test_helpers.SayLine("drop-b\t\t06/15 16:11:33.00"))
-			Expect(outputBuffer).To(test_helpers.SayLine("drop-a\t\t12/31 08:22:44.00"))
+			Expect(outputBuffer).To(test_helpers.SayLine("Droplet\t\tCreated At\t\tSize"))
+			Expect(outputBuffer).To(test_helpers.SayLine("drop-b\t\t06/15 16:11:33.00\t456K"))
+			Expect(outputBuffer).To(test_helpers.SayLine("drop-a\t\t12/31 08:22:44.00\t789M"))
 		})
 
 		It("doesn't print a time if Created is nil", func() {
@@ -474,19 +476,21 @@ var _ = Describe("CommandFactory", func() {
 			droplets := []droplet_runner.Droplet{
 				droplet_runner.Droplet{
 					Name:    "drop-a",
-					Created: &time,
+					Created: time,
+					Size:    789 * 1024 * 1024,
 				},
 				droplet_runner.Droplet{
 					Name: "drop-b",
+					Size: 456 * 1024,
 				},
 			}
 			fakeDropletRunner.ListDropletsReturns(droplets, nil)
 
 			test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
 
-			Expect(outputBuffer).To(test_helpers.SayLine("Droplet\t\tCreated At"))
-			Expect(outputBuffer).To(test_helpers.SayLine("drop-b"))
-			Expect(outputBuffer).To(test_helpers.SayLine("drop-a\t\t12/31 14:33:52.00"))
+			Expect(outputBuffer).To(test_helpers.SayLine("Droplet\t\tCreated At\t\tSize"))
+			Expect(outputBuffer).To(test_helpers.SayLine("drop-b\t\t\t\t\t456K"))
+			Expect(outputBuffer).To(test_helpers.SayLine("drop-a\t\t12/31 14:33:52.00\t789M"))
 		})
 
 		Context("when the droplet runner returns errors", func() {
