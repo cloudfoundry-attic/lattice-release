@@ -130,6 +130,7 @@ compile_brain() {
             ./build
             cp bin/etcd ${GOBIN}
         popd
+        go install github.com/cloudfoundry-incubator/bbs/cmd/bbs
     popd
 
     rm -rf ${GOPATH}/pkg
