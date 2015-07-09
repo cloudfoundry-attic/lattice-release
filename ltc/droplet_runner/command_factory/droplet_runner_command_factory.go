@@ -226,7 +226,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 
 	archivePath, err := factory.makeTar(pathFlag)
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error tarring %s to %s: %s", pathFlag, archivePath, err))
+		factory.UI.Say(fmt.Sprintf("Error tarring %s: %s", pathFlag, err))
 		factory.ExitHandler.Exit(exit_codes.FileSystemError)
 		return
 	}
@@ -459,15 +459,25 @@ func addFileToTar(fileWriter *os.File, tarWriter *tar.Writer, info os.FileInfo, 
 		}
 	}
 
-	if !info.IsDir() {
-		fr, err := os.Open(fullPath)
-		if err != nil {
-			return err
-		}
-		defer fr.Close()
-		if _, err := io.Copy(tarWriter, fr); err != nil {
-			return err
-		}
+	if info.IsDir() {
+		return nil
+	}
+
+	li, err := os.Lstat(fullPath)
+	if err != nil {
+		return err
+	}
+	if li.Mode()&os.ModeSymlink == os.ModeSymlink {
+		return nil
+	}
+
+	fr, err := os.Open(fullPath)
+	if err != nil {
+		return err
+	}
+	defer fr.Close()
+	if _, err := io.Copy(tarWriter, fr); err != nil {
+		return err
 	}
 
 	return nil
