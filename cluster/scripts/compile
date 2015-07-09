@@ -116,7 +116,7 @@ compile_brain() {
         go install github.com/apcera/gnatsd
         go install github.com/cloudfoundry-incubator/receptor/cmd/receptor
         go install github.com/cloudfoundry-incubator/file-server/cmd/file-server
-        go install github.com/cloudfoundry-incubator/buildpack_app_lifecycle/healthcheck
+        go install github.com/cloudfoundry-incubator/healthcheck/cmd/healthcheck
         go install github.com/cloudfoundry-incubator/buildpack_app_lifecycle/builder
 
         go get -v -d github.com/goamz/goamz/...
