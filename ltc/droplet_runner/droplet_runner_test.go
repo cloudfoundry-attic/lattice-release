@@ -396,8 +396,8 @@ var _ = Describe("DropletRunner", func() {
 			Expect(createAppParams).ToNot(BeNil())
 
 			Expect(createAppParams.Name).To(Equal("app-name"))
-			Expect(createAppParams.StartCommand).To(Equal("start-r-up"))
-			Expect(createAppParams.AppArgs).To(Equal([]string{"-yeah!"}))
+			Expect(createAppParams.StartCommand).To(Equal("/tmp/lrp-launcher"))
+			Expect(createAppParams.AppArgs).To(Equal([]string{"start-r-up", "-yeah!"}))
 		})
 
 		It("returns an error when it can't download result.json from the blob store", func() {

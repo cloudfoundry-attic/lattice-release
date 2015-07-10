@@ -221,7 +221,6 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 	}
 
 	if startCommand == "" {
-		startCommand = "/tmp/lrp-launcher"
 		if result.DetectedStartCommand.Web != "" {
 			startArgs = []string{result.DetectedStartCommand.Web}
 		} else {
@@ -229,6 +228,8 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 			// happens to match the droplet name.
 			startArgs = []string{dropletName}
 		}
+	} else {
+		startArgs = append([]string{startCommand}, startArgs...)
 	}
 
 	annotation := Annotation{}
@@ -247,7 +248,7 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 
 		Name:         appName,
 		RootFS:       DropletRootFS,
-		StartCommand: startCommand,
+		StartCommand: "/tmp/lrp-launcher",
 		AppArgs:      startArgs,
 
 		Annotation: string(annotationBytes),
