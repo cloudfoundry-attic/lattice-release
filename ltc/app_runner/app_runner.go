@@ -60,6 +60,7 @@ type CreateAppParams struct {
 	RootFS       string
 	AppArgs      []string
 	Timeout      time.Duration
+	Annotation   string
 	Setup        models.Action
 }
 
@@ -215,6 +216,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		LogSource:            "APP",
 		MetricsGuid:          params.Name,
 		EnvironmentVariables: envVars,
+		Annotation:           params.Annotation,
 		Setup:                params.Setup,
 		Action: &models.RunAction{
 			Path: params.StartCommand,

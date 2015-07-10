@@ -55,6 +55,7 @@ var _ = Describe("AppRunner", func() {
 				StartCommand: "/app-run-statement",
 				RootFS:       "/runtest/runner",
 				AppArgs:      appArgs,
+				Annotation:   "some annotation",
 
 				Setup: &models.DownloadAction{
 					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
@@ -94,6 +95,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(req.LogGuid).To(Equal("americano-app"))
 			Expect(req.LogSource).To(Equal("APP"))
 			Expect(req.MetricsGuid).To(Equal("americano-app"))
+			Expect(req.Annotation).To(Equal("some annotation"))
 
 			Expect(req.Setup).To(BeAssignableToTypeOf(&models.DownloadAction{}))
 			reqSetup, ok := req.Setup.(*models.DownloadAction)

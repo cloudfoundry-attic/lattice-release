@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry-incubator/buildpack_app_lifecycle"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
@@ -45,6 +46,7 @@ type dropletRunner struct {
 	blobStore      blob_store.BlobStore
 	blobBucket     blob_store.BlobBucket
 	targetVerifier target_verifier.TargetVerifier
+	appExaminer    app_examiner.AppExaminer
 }
 
 type BuildResult struct {
@@ -58,7 +60,14 @@ type StartCommand struct {
 	Web string `json:"web"`
 }
 
-func New(appRunner app_runner.AppRunner, taskRunner task_runner.TaskRunner, config *config.Config, blobStore blob_store.BlobStore, blobBucket blob_store.BlobBucket, targetVerifier target_verifier.TargetVerifier) *dropletRunner {
+type Annotation struct {
+	DropletSource struct {
+		config.BlobTargetInfo
+		DropletName string `json:"droplet_name"`
+	} `json:"droplet_source"`
+}
+
+func New(appRunner app_runner.AppRunner, taskRunner task_runner.TaskRunner, config *config.Config, blobStore blob_store.BlobStore, blobBucket blob_store.BlobBucket, targetVerifier target_verifier.TargetVerifier, appExaminer app_examiner.AppExaminer) *dropletRunner {
 	return &dropletRunner{
 		appRunner:      appRunner,
 		taskRunner:     taskRunner,
@@ -66,6 +75,7 @@ func New(appRunner app_runner.AppRunner, taskRunner task_runner.TaskRunner, conf
 		blobStore:      blobStore,
 		blobBucket:     blobBucket,
 		targetVerifier: targetVerifier,
+		appExaminer:    appExaminer,
 	}
 }
 
@@ -221,6 +231,17 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 		}
 	}
 
+	annotation := Annotation{}
+	annotation.DropletSource.BlobTargetInfo.TargetHost = dr.config.BlobTarget().TargetHost
+	annotation.DropletSource.BlobTargetInfo.TargetPort = dr.config.BlobTarget().TargetPort
+	annotation.DropletSource.BlobTargetInfo.BucketName = dr.config.BlobTarget().BucketName
+	annotation.DropletSource.DropletName = dropletName
+
+	annotationBytes, err := json.Marshal(annotation)
+	if err != nil {
+		return err
+	}
+
 	appParams := app_runner.CreateAppParams{
 		AppEnvironmentParams: appEnvironmentParams,
 
@@ -228,6 +249,8 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 		RootFS:       DropletRootFS,
 		StartCommand: startCommand,
 		AppArgs:      startArgs,
+
+		Annotation: string(annotationBytes),
 
 		Setup: &models.SerialAction{
 			LogSource: appName,
@@ -282,7 +305,29 @@ func (dr *dropletRunner) downloadJSON(path string) (*BuildResult, error) {
 	return &result, nil
 }
 
+func dropletMatchesAnnotation(blobTarget config.BlobTargetInfo, dropletName string, annotation Annotation) bool {
+	return annotation.DropletSource.DropletName == dropletName &&
+		annotation.DropletSource.TargetHost == blobTarget.TargetHost &&
+		annotation.DropletSource.TargetPort == blobTarget.TargetPort &&
+		annotation.DropletSource.BucketName == blobTarget.BucketName
+}
+
 func (dr *dropletRunner) RemoveDroplet(dropletName string) error {
+	apps, err := dr.appExaminer.ListApps()
+	if err != nil {
+		return err
+	}
+	for _, app := range apps {
+		annotation := Annotation{}
+		if err := json.Unmarshal([]byte(app.Annotation), &annotation); err != nil {
+			return err
+		}
+
+		if dropletMatchesAnnotation(dr.config.BlobTarget(), dropletName, annotation) {
+			return fmt.Errorf("app %s was launched from droplet", app.ProcessGuid)
+		}
+	}
+
 	listResp, err := dr.blobBucket.List(dropletName+"/", "/", "", 0)
 	if err != nil {
 		return err

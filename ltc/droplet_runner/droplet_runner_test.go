@@ -24,6 +24,8 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/goamz/goamz/s3"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
@@ -35,17 +37,19 @@ var _ = Describe("DropletRunner", func() {
 		fakeBlobStore      *fake_blob_store.FakeBlobStore
 		fakeBlobBucket     *fake_blob_bucket.FakeBlobBucket
 		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
+		fakeAppExaminer    *fake_app_examiner.FakeAppExaminer
 		dropletRunner      droplet_runner.DropletRunner
 	)
 
 	BeforeEach(func() {
-		fakeAppRunner = new(fake_app_runner.FakeAppRunner)
-		fakeTaskRunner = new(fake_task_runner.FakeTaskRunner)
+		fakeAppRunner = &fake_app_runner.FakeAppRunner{}
+		fakeTaskRunner = &fake_task_runner.FakeTaskRunner{}
 		config = config_package.New(persister.NewMemPersister())
-		fakeBlobStore = new(fake_blob_store.FakeBlobStore)
-		fakeBlobBucket = new(fake_blob_bucket.FakeBlobBucket)
-		fakeTargetVerifier = new(fake_target_verifier.FakeTargetVerifier)
-		dropletRunner = droplet_runner.New(fakeAppRunner, fakeTaskRunner, config, fakeBlobStore, fakeBlobBucket, fakeTargetVerifier)
+		fakeBlobStore = &fake_blob_store.FakeBlobStore{}
+		fakeBlobBucket = &fake_blob_bucket.FakeBlobBucket{}
+		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
+		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
+		dropletRunner = droplet_runner.New(fakeAppRunner, fakeTaskRunner, config, fakeBlobStore, fakeBlobBucket, fakeTargetVerifier, fakeAppExaminer)
 	})
 
 	Describe("ListDroplets", func() {
@@ -324,6 +328,15 @@ var _ = Describe("DropletRunner", func() {
 			Expect(createAppParams.StartCommand).To(Equal("/tmp/lrp-launcher"))
 			Expect(createAppParams.AppArgs).To(Equal([]string{"start"}))
 
+			Expect(createAppParams.Annotation).To(MatchJSON(`{
+				"droplet_source": {
+					"host": "blob-host",
+					"port": 7474,
+					"bucket_name": "bucket-name",
+					"droplet_name": "droplet-name"
+				}
+			}`))
+
 			Expect(createAppParams.Setup).To(Equal(&models.SerialAction{
 				LogSource: "app-name",
 				Actions: []models.Action{
@@ -358,8 +371,7 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("launches the droplet lrp task with the droplet name as the start command", func() {
-			js := []byte("{}")
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader(js)), nil)
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader([]byte("{}"))), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
 			Expect(err).NotTo(HaveOccurred())
@@ -374,8 +386,7 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("launches the droplet lrp task with a custom start command", func() {
-			js := []byte("{}")
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader(js)), nil)
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader([]byte("{}"))), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "start-r-up", []string{"-yeah!"}, app_runner.AppEnvironmentParams{})
 			Expect(err).NotTo(HaveOccurred())
@@ -435,6 +446,50 @@ var _ = Describe("DropletRunner", func() {
 				}
 			}
 
+			appInfos := []app_examiner.AppInfo{
+				{
+					Annotation: `{
+						"droplet_source": {
+							"host": "other-blob-host",
+							"port": 7474,
+							"bucket_name": "bucket-name",
+							"droplet_name": "drippy"
+						}
+					}`,
+				},
+				{
+					Annotation: `{
+						"droplet_source": {
+							"host": "blob-host",
+							"port": 1234,
+							"bucket_name": "bucket-name",
+							"droplet_name": "drippy"
+						}
+					}`,
+				},
+				{
+					Annotation: `{
+						"droplet_source": {
+							"host": "blob-host",
+							"port": 7474,
+							"bucket_name": "other-bucket-name",
+							"droplet_name": "drippy"
+						}
+					}`,
+				},
+				{
+					Annotation: `{
+						"droplet_source": {
+							"host": "blob-host",
+							"port": 7474,
+							"bucket_name": "bucket-name",
+							"droplet_name": "other-drippy"
+						}
+					}`,
+				},
+			}
+			fakeAppExaminer.ListAppsReturns(appInfos, nil)
+
 			err := dropletRunner.RemoveDroplet("drippy")
 			Expect(err).ToNot(HaveOccurred())
 
@@ -453,6 +508,63 @@ var _ = Describe("DropletRunner", func() {
 
 			err := dropletRunner.RemoveDroplet("drippy")
 			Expect(err).To(HaveOccurred())
+		})
+
+		It("returns an error when the app specifies that the droplet is in use", func() {
+			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
+			config.Save()
+
+			dropletContents := &s3.ListResp{
+				Name:      "bucket-name",
+				Prefix:    "drippy/",
+				Delimiter: "/",
+				Contents: []s3.Key{
+					s3.Key{Key: "drippy/bits.tgz"},
+					s3.Key{Key: "drippy/droplet.tgz"},
+					s3.Key{Key: "drippy/result.json"},
+				},
+			}
+			fakeBlobBucket.ListReturns(dropletContents, nil)
+
+			appInfos := []app_examiner.AppInfo{{
+				ProcessGuid: "dripapp",
+				Annotation: `{
+					"droplet_source": {
+						"host": "blob-host",
+						"port": 7474,
+						"bucket_name": "bucket-name",
+						"droplet_name": "drippy"
+					}
+				}`,
+			}}
+			fakeAppExaminer.ListAppsReturns(appInfos, nil)
+
+			err := dropletRunner.RemoveDroplet("drippy")
+			Expect(err).To(MatchError("app dripapp was launched from droplet"))
+		})
+
+		It("returns an error when listing the running applications fails", func() {
+			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
+			config.Save()
+
+			fakeAppExaminer.ListAppsReturns(nil, errors.New("some error"))
+
+			err := dropletRunner.RemoveDroplet("drippy")
+			Expect(err).To(MatchError("some error"))
+		})
+
+		It("returns an error when encountering an app with bad JSON in its annotation", func() {
+			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
+			config.Save()
+
+			appInfos := []app_examiner.AppInfo{{
+				ProcessGuid: "dripapp",
+				Annotation:  "invalid JSON",
+			}}
+			fakeAppExaminer.ListAppsReturns(appInfos, nil)
+
+			err := dropletRunner.RemoveDroplet("drippy")
+			Expect(err).To(MatchError("invalid character 'i' looking for beginning of value"))
 		})
 	})
 })
