@@ -321,7 +321,7 @@ func (dr *dropletRunner) RemoveDroplet(dropletName string) error {
 	for _, app := range apps {
 		annotation := Annotation{}
 		if err := json.Unmarshal([]byte(app.Annotation), &annotation); err != nil {
-			return err
+			continue
 		}
 
 		if dropletMatchesAnnotation(dr.config.BlobTarget(), dropletName, annotation) {

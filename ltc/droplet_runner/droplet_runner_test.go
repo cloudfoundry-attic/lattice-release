@@ -448,6 +448,9 @@ var _ = Describe("DropletRunner", func() {
 
 			appInfos := []app_examiner.AppInfo{
 				{
+					Annotation: "",
+				},
+				{
 					Annotation: `{
 						"droplet_source": {
 							"host": "other-blob-host",
@@ -466,6 +469,9 @@ var _ = Describe("DropletRunner", func() {
 							"droplet_name": "drippy"
 						}
 					}`,
+				},
+				{
+					Annotation: "junk",
 				},
 				{
 					Annotation: `{
@@ -551,20 +557,6 @@ var _ = Describe("DropletRunner", func() {
 
 			err := dropletRunner.RemoveDroplet("drippy")
 			Expect(err).To(MatchError("some error"))
-		})
-
-		It("returns an error when encountering an app with bad JSON in its annotation", func() {
-			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
-			config.Save()
-
-			appInfos := []app_examiner.AppInfo{{
-				ProcessGuid: "dripapp",
-				Annotation:  "invalid JSON",
-			}}
-			fakeAppExaminer.ListAppsReturns(appInfos, nil)
-
-			err := dropletRunner.RemoveDroplet("drippy")
-			Expect(err).To(MatchError("invalid character 'i' looking for beginning of value"))
 		})
 	})
 })
