@@ -24,8 +24,25 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/bytefmt"
 
+	"net/url"
+
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 )
+
+var knownBuildpacks map[string]string
+
+func init() {
+	knownBuildpacks = map[string]string{
+		"go":         "https://github.com/cloudfoundry/go-buildpack.git",
+		"java":       "https://github.com/cloudfoundry/java-buildpack.git",
+		"python":     "https://github.com/cloudfoundry/python-buildpack.git",
+		"ruby":       "https://github.com/cloudfoundry/ruby-buildpack.git",
+		"nodejs":     "https://github.com/cloudfoundry/nodejs-buildpack.git",
+		"php":        "https://github.com/cloudfoundry/php-buildpack.git",
+		"binary":     "https://github.com/cloudfoundry/binary-buildpack.git",
+		"staticfile": "https://github.com/cloudfoundry/staticfile-buildpack.git",
+	}
+}
 
 type DropletRunnerCommandFactory struct {
 	app_runner_command_factory.AppRunnerCommandFactory
@@ -218,10 +235,21 @@ func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
 func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	pathFlag := context.String("path")
 	dropletName := context.Args().First()
-	buildpackUrl := context.Args().Get(1)
+	buildpack := context.Args().Get(1)
 
-	if dropletName == "" || buildpackUrl == "" {
+	if dropletName == "" || buildpack == "" {
 		factory.UI.SayIncorrectUsage("")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	var buildpackUrl string
+	if knownBuildpackUrl, ok := knownBuildpacks[buildpack]; ok {
+		buildpackUrl = knownBuildpackUrl
+	} else if _, err := url.ParseRequestURI(buildpack); err == nil {
+		buildpackUrl = buildpack
+	} else {
+		factory.UI.SayIncorrectUsage(fmt.Sprintf("invalid buildpack %s", buildpack))
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
