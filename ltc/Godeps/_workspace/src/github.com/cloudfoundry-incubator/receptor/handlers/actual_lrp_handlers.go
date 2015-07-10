@@ -6,23 +6,27 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/cloudfoundry-incubator/bbs"
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/bbserrors"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-golang/lager"
 )
 
 type ActualLRPHandler struct {
-	bbs    Bbs.ReceptorBBS
-	logger lager.Logger
+	legacyBBS Bbs.ReceptorBBS
+	bbs       bbs.Client
+	logger    lager.Logger
 }
 
-func NewActualLRPHandler(bbs Bbs.ReceptorBBS, logger lager.Logger) *ActualLRPHandler {
+func NewActualLRPHandler(bbs bbs.Client, legacyBBS Bbs.ReceptorBBS, logger lager.Logger) *ActualLRPHandler {
 	return &ActualLRPHandler{
-		bbs:    bbs,
-		logger: logger.Session("actual-lrp-handler"),
+		bbs:       bbs,
+		legacyBBS: legacyBBS,
+		logger:    logger.Session("actual-lrp-handler"),
 	}
 }
 
@@ -32,14 +36,8 @@ func (h *ActualLRPHandler) GetAll(w http.ResponseWriter, req *http.Request) {
 		"domain": domain,
 	})
 
-	var actualLRPGroups []models.ActualLRPGroup
-	var err error
-
-	if domain == "" {
-		actualLRPGroups, err = h.bbs.ActualLRPGroups(logger)
-	} else {
-		actualLRPGroups, err = h.bbs.ActualLRPGroupsByDomain(logger, domain)
-	}
+	filter := models.ActualLRPFilter{Domain: domain}
+	actualLRPGroups, err := h.bbs.ActualLRPGroups(filter)
 
 	if err != nil {
 		logger.Error("failed-to-fetch-actual-lrp-groups", err)
@@ -53,7 +51,7 @@ func (h *ActualLRPHandler) GetAll(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			continue
 		}
-		responses = append(responses, serialization.ActualLRPToResponse(*lrp, evacuating))
+		responses = append(responses, serialization.ActualLRPProtoToResponse(*lrp, evacuating))
 	}
 
 	writeJSONResponse(w, http.StatusOK, responses)
@@ -72,7 +70,7 @@ func (h *ActualLRPHandler) GetAllByProcessGuid(w http.ResponseWriter, req *http.
 		return
 	}
 
-	actualLRPGroupsByIndex, err := h.bbs.ActualLRPGroupsByProcessGuid(logger, processGuid)
+	actualLRPGroupsByIndex, err := h.legacyBBS.ActualLRPGroupsByProcessGuid(logger, processGuid)
 	if err != nil {
 		logger.Error("failed-to-fetch-actual-lrp-groups-by-process-guid", err)
 		writeUnknownErrorResponse(w, err)
@@ -124,7 +122,7 @@ func (h *ActualLRPHandler) GetByProcessGuidAndIndex(w http.ResponseWriter, req *
 		return
 	}
 
-	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(logger, processGuid, index)
+	actualLRPGroup, err := h.legacyBBS.ActualLRPGroupByProcessGuidAndIndex(logger, processGuid, index)
 	if err == bbserrors.ErrStoreResourceNotFound {
 		writeJSONResponse(w, http.StatusNotFound, nil)
 		return
@@ -171,7 +169,7 @@ func (h *ActualLRPHandler) KillByProcessGuidAndIndex(w http.ResponseWriter, req 
 		return
 	}
 
-	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(logger, processGuid, index)
+	actualLRPGroup, err := h.legacyBBS.ActualLRPGroupByProcessGuidAndIndex(logger, processGuid, index)
 	if err != nil {
 		if err == bbserrors.ErrStoreResourceNotFound {
 			responseErr := fmt.Errorf("process-guid '%s' does not exist or has no instance at index %d", processGuid, index)
@@ -195,7 +193,7 @@ func (h *ActualLRPHandler) KillByProcessGuidAndIndex(w http.ResponseWriter, req 
 		return
 	}
 
-	h.bbs.RetireActualLRPs(logger, []models.ActualLRPKey{actualLRP.ActualLRPKey})
+	h.legacyBBS.RetireActualLRPs(logger, []oldmodels.ActualLRPKey{actualLRP.ActualLRPKey})
 
 	w.WriteHeader(http.StatusNoContent)
 }

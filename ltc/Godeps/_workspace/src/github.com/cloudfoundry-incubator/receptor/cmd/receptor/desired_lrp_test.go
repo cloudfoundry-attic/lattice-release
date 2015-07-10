@@ -38,8 +38,8 @@ var _ = Describe("Desired LRP API", func() {
 		})
 
 		It("desires an LRP in the BBS", func() {
-			Eventually(func() ([]models.DesiredLRP, error) { return bbs.DesiredLRPs(logger) }).Should(HaveLen(1))
-			desiredLRPs, err := bbs.DesiredLRPs(logger)
+			Eventually(func() ([]models.DesiredLRP, error) { return legacyBBS.DesiredLRPs(logger) }).Should(HaveLen(1))
+			desiredLRPs, err := legacyBBS.DesiredLRPs(logger)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(desiredLRPs[0].ProcessGuid).To(Equal(lrpToCreate.ProcessGuid))
 		})
@@ -64,7 +64,7 @@ var _ = Describe("Desired LRP API", func() {
 			err := client.CreateDesiredLRP(lrpRequest)
 			Expect(err).NotTo(HaveOccurred())
 
-			desiredLRP, err = bbs.DesiredLRPByProcessGuid(logger, lrpRequest.ProcessGuid)
+			desiredLRP, err = legacyBBS.DesiredLRPByProcessGuid(logger, lrpRequest.ProcessGuid)
 			Expect(err).NotTo(HaveOccurred())
 
 			lrpResponse, getErr = client.GetDesiredLRP(lrpRequest.ProcessGuid)
@@ -110,8 +110,8 @@ var _ = Describe("Desired LRP API", func() {
 		})
 
 		It("updates the LRP in the BBS", func() {
-			Eventually(func() ([]models.DesiredLRP, error) { return bbs.DesiredLRPs(logger) }).Should(HaveLen(1))
-			desiredLRPs, err := bbs.DesiredLRPs(logger)
+			Eventually(func() ([]models.DesiredLRP, error) { return legacyBBS.DesiredLRPs(logger) }).Should(HaveLen(1))
+			desiredLRPs, err := legacyBBS.DesiredLRPs(logger)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(desiredLRPs[0].Instances).To(Equal(instances))
 			Expect(desiredLRPs[0].Annotation).To(Equal(annotation))

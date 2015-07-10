@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"time"
 
+	"github.com/cloudfoundry-incubator/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/handlers"
-	"github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
+	fake_legacy_bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -19,26 +21,28 @@ import (
 var _ = Describe("Domain Handlers", func() {
 	var (
 		logger           lager.Logger
-		fakeBBS          *fake_bbs.FakeReceptorBBS
+		fakeLegacyBBS    *fake_legacy_bbs.FakeReceptorBBS
+		fakeBBS          *fake_bbs.FakeClient
 		responseRecorder *httptest.ResponseRecorder
 		handler          *handlers.DomainHandler
 	)
 
 	BeforeEach(func() {
-		fakeBBS = new(fake_bbs.FakeReceptorBBS)
+		fakeLegacyBBS = new(fake_legacy_bbs.FakeReceptorBBS)
+		fakeBBS = new(fake_bbs.FakeClient)
 		logger = lager.NewLogger("test")
 		logger.RegisterSink(lager.NewWriterSink(GinkgoWriter, lager.DEBUG))
 		responseRecorder = httptest.NewRecorder()
-		handler = handlers.NewDomainHandler(fakeBBS, logger)
+		handler = handlers.NewDomainHandler(fakeBBS, fakeLegacyBBS, logger)
 	})
 
 	Describe("Upsert", func() {
 		var domain string
-		var ttlInSeconds int
+		var ttl time.Duration
 
 		BeforeEach(func() {
 			domain = "domain-1"
-			ttlInSeconds = 1000
+			ttl = 1000 * time.Second
 		})
 
 		Context("with a structured request", func() {
@@ -59,7 +63,7 @@ var _ = Describe("Domain Handlers", func() {
 					Expect(fakeBBS.UpsertDomainCallCount()).To(Equal(1))
 					d, ttl := fakeBBS.UpsertDomainArgsForCall(0)
 					Expect(d).To(Equal(domain))
-					Expect(ttl).To(Equal(ttlInSeconds))
+					Expect(ttl).To(Equal(ttl))
 				})
 
 				It("responds with 204 Status NO CONTENT", func() {
@@ -120,7 +124,7 @@ var _ = Describe("Domain Handlers", func() {
 					Expect(fakeBBS.UpsertDomainCallCount()).To(Equal(1))
 					d, ttl := fakeBBS.UpsertDomainArgsForCall(0)
 					Expect(d).To(Equal(domain))
-					Expect(ttl).To(Equal(0))
+					Expect(ttl).To(Equal(time.Duration(0)))
 				})
 			})
 

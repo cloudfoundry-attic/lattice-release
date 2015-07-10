@@ -54,18 +54,28 @@ func (cap CellCapacity) Validate() error {
 }
 
 type CellPresence struct {
-	CellID     string       `json:"cell_id"`
-	RepAddress string       `json:"rep_address"`
-	Zone       string       `json:"zone"`
-	Capacity   CellCapacity `json:"capacity"`
+	CellID          string              `json:"cell_id"`
+	RepAddress      string              `json:"rep_address"`
+	Zone            string              `json:"zone"`
+	Capacity        CellCapacity        `json:"capacity"`
+	RootFSProviders map[string][]string `json:"rootfs_providers"`
 }
 
-func NewCellPresence(cellID, repAddress, zone string, capacity CellCapacity) CellPresence {
+func NewCellPresence(cellID, repAddress, zone string, capacity CellCapacity, rootFSProviders, preloadedRootFSes []string) CellPresence {
+	rootFSProviderMap := make(map[string][]string)
+
+	for _, provider := range rootFSProviders {
+		rootFSProviderMap[provider] = []string{}
+	}
+
+	rootFSProviderMap["preloaded"] = preloadedRootFSes
+
 	return CellPresence{
-		CellID:     cellID,
-		RepAddress: repAddress,
-		Zone:       zone,
-		Capacity:   capacity,
+		CellID:          cellID,
+		RepAddress:      repAddress,
+		Zone:            zone,
+		Capacity:        capacity,
+		RootFSProviders: rootFSProviderMap,
 	}
 }
 

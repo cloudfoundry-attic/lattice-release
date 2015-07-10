@@ -443,9 +443,10 @@ func (m *ModificationTag) SucceededBy(other ModificationTag) bool {
 }
 
 type CellResponse struct {
-	CellID   string       `json:"cell_id"`
-	Zone     string       `json:"zone"`
-	Capacity CellCapacity `json:"capacity"`
+	CellID          string              `json:"cell_id"`
+	Zone            string              `json:"zone"`
+	Capacity        CellCapacity        `json:"capacity"`
+	RootFSProviders map[string][]string `json:"rootfs_providers"`
 }
 
 type CellCapacity struct {

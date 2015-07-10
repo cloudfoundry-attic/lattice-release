@@ -16,7 +16,9 @@ var _ = Describe("CellPresence", func() {
 
 	BeforeEach(func() {
 		capacity = models.NewCellCapacity(128, 1024, 3)
-		cellPresence = models.NewCellPresence("some-id", "some-address", "some-zone", capacity)
+		rootfsProviders := []string{"provider-1"}
+		preloadedRootFSes := []string{"provider-2"}
+		cellPresence = models.NewCellPresence("some-id", "some-address", "some-zone", capacity, rootfsProviders, preloadedRootFSes)
 
 		payload = `{
     "cell_id":"some-id",
@@ -26,8 +28,12 @@ var _ = Describe("CellPresence", func() {
        "memory_mb": 128,
        "disk_mb": 1024,
        "containers": 3
-    }
-  }`
+		 },
+		 "rootfs_providers": {
+			 "provider-1": [],
+			 "preloaded": ["provider-2"]
+		 }
+   }`
 	})
 
 	Describe("Validate", func() {
@@ -36,21 +42,25 @@ var _ = Describe("CellPresence", func() {
 				Expect(cellPresence.Validate()).NotTo(HaveOccurred())
 			})
 		})
+
 		Context("when cell presence is invalid", func() {
 			Context("when cell id is invalid", func() {
 				BeforeEach(func() {
 					cellPresence.CellID = ""
 				})
+
 				It("returns an error", func() {
 					err := cellPresence.Validate()
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(ContainSubstring("cell_id"))
 				})
 			})
+
 			Context("when rep address is invalid", func() {
 				BeforeEach(func() {
 					cellPresence.RepAddress = ""
 				})
+
 				It("returns an error", func() {
 					err := cellPresence.Validate()
 					Expect(err).To(HaveOccurred())

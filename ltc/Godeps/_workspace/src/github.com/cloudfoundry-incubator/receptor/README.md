@@ -1,3 +1,3 @@
 # Receptor
 
-Restful API for Diego, which lives on every cell.
+Restful API for Diego, which lives within the access VM.

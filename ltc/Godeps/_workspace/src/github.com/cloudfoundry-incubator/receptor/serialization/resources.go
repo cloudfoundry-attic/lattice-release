@@ -1,15 +1,16 @@
 package serialization
 
 import (
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
-func EnvironmentVariablesToModel(envVars []receptor.EnvironmentVariable) []models.EnvironmentVariable {
+func EnvironmentVariablesToModel(envVars []receptor.EnvironmentVariable) []oldmodels.EnvironmentVariable {
 	if envVars == nil {
 		return nil
 	}
-	out := make([]models.EnvironmentVariable, len(envVars))
+	out := make([]oldmodels.EnvironmentVariable, len(envVars))
 	for i, val := range envVars {
 		out[i].Name = val.Name
 		out[i].Value = val.Value
@@ -17,7 +18,7 @@ func EnvironmentVariablesToModel(envVars []receptor.EnvironmentVariable) []model
 	return out
 }
 
-func EnvironmentVariablesFromModel(envVars []models.EnvironmentVariable) []receptor.EnvironmentVariable {
+func EnvironmentVariablesFromModel(envVars []oldmodels.EnvironmentVariable) []receptor.EnvironmentVariable {
 	if envVars == nil {
 		return nil
 	}
@@ -29,7 +30,19 @@ func EnvironmentVariablesFromModel(envVars []models.EnvironmentVariable) []recep
 	return out
 }
 
-func PortMappingFromModel(ports []models.PortMapping) []receptor.PortMapping {
+func PortMappingFromProto(ports []*models.PortMapping) []receptor.PortMapping {
+	if ports == nil {
+		return nil
+	}
+	out := make([]receptor.PortMapping, len(ports))
+	for i, val := range ports {
+		out[i].ContainerPort = uint16(val.GetContainerPort())
+		out[i].HostPort = uint16(val.GetHostPort())
+	}
+	return out
+}
+
+func PortMappingFromModel(ports []oldmodels.PortMapping) []receptor.PortMapping {
 	if ports == nil {
 		return nil
 	}
@@ -41,11 +54,11 @@ func PortMappingFromModel(ports []models.PortMapping) []receptor.PortMapping {
 	return out
 }
 
-func PortMappingToModel(ports []receptor.PortMapping) []models.PortMapping {
+func PortMappingToModel(ports []receptor.PortMapping) []oldmodels.PortMapping {
 	if ports == nil {
 		return nil
 	}
-	out := make([]models.PortMapping, len(ports))
+	out := make([]oldmodels.PortMapping, len(ports))
 	for i, val := range ports {
 		out[i].ContainerPort = val.ContainerPort
 		out[i].HostPort = val.HostPort

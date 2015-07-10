@@ -1,11 +1,55 @@
 package serialization
 
 import (
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
-func ActualLRPToResponse(actualLRP models.ActualLRP, evacuating bool) receptor.ActualLRPResponse {
+func ActualLRPProtoToResponse(actualLRP models.ActualLRP, evacuating bool) receptor.ActualLRPResponse {
+	return receptor.ActualLRPResponse{
+		ProcessGuid:     actualLRP.GetProcessGuid(),
+		InstanceGuid:    actualLRP.GetInstanceGuid(),
+		CellID:          actualLRP.GetCellId(),
+		Domain:          actualLRP.GetDomain(),
+		Index:           int(actualLRP.GetIndex()),
+		Address:         actualLRP.GetAddress(),
+		Ports:           PortMappingFromProto(actualLRP.GetPorts()),
+		State:           actualLRPProtoStateToResponseState(actualLRP.GetState()),
+		PlacementError:  actualLRP.GetPlacementError(),
+		Since:           actualLRP.GetSince(),
+		CrashCount:      int(actualLRP.GetCrashCount()),
+		CrashReason:     actualLRP.GetCrashReason(),
+		Evacuating:      evacuating,
+		ModificationTag: actualLRPProtoModificationTagToResponseModificationTag(actualLRP.GetModificationTag()),
+	}
+}
+
+func actualLRPProtoStateToResponseState(state string) receptor.ActualLRPState {
+	switch state {
+	case models.ActualLRPStateUnclaimed:
+		return receptor.ActualLRPStateUnclaimed
+	case models.ActualLRPStateClaimed:
+		return receptor.ActualLRPStateClaimed
+	case models.ActualLRPStateRunning:
+		return receptor.ActualLRPStateRunning
+	case models.ActualLRPStateCrashed:
+		return receptor.ActualLRPStateCrashed
+	default:
+		return receptor.ActualLRPStateInvalid
+	}
+}
+
+func actualLRPProtoModificationTagToResponseModificationTag(modificationTag *models.ModificationTag) receptor.ModificationTag {
+	return receptor.ModificationTag{
+		Epoch: modificationTag.GetEpoch(),
+		Index: uint(modificationTag.GetIndex()),
+	}
+}
+
+// old code -- delete when BBS server is done
+
+func ActualLRPToResponse(actualLRP oldmodels.ActualLRP, evacuating bool) receptor.ActualLRPResponse {
 	return receptor.ActualLRPResponse{
 		ProcessGuid:     actualLRP.ProcessGuid,
 		InstanceGuid:    actualLRP.InstanceGuid,
@@ -24,7 +68,7 @@ func ActualLRPToResponse(actualLRP models.ActualLRP, evacuating bool) receptor.A
 	}
 }
 
-func actualLRPStateToResponseState(state models.ActualLRPState) receptor.ActualLRPState {
+func actualLRPStateToResponseState(state oldmodels.ActualLRPState) receptor.ActualLRPState {
 	switch state {
 	case models.ActualLRPStateUnclaimed:
 		return receptor.ActualLRPStateUnclaimed
@@ -39,7 +83,7 @@ func actualLRPStateToResponseState(state models.ActualLRPState) receptor.ActualL
 	}
 }
 
-func actualLRPModificationTagToResponseModificationTag(modificationTag models.ModificationTag) receptor.ModificationTag {
+func actualLRPModificationTagToResponseModificationTag(modificationTag oldmodels.ModificationTag) receptor.ModificationTag {
 	return receptor.ModificationTag{
 		Epoch: modificationTag.Epoch,
 		Index: modificationTag.Index,

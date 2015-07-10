@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/cloudfoundry-incubator/bbs"
 	"github.com/cloudfoundry-incubator/receptor"
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
@@ -14,8 +16,9 @@ import (
 )
 
 type DomainHandler struct {
-	bbs    Bbs.ReceptorBBS
-	logger lager.Logger
+	legacyBBS Bbs.ReceptorBBS
+	bbs       bbs.Client
+	logger    lager.Logger
 }
 
 var (
@@ -23,10 +26,11 @@ var (
 	ErrMaxAgeMissing = errors.New("max-age directive missing from request")
 )
 
-func NewDomainHandler(bbs Bbs.ReceptorBBS, logger lager.Logger) *DomainHandler {
+func NewDomainHandler(bbs bbs.Client, legacyBBS Bbs.ReceptorBBS, logger lager.Logger) *DomainHandler {
 	return &DomainHandler{
-		bbs:    bbs,
-		logger: logger.Session("domain-handler"),
+		bbs:       bbs,
+		legacyBBS: legacyBBS,
+		logger:    logger.Session("domain-handler"),
 	}
 }
 
@@ -69,7 +73,7 @@ func (h *DomainHandler) Upsert(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	err := h.bbs.UpsertDomain(domain, ttl)
+	err := h.bbs.UpsertDomain(domain, time.Second*time.Duration(ttl))
 	if err != nil {
 		if _, ok := err.(models.ValidationError); ok {
 			logger.Error("failed-to-upsert-domain", err)

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudfoundry-incubator/bbs"
 	cf_debug_server "github.com/cloudfoundry-incubator/cf-debug-server"
 	cf_lager "github.com/cloudfoundry-incubator/cf-lager"
 	"github.com/cloudfoundry-incubator/cf_http"
@@ -111,6 +112,12 @@ var communicationTimeout = flag.Duration(
 	"Timeout applied to all HTTP requests.",
 )
 
+var bbsAddress = flag.String(
+	"bbsAddress",
+	"",
+	"Address to the BBS Server",
+)
+
 const (
 	dropsondeDestination = "localhost:3457"
 	dropsondeOrigin      = "receptor"
@@ -141,15 +148,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	bbs := initializeReceptorBBS(etcdOptions, logger)
+	if err := validateBBSAddress(); err != nil {
+		logger.Fatal("invalid-bbs-address", err)
+	}
+
+	legacyBBS := initializeReceptorBBS(etcdOptions, logger)
 	hub := event.NewHub()
 
-	handler := handlers.New(bbs, hub, logger, *username, *password, *corsEnabled)
+	bbs := bbs.NewClient(*bbsAddress)
 
-	worker, enqueue := task_handler.NewTaskWorkerPool(bbs, logger)
+	handler := handlers.New(bbs, legacyBBS, hub, logger, *username, *password, *corsEnabled)
+
+	worker, enqueue := task_handler.NewTaskWorkerPool(legacyBBS, logger)
 	taskHandler := task_handler.New(enqueue, logger)
 	lrpChangeWatcher := watcher.NewWatcher(
-		bbs,
+		legacyBBS,
 		hub,
 		clock.NewClock(),
 		bbsWatchRetryWaitDuration,
@@ -192,6 +205,13 @@ func main() {
 	}
 
 	logger.Info("exited")
+}
+
+func validateBBSAddress() error {
+	if *bbsAddress == "" {
+		return errors.New("bbsAddress is required")
+	}
+	return nil
 }
 
 func validateNatsArguments() error {

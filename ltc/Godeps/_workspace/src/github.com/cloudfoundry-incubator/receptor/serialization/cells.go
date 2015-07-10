@@ -14,5 +14,6 @@ func CellPresenceToCellResponse(cellPresence models.CellPresence) receptor.CellR
 			DiskMB:     cellPresence.Capacity.DiskMB,
 			Containers: cellPresence.Capacity.Containers,
 		},
+		RootFSProviders: cellPresence.RootFSProviders,
 	}
 }

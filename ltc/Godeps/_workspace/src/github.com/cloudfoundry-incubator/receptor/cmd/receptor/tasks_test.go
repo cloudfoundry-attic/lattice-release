@@ -67,7 +67,7 @@ var _ = Describe("Task API", func() {
 
 		It("desires the task in the BBS", func() {
 			Eventually(func() ([]models.Task, error) {
-				return bbs.PendingTasks(logger)
+				return legacyBBS.PendingTasks(logger)
 			}).Should(HaveLen(1))
 		})
 
@@ -83,7 +83,7 @@ var _ = Describe("Task API", func() {
 
 		Describe("when the task completes", func() {
 			BeforeEach(func() {
-				_, err = bbs.StartTask(logger, "task-guid-1", "the-cell-id")
+				_, err = legacyBBS.StartTask(logger, "task-guid-1", "the-cell-id")
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -108,7 +108,7 @@ var _ = Describe("Task API", func() {
 
 				Expect(testServer.ReceivedRequests()).To(HaveLen(0))
 
-				err = bbs.CompleteTask(logger, "task-guid-1", "the-cell-id", true, "the-failure-reason", "the-result")
+				err = legacyBBS.CompleteTask(logger, "task-guid-1", "the-cell-id", true, "the-failure-reason", "the-result")
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(testServer.ReceivedRequests).Should(HaveLen(1))
@@ -127,7 +127,7 @@ var _ = Describe("Task API", func() {
 
 		Context("when there are tasks", func() {
 			BeforeEach(func() {
-				err := bbs.DesireTask(logger, models.Task{
+				err := legacyBBS.DesireTask(logger, models.Task{
 					TaskGuid: "task-guid-1",
 					Domain:   "test-domain",
 					RootFS:   "some:rootfs",
@@ -135,7 +135,7 @@ var _ = Describe("Task API", func() {
 				})
 				Expect(err).NotTo(HaveOccurred())
 
-				err = bbs.DesireTask(logger, models.Task{
+				err = legacyBBS.DesireTask(logger, models.Task{
 					TaskGuid: "task-guid-2",
 					Domain:   "test-domain",
 					RootFS:   "some:rootfs",
@@ -160,7 +160,7 @@ var _ = Describe("Task API", func() {
 
 	Describe("GET /v1/domains/:domain/tasks", func() {
 		BeforeEach(func() {
-			err := bbs.DesireTask(logger, models.Task{
+			err := legacyBBS.DesireTask(logger, models.Task{
 				TaskGuid: "task-guid-1",
 				Domain:   "test-domain",
 				RootFS:   "some:rootfs",
@@ -168,7 +168,7 @@ var _ = Describe("Task API", func() {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			err = bbs.DesireTask(logger, models.Task{
+			err = legacyBBS.DesireTask(logger, models.Task{
 				TaskGuid: "task-guid-2",
 				Domain:   "other-domain",
 				RootFS:   "some:rootfs",
@@ -176,7 +176,7 @@ var _ = Describe("Task API", func() {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			err = bbs.DesireTask(logger, models.Task{
+			err = legacyBBS.DesireTask(logger, models.Task{
 				TaskGuid: "task-guid-3",
 				Domain:   "test-domain",
 				RootFS:   "some:rootfs",
@@ -205,7 +205,7 @@ var _ = Describe("Task API", func() {
 				RootFS:   "some:rootfs",
 				Action:   &models.RunAction{User: "me", Path: "/bin/true"},
 			}
-			err := bbs.DesireTask(logger, task)
+			err := legacyBBS.DesireTask(logger, task)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -217,9 +217,9 @@ var _ = Describe("Task API", func() {
 		})
 
 		It("includes all of the task's publicly-visible fields", func() {
-			_, err := bbs.StartTask(logger, "task-guid-1", "the-cell-id")
+			_, err := legacyBBS.StartTask(logger, "task-guid-1", "the-cell-id")
 			Expect(err).NotTo(HaveOccurred())
-			err = bbs.CompleteTask(logger, "task-guid-1", "the-cell-id", true, "the-failure-reason", "the-task-result")
+			err = legacyBBS.CompleteTask(logger, "task-guid-1", "the-cell-id", true, "the-failure-reason", "the-task-result")
 			Expect(err).NotTo(HaveOccurred())
 
 			task, err := client.GetTask("task-guid-1")
@@ -248,16 +248,16 @@ var _ = Describe("Task API", func() {
 				Action:   &models.RunAction{User: "me", Path: "/bin/true"},
 			}
 
-			err := bbs.DesireTask(logger, task)
+			err := legacyBBS.DesireTask(logger, task)
 			Expect(err).NotTo(HaveOccurred())
 
-			_, err = bbs.StartTask(logger, "task-guid-1", "the-cell-id")
+			_, err = legacyBBS.StartTask(logger, "task-guid-1", "the-cell-id")
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		Context("when the task is in the COMPLETED state", func() {
 			BeforeEach(func() {
-				err := bbs.CompleteTask(logger, "task-guid-1", "the-cell-id", false, "", "the-task-result")
+				err := legacyBBS.CompleteTask(logger, "task-guid-1", "the-cell-id", false, "", "the-task-result")
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -265,7 +265,7 @@ var _ = Describe("Task API", func() {
 				err := client.DeleteTask("task-guid-1")
 				Expect(err).NotTo(HaveOccurred())
 
-				_, err = bbs.TaskByGuid(logger, "task-guid-1")
+				_, err = legacyBBS.TaskByGuid(logger, "task-guid-1")
 				Expect(err).To(Equal(bbserrors.ErrStoreResourceNotFound))
 			})
 		})
@@ -278,7 +278,7 @@ var _ = Describe("Task API", func() {
 
 			It("does not delete the task", func() {
 				client.DeleteTask("task-guid-1")
-				_, err := bbs.TaskByGuid(logger, "task-guid-1")
+				_, err := legacyBBS.TaskByGuid(logger, "task-guid-1")
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})
@@ -303,17 +303,17 @@ var _ = Describe("Task API", func() {
 				Action:   &models.RunAction{User: "me", Path: "/bin/true"},
 			}
 
-			err := bbs.DesireTask(logger, task)
+			err := legacyBBS.DesireTask(logger, task)
 			Expect(err).NotTo(HaveOccurred())
 
-			_, err = bbs.StartTask(logger, "task-guid-1", "the-cell-id")
+			_, err = legacyBBS.StartTask(logger, "task-guid-1", "the-cell-id")
 			Expect(err).NotTo(HaveOccurred())
 
 			cancelErr = client.CancelTask("task-guid-1")
 		})
 
 		It("cancels the task", func() {
-			task, err := bbs.TaskByGuid(logger, "task-guid-1")
+			task, err := legacyBBS.TaskByGuid(logger, "task-guid-1")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(task.State).To(Equal(models.TaskStateCompleted))
 		})

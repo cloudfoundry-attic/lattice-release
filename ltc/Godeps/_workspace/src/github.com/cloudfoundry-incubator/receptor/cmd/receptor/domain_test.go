@@ -28,7 +28,7 @@ var _ = Describe("Domain API", func() {
 			})
 
 			It("has the correct data from the bbs", func() {
-				domains, err := bbs.Domains()
+				domains, err := bbsClient.Domains()
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(domains).To(ConsistOf([]string{"domain-0"}))
@@ -45,14 +45,14 @@ var _ = Describe("Domain API", func() {
 			})
 
 			It("has the correct data from the bbs", func() {
-				domains, err := bbs.Domains()
+				domains, err := bbsClient.Domains()
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(domains).To(ConsistOf([]string{"domain-0", "domain-1"}))
 
 				time.Sleep(2 * time.Second)
 
-				domains, err = bbs.Domains()
+				domains, err = bbsClient.Domains()
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(domains).To(ConsistOf([]string{"domain-0"}))
@@ -68,7 +68,7 @@ var _ = Describe("Domain API", func() {
 		BeforeEach(func() {
 			expectedDomains = []string{"domain-0", "domain-1"}
 			for i, d := range expectedDomains {
-				err := bbs.UpsertDomain(d, 100*(i+1))
+				err := client.UpsertDomain(d, time.Duration(100*(i+1))*time.Second)
 				Expect(err).NotTo(HaveOccurred())
 			}
 

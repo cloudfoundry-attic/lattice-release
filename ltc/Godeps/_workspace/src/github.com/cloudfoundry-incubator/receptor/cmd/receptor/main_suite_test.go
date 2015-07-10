@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 
+	"github.com/cloudfoundry-incubator/bbs"
 	"github.com/cloudfoundry-incubator/consuladapter"
 	"github.com/cloudfoundry-incubator/consuladapter/consulrunner"
 	"github.com/cloudfoundry-incubator/receptor"
+
+	bbstestrunner "github.com/cloudfoundry-incubator/bbs/cmd/bbs/testrunner"
 	"github.com/cloudfoundry-incubator/receptor/cmd/receptor/testrunner"
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry/gunk/diegonats"
@@ -49,7 +53,14 @@ var etcdAdapter storeadapter.StoreAdapter
 var consulRunner *consulrunner.ClusterRunner
 var consulSession *consuladapter.Session
 
-var bbs *Bbs.BBS
+var bbsArgs bbstestrunner.Args
+var bbsBinPath string
+var bbsURL *url.URL
+var bbsRunner *ginkgomon.Runner
+var bbsProcess ifrit.Process
+var bbsClient bbs.Client
+
+var legacyBBS *Bbs.BBS
 
 var logger lager.Logger
 
@@ -68,12 +79,18 @@ func TestReceptor(t *testing.T) {
 
 var _ = SynchronizedBeforeSuite(
 	func() []byte {
+		bbsConfig, err := gexec.Build("github.com/cloudfoundry-incubator/bbs/cmd/bbs", "-race")
+		Expect(err).NotTo(HaveOccurred())
+
 		receptorConfig, err := gexec.Build("github.com/cloudfoundry-incubator/receptor/cmd/receptor", "-race")
 		Expect(err).NotTo(HaveOccurred())
-		return []byte(receptorConfig)
+
+		return []byte(strings.Join([]string{receptorConfig, bbsConfig}, ","))
 	},
-	func(receptorConfig []byte) {
-		receptorBinPath = string(receptorConfig)
+	func(pathsByte []byte) {
+		path := string(pathsByte)
+		receptorBinPath = strings.Split(path, ",")[0]
+		bbsBinPath = strings.Split(path, ",")[1]
 		SetDefaultEventuallyTimeout(15 * time.Second)
 
 		etcdPort = 4001 + GinkgoParallelNode()
@@ -89,10 +106,27 @@ var _ = SynchronizedBeforeSuite(
 		etcdRunner.Start()
 		consulRunner.Start()
 		consulRunner.WaitUntilReady()
+
+		bbsAddress := fmt.Sprintf("127.0.0.1:%d", 13000+GinkgoParallelNode())
+
+		bbsURL = &url.URL{
+			Scheme: "http",
+			Host:   bbsAddress,
+		}
+
+		bbsClient = bbs.NewClient(bbsURL.String())
+
+		bbsArgs = bbstestrunner.Args{
+			Address:     bbsAddress,
+			EtcdCluster: etcdUrl,
+		}
+		bbsRunner = bbstestrunner.New(bbsBinPath, bbsArgs)
+		bbsProcess = ginkgomon.Invoke(bbsRunner)
 	},
 )
 
 var _ = SynchronizedAfterSuite(func() {
+	ginkgomon.Kill(bbsProcess)
 	etcdRunner.Stop()
 	consulRunner.Stop()
 }, func() {
@@ -111,7 +145,7 @@ var _ = BeforeEach(func() {
 	receptorTaskHandlerAddress = fmt.Sprintf("127.0.0.1:%d", 1169+GinkgoParallelNode())
 
 	etcdAdapter = etcdRunner.Adapter(nil)
-	bbs = Bbs.NewBBS(etcdAdapter, consulSession, "http://"+receptorTaskHandlerAddress, clock.NewClock(), logger)
+	legacyBBS = Bbs.NewBBS(etcdAdapter, consulSession, "http://"+receptorTaskHandlerAddress, clock.NewClock(), logger)
 
 	natsPort = 4051 + GinkgoParallelNode()
 	natsAddress = fmt.Sprintf("127.0.0.1:%d", natsPort)
@@ -138,6 +172,7 @@ var _ = BeforeEach(func() {
 		NatsUsername:       "nats",
 		NatsPassword:       "nats",
 		ConsulCluster:      consulRunner.ConsulCluster(),
+		BBSAddress:         bbsURL.String(),
 	}
 	receptorRunner = testrunner.New(receptorBinPath, receptorArgs)
 })

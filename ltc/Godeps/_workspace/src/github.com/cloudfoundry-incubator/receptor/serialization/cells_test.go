@@ -15,7 +15,7 @@ var _ = Describe("CellPresence Serialization", func() {
 
 		BeforeEach(func() {
 			capacity := models.NewCellCapacity(128, 1024, 6)
-			cellPresence = models.NewCellPresence("cell-id-0", "1.2.3.4", "the-zone", capacity)
+			cellPresence = models.NewCellPresence("cell-id-0", "1.2.3.4", "the-zone", capacity, []string{"provider-1", "provider-2"}, []string{"stack-1"})
 		})
 
 		It("serializes all the fields", func() {
@@ -26,6 +26,11 @@ var _ = Describe("CellPresence Serialization", func() {
 					MemoryMB:   128,
 					DiskMB:     1024,
 					Containers: 6,
+				},
+				RootFSProviders: map[string][]string{
+					"provider-1": []string{},
+					"provider-2": []string{},
+					"preloaded":  []string{"stack-1"},
 				},
 			}
 
