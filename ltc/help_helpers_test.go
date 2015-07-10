@@ -31,6 +31,7 @@ var _ = Describe("HelpHelpers", func() {
 		cliConfig = config.New(persister.NewMemPersister())
 		cliApp = cli_app_factory.MakeCliApp(
 			"",
+			"",
 			"~/",
 			nil,
 			cliConfig,

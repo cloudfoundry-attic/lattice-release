@@ -3,8 +3,9 @@
 set -e
 
 lattice_version=$(< /var/lattice/LATTICE_VERSION)
+diego_version=$(< /var/lattice/DIEGO_VERSION)
 
-echo "Installing Lattice ($lattice_version) - Brain"
+echo "Installing Lattice ($lattice_version) (Diego $diego_version) - Brain"
 
 lattice_brain_path=/tmp/lattice-build/brain
 
@@ -30,5 +31,5 @@ mkdir -p /var/lattice/log
 
 start bootstrap &>> /var/lattice/log/brain-bootstrap.log
 
-echo "Finished Installing Lattice Brain ($lattice_version)!"
+echo "Finished Installing Lattice Brain ($lattice_version) (Diego $diego_version)!"
 

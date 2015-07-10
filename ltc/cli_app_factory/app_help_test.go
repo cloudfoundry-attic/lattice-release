@@ -37,6 +37,7 @@ USAGE:
 
 		cliApp = cli_app_factory.MakeCliApp(
 			"",
+			"",
 			"~/",
 			nil,
 			config.New(persister.NewMemPersister()),

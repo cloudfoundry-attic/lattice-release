@@ -44,6 +44,13 @@ get_lattice_version() {
     fi
 }
 
+get_diego_version() {
+    get_diego_release_git_sha
+    pushd $DIEGO_RELEASE_PATH > /dev/null
+        diego_version=$(git describe --tags $diego_release_git_sha)
+    popd > /dev/null
+}
+
 git_describe_lattice() {
     if [ -z "${LATTICE_RELEASE_VERSION}" ]; then
         pushd $LATTICE_SRC_PATH > /dev/null
@@ -103,16 +110,23 @@ run_unit_tests() {
 }
 
 go_build_ltc() {
+    get_lattice_version
+    get_diego_version
+
     export GOBIN="$OUTDIR"
 
     echo -n "Compiling cli ($lattice_version) .."
     GOARCH=amd64 GOOS=linux go build \
-        -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
+        -ldflags \
+            "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version
+             -X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.diegoVersion $diego_version" \
         -o $OUTDIR/ltc-linux-amd64 \
         github.com/cloudfoundry-incubator/lattice/ltc
 
     GOARCH=amd64 GOOS=darwin go build \
-        -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
+        -ldflags \
+            "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version
+             -X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.diegoVersion $diego_version" \
         -o $OUTDIR/ltc-darwin-amd64 \
         github.com/cloudfoundry-incubator/lattice/ltc
     echo "DONE!"
@@ -122,17 +136,24 @@ go_build_ltc() {
 
 
 godep_go_build_ltc() {
+    get_lattice_version
+    get_diego_version
+
     echo -n "Compiling cli ($lattice_version) .."
 
     export GOBIN="$OUTDIR"
     pushd $LATTICE_SRC_PATH/ltc > /dev/null
         GOARCH=amd64 GOOS=linux godep go build \
-            -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
+            -ldflags \
+                "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version
+                 -X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.diegoVersion $diego_version" \
             -o $OUTDIR/ltc-linux-amd64 \
             github.com/cloudfoundry-incubator/lattice/ltc
 
         GOARCH=amd64 GOOS=darwin godep go build \
-            -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version" \
+            -ldflags \
+                "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_version
+                 -X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.diegoVersion $diego_version" \
             -o $OUTDIR/ltc-darwin-amd64 \
             github.com/cloudfoundry-incubator/lattice/ltc
     popd > /dev/null
@@ -157,6 +178,7 @@ generate_ltc_tarball() {
 
 bump_lattice_version() {
     git_describe_lattice
+    get_diego_version
 
     pushd $LATTICE_SRC_PATH > /dev/null
         previous_lattice_version=$(cat Version)
@@ -165,8 +187,7 @@ bump_lattice_version() {
         echo "$new_lattice_version" > Version
         echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
 
-        get_diego_release_git_sha
-        echo "$diego_release_git_sha" > DIEGO_VERSION
+        echo "$diego_version" > DIEGO_VERSION
 
         git add Version
         git add DIEGO_VERSION
@@ -175,6 +196,7 @@ bump_lattice_version() {
 
         + Bump Version Files
 
+        Diego Release: $diego_version
         Diego Release Git SHA: $diego_release_git_sha
 
         $deliver_stories_message

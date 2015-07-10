@@ -74,6 +74,7 @@ stage_common() {
     mkdir -p ${output_dir}/common
     cp -a ${lattice_path}/cluster/common/* ${output_dir}/common/
     cp ${lattice_path}/Version ${output_dir}/common/LATTICE_VERSION
+    cp ${lattice_path}/DIEGO_VERSION ${output_dir}/common/DIEGO_VERSION
 }
 
 stage_scripts() {

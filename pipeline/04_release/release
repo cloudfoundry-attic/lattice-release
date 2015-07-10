@@ -43,6 +43,7 @@ repackage_release_lattice_tar() {
     pushd ~/lattice-tmp > /dev/null
         tar xzf $lattice_tar_path
         echo "${LATTICE_RELEASE_VERSION}" > lattice-build/common/LATTICE_VERSION
+        cp -vf ${LATTICE_SRC_PATH}/DIEGO_VERSION lattice-build/common/DIEGO_VERSION
 
         tar czf lattice.tgz lattice-build
         cp -vf lattice.tgz /workspace/lattice-release

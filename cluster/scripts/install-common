@@ -9,6 +9,7 @@ lattice_common_build_path=/tmp/lattice-build/common
 cp $lattice_common_build_path/health_check /var/lattice
 
 cp $lattice_common_build_path/LATTICE_VERSION /var/lattice
+cp $lattice_common_build_path/DIEGO_VERSION /var/lattice
 
 ## log rotation ##
 cp $lattice_common_build_path/system-config/lattice.logrotate.txt /etc/logrotate.d/lattice

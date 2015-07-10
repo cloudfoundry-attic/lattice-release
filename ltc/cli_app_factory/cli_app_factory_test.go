@@ -30,6 +30,7 @@ var _ = Describe("CliAppFactory", func() {
 		terminalUI         terminal.UI
 		cliApp             *cli.App
 		cliConfig          *config.Config
+		diegoVersion       string
 		latticeVersion     string
 	)
 
@@ -40,11 +41,13 @@ var _ = Describe("CliAppFactory", func() {
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		cliConfig = config.New(memPersister)
+		diegoVersion = "0.12345.0"
 		latticeVersion = "v0.2.Test"
 	})
 
 	JustBeforeEach(func() {
 		cliApp = cli_app_factory.MakeCliApp(
+			diegoVersion,
 			latticeVersion,
 			"~/",
 			fakeExitHandler,
@@ -60,7 +63,7 @@ var _ = Describe("CliAppFactory", func() {
 			Expect(cliApp).ToNot(BeNil())
 			Expect(cliApp.Name).To(Equal("ltc"))
 			Expect(cliApp.Author).To(Equal("Pivotal"))
-			Expect(cliApp.Version).To(Equal("v0.2.Test"))
+			Expect(cliApp.Version).To(Equal("v0.2.Test (diego 0.12345.0)"))
 			Expect(cliApp.Email).To(Equal("cf-lattice@lists.cloudfoundry.org"))
 			Expect(cliApp.Usage).To(Equal(cli_app_factory.LtcUsage))
 			Expect(cliApp.Commands).NotTo(BeEmpty())
@@ -76,12 +79,13 @@ var _ = Describe("CliAppFactory", func() {
 
 		Context("when invoked without latticeVersion set", func() {
 			BeforeEach(func() {
+				diegoVersion = ""
 				latticeVersion = ""
 			})
 
 			It("defaults the version", func() {
 				Expect(cliApp).NotTo(BeNil())
-				Expect(cliApp.Version).To(Equal("development (not versioned)"))
+				Expect(cliApp.Version).To(Equal("development (not versioned) (diego unknown)"))
 			})
 		})
 

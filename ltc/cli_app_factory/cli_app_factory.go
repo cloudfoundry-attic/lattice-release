@@ -77,12 +77,12 @@ func init() {
 	cli.HelpPrinter = ShowHelp
 }
 
-func MakeCliApp(latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, cliStdout io.Writer) *cli.App {
+func MakeCliApp(diegoVersion, latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, cliStdout io.Writer) *cli.App {
 	config.Load()
 	app := cli.NewApp()
 	app.Name = AppName
 	app.Author = latticeCliAuthor
-	app.Version = defaultVersion(latticeVersion)
+	app.Version = defaultVersion(diegoVersion, latticeVersion)
 	app.Usage = LtcUsage
 	app.Email = "cf-lattice@lists.cloudfoundry.org"
 
@@ -238,11 +238,16 @@ func LoggregatorUrl(loggregatorTarget string) string {
 	return "ws://" + loggregatorTarget
 }
 
-func defaultVersion(latticeVersion string) string {
-	if latticeVersion == "" {
-		return "development (not versioned)"
+func defaultVersion(diegoVersion, latticeVersion string) string {
+	if diegoVersion == "" {
+		diegoVersion = "unknown"
 	}
-	return latticeVersion
+
+	if latticeVersion == "" {
+		latticeVersion = "development (not versioned)"
+	}
+
+	return fmt.Sprintf("%s (diego %s)", latticeVersion, diegoVersion)
 }
 
 func appHelpTemplate() string {

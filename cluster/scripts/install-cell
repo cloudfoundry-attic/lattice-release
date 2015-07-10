@@ -3,8 +3,9 @@
 set -e
 
 lattice_version=$(< /var/lattice/LATTICE_VERSION)
+diego_version=$(< /var/lattice/DIEGO_VERSION)
 
-echo "Installing Lattice ($lattice_version) - Lattice Cell"
+echo "Installing Lattice ($lattice_version) (Diego $diego_version) - Lattice Cell"
 
 cell_build_path=/tmp/lattice-build/cell
 
@@ -45,4 +46,4 @@ mkdir -p /var/lattice/log
 install_dependencies &> /var/lattice/log/cell-install.log
 start bootstrap
 
-echo "Finished Installing Lattice Cell ($lattice_version)!" 
+echo "Finished Installing Lattice Cell ($lattice_version) (Diego $diego_version)!"
