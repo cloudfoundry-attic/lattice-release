@@ -23,7 +23,7 @@ var _ = Describe("s3downloader", func() {
 
 	BeforeSuite(func() {
 		var err error
-		s3downloaderPath, err = gexec.Build("github.com/cloudfoundry-incubator/lattice/s3downloader")
+		s3downloaderPath, err = gexec.Build("github.com/cloudfoundry-incubator/lattice/cell-helpers/s3downloader")
 		Expect(err).ToNot(HaveOccurred())
 	})
 
