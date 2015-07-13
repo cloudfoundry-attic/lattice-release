@@ -326,10 +326,16 @@ func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Durati
 	return false
 }
 
-func (factory *AppRunnerCommandFactory) BuildEnvironment(envVars []string, appName string) map[string]string {
-	environment := make(map[string]string)
-	environment["PROCESS_GUID"] = appName
+func (factory *AppRunnerCommandFactory) BuildAppEnvironment(envVars []string, appName string) map[string]string {
+	environment := factory.BuildEnvironment(envVars)
+	if _, ok := environment["PROCESS_GUID"]; !ok {
+		environment["PROCESS_GUID"] = appName
+	}
+	return environment
+}
 
+func (factory *AppRunnerCommandFactory) BuildEnvironment(envVars []string) map[string]string {
+	environment := make(map[string]string)
 	for _, envVarPair := range envVars {
 		name, value := parseEnvVarPair(envVarPair)
 

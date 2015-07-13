@@ -27,7 +27,7 @@ const (
 //go:generate counterfeiter -o fake_droplet_runner/fake_droplet_runner.go . DropletRunner
 type DropletRunner interface {
 	UploadBits(dropletName, uploadPath string) error
-	BuildDroplet(taskName, dropletName, buildpackUrl string) error
+	BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string) error
 	LaunchDroplet(appName, dropletName, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error
 	ListDroplets() ([]Droplet, error)
 	RemoveDroplet(dropletName string) error
@@ -133,7 +133,7 @@ func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
 	return dr.blobBucket.PutReader(fmt.Sprintf("%s/bits.tgz", dropletName), uploadFile, fileInfo.Size(), blob_store.DropletContentType, blob_store.DefaultPrivilege, s3.Options{})
 }
 
-func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string) error {
+func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string) error {
 	builderConfig := buildpack_app_lifecycle.NewLifecycleBuilderConfig([]string{buildpackUrl}, true, false)
 
 	action := &models.SerialAction{
@@ -201,13 +201,16 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 			},
 		},
 	}
+
+	environment["CF_STACK"] = DropletStack
+
 	createTaskParams := task_runner.NewCreateTaskParams(
 		action,
 		taskName,
 		DropletRootFS,
 		"lattice",
 		"BUILD",
-		map[string]string{"CF_STACK": DropletStack},
+		environment,
 		[]models.SecurityGroupRule{},
 	)
 

@@ -280,7 +280,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 
 	err = factory.AppRunner.CreateApp(app_runner.CreateAppParams{
 		AppEnvironmentParams: app_runner.AppEnvironmentParams{
-			EnvironmentVariables: factory.BuildEnvironment(envVarsFlag, name),
+			EnvironmentVariables: factory.BuildAppEnvironment(envVarsFlag, name),
 			Privileged:           runAsRootFlag,
 			Monitor:              monitorConfig,
 			Instances:            instancesFlag,

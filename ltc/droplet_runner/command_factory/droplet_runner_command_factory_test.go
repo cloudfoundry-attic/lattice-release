@@ -66,7 +66,7 @@ var _ = Describe("CommandFactory", func() {
 			TailedLogsOutputter: fakeTailedLogsOutputter,
 			Clock:               fakeClock,
 			Domain:              "192.168.11.11.xip.io",
-			Env:                 []string{"SHELL=/bin/bash", "COLOR=Black"},
+			Env:                 []string{"SHELL=/bin/bash", "COLOR=Black", "AAAA=xyz"},
 		}
 	})
 
@@ -174,39 +174,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(err).To(HaveOccurred())
 			})
 
-			It("tars up a manually-specified folder and uploads as the droplet name", func() {
-				Expect(os.Chdir("/tmp")).To(Succeed())
-
-				args := []string{
-					"droplet-name",
-					"http://some.url/for/buildpack",
-					"-p",
-					tmpDir,
-				}
-
-				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
-
-				Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
-				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
-				dropletName, uploadPath := fakeDropletRunner.UploadBitsArgsForCall(0)
-				Expect(dropletName).To(Equal("droplet-name"))
-
-				Expect(uploadPath).ToNot(BeNil())
-				Expect(uploadPath).To(HaveSuffix(".tar"))
-
-				file, err := os.Open(uploadPath)
-				Expect(err).ToNot(HaveOccurred())
-				tarReader := tar.NewReader(file)
-
-				h, err := tarReader.Next()
-				Expect(err).NotTo(HaveOccurred())
-				Expect(h.FileInfo().Name()).To(Equal("aaa"))
-
-				h, err = tarReader.Next()
-				Expect(err).NotTo(HaveOccurred())
-				Expect(h.FileInfo().Name()).To(Equal("bbb"))
-			})
-
 			It("tars up a manually-specified single file and uploads as the droplet name", func() {
 				Expect(os.Chdir("/tmp")).To(Succeed())
 
@@ -241,6 +208,25 @@ var _ = Describe("CommandFactory", func() {
 
 				_, err = tarReader.Next()
 				Expect(err).To(HaveOccurred())
+			})
+
+			It("passes through environment variables from the command-line", func() {
+				args := []string{
+					"-e",
+					"AAAA",
+					"-e",
+					"BBBB=2",
+					"droplet-name",
+					"http://some.url/for/buildpack",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
+
+				_, _, _, env := fakeDropletRunner.BuildDropletArgsForCall(0)
+				Expect(env["AAAA"]).To(Equal("xyz"))
+				Expect(env["BBBB"]).To(Equal("2"))
 			})
 
 			Describe(".cfignore", func() {
@@ -279,49 +265,49 @@ var _ = Describe("CommandFactory", func() {
 			Describe("buildpack aliases", func() {
 				It("uses the correct buildpack URL for go", func() {
 					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "go"})
-					_, _, buildpackUrl := fakeDropletRunner.BuildDropletArgsForCall(0)
+					_, _, buildpackUrl, _ := fakeDropletRunner.BuildDropletArgsForCall(0)
 					Expect(buildpackUrl).To(Equal("https://github.com/cloudfoundry/go-buildpack.git"))
 				})
 
 				It("uses the correct buildpack URL for java", func() {
 					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "java"})
-					_, _, buildpackUrl := fakeDropletRunner.BuildDropletArgsForCall(0)
+					_, _, buildpackUrl, _ := fakeDropletRunner.BuildDropletArgsForCall(0)
 					Expect(buildpackUrl).To(Equal("https://github.com/cloudfoundry/java-buildpack.git"))
 				})
 
 				It("uses the correct buildpack URL for python", func() {
 					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "python"})
-					_, _, buildpackUrl := fakeDropletRunner.BuildDropletArgsForCall(0)
+					_, _, buildpackUrl, _ := fakeDropletRunner.BuildDropletArgsForCall(0)
 					Expect(buildpackUrl).To(Equal("https://github.com/cloudfoundry/python-buildpack.git"))
 				})
 
 				It("uses the correct buildpack URL for ruby", func() {
 					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "ruby"})
-					_, _, buildpackUrl := fakeDropletRunner.BuildDropletArgsForCall(0)
+					_, _, buildpackUrl, _ := fakeDropletRunner.BuildDropletArgsForCall(0)
 					Expect(buildpackUrl).To(Equal("https://github.com/cloudfoundry/ruby-buildpack.git"))
 				})
 
 				It("uses the correct buildpack URL for nodejs", func() {
 					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "nodejs"})
-					_, _, buildpackUrl := fakeDropletRunner.BuildDropletArgsForCall(0)
+					_, _, buildpackUrl, _ := fakeDropletRunner.BuildDropletArgsForCall(0)
 					Expect(buildpackUrl).To(Equal("https://github.com/cloudfoundry/nodejs-buildpack.git"))
 				})
 
 				It("uses the correct buildpack URL for php", func() {
 					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "php"})
-					_, _, buildpackUrl := fakeDropletRunner.BuildDropletArgsForCall(0)
+					_, _, buildpackUrl, _ := fakeDropletRunner.BuildDropletArgsForCall(0)
 					Expect(buildpackUrl).To(Equal("https://github.com/cloudfoundry/php-buildpack.git"))
 				})
 
 				It("uses the correct buildpack URL for binary", func() {
 					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "binary"})
-					_, _, buildpackUrl := fakeDropletRunner.BuildDropletArgsForCall(0)
+					_, _, buildpackUrl, _ := fakeDropletRunner.BuildDropletArgsForCall(0)
 					Expect(buildpackUrl).To(Equal("https://github.com/cloudfoundry/binary-buildpack.git"))
 				})
 
 				It("uses the correct buildpack URL for staticfile", func() {
 					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "staticfile"})
-					_, _, buildpackUrl := fakeDropletRunner.BuildDropletArgsForCall(0)
+					_, _, buildpackUrl, _ := fakeDropletRunner.BuildDropletArgsForCall(0)
 					Expect(buildpackUrl).To(Equal("https://github.com/cloudfoundry/staticfile-buildpack.git"))
 				})
 

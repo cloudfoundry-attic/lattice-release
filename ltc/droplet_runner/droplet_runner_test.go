@@ -217,7 +217,7 @@ var _ = Describe("DropletRunner", func() {
 			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
 			config.Save()
 
-			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack")
+			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{})
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
@@ -296,10 +296,43 @@ var _ = Describe("DropletRunner", func() {
 			Expect(receptorRequest.EgressRules).To(BeEmpty())
 		})
 
+		It("passes through user environment variables", func() {
+			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
+			config.Save()
+
+			env := map[string]string{
+				"ENV_VAR":   "stuff",
+				"OTHER_VAR": "same",
+			}
+
+			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", env)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
+			createTaskParams := fakeTaskRunner.CreateTaskArgsForCall(0)
+			Expect(createTaskParams).ToNot(BeNil())
+			receptorRequest := createTaskParams.GetReceptorRequest()
+
+			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
+				receptor.EnvironmentVariable{
+					Name:  "CF_STACK",
+					Value: "cflinuxfs2",
+				},
+				receptor.EnvironmentVariable{
+					Name:  "ENV_VAR",
+					Value: "stuff",
+				},
+				receptor.EnvironmentVariable{
+					Name:  "OTHER_VAR",
+					Value: "same",
+				},
+			}))
+		})
+
 		It("returns an error when create task fails", func() {
 			fakeTaskRunner.CreateTaskReturns(errors.New("creating task failed"))
 
-			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack")
+			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{})
 
 			Expect(err).To(MatchError("creating task failed"))
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))

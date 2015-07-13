@@ -94,6 +94,11 @@ func (factory *DropletRunnerCommandFactory) MakeBuildDropletCommand() cli.Comman
 			Usage: "Path to droplet source",
 			Value: ".",
 		},
+		cli.StringSliceFlag{
+			Name:  "env, e",
+			Usage: "Environment variables (can be passed multiple times)",
+			Value: &cli.StringSlice{},
+		},
 	}
 
 	var buildDropletCommand = cli.Command{
@@ -234,6 +239,7 @@ func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
 
 func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	pathFlag := context.String("path")
+	envFlag := context.StringSlice("env")
 	dropletName := context.Args().First()
 	buildpack := context.Args().Get(1)
 
@@ -267,8 +273,10 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 		return
 	}
 
+	environment := factory.AppRunnerCommandFactory.BuildEnvironment(envFlag)
+
 	taskName := "build-droplet-" + dropletName
-	if err = factory.dropletRunner.BuildDroplet(taskName, dropletName, buildpackUrl); err != nil {
+	if err = factory.dropletRunner.BuildDroplet(taskName, dropletName, buildpackUrl, environment); err != nil {
 		factory.UI.Say(fmt.Sprintf("Error submitting build of %s: %s", dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
@@ -390,7 +398,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 	}
 
 	appEnvironmentParams := app_runner.AppEnvironmentParams{
-		EnvironmentVariables: factory.BuildEnvironment(envVarsFlag, appName),
+		EnvironmentVariables: factory.BuildAppEnvironment(envVarsFlag, appName),
 		Privileged:           runAsRootFlag,
 		Monitor:              monitorConfig,
 		Instances:            instancesFlag,
