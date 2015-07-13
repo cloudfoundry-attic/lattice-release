@@ -350,7 +350,8 @@ func (factory *AppRunnerCommandFactory) BuildEnvironment(envVars []string) map[s
 
 func (factory *AppRunnerCommandFactory) grabVarFromEnv(name string) string {
 	for _, envVarPair := range factory.Env {
-		if strings.HasPrefix(envVarPair, name) {
+		k := strings.SplitN(envVarPair, "=", 2)[0]
+		if k == name {
 			_, value := parseEnvVarPair(envVarPair)
 			return value
 		}

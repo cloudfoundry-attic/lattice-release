@@ -48,6 +48,37 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 	})
 
+	Describe("helper methods", func() {
+		var (
+			factory *command_factory.AppRunnerCommandFactory
+		)
+
+		BeforeEach(func() {
+			appRunnerCommandFactoryConfig := command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:   fakeAppRunner,
+				UI:          terminalUI,
+				ExitHandler: fakeExitHandler,
+				Env:         []string{"AAAAA=1", "AAA=2", "BBB=3"},
+			}
+
+			factory = command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
+		})
+
+		Describe("BuildEnvironment", func() {
+			It("grabs values from the environment when not in its args", func() {
+				env := factory.BuildEnvironment([]string{"AAAAA", "CCC=4"})
+				Expect(env["AAAAA"]).To(Equal("1"))
+				Expect(env["CCC"]).To(Equal("4"))
+			})
+
+			It("only uses exact key matches when grabbing from the environment", func() {
+				env := factory.BuildEnvironment([]string{"AAA"})
+				Expect(env["AAA"]).To(Equal("2"))
+				Expect(env["AAAAA"]).To(BeEmpty())
+			})
+		})
+	})
+
 	Describe("SubmitLrpCommand", func() {
 		var (
 			submitLrpCommand cli.Command
