@@ -18,7 +18,7 @@ construct_temp_workspace() {
     rm -rf ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator/lattice
     echo "copying cf release"
     mkdir -p ${temp_workspace}/cf-release/src
-    cp -a ${cf_release_path}/src/gorouter ${temp_workspace}/diego-release/src/github.com/cloudfoundry
+    cp -a ${cf_release_path}/src/github.com/cloudfoundry/gorouter ${temp_workspace}/diego-release/src/github.com/cloudfoundry
     cp -a ${cf_release_path}/src/loggregator ${temp_workspace}/cf-release/src
     echo "copying lattice"
     cp -a ${lattice_path} ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator
