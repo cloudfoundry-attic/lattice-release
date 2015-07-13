@@ -92,7 +92,7 @@ compile_cell() {
         go install github.com/cloudfoundry-incubator/rep/cmd/rep
         go install github.com/cloudfoundry-incubator/auctioneer/cmd/auctioneer
         go install github.com/cloudfoundry-incubator/converger/cmd/converger
-        go install github.com/cloudfoundry-incubator/lattice/tee2metron
+        go install github.com/cloudfoundry-incubator/lattice/cell-helpers/tee2metron
     popd
 
     rm -rf ${GOPATH}/pkg/*
@@ -121,8 +121,8 @@ compile_brain() {
         go install github.com/cloudfoundry-incubator/buildpack_app_lifecycle/builder
 
         go get -v -d github.com/goamz/goamz/...
-        go install github.com/cloudfoundry-incubator/lattice/s3downloader
-        go install github.com/cloudfoundry-incubator/lattice/s3uploader
+        go install github.com/cloudfoundry-incubator/lattice/cell-helpers/s3downloader
+        go install github.com/cloudfoundry-incubator/lattice/cell-helpers/s3uploader
 
         ## TODO:  put me somewhere else
         cp -v $GOPATH/src/github.com/cloudfoundry-incubator/lattice/cluster/common/lrp-launcher ${GOBIN}

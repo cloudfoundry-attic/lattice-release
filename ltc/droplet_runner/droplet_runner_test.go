@@ -228,7 +228,7 @@ var _ = Describe("DropletRunner", func() {
 			expectedActions := &models.SerialAction{
 				Actions: []models.Action{
 					&models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-support.tgz",
+						From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
 						To:   "/tmp",
 					},
 					&models.RunAction{
@@ -374,7 +374,7 @@ var _ = Describe("DropletRunner", func() {
 				LogSource: "app-name",
 				Actions: []models.Action{
 					&models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-support.tgz",
+						From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
 						To:   "/tmp",
 					},
 					&models.DownloadAction{

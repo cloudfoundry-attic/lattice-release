@@ -19,8 +19,8 @@ var _ = Describe("tee2metron", func() {
 
 	BeforeSuite(func() {
 		var err error
-		tee2MetronPath, err = gexec.Build("github.com/cloudfoundry-incubator/lattice/tee2metron")
-		chattyProcessPath, err = gexec.Build("github.com/cloudfoundry-incubator/lattice/tee2metron/test_helpers/chatty_process")
+		tee2MetronPath, err = gexec.Build("github.com/cloudfoundry-incubator/lattice/cell-helpers/tee2metron")
+		chattyProcessPath, err = gexec.Build("github.com/cloudfoundry-incubator/lattice/cell-helpers/tee2metron/test_helpers/chatty_process")
 		Expect(err).ToNot(HaveOccurred())
 	})
 	AfterSuite(func() {

@@ -139,7 +139,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 	action := &models.SerialAction{
 		Actions: []models.Action{
 			&models.DownloadAction{
-				From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-support.tgz",
+				From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
 				To:   "/tmp",
 			},
 			&models.RunAction{
@@ -260,7 +260,7 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 			LogSource: appName,
 			Actions: []models.Action{
 				&models.DownloadAction{
-					From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-support.tgz",
+					From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
 					To:   "/tmp",
 				},
 				&models.DownloadAction{
