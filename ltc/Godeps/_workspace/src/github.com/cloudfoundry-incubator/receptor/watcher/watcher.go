@@ -207,3 +207,4 @@ func (w *watcher) watchActual(logger lager.Logger) (chan<- bool, <-chan error) {
 			w.hub.Emit(receptor.NewActualLRPRemovedEvent(serialization.ActualLRPToResponse(deleted, evacuating)))
 		})
 }
+

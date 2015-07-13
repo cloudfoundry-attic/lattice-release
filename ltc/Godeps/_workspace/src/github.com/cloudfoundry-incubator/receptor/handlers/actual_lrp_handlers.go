@@ -11,7 +11,6 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
-	"github.com/cloudfoundry-incubator/runtime-schema/bbs/bbserrors"
 	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-golang/lager"
 )
@@ -70,7 +69,7 @@ func (h *ActualLRPHandler) GetAllByProcessGuid(w http.ResponseWriter, req *http.
 		return
 	}
 
-	actualLRPGroupsByIndex, err := h.legacyBBS.ActualLRPGroupsByProcessGuid(logger, processGuid)
+	actualLRPGroupsByIndex, err := h.bbs.ActualLRPGroupsByProcessGuid(processGuid)
 	if err != nil {
 		logger.Error("failed-to-fetch-actual-lrp-groups-by-process-guid", err)
 		writeUnknownErrorResponse(w, err)
@@ -83,7 +82,7 @@ func (h *ActualLRPHandler) GetAllByProcessGuid(w http.ResponseWriter, req *http.
 		if err != nil {
 			continue
 		}
-		responses = append(responses, serialization.ActualLRPToResponse(*lrp, evacuating))
+		responses = append(responses, serialization.ActualLRPProtoToResponse(*lrp, evacuating))
 	}
 
 	writeJSONResponse(w, http.StatusOK, responses)
@@ -122,21 +121,20 @@ func (h *ActualLRPHandler) GetByProcessGuidAndIndex(w http.ResponseWriter, req *
 		return
 	}
 
-	actualLRPGroup, err := h.legacyBBS.ActualLRPGroupByProcessGuidAndIndex(logger, processGuid, index)
-	if err == bbserrors.ErrStoreResourceNotFound {
-		writeJSONResponse(w, http.StatusNotFound, nil)
-		return
-	}
-
+	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(processGuid, index)
 	if err != nil {
-		logger.Error("failed-to-fetch-actual-lrps-by-process-guid", err)
-		writeUnknownErrorResponse(w, err)
+		if e, ok := err.(bbs.Error); ok && e.GetType() == bbs.ResourceNotFound {
+			writeJSONResponse(w, http.StatusNotFound, nil)
+		} else {
+			logger.Error("failed-to-fetch-actual-lrps-by-process-guid", err)
+			writeUnknownErrorResponse(w, err)
+		}
 		return
 	}
 
 	actualLRP, evacuating, err := actualLRPGroup.Resolve()
 
-	writeJSONResponse(w, http.StatusOK, serialization.ActualLRPToResponse(*actualLRP, evacuating))
+	writeJSONResponse(w, http.StatusOK, serialization.ActualLRPProtoToResponse(*actualLRP, evacuating))
 }
 
 func (h *ActualLRPHandler) KillByProcessGuidAndIndex(w http.ResponseWriter, req *http.Request) {
@@ -169,20 +167,19 @@ func (h *ActualLRPHandler) KillByProcessGuidAndIndex(w http.ResponseWriter, req 
 		return
 	}
 
-	actualLRPGroup, err := h.legacyBBS.ActualLRPGroupByProcessGuidAndIndex(logger, processGuid, index)
+	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(processGuid, index)
 	if err != nil {
-		if err == bbserrors.ErrStoreResourceNotFound {
+		if e, ok := err.(bbs.Error); ok && e.GetType() == bbs.ResourceNotFound {
 			responseErr := fmt.Errorf("process-guid '%s' does not exist or has no instance at index %d", processGuid, index)
 			logger.Error("no-instances-to-delete", responseErr)
 			writeJSONResponse(w, http.StatusNotFound, receptor.Error{
 				Type:    receptor.ActualLRPIndexNotFound,
 				Message: responseErr.Error(),
 			})
-			return
+		} else {
+			logger.Error("failed-to-fetch-actual-lrps-by-process-guid", err)
+			writeUnknownErrorResponse(w, err)
 		}
-
-		logger.Error("failed-to-fetch-actual-lrp-by-process-guid-and-index", err)
-		writeUnknownErrorResponse(w, err)
 		return
 	}
 
@@ -193,7 +190,9 @@ func (h *ActualLRPHandler) KillByProcessGuidAndIndex(w http.ResponseWriter, req 
 		return
 	}
 
-	h.legacyBBS.RetireActualLRPs(logger, []oldmodels.ActualLRPKey{actualLRP.ActualLRPKey})
+	actualLRPKey := oldmodels.NewActualLRPKey(actualLRP.GetProcessGuid(), int(actualLRP.GetIndex()), actualLRP.GetDomain())
+	h.legacyBBS.RetireActualLRPs(logger, []oldmodels.ActualLRPKey{actualLRPKey})
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
