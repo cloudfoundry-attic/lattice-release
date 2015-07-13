@@ -389,6 +389,8 @@ var _ = Describe("CommandFactory", func() {
 					args := []string{
 						"droppo-the-clown",
 						"http://some.url/for/buildpack",
+						"-t",
+						"17s",
 					}
 
 					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "RUNNING"}, nil)
@@ -398,7 +400,7 @@ var _ = Describe("CommandFactory", func() {
 					Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droppo-the-clown"))
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
 
-					fakeClock.IncrementBySeconds(120)
+					fakeClock.IncrementBySeconds(17)
 
 					Eventually(commandFinishChan).Should(BeClosed())
 

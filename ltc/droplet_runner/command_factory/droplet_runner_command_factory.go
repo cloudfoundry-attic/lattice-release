@@ -99,6 +99,11 @@ func (factory *DropletRunnerCommandFactory) MakeBuildDropletCommand() cli.Comman
 			Usage: "Environment variables (can be passed multiple times)",
 			Value: &cli.StringSlice{},
 		},
+		cli.DurationFlag{
+			Name:  "timeout, t",
+			Usage: "Polling timeout for app to start",
+			Value: app_runner_command_factory.DefaultPollingTimeout,
+		},
 	}
 
 	var buildDropletCommand = cli.Command{
@@ -240,6 +245,7 @@ func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
 func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	pathFlag := context.String("path")
 	envFlag := context.StringSlice("env")
+	timeoutFlag := context.Duration("timeout")
 	dropletName := context.Args().First()
 	buildpack := context.Args().Get(1)
 
@@ -287,7 +293,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	go factory.TailedLogsOutputter.OutputTailedLogs(taskName)
 	defer factory.TailedLogsOutputter.StopOutputting()
 
-	ok, taskState := factory.waitForBuildTask(2*time.Minute, taskName)
+	ok, taskState := factory.waitForBuildTask(timeoutFlag, taskName)
 	if ok {
 		if taskState.Failed {
 			factory.UI.SayLine("Build failed: " + taskState.FailureReason)

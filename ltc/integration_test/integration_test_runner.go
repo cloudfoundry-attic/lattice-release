@@ -228,7 +228,7 @@ func (runner *integrationTestRunner) uploadBits(timeout time.Duration, dropletNa
 func (runner *integrationTestRunner) buildDroplet(timeout time.Duration, dropletName, buildpack, srcDir string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Submitting build of %s with buildpack %s", dropletName, buildpack)))
 
-	command := runner.command("build-droplet", dropletName, buildpack)
+	command := runner.command("build-droplet", dropletName, buildpack, "--timeout", timeout.String())
 	command.Dir = srcDir
 
 	session, err := gexec.Start(command, getStyledWriter("build-droplet"), getStyledWriter("build-droplet"))
