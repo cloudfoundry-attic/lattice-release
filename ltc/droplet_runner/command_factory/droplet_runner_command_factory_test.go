@@ -429,6 +429,7 @@ var _ = Describe("CommandFactory", func() {
 					fakeClock.IncrementBySeconds(1)
 
 					Eventually(outputBuffer).Should(test_helpers.SayLine("Build failed: oops"))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 				})
 			})
 

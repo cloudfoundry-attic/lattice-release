@@ -297,6 +297,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	if ok {
 		if taskState.Failed {
 			factory.UI.SayLine("Build failed: " + taskState.FailureReason)
+			factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		} else {
 			factory.UI.SayLine("Build completed")
 		}
