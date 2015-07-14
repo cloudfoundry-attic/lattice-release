@@ -1,6 +1,5 @@
 package cluster_test
 
-import (
 	"bufio"
 	"encoding/json"
 	"errors"
@@ -476,6 +475,7 @@ func errorCheckForConnection(ip string, port uint16) func() error {
 		return nil
 	}
 }
+
 
 func errorCheckForRoute(route string) func() error {
 	fmt.Fprintln(getStyledWriter("test"), "Polling for the route", route)
