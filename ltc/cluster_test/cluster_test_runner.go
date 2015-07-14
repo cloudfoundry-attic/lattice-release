@@ -2,6 +2,10 @@ package cluster_test
 
 import (
 	"bufio"
+<<<<<<< HEAD
+=======
+	"encoding/json"
+>>>>>>> Add tcp-routing integration test.
 	"errors"
 	"fmt"
 	"io"
@@ -23,6 +27,12 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
+<<<<<<< HEAD
+=======
+	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
+	"github.com/cloudfoundry-incubator/receptor"
+	"github.com/cloudfoundry-incubator/runtime-schema/models"
+>>>>>>> Add tcp-routing integration test.
 )
 
 var numCPU int
@@ -196,6 +206,97 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
 			})
 		})
+
+		Context("tcp routing", func() {
+			var (
+				appName      string
+				externalPort uint16
+				desiredLrp   receptor.DesiredLRPCreateRequest
+			)
+
+			BeforeEach(func() {
+				appGuid, err := uuid.NewV4()
+				Expect(err).ToNot(HaveOccurred())
+
+				appName = fmt.Sprintf("lattice-test-app-%s", appGuid.String())
+				externalPort = 64000
+				containerPort := uint16(5222)
+				routingInfo := json.RawMessage([]byte(fmt.Sprintf("{\"external_port\":%d, \"container_port\":%d}", externalPort, containerPort)))
+
+				desiredLrp = receptor.DesiredLRPCreateRequest{
+					ProcessGuid: appGuid.String(),
+					LogGuid:     "log-guid",
+					Domain:      "ge",
+					Instances:   1,
+					Setup: &models.SerialAction{
+						Actions: []models.Action{
+							&models.RunAction{
+								Path: "sh",
+								User: "vcap",
+								Args: []string{
+									"-c",
+									"curl https://s3.amazonaws.com/router-release-blobs/tcp-sample-receiver.linux -o /tmp/tcp-sample-receiver && chmod +x /tmp/tcp-sample-receiver",
+								},
+							},
+						},
+					},
+					Action: &models.ParallelAction{
+						Actions: []models.Action{
+							&models.RunAction{
+								Path: "sh",
+								User: "vcap",
+								Args: []string{
+									"-c",
+									fmt.Sprintf("/tmp/tcp-sample-receiver -address 0.0.0.0:%d -serverId %s", containerPort, 1),
+								},
+							},
+						},
+					},
+					Monitor: &models.RunAction{
+						Path: "sh",
+						User: "vcap",
+						Args: []string{
+							"-c",
+							fmt.Sprintf("nc -z 0.0.0.0 %d", containerPort),
+						}},
+					StartTimeout: 60,
+					RootFS:       "docker:///cloudfoundry/trusty64",
+					MemoryMB:     128,
+					DiskMB:       128,
+					Ports:        []uint16{containerPort},
+					Routes: receptor.RoutingInfo{
+						"tcp-router": &routingInfo,
+					},
+					EgressRules: []models.SecurityGroupRule{
+						{
+							Protocol:     models.TCPProtocol,
+							Destinations: []string{"0.0.0.0-255.255.255.255"},
+							Ports:        []uint16{80, 443},
+						},
+						{
+							Protocol:     models.UDPProtocol,
+							Destinations: []string{"0.0.0.0/0"},
+							PortRange: &models.PortRange{
+								Start: 53,
+								End:   53,
+							},
+						},
+					},
+				}
+			})
+
+			It("routes tcp traffic to a container", func() {
+				helperErr := test_helpers.TempJsonFile(desiredLrp, func(file string) {
+					By("Submitting an LRP")
+					runner.submitLrp(timeout, file)
+				})
+				Expect(helperErr).NotTo(HaveOccurred())
+
+				By("connecting to the running LRP over TCP")
+				Eventually(errorCheckForConnection(runner.config.Target(), externalPort), timeout, 1).ShouldNot(HaveOccurred())
+			})
+		})
+
 	})
 }
 
@@ -218,7 +319,11 @@ func (runner *clusterTestRunner) cloneRepo(timeout time.Duration, repoURL string
 	return tmpDir
 }
 
+<<<<<<< HEAD
 func (runner *clusterTestRunner) submitLrp(timeout time.Duration, jsonPath string) {
+=======
+func (runner *integrationTestRunner) submitLrp(timeout time.Duration, jsonPath string) {
+>>>>>>> Add tcp-routing integration test.
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to submit lrp at %s", jsonPath)))
 
 	command := runner.command("submit-lrp", jsonPath)
@@ -232,7 +337,11 @@ func (runner *clusterTestRunner) submitLrp(timeout time.Duration, jsonPath strin
 	fmt.Fprintln(getStyledWriter("test"), "Submitted lrp")
 }
 
+<<<<<<< HEAD
 func (runner *clusterTestRunner) uploadBits(timeout time.Duration, dropletName, bits string) {
+=======
+func (runner *integrationTestRunner) uploadBits(timeout time.Duration, dropletName, bits string) {
+>>>>>>> Add tcp-routing integration test.
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to upload %s to %s", bits, dropletName)))
 
 	command := runner.command("upload-bits", dropletName, bits)
@@ -246,7 +355,11 @@ func (runner *clusterTestRunner) uploadBits(timeout time.Duration, dropletName, 
 	fmt.Fprintln(getStyledWriter("test"), "Uploaded", bits, "to", dropletName)
 }
 
+<<<<<<< HEAD
 func (runner *clusterTestRunner) buildDroplet(timeout time.Duration, dropletName, buildpack, srcDir string) {
+=======
+func (runner *integrationTestRunner) buildDroplet(timeout time.Duration, dropletName, buildpack, srcDir string) {
+>>>>>>> Add tcp-routing integration test.
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Submitting build of %s with buildpack %s", dropletName, buildpack)))
 
 	command := runner.command("build-droplet", dropletName, buildpack, "--timeout", timeout.String())
@@ -471,7 +584,11 @@ func makeTcpConnRequest(ip string, port uint16, req string) (string, error) {
 	return line, nil
 }
 
+<<<<<<< HEAD
 func makeGetRequestToURL(route string) (*http.Response, error) {
+=======
+func makeGetRequestToURL(url string) (*http.Response, error) {
+>>>>>>> Add tcp-routing integration test.
 	routeWithScheme := fmt.Sprintf("http://%s", route)
 	resp, err := http.DefaultClient.Get(routeWithScheme)
 	if err != nil {
