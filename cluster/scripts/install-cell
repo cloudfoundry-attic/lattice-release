@@ -19,6 +19,8 @@ install_dependencies() {
             make
             make install
         popd
+
+        apt-get install -y btrfs-tools
     popd
 }
 
