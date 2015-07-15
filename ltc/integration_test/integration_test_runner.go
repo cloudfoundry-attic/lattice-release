@@ -173,9 +173,6 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 					By("launching a build task")
 					runner.buildDroplet(timeout, dropletName, "https://github.com/cloudfoundry/go-buildpack.git", gitDir)
 
-					By("uploading to the blob store")
-					Eventually(errorCheckURLExists(dropletFolderURL+"/bits.tgz"), timeout, 1).ShouldNot(HaveOccurred())
-
 					By("uploading a compiled droplet to the blob store")
 					Eventually(errorCheckURLExists(dropletFolderURL+"/droplet.tgz"), timeout, 1).ShouldNot(HaveOccurred())
 
