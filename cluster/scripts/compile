@@ -26,20 +26,6 @@ construct_temp_workspace() {
 
 compile_garden_linux() {
     echo "compiling garden linux"
-
-    mkdir -p /tmp/btrfs-progs
-    pushd /tmp/btrfs-progs
-        apt-get install -y asciidoc xmlto --no-install-recommends
-        apt-get install -y pkg-config autoconf
-        apt-get install -y uuid-dev libattr1-dev zlib1g-dev libacl1-dev e2fslibs-dev libblkid-dev liblzo2-dev
-
-        git clone git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git .
-
-        ./autogen.sh
-        ./configure
-        make install
-    popd
-
     mkdir -p ${output_dir}/cell/garden
     rm -rf ${GOPATH}/pkg/*
     rm -rf ${GOPATH}/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace/pkg/*
@@ -47,7 +33,7 @@ compile_garden_linux() {
     GOPATH=${GOPATH}/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace:${GOPATH} \
         go install -tags daemon github.com/cloudfoundry-incubator/garden-linux
 
-    pushd ${diego_release_path}/src/github.com/cloudfoundry-incubator/garden-linux
+    pushd ${diego_release_path}/src/github.com/cloudfoundry-incubator/garden-linux/old
         make
         cp -a linux_backend/bin ${output_dir}/cell/garden/garden-bin
         cp -a linux_backend/skeleton ${output_dir}/cell/garden/skeleton
