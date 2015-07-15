@@ -123,6 +123,7 @@ compile_brain() {
         go get -v -d github.com/goamz/goamz/...
         go install github.com/cloudfoundry-incubator/lattice/cell-helpers/s3downloader
         go install github.com/cloudfoundry-incubator/lattice/cell-helpers/s3uploader
+        go install github.com/cloudfoundry-incubator/lattice/cell-helpers/s3deleter
 
         ## TODO:  put me somewhere else
         cp -v $GOPATH/src/github.com/cloudfoundry-incubator/lattice/cluster/common/lrp-launcher ${GOBIN}

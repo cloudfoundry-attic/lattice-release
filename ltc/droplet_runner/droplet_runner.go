@@ -199,6 +199,18 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				},
 				User: "vcap",
 			},
+			&models.RunAction{
+				Path: "/tmp/s3deleter",
+				Dir:  "/",
+				Args: []string{
+					dr.config.BlobTarget().AccessKey,
+					dr.config.BlobTarget().SecretKey,
+					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
+					dr.config.BlobTarget().BucketName,
+					fmt.Sprintf("%s/bits.tgz", dropletName),
+				},
+				User: "vcap",
+			},
 		},
 	}
 

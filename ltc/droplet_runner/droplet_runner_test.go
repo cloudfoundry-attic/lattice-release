@@ -277,6 +277,12 @@ var _ = Describe("DropletRunner", func() {
 						Args: []string{"access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/result.json", "/tmp/result.json"},
 						User: "vcap",
 					},
+					&models.RunAction{
+						Path: "/tmp/s3deleter",
+						Dir:  "/",
+						Args: []string{"access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.tgz"},
+						User: "vcap",
+					},
 				},
 			}
 			Expect(receptorRequest.Action).To(Equal(expectedActions))
