@@ -1,0 +1,6 @@
+{
+    "service": {
+        "name": "bbs",
+        "port": 8889
+    }
+}
