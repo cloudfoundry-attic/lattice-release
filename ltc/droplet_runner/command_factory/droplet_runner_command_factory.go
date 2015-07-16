@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -23,8 +24,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/bytefmt"
-
-	"net/url"
 
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
 )

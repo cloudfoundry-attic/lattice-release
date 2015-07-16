@@ -9,6 +9,10 @@ import (
 	"path/filepath"
 	"time"
 
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
+
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
@@ -25,9 +29,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	"github.com/codegangsta/cli"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gbytes"
 	"github.com/pivotal-golang/clock/fakeclock"
 
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
@@ -843,9 +844,9 @@ var _ = Describe("CommandFactory", func() {
 
 	Describe("ExportDropletCommand", func() {
 		var (
-			exportDropletCommand cli.Command
-			tmpDir               string
-			err                  error
+			exportDropletCommand           cli.Command
+			exportDir, workingDir, prevDir string
+			err                            error
 		)
 
 		BeforeEach(func() {
@@ -855,23 +856,33 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		BeforeEach(func() {
-			tmpDir, err = ioutil.TempDir(os.TempDir(), "exported_stuff")
+			exportDir, err = ioutil.TempDir(os.TempDir(), "exported_stuff")
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(ioutil.WriteFile(filepath.Join(tmpDir, "droppo.tgz"), []byte("tar"), 0644)).To(Succeed())
-			Expect(ioutil.WriteFile(filepath.Join(tmpDir, "droppo-metadata.json"), []byte("json"), 0644)).To(Succeed())
+			Expect(ioutil.WriteFile(filepath.Join(exportDir, "droppo.tgz"), []byte("tar"), 0644)).To(Succeed())
+			Expect(ioutil.WriteFile(filepath.Join(exportDir, "droppo-metadata.json"), []byte("json"), 0644)).To(Succeed())
+
+			workingDir, err = ioutil.TempDir("", "working_dir")
+			Expect(err).NotTo(HaveOccurred())
+			prevDir, err = os.Getwd()
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(os.Chdir(workingDir)).To(Succeed())
 		})
 
 		AfterEach(func() {
-			Expect(os.RemoveAll(tmpDir)).To(Succeed())
+			Expect(os.Chdir(prevDir)).To(Succeed())
+
+			Expect(os.RemoveAll(exportDir)).To(Succeed())
+			Expect(os.RemoveAll(workingDir)).To(Succeed())
 		})
 
 		It("exports the droplet", func() {
-			dropletReader, err := os.Open(filepath.Join(tmpDir, "droppo.tgz"))
+			dropletReader, err := os.Open(filepath.Join(exportDir, "droppo.tgz"))
 			Expect(err).NotTo(HaveOccurred())
 			defer dropletReader.Close()
 
-			metadataReader, err := os.Open(filepath.Join(tmpDir, "droppo-metadata.json"))
+			metadataReader, err := os.Open(filepath.Join(exportDir, "droppo-metadata.json"))
 			Expect(err).NotTo(HaveOccurred())
 			defer metadataReader.Close()
 
