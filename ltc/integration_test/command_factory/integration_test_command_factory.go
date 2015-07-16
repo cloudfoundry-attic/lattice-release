@@ -27,10 +27,6 @@ func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.C
 			Name:  "verbose, v",
 			Usage: "Verbose mode",
 		},
-		cli.BoolFlag{
-			Name:  "cli-help",
-			Usage: "Cli Help Tests",
-		},
 	}
 
 	cliCommand := cli.Command{
@@ -46,5 +42,5 @@ func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.C
 }
 
 func (factory *IntegrationTestCommandFactory) runIntegrationTests(context *cli.Context) {
-	factory.integrationTestRunner.Run(context.Duration("timeout"), context.Bool("verbose"), context.Bool("cli-help"))
+	factory.integrationTestRunner.Run(context.Duration("timeout"), context.Bool("verbose"))
 }

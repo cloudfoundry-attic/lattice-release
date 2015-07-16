@@ -123,6 +123,18 @@ var _ = Describe("LatticeCli Main", func() {
 			Expect(session.Out).To(gbytes.Say(fmt.Sprintf("%s.xip.io:%s", listenerHost, listenerPort)))
 		})
 
+		Context("when an unknown command is invoked", func() {
+			It("should exit non-zero when an unknown command is invoked", func() {
+				command := ltcCommand("unknown-command")
+
+				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(session).Should(gexec.Exit(1))
+				Expect(session.Out).To(gbytes.Say("not a registered command"))
+			})
+		})
+
 		Context("when a known command is invoked with an invalid flag", func() {
 			It("should exit non-zero and print incorrect usage", func() {
 				command := ltcCommand("status", "--badFlag")
