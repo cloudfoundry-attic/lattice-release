@@ -73,11 +73,32 @@ const (
 )
 
 func init() {
-	cli.AppHelpTemplate = appHelpTemplate()
 	cli.HelpPrinter = ShowHelp
+	cli.AppHelpTemplate = appHelpTemplate()
+	cli.CommandHelpTemplate = `NAME:
+   {{join .Names ", "}} - {{.Usage}}
+{{with .ShortName}}
+ALIAS:
+   {{.Aliases}}
+{{end}}
+USAGE:
+   {{.Description}}{{with .Flags}}
+OPTIONS:
+{{range .}}   {{.}}
+{{end}}{{else}}
+{{end}}`
 }
 
-func MakeCliApp(diegoVersion, latticeVersion, ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, cliStdout io.Writer) *cli.App {
+func MakeCliApp(
+	diegoVersion string,
+	latticeVersion string,
+	ltcConfigRoot string,
+	exitHandler exit_handler.ExitHandler,
+	config *config.Config,
+	logger lager.Logger,
+	targetVerifier target_verifier.TargetVerifier,
+	cliStdout io.Writer,
+) *cli.App {
 	config.Load()
 	app := cli.NewApp()
 	app.Name = AppName

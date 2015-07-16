@@ -17,8 +17,7 @@ import (
 
 const latticeCliHomeVar = "LATTICE_CLI_HOME"
 
-var latticeVersion string // provided by linker argument at compile-time
-var diegoVersion string   // provided by linker argument at compile-time
+var latticeVersion, diegoVersion string // provided by linker argument at compile-time
 
 func NewCliApp() *cli.App {
 	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(ltcConfigRoot())))
@@ -29,8 +28,17 @@ func NewCliApp() *cli.App {
 	go exitHandler.Run()
 
 	targetVerifier := target_verifier.New(receptor_client_factory.MakeReceptorClient)
-	app := cli_app_factory.MakeCliApp(diegoVersion, latticeVersion, ltcConfigRoot(), exitHandler, config, logger(), targetVerifier, os.Stdout)
-	return app
+
+	return cli_app_factory.MakeCliApp(
+		diegoVersion,
+		latticeVersion,
+		ltcConfigRoot(),
+		exitHandler,
+		config,
+		logger(),
+		targetVerifier,
+		os.Stdout,
+	)
 }
 
 func logger() lager.Logger {
