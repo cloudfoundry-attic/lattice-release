@@ -840,4 +840,63 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 	})
+
+	Describe("ExportDropletCommand", func() {
+		var (
+			exportDropletCommand cli.Command
+			tmpDir               string
+			err                  error
+		)
+
+		BeforeEach(func() {
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner, nil)
+			exportDropletCommand = commandFactory.MakeExportDropletCommand()
+
+		})
+
+		BeforeEach(func() {
+			tmpDir, err = ioutil.TempDir(os.TempDir(), "exported_stuff")
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(ioutil.WriteFile(filepath.Join(tmpDir, "droppo.tgz"), []byte("tar"), 0644)).To(Succeed())
+			Expect(ioutil.WriteFile(filepath.Join(tmpDir, "droppo-metadata.json"), []byte("json"), 0644)).To(Succeed())
+		})
+
+		AfterEach(func() {
+			Expect(os.RemoveAll(tmpDir)).To(Succeed())
+		})
+
+		It("exports the droplet", func() {
+			dropletReader, err := os.Open(filepath.Join(tmpDir, "droppo.tgz"))
+			Expect(err).NotTo(HaveOccurred())
+			defer dropletReader.Close()
+
+			metadataReader, err := os.Open(filepath.Join(tmpDir, "droppo-metadata.json"))
+			Expect(err).NotTo(HaveOccurred())
+			defer metadataReader.Close()
+
+			fakeDropletRunner.ExportDropletReturns(dropletReader, metadataReader, nil)
+
+			test_helpers.ExecuteCommandWithArgs(exportDropletCommand, []string{"droppo"})
+
+			Expect(outputBuffer).To(test_helpers.SayLine("Droplet 'droppo' exported to droppo.tgz and droppo-metadata.json."))
+			Expect(fakeDropletRunner.ExportDropletCallCount()).To(Equal(1))
+			Expect(fakeDropletRunner.ExportDropletArgsForCall(0)).To(Equal("droppo"))
+
+			Expect(os.Stat("droppo.tgz")).ToNot(BeNil())
+			Expect(os.Stat("droppo-metadata.json")).ToNot(BeNil())
+		})
+
+		Context("when the droplet runner returns errors", func() {
+			It("prints an error", func() {
+				fakeDropletRunner.ExportDropletReturns(nil, nil, errors.New("failed"))
+
+				test_helpers.ExecuteCommandWithArgs(exportDropletCommand, []string{"droppo"})
+
+				Expect(outputBuffer).To(test_helpers.Say("Error exporting droplet droppo: failed"))
+				Expect(fakeDropletRunner.ExportDropletCallCount()).To(Equal(1))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+			})
+		})
+	})
 })

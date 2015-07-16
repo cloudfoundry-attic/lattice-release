@@ -1,10 +1,11 @@
 package droplet_runner_test
 
 import (
-	"bytes"
 	"errors"
+	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -54,9 +55,6 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("ListDroplets", func() {
 		It("returns a list of droplets in the blob store", func() {
-			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
-			config.Save()
-
 			fakeBlobBucket.ListStub = func(prefix, delim, marker string, max int) (result *s3.ListResp, err error) {
 				switch prefix {
 				case "":
@@ -116,9 +114,6 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("returns an error when querying the blob store fails", func() {
-			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
-			config.Save()
-
 			fakeBlobBucket.ListReturns(nil, errors.New("boom"))
 
 			_, err := dropletRunner.ListDroplets()
@@ -352,8 +347,8 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("launches the droplet lrp task with a start command from buildpack results", func() {
-			js := []byte(`{"detected_start_command":{"web":"start"}}`)
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader(js)), nil)
+			js := `{"detected_start_command":{"web":"start"}}`
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader(js)), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
 			Expect(err).NotTo(HaveOccurred())
@@ -410,7 +405,7 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("launches the droplet lrp task with the droplet name as the start command", func() {
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader([]byte("{}"))), nil)
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader("{}")), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
 			Expect(err).NotTo(HaveOccurred())
@@ -425,7 +420,7 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("launches the droplet lrp task with a custom start command", func() {
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader([]byte("{}"))), nil)
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader("{}")), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "start-r-up", []string{"-yeah!"}, app_runner.AppEnvironmentParams{})
 			Expect(err).NotTo(HaveOccurred())
@@ -447,7 +442,7 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("returns an error when create app fails", func() {
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(bytes.NewReader([]byte(`{}`))), nil)
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader(`{}`)), nil)
 			fakeAppRunner.CreateAppReturns(errors.New("nope"))
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
@@ -596,6 +591,51 @@ var _ = Describe("DropletRunner", func() {
 
 			err := dropletRunner.RemoveDroplet("drippy")
 			Expect(err).To(MatchError("some error"))
+		})
+	})
+
+	Describe("ExportDroplet", func() {
+		BeforeEach(func() {
+			fakeDropletReader := ioutil.NopCloser(strings.NewReader("some droplet reader"))
+			fakeMetadataReader := ioutil.NopCloser(strings.NewReader("some metadata reader"))
+
+			fakeBlobBucket.GetReaderStub = func(path string) (io.ReadCloser, error) {
+				switch path {
+				case "drippy/droplet.tgz":
+					return fakeDropletReader, nil
+				case "drippy/result.json":
+					return fakeMetadataReader, nil
+				case "no-such-droplet/droplet.tgz":
+					return nil, errors.New("some missing droplet error")
+				case "no-such-metadata/droplet.tgz":
+					return fakeDropletReader, nil
+				case "no-such-metadata/result.json":
+					return nil, errors.New("some missing metadata error")
+				default:
+					return nil, errors.New("fake GetReader called with invalid arguments")
+				}
+			}
+		})
+
+		It("returns IO readers for the droplet and its metadata", func() {
+			dropletReader, metadataReader, err := dropletRunner.ExportDroplet("drippy")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ioutil.ReadAll(dropletReader)).To(BeEquivalentTo("some droplet reader"))
+			Expect(ioutil.ReadAll(metadataReader)).To(BeEquivalentTo("some metadata reader"))
+		})
+
+		Context("when the droplet name does not have an associated droplet", func() {
+			It("returns an error", func() {
+				_, _, err := dropletRunner.ExportDroplet("no-such-droplet")
+				Expect(err).To(MatchError("droplet not found: some missing droplet error"))
+			})
+		})
+
+		Context("when the droplet name does not have an associated metadata", func() {
+			It("returns an error", func() {
+				_, _, err := dropletRunner.ExportDroplet("no-such-metadata")
+				Expect(err).To(MatchError("metadata not found: some missing metadata error"))
+			})
 		})
 	})
 })

@@ -3,6 +3,7 @@ package droplet_runner
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -31,6 +32,7 @@ type DropletRunner interface {
 	LaunchDroplet(appName, dropletName, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error
 	ListDroplets() ([]Droplet, error)
 	RemoveDroplet(dropletName string) error
+	ExportDroplet(dropletName string) (io.ReadCloser, io.ReadCloser, error)
 }
 
 type Droplet struct {
@@ -357,4 +359,18 @@ func (dr *dropletRunner) RemoveDroplet(dropletName string) error {
 	}
 
 	return nil
+}
+
+func (dr *dropletRunner) ExportDroplet(dropletName string) (io.ReadCloser, io.ReadCloser, error) {
+	dropletReader, err := dr.blobBucket.GetReader(fmt.Sprintf("%s/droplet.tgz", dropletName))
+	if err != nil {
+		return nil, nil, fmt.Errorf("droplet not found: %s", err)
+	}
+
+	metadataReader, err := dr.blobBucket.GetReader(fmt.Sprintf("%s/result.json", dropletName))
+	if err != nil {
+		return nil, nil, fmt.Errorf("metadata not found: %s", err)
+	}
+
+	return dropletReader, metadataReader, err
 }

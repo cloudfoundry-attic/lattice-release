@@ -2,6 +2,7 @@
 package fake_droplet_runner
 
 import (
+	"io"
 	"sync"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
@@ -55,6 +56,16 @@ type FakeDropletRunner struct {
 	}
 	removeDropletReturns struct {
 		result1 error
+	}
+	ExportDropletStub        func(dropletName string) (io.ReadCloser, io.ReadCloser, error)
+	exportDropletMutex       sync.RWMutex
+	exportDropletArgsForCall []struct {
+		dropletName string
+	}
+	exportDropletReturns struct {
+		result1 io.ReadCloser
+		result2 io.ReadCloser
+		result3 error
 	}
 }
 
@@ -217,6 +228,40 @@ func (fake *FakeDropletRunner) RemoveDropletReturns(result1 error) {
 	fake.removeDropletReturns = struct {
 		result1 error
 	}{result1}
+}
+
+func (fake *FakeDropletRunner) ExportDroplet(dropletName string) (io.ReadCloser, io.ReadCloser, error) {
+	fake.exportDropletMutex.Lock()
+	fake.exportDropletArgsForCall = append(fake.exportDropletArgsForCall, struct {
+		dropletName string
+	}{dropletName})
+	fake.exportDropletMutex.Unlock()
+	if fake.ExportDropletStub != nil {
+		return fake.ExportDropletStub(dropletName)
+	} else {
+		return fake.exportDropletReturns.result1, fake.exportDropletReturns.result2, fake.exportDropletReturns.result3
+	}
+}
+
+func (fake *FakeDropletRunner) ExportDropletCallCount() int {
+	fake.exportDropletMutex.RLock()
+	defer fake.exportDropletMutex.RUnlock()
+	return len(fake.exportDropletArgsForCall)
+}
+
+func (fake *FakeDropletRunner) ExportDropletArgsForCall(i int) string {
+	fake.exportDropletMutex.RLock()
+	defer fake.exportDropletMutex.RUnlock()
+	return fake.exportDropletArgsForCall[i].dropletName
+}
+
+func (fake *FakeDropletRunner) ExportDropletReturns(result1 io.ReadCloser, result2 io.ReadCloser, result3 error) {
+	fake.ExportDropletStub = nil
+	fake.exportDropletReturns = struct {
+		result1 io.ReadCloser
+		result2 io.ReadCloser
+		result3 error
+	}{result1, result2, result3}
 }
 
 var _ droplet_runner.DropletRunner = new(FakeDropletRunner)

@@ -216,6 +216,18 @@ func (factory *DropletRunnerCommandFactory) MakeRemoveDropletCommand() cli.Comma
 	return removeDropletCommand
 }
 
+func (factory *DropletRunnerCommandFactory) MakeExportDropletCommand() cli.Command {
+	var exportDropletCommand = cli.Command{
+		Name:        "export-droplet",
+		Aliases:     []string{"ed"},
+		Usage:       "Export droplet",
+		Description: "ltc export-droplet DROPLET_NAME",
+		Action:      factory.exportDroplet,
+	}
+
+	return exportDropletCommand
+}
+
 func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
 	droplets, err := factory.dropletRunner.ListDroplets()
 	if err != nil {
@@ -438,6 +450,52 @@ func (factory *DropletRunnerCommandFactory) removeDroplet(context *cli.Context) 
 	}
 
 	factory.UI.SayLine("Droplet removed")
+}
+
+func (factory *DropletRunnerCommandFactory) exportDroplet(context *cli.Context) {
+	dropletName := context.Args().First()
+
+	dropletReader, metadataReader, err := factory.dropletRunner.ExportDroplet(dropletName)
+	if err != nil {
+		factory.UI.Say(fmt.Sprintf("Error exporting droplet %s: %s", dropletName, err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+	defer dropletReader.Close()
+	defer metadataReader.Close()
+
+	dropletPath := dropletName + ".tgz"
+	metadataPath := dropletName + "-metadata.json"
+
+	dropletWriter, err := os.OpenFile(dropletPath, os.O_WRONLY|os.O_CREATE, os.FileMode(0644))
+	if err != nil {
+		factory.UI.Say(fmt.Sprintf("Error exporting droplet '%s' to %s: %s", dropletName, dropletPath, err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
+	_, err = io.Copy(dropletWriter, dropletReader)
+	if err != nil {
+		factory.UI.Say(fmt.Sprintf("Error exporting droplet '%s' to %s: %s", dropletName, dropletPath, err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
+	metadataWriter, err := os.OpenFile(metadataPath, os.O_WRONLY|os.O_CREATE, os.FileMode(0644))
+	if err != nil {
+		factory.UI.Say(fmt.Sprintf("Error exporting metadata for '%s' to %s: %s", dropletName, metadataPath, err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
+	_, err = io.Copy(metadataWriter, metadataReader)
+	if err != nil {
+		factory.UI.Say(fmt.Sprintf("Error exporting metadata for '%s' to %s: %s", dropletName, metadataPath, err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
+	factory.UI.SayLine(fmt.Sprintf("Droplet '%s' exported to %s and %s.", dropletName, dropletPath, metadataPath))
 }
 
 func (factory *DropletRunnerCommandFactory) makeTar(contentsPath string) (string, error) {

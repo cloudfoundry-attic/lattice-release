@@ -251,6 +251,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		dropletRunnerCommandFactory.MakeListDropletsCommand(),
 		dropletRunnerCommandFactory.MakeLaunchDropletCommand(),
 		dropletRunnerCommandFactory.MakeRemoveDropletCommand(),
+		dropletRunnerCommandFactory.MakeExportDropletCommand(),
 		helpCommand,
 	}
 }
