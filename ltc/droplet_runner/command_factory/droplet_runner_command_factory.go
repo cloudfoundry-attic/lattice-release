@@ -215,6 +215,31 @@ func (factory *DropletRunnerCommandFactory) MakeRemoveDropletCommand() cli.Comma
 	return removeDropletCommand
 }
 
+func (factory *DropletRunnerCommandFactory) MakeImportDropletCommand() cli.Command {
+	var importDropletCommand = cli.Command{
+		Name:        "import-droplet",
+		Aliases:     []string{"id"},
+		Usage:       "Imports the droplet",
+		Description: "ltc import-droplet DROPLET-NAME /path/droplet.tgz /path/result.json",
+		Action:      factory.importDroplet,
+	}
+
+	return importDropletCommand
+}
+
+func (factory *DropletRunnerCommandFactory) importDroplet(context *cli.Context) {
+	dropletName := context.Args().First()
+	dropletPath := context.Args().Get(1)
+	metadataPath := context.Args().Get(2)
+
+	if err := factory.dropletRunner.ImportDroplet(dropletName, dropletPath, metadataPath); err != nil {
+		factory.UI.Say(fmt.Sprintf("Error importing %s: %s", dropletName, err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+	factory.UI.Say("Imported " + dropletName)
+}
+
 func (factory *DropletRunnerCommandFactory) MakeExportDropletCommand() cli.Command {
 	var exportDropletCommand = cli.Command{
 		Name:        "export-droplet",

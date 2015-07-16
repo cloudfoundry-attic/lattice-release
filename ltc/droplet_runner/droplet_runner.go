@@ -33,6 +33,7 @@ type DropletRunner interface {
 	ListDroplets() ([]Droplet, error)
 	RemoveDroplet(dropletName string) error
 	ExportDroplet(dropletName string) (io.ReadCloser, io.ReadCloser, error)
+	ImportDroplet(dropletName, dropletPath, metadataPath string) error
 }
 
 type Droplet struct {
@@ -356,6 +357,25 @@ func (dr *dropletRunner) RemoveDroplet(dropletName string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (dr *dropletRunner) ImportDroplet(dropletName, dropletPath, metadataPath string) error {
+
+	dropletInfo, _ := os.Stat(dropletPath)
+	metadataInfo, _ := os.Stat(metadataPath)
+
+	dropletFile, _ := os.Open(dropletPath)
+	metadataFile, _ := os.Open(metadataPath)
+
+	if err := dr.blobBucket.PutReader(dropletName+"/droplet.tgz", dropletFile, dropletInfo.Size(), blob_store.DropletContentType, blob_store.DefaultPrivilege, s3.Options{}); err != nil {
+		return err
+	}
+
+	if err := dr.blobBucket.PutReader(dropletName+"/result.json", metadataFile, metadataInfo.Size(), blob_store.DropletContentType, blob_store.DefaultPrivilege, s3.Options{}); err != nil {
+		return err
 	}
 
 	return nil

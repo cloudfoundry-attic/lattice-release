@@ -5,12 +5,15 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
@@ -25,8 +28,6 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/goamz/goamz/s3"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
@@ -636,6 +637,85 @@ var _ = Describe("DropletRunner", func() {
 				_, _, err := dropletRunner.ExportDroplet("no-such-metadata")
 				Expect(err).To(MatchError("metadata not found: some missing metadata error"))
 			})
+		})
+	})
+
+	Describe("ImportDroplet", func() {
+		Context("when the droplet files exist", func() {
+			var tmpDir, dropletPathArg, metadataPathArg string
+
+			BeforeEach(func() {
+				var err error
+				tmpDir, err = ioutil.TempDir(os.TempDir(), "droplet")
+				Expect(err).NotTo(HaveOccurred())
+
+				dropletPathArg = filepath.Join(tmpDir, "totally-drippy.tgz")
+				metadataPathArg = filepath.Join(tmpDir, "result.json")
+				Expect(ioutil.WriteFile(dropletPathArg, []byte("droplet contents"), 0644)).To(Succeed())
+				Expect(ioutil.WriteFile(metadataPathArg, []byte("result metadata"), 0644)).To(Succeed())
+			})
+			AfterEach(func() {
+				Expect(os.RemoveAll(tmpDir)).To(Succeed())
+			})
+
+			It("uploads the droplet files to the blob store", func() {
+				err := dropletRunner.ImportDroplet("drippy", dropletPathArg, metadataPathArg)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(2))
+
+				dropletPath, dropletReader, dropletLength, dropletContentType, dropletPerm, dropletOptions := fakeBlobBucket.PutReaderArgsForCall(0)
+				Expect(dropletPath).To(Equal("drippy/droplet.tgz"))
+				Expect(dropletReader).ToNot(BeNil())
+				Expect(dropletLength).ToNot(BeZero())
+				Expect(dropletContentType).To(Equal(blob_store.DropletContentType))
+				Expect(dropletPerm).To(Equal(blob_store.DefaultPrivilege))
+				Expect(dropletOptions).To(BeZero())
+
+				metadataPath, metadataReader, metadataLength, metadataContentType, metadataPerm, metadataOptions := fakeBlobBucket.PutReaderArgsForCall(1)
+				Expect(metadataPath).To(Equal("drippy/result.json"))
+				Expect(metadataReader).ToNot(BeNil())
+				Expect(metadataLength).ToNot(BeZero())
+				Expect(metadataContentType).To(Equal(blob_store.DropletContentType))
+				Expect(metadataPerm).To(Equal(blob_store.DefaultPrivilege))
+				Expect(metadataOptions).To(BeZero())
+			})
+
+			Context("when the droplet already exists on the blob store", func() {
+				It("overwrites the droplet with the imported droplet", func() {})
+			})
+
+			Context("when the blob bucket returns error(s)", func() {
+				It("returns an error uploading the droplet file", func() {
+					fakeBlobBucket.PutReaderReturns(errors.New("unable2upload"))
+
+					err := dropletRunner.ImportDroplet("drippy", dropletPathArg, metadataPathArg)
+					Expect(err).To(MatchError("unable2upload"))
+
+					Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(1))
+				})
+
+				It("returns an error uploading the metadata file", func() {
+					fakeBlobBucket.PutReaderStub = func(path string, r io.Reader, length int64, contType string, perm s3.ACL, options s3.Options) error {
+						if strings.HasSuffix(path, "result.json") {
+							return errors.New("ugly-duckling")
+						}
+						return nil
+					}
+
+					err := dropletRunner.ImportDroplet("drippy", dropletPathArg, metadataPathArg)
+					Expect(err).To(MatchError("ugly-duckling"))
+
+					Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(2))
+				})
+			})
+		})
+
+		Context("when the droplet files do not exist", func() {
+			It("returns an error stat'ing the droplet file", func() {})
+			It("returns an error stat'ing the metadata file", func() {})
+			It("returns an error opening the droplet file", func() {})
+			It("returns an error opening the metadata file", func() {})
 		})
 	})
 })

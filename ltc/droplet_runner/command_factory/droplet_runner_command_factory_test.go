@@ -910,4 +910,59 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 	})
+
+	Describe("ImportDropletCommand", func() {
+		var importDropletCommand cli.Command
+
+		BeforeEach(func() {
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, nil, fakeDropletRunner, nil)
+			importDropletCommand = commandFactory.MakeImportDropletCommand()
+		})
+
+		Context("when the droplet files exist", func() {
+			var tmpDir, dropletPathArg, metadataPathArg string
+
+			BeforeEach(func() {
+				var err error
+				tmpDir, err = ioutil.TempDir(os.TempDir(), "droplet")
+				Expect(err).NotTo(HaveOccurred())
+
+				dropletPathArg = filepath.Join(tmpDir, "droplet.tgz")
+				metadataPathArg = filepath.Join(tmpDir, "result.json")
+				Expect(ioutil.WriteFile(dropletPathArg, []byte("droplet contents"), 0644)).To(Succeed())
+				Expect(ioutil.WriteFile(metadataPathArg, []byte("result metadata"), 0644)).To(Succeed())
+			})
+			AfterEach(func() {
+				Expect(os.RemoveAll(tmpDir)).To(Succeed())
+			})
+
+			It("imports the droplet", func() {
+				test_helpers.ExecuteCommandWithArgs(importDropletCommand, []string{"droplet-name", dropletPathArg, metadataPathArg})
+
+				Expect(outputBuffer).To(test_helpers.Say("Imported droplet-name"))
+
+				Expect(fakeDropletRunner.ImportDropletCallCount()).To(Equal(1))
+				dropletName, dropletPath, metadataPath := fakeDropletRunner.ImportDropletArgsForCall(0)
+				Expect(dropletName).To(Equal("droplet-name"))
+				Expect(dropletPath).To(Equal(dropletPathArg))
+				Expect(metadataPath).To(Equal(metadataPathArg))
+			})
+
+			Context("when the droplet runner returns an error", func() {
+				It("prints the error message", func() {
+					fakeDropletRunner.ImportDropletReturns(errors.New("dont tread on me"))
+
+					test_helpers.ExecuteCommandWithArgs(importDropletCommand, []string{"droplet-name", dropletPathArg, metadataPathArg})
+
+					Expect(outputBuffer).To(test_helpers.Say("Error importing droplet-name: dont tread on me"))
+					Expect(fakeDropletRunner.ImportDropletCallCount()).To(Equal(1))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+				})
+			})
+		})
+
+		Context("when required arguments are missing", func() {
+			It("prints incorrect usage", func() {})
+		})
+	})
 })

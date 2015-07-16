@@ -67,6 +67,16 @@ type FakeDropletRunner struct {
 		result2 io.ReadCloser
 		result3 error
 	}
+	ImportDropletStub        func(dropletName, dropletPath, metadataPath string) error
+	importDropletMutex       sync.RWMutex
+	importDropletArgsForCall []struct {
+		dropletName  string
+		dropletPath  string
+		metadataPath string
+	}
+	importDropletReturns struct {
+		result1 error
+	}
 }
 
 func (fake *FakeDropletRunner) UploadBits(dropletName string, uploadPath string) error {
@@ -262,6 +272,40 @@ func (fake *FakeDropletRunner) ExportDropletReturns(result1 io.ReadCloser, resul
 		result2 io.ReadCloser
 		result3 error
 	}{result1, result2, result3}
+}
+
+func (fake *FakeDropletRunner) ImportDroplet(dropletName string, dropletPath string, metadataPath string) error {
+	fake.importDropletMutex.Lock()
+	fake.importDropletArgsForCall = append(fake.importDropletArgsForCall, struct {
+		dropletName  string
+		dropletPath  string
+		metadataPath string
+	}{dropletName, dropletPath, metadataPath})
+	fake.importDropletMutex.Unlock()
+	if fake.ImportDropletStub != nil {
+		return fake.ImportDropletStub(dropletName, dropletPath, metadataPath)
+	} else {
+		return fake.importDropletReturns.result1
+	}
+}
+
+func (fake *FakeDropletRunner) ImportDropletCallCount() int {
+	fake.importDropletMutex.RLock()
+	defer fake.importDropletMutex.RUnlock()
+	return len(fake.importDropletArgsForCall)
+}
+
+func (fake *FakeDropletRunner) ImportDropletArgsForCall(i int) (string, string, string) {
+	fake.importDropletMutex.RLock()
+	defer fake.importDropletMutex.RUnlock()
+	return fake.importDropletArgsForCall[i].dropletName, fake.importDropletArgsForCall[i].dropletPath, fake.importDropletArgsForCall[i].metadataPath
+}
+
+func (fake *FakeDropletRunner) ImportDropletReturns(result1 error) {
+	fake.ImportDropletStub = nil
+	fake.importDropletReturns = struct {
+		result1 error
+	}{result1}
 }
 
 var _ droplet_runner.DropletRunner = new(FakeDropletRunner)
