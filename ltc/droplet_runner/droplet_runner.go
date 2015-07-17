@@ -133,7 +133,7 @@ func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
 		return err
 	}
 
-	return dr.blobBucket.PutReader(fmt.Sprintf("%s/bits.tgz", dropletName), uploadFile, fileInfo.Size(), blob_store.DropletContentType, blob_store.DefaultPrivilege, s3.Options{})
+	return dr.blobBucket.PutReader(path.Join(dropletName, "bits.tgz"), uploadFile, fileInfo.Size(), blob_store.DropletContentType, blob_store.DefaultPrivilege, s3.Options{})
 }
 
 func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string) error {
@@ -153,7 +153,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 					dr.config.BlobTarget().SecretKey,
 					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
 					dr.config.BlobTarget().BucketName,
-					fmt.Sprintf("%s/bits.tgz", dropletName),
+					path.Join(dropletName, "bits.tgz"),
 					"/tmp/bits.tgz",
 				},
 				User: "vcap",
@@ -184,7 +184,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 					dr.config.BlobTarget().SecretKey,
 					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
 					dr.config.BlobTarget().BucketName,
-					fmt.Sprintf("%s/droplet.tgz", dropletName),
+					path.Join(dropletName, "droplet.tgz"),
 					"/tmp/droplet",
 				},
 				User: "vcap",
@@ -197,7 +197,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 					dr.config.BlobTarget().SecretKey,
 					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
 					dr.config.BlobTarget().BucketName,
-					fmt.Sprintf("%s/result.json", dropletName),
+					path.Join(dropletName, "result.json"),
 					"/tmp/result.json",
 				},
 				User: "vcap",
@@ -210,7 +210,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 					dr.config.BlobTarget().SecretKey,
 					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
 					dr.config.BlobTarget().BucketName,
-					fmt.Sprintf("%s/bits.tgz", dropletName),
+					path.Join(dropletName, "bits.tgz"),
 				},
 				User: "vcap",
 			},
@@ -289,7 +289,7 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 						dr.config.BlobTarget().SecretKey,
 						fmt.Sprintf("http://%s:%d", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
 						dr.config.BlobTarget().BucketName,
-						dropletName + "/droplet.tgz",
+						path.Join(dropletName, "droplet.tgz"),
 						"/tmp/droplet.tgz",
 					},
 					User: "vcap",
@@ -363,18 +363,29 @@ func (dr *dropletRunner) RemoveDroplet(dropletName string) error {
 }
 
 func (dr *dropletRunner) ImportDroplet(dropletName, dropletPath, metadataPath string) error {
-
-	dropletInfo, _ := os.Stat(dropletPath)
-	metadataInfo, _ := os.Stat(metadataPath)
-
-	dropletFile, _ := os.Open(dropletPath)
-	metadataFile, _ := os.Open(metadataPath)
-
-	if err := dr.blobBucket.PutReader(dropletName+"/droplet.tgz", dropletFile, dropletInfo.Size(), blob_store.DropletContentType, blob_store.DefaultPrivilege, s3.Options{}); err != nil {
+	dropletInfo, err := os.Stat(dropletPath)
+	if err != nil {
+		return err
+	}
+	metadataInfo, err := os.Stat(metadataPath)
+	if err != nil {
 		return err
 	}
 
-	if err := dr.blobBucket.PutReader(dropletName+"/result.json", metadataFile, metadataInfo.Size(), blob_store.DropletContentType, blob_store.DefaultPrivilege, s3.Options{}); err != nil {
+	dropletFile, err := os.Open(dropletPath)
+	if err != nil {
+		return err
+	}
+	metadataFile, err := os.Open(metadataPath)
+	if err != nil {
+		return err
+	}
+
+	if err := dr.blobBucket.PutReader(path.Join(dropletName, "droplet.tgz"), dropletFile, dropletInfo.Size(), blob_store.DropletContentType, blob_store.DefaultPrivilege, s3.Options{}); err != nil {
+		return err
+	}
+
+	if err := dr.blobBucket.PutReader(path.Join(dropletName, "result.json"), metadataFile, metadataInfo.Size(), blob_store.DropletContentType, blob_store.DefaultPrivilege, s3.Options{}); err != nil {
 		return err
 	}
 
@@ -382,12 +393,12 @@ func (dr *dropletRunner) ImportDroplet(dropletName, dropletPath, metadataPath st
 }
 
 func (dr *dropletRunner) ExportDroplet(dropletName string) (io.ReadCloser, io.ReadCloser, error) {
-	dropletReader, err := dr.blobBucket.GetReader(fmt.Sprintf("%s/droplet.tgz", dropletName))
+	dropletReader, err := dr.blobBucket.GetReader(path.Join(dropletName, "droplet.tgz"))
 	if err != nil {
 		return nil, nil, fmt.Errorf("droplet not found: %s", err)
 	}
 
-	metadataReader, err := dr.blobBucket.GetReader(fmt.Sprintf("%s/result.json", dropletName))
+	metadataReader, err := dr.blobBucket.GetReader(path.Join(dropletName, "result.json"))
 	if err != nil {
 		return nil, nil, fmt.Errorf("metadata not found: %s", err)
 	}
