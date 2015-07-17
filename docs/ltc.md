@@ -169,8 +169,7 @@ This indicates that instance 0 of the application has been `RUNNING` on `lattice
 `ltc test` runs a minimal integration suite to ensure that a Lattice deploy is functioning correctly.
 
 - **`--verbose`** verbose mode.  shows application output during test suite.
-- **`--timeout=30s`** sets the wait time for Lattice to respond.
-- **`--cli-help`** runs additional tests for CLI output formatting.
+- **`--timeout=2m`** sets the wait time for Lattice to respond.
 
 ### `ltc debug-logs`
 
