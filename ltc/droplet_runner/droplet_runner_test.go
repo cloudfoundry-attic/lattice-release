@@ -331,8 +331,8 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("launches the droplet lrp task with a start command from buildpack results", func() {
-			js := `{"detected_start_command":{"web":"start"}}`
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader(js)), nil)
+			executionMetadata := `{"execution_metadata": "{\"start_command\": \"start\"}"}`
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader(executionMetadata)), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
 			Expect(err).NotTo(HaveOccurred())
@@ -343,8 +343,8 @@ var _ = Describe("DropletRunner", func() {
 
 			Expect(createAppParams.Name).To(Equal("app-name"))
 			Expect(createAppParams.RootFS).To(Equal(droplet_runner.DropletRootFS))
-			Expect(createAppParams.StartCommand).To(Equal("/tmp/lrp-launcher"))
-			Expect(createAppParams.AppArgs).To(Equal([]string{"start"}))
+			Expect(createAppParams.StartCommand).To(Equal("/tmp/launcher"))
+			Expect(createAppParams.AppArgs).To(Equal([]string{"/home/vcap/app", "", `{"start_command": "start"}`}))
 
 			Expect(createAppParams.Annotation).To(MatchJSON(`{
 				"droplet_source": {
@@ -388,23 +388,9 @@ var _ = Describe("DropletRunner", func() {
 			}))
 		})
 
-		It("launches the droplet lrp task with the droplet name as the start command", func() {
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader("{}")), nil)
-
-			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
-			createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
-			Expect(createAppParams).ToNot(BeNil())
-
-			Expect(createAppParams.Name).To(Equal("app-name"))
-			Expect(createAppParams.StartCommand).To(Equal("/tmp/lrp-launcher"))
-			Expect(createAppParams.AppArgs).To(Equal([]string{"droplet-name"}))
-		})
-
 		It("launches the droplet lrp task with a custom start command", func() {
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader("{}")), nil)
+			executionMetadata := `{"execution_metadata": "{\"start_command\": \"start\"}"}`
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader(executionMetadata)), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "start-r-up", []string{"-yeah!"}, app_runner.AppEnvironmentParams{})
 			Expect(err).NotTo(HaveOccurred())
@@ -414,15 +400,22 @@ var _ = Describe("DropletRunner", func() {
 			Expect(createAppParams).ToNot(BeNil())
 
 			Expect(createAppParams.Name).To(Equal("app-name"))
-			Expect(createAppParams.StartCommand).To(Equal("/tmp/lrp-launcher"))
-			Expect(createAppParams.AppArgs).To(Equal([]string{"start-r-up", "-yeah!"}))
+			Expect(createAppParams.StartCommand).To(Equal("/tmp/launcher"))
+			Expect(createAppParams.AppArgs).To(Equal([]string{"/home/vcap/app", "start-r-up -yeah!", `{"start_command": "start"}`}))
 		})
 
-		It("returns an error when it can't download result.json from the blob store", func() {
+		It("returns an error when it can't retrieve the execution metadata from the blob store", func() {
 			fakeBlobBucket.GetReaderReturns(nil, errors.New("nope"))
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("nope"))
+		})
+
+		It("returns an error when the downloaded execution metadata is invaild JSON", func() {
+			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader("invalid JSON")), nil)
+
+			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
+			Expect(err).To(MatchError("invalid character 'i' looking for beginning of value"))
 		})
 
 		It("returns an error when create app fails", func() {
@@ -430,7 +423,7 @@ var _ = Describe("DropletRunner", func() {
 			fakeAppRunner.CreateAppReturns(errors.New("nope"))
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("nope"))
 		})
 	})
 

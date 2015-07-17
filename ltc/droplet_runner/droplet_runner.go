@@ -52,17 +52,6 @@ type dropletRunner struct {
 	appExaminer    app_examiner.AppExaminer
 }
 
-type BuildResult struct {
-	DetectedBuildpack    string       `json:"detected_buildpack"`
-	ExecutionMetadata    string       `json:"execution_metadata"`
-	BuildpackKey         string       `json:"buildpack_key"`
-	DetectedStartCommand StartCommand `json:"detected_start_command"`
-}
-
-type StartCommand struct {
-	Web string `json:"web"`
-}
-
 type Annotation struct {
 	DropletSource struct {
 		config.BlobTargetInfo
@@ -233,21 +222,9 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 }
 
 func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error {
-	result, err := dr.downloadJSON(path.Join(dropletName, "result.json"))
+	executionMetadata, err := dr.getExecutionMetadata(path.Join(dropletName, "result.json"))
 	if err != nil {
 		return err
-	}
-
-	if startCommand == "" {
-		if result.DetectedStartCommand.Web != "" {
-			startArgs = []string{result.DetectedStartCommand.Web}
-		} else {
-			// This is go buildpack-specific behavior where the executable
-			// happens to match the droplet name.
-			startArgs = []string{dropletName}
-		}
-	} else {
-		startArgs = append([]string{startCommand}, startArgs...)
 	}
 
 	annotation := Annotation{}
@@ -266,8 +243,12 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 
 		Name:         appName,
 		RootFS:       DropletRootFS,
-		StartCommand: "/tmp/lrp-launcher",
-		AppArgs:      startArgs,
+		StartCommand: "/tmp/launcher",
+		AppArgs: []string{
+			"/home/vcap/app",
+			strings.Join(append([]string{startCommand}, startArgs...), " "),
+			executionMetadata,
+		},
 
 		Annotation: string(annotationBytes),
 
@@ -307,21 +288,21 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 	return dr.appRunner.CreateApp(appParams)
 }
 
-func (dr *dropletRunner) downloadJSON(path string) (*BuildResult, error) {
+func (dr *dropletRunner) getExecutionMetadata(path string) (string, error) {
 	reader, err := dr.blobBucket.GetReader(path)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	decoder := json.NewDecoder(reader)
-
-	result := BuildResult{}
-	err = decoder.Decode(&result)
-	if err != nil {
-		return nil, err
+	var result struct {
+		ExecutionMetadata string `json:"execution_metadata"`
 	}
 
-	return &result, nil
+	if err := json.NewDecoder(reader).Decode(&result); err != nil {
+		return "", err
+	}
+
+	return result.ExecutionMetadata, nil
 }
 
 func dropletMatchesAnnotation(blobTarget config.BlobTargetInfo, dropletName string, annotation Annotation) bool {
