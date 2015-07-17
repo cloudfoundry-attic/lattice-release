@@ -312,5 +312,4 @@ var _ = Describe("CliAppFactory", func() {
 			Expect(loggregatorUrl).To(Equal("ws://doppler.diego.io"))
 		})
 	})
-
 })

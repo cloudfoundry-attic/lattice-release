@@ -1,41 +1,83 @@
 package blob_store
 
 import (
+	"fmt"
 	"io"
+	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/goamz/goamz/s3"
 )
 
-const DropletContentType = "application/octet-stream"
-
-var DefaultPrivilege s3.ACL = s3.Private
-
-//go:generate counterfeiter -o fake_blob_store/fake_blob_store.go . BlobStore
-type BlobStore interface {
-	Bucket(name string) BlobBucket
+type BlobStore struct {
+	Bucket string
+	S3     *s3.S3
 }
 
-//go:generate counterfeiter -o fake_blob_bucket/fake_blob_bucket.go . BlobBucket
-type BlobBucket interface {
-	List(prefix, delim, marker string, max int) (result *s3.ListResp, err error)
-	PutReader(path string, r io.Reader, length int64, contType string, perm s3.ACL, options s3.Options) error
-	GetReader(path string) (rc io.ReadCloser, err error)
-	Del(path string) error
+type Blob struct {
+	Path    string
+	Created time.Time
+	Size    int64
 }
 
-type blobStore struct {
-	config     *config.Config
-	s3Endpoint *s3.S3
-}
-
-func NewBlobStore(config *config.Config, s3S3 *s3.S3) BlobStore {
-	return &blobStore{
-		config:     config,
-		s3Endpoint: s3S3,
+func New(blobTarget config.BlobTargetInfo) *BlobStore {
+	endpoint := fmt.Sprintf("http://%s:%d/", blobTarget.TargetHost, blobTarget.TargetPort)
+	client := s3.New(&aws.Config{
+		Credentials:      credentials.NewStaticCredentials(blobTarget.AccessKey, blobTarget.SecretKey, ""),
+		Endpoint:         endpoint,
+		Region:           "fake-region",
+		S3ForcePathStyle: true,
+	})
+	return &BlobStore{
+		Bucket: blobTarget.BucketName,
+		S3:     client,
 	}
 }
 
-func (bs *blobStore) Bucket(name string) BlobBucket {
-	return bs.s3Endpoint.Bucket(name)
+func (b *BlobStore) List() ([]Blob, error) {
+	objects, err := b.S3.ListObjects(&s3.ListObjectsInput{
+		Bucket: aws.String(b.Bucket),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	blobs := []Blob{}
+	for _, obj := range objects.Contents {
+		blobs = append(blobs, Blob{
+			Path:    *obj.Key,
+			Size:    *obj.Size,
+			Created: *obj.LastModified,
+		})
+	}
+
+	return blobs, nil
+}
+
+func (b *BlobStore) Upload(path string, contents io.ReadSeeker) error {
+	_, err := b.S3.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String(b.Bucket),
+		ACL:    aws.String("private"),
+		Key:    aws.String(path),
+		Body:   contents,
+	})
+	return err
+}
+
+func (b *BlobStore) Download(path string) (io.ReadCloser, error) {
+	output, err := b.S3.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(b.Bucket),
+		Key:    aws.String(path),
+	})
+	return output.Body, err
+}
+
+func (b *BlobStore) Delete(path string) error {
+	_, err := b.S3.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(b.Bucket),
+		Key:    aws.String(path),
+	})
+	return err
 }

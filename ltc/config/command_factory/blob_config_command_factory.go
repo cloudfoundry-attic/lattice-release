@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/codegangsta/cli"
 )
@@ -59,7 +60,13 @@ func (factory *ConfigCommandFactory) targetBlob(context *cli.Context) {
 	secretKey := factory.ui.Prompt("Secret Key")
 	bucketName := factory.ui.PromptWithDefault("Bucket Name", "condenser-bucket")
 
-	if ok, err := factory.targetVerifier.VerifyBlobTarget(host, uint16(port), accessKey, secretKey, bucketName); !ok {
+	if err := factory.targetVerifier.VerifyBlobTarget(config.BlobTargetInfo{
+		TargetHost: host,
+		TargetPort: uint16(port),
+		AccessKey: accessKey,
+		SecretKey: secretKey,
+		BucketName: bucketName,
+	}); err != nil {
 		factory.ui.Say("Unable to verify blob store: " + err.Error())
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return

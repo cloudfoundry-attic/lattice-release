@@ -2,55 +2,29 @@ package target_verifier
 
 import (
 	"fmt"
-	"net"
-	"net/http"
-	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
-	"github.com/goamz/goamz/aws"
-	"github.com/goamz/goamz/s3"
 )
 
-var awsRegion = aws.Region{Name: "riak-region-1", S3Endpoint: "http://s3.amazonaws.com"}
+// TODO: should be separate object
+func (t *targetVerifier) VerifyBlobTarget(targetInfo config.BlobTargetInfo) error {
+	blobStore := blob_store.New(targetInfo)
+	// TODO: seems like it would be better to retry
+	blobStore.S3.ShouldRetry = func(_ *aws.Request) bool { return false }
 
-func (t *targetVerifier) VerifyBlobTarget(host string, port uint16, accessKey, secretKey, bucketName string) (bool, error) {
-	s3Auth := aws.Auth{
-		AccessKey: accessKey,
-		SecretKey: secretKey,
-	}
-
-	config := config.New(persister.NewMemPersister())
-	config.SetBlobTarget(host, port, accessKey, secretKey, bucketName)
-
-	s3S3 := s3.New(s3Auth, awsRegion, &http.Client{
-		Transport: &http.Transport{
-			Proxy: config.BlobTarget().Proxy(),
-			Dial: (&net.Dialer{
-				Timeout:   5 * time.Second,
-				KeepAlive: 5 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout: 10 * time.Second,
-		},
-	})
-	s3S3.AttemptStrategy = aws.AttemptStrategy{}
-
-	blobStore := blob_store.NewBlobStore(config, s3S3)
-	blobBucket := blobStore.Bucket(config.BlobTarget().BucketName)
-
-	if _, err := blobBucket.List("", "/", "", 1); err != nil {
-		if httpError, ok := err.(*s3.Error); ok {
-			switch httpError.StatusCode {
-			case 403:
-				return false, fmt.Errorf("unauthorized")
-			default:
-				return false, fmt.Errorf("%s", httpError)
+	if _, err := blobStore.List(); err != nil {
+		if httpError, ok := err.(awserr.RequestFailure); ok {
+			if httpError.StatusCode() == 403 {
+				return fmt.Errorf("unauthorized")
 			}
+			return httpError
 		}
 
-		return false, fmt.Errorf("blob target is down: %s", err)
+		return fmt.Errorf("blob target is down: %s", err)
 	}
 
-	return true, nil
+	return nil
 }

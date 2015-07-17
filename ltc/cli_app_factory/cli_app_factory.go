@@ -4,10 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
-	"net/http"
 	"os"
-	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
@@ -30,7 +27,6 @@ import (
 	"github.com/cloudfoundry/noaa"
 	"github.com/codegangsta/cli"
 	"github.com/goamz/goamz/aws"
-	"github.com/goamz/goamz/s3"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 
@@ -197,26 +193,9 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	testRunner := integration_test.NewIntegrationTestRunner(config, ltcConfigRoot)
 	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner)
 
-	s3Auth := aws.Auth{
-		AccessKey: config.BlobTarget().AccessKey,
-		SecretKey: config.BlobTarget().SecretKey,
-	}
+	blobStore := blob_store.New(config.BlobTarget())
 
-	s3S3 := s3.New(s3Auth, awsRegion, &http.Client{
-		Transport: &http.Transport{
-			Proxy: config.BlobTarget().Proxy(),
-			Dial: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout: 10 * time.Second,
-		},
-	})
-
-	blobStore := blob_store.NewBlobStore(config, s3S3)
-	blobBucket := blobStore.Bucket(config.BlobTarget().BucketName)
-
-	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, blobBucket, targetVerifier, appExaminer)
+	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, targetVerifier, appExaminer)
 	cfIgnore := cf_ignore.New()
 	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, taskExaminer, dropletRunner, cfIgnore)
 

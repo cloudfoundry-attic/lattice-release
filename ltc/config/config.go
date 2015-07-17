@@ -1,12 +1,6 @@
 package config
 
-import (
-	"fmt"
-	"net/http"
-	"net/url"
-
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
-)
+import "github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 
 type Data struct {
 	Target     string         `json:"target"`
@@ -79,25 +73,4 @@ func (c *Config) SetBlobTarget(host string, port uint16, accessKey, secretKey, b
 
 func (c *Config) BlobTarget() BlobTargetInfo {
 	return c.data.BlobTarget
-}
-
-func (bti BlobTargetInfo) Proxy() func(req *http.Request) (*url.URL, error) {
-	if bti.TargetHost == "" {
-		return func(*http.Request) (*url.URL, error) {
-			return nil, fmt.Errorf("missing proxy host")
-		}
-	}
-	if bti.TargetPort == 0 {
-		return func(*http.Request) (*url.URL, error) {
-			return nil, fmt.Errorf("missing proxy port")
-		}
-	}
-	return func(req *http.Request) (*url.URL, error) {
-		proxy := fmt.Sprintf("http://%s:%d", bti.TargetHost, bti.TargetPort)
-		proxyURL, err := url.Parse(proxy)
-		if err != nil {
-			return nil, fmt.Errorf("invalid proxy address %q: %v", proxy, err)
-		}
-		return proxyURL, nil
-	}
 }

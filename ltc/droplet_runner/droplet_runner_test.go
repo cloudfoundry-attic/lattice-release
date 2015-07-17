@@ -17,16 +17,14 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store/fake_blob_bucket"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store/fake_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner/fake_task_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
-	"github.com/goamz/goamz/s3"
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
@@ -37,7 +35,6 @@ var _ = Describe("DropletRunner", func() {
 		fakeTaskRunner     *fake_task_runner.FakeTaskRunner
 		config             *config_package.Config
 		fakeBlobStore      *fake_blob_store.FakeBlobStore
-		fakeBlobBucket     *fake_blob_bucket.FakeBlobBucket
 		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
 		fakeAppExaminer    *fake_app_examiner.FakeAppExaminer
 		dropletRunner      droplet_runner.DropletRunner
@@ -48,96 +45,46 @@ var _ = Describe("DropletRunner", func() {
 		fakeTaskRunner = &fake_task_runner.FakeTaskRunner{}
 		config = config_package.New(persister.NewMemPersister())
 		fakeBlobStore = &fake_blob_store.FakeBlobStore{}
-		fakeBlobBucket = &fake_blob_bucket.FakeBlobBucket{}
 		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
-		dropletRunner = droplet_runner.New(fakeAppRunner, fakeTaskRunner, config, fakeBlobStore, fakeBlobBucket, fakeTargetVerifier, fakeAppExaminer)
+		dropletRunner = droplet_runner.New(fakeAppRunner, fakeTaskRunner, config, fakeBlobStore, fakeTargetVerifier, fakeAppExaminer)
 	})
 
 	Describe("ListDroplets", func() {
 		It("returns a list of droplets in the blob store", func() {
-			fakeBlobBucket.ListStub = func(prefix, delim, marker string, max int) (result *s3.ListResp, err error) {
-				switch prefix {
-				case "":
-					return &s3.ListResp{
-						Name:           "bucket-name",
-						Prefix:         "",
-						Delimiter:      "/",
-						CommonPrefixes: []string{"X/", "Y/", "Z/"},
-					}, nil
-				case "X/":
-					return &s3.ListResp{
-						Name:      "bucket-name",
-						Prefix:    "X/",
-						Delimiter: "/",
-						Contents: []s3.Key{
-							s3.Key{Key: "X/bits.tgz", LastModified: "2006-01-02T15:04:05.999Z", Size: 100},
-							s3.Key{Key: "X/droplet.tgz", LastModified: "2006-01-02T15:04:05.999Z", Size: 200},
-							s3.Key{Key: "X/result.json", LastModified: "2006-01-02T15:04:05.999Z", Size: 300},
-						},
-					}, nil
-				case "Y/":
-					return &s3.ListResp{
-						Name:      "bucket-name",
-						Prefix:    "Y/",
-						Delimiter: "/",
-						Contents: []s3.Key{
-							s3.Key{Key: "Y/bits.tgz"},
-							s3.Key{Key: "Y/droplet.tgz"},
-							s3.Key{Key: "Y/result.json"},
-						},
-					}, nil
-				case "Z/":
-					return &s3.ListResp{
-						Name:      "bucket-name",
-						Prefix:    "Z/",
-						Delimiter: "/",
-						Contents: []s3.Key{
-							s3.Key{Key: "Z/bits.tgz"},
-						},
-					}, nil
-				}
+			fakeBlobStore.ListReturns([]blob_store.Blob{
+				{Path: "X/bits.tgz", Created: time.Unix(1000, 0), Size: 100},
+				{Path: "X/droplet.tgz", Created: time.Unix(2000, 0), Size: 200},
+				{Path: "X/result.json", Created: time.Unix(3000, 0), Size: 300},
+				{Path: "Y/bits.tgz"},
+				{Path: "X/Y/droplet.tgz"},
+				{Path: "droplet.tgz"},
+			}, nil)
 
-				Fail("no stub for arguments: " + prefix + "," + delim + "," + marker + "," + string(max))
-				return nil, nil
-			}
-
-			droplets, err := dropletRunner.ListDroplets()
-
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(droplets)).To(Equal(2))
-			Expect(droplets[0].Name).To(Equal("X"))
-			Expect(droplets[0].Created.Unix()).To(Equal(time.Date(2006, 1, 2, 15, 4, 5, 999, time.UTC).Unix()))
-			Expect(droplets[0].Size).To(Equal(int64(200)))
-			Expect(droplets[1].Name).To(Equal("Y"))
-			Expect(droplets[1].Created).To(BeZero())
-			Expect(droplets[1].Size).To(Equal(int64(0)))
+			Expect(dropletRunner.ListDroplets()).To(Equal([]droplet_runner.Droplet{
+				{Name: "X", Created: time.Unix(2000, 0), Size: 200},
+			}))
 		})
 
 		It("returns an error when querying the blob store fails", func() {
-			fakeBlobBucket.ListReturns(nil, errors.New("boom"))
+			fakeBlobStore.ListReturns(nil, errors.New("some error"))
 
 			_, err := dropletRunner.ListDroplets()
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("some error"))
 		})
 	})
 
 	Describe("UploadBits", func() {
 		Context("when the archive path is a file and exists", func() {
-			var (
-				tmpFile *os.File
-				err     error
-			)
+			var tmpFile *os.File
 
 			BeforeEach(func() {
 				tmpDir := os.TempDir()
+				var err error
 				tmpFile, err = ioutil.TempFile(tmpDir, "tmp_file")
 				Expect(err).NotTo(HaveOccurred())
 
-				err = ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value"}`), 0700)
-				Expect(err).NotTo(HaveOccurred())
-
-				fakeTargetVerifier.VerifyBlobTargetReturns(true, nil)
+				Expect(ioutil.WriteFile(tmpFile.Name(), []byte("some contents"), 0600)).To(Succeed())
 			})
 
 			AfterEach(func() {
@@ -145,49 +92,25 @@ var _ = Describe("DropletRunner", func() {
 			})
 
 			It("uploads the file to the bucket", func() {
-				err = dropletRunner.UploadBits("droplet-name", tmpFile.Name())
+				Expect(dropletRunner.UploadBits("droplet-name", tmpFile.Name())).To(Succeed())
 
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
-
-				Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(1))
-				path, reader, length, contType, perm, options := fakeBlobBucket.PutReaderArgsForCall(0)
+				Expect(fakeBlobStore.UploadCallCount()).To(Equal(1))
+				path, contents := fakeBlobStore.UploadArgsForCall(0)
 				Expect(path).To(Equal("droplet-name/bits.tgz"))
-				Expect(reader).ToNot(BeNil())
-				Expect(length).ToNot(BeZero())
-				Expect(contType).To(Equal(blob_store.DropletContentType))
-				Expect(perm).To(Equal(blob_store.DefaultPrivilege))
-				Expect(options).To(BeZero())
+				Expect(ioutil.ReadAll(contents)).To(Equal([]byte("some contents")))
 			})
 
-			It("errors when the blob store verifier fails", func() {
-				fakeTargetVerifier.VerifyBlobTargetReturns(false, errors.New("no blobs here"))
-
-				err = dropletRunner.UploadBits("droplet-name", tmpFile.Name())
-
-				Expect(err).To(MatchError("no blobs here"))
-
-				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
-				Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(0))
+			It("returns an error when we fail to open the droplet bits", func() {
+				err := dropletRunner.UploadBits("droplet-name", "some non-existent file")
+				Expect(err).To(MatchError("open some non-existent file: no such file or directory"))
 			})
 
-			It("errors when Bucket.PutReader fails", func() {
-				fakeBlobBucket.PutReaderReturns(errors.New("winter is coming yo"))
+			It("returns an error when the upload fails", func() {
+				fakeBlobStore.UploadReturns(errors.New("some error"))
 
-				err = dropletRunner.UploadBits("droplet-name", tmpFile.Name())
-
-				Expect(err).To(MatchError("winter is coming yo"))
-				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
-				Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(1))
+				err := dropletRunner.UploadBits("droplet-name", tmpFile.Name())
+				Expect(err).To(MatchError("some error"))
 			})
-		})
-
-		It("errors when file cannot be Stat'ed", func() {
-			err := dropletRunner.UploadBits("droplet-name", "new-file-yo")
-
-			Expect(err).To(HaveOccurred())
-			Expect(fakeBlobBucket.PutReaderCallCount()).To(BeZero())
 		})
 	})
 
@@ -332,7 +255,7 @@ var _ = Describe("DropletRunner", func() {
 
 		It("launches the droplet lrp task with a start command from buildpack results", func() {
 			executionMetadata := `{"execution_metadata": "{\"start_command\": \"start\"}"}`
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader(executionMetadata)), nil)
+			fakeBlobStore.DownloadReturns(ioutil.NopCloser(strings.NewReader(executionMetadata)), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
 			Expect(err).NotTo(HaveOccurred())
@@ -390,7 +313,7 @@ var _ = Describe("DropletRunner", func() {
 
 		It("launches the droplet lrp task with a custom start command", func() {
 			executionMetadata := `{"execution_metadata": "{\"start_command\": \"start\"}"}`
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader(executionMetadata)), nil)
+			fakeBlobStore.DownloadReturns(ioutil.NopCloser(strings.NewReader(executionMetadata)), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "start-r-up", []string{"-yeah!"}, app_runner.AppEnvironmentParams{})
 			Expect(err).NotTo(HaveOccurred())
@@ -405,21 +328,21 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("returns an error when it can't retrieve the execution metadata from the blob store", func() {
-			fakeBlobBucket.GetReaderReturns(nil, errors.New("nope"))
+			fakeBlobStore.DownloadReturns(nil, errors.New("nope"))
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
 			Expect(err).To(MatchError("nope"))
 		})
 
 		It("returns an error when the downloaded execution metadata is invaild JSON", func() {
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader("invalid JSON")), nil)
+			fakeBlobStore.DownloadReturns(ioutil.NopCloser(strings.NewReader("invalid JSON")), nil)
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
 			Expect(err).To(MatchError("invalid character 'i' looking for beginning of value"))
 		})
 
 		It("returns an error when create app fails", func() {
-			fakeBlobBucket.GetReaderReturns(ioutil.NopCloser(strings.NewReader(`{}`)), nil)
+			fakeBlobStore.DownloadReturns(ioutil.NopCloser(strings.NewReader(`{}`)), nil)
 			fakeAppRunner.CreateAppReturns(errors.New("nope"))
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
@@ -432,30 +355,11 @@ var _ = Describe("DropletRunner", func() {
 			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
 			config.Save()
 
-			dropletContents := &s3.ListResp{
-				Name:      "bucket-name",
-				Prefix:    "drippy/",
-				Delimiter: "/",
-				Contents: []s3.Key{
-					s3.Key{Key: "drippy/bits.tgz"},
-					s3.Key{Key: "drippy/droplet.tgz"},
-					s3.Key{Key: "drippy/result.json"},
-				},
-			}
-			fakeBlobBucket.ListReturns(dropletContents, nil)
-
-			fakeBlobBucket.DelStub = func(path string) error {
-				switch path {
-				case "drippy/bits.tgz":
-					return nil
-				case "drippy/droplet.tgz":
-					return nil
-				case "drippy/result.json":
-					return nil
-				default:
-					return errors.New("bad arg to bucket.Del(): " + path)
-				}
-			}
+			fakeBlobStore.ListReturns([]blob_store.Blob{
+				{Path: "drippy/bits.tgz"},
+				{Path: "drippy/droplet.tgz"},
+				{Path: "drippy/result.json"},
+			}, nil)
 
 			appInfos := []app_examiner.AppInfo{
 				{
@@ -507,41 +411,27 @@ var _ = Describe("DropletRunner", func() {
 			}
 			fakeAppExaminer.ListAppsReturns(appInfos, nil)
 
-			err := dropletRunner.RemoveDroplet("drippy")
-			Expect(err).ToNot(HaveOccurred())
+			Expect(dropletRunner.RemoveDroplet("drippy")).To(Succeed())
 
-			Expect(fakeBlobBucket.ListCallCount()).To(Equal(1))
-			prefix, _, _, _ := fakeBlobBucket.ListArgsForCall(0)
-			Expect(prefix).To(Equal("drippy/"))
+			Expect(fakeBlobStore.ListCallCount()).To(Equal(1))
 
-			Expect(fakeBlobBucket.DelCallCount()).To(Equal(3))
+			Expect(fakeBlobStore.DeleteCallCount()).To(Equal(3))
+			Expect(fakeBlobStore.DeleteArgsForCall(0)).To(Equal("drippy/bits.tgz"))
+			Expect(fakeBlobStore.DeleteArgsForCall(1)).To(Equal("drippy/droplet.tgz"))
+			Expect(fakeBlobStore.DeleteArgsForCall(2)).To(Equal("drippy/result.json"))
+
 		})
 
 		It("returns an error when querying the blob store fails", func() {
-			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
-			config.Save()
-
-			fakeBlobBucket.ListReturns(nil, errors.New("boom"))
+			fakeBlobStore.ListReturns(nil, errors.New("some error"))
 
 			err := dropletRunner.RemoveDroplet("drippy")
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("some error"))
 		})
 
 		It("returns an error when the app specifies that the droplet is in use", func() {
 			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
 			config.Save()
-
-			dropletContents := &s3.ListResp{
-				Name:      "bucket-name",
-				Prefix:    "drippy/",
-				Delimiter: "/",
-				Contents: []s3.Key{
-					s3.Key{Key: "drippy/bits.tgz"},
-					s3.Key{Key: "drippy/droplet.tgz"},
-					s3.Key{Key: "drippy/result.json"},
-				},
-			}
-			fakeBlobBucket.ListReturns(dropletContents, nil)
 
 			appInfos := []app_examiner.AppInfo{{
 				ProcessGuid: "dripapp",
@@ -561,9 +451,6 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("returns an error when listing the running applications fails", func() {
-			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
-			config.Save()
-
 			fakeAppExaminer.ListAppsReturns(nil, errors.New("some error"))
 
 			err := dropletRunner.RemoveDroplet("drippy")
@@ -576,7 +463,7 @@ var _ = Describe("DropletRunner", func() {
 			fakeDropletReader := ioutil.NopCloser(strings.NewReader("some droplet reader"))
 			fakeMetadataReader := ioutil.NopCloser(strings.NewReader("some metadata reader"))
 
-			fakeBlobBucket.GetReaderStub = func(path string) (io.ReadCloser, error) {
+			fakeBlobStore.DownloadStub = func(path string) (io.ReadCloser, error) {
 				switch path {
 				case "drippy/droplet.tgz":
 					return fakeDropletReader, nil
@@ -639,60 +526,49 @@ var _ = Describe("DropletRunner", func() {
 				err := dropletRunner.ImportDroplet("drippy", dropletPathArg, metadataPathArg)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(2))
+				Expect(fakeBlobStore.UploadCallCount()).To(Equal(2))
 
-				dropletPath, dropletReader, dropletLength, dropletContentType, dropletPerm, dropletOptions := fakeBlobBucket.PutReaderArgsForCall(0)
-				Expect(dropletPath).To(Equal("drippy/droplet.tgz"))
-				Expect(dropletReader).ToNot(BeNil())
-				Expect(dropletLength).ToNot(BeZero())
-				Expect(dropletContentType).To(Equal(blob_store.DropletContentType))
-				Expect(dropletPerm).To(Equal(blob_store.DefaultPrivilege))
-				Expect(dropletOptions).To(BeZero())
+				path, contents := fakeBlobStore.UploadArgsForCall(0)
+				Expect(path).To(Equal("drippy/droplet.tgz"))
+				Expect(ioutil.ReadAll(contents)).To(Equal([]byte("droplet contents")))
 
-				metadataPath, metadataReader, metadataLength, metadataContentType, metadataPerm, metadataOptions := fakeBlobBucket.PutReaderArgsForCall(1)
-				Expect(metadataPath).To(Equal("drippy/result.json"))
-				Expect(metadataReader).ToNot(BeNil())
-				Expect(metadataLength).ToNot(BeZero())
-				Expect(metadataContentType).To(Equal(blob_store.DropletContentType))
-				Expect(metadataPerm).To(Equal(blob_store.DefaultPrivilege))
-				Expect(metadataOptions).To(BeZero())
+				path, contents = fakeBlobStore.UploadArgsForCall(1)
+				Expect(path).To(Equal("drippy/result.json"))
+				Expect(ioutil.ReadAll(contents)).To(Equal([]byte("result metadata")))
+
 			})
 
 			Context("when the blob bucket returns error(s)", func() {
 				It("returns an error uploading the droplet file", func() {
-					fakeBlobBucket.PutReaderReturns(errors.New("unable2upload"))
+					fakeBlobStore.UploadReturns(errors.New("some error"))
 
 					err := dropletRunner.ImportDroplet("drippy", dropletPathArg, metadataPathArg)
-					Expect(err).To(MatchError("unable2upload"))
-
-					Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(1))
+					Expect(err).To(MatchError("some error"))
 				})
 
 				It("returns an error uploading the metadata file", func() {
-					fakeBlobBucket.PutReaderStub = func(path string, r io.Reader, length int64, contType string, perm s3.ACL, options s3.Options) error {
+					fakeBlobStore.UploadStub = func(path string, contents io.ReadSeeker) error {
 						if strings.HasSuffix(path, "result.json") {
-							return errors.New("ugly-duckling")
+							return errors.New("some error")
 						}
 						return nil
 					}
 
 					err := dropletRunner.ImportDroplet("drippy", dropletPathArg, metadataPathArg)
-					Expect(err).To(MatchError("ugly-duckling"))
-
-					Expect(fakeBlobBucket.PutReaderCallCount()).To(Equal(2))
+					Expect(err).To(MatchError("some error"))
 				})
 			})
 		})
 
 		Context("when the droplet files do not exist", func() {
-			It("returns an error stat'ing the droplet file", func() {
+			It("returns an error opening the droplet file", func() {
 				err := dropletRunner.ImportDroplet("drippy", "some/missing/droplet/path", metadataPathArg)
-				Expect(err).To(MatchError("stat some/missing/droplet/path: no such file or directory"))
+				Expect(err).To(MatchError("open some/missing/droplet/path: no such file or directory"))
 			})
 
-			It("returns an error stat'ing the metadata file", func() {
+			It("returns an error opening the metadata file", func() {
 				err := dropletRunner.ImportDroplet("drippy", dropletPathArg, "some/missing/metadata/path")
-				Expect(err).To(MatchError("stat some/missing/metadata/path: no such file or directory"))
+				Expect(err).To(MatchError("open some/missing/metadata/path: no such file or directory"))
 			})
 		})
 	})

@@ -2,7 +2,6 @@ package config_test
 
 import (
 	"errors"
-	"net/http"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -113,55 +112,6 @@ var _ = Describe("Config", func() {
 			Expect(blobTarget.BucketName).To(Equal("the-bucket"))
 		})
 	})
-
-	Describe("BlobTargetInfo", func() {
-		var blobTargetInfo config.BlobTargetInfo
-
-		Describe("Proxy", func() {
-			It("returns the proxy func", func() {
-				blobTargetInfo = config.BlobTargetInfo{
-					TargetHost: "success",
-					TargetPort: 1818,
-				}
-
-				proxyURL, err := blobTargetInfo.Proxy()(&http.Request{})
-				Expect(err).NotTo(HaveOccurred())
-				Expect(proxyURL.Host).To(Equal("success:1818"))
-			})
-			Context("when the target host is empty", func() {
-				It("returns an func that returns an error", func() {
-					blobTargetInfo = config.BlobTargetInfo{
-						TargetPort: 1818,
-					}
-
-					_, err := blobTargetInfo.Proxy()(&http.Request{})
-					Expect(err).To(MatchError("missing proxy host"))
-				})
-			})
-			Context("when the target port is zero", func() {
-				It("returns an func that returns an error", func() {
-					blobTargetInfo = config.BlobTargetInfo{
-						TargetHost: "success",
-					}
-
-					_, err := blobTargetInfo.Proxy()(&http.Request{})
-					Expect(err).To(MatchError("missing proxy port"))
-				})
-			})
-			Context("when the url is malformed", func() {
-				It("returns a func that returns an error", func() {
-					blobTargetInfo = config.BlobTargetInfo{
-						TargetHost: "succ%2Fess",
-						TargetPort: 1818,
-					}
-
-					_, err := blobTargetInfo.Proxy()(&http.Request{})
-					Expect(err).To(MatchError(ContainSubstring("invalid proxy address")))
-				})
-			})
-		})
-	})
-
 })
 
 type fakePersister struct {

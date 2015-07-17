@@ -1,13 +1,14 @@
 package target_verifier
 
 import (
+	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/receptor"
 )
 
 //go:generate counterfeiter -o fake_target_verifier/fake_target_verifier.go . TargetVerifier
 type TargetVerifier interface {
 	VerifyTarget(name string) (up bool, auth bool, err error)
-	VerifyBlobTarget(host string, port uint16, accessKey, secretKey, bucketName string) (ok bool, err error)
+	VerifyBlobTarget(targetInfo config.BlobTargetInfo) error
 }
 
 func New(receptorClientFactory func(target string) receptor.Client) TargetVerifier {
@@ -32,6 +33,7 @@ func (t *targetVerifier) VerifyTarget(target string) (up, auth bool, err error) 
 		if receptorErr.Type == receptor.Unauthorized {
 			return true, false, nil
 		} else {
+			// TODO: poor interface for return values: "true, false, err"
 			return true, false, err
 		}
 	}
