@@ -77,7 +77,7 @@ func NewDropletRunnerCommandFactory(appRunnerCommandFactory app_runner_command_f
 func (factory *DropletRunnerCommandFactory) MakeListDropletsCommand() cli.Command {
 	var listDropletsCommand = cli.Command{
 		Name:        "list-droplets",
-		Aliases:     []string{"lid", "lsd"},
+		Aliases:     []string{"lsd"},
 		Usage:       "List the droplets available to launch",
 		Description: "ltc list-droplets",
 		Action:      factory.listDroplets,
@@ -108,7 +108,7 @@ func (factory *DropletRunnerCommandFactory) MakeBuildDropletCommand() cli.Comman
 	var buildDropletCommand = cli.Command{
 		Name:        "build-droplet",
 		Aliases:     []string{"bd"},
-		Usage:       "Build droplet",
+		Usage:       "Builds app bits into a droplet using a CF buildpack",
 		Description: "ltc build-droplet DROPLET_NAME http://buildpack/uri",
 		Action:      factory.buildDroplet,
 		Flags:       launchFlags,
@@ -194,7 +194,7 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 	var buildDropletCommand = cli.Command{
 		Name:        "launch-droplet",
 		Aliases:     []string{"ld"},
-		Usage:       "Launch droplet",
+		Usage:       "Launches a droplet as an app running on lattice",
 		Description: "ltc launch-droplet APP_NAME DROPLET_NAME",
 		Action:      factory.launchDroplet,
 		Flags:       launchFlags,
@@ -206,8 +206,8 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 func (factory *DropletRunnerCommandFactory) MakeRemoveDropletCommand() cli.Command {
 	var removeDropletCommand = cli.Command{
 		Name:        "remove-droplet",
-		Aliases:     []string{"rd", "rmd"},
-		Usage:       "Remove droplet",
+		Aliases:     []string{"rmd"},
+		Usage:       "Removes a droplet stored in the lattice blob store",
 		Description: "ltc remove-droplet DROPLET_NAME",
 		Action:      factory.removeDroplet,
 	}
@@ -218,8 +218,8 @@ func (factory *DropletRunnerCommandFactory) MakeRemoveDropletCommand() cli.Comma
 func (factory *DropletRunnerCommandFactory) MakeExportDropletCommand() cli.Command {
 	var exportDropletCommand = cli.Command{
 		Name:        "export-droplet",
-		Aliases:     []string{"ed"},
-		Usage:       "Export droplet",
+		Aliases:     []string{"exd"},
+		Usage:       "Exports a droplet from the lattice blob store",
 		Description: "ltc export-droplet DROPLET_NAME",
 		Action:      factory.exportDroplet,
 	}

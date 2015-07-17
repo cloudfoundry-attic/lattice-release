@@ -73,14 +73,11 @@ func NewAppRunnerCommandFactory(config AppRunnerCommandFactoryConfig) *AppRunner
 
 func (factory *AppRunnerCommandFactory) MakeSubmitLrpCommand() cli.Command {
 	var submitLrpCommand = cli.Command{
-		Name:    "submit-lrp",
-		Aliases: []string{"create-lrp", "cl", "sl"},
-		Usage:   "Creates an app from JSON on lattice",
-		Description: `ltc submit-lrp /path/to/json
-
-	Deprecation Warning: ltc create-lrp will be removed in a future release.
-		`,
-		Action: factory.submitLrp,
+		Name:        "submit-lrp",
+		Aliases:     []string{"sl"},
+		Usage:       "Creates an app from JSON on lattice",
+		Description: "ltc submit-lrp /path/to/json",
+		Action:      factory.submitLrp,
 	}
 
 	return submitLrpCommand

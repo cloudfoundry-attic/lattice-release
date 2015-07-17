@@ -55,7 +55,7 @@ func (factory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
 
 	var listCommand = cli.Command{
 		Name:        "list",
-		Aliases:     []string{"li", "ls"},
+		Aliases:     []string{"ls"},
 		Usage:       "Lists applications & tasks running on lattice",
 		Description: "ltc list",
 		Action:      factory.listApps,
@@ -81,7 +81,7 @@ func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 	var visualizeCommand = cli.Command{
 		Name:        "visualize",
 		Aliases:     []string{"vz"},
-		Usage:       "Shows a visualization of the workload distribution across the lattice cells",
+		Usage:       "Visualizes the workload distribution across the lattice cells",
 		Description: "ltc visualize [-r=DELAY] [-g]",
 		Action:      factory.visualizeCells,
 		Flags:       visualizeFlags,
