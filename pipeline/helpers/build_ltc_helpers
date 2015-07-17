@@ -54,11 +54,17 @@ get_diego_version() {
 git_describe_lattice() {
     if [ -z "${LATTICE_RELEASE_VERSION}" ]; then
         pushd $LATTICE_SRC_PATH > /dev/null
-            lattice_version=$(git describe --always)
+            lattice_version=$(git describe --always --dirty)
         popd > /dev/null
     else
         lattice_version="${LATTICE_RELEASE_VERSION}"
     fi
+}
+
+git_describe_diego() {
+    pushd $DIEGO_RELEASE_PATH > /dev/null
+        diego_version=$(git describe --tags)
+    popd > /dev/null
 }
 
 get_diego_release_git_sha() {
@@ -110,9 +116,6 @@ run_unit_tests() {
 }
 
 go_build_ltc() {
-    get_lattice_version
-    get_diego_version
-
     export GOBIN="$OUTDIR"
 
     echo -n "Compiling cli ($lattice_version) .."
@@ -136,9 +139,6 @@ go_build_ltc() {
 
 
 godep_go_build_ltc() {
-    get_lattice_version
-    get_diego_version
-
     echo -n "Compiling cli ($lattice_version) .."
 
     export GOBIN="$OUTDIR"
@@ -178,7 +178,7 @@ generate_ltc_tarball() {
 
 bump_lattice_version() {
     git_describe_lattice
-    get_diego_version
+    git_describe_diego
 
     pushd $LATTICE_SRC_PATH > /dev/null
         previous_lattice_version=$(cat Version)

@@ -57,6 +57,7 @@ recompile_release_ltc() {
     copy_ltc_source_into_gopath
 
     get_lattice_version
+    get_diego_version
 
     godep_go_build_ltc
 

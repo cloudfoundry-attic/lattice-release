@@ -2,8 +2,9 @@
 set -e
 
 if [[ -z "$LATTICE_SRC_PATH" ]] || [[ -z "$DIEGO_RELEASE_PATH" ]]; then
-    echo "Must set LATTICE_SRC_PATH and DIEGO_RELEASE_PATH"
-    exit 1
+	echo "Defaulting LATTICE_SRC_PATH and DIEGO_RELEASE_PATH to typical values"
+	LATTICE_SRC_PATH=/workspace/diego-release/src/github.com/cloudfoundry-incubator/lattice
+	DIEGO_RELEASE_PATH=/workspace/diego-release
 fi
 
 source $(dirname $0)/../helpers/build_ltc_helpers
@@ -15,6 +16,7 @@ construct_ltc_gopath
 run_unit_tests
 
 git_describe_lattice
+git_describe_diego
 
 go_build_ltc
 
