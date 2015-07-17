@@ -184,28 +184,11 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("errors when file cannot be Stat'ed", func() {
-			// name doesn't match file descriptor
-			osFile := os.NewFile(os.Stdout.Fd(), "new-file-yo")
-
-			err := dropletRunner.UploadBits("droplet-name", osFile.Name())
+			err := dropletRunner.UploadBits("droplet-name", "new-file-yo")
 
 			Expect(err).To(HaveOccurred())
 			Expect(fakeBlobBucket.PutReaderCallCount()).To(BeZero())
 		})
-
-		// FIXME: This strategy doesn't work when run as root on CI.
-		//
-		// It("errors when file can be Stat'ed but not Opened", func() {
-		// 	tmpFile, err := ioutil.TempFile(os.TempDir(), "stat")
-		// 	Expect(err).ToNot(HaveOccurred())
-
-		// 	Expect(os.Chmod(tmpFile.Name(), 0)).To(Succeed())
-
-		// 	err = dropletRunner.UploadBits("droplet-name", tmpFile.Name())
-
-		// 	Expect(err).To(HaveOccurred())
-		// 	Expect(fakeBlobBucket.PutReaderCallCount()).To(BeZero())
-		// })
 	})
 
 	Describe("BuildDroplet", func() {
