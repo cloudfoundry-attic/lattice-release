@@ -61,7 +61,10 @@ var _ = Describe("TaskRunner", func() {
 				"preloaded:my-rootfs",
 				"task-domain",
 				"log-source",
-				nil,
+				map[string]string{
+					"MaRTY": "BiSHoP",
+					"CoSMo": "CRaMeR",
+				},
 				securityGroupRules,
 			)
 		})
@@ -88,6 +91,10 @@ var _ = Describe("TaskRunner", func() {
 			Expect(createTaskRequest.RootFS).To(Equal("preloaded:my-rootfs"))
 			Expect(createTaskRequest.Domain).To(Equal("task-domain"))
 			Expect(createTaskRequest.LogSource).To(Equal("log-source"))
+			Expect(createTaskRequest.EnvironmentVariables).To(ConsistOf(
+				receptor.EnvironmentVariable{"MaRTY", "BiSHoP"},
+				receptor.EnvironmentVariable{"CoSMo", "CRaMeR"},
+			))
 			Expect(createTaskRequest.EgressRules).To(Equal(securityGroupRules))
 		})
 
