@@ -12,11 +12,13 @@ This tutorial walks you through the Vagrant VM flow and using Lattice to start a
 
 ## Starting the Lattice Vagrant VM
 
-First, clone the Lattice repository:
+Consult the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page, and decide on which version of Lattice you plan to use. We recommend using a specific released version of Lattice and the `ltc` binary, rather than tracking master.
+
+First, clone the Lattice repository, then checkout the appropriate release label (here, `v0.2.6` used as an example):
 
     git clone https://github.com/cloudfoundry-incubator/lattice.git
     cd lattice
-    git checkout master
+    git checkout v0.2.6
 
 Then bring up the Vagrant box:
 
@@ -38,9 +40,9 @@ The VM should download and start.
 
 ## Fetching `ltc` - the Lattice CLI
 
-Visit the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page to fetch the latest version of the CLI.  Make sure its on your `PATH`.
+Visit the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page to fetch the latest version of the CLI.  There is a `Download Links` section at the end of each set of release notes.  Make sure the binary is saved to a directory in your `PATH`.
 
-Alternatively you can use these installation scripts.  They assume `$HOME/bin` is on your `PATH`.
+Alternatively you can use these installation steps.  They assume `$HOME/bin` is in your `PATH`.
 
 For Mac:
 
