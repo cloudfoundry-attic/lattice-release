@@ -42,6 +42,7 @@ resource "google_compute_instance" "lattice-brain" {
     connection {
         user = "${var.gce_ssh_user}"
         key_file = "${var.gce_ssh_private_key_file}"
+        agent = false
     }
 
     #COMMON
@@ -116,6 +117,7 @@ resource "google_compute_instance" "cell" {
     connection {
         user = "${var.gce_ssh_user}"
         key_file = "${var.gce_ssh_private_key_file}"
+        agent = false
     }
 
     #COMMON

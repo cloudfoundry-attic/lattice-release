@@ -10,6 +10,7 @@ resource "digitalocean_droplet" "lattice-brain" {
 
     connection {
         key_file = "${var.do_ssh_private_key_file}"
+        agent = false
     }
 
     #COMMON
@@ -76,6 +77,7 @@ resource "digitalocean_droplet" "cell" {
 
     connection {
         key_file = "${var.do_ssh_private_key_file}"
+        agent = false
     }
 
     #COMMON

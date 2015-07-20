@@ -102,6 +102,7 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
     connection {
         user = "${var.openstack_ssh_user}"
         key_file = "${var.openstack_ssh_private_key_file}"
+        agent = false
     }
 
     #COMMON
@@ -165,6 +166,7 @@ resource "openstack_compute_instance_v2" "lattice-cell" {
     connection {
         user = "${var.openstack_ssh_user}"
         key_file = "${var.openstack_ssh_private_key_file}"
+        agent = false
     }
 
     #COMMON
