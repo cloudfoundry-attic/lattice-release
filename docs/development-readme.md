@@ -17,41 +17,40 @@ If you have not developed a golang project before, please see the [Golang docs](
 ```bash
     $ mkdir -p ~/workspace
     $ cd ~/workspace
-    $ git clone git@github.com:cloudfoundry/cf-release.git --recursive
-    $ git clone git@github.com:cloudfoundry-incubator/diego-release.git
-    $ cd diego-release/scripts && ./update
+    $ git clone git@github.com:cloudfoundry-incubator/lattice.git -b develop # may be unstable!
+    $ git clone git@github.com:cloudfoundry-incubator/diego-release.git -b `cat lattice/DIEGO_VERSION`
+    $ ( cd diego-release/scripts && ./update )
+    $ git clone git@github.com:cloudfoundry/cf-release.git -b runtime-passed
+    $ ( cd cf-release && ./update )
     $ export GOPATH=~/workspace/diego-release
-    $ export PATH="$PATH:~/workspace/diego-release/bin"
+    $ export PATH=$PATH:~/workspace/diego-release/bin
     $ go get github.com/dajulia3/godep #Our forked version of godep that handles submodules:
     $ go get github.com/onsi/ginkgo/ginkgo
-    $ go get github.com/onsi/gomega
     $ go get github.com/maxbrunsfeld/counterfeiter
-    $ cd ~/workspace/diego-release/src/github.com/cloudfoundry-incubator
-    $ git clone git@github.com:cloudfoundry-incubator/lattice.git
+    $ mv lattice diego-release/src/github.com/cloudfoundry-incubator/
     $ cd ~/workspace/diego-release/src/github.com/cloudfoundry-incubator/lattice
-    $ git checkout develop #Develop is not guaranteed to be stable, but you're a contributor, so you're awesome enough to handle it!
-    $ go get ./...
-    $ cd ltc
-    $ godep restore
-    $ go install
-    $ export DOCKER_IMAGE=cloudfoundry/lattice-pipeline
-    $ $(boot2docker shellinit)
+    $ go get ./cell-helpers/...
+    $ rm -r ~/workspace/diego-release/src/github.com/docker/docker
+    $ ( cd ltc && godep restore && go install )
     $ docker pull cloudfoundry/lattice-pipeline
     $ docker pull cloudfoundry/lattice-app
 ```
 
-#### Add our helpful aliases to your bash_profile
+#### Add our helpful aliases to your `.bash_profile`:
 
 ```bash
-    $ export PULL_DOCKER_IMAGE=false
-    $ alias recompile-lattice="cd ~/workspace && $GOPATH/src/github.com/cloudfoundry-incubator/lattice/pipeline/helpers/run_with_docker /workspace/diego-release/src/github.com/cloudfoundry-incubator/lattice/pipeline/01_compilation/compile_lattice_tar && mv -v ./lattice.tgz $GOPATH/src/github.com/cloudfoundry-incubator/lattice/"
-    $ alias remake-vagrant="cd-lattice; vagrant destroy --force; recompile-lattice && VAGRANT_LATTICE_TAR_PATH=/vagrant/lattice.tgz vagrant up --provider=virtualbox; go install github.com/cloudfoundry-incubator/lattice/ltc"
+alias recompile-lattice="( export DOCKER_IMAGE=cloudfoundry/lattice-pipeline && export PULL_DOCKER_IMAGE=false && export GOPATH=~/workspace/diego-release && $GOPATH/src/github.com/cloudfoundry-incubator/lattice/pipeline/helpers/run_with_docker /workspace/diego-release/src/github.com/cloudfoundry-incubator/lattice/pipeline/01_compilation/compile_lattice_tar && mv -v ~/workspace/lattice.tgz $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ )"
+
+alias remake-vagrant="( export GOPATH=~/workspace/diego-release && cd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ && vagrant destroy --force && recompile-lattice && VAGRANT_LATTICE_TAR_PATH=/vagrant/lattice.tgz vagrant up --provider=virtualbox && go install github.com/cloudfoundry-incubator/lattice/ltc )"
+
+alias remake-condenser="( export CONDENSER_ON=1 && remake-vagrant )"
 ```
 
 #### Build a vagrant vm-deployed lattice cluster, verify that it's up and running:
 
 ```bash
     $ remake-vagrant
+    $ ltc target 192.168.11.11.xip.io
     $ ltc test -v
 ```
 ## ltc Development
@@ -62,19 +61,17 @@ a viable and more stable option is to clone lattice and godep restore from the v
 ```bash
     $ mkdir -p ~/workspace/go
     $ export GOPATH=~/workspace/go
-    $ export PATH="$PATH:$GOPATH/bin"
-    $ go get github.com/dajulia3/godep #Our forked version of godep that handles submodules:
+    $ export PATH=$PATH:$GOPATH/bin
+    $ go get github.com/dajulia3/godep # our forked version of godep that handles submodules
     $ go get github.com/onsi/ginkgo/ginkgo
-    $ go get github.com/onsi/gomega
     $ go get github.com/maxbrunsfeld/counterfeiter
     $ mkdir -p $GOPATH/src/github.com/cloudfoundry-incubator
     $ cd $GOPATH/src/github.com/cloudfoundry-incubator
     $ git clone git@github.com:cloudfoundry-incubator/lattice.git
     $ cd lattice/ltc
-    $ go get ./...
     $ godep restore
     $ go install
-    $ ./scripts/test #run the unit tests!
+    $ ./scripts/test # run the unit tests
 ```
 
 ## Dependency Management
