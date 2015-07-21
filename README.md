@@ -42,11 +42,11 @@ Make sure you have [Vagrant](https://vagrantup.com/) installed (version 1.6 or b
 ```bash
 git clone https://github.com/cloudfoundry-incubator/lattice.git
 cd lattice
-git checkout <VERSION>
+git checkout v0.2.6
 vagrant up
 ```
 
-This spins up a virtual environment that is accessible at `192.168.11.11`.  Here, `VERSION` refers to the tagged version you wish to deploy.  These tagged versions are known to be stable.
+This spins up a virtual environment that is accessible at `192.168.11.11`.  
 
 Use the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) to target Lattice:
 
@@ -231,16 +231,16 @@ terraform destroy
 
 The provided examples (i.e., `lattice.<platform>.tf`) are pinned to a specific Bump commit or release tag in order to maintain compatibility between the Lattice build (`lattice.tgz`) and the Terraform definitions.  Currently, Terraform does not automatically update to newer revisions of Lattice.  
 
-If you want to update to the latest version of Lattice:  
-  - Update the `ref` in the `source` directive of your `lattice.<platform>.tf` to `master`.
-      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=master"`
-
 If you want to update to a specific version of Lattice:
   - Choose a version from either the [Bump commits](https://github.com/cloudfoundry-incubator/lattice/commits/master) or [Releases](https://github.com/cloudfoundry-incubator/lattice/releases).
   - Update the `ref` in the `source` directive of your `lattice.<platform>.tf` to that version.
   - Examples:
+      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=v0.2.6"`
       - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=aa1b301"`
-      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=v0.2.4"`
+
+If you want to update to the latest version of Lattice:  
+  - Update the `ref` in the `source` directive of your `lattice.<platform>.tf` to `master`.
+      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=master"`
 
 **Note**: Whenever the source directive is changed, make sure to run `terraform get -update` This updates the version of Lattice in the `.terraform/` folder, which is used by Terraform to distribute to each of the VMs.
 

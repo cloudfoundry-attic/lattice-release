@@ -29,9 +29,9 @@ Lattice lives up to these principles.
 
 ## <a name="how-do-i-deploy-lattice"><a href="#how-do-i-deploy-lattice">How do I deploy Lattice?</a></a>
 
-You can run Lattice easily on your laptop with a [Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#local-deployment) or deploy a [cluster of machines](https://github.com/cloudfoundry-incubator/lattice#clustered-deployment) with [AWS](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md), [Digital Ocean](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/digitalocean/README.md), [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/google/README.md) or [Openstack](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/openstack/README.md).
+You can run Lattice easily on your laptop with a [Vagrant VM](https://github.com/cloudfoundry-incubator/lattice#local-deployment) or deploy a [cluster of machines](https://github.com/cloudfoundry-incubator/lattice#clustered-deployment) with [AWS](https://github.com/cloudfoundry-incubator/lattice/blob/v0.2.6/terraform/aws/README.md), [Digital Ocean](https://github.com/cloudfoundry-incubator/lattice/blob/v0.2.6/terraform/digitalocean/README.md), [Google Cloud](https://github.com/cloudfoundry-incubator/lattice/blob/v0.2.6/terraform/google/README.md) or [Openstack](https://github.com/cloudfoundry-incubator/lattice/blob/v0.2.6/terraform/openstack/README.md).
 
-Up-to-date installation instructions are on the [GitHub README](https://github.com/cloudfoundry-incubator/lattice/tree/master).
+Up-to-date installation instructions are on the [GitHub README](https://github.com/cloudfoundry-incubator/lattice/tree/v0.2.6).
 
 ## <a name="how-do-i-use-lattice"><a href="#how-do-i-use-lattice">How do I use Lattice?</a></a>
 

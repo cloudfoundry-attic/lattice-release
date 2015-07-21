@@ -14,7 +14,7 @@ This tutorial walks you through the Vagrant VM flow and using Lattice to start a
 
 Consult the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page, and decide on which version of Lattice you plan to use. We recommend using a specific released version of Lattice and the `ltc` binary, rather than tracking master.
 
-First, clone the Lattice repository, then checkout the appropriate release label (here, `v0.2.6` used as an example):
+First, clone the Lattice repository, then checkout the appropriate release tag:
 
     git clone https://github.com/cloudfoundry-incubator/lattice.git
     cd lattice
@@ -36,7 +36,7 @@ The VM should download and start.
 
 > If you are trying to run both the VirtualBox and VMWare providers on the same machine, you'll need to run them on different private networks (subnets) that do not conflict.
 
-> Learn more about deploying Lattice at the GitHub [README](https://github.com/cloudfoundry-incubator/lattice/tree/master)
+> Learn more about deploying Lattice at the GitHub [README](https://github.com/cloudfoundry-incubator/lattice/tree/v0.2.6)
 
 ## Fetching `ltc` - the Lattice CLI
 
@@ -56,7 +56,7 @@ For Linux:
     wget https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc -O $HOME/bin/ltc
     chmod +x $HOME/bin/ltc
 
-Further instructions can be found [here](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc).
+Further instructions can be found [here](https://github.com/cloudfoundry-incubator/lattice/tree/v0.2.6/ltc).
 
 ## Targeting Lattice
 
