@@ -35,7 +35,7 @@ The default behavior of `ltc create`, outlined above, can be modified via a seri
 
 - **`--working-dir=/path/to/working-dir`** sets the working directory, overriding the default associated with the Docker image.
 - **`--run-as-root`** launches the command in the process as the root user.  By default, Lattice uses a non-root user created at container-creation time.  Lattice does not yet honor the Docker USER directive.  There are plans to address this soon.  For most containers `--run-as-root` is a sufficient workaround.
-- **`--env NAME[=VALUE]`** specifies environment variables. You can have multiple `--env` flags.  These are merged *on top of* the Environment variables extracted from the Docker image metadata.  Passing an --env flag without explicitly setting the VALUE uses the current execution context to set the value.
+- **`--env NAME[=VALUE]`** specifies environment variables. You can have multiple `--env` flags.  Passing an --env flag without explicitly setting the VALUE uses the current execution context to set the value.
 - **`--cpu-weight=100`** specifies the relative CPU weight to apply to the container (scale 1-100).
 - **`--memory-mb=128`** specifies the memory limit to apply to the container.  To allow unlimited memory usage, set this to 0.
 - **`--disk-mb=1024`** specifies the disk limit to apply to the container.  This governs any writes *on top of* the root filesystem mounted into the container.  To allow unlimited disk usage, set this to 0.
