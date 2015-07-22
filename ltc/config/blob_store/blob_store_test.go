@@ -50,6 +50,30 @@ var _ = Describe("BlobStore", func() {
 		fakeServer.Close()
 	})
 
+	Describe(".New", func() {
+		It("returns a BlobStore for the riak-region-1 region", func() {
+			Expect(blobStore.S3.Config.Region).To(Equal("riak-region-1"))
+		})
+
+		It("returns a BlobStore that signs requests and includes a content-length header", func() {
+			requestTime, err := time.Parse(time.RFC1123, "Tue, 21 Jul 2015 23:09:05 UTC")
+			Expect(err).NotTo(HaveOccurred())
+			request := &http.Request{
+				Header: http.Header{"some-header": []string{"some-value"}},
+				URL:    &url.URL{Scheme: "http", Opaque: "//some-host/some-bucket", RawQuery: "some-param=some-value"},
+			}
+			blobStore.S3.Handlers.Sign.Run(&aws.Request{Time: requestTime, HTTPRequest: request})
+			Expect(request.Header).To(Equal(http.Header{
+				"Host":           {"some-host"},
+				"Date":           {"Tue, 21 Jul 2015 23:09:05 UTC"},
+				"Authorization":  {"AWS V8GDQFR_VDOGM55IV8OH:6WPghcgpPKDq70e4x3vPBZOwiqg="},
+				"Content-Length": {"0"},
+				"some-header":    {"some-value"},
+			}))
+			Expect(request.URL.String()).To(Equal("http://some-host/some-bucket?some-param=some-value"))
+		})
+	})
+
 	Describe("#List", func() {
 		It("lists objects in a bucket", func() {
 			responseBody := `

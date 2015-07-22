@@ -63,8 +63,8 @@ func (factory *ConfigCommandFactory) targetBlob(context *cli.Context) {
 	if err := factory.targetVerifier.VerifyBlobTarget(config.BlobTargetInfo{
 		TargetHost: host,
 		TargetPort: uint16(port),
-		AccessKey: accessKey,
-		SecretKey: secretKey,
+		AccessKey:  accessKey,
+		SecretKey:  secretKey,
 		BucketName: bucketName,
 	}); err != nil {
 		factory.ui.Say("Unable to verify blob store: " + err.Error())

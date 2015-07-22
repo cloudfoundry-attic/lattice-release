@@ -27,9 +27,16 @@ func New(blobTarget config.BlobTargetInfo) *BlobStore {
 	client := s3.New(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(blobTarget.AccessKey, blobTarget.SecretKey, ""),
 		Endpoint:         endpoint,
-		Region:           "fake-region",
+		Region:           "riak-region-1",
 		S3ForcePathStyle: true,
 	})
+
+	client.Handlers.Sign.Clear()
+	client.Handlers.Sign.PushBack(aws.BuildContentLength)
+	client.Handlers.Sign.PushBack(func(request *aws.Request) {
+		v2Sign(blobTarget.AccessKey, blobTarget.SecretKey, request.Time, request.HTTPRequest)
+	})
+
 	return &BlobStore{
 		Bucket: blobTarget.BucketName,
 		S3:     client,
