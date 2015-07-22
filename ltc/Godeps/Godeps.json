@@ -1,11 +1,54 @@
 {
 	"ImportPath": "github.com/cloudfoundry-incubator/lattice/ltc",
 	"GoVersion": "go1.4.2",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.6.4-10-g89efc1f",
 			"Rev": "89efc1fea9b8b47f6f6ce72279a7ed9496b4cdb3"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/aws",
+			"Comment": "v0.6.7-3-g2a6648c",
+			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
+			"Comment": "v0.6.7-3-g2a6648c",
+			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
+			"Comment": "v0.6.7-3-g2a6648c",
+			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
+			"Comment": "v0.6.7-3-g2a6648c",
+			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/restxml",
+			"Comment": "v0.6.7-3-g2a6648c",
+			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
+			"Comment": "v0.6.7-3-g2a6648c",
+			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
+			"Comment": "v0.6.7-3-g2a6648c",
+			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/s3",
+			"Comment": "v0.6.7-3-g2a6648c",
+			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
 		},
 		{
 			"ImportPath": "github.com/bmizerany/pat",
@@ -175,10 +218,6 @@
 		},
 		{
 			"ImportPath": "github.com/goamz/goamz/aws",
-			"Rev": "760aa2f8a491b6019dcf2df81d913927cb25fbc6"
-		},
-		{
-			"ImportPath": "github.com/goamz/goamz/s3",
 			"Rev": "760aa2f8a491b6019dcf2df81d913927cb25fbc6"
 		},
 		{
