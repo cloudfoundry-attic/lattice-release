@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"net"
@@ -22,17 +21,13 @@ var (
 
 const latticeDebugStreamId = "lattice-debug"
 
-func init() {
-	flag.Parse()
-}
-
 func die(exitCode int, formatString string, args ...interface{}) {
 	fmt.Printf(formatString+"\n", args...)
 	os.Exit(exitCode)
 }
 
 func main() {
-	args := flag.Args()
+	args := os.Args[1:len(os.Args)]
 
 	if len(args) != 6 {
 		die(3, "Usage: s3downloader s3AccessKey s3SecretKey httpProxy s3Bucket s3Path destinationFilePath")

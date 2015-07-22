@@ -39,7 +39,7 @@ var _ = Describe("s3uploader", func() {
 			func(w http.ResponseWriter, req *http.Request) {
 				auth, ok := req.Header[http.CanonicalHeaderKey("Authorization")]
 				Expect(ok).To(BeTrue())
-				Expect(auth).To(ConsistOf(HavePrefix("AWS access:")))
+				Expect(auth).To(ConsistOf(HavePrefix("AWS ")))
 			},
 		))
 	})
@@ -59,6 +59,29 @@ var _ = Describe("s3uploader", func() {
 		tmpFile.Close()
 
 		command := exec.Command(s3uploaderPath, "access", "secret", fakeServer.URL(), "bucket", "key", tmpFile.Name())
+
+		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+		Expect(err).ToNot(HaveOccurred())
+
+		Eventually(session.Out).Should(gbytes.Say("Uploaded " + tmpFile.Name() + " to s3://bucket/key."))
+
+		Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
+
+		Eventually(session.Exited).Should(BeClosed())
+		Expect(session.ExitCode()).To(Equal(0))
+	})
+
+	It("works with parameters that start with a leading -", func() {
+		httpStatusCode = 200
+
+		tmpFile, err := ioutil.TempFile(os.TempDir(), "fileToUpload")
+		Expect(err).ToNot(HaveOccurred())
+		defer os.Remove(tmpFile.Name())
+
+		tmpFile.Write([]byte("abcd"))
+		tmpFile.Close()
+
+		command := exec.Command(s3uploaderPath, "-access", "-secret", fakeServer.URL(), "bucket", "key", tmpFile.Name())
 
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())

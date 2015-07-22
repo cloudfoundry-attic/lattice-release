@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -33,7 +33,7 @@ func main() {
 
 	if _, err := client.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: aws.String(bucket),
-		Key: aws.String(path),
+		Key:    aws.String(path),
 	}); err != nil {
 		fmt.Printf("Error deleting s3://%s/%s: %s\n", bucket, path, err)
 		os.Exit(2)

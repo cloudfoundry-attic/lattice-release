@@ -1,13 +1,13 @@
 package main
 
 import (
-	"strings"
-	"net/http"
-	"net/url"
-	"sort"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
+	"net/http"
+	"net/url"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -38,8 +38,8 @@ var s3ParamsToSign = map[string]bool{
 func v2Sign(accessKey, secretKey string, requestTime time.Time, request *http.Request) {
 	var (
 		md5, ctype, date, xamz string
-		xamzDate bool
-		sarray []string
+		xamzDate               bool
+		sarray                 []string
 	)
 
 	headers := request.Header

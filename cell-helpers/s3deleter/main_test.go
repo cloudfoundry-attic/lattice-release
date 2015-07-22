@@ -37,7 +37,7 @@ var _ = Describe("s3deleter", func() {
 			func(_ http.ResponseWriter, request *http.Request) {
 				auth, ok := request.Header[http.CanonicalHeaderKey("Authorization")]
 				Expect(ok).To(BeTrue())
-				Expect(auth).To(ConsistOf(HavePrefix("AWS access:")))
+				Expect(auth).To(ConsistOf(HavePrefix("AWS ")))
 			},
 		))
 	})
@@ -50,6 +50,22 @@ var _ = Describe("s3deleter", func() {
 		httpStatusCode = 200
 
 		command := exec.Command(s3DeleterPath, "access", "secret", fakeServer.URL(), "bucket", "key")
+
+		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+		Expect(err).ToNot(HaveOccurred())
+
+		Eventually(session.Out).Should(gbytes.Say("Deleted s3://bucket/key."))
+
+		Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
+
+		Eventually(session.Exited).Should(BeClosed())
+		Expect(session.ExitCode()).To(Equal(0))
+	})
+
+	It("works with parameters that start with a leading -", func() {
+		httpStatusCode = 200
+
+		command := exec.Command(s3DeleterPath, "-access", "-secret", fakeServer.URL(), "bucket", "key")
 
 		session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 		Expect(err).ToNot(HaveOccurred())
