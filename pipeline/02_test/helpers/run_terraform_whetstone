@@ -18,11 +18,11 @@ cleanup(){
         terraform destroy -force
     popd
 
-    cp -fv $TF_WORKING_DIR/terraform.tfstate $WORKSPACE_DIR/
+    cp -fv $TF_WORKING_DIR/terraform.tfstate $WORKSPACE_DIR/   ## FIXME
 }
 
 setup_and_run_whetstone(){
-    source $WORKSPACE_DIR/diego-release/src/github.com/cloudfoundry-incubator/lattice/pipeline/02_test/helpers/setup_whetstone
+    source $LATTICE_DIR/pipeline/02_test/helpers/setup_whetstone
     setup_whetstone
 
     echo "=========================Lattice Integration Tests=============================\n"
@@ -44,9 +44,10 @@ generate_terraform_configuration_file(){
     sync
 }
 
-export DIEGO_RELEASE_PATH=$1
-export LATTICE_TAR_PATH=$2
-WORKSPACE_DIR=/workspace
+export LATTICE_DIR=/run
+export LATTICE_TAR_PATH=$LATTICE_DIR/build/lattice.tgz
+
+## FIXME:  put this under $LATTICE_DIR/build  # maybe not, what about keys
 export TF_WORKING_DIR=$HOME/terraform-work # ephemeral folder in docker context
 
 mkdir -pv $TF_WORKING_DIR

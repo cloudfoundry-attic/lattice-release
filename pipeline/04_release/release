@@ -4,7 +4,7 @@ set -e
 ## Expect:  LATTICE_RELEASE_VERSION environment variable
 
 verify_release_tag_does_not_exist() {
-    local pipeline_version_artifact_path="/workspace/pipeline_published_lattice_version"
+    local pipeline_version_artifact_path="/run/pipeline_published_lattice_version"
     pushd $LATTICE_SRC_PATH > /dev/null
         if [ "$(git tag -l ${LATTICE_RELEASE_VERSION} | wc -l | tr -d '[[:space:]]')" != "0" ]; then
             echo "tag already exists for ${LATTICE_RELEASE_VERSION}"
@@ -39,14 +39,14 @@ extract_deliver_stories_message() {
 
 repackage_release_lattice_tar() {
     mkdir -p ~/lattice-tmp
-    mkdir -p /workspace/lattice-release
+    mkdir -p /run/lattice-release
     pushd ~/lattice-tmp > /dev/null
         tar xzf $lattice_tar_path
         echo "${LATTICE_RELEASE_VERSION}" > lattice-build/common/LATTICE_VERSION
         cp -vf ${LATTICE_SRC_PATH}/DIEGO_VERSION lattice-build/common/DIEGO_VERSION
 
         tar czf lattice.tgz lattice-build
-        cp -vf lattice.tgz /workspace/lattice-release
+        cp -vf lattice.tgz /run/lattice-release
     popd > /dev/null
     rm -rf ~/lattice-tmp
 }
@@ -61,7 +61,7 @@ recompile_release_ltc() {
 
     godep_go_build_ltc
 
-    generate_ltc_tarball "/workspace/lattice-release"
+    generate_ltc_tarball "/run/lattice-release"
 }
 
 tag_lattice_release() {
@@ -72,11 +72,11 @@ tag_lattice_release() {
 
 upload_release_lattice_tar_to_s3() {
     if [ -z "$DRY_RUN" ]; then
-        aws s3 cp /workspace/lattice-release/lattice.tgz "s3://lattice/releases/latest/lattice.tgz"
-        aws s3 cp /workspace/lattice-release/lattice.tgz "s3://lattice/releases/${lattice_version}/lattice.tgz"
+        aws s3 cp /run/lattice-release/lattice.tgz "s3://lattice/releases/latest/lattice.tgz"
+        aws s3 cp /run/lattice-release/lattice.tgz "s3://lattice/releases/${lattice_version}/lattice.tgz"
     else
-        echo "aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz \"s3://lattice/releases/latest/lattice.tgz\""
-        echo "aws s3 cp $lattice_artifacts_staging_folder/lattice.tgz \"s3://lattice/releases/${lattice_version}/lattice.tgz\""
+        echo "aws s3 cp /run/lattice-release/lattice.tgz \"s3://lattice/releases/latest/lattice.tgz\""
+        echo "aws s3 cp /run/lattice-release/lattice.tgz \"s3://lattice/releases/${lattice_version}/lattice.tgz\""
     fi
 
     echo "lattice.tgz uploaded to s3"
@@ -85,7 +85,7 @@ upload_release_lattice_tar_to_s3() {
 upload_release_ltc_binaries_to_s3() {
     rm -rf ltc-binaries
     mkdir -p ltc-binaries
-    tar xzf /workspace/lattice-release/ltc.tar.gz -C ltc-binaries
+    tar xzf /run/lattice-release/ltc.tar.gz -C ltc-binaries
     ltc_checksum=$(cat ltc-binaries/ltc-checksum)
     echo "Unpacked ltc.tar.gz with ltc-checksum (git sha) = ${ltc_checksum}"
 
@@ -152,7 +152,7 @@ fi
 
 source $(dirname $0)/../helpers/build_ltc_helpers
 
-lattice_tar_path=${1:-/workspace/lattice.tgz}
+lattice_tar_path=${1:-/run/build/lattice.tgz}
 
 setup_ssh_access_to_github
 

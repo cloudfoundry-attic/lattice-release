@@ -19,8 +19,8 @@ fi
 command_with_args="$@"
 echo "Running command with $@"
 
-docker run -a stdout -a stderr -w /workspace \
-  -v ${DOCKER_WORKSPACE_MOUNT_DIR:-~/workspace/}:/workspace \
+docker run -a stdout -a stderr -w /run \
+  -v ${DOCKER_MOUNT_DIR-`pwd`}:/run \
   -e LATTICE_SRC_PATH \
   -e DIEGO_RELEASE_PATH \
   -e DRY_RUN \

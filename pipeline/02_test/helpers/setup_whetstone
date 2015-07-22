@@ -1,14 +1,14 @@
-#!/bin/bash
 
 setup_whetstone(){
-    export GOPATH=$DIEGO_RELEASE_PATH
-    export LATTICE_CLI_HOME=$WORKSPACE_DIR
+    export LATTICE_CLI_HOME=$LATTICE_DIR/build
 
-    if [ -n "$GO_PIPELINE_NAME" ]; then #If we are running in CI, get the linux ltc binary from the build artifact.
-        mkdir -pv $GOPATH/bin
-        tar xvzf ltc.tar.gz -C $GOPATH/bin ltc-linux-amd64 && mv -v $GOPATH/bin/ltc-linux-amd64 $GOPATH/bin/ltc
-    fi
+    ltc_arch=$(uname | tr '[:upper:]' '[:lower:]')
+
+    rm -rf $LATTICE_DIR/build/bin
+    mkdir -pv $LATTICE_DIR/build/bin
+    tar xzf $LATTICE_DIR/build/ltc.tar.gz -C $LATTICE_DIR/build/bin ltc-${ltc_arch}-amd64
+    mv -v $LATTICE_DIR/build/bin/ltc-${ltc_arch}-amd64 $LATTICE_DIR/build/bin/ltc
 
     mkdir -pv $LATTICE_CLI_HOME/.lattice
-    export PATH=$PATH:$GOPATH/bin
+    export PATH=$LATTICE_DIR/build/bin:$PATH
 }

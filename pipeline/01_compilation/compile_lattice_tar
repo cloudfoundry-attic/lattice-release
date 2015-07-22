@@ -5,27 +5,35 @@ set -e
 source $(dirname $0)/../helpers/build_ltc_helpers
 
 stage_version_files() {
-    LATTICE_SRC_PATH=$(dirname $0)/../..
-    DIEGO_RELEASE_PATH=$(dirname $0)/../../../../../..
+    # LATTICE_SRC_PATH=$(dirname $0)/../..
+    # DIEGO_RELEASE_PATH=$(dirname $0)/../../build/diego-release
+
+    LATTICE_SRC_PATH=/run
+    DIEGO_RELEASE_PATH=/run/build/diego-release
+
+    # set +e
     git_describe_lattice
     git_describe_diego
+    # set -e
 
     echo "Branding tarball with version $lattice_version (diego $diego_version)"
-    echo $lattice_version > lattice-build/common/LATTICE_VERSION
-    echo $diego_version > lattice-build/common/DIEGO_VERSION
+    echo $lattice_version > /run/build/lattice-build/common/LATTICE_VERSION
+    echo $diego_version > /run/build/lattice-build/common/DIEGO_VERSION
 }
 
-pushd /workspace/cf-release/src/loggregator
+pushd /run/build/cf-release/src/loggregator
    git submodule update --init --recursive
 popd
 
-./diego-release/src/github.com/cloudfoundry-incubator/lattice/cluster/scripts/compile \
-    /workspace/lattice-build \
-    /workspace/diego-release \
-    /workspace/cf-release \
-    /workspace/diego-release/src/github.com/cloudfoundry-incubator/lattice
+/run/cluster/scripts/compile \
+    /run/build/lattice-build \
+    /run/build/diego-release \
+    /run/build/cf-release \
+    /run
 
 stage_version_files
 
 echo "Creating lattice.tgz"
-tar czf lattice.tgz lattice-build
+pushd /run/build
+  tar czf lattice.tgz lattice-build
+popd

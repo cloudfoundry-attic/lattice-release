@@ -70,7 +70,10 @@ bump_unstable_lattice() {
     fi
 
     pushd $LATTICE_SRC_PATH > /dev/null
+        git checkout develop --
+
         git pull origin master
+
         git checkout master
 
         set_deliver_stories_message
@@ -163,7 +166,7 @@ upload_unstable_ltc_binaries_to_s3() {
 
 push_unstable_lattice() {
     pushd $LATTICE_SRC_PATH > /dev/null
-        git checkout develop
+        git checkout develop --
 
         echo "merging master into develop"
 
@@ -188,7 +191,7 @@ push_unstable_lattice() {
 }
 
 stage_pipeline_artifact() {
-    local pipeline_version_artifact_path="/workspace/pipeline_published_lattice_version"
+    local pipeline_version_artifact_path="/run/pipeline_published_lattice_version"
     pushd $LATTICE_SRC_PATH > /dev/null
         git checkout master
         cp -v Version $pipeline_version_artifact_path
@@ -196,7 +199,7 @@ stage_pipeline_artifact() {
 }
 
 copy_docs_to_lattice_website() {
-    local docspath="~/docs-space"
+    local docspath="/run/build/docs-space"
 
     echo "Copy lattice docs to temp folder"
     mkdir -p $docspath/lattice
@@ -239,16 +242,13 @@ copy_docs_to_lattice_website() {
             git push origin master --dry-run
         fi
     popd 
-
-    rm -rf /workspace/lattice-website
-    cp -af $docspath/lattice-website /workspace
 }
 
 source $(dirname $0)/../helpers/build_ltc_helpers
 
-lattice_tar_path=${1:-/workspace/lattice.tgz}
+lattice_tar_path=${1:-/run/build/lattice.tgz}
 
-lattice_artifacts_staging_folder="/workspace/lattice-unstable"
+lattice_artifacts_staging_folder="/run/lattice-unstable"
 rm -rfv $lattice_artifacts_staging_folder
 mkdir -pv $lattice_artifacts_staging_folder
 

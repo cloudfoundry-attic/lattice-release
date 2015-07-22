@@ -13,15 +13,15 @@ setup_go_env() {
 
 construct_temp_workspace() {
     echo "copying diego release"
-    # mkdir -p ${temp_workspace}/diego-release
     cp -a ${diego_release_path}/ ${temp_workspace}/
-    rm -rf ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator/lattice
+    rm -f ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator/lattice
     echo "copying cf release"
     mkdir -p ${temp_workspace}/cf-release/src
     cp -a ${cf_release_path}/src/github.com/cloudfoundry/gorouter ${temp_workspace}/diego-release/src/github.com/cloudfoundry
     cp -a ${cf_release_path}/src/loggregator ${temp_workspace}/cf-release/src
-    echo "copying lattice"
-    cp -a ${lattice_path} ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator
+    echo "copying cell helpers"
+    mkdir -p ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator/lattice/
+    cp -a ${lattice_path}/cell-helpers/ ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator/lattice/
 }
 
 compile_garden_linux() {
@@ -54,7 +54,7 @@ compile_brain_loggregator() {
     pushd ${temp_workspace}/cf-release/src/loggregator
         GOPATH=$(pwd) go install trafficcontroller
         GOPATH=$(pwd) go install doppler
-        GOPATH=$(pwd) go install metron        
+        GOPATH=$(pwd) go install metron
     popd
 }
 
@@ -157,7 +157,7 @@ declare -r cf_release_path=$3
 declare -r lattice_path=$4
 export GOOS=linux
 export GOARCH=amd64
-declare -r temp_workspace=~/workspace
+declare -r temp_workspace=`mktemp -d /tmp/lattice.XXXXXX`
 export GOPATH=${temp_workspace}/diego-release
 
 if [ -n "$DEBUG" ]; then
