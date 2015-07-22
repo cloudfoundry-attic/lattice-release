@@ -63,9 +63,9 @@ func (t *terminalUI) Say(message string) {
 
 func (t *terminalUI) SayIncorrectUsage(message string) {
 	if len(message) > 0 {
-		t.Say("Incorrect Usage: " + message)
+		t.SayLine("Incorrect Usage: " + message)
 	} else {
-		t.Say("Incorrect Usage")
+		t.SayLine("Incorrect Usage")
 	}
 }
 

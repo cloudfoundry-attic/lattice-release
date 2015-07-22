@@ -60,13 +60,13 @@ var _ = Describe("UI", func() {
 			Context("when no message is passed", func() {
 				It("outputs incorrect usage", func() {
 					terminalUI.SayIncorrectUsage("")
-					Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
+					Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage\n"))
 				})
 			})
 			Context("when a message is passed", func() {
 				It("outputs incorrect usage with the message", func() {
 					terminalUI.SayIncorrectUsage("You did that thing wrong")
-					Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: You did that thing wrong"))
+					Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: You did that thing wrong\n"))
 				})
 			})
 		})
