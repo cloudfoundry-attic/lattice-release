@@ -32,10 +32,10 @@ var _ = Describe("s3deleter", func() {
 		fakeServer = ghttp.NewServer()
 		var emptyResponse = ""
 		fakeServer.AppendHandlers(ghttp.CombineHandlers(
-			ghttp.VerifyRequest("DELETE", ContainSubstring("/bucket/key")),
+			ghttp.VerifyRequest("DELETE", "/bucket/key"),
 			ghttp.RespondWithPtr(&httpStatusCode, &emptyResponse),
-			func(w http.ResponseWriter, req *http.Request) {
-				auth, ok := req.Header[http.CanonicalHeaderKey("Authorization")]
+			func(_ http.ResponseWriter, request *http.Request) {
+				auth, ok := request.Header[http.CanonicalHeaderKey("Authorization")]
 				Expect(ok).To(BeTrue())
 				Expect(auth).To(ConsistOf(HavePrefix("AWS access:")))
 			},
