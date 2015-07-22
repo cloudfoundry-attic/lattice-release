@@ -1,0 +1,14 @@
+# Assumes:  CI_DIR is set.
+
+export GO_REVISION_DIEGO_RELEASE=646ffc1250292a6d7e5a3eec9e8721e5abe800e6
+export GO_REVISION_CF_RELEASE=3a825255e80e1441a1428c07f40b5752640571af
+export GOPATH=$CI_DIR/lattice/build/diego-release
+export PATH=$GOPATH/bin:$PATH
+export DOCKER_IMAGE=cloudfoundry/lattice-pipeline
+export PULL_DOCKER_IMAGE=false
+
+export LATTICE_SRC_PATH=/run
+export DIEGO_RELEASE_PATH=/run/build/diego-release
+export DRY_RUN=1
+
+export LATTICE_WEBSITE_CLONE_URL=git@github.com:pivotal-cf-experimental/lattice-website.git

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+export CI_DIR=$1
+
+LATTICE_DIR=$(cd `dirname $0` && cd ../../.. && pwd)
+source $LATTICE_DIR/pipeline/local/env
+
+export LATTICE_SRC_PATH=/run
+
+DOCKER_MOUNT_DIR=$CI_DIR/lattice $CI_DIR/lattice/pipeline/helpers/run_with_docker /run/pipeline/03_promote_and_publish/promote_and_publish /run/build/lattice.tgz
