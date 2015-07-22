@@ -86,13 +86,19 @@ ltc target 192.168.80.100.xip.io
 
 ## Miscellaneous
 
-### Running Vagrant with a custom Lattice tar
+### Running Lattice from source
 
-By default, `vagrant up` will fetch the latest Lattice binary tarball.  To use a particular tarball:
+By default, `vagrant up` will fetch the latest Lattice binary tarball.  To build from source and deploy using Vagrant:
 
 ```bash
-VAGRANT_LATTICE_TAR_PATH=/path/to/lattice.tgz vagrant up
+    $ git clone git@github.com:cloudfoundry-incubator/lattice.git -b develop # may be unstable!
+    $ cd lattice
+    $ development/setup
+    $ development/build
+    $ development/run
 ```
+
+> More information on developing for Lattice can be found on the [Development Readme](development/README.md).
 
 ### Updating
 
@@ -263,7 +269,7 @@ Here are some ways *you* can contribute:
 * by closing [issues](https://github.com/cloudfoundry-incubator/lattice/issues)
 * by reviewing patches
 
-Also see the [Development Readme](docs/development-readme.md)
+Also see the [Development Readme](development/README.md)
 
 ## Submitting an Issue
 We use the [GitHub issue tracker](https://github.com/cloudfoundry-incubator/lattice/issues) to track bugs and features.

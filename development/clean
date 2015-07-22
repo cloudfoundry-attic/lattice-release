@@ -4,4 +4,6 @@ set -e
 
 LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd) 
 
+$(cd $LATTICE_DIR && vagrant destroy)
+
 rm -rf $LATTICE_DIR/build

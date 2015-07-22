@@ -39,14 +39,9 @@
 			"weight": "8",
 			"doc_subnav": "true"
 	},
-	"development-readme.md": {
-			"title": "Development Readme",
-			"weight": "9",
-			"doc_subnav": "true"
-	},
 	"manual-install.md": {
 			"title": "Manual Install",
-			"weight": "10",
+			"weight": "9",
 			"doc_subnav": "true"
 	}
 }
