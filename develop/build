@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+
+LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd) 
+
+if [ ! -d $LATTICE_DIR/build ]; then
+	echo "Please run develop/setup before develop/build"
+	exit 1
+fi
+
+source $LATTICE_DIR/develop/env 
+
+DOCKER_MOUNT_DIR=$LATTICE_DIR $LATTICE_DIR/pipeline/helpers/run_with_docker /run/pipeline/01_compilation/compile_lattice_tar
+mv -v $LATTICE_DIR/build/lattice.tgz $LATTICE_DIR/

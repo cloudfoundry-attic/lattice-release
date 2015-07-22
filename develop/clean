@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd) 
+
+rm -rf $LATTICE_DIR/build

@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -e
+
+LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd) 
+
+source $LATTICE_DIR/develop/env 
+
+if [ -d "$LATTICE_DIR/build" ]; then
+	echo "Please run develop/clean to remove your existing build directory"
+	exit 1
+fi
+
+mkdir $LATTICE_DIR/build 
+pushd $LATTICE_DIR/build >/dev/null
+  git clone git@github.com:cloudfoundry/cf-release.git -b runtime-passed
+  ( cd cf-release && ./update )
+  git clone git@github.com:cloudfoundry-incubator/diego-release.git -b ${1-`cat $LATTICE_DIR/DIEGO_VERSION`}
+  ( cd diego-release && ./scripts/update )
+  rm -r $GOPATH/src/github.com/docker/docker
+popd >/dev/null
+
+go get github.com/dajulia3/godep
+go get github.com/onsi/ginkgo/ginkgo
+go get github.com/maxbrunsfeld/counterfeiter
+
+pushd $GOPATH/src/github.com/cloudfoundry-incubator >/dev/null
+  ln -s ../../../../.. lattice
+
+  pushd lattice >/dev/null
+    go get -v ./cell-helpers/...
+  popd >/dev/null
+
+  pushd lattice/ltc >/dev/null
+    godep restore
+    go install
+  popd >/dev/null
+popd >/dev/null
+
+docker pull $DOCKER_IMAGE 
+docker pull cloudfoundry/lattice-app
