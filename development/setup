@@ -7,7 +7,7 @@ LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd)
 source $LATTICE_DIR/development/env 
 
 if [ -d "$LATTICE_DIR/build" ]; then
-	echo "Please run develop/clean to remove your existing build directory"
+	echo "Please run development/clean to remove your existing build directory"
 	exit 1
 fi
 

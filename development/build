@@ -5,7 +5,7 @@ set -e
 LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd) 
 
 if [ ! -d $LATTICE_DIR/build ]; then
-	echo "Please run develop/setup before develop/build"
+	echo "Please run development/setup before development/build"
 	exit 1
 fi
 
