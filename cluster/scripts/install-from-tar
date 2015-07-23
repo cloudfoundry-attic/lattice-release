@@ -7,18 +7,29 @@ condense_it() {
     ## move into upstart, too
     ulimit -n 65536
 
-    mkdir -pv riak-dl
-    pushd riak-dl
-        wget --quiet http://s3.amazonaws.com/downloads.basho.com/riak/2.1/2.1.1/ubuntu/trusty/riak_2.1.1-1_amd64.deb
-        wget --quiet http://s3.amazonaws.com/downloads.basho.com/stanchion/2.0/2.0.0/ubuntu/trusty/stanchion_2.0.0-1_amd64.deb
-        wget --quiet http://s3.amazonaws.com/downloads.basho.com/riak-cs/2.0/2.0.0/ubuntu/trusty/riak-cs_2.0.0-1_amd64.deb
 
-        sudo dpkg -i riak_2.1.1-1_amd64.deb
-        sudo dpkg -i stanchion_2.0.0-1_amd64.deb
-        sudo dpkg -i riak-cs_2.0.0-1_amd64.deb
-    popd 
+    CONDENSER_DOWNLOAD_PATH=/vagrant/build/condenser
 
-    ## TODO: change up port binds
+    if [ ! -d $CONDENSER_DOWNLOAD_PATH ]; then
+        mkdir -p $CONDENSER_DOWNLOAD_PATH
+    fi
+
+    if [ ! -f "$CONDENSER_DOWNLOAD_PATH/riak_2.1.1-1_amd64.deb" ]; then
+        wget http://s3.amazonaws.com/downloads.basho.com/riak/2.1/2.1.1/ubuntu/trusty/riak_2.1.1-1_amd64.deb --quiet -O $CONDENSER_DOWNLOAD_PATH/riak_2.1.1-1_amd64.deb
+    fi
+
+    if [ ! -f "$CONDENSER_DOWNLOAD_PATH/stanchion_2.0.0-1_amd64.deb" ]; then
+        wget http://s3.amazonaws.com/downloads.basho.com/stanchion/2.0/2.0.0/ubuntu/trusty/stanchion_2.0.0-1_amd64.deb --quiet -O $CONDENSER_DOWNLOAD_PATH/stanchion_2.0.0-1_amd64.deb
+    fi
+
+    if [ ! -f "$CONDENSER_DOWNLOAD_PATH/riak-cs_2.0.0-1_amd64.deb" ]; then
+        wget http://s3.amazonaws.com/downloads.basho.com/riak-cs/2.0/2.0.0/ubuntu/trusty/riak-cs_2.0.0-1_amd64.deb --quiet -O $CONDENSER_DOWNLOAD_PATH/riak-cs_2.0.0-1_amd64.deb
+    fi
+
+    sudo dpkg -i $CONDENSER_DOWNLOAD_PATH/riak_2.1.1-1_amd64.deb
+    sudo dpkg -i $CONDENSER_DOWNLOAD_PATH/stanchion_2.0.0-1_amd64.deb
+    sudo dpkg -i $CONDENSER_DOWNLOAD_PATH/riak-cs_2.0.0-1_amd64.deb
+
     ## UP NEXT:  putting the template in /var/lattice somewhere!!!
     ## get config files w/ anonymous user creation enabled
     cp -av /tmp/lattice-build/common/riak/etc/* /etc/
@@ -75,14 +86,21 @@ condense_it() {
 stage_cflinuxfs2_rootfs() {
     set -x
 
-    ## download the cflinuxfs2 rootfs tarball
-    wget http://cf-runtime-stacks.s3.amazonaws.com/cflinuxfs2.dev.tgz --quiet -O cflinuxfs2.tar.gz && echo "Downloaded RootFS!"
+    ROOTFS_DOWNLOAD_PATH=/vagrant/build/rootfs
+
+    if [ ! -d $ROOTFS_DOWNLOAD_PATH ]; then
+        mkdir -p $ROOTFS_DOWNLOAD_PATH
+    fi
+
+    if [ ! -f "$ROOTFS_DOWNLOAD_PATH/cflinuxfs2.tar.gz" ]; then
+        ## download the cflinuxfs2 rootfs tarball
+        wget http://cf-runtime-stacks.s3.amazonaws.com/cflinuxfs2.dev.tgz --quiet -O $ROOTFS_DOWNLOAD_PATH/cflinuxfs2.tar.gz
+        echo "Downloaded RootFS!"
+    fi
 
     ## unpack to some fixed folder
     mkdir -p /var/lattice/rootfs/cflinuxfs2
-    pushd /var/lattice/rootfs/cflinuxfs2
-        tar xzf $OLDPWD/cflinuxfs2.tar.gz
-    popd
+    tar xzf $ROOTFS_DOWNLOAD_PATH/cflinuxfs2.tar.gz -C /var/lattice/rootfs/cflinuxfs2
 
     ## since args depend on folder existing
     restart rep
