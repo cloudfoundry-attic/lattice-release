@@ -2,14 +2,14 @@
 
 set -e
 
-LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd) 
+LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd)
 
 if [ ! -f "$LATTICE_DIR/lattice.tgz" ]; then
 	echo "No local version of lattice.tgz found"
 	exit 1
 fi
 
-source $LATTICE_DIR/development/env 
+source $LATTICE_DIR/development/env
 
 pushd $LATTICE_DIR >/dev/null
 	VAGRANT_LATTICE_TAR_PATH=/vagrant/lattice.tgz vagrant up --provider=${1-virtualbox}
