@@ -21,6 +21,7 @@ func NewCreateTaskParams(action models.Action, taskGuid, rootFS, domain, logSour
 			LogSource:            logSource,
 			EnvironmentVariables: buildReceptorEnvironment(env),
 			EgressRules:          egressRules,
+			Privileged:           true,
 		},
 	}
 }

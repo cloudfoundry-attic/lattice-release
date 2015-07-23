@@ -38,7 +38,6 @@ var _ = Describe("AppRunner", func() {
 			createAppParams = app_runner.CreateAppParams{
 				AppEnvironmentParams: app_runner.AppEnvironmentParams{
 					EnvironmentVariables: appEnv,
-					Privileged:           false,
 					Monitor: app_runner.MonitorConfig{
 						Method: app_runner.PortMonitor,
 						Port:   2000,
@@ -90,7 +89,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(req.CPUWeight).To(Equal(uint(67)))
 			Expect(req.MemoryMB).To(Equal(128))
 			Expect(req.DiskMB).To(Equal(1024))
-			Expect(req.Privileged).To(BeFalse())
+			Expect(req.Privileged).To(BeTrue())
 			Expect(req.Ports).To(ConsistOf(uint16(2000), uint16(4000)))
 			Expect(req.LogGuid).To(Equal("americano-app"))
 			Expect(req.LogSource).To(Equal("APP"))
@@ -149,6 +148,27 @@ var _ = Describe("AppRunner", func() {
 				reqMonitor, ok := req.Monitor.(*models.RunAction)
 				Expect(ok).To(BeTrue())
 				Expect(reqMonitor.User).To(Equal("root"))
+			})
+		})
+
+		Context("when Privileged is false on the CreateAppParams", func() {
+			It("sets Privileged=true and User=vcap on the lrp request and RunActions, respectively", func() {
+				createAppParams.Privileged = false
+
+				err := appRunner.CreateApp(createAppParams)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+				Expect(req.Privileged).To(BeTrue())
+
+				reqAction, ok := req.Action.(*models.RunAction)
+				Expect(ok).To(BeTrue())
+				Expect(reqAction.User).To(Equal("vcap"))
+
+				reqMonitor, ok := req.Monitor.(*models.RunAction)
+				Expect(ok).To(BeTrue())
+				Expect(reqMonitor.User).To(Equal("vcap"))
 			})
 		})
 

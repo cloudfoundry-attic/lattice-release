@@ -200,6 +200,7 @@ var _ = Describe("DropletRunner", func() {
 			}))
 			Expect(receptorRequest.LogSource).To(Equal("BUILD"))
 			Expect(receptorRequest.Domain).To(Equal("lattice"))
+			Expect(receptorRequest.Privileged).To(BeTrue())
 			Expect(receptorRequest.EgressRules).ToNot(BeNil())
 			Expect(receptorRequest.EgressRules).To(BeEmpty())
 		})
