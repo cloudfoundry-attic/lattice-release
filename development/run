@@ -9,7 +9,7 @@ if [ ! -f "$LATTICE_DIR/lattice.tgz" ]; then
 	exit 1
 fi
 
-source $LATTICE_DIR/develop/env 
+source $LATTICE_DIR/development/env 
 
 pushd $LATTICE_DIR >/dev/null
 	VAGRANT_LATTICE_TAR_PATH=/vagrant/lattice.tgz vagrant up --provider=${1-virtualbox}
