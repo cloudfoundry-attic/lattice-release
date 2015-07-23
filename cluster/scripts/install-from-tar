@@ -158,3 +158,4 @@ elif [[ -n "$DOWNLOAD_ROOTFS" ]]; then
     stage_cflinuxfs2_rootfs
 fi
 
+touch /var/lattice/ready
