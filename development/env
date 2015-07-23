@@ -1,6 +1,7 @@
 LATTICE_DIR=$( cd `dirname ${BASH_SOURCE[0]}` && cd .. && pwd )
 
 export GOPATH=$LATTICE_DIR/build/diego-release
+export GOBIN=$GOPATH/bin
 export PATH=$GOPATH/bin:$PATH
 export DOCKER_IMAGE=cloudfoundry/lattice-pipeline
 export PULL_DOCKER_IMAGE=false
