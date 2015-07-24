@@ -70,7 +70,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   config.vm.provision "shell" do |s|
-    s.inline = "export $(cat /var/lattice/setup/lattice-environment) && printf 'Lattice is now installed and running.\nYou may target it using: ltc target %s\n' $SYSTEM_DOMAIN"
+    s.inline = "export $(cat /var/lattice/setup/lattice-environment) && printf '\nLattice is now installed and running.\nYou may target it using: ltc target %s\n \n' $SYSTEM_DOMAIN"
   end
 
 end

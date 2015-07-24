@@ -1,5 +1,8 @@
 #!/bin/bash
 
+access_key=''
+secret_key=''
+
 set -e
 
 install_condenser() {
@@ -81,12 +84,6 @@ EOF
 
     set +x 
     sleep 1
-
-    ## output info to enable condenser
-    printf 'Welcome to Condenser.  Please enable using: ltc target-blob %s:8980\n' $SYSTEM_IP
-    printf 'Access Key:  %s\n' $access_key
-    printf 'Secret Key:  %s\n' $secret_key
-    printf 'Bucket Name: condenser-bucket\n'
 }
 
 stage_cflinuxfs2_rootfs() {
@@ -103,9 +100,6 @@ stage_cflinuxfs2_rootfs() {
     ## unpack to some fixed folder
     mkdir -p /var/lattice/rootfs/cflinuxfs2
     tar -xzf $rootfs_download_path/cflinuxfs2.tar.gz -C /var/lattice/rootfs/cflinuxfs2
-
-    ## since args depend on folder existing
-    restart rep
 
     echo "Preloaded CFLinuxFS2 RootFS enabled."
 }
@@ -139,6 +133,15 @@ tar -xf $PATH_TO_LATTICE_TAR -C /tmp
 
 /tmp/lattice-build/scripts/install-common
 
+
+# check for opt-in to condenser 
+export $(cat /var/lattice/setup/lattice-environment)
+if [[ -n "$CONDENSER_ON" ]]; then
+    install_condenser
+elif [[ -n "$DOWNLOAD_ROOTFS" ]]; then
+    stage_cflinuxfs2_rootfs
+fi
+
 if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
     /tmp/lattice-build/scripts/install-brain
 
@@ -154,12 +157,12 @@ else
     /tmp/lattice-build/scripts/install-$COMPONENT_TO_INSTALL
 fi
 
-# check for opt-in to condenser 
-export $(cat /var/lattice/setup/lattice-environment)
 if [[ -n "$CONDENSER_ON" ]]; then
-    install_condenser
-elif [[ -n "$DOWNLOAD_ROOTFS" ]]; then
-    stage_cflinuxfs2_rootfs
+    ## output info to enable condenser
+    printf '\n==================================\n'
+    printf 'Welcome to Condenser.  Please enable using: ltc target-blob %s:8980\n' $SYSTEM_IP
+    printf 'Access Key:  %s\n' $access_key
+    printf 'Secret Key:  %s\n' $secret_key
+    printf 'Bucket Name: condenser-bucket\n'
+    printf '==================================\n \n'
 fi
-
-touch /var/lattice/ready

@@ -20,6 +20,7 @@ install_dependencies() {
             make install
         popd
 
+        apt-get update
         apt-get install -y btrfs-tools
     popd
 }
@@ -47,5 +48,7 @@ mkdir -p /var/lattice/log
 
 install_dependencies &> /var/lattice/log/cell-install.log
 start bootstrap
+
+touch /var/lattice/ready
 
 echo "Finished Installing Lattice Cell ($lattice_version) (Diego $diego_version)!"
