@@ -63,7 +63,7 @@ echo "===="
 
 deploy_lattice
 
-echo "Sleeping for 10 seconds.."
-sleep 10
+echo "Sleeping for 3 minutes.."
+sleep 180
 
 setup_and_run_whetstone
