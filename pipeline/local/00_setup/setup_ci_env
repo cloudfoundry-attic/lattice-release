@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 export CI_DIR=`mktemp -d $HOME/.lattice-ci.XXXXXX`
@@ -9,7 +8,7 @@ source $LATTICE_DIR/pipeline/local/env
 
 ## default gocd material dependency behavior
 pushd $CI_DIR
-	git clone git@github.com:cloudfoundry-incubator/lattice -b pipeline 
+	git clone git@github.com:cloudfoundry-incubator/lattice -b pipeline
 	git clone git@github.com:cloudfoundry-incubator/diego-release -b master
 	pushd diego-release
 		git reset $GO_REVISION_DIEGO_RELEASE --hard
