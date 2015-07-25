@@ -107,6 +107,7 @@ Currently, Lattice does not support updating via provision. So to update, you ha
 ```bash
  vagrant destroy --force
  git pull
+ git checkout v0.2.7 #specify the version tag you want
  vagrant up
 ```
 
@@ -182,9 +183,9 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 * Credentials for your choice of IaaS
 * [Terraform](https://www.terraform.io/intro/getting-started/install.html)
 
-  Lattice | Recommended | Not Supported 
+  Lattice | Recommended | Not Supported
   ------------|-------------|--------------
-  v0.2.7 | Terraform 0.6.1 | 
+  v0.2.7 | Terraform 0.6.1 |
   v0.2.6 | Terraform 0.5.3 | Terraform 0.6
   v0.2.5 | Terraform 0.5.0 | Terraform 0.6
   v0.2.4 | Terraform 0.4.2 | Terraform 0.5
@@ -201,7 +202,7 @@ Here are some step-by-step instructions for deploying a Lattice cluster via Terr
   - [Amazon Web Services](terraform/aws/README.md#configure)
   - [DigitalOcean](terraform/digitalocean/README.md#configure)
   - [Google Cloud](terraform/google/README.md#configure)
-  - [Openstack](terraform/openstack/README.md#configure) 
+  - [Openstack](terraform/openstack/README.md#configure)
       - Note: This is a community-supplied platform. It is not presently supported by the project maintainers.
 5. Run the following commands in the folder containing the `lattice.<platform>.tf` file
 
@@ -293,7 +294,7 @@ details that may be necessary to reproduce the bug including the Lattice version
 
 Stories not (yet) prioritized are kept in the Icebox. The Icebox is a grab-bag of feature requests, GitHub Issues, or partially-developed ideas. Stories in the Icebox may never be prioritized, and may not always be maintained in the same disciplined manner as the Backlog.
 
-Periodically, the Lattice team goes through through both the Backlog and the Icebox, and tags stories using the 'community' label.   These are stories that are particularly well-suited to community contribution, and make excellent candidates for people to work on. 
+Periodically, the Lattice team goes through through both the Backlog and the Icebox, and tags stories using the 'community' label.   These are stories that are particularly well-suited to community contribution, and make excellent candidates for people to work on.
 
 # Copyright
 
