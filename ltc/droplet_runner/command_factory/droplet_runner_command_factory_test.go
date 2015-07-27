@@ -193,7 +193,7 @@ var _ = Describe("CommandFactory", func() {
 
 					zipFilePath := tmpFile.Name() + ".zip"
 
-					zipCommand := exec.Command("/usr/bin/zip", "-yr", zipFilePath, ".")
+					zipCommand := exec.Command("/usr/bin/zip", "-yr", zipFilePath, "aaa", "bbb", "ccc", "ddd", "some-ignored-file", "subfolder")
 					zipCommand.Dir = tmpDir
 					Expect(zipCommand.Run()).To(Succeed())
 					defer os.Remove(zipFilePath)
