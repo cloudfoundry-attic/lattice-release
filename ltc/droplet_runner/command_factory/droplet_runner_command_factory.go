@@ -124,10 +124,6 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 			Usage: "Working directory for container",
 			Value: "/home/vcap/app",
 		},
-		cli.BoolFlag{
-			Name:  "run-as-root, r",
-			Usage: "Runs in the context of the root user",
-		},
 		cli.StringSliceFlag{
 			Name:  "env, e",
 			Usage: "Environment variables (can be passed multiple times)",
@@ -387,7 +383,6 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 	memoryMBFlag := context.Int("memory-mb")
 	diskMBFlag := context.Int("disk-mb")
 	portsFlag := context.String("ports")
-	runAsRootFlag := context.Bool("run-as-root")
 	noMonitorFlag := context.Bool("no-monitor")
 	portMonitorFlag := context.Int("monitor-port")
 	urlMonitorFlag := context.String("monitor-url")
@@ -442,7 +437,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 
 	appEnvironmentParams := app_runner.AppEnvironmentParams{
 		EnvironmentVariables: factory.BuildAppEnvironment(envVarsFlag, appName),
-		Privileged:           runAsRootFlag,
+		Privileged:           true,
 		Monitor:              monitorConfig,
 		Instances:            instancesFlag,
 		CPUWeight:            cpuWeightFlag,

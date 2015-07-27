@@ -665,7 +665,6 @@ var _ = Describe("CommandFactory", func() {
 				"--disk-mb=12",
 				"--routes=4444:ninetyninety,9090:fourtyfourfourtyfour",
 				"--working-dir=/xxx",
-				"--run-as-root=true",
 				"--instances=11",
 				"--env=TIMEZONE=CST",
 				`--env=LANG="Chicago English"`,
@@ -738,7 +737,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(startCommandParam).To(Equal(""))
 			Expect(startArgsParam).To(BeNil())
 			Expect(appEnvParam.WorkingDir).To(Equal("/home/vcap/app"))
-			Expect(appEnvParam.Privileged).To(BeFalse())
+			Expect(appEnvParam.Privileged).To(BeTrue())
 			Expect(appEnvParam.Instances).To(Equal(1))
 			Expect(appEnvParam.Monitor).To(Equal(app_runner.MonitorConfig{
 				Method:  app_runner.PortMonitor,
