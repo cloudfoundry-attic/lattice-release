@@ -712,6 +712,7 @@ var _ = Describe("CommandFactory", func() {
 				"LANG":         `"Chicago English"`,
 				"COLOR":        "Black",
 				"UNSET":        "",
+				"MEMORY_LIMIT": "12M",
 			}))
 			Expect(appEnvParam.RouteOverrides).To(ContainExactly(app_runner.RouteOverrides{
 				app_runner.RouteOverride{HostnamePrefix: "ninetyninety", Port: 4444},
@@ -746,6 +747,7 @@ var _ = Describe("CommandFactory", func() {
 			}))
 			Expect(appEnvParam.EnvironmentVariables).To(Equal(map[string]string{
 				"PROCESS_GUID": "droppy",
+				"MEMORY_LIMIT": "128M",
 			}))
 			Expect(appEnvParam.RouteOverrides).To(BeNil())
 		})

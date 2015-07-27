@@ -454,6 +454,8 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 		NoRoutes:             noRoutesFlag,
 	}
 
+	appEnvironmentParams.EnvironmentVariables["MEMORY_LIMIT"] = fmt.Sprintf("%dM", memoryMBFlag)
+
 	if err := factory.dropletRunner.LaunchDroplet(appName, dropletName, startCommand, startArgs, appEnvironmentParams); err != nil {
 		factory.UI.Say(fmt.Sprintf("Error launching app %s from droplet %s: %s", appName, dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)

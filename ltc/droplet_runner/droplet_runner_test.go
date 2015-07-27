@@ -193,15 +193,22 @@ var _ = Describe("DropletRunner", func() {
 			Expect(receptorRequest.LogGuid).To(Equal("task-name"))
 			Expect(receptorRequest.MetricsGuid).To(Equal("task-name"))
 			Expect(receptorRequest.RootFS).To(Equal("preloaded:cflinuxfs2"))
-			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{{
-				Name:  "CF_STACK",
-				Value: "cflinuxfs2",
-			}}))
+			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
+				receptor.EnvironmentVariable{
+					Name:  "CF_STACK",
+					Value: "cflinuxfs2",
+				},
+				receptor.EnvironmentVariable{
+					Name:  "MEMORY_LIMIT",
+					Value: "1024M",
+				},
+			}))
 			Expect(receptorRequest.LogSource).To(Equal("BUILD"))
 			Expect(receptorRequest.Domain).To(Equal("lattice"))
 			Expect(receptorRequest.Privileged).To(BeTrue())
 			Expect(receptorRequest.EgressRules).ToNot(BeNil())
 			Expect(receptorRequest.EgressRules).To(BeEmpty())
+			Expect(receptorRequest.MemoryMB).To(Equal(1024))
 		})
 
 		It("passes through user environment variables", func() {
@@ -225,6 +232,10 @@ var _ = Describe("DropletRunner", func() {
 				receptor.EnvironmentVariable{
 					Name:  "CF_STACK",
 					Value: "cflinuxfs2",
+				},
+				receptor.EnvironmentVariable{
+					Name:  "MEMORY_LIMIT",
+					Value: "1024M",
 				},
 				receptor.EnvironmentVariable{
 					Name:  "ENV_VAR",

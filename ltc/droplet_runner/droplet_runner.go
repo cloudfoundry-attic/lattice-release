@@ -20,8 +20,9 @@ import (
 )
 
 const (
-	DropletStack  = "cflinuxfs2"
-	DropletRootFS = "preloaded:" + DropletStack
+	DropletStack    = "cflinuxfs2"
+	DropletRootFS   = "preloaded:" + DropletStack
+	DropletMemoryMB = 128
 )
 
 //go:generate counterfeiter -o fake_droplet_runner/fake_droplet_runner.go . DropletRunner
@@ -189,6 +190,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 	}
 
 	environment["CF_STACK"] = DropletStack
+	environment["MEMORY_LIMIT"] = fmt.Sprintf("%dM", DropletMemoryMB)
 
 	createTaskParams := task_runner.NewCreateTaskParams(
 		action,
@@ -198,6 +200,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 		"BUILD",
 		environment,
 		[]models.SecurityGroupRule{},
+		DropletMemoryMB,
 	)
 
 	return dr.taskRunner.CreateTask(createTaskParams)
