@@ -66,6 +66,7 @@ var _ = Describe("TaskRunner", func() {
 					"CoSMo": "CRaMeR",
 				},
 				securityGroupRules,
+				128,
 			)
 		})
 
@@ -124,6 +125,7 @@ var _ = Describe("TaskRunner", func() {
 					"log-source",
 					nil,
 					securityGroupRules,
+					128,
 				)
 
 				err := taskRunner.CreateTask(createTaskParams)
