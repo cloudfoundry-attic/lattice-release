@@ -11,13 +11,13 @@ lattice_brain_path=/tmp/lattice-build/brain
 
 cp $lattice_brain_path/upstart/* /etc/init
 cp $lattice_brain_path/bin/* /usr/local/bin
-cp -a $lattice_brain_path/brain_health_check /var/lattice 
+cp -a $lattice_brain_path/brain_health_check /var/lattice
 
 mkdir -p /var/lattice/static-files
 
 pushd $lattice_brain_path/bin > /dev/null
     tar czf /var/lattice/static-files/healthcheck.tgz healthcheck
-    tar czf /var/lattice/static-files/lattice-cell-helpers.tgz builder launcher s3downloader s3uploader s3deleter
+    tar czf /var/lattice/static-files/lattice-cell-helpers.tgz builder launcher s3tool
 popd > /dev/null
 
 mkdir -p /var/lattice/config

@@ -26,7 +26,6 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry/noaa"
 	"github.com/codegangsta/cli"
-	"github.com/goamz/goamz/aws"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 
@@ -56,8 +55,6 @@ var (
 			showAppHelp(context.App.Writer, appHelpTemplate(), context.App)
 		}
 	}
-
-	awsRegion = aws.Region{Name: "riak-region-1", S3Endpoint: "http://s3.amazonaws.com"}
 )
 
 const (

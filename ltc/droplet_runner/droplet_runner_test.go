@@ -134,9 +134,9 @@ var _ = Describe("DropletRunner", func() {
 						To:   "/tmp",
 					},
 					&models.RunAction{
-						Path: "/tmp/s3downloader",
+						Path: "/tmp/s3tool",
 						Dir:  "/",
-						Args: []string{"access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.tgz", "/tmp/bits.tgz"},
+						Args: []string{"get", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.tgz", "/tmp/bits.tgz"},
 						User: "vcap",
 					},
 					&models.RunAction{
@@ -168,21 +168,21 @@ var _ = Describe("DropletRunner", func() {
 						User: "vcap",
 					},
 					&models.RunAction{
-						Path: "/tmp/s3uploader",
+						Path: "/tmp/s3tool",
 						Dir:  "/",
-						Args: []string{"access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/droplet.tgz", "/tmp/droplet"},
+						Args: []string{"put", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/droplet.tgz", "/tmp/droplet"},
 						User: "vcap",
 					},
 					&models.RunAction{
-						Path: "/tmp/s3uploader",
+						Path: "/tmp/s3tool",
 						Dir:  "/",
-						Args: []string{"access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/result.json", "/tmp/result.json"},
+						Args: []string{"put", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/result.json", "/tmp/result.json"},
 						User: "vcap",
 					},
 					&models.RunAction{
-						Path: "/tmp/s3deleter",
+						Path: "/tmp/s3tool",
 						Dir:  "/",
-						Args: []string{"access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.tgz"},
+						Args: []string{"delete", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.tgz"},
 						User: "vcap",
 					},
 				},
@@ -192,12 +192,10 @@ var _ = Describe("DropletRunner", func() {
 			Expect(receptorRequest.LogGuid).To(Equal("task-name"))
 			Expect(receptorRequest.MetricsGuid).To(Equal("task-name"))
 			Expect(receptorRequest.RootFS).To(Equal("preloaded:cflinuxfs2"))
-			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
-				receptor.EnvironmentVariable{
-					Name:  "CF_STACK",
-					Value: "cflinuxfs2",
-				},
-			}))
+			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{{
+				Name:  "CF_STACK",
+				Value: "cflinuxfs2",
+			}}))
 			Expect(receptorRequest.LogSource).To(Equal("BUILD"))
 			Expect(receptorRequest.Domain).To(Equal("lattice"))
 			Expect(receptorRequest.Privileged).To(BeTrue())
@@ -291,8 +289,9 @@ var _ = Describe("DropletRunner", func() {
 						To:   "/tmp",
 					},
 					&models.RunAction{
-						Path: "/tmp/s3downloader",
+						Path: "/tmp/s3tool",
 						Args: []string{
+							"get",
 							"access-key",
 							"secret-key",
 							"http://blob-host:7474",

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestS3downloader(t *testing.T) {
+func TestS3Tool(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "S3uploader Suite")
+	RunSpecs(t, "S3Tool Suite")
 }

@@ -112,9 +112,10 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				To:   "/tmp",
 			},
 			&models.RunAction{
-				Path: "/tmp/s3downloader",
+				Path: "/tmp/s3tool",
 				Dir:  "/",
 				Args: []string{
+					"get",
 					dr.config.BlobTarget().AccessKey,
 					dr.config.BlobTarget().SecretKey,
 					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
@@ -143,9 +144,10 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				User: "vcap",
 			},
 			&models.RunAction{
-				Path: "/tmp/s3uploader",
+				Path: "/tmp/s3tool",
 				Dir:  "/",
 				Args: []string{
+					"put",
 					dr.config.BlobTarget().AccessKey,
 					dr.config.BlobTarget().SecretKey,
 					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
@@ -156,9 +158,10 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				User: "vcap",
 			},
 			&models.RunAction{
-				Path: "/tmp/s3uploader",
+				Path: "/tmp/s3tool",
 				Dir:  "/",
 				Args: []string{
+					"put",
 					dr.config.BlobTarget().AccessKey,
 					dr.config.BlobTarget().SecretKey,
 					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
@@ -169,9 +172,10 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				User: "vcap",
 			},
 			&models.RunAction{
-				Path: "/tmp/s3deleter",
+				Path: "/tmp/s3tool",
 				Dir:  "/",
 				Args: []string{
+					"delete",
 					dr.config.BlobTarget().AccessKey,
 					dr.config.BlobTarget().SecretKey,
 					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
@@ -241,8 +245,9 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 					To:   "/tmp",
 				},
 				&models.RunAction{
-					Path: "/tmp/s3downloader",
+					Path: "/tmp/s3tool",
 					Args: []string{
+						"get",
 						dr.config.BlobTarget().AccessKey,
 						dr.config.BlobTarget().SecretKey,
 						fmt.Sprintf("http://%s:%d", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
