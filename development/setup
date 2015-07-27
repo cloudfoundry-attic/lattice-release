@@ -4,12 +4,17 @@ set -e
 
 LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd)
 DIEGO_VERSION=${1-`cat $LATTICE_DIR/DIEGO_VERSION`}
+CF_VERSION=`cat $LATTICE_DIR/development/CF_VERSION`
 
 source $LATTICE_DIR/development/env
 
 mkdir -p $LATTICE_DIR/build
 pushd $LATTICE_DIR/build >/dev/null
-  [ ! -d "cf-release" ] && git clone git@github.com:cloudfoundry/cf-release.git -b runtime-passed
+  if [ ! -d "cf-release" ]; then
+    git clone git@github.com:cloudfoundry/cf-release.git -b "$CF_VERSION"
+  else
+    ( cd cf-release && git reset --hard && git checkout "$CF_VERSION" && git clean -xffd )
+  fi
   ( cd cf-release && ./update )
 
   if [ ! -d "diego-release" ]; then
