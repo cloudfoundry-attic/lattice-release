@@ -5,20 +5,17 @@ set -e
 source $(dirname $0)/../helpers/build_ltc_helpers
 
 stage_version_files() {
-    # LATTICE_SRC_PATH=$(dirname $0)/../..
-    # DIEGO_RELEASE_PATH=$(dirname $0)/../../build/diego-release
-
     LATTICE_SRC_PATH=/run
     DIEGO_RELEASE_PATH=/run/build/diego-release
 
-    # set +e
     git_describe_lattice
     git_describe_diego
-    # set -e
+    get_cf_version
 
     echo "Branding tarball with version $lattice_version (diego $diego_version)"
     echo $lattice_version > /run/build/lattice-build/common/LATTICE_VERSION
     echo $diego_version > /run/build/lattice-build/common/DIEGO_VERSION
+    echo $cf_version > /run/build/lattice-build/common/CF_VERSION
 }
 
 pushd /run/build/cf-release/src/loggregator

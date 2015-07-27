@@ -4,7 +4,7 @@ set -e
 
 LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd)
 DIEGO_VERSION=${1-`cat $LATTICE_DIR/DIEGO_VERSION`}
-CF_VERSION=`cat $LATTICE_DIR/development/CF_VERSION`
+CF_VERSION=${2-`cat $LATTICE_DIR/CF_VERSION`}
 
 source $LATTICE_DIR/development/env
 

@@ -51,6 +51,12 @@ get_diego_version() {
     popd > /dev/null
 }
 
+get_cf_version() {
+    pushd $LATTICE_SRC_PATH/build/cf-release > /dev/null
+        cf_version=$(git rev-parse HEAD)
+    popd > /dev/null
+}
+
 git_describe_lattice() {
     if [ -z "${LATTICE_RELEASE_VERSION}" ]; then
         pushd $LATTICE_SRC_PATH > /dev/null
@@ -179,6 +185,7 @@ generate_ltc_tarball() {
 bump_lattice_version() {
     git_describe_lattice
     git_describe_diego
+    get_cf_version
 
     pushd $LATTICE_SRC_PATH > /dev/null
         previous_lattice_version=$(cat Version)
@@ -188,16 +195,17 @@ bump_lattice_version() {
         echo "Updating Version file: $previous_lattice_version -> $new_lattice_version"
 
         echo "$diego_version" > DIEGO_VERSION
+        echo "$cf_version" > CF_VERSION
 
         git add Version
         git add DIEGO_VERSION
+        git add CF_VERSION
 
         git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
 
         + Bump Version Files
 
         Diego Release: $diego_version
-        Diego Release Git SHA: $diego_release_git_sha
 
         $deliver_stories_message
 

@@ -99,12 +99,14 @@ bump_unstable_lattice() {
 repackage_unstable_lattice_tar() {
     get_lattice_version
     get_diego_version
+    get_cf_version
 
     mkdir -pv ~/lattice-tmp
     pushd ~/lattice-tmp > /dev/null
         tar xzf $lattice_tar_path
         echo "$lattice_version" > lattice-build/common/LATTICE_VERSION
         echo "$diego_version" > lattice-build/common/DIEGO_VERSION
+        echo "$cf_version" > lattice-build/common/CF_VERSION
 
         tar czf lattice.tgz lattice-build
         cp -vf lattice.tgz $lattice_artifacts_staging_folder

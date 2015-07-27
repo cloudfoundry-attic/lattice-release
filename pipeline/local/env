@@ -1,7 +1,7 @@
 # Assumes:  CI_DIR is set.
 
-export GO_REVISION_DIEGO_RELEASE=646ffc1250292a6d7e5a3eec9e8721e5abe800e6
-export GO_REVISION_CF_RELEASE=3a825255e80e1441a1428c07f40b5752640571af
+export GO_REVISION_DIEGO_RELEASE=a4a6ca6756f59ff6e0a5b478b9ec4350c360cb89
+export GO_REVISION_CF_RELEASE=8a4f7526ae1c9957f3b3bbda7981cefeb195f09f
 export GOPATH=$CI_DIR/lattice/build/diego-release
 export PATH=$GOPATH/bin:$PATH
 export DOCKER_IMAGE=cloudfoundry/lattice-pipeline
