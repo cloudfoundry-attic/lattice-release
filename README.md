@@ -93,9 +93,8 @@ By default, `vagrant up` will fetch the latest Lattice binary tarball.  To build
 ```bash
     $ git clone git@github.com:cloudfoundry-incubator/lattice.git -b develop # may be unstable!
     $ cd lattice
-    $ development/setup
-    $ development/build
-    $ development/run
+    $ development/setup && development/build && development/run
+    $ source development/env
 ```
 
 > More information on developing for Lattice can be found on the [Development Readme](development/README.md).

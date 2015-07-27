@@ -37,11 +37,16 @@ If you have not developed a golang project before, please see the [Golang docs](
     $ ltc test -v
 ```
 
-### Clean up
+### Destroy everything
 
 ```bash
-    $ development/clean
+    $ development/teardown
 ```
+
+Running `development/setup` subsequent times will clean and re-sync your build directory.
+
+Running `development/teardown` will delete the `build` directory and destroy the running vagrant box. It is destructive and unnecessary
+to run `development/teardown` after build.
 
 ## Dependency Management
 

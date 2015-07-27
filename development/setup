@@ -3,21 +3,24 @@
 set -e
 
 LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd)
+DIEGO_VERSION=${1-`cat $LATTICE_DIR/DIEGO_VERSION`}
 
 source $LATTICE_DIR/development/env
 
-if [ -d "$LATTICE_DIR/build" ]; then
-	echo "Please run development/clean to remove your existing build directory"
-	exit 1
-fi
-
-mkdir $LATTICE_DIR/build
+mkdir -p $LATTICE_DIR/build
 pushd $LATTICE_DIR/build >/dev/null
-  git clone git@github.com:cloudfoundry/cf-release.git -b runtime-passed
+  [ ! -d "cf-release" ] && git clone git@github.com:cloudfoundry/cf-release.git -b runtime-passed
   ( cd cf-release && ./update )
-  git clone git@github.com:cloudfoundry-incubator/diego-release.git -b ${1-`cat $LATTICE_DIR/DIEGO_VERSION`}
+
+  if [ ! -d "diego-release" ]; then
+    git clone git@github.com:cloudfoundry-incubator/diego-release.git -b "$DIEGO_VERSION"
+  else
+    rm -f diego-release/src/github.com/cloudfoundry-incubator/lattice
+    ( cd diego-release && git reset --hard && git checkout "$DIEGO_VERSION" && git clean -xffd )
+  fi
   ( cd diego-release && ./scripts/update )
-  rm -r $GOPATH/src/github.com/docker/docker
+
+  rm -rf $GOPATH/src/github.com/docker/docker
 popd >/dev/null
 
 go get github.com/dajulia3/godep
@@ -25,7 +28,7 @@ go get github.com/onsi/ginkgo/ginkgo
 go get github.com/maxbrunsfeld/counterfeiter
 
 pushd $GOPATH/src/github.com/cloudfoundry-incubator >/dev/null
-  ln -s ../../../../.. lattice
+  ln -sfh ../../../../.. lattice
 
   pushd lattice >/dev/null
     go get -v ./cell-helpers/...
