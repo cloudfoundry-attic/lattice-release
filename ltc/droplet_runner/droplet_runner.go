@@ -99,7 +99,7 @@ func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
 		return err
 	}
 
-	return dr.blobStore.Upload(path.Join(dropletName, "bits.tgz"), uploadFile)
+	return dr.blobStore.Upload(path.Join(dropletName, "bits.zip"), uploadFile)
 }
 
 func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string) error {
@@ -121,8 +121,8 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 					dr.config.BlobTarget().SecretKey,
 					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
 					dr.config.BlobTarget().BucketName,
-					path.Join(dropletName, "bits.tgz"),
-					"/tmp/bits.tgz",
+					path.Join(dropletName, "bits.zip"),
+					"/tmp/bits.zip",
 				},
 				User: "vcap",
 			},
@@ -133,9 +133,9 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				User: "vcap",
 			},
 			&models.RunAction{
-				Path: "/bin/tar",
-				Dir:  "/",
-				Args: []string{"-C", "/tmp/app", "-xf", "/tmp/bits.tgz"},
+				Path: "/usr/bin/unzip",
+				Dir:  "/tmp/app",
+				Args: []string{"-q", "/tmp/bits.zip"},
 				User: "vcap",
 			},
 			&models.RunAction{
@@ -181,7 +181,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 					dr.config.BlobTarget().SecretKey,
 					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
 					dr.config.BlobTarget().BucketName,
-					path.Join(dropletName, "bits.tgz"),
+					path.Join(dropletName, "bits.zip"),
 				},
 				User: "vcap",
 			},

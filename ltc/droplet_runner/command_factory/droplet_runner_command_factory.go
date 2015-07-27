@@ -1,7 +1,7 @@
 package command_factory
 
 import (
-	"archive/tar"
+	"archive/zip"
 	"errors"
 	"fmt"
 	"io"
@@ -302,9 +302,9 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 		return
 	}
 
-	archivePath, err := factory.makeTar(pathFlag)
+	archivePath, err := factory.makeZip(pathFlag)
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error tarring %s: %s", pathFlag, err))
+		factory.UI.Say(fmt.Sprintf("Error archiving %s: %s", pathFlag, err))
 		factory.ExitHandler.Exit(exit_codes.FileSystemError)
 		return
 	}
@@ -522,18 +522,19 @@ func (factory *DropletRunnerCommandFactory) exportDroplet(context *cli.Context) 
 	factory.UI.SayLine(fmt.Sprintf("Droplet '%s' exported to %s and %s.", dropletName, dropletPath, metadataPath))
 }
 
-func (factory *DropletRunnerCommandFactory) makeTar(contentsPath string) (string, error) {
+func (factory *DropletRunnerCommandFactory) makeZip(contentsPath string) (string, error) {
 	tmpPath, err := ioutil.TempDir(os.TempDir(), "build-bits")
 	if err != nil {
 		return "", err
 	}
 
-	fileWriter, err := os.OpenFile(filepath.Join(tmpPath, "build-bits.tar"), os.O_CREATE|os.O_WRONLY, 0600)
+	fileWriter, err := os.OpenFile(filepath.Join(tmpPath, "build-bits.zip"), os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return "", err
 	}
-	tarWriter := tar.NewWriter(fileWriter)
-	defer tarWriter.Close()
+
+	zipWriter := zip.NewWriter(fileWriter)
+	defer zipWriter.Close()
 
 	contentsFileInfo, err := os.Stat(contentsPath)
 	if err != nil {
@@ -561,53 +562,67 @@ func (factory *DropletRunnerCommandFactory) makeTar(contentsPath string) (string
 				return nil
 			}
 
-			if err := addFileToTar(fileWriter, tarWriter, info, relativePath, fullPath); err != nil {
-				return err
+			if relativePath == fileWriter.Name() || relativePath == "." || relativePath == ".." {
+				return nil
+			}
+
+			if h, err := zip.FileInfoHeader(info); err == nil {
+				h.Name = relativePath
+
+				if info.IsDir() {
+					h.Name = h.Name + "/"
+				}
+
+				h.SetMode(info.Mode())
+
+				writer, err := zipWriter.CreateHeader(h)
+				if err != nil {
+					return err
+				}
+
+				if info.IsDir() {
+					return nil
+				}
+
+				li, err := os.Lstat(fullPath)
+				if err != nil {
+					return err
+				}
+				if li.Mode()&os.ModeSymlink == os.ModeSymlink {
+					return nil
+				}
+
+				fr, err := os.Open(fullPath)
+				if err != nil {
+					return err
+				}
+				defer fr.Close()
+				if _, err := io.Copy(writer, fr); err != nil {
+					return err
+				}
 			}
 
 			return nil
 		})
 	} else {
-		err = addFileToTar(fileWriter, tarWriter, contentsFileInfo, path.Base(contentsPath), contentsPath)
+		if validZip(contentsPath) {
+			return contentsPath, nil
+		} else {
+			return "", fmt.Errorf("%s must be a zip archive", path.Base(contentsPath))
+		}
 	}
 
 	return fileWriter.Name(), err
 }
 
-func addFileToTar(fileWriter *os.File, tarWriter *tar.Writer, info os.FileInfo, relativePath, fullPath string) error {
-	if relativePath == fileWriter.Name() || relativePath == "." || relativePath == ".." {
-		return nil
-	}
-
-	if h, err := tar.FileInfoHeader(info, fullPath); err == nil {
-		h.Name = relativePath
-		if err := tarWriter.WriteHeader(h); err != nil {
-			return err
-		}
-	}
-
-	if info.IsDir() {
-		return nil
-	}
-
-	li, err := os.Lstat(fullPath)
+func validZip(path string) bool {
+	reader, err := zip.OpenReader(path)
 	if err != nil {
-		return err
+		return false
+	} else {
+		reader.Close()
+		return true
 	}
-	if li.Mode()&os.ModeSymlink == os.ModeSymlink {
-		return nil
-	}
-
-	fr, err := os.Open(fullPath)
-	if err != nil {
-		return err
-	}
-	defer fr.Close()
-	if _, err := io.Copy(tarWriter, fr); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (factory *DropletRunnerCommandFactory) parsePortsFromArgs(portsFlag string) ([]uint16, error) {

@@ -1,10 +1,11 @@
 package command_factory_test
 
 import (
-	"archive/tar"
+	"archive/zip"
 	"errors"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"time"
@@ -86,7 +87,7 @@ var _ = Describe("CommandFactory", func() {
 			)
 
 			BeforeEach(func() {
-				tmpDir, err = ioutil.TempDir(os.TempDir(), "tar_contents")
+				tmpDir, err = ioutil.TempDir(os.TempDir(), "zip_contents")
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "aaa"), []byte("aaa contents"), 0700)).To(Succeed())
@@ -112,7 +113,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(os.RemoveAll(tmpDir)).To(Succeed())
 			})
 
-			It("tars up current working folder and uploads as the droplet name", func() {
+			It("zips up current working folder and uploads as the droplet name", func() {
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
 
 				Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
@@ -121,94 +122,187 @@ var _ = Describe("CommandFactory", func() {
 				Expect(dropletName).To(Equal("droplet-name"))
 
 				Expect(uploadPath).ToNot(BeNil())
-				Expect(uploadPath).To(HaveSuffix(".tar"))
+				Expect(uploadPath).To(HaveSuffix(".zip"))
 
 				buffer := make([]byte, 12)
-				file, err := os.Open(uploadPath)
-				Expect(err).ToNot(HaveOccurred())
-				tarReader := tar.NewReader(file)
-
-				h, err := tarReader.Next()
+				zipReader, err := zip.OpenReader(uploadPath)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(h.FileInfo().Name()).To(Equal("aaa"))
+
+				Expect(zipReader.File).To(HaveLen(6))
+
+				h := zipReader.File[0].FileHeader
+				f, err := zipReader.File[0].Open()
+				Expect(err).NotTo(HaveOccurred())
+				defer f.Close()
+				Expect(h.Name).To(Equal("aaa"))
 				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0700)))
-				Expect(tarReader.Read(buffer)).To(Equal(12))
+				Expect(f.Read(buffer)).To(Equal(12))
 				Expect(string(buffer)).To(Equal("aaa contents"))
 
-				h, err = tarReader.Next()
+				h = zipReader.File[1].FileHeader
+				f, err = zipReader.File[1].Open()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(h.FileInfo().Name()).To(Equal("bbb"))
+				defer f.Close()
+				Expect(h.Name).To(Equal("bbb"))
 				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0750)))
-				Expect(tarReader.Read(buffer)).To(Equal(12))
+				Expect(f.Read(buffer)).To(Equal(12))
 				Expect(string(buffer)).To(Equal("bbb contents"))
 
-				h, err = tarReader.Next()
+				h = zipReader.File[2].FileHeader
+				f, err = zipReader.File[2].Open()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(h.FileInfo().Name()).To(Equal("ccc"))
+				defer f.Close()
+				Expect(h.Name).To(Equal("ccc"))
 				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
-				Expect(tarReader.Read(buffer)).To(Equal(12))
+				Expect(f.Read(buffer)).To(Equal(12))
 				Expect(string(buffer)).To(Equal("ccc contents"))
 
-				h, err = tarReader.Next()
+				h = zipReader.File[3].FileHeader
+				f, err = zipReader.File[3].Open()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(h.FileInfo().Name()).To(Equal("ddd"))
+				defer f.Close()
+				Expect(h.Name).To(Equal("ddd"))
 				Expect(h.FileInfo().Mode() & os.ModeSymlink).To(Equal(os.ModeSymlink))
-				_, err = tarReader.Read(buffer)
+				_, err = f.Read(buffer)
 				Expect(err).To(MatchError("EOF"))
 
-				h, err = tarReader.Next()
+				h = zipReader.File[4].FileHeader
+				f, err = zipReader.File[4].Open()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(h.FileInfo().Name()).To(Equal("subfolder"))
+				defer f.Close()
+				Expect(h.Name).To(Equal("subfolder/"))
 				Expect(h.FileInfo().IsDir()).To(BeTrue())
 				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(os.ModeDir | 0755)))
-				_, err = tarReader.Read(buffer)
+				_, err = f.Read(buffer)
 				Expect(err).To(MatchError("EOF"))
 
-				h, err = tarReader.Next()
+				h = zipReader.File[5].FileHeader
+				f, err = zipReader.File[5].Open()
 				Expect(err).NotTo(HaveOccurred())
-				Expect(h.FileInfo().Name()).To(Equal("sub"))
+				defer f.Close()
+				Expect(h.Name).To(Equal("subfolder/sub"))
 				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
-				Expect(tarReader.Read(buffer)).To(Equal(12))
+				Expect(f.Read(buffer)).To(Equal(12))
 				Expect(string(buffer)).To(Equal("sub contents"))
-
-				_, err = tarReader.Next()
-				Expect(err).To(HaveOccurred())
 			})
 
-			It("tars up a manually-specified single file and uploads as the droplet name", func() {
-				Expect(os.Chdir("/tmp")).To(Succeed())
+			Context("when a single file is passed to -p", func() {
+				It("uses it as the app bits if it's already a zip archive", func() {
+					tmpFile, err := ioutil.TempFile(os.TempDir(), "singlezip")
+					Expect(err).NotTo(HaveOccurred())
 
-				args := []string{
-					"droplet-name",
-					"http://some.url/for/buildpack",
-					"-p",
-					path.Join(tmpDir, "ccc"),
-				}
+					zipFilePath := tmpFile.Name() + ".zip"
 
-				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
+					zipCommand := exec.Command("/usr/bin/zip", "-yr", zipFilePath, ".")
+					zipCommand.Dir = tmpDir
+					Expect(zipCommand.Run()).To(Succeed())
+					defer os.Remove(zipFilePath)
+					defer tmpFile.Close()
+					defer os.Remove(tmpFile.Name())
 
-				Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
-				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
-				dropletName, uploadPath := fakeDropletRunner.UploadBitsArgsForCall(0)
-				Expect(dropletName).To(Equal("droplet-name"))
+					args := []string{
+						"droplet-name",
+						"http://some.url/for/buildpack",
+						"-p",
+						zipFilePath,
+					}
 
-				Expect(uploadPath).ToNot(BeNil())
-				Expect(uploadPath).To(HaveSuffix(".tar"))
+					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
 
-				buffer := make([]byte, 12)
-				file, err := os.Open(uploadPath)
-				Expect(err).ToNot(HaveOccurred())
-				tarReader := tar.NewReader(file)
+					Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
+					Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
+					dropletName, uploadPath := fakeDropletRunner.UploadBitsArgsForCall(0)
+					Expect(dropletName).To(Equal("droplet-name"))
 
-				h, err := tarReader.Next()
-				Expect(err).NotTo(HaveOccurred())
-				Expect(h.FileInfo().Name()).To(Equal("ccc"))
-				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
-				Expect(tarReader.Read(buffer)).To(Equal(12))
-				Expect(string(buffer)).To(Equal("ccc contents"))
+					Expect(uploadPath).ToNot(BeNil())
+					Expect(uploadPath).To(HaveSuffix(".zip"))
 
-				_, err = tarReader.Next()
-				Expect(err).To(HaveOccurred())
+					buffer := make([]byte, 12)
+					zipReader, err := zip.OpenReader(uploadPath)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(zipReader.File).To(HaveLen(7))
+
+					h := zipReader.File[0].FileHeader
+					f, err := zipReader.File[0].Open()
+					Expect(err).NotTo(HaveOccurred())
+					defer f.Close()
+					Expect(h.Name).To(Equal("aaa"))
+					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0700)))
+					Expect(f.Read(buffer)).To(Equal(12))
+					Expect(string(buffer)).To(Equal("aaa contents"))
+
+					h = zipReader.File[1].FileHeader
+					f, err = zipReader.File[1].Open()
+					Expect(err).NotTo(HaveOccurred())
+					defer f.Close()
+					Expect(h.Name).To(Equal("bbb"))
+					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0750)))
+					Expect(f.Read(buffer)).To(Equal(12))
+					Expect(string(buffer)).To(Equal("bbb contents"))
+
+					h = zipReader.File[2].FileHeader
+					f, err = zipReader.File[2].Open()
+					Expect(err).NotTo(HaveOccurred())
+					defer f.Close()
+					Expect(h.Name).To(Equal("ccc"))
+					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
+					Expect(f.Read(buffer)).To(Equal(12))
+					Expect(string(buffer)).To(Equal("ccc contents"))
+
+					h = zipReader.File[3].FileHeader
+					f, err = zipReader.File[3].Open()
+					Expect(err).NotTo(HaveOccurred())
+					defer f.Close()
+					Expect(h.Name).To(Equal("ddd"))
+					Expect(h.FileInfo().Mode() & os.ModeSymlink).To(Equal(os.ModeSymlink))
+					Expect(f.Read(buffer)).To(Equal(3))
+					Expect(string(buffer)).To(Equal("ccc contents"))
+
+					h = zipReader.File[4].FileHeader
+					f, err = zipReader.File[4].Open()
+					Expect(err).NotTo(HaveOccurred())
+					defer f.Close()
+					Expect(h.Name).To(Equal("some-ignored-file"))
+					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
+					Expect(f.Read(buffer)).To(Equal(12))
+					Expect(string(buffer)).To(Equal("ignored cont"))
+
+					h = zipReader.File[5].FileHeader
+					f, err = zipReader.File[5].Open()
+					Expect(err).NotTo(HaveOccurred())
+					defer f.Close()
+					Expect(h.Name).To(Equal("subfolder/"))
+					Expect(h.FileInfo().IsDir()).To(BeTrue())
+					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(os.ModeDir | 0755)))
+					_, err = f.Read(buffer)
+					Expect(err).To(MatchError("EOF"))
+
+					h = zipReader.File[6].FileHeader
+					f, err = zipReader.File[6].Open()
+					Expect(err).NotTo(HaveOccurred())
+					defer f.Close()
+					Expect(h.Name).To(Equal("subfolder/sub"))
+					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
+					Expect(f.Read(buffer)).To(Equal(12))
+					Expect(string(buffer)).To(Equal("sub contents"))
+				})
+
+				It("prints an error if the file isn't a zip archive", func() {
+					args := []string{
+						"droplet-name",
+						"http://some.url/for/buildpack",
+						"-p",
+						path.Join(tmpDir, "ccc"),
+					}
+
+					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
+
+					Expect(outputBuffer).To(gbytes.Say("Error archiving .*: ccc must be a zip archive"))
+					Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
+					Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
+				})
 			})
 
 			It("passes through environment variables from the command-line", func() {

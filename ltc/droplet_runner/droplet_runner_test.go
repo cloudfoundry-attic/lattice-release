@@ -53,10 +53,10 @@ var _ = Describe("DropletRunner", func() {
 	Describe("ListDroplets", func() {
 		It("returns a list of droplets in the blob store", func() {
 			fakeBlobStore.ListReturns([]blob_store.Blob{
-				{Path: "X/bits.tgz", Created: time.Unix(1000, 0), Size: 100},
+				{Path: "X/bits.zip", Created: time.Unix(1000, 0), Size: 100},
 				{Path: "X/droplet.tgz", Created: time.Unix(2000, 0), Size: 200},
 				{Path: "X/result.json", Created: time.Unix(3000, 0), Size: 300},
-				{Path: "Y/bits.tgz"},
+				{Path: "Y/bits.zip"},
 				{Path: "X/Y/droplet.tgz"},
 				{Path: "droplet.tgz"},
 			}, nil)
@@ -96,7 +96,7 @@ var _ = Describe("DropletRunner", func() {
 
 				Expect(fakeBlobStore.UploadCallCount()).To(Equal(1))
 				path, contents := fakeBlobStore.UploadArgsForCall(0)
-				Expect(path).To(Equal("droplet-name/bits.tgz"))
+				Expect(path).To(Equal("droplet-name/bits.zip"))
 				Expect(ioutil.ReadAll(contents)).To(Equal([]byte("some contents")))
 			})
 
@@ -137,7 +137,7 @@ var _ = Describe("DropletRunner", func() {
 					&models.RunAction{
 						Path: "/tmp/s3tool",
 						Dir:  "/",
-						Args: []string{"get", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.tgz", "/tmp/bits.tgz"},
+						Args: []string{"get", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.zip", "/tmp/bits.zip"},
 						User: "vcap",
 					},
 					&models.RunAction{
@@ -147,9 +147,9 @@ var _ = Describe("DropletRunner", func() {
 						User: "vcap",
 					},
 					&models.RunAction{
-						Path: "/bin/tar",
-						Dir:  "/",
-						Args: []string{"-C", "/tmp/app", "-xf", "/tmp/bits.tgz"},
+						Path: "/usr/bin/unzip",
+						Dir:  "/tmp/app",
+						Args: []string{"-q", "/tmp/bits.zip"},
 						User: "vcap",
 					},
 					&models.RunAction{
@@ -183,7 +183,7 @@ var _ = Describe("DropletRunner", func() {
 					&models.RunAction{
 						Path: "/tmp/s3tool",
 						Dir:  "/",
-						Args: []string{"delete", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.tgz"},
+						Args: []string{"delete", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.zip"},
 						User: "vcap",
 					},
 				},
@@ -359,7 +359,7 @@ var _ = Describe("DropletRunner", func() {
 			config.Save()
 
 			fakeBlobStore.ListReturns([]blob_store.Blob{
-				{Path: "drippy/bits.tgz"},
+				{Path: "drippy/bits.zip"},
 				{Path: "drippy/droplet.tgz"},
 				{Path: "drippy/result.json"},
 			}, nil)
@@ -419,7 +419,7 @@ var _ = Describe("DropletRunner", func() {
 			Expect(fakeBlobStore.ListCallCount()).To(Equal(1))
 
 			Expect(fakeBlobStore.DeleteCallCount()).To(Equal(3))
-			Expect(fakeBlobStore.DeleteArgsForCall(0)).To(Equal("drippy/bits.tgz"))
+			Expect(fakeBlobStore.DeleteArgsForCall(0)).To(Equal("drippy/bits.zip"))
 			Expect(fakeBlobStore.DeleteArgsForCall(1)).To(Equal("drippy/droplet.tgz"))
 			Expect(fakeBlobStore.DeleteArgsForCall(2)).To(Equal("drippy/result.json"))
 

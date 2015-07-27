@@ -204,20 +204,6 @@ func (runner *integrationTestRunner) cloneRepo(timeout time.Duration, repoURL st
 	return tmpDir
 }
 
-func (runner *integrationTestRunner) uploadBits(timeout time.Duration, dropletName, bits string) {
-	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to upload %s to %s", bits, dropletName)))
-
-	command := runner.command("upload-bits", dropletName, bits)
-
-	session, err := gexec.Start(command, getStyledWriter("upload-bits"), getStyledWriter("upload-bits"))
-	Expect(err).ToNot(HaveOccurred())
-	expectExit(timeout, session)
-
-	Expect(session.Out).To(gbytes.Say("Successfully uploaded " + dropletName))
-
-	fmt.Fprintln(getStyledWriter("test"), "Uploaded", bits, "to", dropletName)
-}
-
 func (runner *integrationTestRunner) buildDroplet(timeout time.Duration, dropletName, buildpack, srcDir string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Submitting build of %s with buildpack %s", dropletName, buildpack)))
 
