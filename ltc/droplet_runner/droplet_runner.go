@@ -110,6 +110,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 			&models.DownloadAction{
 				From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
 				To:   "/tmp",
+				User: "vcap",
 			},
 			&models.RunAction{
 				Path: "/tmp/s3tool",
@@ -239,10 +240,12 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 				&models.DownloadAction{
 					From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
 					To:   "/tmp",
+					User: "vcap",
 				},
 				&models.DownloadAction{
 					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
 					To:   "/tmp",
+					User: "vcap",
 				},
 				&models.RunAction{
 					Path: "/tmp/s3tool",

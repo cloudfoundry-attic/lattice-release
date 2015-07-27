@@ -302,6 +302,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		Setup: &models.DownloadAction{
 			From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
 			To:   "/tmp",
+			User: "vcap",
 		},
 	})
 	if err != nil {

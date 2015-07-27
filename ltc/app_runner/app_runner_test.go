@@ -59,6 +59,7 @@ var _ = Describe("AppRunner", func() {
 				Setup: &models.DownloadAction{
 					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
 					To:   "/tmp",
+					User: "vcap",
 				},
 			}
 		})
@@ -101,6 +102,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(ok).To(BeTrue())
 			Expect(reqSetup.From).To(Equal("http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"))
 			Expect(reqSetup.To).To(Equal("/tmp"))
+			Expect(reqSetup.User).To(Equal("vcap"))
 
 			Expect(req.Action).To(BeAssignableToTypeOf(&models.RunAction{}))
 			reqAction, ok := req.Action.(*models.RunAction)
@@ -397,6 +399,7 @@ var _ = Describe("AppRunner", func() {
 				Setup: &models.DownloadAction{
 					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
 					To:   "/tmp",
+					User: "vcap",
 				},
 				Action: &models.RunAction{
 					Path: "/app-run-statement",
@@ -408,6 +411,7 @@ var _ = Describe("AppRunner", func() {
 					Path:      "/tmp/healthcheck",
 					Args:      []string{"-port", "2000"},
 					LogSource: "HEALTH",
+					User:      "vcap",
 				},
 			}
 

@@ -201,6 +201,7 @@ var _ = Describe("TaskRunner", func() {
 					From:      "/tmp/here",
 					To:        "/tmp/there",
 					LogSource: "MOVING",
+					User:      "downloader-man",
 				},
 				Annotation:            "blah blah",
 				CompletionCallbackURL: "http://sup.com",
@@ -217,8 +218,8 @@ var _ = Describe("TaskRunner", func() {
 				EnvironmentVariables:  environmentVariables,
 				EgressRules:           egressRules,
 			}
-			taskJson, marshalErr := json.Marshal(task)
-			Expect(marshalErr).ToNot(HaveOccurred())
+			taskJson, err := json.Marshal(task)
+			Expect(err).ToNot(HaveOccurred())
 
 			taskName, err := taskRunner.SubmitTask(taskJson)
 			Expect(err).NotTo(HaveOccurred())
@@ -237,6 +238,7 @@ var _ = Describe("TaskRunner", func() {
 				From:      "/tmp/here",
 				To:        "/tmp/there",
 				LogSource: "MOVING",
+				User:      "downloader-man",
 			}))
 			Expect(taskRequest.TaskGuid).To(Equal("lattice-task"))
 			Expect(taskRequest.Annotation).To(Equal("blah blah"))

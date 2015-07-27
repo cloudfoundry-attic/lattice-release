@@ -21,6 +21,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
+	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock/fakeclock"
 	"github.com/pivotal-golang/lager"
@@ -135,6 +136,13 @@ var _ = Describe("CommandFactory", func() {
 			}))
 			Expect(createAppParams.NoRoutes).To(BeFalse())
 			Expect(createAppParams.WorkingDir).To(Equal("/applications"))
+
+			Expect(createAppParams.Setup).To(BeAssignableToTypeOf(&models.DownloadAction{}))
+			reqSetup, ok := createAppParams.Setup.(*models.DownloadAction)
+			Expect(ok).To(BeTrue())
+			Expect(reqSetup.From).To(Equal("http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"))
+			Expect(reqSetup.To).To(Equal("/tmp"))
+			Expect(reqSetup.User).To(Equal("vcap"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Creating App: cool-web-app\n"))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
