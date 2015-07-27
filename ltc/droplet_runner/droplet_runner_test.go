@@ -200,7 +200,7 @@ var _ = Describe("DropletRunner", func() {
 				},
 				receptor.EnvironmentVariable{
 					Name:  "MEMORY_LIMIT",
-					Value: "1024M",
+					Value: "128M",
 				},
 			}))
 			Expect(receptorRequest.LogSource).To(Equal("BUILD"))
@@ -208,7 +208,7 @@ var _ = Describe("DropletRunner", func() {
 			Expect(receptorRequest.Privileged).To(BeTrue())
 			Expect(receptorRequest.EgressRules).ToNot(BeNil())
 			Expect(receptorRequest.EgressRules).To(BeEmpty())
-			Expect(receptorRequest.MemoryMB).To(Equal(1024))
+			Expect(receptorRequest.MemoryMB).To(Equal(128))
 		})
 
 		It("passes through user environment variables", func() {
@@ -235,7 +235,7 @@ var _ = Describe("DropletRunner", func() {
 				},
 				receptor.EnvironmentVariable{
 					Name:  "MEMORY_LIMIT",
-					Value: "1024M",
+					Value: "128M",
 				},
 				receptor.EnvironmentVariable{
 					Name:  "ENV_VAR",
