@@ -214,10 +214,6 @@
 			"Rev": "ce9bf21e3a5dd9e751030b4c55b00279c6d2fec0"
 		},
 		{
-			"ImportPath": "github.com/goamz/goamz/aws",
-			"Rev": "760aa2f8a491b6019dcf2df81d913927cb25fbc6"
-		},
-		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
 			"Rev": "64f27bf06efee53589314a6e5a4af34cdd85adf6"
 		},
