@@ -123,7 +123,7 @@ func (h *ActualLRPHandler) GetByProcessGuidAndIndex(w http.ResponseWriter, req *
 
 	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(processGuid, index)
 	if err != nil {
-		if e, ok := err.(bbs.Error); ok && e.GetType() == bbs.ResourceNotFound {
+		if e, ok := err.(*bbs.Error); ok && e.Equal(bbs.ErrResourceNotFound) {
 			writeJSONResponse(w, http.StatusNotFound, nil)
 		} else {
 			logger.Error("failed-to-fetch-actual-lrps-by-process-guid", err)
@@ -169,7 +169,7 @@ func (h *ActualLRPHandler) KillByProcessGuidAndIndex(w http.ResponseWriter, req 
 
 	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(processGuid, index)
 	if err != nil {
-		if e, ok := err.(bbs.Error); ok && e.GetType() == bbs.ResourceNotFound {
+		if e, ok := err.(*bbs.Error); ok && e.Equal(bbs.ErrResourceNotFound) {
 			responseErr := fmt.Errorf("process-guid '%s' does not exist or has no instance at index %d", processGuid, index)
 			logger.Error("no-instances-to-delete", responseErr)
 			writeJSONResponse(w, http.StatusNotFound, receptor.Error{
@@ -195,4 +195,3 @@ func (h *ActualLRPHandler) KillByProcessGuidAndIndex(w http.ResponseWriter, req 
 
 	w.WriteHeader(http.StatusNoContent)
 }
-

@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/tedsuo/ifrit/ginkgomon"
 
 	. "github.com/onsi/ginkgo"
@@ -15,7 +16,6 @@ import (
 )
 
 var _ = Describe("Desired LRP API", func() {
-
 	BeforeEach(func() {
 		receptorProcess = ginkgomon.Invoke(receptorRunner)
 	})
@@ -38,10 +38,10 @@ var _ = Describe("Desired LRP API", func() {
 		})
 
 		It("desires an LRP in the BBS", func() {
-			Eventually(func() ([]models.DesiredLRP, error) { return legacyBBS.DesiredLRPs(logger) }).Should(HaveLen(1))
-			desiredLRPs, err := legacyBBS.DesiredLRPs(logger)
+			Eventually(func() ([]*models.DesiredLRP, error) { return bbsClient.DesiredLRPs(models.DesiredLRPFilter{}) }).Should(HaveLen(1))
+			desiredLRPs, err := bbsClient.DesiredLRPs(models.DesiredLRPFilter{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(desiredLRPs[0].ProcessGuid).To(Equal(lrpToCreate.ProcessGuid))
+			Expect(desiredLRPs[0].GetProcessGuid()).To(Equal(lrpToCreate.ProcessGuid))
 		})
 
 		Context("when the desired LRP already exists", func() {
@@ -57,14 +57,14 @@ var _ = Describe("Desired LRP API", func() {
 		var lrpRequest receptor.DesiredLRPCreateRequest
 		var lrpResponse receptor.DesiredLRPResponse
 		var getErr error
-		var desiredLRP models.DesiredLRP
+		var desiredLRP *models.DesiredLRP
 
 		BeforeEach(func() {
 			lrpRequest = newValidDesiredLRPCreateRequest()
 			err := client.CreateDesiredLRP(lrpRequest)
 			Expect(err).NotTo(HaveOccurred())
 
-			desiredLRP, err = legacyBBS.DesiredLRPByProcessGuid(logger, lrpRequest.ProcessGuid)
+			desiredLRP, err = bbsClient.DesiredLRPByProcessGuid(lrpRequest.ProcessGuid)
 			Expect(err).NotTo(HaveOccurred())
 
 			lrpResponse, getErr = client.GetDesiredLRP(lrpRequest.ProcessGuid)
@@ -75,8 +75,12 @@ var _ = Describe("Desired LRP API", func() {
 		})
 
 		It("fetches the desired lrp with the matching process guid", func() {
-			expectedLRPResponse := serialization.DesiredLRPToResponse(desiredLRP)
-			Expect(lrpResponse).To(Equal(expectedLRPResponse))
+			expectedLRPResponse := serialization.DesiredLRPProtoToResponse(desiredLRP)
+			actualJSON, err := json.Marshal(lrpResponse)
+			Expect(err).NotTo(HaveOccurred())
+			expectedJSON, err := json.Marshal(expectedLRPResponse)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(actualJSON).To(MatchJSON(expectedJSON))
 		})
 	})
 
@@ -110,12 +114,12 @@ var _ = Describe("Desired LRP API", func() {
 		})
 
 		It("updates the LRP in the BBS", func() {
-			Eventually(func() ([]models.DesiredLRP, error) { return legacyBBS.DesiredLRPs(logger) }).Should(HaveLen(1))
-			desiredLRPs, err := legacyBBS.DesiredLRPs(logger)
+			Eventually(func() ([]*models.DesiredLRP, error) { return bbsClient.DesiredLRPs(models.DesiredLRPFilter{}) }).Should(HaveLen(1))
+			desiredLRPs, err := bbsClient.DesiredLRPs(models.DesiredLRPFilter{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(desiredLRPs[0].Instances).To(Equal(instances))
-			Expect(desiredLRPs[0].Annotation).To(Equal(annotation))
-			Expect(desiredLRPs[0].Routes).To(Equal(map[string]*json.RawMessage(routingInfo)))
+			Expect(desiredLRPs[0].GetInstances()).To(BeNumerically("==", instances))
+			Expect(desiredLRPs[0].GetAnnotation()).To(Equal(annotation))
+			Expect(*desiredLRPs[0].Routes).To(BeEquivalentTo(map[string]*json.RawMessage(routingInfo)))
 		})
 	})
 
@@ -207,7 +211,7 @@ func newValidDesiredLRPCreateRequest() receptor.DesiredLRPCreateRequest {
 		RootFS:      "some:rootfs",
 		Instances:   1,
 		Ports:       []uint16{1234, 5678},
-		Action: &models.RunAction{
+		Action: &oldmodels.RunAction{
 			User: "me",
 			Path: "/bin/bash",
 		},

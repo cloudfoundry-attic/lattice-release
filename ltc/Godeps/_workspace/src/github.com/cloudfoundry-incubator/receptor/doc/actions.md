@@ -74,6 +74,7 @@ The download action downloads an archive and extracts it to a specified location
         "artifact": "download name"
         "from": "http://some/endpoint",
         "to": "/some/container/path",
+        "user": "username",
         "cache_key": "some-cache-key",
         "log_source": "some-log-source"
     }
@@ -90,6 +91,10 @@ The url from which to fetch the archive.  The downloaded asset must be a gzipped
 #### `to` [required]
 
 The absolute path to extract the archive into.
+
+#### `user` [required]
+
+The user that downloads the artifact. Running as 'root' may be disabled by the operator managing Diego. If it is disabled, the `DownloadAction` will fail.  If the associated Task/LRP has the container-level `privileged` flag set to `true` then this will correspond to *real* root, otherwise the download will be run as a user-namespaced root.
 
 #### `cache_key` [optional]
 
@@ -109,6 +114,7 @@ The upload action uploads a file to the specified location:
         "artifact": "upload name"
         "to": "http://some/endpoint",
         "from": "/some/container/file",
+        "user": "username",
         "log_source": "some-log-source"
     }
 }
@@ -125,6 +131,10 @@ The absolute path to a *file* in the container.
 #### `to` [required]
 
 A URL to upload the file to.  The upload will be an HTTP POST.
+
+#### `user` [required]
+
+The user that uploads the artifact. Running as 'root' may be disabled by the operator managing Diego. If it is disabled, the `UploadAction` will fail.  If the associated Task/LRP has the container-level `privileged` flag set to `true` then this will correspond to *real* root, otherwise the upload will be run as a user-namespaced root.
 
 #### `log_source` [optional]
 

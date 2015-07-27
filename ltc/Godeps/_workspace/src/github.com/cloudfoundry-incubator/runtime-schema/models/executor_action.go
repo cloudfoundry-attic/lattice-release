@@ -10,22 +10,20 @@ import (
 
 var ErrInvalidActionType = errors.New("invalid action type")
 
-type ActionType string
-
 const (
-	ActionTypeDownload     ActionType = "download"
-	ActionTypeEmitProgress            = "emit_progress"
-	ActionTypeRun                     = "run"
-	ActionTypeUpload                  = "upload"
-	ActionTypeTimeout                 = "timeout"
-	ActionTypeTry                     = "try"
-	ActionTypeParallel                = "parallel"
-	ActionTypeSerial                  = "serial"
-	ActionTypeCodependent             = "codependent"
+	ActionTypeDownload     = "download"
+	ActionTypeEmitProgress = "emit_progress"
+	ActionTypeRun          = "run"
+	ActionTypeUpload       = "upload"
+	ActionTypeTimeout      = "timeout"
+	ActionTypeTry          = "try"
+	ActionTypeParallel     = "parallel"
+	ActionTypeSerial       = "serial"
+	ActionTypeCodependent  = "codependent"
 )
 
 type Action interface {
-	ActionType() ActionType
+	ActionType() string
 	Validator
 }
 
@@ -35,10 +33,12 @@ type DownloadAction struct {
 	To       string `json:"to"`
 	CacheKey string `json:"cache_key"`
 
+	User string `json:"user"`
+
 	LogSource string `json:"log_source,omitempty"`
 }
 
-func (a *DownloadAction) ActionType() ActionType {
+func (a *DownloadAction) ActionType() string {
 	return ActionTypeDownload
 }
 
@@ -53,6 +53,10 @@ func (a DownloadAction) Validate() error {
 		validationError = validationError.Append(ErrInvalidField{"to"})
 	}
 
+	if a.User == "" {
+		validationError = validationError.Append(ErrInvalidField{"user"})
+	}
+
 	if !validationError.Empty() {
 		return validationError
 	}
@@ -65,10 +69,12 @@ type UploadAction struct {
 	To       string `json:"to"`
 	From     string `json:"from"`
 
+	User string `json:"user"`
+
 	LogSource string `json:"log_source,omitempty"`
 }
 
-func (a *UploadAction) ActionType() ActionType {
+func (a *UploadAction) ActionType() string {
 	return ActionTypeUpload
 }
 
@@ -83,6 +89,10 @@ func (a UploadAction) Validate() error {
 		validationError = validationError.Append(ErrInvalidField{"from"})
 	}
 
+	if a.User == "" {
+		validationError = validationError.Append(ErrInvalidField{"user"})
+	}
+
 	if !validationError.Empty() {
 		return validationError
 	}
@@ -92,16 +102,16 @@ func (a UploadAction) Validate() error {
 
 type RunAction struct {
 	Path           string                `json:"path"`
-	Args           []string              `json:"args"`
+	Args           []string              `json:"args,omitempty"`
 	Dir            string                `json:"dir,omitempty"`
-	Env            []EnvironmentVariable `json:"env"`
+	Env            []EnvironmentVariable `json:"env,omitempty"`
 	ResourceLimits ResourceLimits        `json:"resource_limits"`
 	User           string                `json:"user"`
 
 	LogSource string `json:"log_source,omitempty"`
 }
 
-func (a *RunAction) ActionType() ActionType {
+func (a *RunAction) ActionType() string {
 	return ActionTypeRun
 }
 
@@ -139,7 +149,7 @@ type TimeoutAction struct {
 	LogSource string
 }
 
-func (a *TimeoutAction) ActionType() ActionType {
+func (a *TimeoutAction) ActionType() string {
 	return ActionTypeTimeout
 }
 
@@ -217,7 +227,7 @@ type TryAction struct {
 	LogSource string
 }
 
-func (a *TryAction) ActionType() ActionType {
+func (a *TryAction) ActionType() string {
 	return ActionTypeTry
 }
 
@@ -288,7 +298,7 @@ type ParallelAction struct {
 	LogSource string
 }
 
-func (a *ParallelAction) ActionType() ActionType {
+func (a *ParallelAction) ActionType() string {
 	return ActionTypeParallel
 }
 
@@ -360,7 +370,7 @@ type CodependentAction struct {
 	LogSource string
 }
 
-func (a *CodependentAction) ActionType() ActionType {
+func (a *CodependentAction) ActionType() string {
 	return ActionTypeCodependent
 }
 
@@ -432,7 +442,7 @@ type SerialAction struct {
 	LogSource string
 }
 
-func (a *SerialAction) ActionType() ActionType {
+func (a *SerialAction) ActionType() string {
 	return ActionTypeSerial
 }
 
@@ -514,7 +524,7 @@ type mEmitProgressAction struct {
 	ActionRaw *json.RawMessage `json:"action"`
 }
 
-func (a *EmitProgressAction) ActionType() ActionType {
+func (a *EmitProgressAction) ActionType() string {
 	return ActionTypeEmitProgress
 }
 
@@ -611,7 +621,7 @@ func Serial(actions ...Action) *SerialAction {
 	}
 }
 
-var actionMap = map[ActionType]Action{
+var actionMap = map[string]Action{
 	ActionTypeDownload:     &DownloadAction{},
 	ActionTypeEmitProgress: &EmitProgressAction{},
 	ActionTypeRun:          &RunAction{},
@@ -653,7 +663,7 @@ func MarshalAction(a Action) ([]byte, error) {
 
 	j := json.RawMessage(payload)
 
-	wrapped := map[ActionType]*json.RawMessage{
+	wrapped := map[string]*json.RawMessage{
 		a.ActionType(): &j,
 	}
 
@@ -682,7 +692,7 @@ func unmarshalActions(mActions []*json.RawMessage) ([]Action, error) {
 }
 
 func UnmarshalAction(data []byte) (Action, error) {
-	wrapped := make(map[ActionType]json.RawMessage)
+	wrapped := make(map[string]json.RawMessage)
 	err := json.Unmarshal(data, &wrapped)
 	if err != nil {
 		return nil, err

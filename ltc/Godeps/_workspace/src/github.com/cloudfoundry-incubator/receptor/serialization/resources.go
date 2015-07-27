@@ -18,6 +18,18 @@ func EnvironmentVariablesToModel(envVars []receptor.EnvironmentVariable) []oldmo
 	return out
 }
 
+func EnvironmentVariablesFromProto(envVars []*models.EnvironmentVariable) []receptor.EnvironmentVariable {
+	if envVars == nil {
+		return nil
+	}
+	out := make([]receptor.EnvironmentVariable, len(envVars))
+	for i, val := range envVars {
+		out[i].Name = val.GetName()
+		out[i].Value = val.GetValue()
+	}
+	return out
+}
+
 func EnvironmentVariablesFromModel(envVars []oldmodels.EnvironmentVariable) []receptor.EnvironmentVariable {
 	if envVars == nil {
 		return nil
@@ -65,4 +77,3 @@ func PortMappingToModel(ports []receptor.PortMapping) []oldmodels.PortMapping {
 	}
 	return out
 }
-

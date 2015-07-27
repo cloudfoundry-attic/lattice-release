@@ -24,7 +24,8 @@ var _ = Describe("LRPStartRequest", func() {
       "action": {"download": {
           "from": "http://example.com",
           "to": "/tmp/internet",
-          "cache_key": ""
+          "cache_key": "",
+					"user": "someone"
         }
       },
       "disk_mb": 512,
@@ -73,6 +74,7 @@ var _ = Describe("LRPStartRequest", func() {
 				Action: &models.DownloadAction{
 					From: "http://example.com",
 					To:   "/tmp/internet",
+					User: "someone",
 				},
 				ModificationTag: models.ModificationTag{
 					Epoch: "some-epoch",
@@ -126,7 +128,8 @@ var _ = Describe("LRPStartRequest", func() {
       "action": {"download": {
           "from": "http://example.com",
           "to": "/tmp/internet",
-          "cache_key": ""
+          "cache_key": "",
+					"user": "someone"
         }
       },
       "disk_mb": 512,
@@ -164,7 +167,8 @@ var _ = Describe("LRPStartRequest", func() {
       "action": {"download": {
           "from": "http://example.com",
           "to": "/tmp/internet",
-          "cache_key": ""
+          "cache_key": "",
+					"user": "someone"
         }
       },
       "disk_mb": 512,
@@ -201,7 +205,8 @@ var _ = Describe("LRPStartRequest", func() {
       "action": {"download": {
           "from": "http://example.com",
           "to": "/tmp/internet",
-          "cache_key": ""
+          "cache_key": "",
+					"user": "someone"
         }
       },
       "disk_mb": 512,

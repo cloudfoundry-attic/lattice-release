@@ -13,7 +13,7 @@ import (
 
 func New(bbs bbs.Client, receptorBBS legacybbs.ReceptorBBS, hub event.Hub, logger lager.Logger, username, password string, corsEnabled bool) http.Handler {
 	taskHandler := NewTaskHandler(receptorBBS, logger)
-	desiredLRPHandler := NewDesiredLRPHandler(receptorBBS, logger)
+	desiredLRPHandler := NewDesiredLRPHandler(bbs, receptorBBS, logger)
 	actualLRPHandler := NewActualLRPHandler(bbs, receptorBBS, logger)
 	cellHandler := NewCellHandler(receptorBBS, logger)
 	domainHandler := NewDomainHandler(bbs, receptorBBS, logger)

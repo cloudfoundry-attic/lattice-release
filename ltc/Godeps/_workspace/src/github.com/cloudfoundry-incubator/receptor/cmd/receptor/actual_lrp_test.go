@@ -150,7 +150,6 @@ var _ = Describe("Actual LRP API", func() {
 		It("has the correct data from the bbs", func() {
 			evacuatingLRPGroup, err := bbsClient.ActualLRPGroupByProcessGuidAndIndex(evacuatingLRPKey.GetProcessGuid(), int(evacuatingLRPKey.GetIndex()))
 			Expect(err).NotTo(HaveOccurred())
-
 			Expect(actualLRPResponses).To(ConsistOf(serialization.ActualLRPProtoToResponse(*evacuatingLRPGroup.GetEvacuating(), true)))
 		})
 	})

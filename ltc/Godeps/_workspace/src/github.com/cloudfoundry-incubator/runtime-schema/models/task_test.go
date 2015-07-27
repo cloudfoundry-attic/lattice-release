@@ -31,7 +31,8 @@ var _ = Describe("Task", func() {
 			"download":{
 				"from":"old_location",
 				"to":"new_location",
-				"cache_key":"the-cache-key"
+				"cache_key":"the-cache-key",
+				"user":"someone"
 			}
 		},
 		"result_file":"some-file.txt",
@@ -83,6 +84,7 @@ var _ = Describe("Task", func() {
 				From:     "old_location",
 				To:       "new_location",
 				CacheKey: "the-cache-key",
+				User:     "someone",
 			},
 			MemoryMB:         256,
 			DiskMB:           1024,
