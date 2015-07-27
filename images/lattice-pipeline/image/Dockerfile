@@ -16,6 +16,7 @@ RUN \
     python-dev \
     python-pip \
     wget \
+    zip \
     unzip \
     jq \
     ruby \
