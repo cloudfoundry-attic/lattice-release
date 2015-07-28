@@ -2,10 +2,7 @@ package cluster_test
 
 import (
 	"bufio"
-<<<<<<< HEAD
-=======
 	"encoding/json"
->>>>>>> Add tcp-routing integration test.
 	"errors"
 	"fmt"
 	"io"
@@ -27,12 +24,9 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
-<<<<<<< HEAD
-=======
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
->>>>>>> Add tcp-routing integration test.
 )
 
 var numCPU int
@@ -319,11 +313,7 @@ func (runner *clusterTestRunner) cloneRepo(timeout time.Duration, repoURL string
 	return tmpDir
 }
 
-<<<<<<< HEAD
 func (runner *clusterTestRunner) submitLrp(timeout time.Duration, jsonPath string) {
-=======
-func (runner *integrationTestRunner) submitLrp(timeout time.Duration, jsonPath string) {
->>>>>>> Add tcp-routing integration test.
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to submit lrp at %s", jsonPath)))
 
 	command := runner.command("submit-lrp", jsonPath)
@@ -337,11 +327,7 @@ func (runner *integrationTestRunner) submitLrp(timeout time.Duration, jsonPath s
 	fmt.Fprintln(getStyledWriter("test"), "Submitted lrp")
 }
 
-<<<<<<< HEAD
 func (runner *clusterTestRunner) uploadBits(timeout time.Duration, dropletName, bits string) {
-=======
-func (runner *integrationTestRunner) uploadBits(timeout time.Duration, dropletName, bits string) {
->>>>>>> Add tcp-routing integration test.
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to upload %s to %s", bits, dropletName)))
 
 	command := runner.command("upload-bits", dropletName, bits)
@@ -355,11 +341,7 @@ func (runner *integrationTestRunner) uploadBits(timeout time.Duration, dropletNa
 	fmt.Fprintln(getStyledWriter("test"), "Uploaded", bits, "to", dropletName)
 }
 
-<<<<<<< HEAD
 func (runner *clusterTestRunner) buildDroplet(timeout time.Duration, dropletName, buildpack, srcDir string) {
-=======
-func (runner *integrationTestRunner) buildDroplet(timeout time.Duration, dropletName, buildpack, srcDir string) {
->>>>>>> Add tcp-routing integration test.
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Submitting build of %s with buildpack %s", dropletName, buildpack)))
 
 	command := runner.command("build-droplet", dropletName, buildpack, "--timeout", timeout.String())
@@ -584,11 +566,7 @@ func makeTcpConnRequest(ip string, port uint16, req string) (string, error) {
 	return line, nil
 }
 
-<<<<<<< HEAD
 func makeGetRequestToURL(route string) (*http.Response, error) {
-=======
-func makeGetRequestToURL(url string) (*http.Response, error) {
->>>>>>> Add tcp-routing integration test.
 	routeWithScheme := fmt.Sprintf("http://%s", route)
 	resp, err := http.DefaultClient.Get(routeWithScheme)
 	if err != nil {
