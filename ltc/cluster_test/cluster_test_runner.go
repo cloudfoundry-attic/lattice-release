@@ -79,33 +79,29 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 	Describe("Lattice", func() {
 		Context("docker", func() {
 			Context("when desiring a docker-based LRP", func() {
-
-				var (
-					appName string
-					route   string
-				)
+				var appName, appRoute string
 
 				BeforeEach(func() {
 					appGuid, err := uuid.NewV4()
 					Expect(err).ToNot(HaveOccurred())
 
 					appName = fmt.Sprintf("lattice-test-app-%s", appGuid.String())
-					route = fmt.Sprintf("%s.%s", appName, runner.config.Target())
+					appRoute = fmt.Sprintf("%s.%s", appName, runner.config.Target())
 				})
 
 				AfterEach(func() {
 					runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
 
-					Eventually(errorCheckForRoute(route), timeout, 1).Should(HaveOccurred())
+					Eventually(errorCheckForRoute(appRoute), timeout, 1).Should(HaveOccurred())
 				})
 
-				It("eventually runs a docker app", func() {
+				It("should run a docker app", func() {
 					debugLogsStream := runner.streamDebugLogs(timeout)
 					defer func() { debugLogsStream.Terminate().Wait() }()
 
 					runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app", fmt.Sprintf("--timeout=%s", timeout.String()), "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Lattice User", "--quiet")
 
-					Eventually(errorCheckForRoute(route), timeout, 1).ShouldNot(HaveOccurred())
+					Eventually(errorCheckForRoute(appRoute), timeout, 1).ShouldNot(HaveOccurred())
 
 					Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("rep.*cell-\\d+"))
 					Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("garden-linux.*cell-\\d+"))
@@ -119,14 +115,31 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 					runner.scaleApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
 
 					instanceCountChan := make(chan int, numCpu)
-					go countInstances(route, instanceCountChan)
+					go countInstances(appRoute, instanceCountChan)
 					Eventually(instanceCountChan, timeout).Should(Receive(Equal(3)))
 				})
 
-				It("eventually runs a docker app with metadata from Docker Hub", func() {
+				It("should run a docker app using metadata from Docker Hub", func() {
 					runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app")
 
-					Eventually(errorCheckForRoute(route), timeout, .5).ShouldNot(HaveOccurred())
+					Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
+				})
+
+				Context("when the docker app requires escalated privileges to run", func() {
+					BeforeEach(func() {
+						appGuid, err := uuid.NewV4()
+						Expect(err).ToNot(HaveOccurred())
+
+						appName = fmt.Sprintf("nginx-app-%s", appGuid.String())
+						appRoute = fmt.Sprintf("%s.%s", appName, runner.config.Target())
+					})
+
+					It("should start the nginx app successfully", func() {
+						By("passing the `--run-as-root` flag to `ltc create`")
+						runner.createDockerApp(timeout, appName, "nginx", "--run-as-root")
+
+						Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
+					})
 				})
 			})
 		})
@@ -324,10 +337,10 @@ func getStyledWriter(prefix string) io.Writer {
 	return gexec.NewPrefixedWriter(fmt.Sprintf("[%s] ", colors.Yellow(prefix)), GinkgoWriter)
 }
 
-func errorCheckForRoute(route string) func() error {
-	fmt.Fprintln(getStyledWriter("test"), "Polling for the route", route)
+func errorCheckForRoute(appRoute string) func() error {
+	fmt.Fprintln(getStyledWriter("test"), "Polling for the appRoute", appRoute)
 	return func() error {
-		response, err := makeGetRequestToRoute(route)
+		response, err := makeGetRequestToRoute(appRoute)
 		if err != nil {
 			return err
 		}
@@ -362,9 +375,9 @@ func errorCheckURLExists(url string) func() error {
 	}
 }
 
-func countInstances(route string, instanceCountChan chan<- int) {
+func countInstances(appRoute string, instanceCountChan chan<- int) {
 	defer GinkgoRecover()
-	instanceIndexRoute := fmt.Sprintf("%s/index", route)
+	instanceIndexRoute := fmt.Sprintf("%s/index", appRoute)
 	instancesSeen := make(map[int]bool)
 
 	instanceIndexChan := make(chan int, numCpu)
@@ -380,10 +393,10 @@ func countInstances(route string, instanceCountChan chan<- int) {
 	}
 }
 
-func pollForInstanceIndices(route string, instanceIndexChan chan<- int) {
+func pollForInstanceIndices(appRoute string, instanceIndexChan chan<- int) {
 	defer GinkgoRecover()
 	for {
-		response, err := makeGetRequestToRoute(route)
+		response, err := makeGetRequestToRoute(appRoute)
 		Expect(err).To(BeNil())
 
 		responseBody, err := ioutil.ReadAll(response.Body)
@@ -398,8 +411,8 @@ func pollForInstanceIndices(route string, instanceIndexChan chan<- int) {
 	}
 }
 
-func makeGetRequestToRoute(route string) (*http.Response, error) {
-	routeWithScheme := fmt.Sprintf("http://%s", route)
+func makeGetRequestToRoute(appRoute string) (*http.Response, error) {
+	routeWithScheme := fmt.Sprintf("http://%s", appRoute)
 	resp, err := http.DefaultClient.Get(routeWithScheme)
 	if err != nil {
 		return nil, err
