@@ -43,6 +43,8 @@ type App struct {
 	Compiled time.Time
 	// List of all authors who contributed
 	Authors []Author
+	// Copyright of the binary if any
+	Copyright string
 	// Name of Author (Note: Use App.Authors, this is deprecated)
 	Author string
 	// Email of Author (Note: Use App.Authors, this is deprecated)
@@ -106,15 +108,14 @@ func (a *App) Run(arguments []string) (err error) {
 		fmt.Fprintln(a.Writer, nerr)
 		context := NewContext(a, set, nil)
 		ShowAppHelp(context)
-		fmt.Fprintln(a.Writer)
 		return nerr
 	}
 	context := NewContext(a, set, nil)
 
 	if err != nil {
-		fmt.Fprintf(a.Writer, "Incorrect Usage.\n\n")
-		ShowAppHelp(context)
+		fmt.Fprintln(a.Writer, "Incorrect Usage.")
 		fmt.Fprintln(a.Writer)
+		ShowAppHelp(context)
 		return err
 	}
 
@@ -198,17 +199,18 @@ func (a *App) RunAsSubcommand(ctx *Context) (err error) {
 
 	if nerr != nil {
 		fmt.Fprintln(a.Writer, nerr)
+		fmt.Fprintln(a.Writer)
 		if len(a.Commands) > 0 {
 			ShowSubcommandHelp(context)
 		} else {
 			ShowCommandHelp(ctx, context.Args().First())
 		}
-		fmt.Fprintln(a.Writer)
 		return nerr
 	}
 
 	if err != nil {
-		fmt.Fprintf(a.Writer, "Incorrect Usage.\n\n")
+		fmt.Fprintln(a.Writer, "Incorrect Usage.")
+		fmt.Fprintln(a.Writer)
 		ShowSubcommandHelp(context)
 		return err
 	}

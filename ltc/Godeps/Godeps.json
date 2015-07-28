@@ -9,43 +9,43 @@
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/aws",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.7.0",
+			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.7.0",
+			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.7.0",
+			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.7.0",
+			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/restxml",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.7.0",
+			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.7.0",
+			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.7.0",
+			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/s3",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.7.0",
+			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
 		},
 		{
 			"ImportPath": "github.com/bmizerany/pat",
@@ -77,8 +77,8 @@
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-122-g8cbee4b",
-			"Rev": "8cbee4b7192cea690c9f048e742e6b4c3525fd9e"
+			"Comment": "1.2.0-137-gbca61c4",
+			"Rev": "bca61c476e3c752594983e4c9bcd5f62fb09f157"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/api",

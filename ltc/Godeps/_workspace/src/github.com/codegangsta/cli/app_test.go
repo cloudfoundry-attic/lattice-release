@@ -627,6 +627,23 @@ func TestAppCommandNotFound(t *testing.T) {
 	expect(t, subcommandRun, false)
 }
 
+func TestGlobalFlag(t *testing.T) {
+	var globalFlag string
+	var globalFlagSet bool
+	app := cli.NewApp()
+	app.Flags = []cli.Flag{
+		cli.StringFlag{Name: "global, g", Usage: "global"},
+	}
+	app.Action = func(c *cli.Context) {
+		globalFlag = c.GlobalString("global")
+		globalFlagSet = c.GlobalIsSet("global")
+	}
+	app.Run([]string{"command", "-g", "foo"})
+	expect(t, globalFlag, "foo")
+	expect(t, globalFlagSet, true)
+
+}
+
 func TestGlobalFlagsInSubcommands(t *testing.T) {
 	subcommandRun := false
 	parentFlag := false
@@ -715,6 +732,36 @@ func TestApp_Run_CommandWithSubcommandHasHelpTopic(t *testing.T) {
 				t.Errorf("want help to contain %q, did not: \n%q", shouldContain, output)
 			}
 		}
+	}
+}
+
+func TestApp_Run_SubcommandFullPath(t *testing.T) {
+	app := cli.NewApp()
+	buf := new(bytes.Buffer)
+	app.Writer = buf
+
+	subCmd := cli.Command{
+		Name:  "bar",
+		Usage: "does bar things",
+	}
+	cmd := cli.Command{
+		Name:        "foo",
+		Description: "foo commands",
+		Subcommands: []cli.Command{subCmd},
+	}
+	app.Commands = []cli.Command{cmd}
+
+	err := app.Run([]string{"command", "foo", "bar", "--help"})
+	if err != nil {
+		t.Error(err)
+	}
+
+	output := buf.String()
+	if !strings.Contains(output, "foo bar - does bar things") {
+		t.Errorf("expected full path to subcommand: %s", output)
+	}
+	if !strings.Contains(output, "command foo bar [arguments...]") {
+		t.Errorf("expected full path to subcommand: %s", output)
 	}
 }
 
