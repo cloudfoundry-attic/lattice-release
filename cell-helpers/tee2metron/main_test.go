@@ -75,7 +75,7 @@ var _ = Describe("tee2metron", func() {
 		})
 		Context("when there is an no permission to execute", func() {
 			It("prints and error message and exits", func() {
-				chmodCmd := exec.Command("chmod", "u-x", chattyProcessPath)
+				chmodCmd := exec.Command("chmod", "a-x", chattyProcessPath)
 				_, chmodErr := gexec.Start(chmodCmd, GinkgoWriter, GinkgoWriter)
 				Expect(chmodErr).ToNot(HaveOccurred())
 				command := exec.Command(tee2MetronPath, "-dropsondeDestination=127.0.0.1:4000", "-sourceInstance=cell-123", chattyProcessPath, "chattyArg1", "chattyArg2", "-chattyFlag")
