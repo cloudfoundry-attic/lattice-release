@@ -24,11 +24,12 @@ type Blob struct {
 
 func New(blobTarget config.BlobTargetInfo) *BlobStore {
 	endpoint := fmt.Sprintf("http://%s:%d/", blobTarget.TargetHost, blobTarget.TargetPort)
+	awsRegion, awsS3ForcePathStyle := "riak-region-1", true
 	client := s3.New(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(blobTarget.AccessKey, blobTarget.SecretKey, ""),
-		Endpoint:         endpoint,
-		Region:           "riak-region-1",
-		S3ForcePathStyle: true,
+		Endpoint:         &endpoint,
+		Region:           &awsRegion,
+		S3ForcePathStyle: &awsS3ForcePathStyle,
 	})
 
 	client.Handlers.Sign.Clear()

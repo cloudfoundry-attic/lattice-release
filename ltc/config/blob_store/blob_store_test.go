@@ -2,6 +2,7 @@ package blob_store_test
 
 import (
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -29,14 +30,14 @@ var _ = Describe("BlobStore", func() {
 		fakeServerURL, err := url.Parse(fakeServer.URL())
 		Expect(err).NotTo(HaveOccurred())
 
-		proxyHostArr := strings.Split(fakeServerURL.Host, ":")
-		Expect(proxyHostArr).To(HaveLen(2))
-		proxyHostPort, err := strconv.Atoi(proxyHostArr[1])
+		serverHost, serverPort, err := net.SplitHostPort(fakeServerURL.Host)
+		Expect(err).NotTo(HaveOccurred())
+		proxyPort, err := strconv.Atoi(serverPort)
 		Expect(err).NotTo(HaveOccurred())
 
 		blobTargetInfo := config_package.BlobTargetInfo{
-			TargetHost: proxyHostArr[0],
-			TargetPort: uint16(proxyHostPort),
+			TargetHost: serverHost,
+			TargetPort: uint16(proxyPort),
 			AccessKey:  "V8GDQFR_VDOGM55IV8OH",
 			SecretKey:  "Wv_kltnl98hNWNdNwyQPYnFhK4gVPTxVS3NNMg==",
 			BucketName: "bucket",
@@ -52,7 +53,7 @@ var _ = Describe("BlobStore", func() {
 
 	Describe(".New", func() {
 		It("returns a BlobStore for the riak-region-1 region", func() {
-			Expect(blobStore.S3.Config.Region).To(Equal("riak-region-1"))
+			Expect(*blobStore.S3.Config.Region).To(Equal("riak-region-1"))
 		})
 
 		It("returns a BlobStore that signs requests and includes a content-length header", func() {
