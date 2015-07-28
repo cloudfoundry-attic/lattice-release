@@ -116,11 +116,12 @@ func putAction(args []string) {
 }
 
 func connect(accessKey, secretKey, url string) *s3.S3 {
+	awsRegion, awsS3ForcePathStyle := "riak-region-1", true
 	client := s3.New(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(accessKey, secretKey, ""),
-		Endpoint:         url,
-		Region:           "riak-region-1",
-		S3ForcePathStyle: true,
+		Endpoint:         &url,
+		Region:           &awsRegion,
+		S3ForcePathStyle: &awsS3ForcePathStyle,
 	})
 	client.Handlers.Sign.Clear()
 	client.Handlers.Sign.PushBack(aws.BuildContentLength)
