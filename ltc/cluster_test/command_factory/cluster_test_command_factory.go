@@ -3,19 +3,19 @@ package command_factory
 import (
 	"time"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test"
+	"github.com/cloudfoundry-incubator/lattice/ltc/cluster_test"
 	"github.com/codegangsta/cli"
 )
 
-type IntegrationTestCommandFactory struct {
-	integrationTestRunner integration_test.IntegrationTestRunner
+type ClusterTestCommandFactory struct {
+	clusterTestRunner cluster_test.ClusterTestRunner
 }
 
-func NewIntegrationTestCommandFactory(testRunner integration_test.IntegrationTestRunner) *IntegrationTestCommandFactory {
-	return &IntegrationTestCommandFactory{testRunner}
+func NewClusterTestCommandFactory(testRunner cluster_test.ClusterTestRunner) *ClusterTestCommandFactory {
+	return &ClusterTestCommandFactory{testRunner}
 }
 
-func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.Command {
+func (factory *ClusterTestCommandFactory) MakeClusterTestCommand() cli.Command {
 
 	testFlags := []cli.Flag{
 		cli.DurationFlag{
@@ -41,6 +41,6 @@ func (factory *IntegrationTestCommandFactory) MakeIntegrationTestCommand() cli.C
 	return cliCommand
 }
 
-func (factory *IntegrationTestCommandFactory) runIntegrationTests(context *cli.Context) {
-	factory.integrationTestRunner.Run(context.Duration("timeout"), context.Bool("verbose"))
+func (factory *ClusterTestCommandFactory) runIntegrationTests(context *cli.Context) {
+	factory.clusterTestRunner.Run(context.Duration("timeout"), context.Bool("verbose"))
 }

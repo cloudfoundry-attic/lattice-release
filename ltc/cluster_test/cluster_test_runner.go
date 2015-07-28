@@ -1,4 +1,4 @@
-package integration_test
+package cluster_test
 
 import (
 	"fmt"
@@ -29,11 +29,11 @@ func init() {
 	runtime.GOMAXPROCS(numCpu)
 }
 
-type IntegrationTestRunner interface {
+type ClusterTestRunner interface {
 	Run(timeout time.Duration, verbose bool)
 }
 
-type integrationTestRunner struct {
+type clusterTestRunner struct {
 	testingT          GinkgoTestingT
 	config            *config.Config
 	latticeCliHome    string
@@ -46,8 +46,8 @@ func (g *ginkgoTestingT) Fail() {
 	os.Exit(1)
 }
 
-func NewIntegrationTestRunner(config *config.Config, latticeCliHome string) IntegrationTestRunner {
-	return &integrationTestRunner{
+func NewClusterTestRunner(config *config.Config, latticeCliHome string) ClusterTestRunner {
+	return &clusterTestRunner{
 		config:            config,
 		testingT:          &ginkgoTestingT{},
 		latticeCliHome:    latticeCliHome,
@@ -55,7 +55,7 @@ func NewIntegrationTestRunner(config *config.Config, latticeCliHome string) Inte
 	}
 }
 
-func (runner *integrationTestRunner) Run(timeout time.Duration, verbose bool) {
+func (runner *clusterTestRunner) Run(timeout time.Duration, verbose bool) {
 	ginkgo_config.DefaultReporterConfig.Verbose = verbose
 	ginkgo_config.DefaultReporterConfig.SlowSpecThreshold = float64(45)
 	defineTheGinkgoTests(runner, timeout)
@@ -63,7 +63,7 @@ func (runner *integrationTestRunner) Run(timeout time.Duration, verbose bool) {
 	RunSpecs(runner.testingT, "Lattice Integration Tests")
 }
 
-func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) {
+func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 	BeforeSuite(func() {
 		err := runner.config.Load()
 		if err != nil {
@@ -185,7 +185,7 @@ func defineTheGinkgoTests(runner *integrationTestRunner, timeout time.Duration) 
 	})
 }
 
-func (runner *integrationTestRunner) cloneRepo(timeout time.Duration, repoURL string) string {
+func (runner *clusterTestRunner) cloneRepo(timeout time.Duration, repoURL string) string {
 	tmpDir, err := ioutil.TempDir("", "repo")
 	Expect(err).ToNot(HaveOccurred())
 
@@ -204,7 +204,7 @@ func (runner *integrationTestRunner) cloneRepo(timeout time.Duration, repoURL st
 	return tmpDir
 }
 
-func (runner *integrationTestRunner) buildDroplet(timeout time.Duration, dropletName, buildpack, srcDir string) {
+func (runner *clusterTestRunner) buildDroplet(timeout time.Duration, dropletName, buildpack, srcDir string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Submitting build of %s with buildpack %s", dropletName, buildpack)))
 
 	command := runner.command("build-droplet", dropletName, buildpack, "--timeout", timeout.String())
@@ -217,7 +217,7 @@ func (runner *integrationTestRunner) buildDroplet(timeout time.Duration, droplet
 	Expect(session.Out).To(gbytes.Say("Submitted build of " + dropletName))
 }
 
-func (runner *integrationTestRunner) launchDroplet(timeout time.Duration, appName, dropletName string) {
+func (runner *clusterTestRunner) launchDroplet(timeout time.Duration, appName, dropletName string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Launching droplet %s as %s", dropletName, appName)))
 
 	command := runner.command("launch-droplet", appName, dropletName)
@@ -229,7 +229,7 @@ func (runner *integrationTestRunner) launchDroplet(timeout time.Duration, appNam
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
 }
 
-func (runner *integrationTestRunner) listDroplets(timeout time.Duration, dropletName string) {
+func (runner *clusterTestRunner) listDroplets(timeout time.Duration, dropletName string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline("Attempting to find droplet in the list"))
 
 	command := runner.command("list-droplets")
@@ -243,7 +243,7 @@ func (runner *integrationTestRunner) listDroplets(timeout time.Duration, droplet
 	fmt.Fprintln(getStyledWriter("test"), "Found", dropletName, "in the list!")
 }
 
-func (runner *integrationTestRunner) removeDroplet(timeout time.Duration, dropletName string) {
+func (runner *clusterTestRunner) removeDroplet(timeout time.Duration, dropletName string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to remove droplet %s", dropletName)))
 
 	command := runner.command("remove-droplet", dropletName)
@@ -257,7 +257,7 @@ func (runner *integrationTestRunner) removeDroplet(timeout time.Duration, drople
 	fmt.Fprintln(getStyledWriter("test"), "Removed", dropletName)
 }
 
-func (runner *integrationTestRunner) createDockerApp(timeout time.Duration, appName string, args ...string) {
+func (runner *clusterTestRunner) createDockerApp(timeout time.Duration, appName string, args ...string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to create %s", appName)))
 	createArgs := append([]string{"create", appName}, args...)
 	command := runner.command(createArgs...)
@@ -271,7 +271,7 @@ func (runner *integrationTestRunner) createDockerApp(timeout time.Duration, appN
 	fmt.Fprintln(getStyledWriter("test"), "Yay! Created", appName)
 }
 
-func (runner *integrationTestRunner) streamLogs(timeout time.Duration, appName string, args ...string) *gexec.Session {
+func (runner *clusterTestRunner) streamLogs(timeout time.Duration, appName string, args ...string) *gexec.Session {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to stream logs from %s", appName)))
 	command := runner.command("logs", appName)
 
@@ -281,7 +281,7 @@ func (runner *integrationTestRunner) streamLogs(timeout time.Duration, appName s
 	return session
 }
 
-func (runner *integrationTestRunner) streamDebugLogs(timeout time.Duration, args ...string) *gexec.Session {
+func (runner *clusterTestRunner) streamDebugLogs(timeout time.Duration, args ...string) *gexec.Session {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline("Attempting to stream cluster debug logs"))
 	command := runner.command("debug-logs")
 
@@ -291,7 +291,7 @@ func (runner *integrationTestRunner) streamDebugLogs(timeout time.Duration, args
 	return session
 }
 
-func (runner *integrationTestRunner) scaleApp(timeout time.Duration, appName string, args ...string) {
+func (runner *clusterTestRunner) scaleApp(timeout time.Duration, appName string, args ...string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to scale %s", appName)))
 	command := runner.command("scale", appName, "3")
 
@@ -301,7 +301,7 @@ func (runner *integrationTestRunner) scaleApp(timeout time.Duration, appName str
 	expectExit(timeout, session)
 }
 
-func (runner *integrationTestRunner) removeApp(timeout time.Duration, appName string, args ...string) {
+func (runner *clusterTestRunner) removeApp(timeout time.Duration, appName string, args ...string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to remove app %s", appName)))
 	command := runner.command("remove", appName)
 
@@ -312,7 +312,7 @@ func (runner *integrationTestRunner) removeApp(timeout time.Duration, appName st
 }
 
 //TODO: add subcommand string param
-func (runner *integrationTestRunner) command(arg ...string) *exec.Cmd {
+func (runner *clusterTestRunner) command(arg ...string) *exec.Cmd {
 	command := exec.Command(runner.ltcExecutablePath, arg...)
 	appName := "APP_NAME=LATTICE-TEST-APP"
 	cliHome := fmt.Sprintf("LATTICE_CLI_HOME=%s", runner.latticeCliHome)

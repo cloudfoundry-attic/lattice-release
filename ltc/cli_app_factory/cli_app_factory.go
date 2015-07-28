@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/cluster_test"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
@@ -16,7 +17,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/cf_ignore"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
-	"github.com/cloudfoundry-incubator/lattice/ltc/integration_test"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
@@ -31,10 +31,10 @@ import (
 
 	app_examiner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory"
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
+	cluster_test_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/cluster_test/command_factory"
 	config_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
 	docker_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/command_factory"
 	droplet_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
-	integration_test_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/integration_test/command_factory"
 	logs_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
 	task_examiner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/command_factory"
 	task_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/task_runner/command_factory"
@@ -187,8 +187,8 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, exitHandler)
 
-	testRunner := integration_test.NewIntegrationTestRunner(config, ltcConfigRoot)
-	integrationTestCommandFactory := integration_test_command_factory.NewIntegrationTestCommandFactory(testRunner)
+	clusterTestRunner := cluster_test.NewClusterTestRunner(config, ltcConfigRoot)
+	clusterTestCommandFactory := cluster_test_command_factory.NewClusterTestCommandFactory(clusterTestRunner)
 
 	blobStore := blob_store.New(config.BlobTarget())
 
@@ -220,7 +220,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		taskExaminerCommandFactory.MakeTaskCommand(),
 		taskRunnerCommandFactory.MakeDeleteTaskCommand(),
 		taskRunnerCommandFactory.MakeCancelTaskCommand(),
-		integrationTestCommandFactory.MakeIntegrationTestCommand(),
+		clusterTestCommandFactory.MakeClusterTestCommand(),
 		appRunnerCommandFactory.MakeUpdateRoutesCommand(),
 		appExaminerCommandFactory.MakeVisualizeCommand(),
 		dropletRunnerCommandFactory.MakeBuildDropletCommand(),

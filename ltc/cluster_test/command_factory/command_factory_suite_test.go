@@ -9,5 +9,5 @@ import (
 
 func TestCommandFactory(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "IntegrationTest CommandFactory Suite")
+	RunSpecs(t, "ClusterTest CommandFactory Suite")
 }
