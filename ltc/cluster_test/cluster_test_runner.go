@@ -26,6 +26,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	"github.com/nu7hatch/gouuid"
 )
 
 var numCpu int
@@ -313,7 +314,7 @@ func (runner *clusterTestRunner) cloneRepo(timeout time.Duration, repoURL string
 	return tmpDir
 }
 
-func (runner *integrationTestRunner) submitLrp(timeout time.Duration, jsonPath string) {
+func (runner *clusterTestRunner) submitLrp(timeout time.Duration, jsonPath string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to submit lrp at %s", jsonPath)))
 
 	command := runner.command("submit-lrp", jsonPath)
@@ -327,7 +328,7 @@ func (runner *integrationTestRunner) submitLrp(timeout time.Duration, jsonPath s
 	fmt.Fprintln(getStyledWriter("test"), "Submitted lrp")
 }
 
-func (runner *integrationTestRunner) uploadBits(timeout time.Duration, dropletName, bits string) {
+func (runner *clusterTestRunner) uploadBits(timeout time.Duration, dropletName, bits string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to upload %s to %s", bits, dropletName)))
 
 	command := runner.command("upload-bits", dropletName, bits)
@@ -341,7 +342,7 @@ func (runner *integrationTestRunner) uploadBits(timeout time.Duration, dropletNa
 	fmt.Fprintln(getStyledWriter("test"), "Uploaded", bits, "to", dropletName)
 }
 
-func (runner *integrationTestRunner) buildDroplet(timeout time.Duration, dropletName, buildpack, srcDir string) {
+func (runner *clusterTestRunner) buildDroplet(timeout time.Duration, dropletName, buildpack, srcDir string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Submitting build of %s with buildpack %s", dropletName, buildpack)))
 
 	command := runner.command("build-droplet", dropletName, buildpack, "--timeout", timeout.String())
@@ -480,7 +481,7 @@ func errorCheckForConnection(ip string, port uint16) func() error {
 func errorCheckForRoute(route string) func() error {
 	fmt.Fprintln(getStyledWriter("test"), "Polling for the route", route)
 	return func() error {
-		response, err := makeGetRequestToRoute(appRoute)
+		response, err := makeGetRequestToRoute(route)
 		if err != nil {
 			return err
 		}
