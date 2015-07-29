@@ -5,32 +5,29 @@ set -e
 source $(dirname $0)/../helpers/build_ltc_helpers
 
 stage_version_files() {
-    LATTICE_SRC_PATH=/run
-    DIEGO_RELEASE_PATH=/run/build/diego-release
-
     git_describe_lattice
     git_describe_diego
     get_cf_version
 
     echo "Branding tarball with version $lattice_version (diego $diego_version)"
-    echo $lattice_version > /run/build/lattice-build/common/LATTICE_VERSION
-    echo $diego_version > /run/build/lattice-build/common/DIEGO_VERSION
-    echo $cf_version > /run/build/lattice-build/common/CF_VERSION
+    echo $lattice_version > $LATTICE_SRC_PATH/build/lattice-build/common/LATTICE_VERSION
+    echo $diego_version > $LATTICE_SRC_PATH/build/lattice-build/common/DIEGO_VERSION
+    echo $cf_version > $LATTICE_SRC_PATH/build/lattice-build/common/CF_VERSION
 }
 
-pushd /run/build/cf-release/src/loggregator
+pushd $LATTICE_SRC_PATH/build/cf-release/src/loggregator
    git submodule update --init --recursive
 popd
 
-/run/cluster/scripts/compile \
-    /run/build/lattice-build \
-    /run/build/diego-release \
-    /run/build/cf-release \
-    /run
+$LATTICE_SRC_PATH/cluster/scripts/compile \
+    $LATTICE_SRC_PATH/build/lattice-build \
+    $LATTICE_SRC_PATH/build/diego-release \
+    $LATTICE_SRC_PATH/build/cf-release \
+    $LATTICE_SRC_PATH
 
 stage_version_files
 
 echo "Creating lattice.tgz"
-pushd /run/build
+pushd $LATTICE_SRC_PATH/build
   tar czf lattice.tgz lattice-build
 popd

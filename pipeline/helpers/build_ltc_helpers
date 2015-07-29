@@ -46,7 +46,7 @@ get_lattice_version() {
 
 get_diego_version() {
     get_diego_release_git_sha
-    pushd $DIEGO_RELEASE_PATH > /dev/null
+    pushd $LATTICE_SRC_PATH/build/diego-release > /dev/null
         diego_version=$(git describe --tags $diego_release_git_sha)
     popd > /dev/null
 }
@@ -68,21 +68,20 @@ git_describe_lattice() {
 }
 
 git_describe_diego() {
-    pushd $DIEGO_RELEASE_PATH > /dev/null
+    pushd $LATTICE_SRC_PATH/build/diego-release > /dev/null
         diego_version=$(git describe --tags)
     popd > /dev/null
 }
 
 get_diego_release_git_sha() {
-    pushd $DIEGO_RELEASE_PATH > /dev/null
+    pushd $LATTICE_SRC_PATH/build/diego-release > /dev/null
         diego_release_git_sha="$(git rev-parse HEAD)" && echo "diego_release_git_sha=${diego_release_git_sha}"
     popd > /dev/null
 }
 
 construct_ltc_gopath() {
-
-    if [[ -z "$LATTICE_SRC_PATH" ]] || [[ -z "$DIEGO_RELEASE_PATH" ]]; then
-        echo "Must set LATTICE_SRC_PATH and DIEGO_RELEASE_PATH"
+    if [[ -z "$LATTICE_SRC_PATH" ]] || [[ -z "$LATTICE_SRC_PATH/build/diego-release" ]]; then
+        echo "Must set LATTICE_SRC_PATH and LATTICE_SRC_PATH/build/diego-release"
         exit 1
     fi
 
@@ -100,16 +99,16 @@ construct_ltc_gopath() {
 
     echo -n "Deleting .git folders that are diego-release submodules .."
     pushd $GOPATH > /dev/null
-        grep submodule $DIEGO_RELEASE_PATH/.gitmodules | awk -F\" '{ print $2"/.git" }' | xargs rm -rf
+        grep submodule $LATTICE_SRC_PATH/build/diego-release/.gitmodules | awk -F\" '{ print $2"/.git" }' | xargs rm -rf
     popd > /dev/null
     echo "DONE!"
 
-    echo -n "Copying $DIEGO_RELEASE_PATH/src/* into compilation GOPATH (Prefer Diego-Release dependencies over ltc's Godeps) .."
+    echo -n "Copying $LATTICE_SRC_PATH/build/diego-release/src/* into compilation GOPATH (Prefer Diego-Release dependencies over ltc's Godeps) .."
     ## locally, this copies all of lattice again because we usually develop lattice using diego-release as the GOPATH
-    rsync -a $DIEGO_RELEASE_PATH/src $GOPATH/ --exclude src/github.com/docker && echo "DONE!"
+    rsync -a $LATTICE_SRC_PATH/build/diego-release/src $GOPATH/ --exclude src/github.com/docker && echo "DONE!"
 
     echo -n "Copying over git modules for later godeps saves from constructed path .."
-    cp -af $DIEGO_RELEASE_PATH/.git* $GOPATH/ && echo "DONE!"
+    cp -af $LATTICE_SRC_PATH/build/diego-release/.git* $GOPATH/ && echo "DONE!"
 
     sync
 }

@@ -5,3 +5,4 @@ export GOBIN=$GOPATH/bin
 export PATH=$GOPATH/bin:$PATH
 export DOCKER_IMAGE=cloudfoundry/lattice-pipeline
 export PULL_DOCKER_IMAGE=false
+export LATTICE_SRC_PATH=/lattice

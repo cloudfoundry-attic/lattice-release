@@ -11,5 +11,5 @@ fi
 
 source $LATTICE_DIR/development/env
 
-DOCKER_MOUNT_DIR=$LATTICE_DIR $LATTICE_DIR/pipeline/helpers/run_with_docker /run/pipeline/01_compilation/compile_lattice_tar
+DOCKER_MOUNT_DIR=$LATTICE_DIR $LATTICE_DIR/pipeline/helpers/run_with_docker $LATTICE_SRC_PATH/pipeline/01_compilation/compile_lattice_tar
 mv -v $LATTICE_DIR/build/lattice.tgz $LATTICE_DIR/

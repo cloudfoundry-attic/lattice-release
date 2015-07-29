@@ -7,8 +7,7 @@ export PATH=$GOPATH/bin:$PATH
 export DOCKER_IMAGE=cloudfoundry/lattice-pipeline
 export PULL_DOCKER_IMAGE=false
 
-export LATTICE_SRC_PATH=/run
-export DIEGO_RELEASE_PATH=/run/build/diego-release
+export LATTICE_SRC_PATH=/lattice
 export DRY_RUN=1
 
 export LATTICE_WEBSITE_CLONE_URL=git@github.com:pivotal-cf-experimental/lattice-website.git

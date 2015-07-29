@@ -193,7 +193,7 @@ push_unstable_lattice() {
 }
 
 stage_pipeline_artifact() {
-    local pipeline_version_artifact_path="/run/pipeline_published_lattice_version"
+    local pipeline_version_artifact_path="$LATTICE_SRC_PATH/pipeline_published_lattice_version"
     pushd $LATTICE_SRC_PATH > /dev/null
         git checkout master
         cp -v Version $pipeline_version_artifact_path
@@ -201,7 +201,7 @@ stage_pipeline_artifact() {
 }
 
 copy_docs_to_lattice_website() {
-    local docspath="/run/build/docs-space"
+    local docspath="$LATTICE_SRC_PATH/build/docs-space"
 
     echo "Copy lattice docs to temp folder"
     mkdir -p $docspath/lattice
@@ -248,9 +248,9 @@ copy_docs_to_lattice_website() {
 
 source $(dirname $0)/../helpers/build_ltc_helpers
 
-lattice_tar_path=${1:-/run/build/lattice.tgz}
+lattice_tar_path=${1:-$LATTICE_SRC_PATH/build/lattice.tgz}
 
-lattice_artifacts_staging_folder="/run/lattice-unstable"
+lattice_artifacts_staging_folder="$LATTICE_SRC_PATH/lattice-unstable"
 rm -rfv $lattice_artifacts_staging_folder
 mkdir -pv $lattice_artifacts_staging_folder
 

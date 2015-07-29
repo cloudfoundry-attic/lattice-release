@@ -19,10 +19,9 @@ fi
 command_with_args="$@"
 echo "Running command with $@"
 
-docker run -a stdout -a stderr -w /run \
-  -v ${DOCKER_MOUNT_DIR-`pwd`}:/run \
+docker run -a stdout -a stderr -w $LATTICE_SRC_PATH \
+  -v ${DOCKER_MOUNT_DIR-`pwd`}:$LATTICE_SRC_PATH \
   -e LATTICE_SRC_PATH \
-  -e DIEGO_RELEASE_PATH \
   -e DRY_RUN \
   -e LATTICE_RELEASE_VERSION \
   -e LATTICE_WEBSITE_CLONE_URL \
