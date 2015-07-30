@@ -1,7 +1,7 @@
 #!/bin/bash
 
-access_key=''
-secret_key=''
+access_key='user'
+secret_key='pass'
 
 set -e
 
@@ -16,7 +16,7 @@ install_condenser() {
     /etc/init.d/lighttpd stop
 
     cp /tmp/lattice-build/common/webdav/lighttpd.conf /etc/lighttpd/lighttpd.conf
-    echo user:$(openssl passwd -crypt pass) > /var/lattice/etc/lighttpd.user
+    echo $access_key:$(openssl passwd -crypt $secret_key) > /var/lattice/etc/lighttpd.user
 
     /etc/init.d/lighttpd start
 
@@ -101,7 +101,7 @@ fi
 if [[ -n "$CONDENSER_ON" ]]; then
     ## output info to enable condenser
     printf '\n==================================\n'
-    printf 'Welcome to Condenser.  Please enable using: ltc target-blob %s:8980\n' $SYSTEM_IP
+    printf 'Welcome to Condenser.  Please enable using: ltc target-blob %s:8444\n' $SYSTEM_IP
     printf 'Access Key:  %s\n' $access_key
     printf 'Secret Key:  %s\n' $secret_key
     printf 'Bucket Name: condenser-bucket\n'

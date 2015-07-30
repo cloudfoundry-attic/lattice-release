@@ -55,17 +55,12 @@ start_lattice_vagrant
 source $LATTICE_DIR/pipeline/02_test/helpers/setup_whetstone
 setup_whetstone
 
-pushd $LATTICE_DIR
-    blob_access_key=$(vagrant ssh -c 'egrep "^admin\.key=" /etc/riak-cs/riak-cs.conf' 2> /dev/null | grep '^admin.key=' | sed 's/^admin.key=//')
-    blob_secret_key=$(vagrant ssh -c 'egrep "^admin\.secret=" /etc/riak-cs/riak-cs.conf' 2> /dev/null | grep '^admin.secret=' | sed 's/^admin.secret=//')
-popd
-
 printf "{\"target\":\"%s\",\"blob_target_info\":{\"host\":\"%s\",\"port\":%d,\"access_key\":\"%s\",\"secret_key\":\"%s\",\"bucket_name\":\"%s\"}}" \
     "$SYSTEM_DOMAIN" \
     "$SYSTEM_IP" \
-    8980 \
-    "${blob_access_key%%[[:space:]]}" \
-    "${blob_secret_key%%[[:space:]]}" \
+    8444 \
+    "user" \
+    "pass" \
     "condenser-bucket" | json_pp \
     > $LATTICE_CLI_HOME/.lattice/config.json
 sync

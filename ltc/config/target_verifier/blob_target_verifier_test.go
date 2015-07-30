@@ -40,30 +40,20 @@ var _ = Describe("TargetVerifier", func() {
 				TargetPort: uint16(proxyHostPort),
 				AccessKey:  "some-access-key",
 				SecretKey:  "some-secret-key",
-				BucketName: "bucket",
 			}
 
 			httpHeader := http.Header{
 				http.CanonicalHeaderKey("Content-Type"): []string{"application/xml"},
 			}
 			fakeServer.AppendHandlers(ghttp.CombineHandlers(
-				ghttp.VerifyRequest("GET", "/bucket"),
+				ghttp.VerifyRequest("PROPFIND", "/blobs"),
 				ghttp.RespondWithPtr(&statusCode, &responseBody, httpHeader),
 			))
 		})
 
 		It("returns ok=true if able to connect and auth and it exists", func() {
-			statusCode = http.StatusOK
-			responseBody = `
-				<?xml version="1.0" encoding="UTF-8"?>
-				<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-					<Name>bucket</Name>
-					<Prefix/>
-					<Marker/>
-					<MaxKeys>1000</MaxKeys>
-					<IsTruncated>false</IsTruncated>
-				</ListBucketResult>
-			`
+			statusCode = 207
+			responseBody = `<D:multistatus xmlns:D="DAV:" xmlns:ns0="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/"/>`
 
 			err := targetVerifier.VerifyBlobTarget(targetInfo)
 			Expect(err).NotTo(HaveOccurred())
@@ -73,15 +63,6 @@ var _ = Describe("TargetVerifier", func() {
 
 		It("returns ok=false if able to connect but can't auth", func() {
 			statusCode = http.StatusForbidden
-			responseBody = `
-				<?xml version="1.0" encoding="UTF-8"?>
-				<Error>
-				  <Code>NoSuchKey</Code>
-				  <Message>The resource you requested does not exist</Message>
-				  <Resource>/bucket</Resource>
-				  <RequestId>4442587FB7D0A2F9</RequestId>
-				</Error>
-			`
 
 			err := targetVerifier.VerifyBlobTarget(targetInfo)
 			Expect(err).To(MatchError("unauthorized"))

@@ -13,7 +13,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/s3_blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
@@ -53,7 +53,7 @@ type dropletRunner struct {
 
 //go:generate counterfeiter -o fake_blob_store/fake_blob_store.go . BlobStore
 type BlobStore interface {
-	List() ([]s3_blob_store.Blob, error)
+	List() ([]dav_blob_store.Blob, error)
 	Delete(path string) error
 	Upload(path string, contents io.ReadSeeker) error
 	Download(path string) (io.ReadCloser, error)
@@ -106,6 +106,13 @@ func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
 func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string) error {
 	builderConfig := buildpack_app_lifecycle.NewLifecycleBuilderConfig([]string{buildpackUrl}, true, false)
 
+	dropletURL := fmt.Sprintf("http://%s:%s@%s:%d%s",
+		dr.config.BlobTarget().AccessKey,
+		dr.config.BlobTarget().SecretKey,
+		dr.config.BlobTarget().TargetHost,
+		dr.config.BlobTarget().TargetPort,
+		path.Join("/blobs", dropletName))
+
 	action := &models.SerialAction{
 		Actions: []models.Action{
 			&models.DownloadAction{
@@ -113,30 +120,9 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				To:   "/tmp",
 				User: "vcap",
 			},
-			&models.RunAction{
-				Path: "/tmp/s3tool",
-				Dir:  "/",
-				Args: []string{
-					"get",
-					dr.config.BlobTarget().AccessKey,
-					dr.config.BlobTarget().SecretKey,
-					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
-					dr.config.BlobTarget().BucketName,
-					path.Join(dropletName, "bits.zip"),
-					"/tmp/bits.zip",
-				},
-				User: "vcap",
-			},
-			&models.RunAction{
-				Path: "/bin/mkdir",
-				Dir:  "/",
-				Args: []string{"/tmp/app"},
-				User: "vcap",
-			},
-			&models.RunAction{
-				Path: "/usr/bin/unzip",
-				Dir:  "/tmp/app",
-				Args: []string{"-q", "/tmp/bits.zip"},
+			&models.DownloadAction{
+				From: dropletURL + "/bits.zip",
+				To:   "/tmp/app",
 				User: "vcap",
 			},
 			&models.RunAction{
@@ -146,44 +132,21 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				User: "vcap",
 			},
 			&models.RunAction{
-				Path: "/tmp/s3tool",
+				Path: "/tmp/davtool",
 				Dir:  "/",
-				Args: []string{
-					"put",
-					dr.config.BlobTarget().AccessKey,
-					dr.config.BlobTarget().SecretKey,
-					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
-					dr.config.BlobTarget().BucketName,
-					path.Join(dropletName, "droplet.tgz"),
-					"/tmp/droplet",
-				},
+				Args: []string{"put", dropletURL + "/droplet.tgz", "/tmp/droplet"},
 				User: "vcap",
 			},
 			&models.RunAction{
-				Path: "/tmp/s3tool",
+				Path: "/tmp/davtool",
 				Dir:  "/",
-				Args: []string{
-					"put",
-					dr.config.BlobTarget().AccessKey,
-					dr.config.BlobTarget().SecretKey,
-					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
-					dr.config.BlobTarget().BucketName,
-					path.Join(dropletName, "result.json"),
-					"/tmp/result.json",
-				},
+				Args: []string{"put", dropletURL + "/result.json", "/tmp/result.json"},
 				User: "vcap",
 			},
 			&models.RunAction{
-				Path: "/tmp/s3tool",
+				Path: "/tmp/davtool",
 				Dir:  "/",
-				Args: []string{
-					"delete",
-					dr.config.BlobTarget().AccessKey,
-					dr.config.BlobTarget().SecretKey,
-					fmt.Sprintf("http://%s:%d/", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
-					dr.config.BlobTarget().BucketName,
-					path.Join(dropletName, "bits.zip"),
-				},
+				Args: []string{"delete", dropletURL + "/bits.zip"},
 				User: "vcap",
 			},
 		},
@@ -223,6 +186,13 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 		return err
 	}
 
+	dropletURL := fmt.Sprintf("http://%s:%s@%s:%d%s",
+		dr.config.BlobTarget().AccessKey,
+		dr.config.BlobTarget().SecretKey,
+		dr.config.BlobTarget().TargetHost,
+		dr.config.BlobTarget().TargetPort,
+		path.Join("/blobs", dropletName))
+
 	appParams := app_runner.CreateAppParams{
 		AppEnvironmentParams: appEnvironmentParams,
 
@@ -250,23 +220,9 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 					To:   "/tmp",
 					User: "vcap",
 				},
-				&models.RunAction{
-					Path: "/tmp/s3tool",
-					Args: []string{
-						"get",
-						dr.config.BlobTarget().AccessKey,
-						dr.config.BlobTarget().SecretKey,
-						fmt.Sprintf("http://%s:%d", dr.config.BlobTarget().TargetHost, dr.config.BlobTarget().TargetPort),
-						dr.config.BlobTarget().BucketName,
-						path.Join(dropletName, "droplet.tgz"),
-						"/tmp/droplet.tgz",
-					},
-					User: "vcap",
-				},
-				&models.RunAction{
-					Path: "/bin/tar",
-					Dir:  "/home/vcap",
-					Args: []string{"-zxf", "/tmp/droplet.tgz"},
+				&models.DownloadAction{
+					From: dropletURL + "/droplet.tgz",
+					To:   "/home/vcap",
 					User: "vcap",
 				},
 			},

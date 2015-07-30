@@ -17,7 +17,7 @@ func (factory *ConfigCommandFactory) MakeTargetBlobCommand() cli.Command {
 		Name:        TargetBlobCommandName,
 		Aliases:     []string{"tb"},
 		Usage:       "Targets a lattice blob store",
-		Description: "ltc target-blob TARGET:PORT (e.g., 192.168.11.11:8980)",
+		Description: "ltc target-blob TARGET:PORT (e.g., 192.168.11.11:8444)",
 		Action:      factory.targetBlob,
 	}
 

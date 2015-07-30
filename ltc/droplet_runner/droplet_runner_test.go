@@ -2,6 +2,7 @@ package droplet_runner_test
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -16,7 +17,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/s3_blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
@@ -52,7 +53,7 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("ListDroplets", func() {
 		It("returns a list of droplets in the blob store", func() {
-			fakeBlobStore.ListReturns([]s3_blob_store.Blob{
+			fakeBlobStore.ListReturns([]dav_blob_store.Blob{
 				{Path: "X/bits.zip", Created: time.Unix(1000, 0), Size: 100},
 				{Path: "X/droplet.tgz", Created: time.Unix(2000, 0), Size: 200},
 				{Path: "X/result.json", Created: time.Unix(3000, 0), Size: 300},
@@ -116,7 +117,7 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("BuildDroplet", func() {
 		It("does the build droplet task", func() {
-			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
+			config.SetBlobTarget("blob-host", 7474, "dav-user", "dav-pass", "does-not-matter")
 			config.Save()
 
 			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{})
@@ -127,6 +128,13 @@ var _ = Describe("DropletRunner", func() {
 			Expect(createTaskParams).ToNot(BeNil())
 			receptorRequest := createTaskParams.GetReceptorRequest()
 
+			blobURL := fmt.Sprintf("http://%s:%s@%s:%d%s",
+				config.BlobTarget().AccessKey,
+				config.BlobTarget().SecretKey,
+				config.BlobTarget().TargetHost,
+				config.BlobTarget().TargetPort,
+				"/blobs/droplet-name")
+
 			expectedActions := &models.SerialAction{
 				Actions: []models.Action{
 					&models.DownloadAction{
@@ -134,22 +142,9 @@ var _ = Describe("DropletRunner", func() {
 						To:   "/tmp",
 						User: "vcap",
 					},
-					&models.RunAction{
-						Path: "/tmp/s3tool",
-						Dir:  "/",
-						Args: []string{"get", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.zip", "/tmp/bits.zip"},
-						User: "vcap",
-					},
-					&models.RunAction{
-						Path: "/bin/mkdir",
-						Dir:  "/",
-						Args: []string{"/tmp/app"},
-						User: "vcap",
-					},
-					&models.RunAction{
-						Path: "/usr/bin/unzip",
-						Dir:  "/tmp/app",
-						Args: []string{"-q", "/tmp/bits.zip"},
+					&models.DownloadAction{
+						From: "http://dav-user:dav-pass@blob-host:7474/blobs/droplet-name/bits.zip",
+						To:   "/tmp/app",
 						User: "vcap",
 					},
 					&models.RunAction{
@@ -169,21 +164,21 @@ var _ = Describe("DropletRunner", func() {
 						User: "vcap",
 					},
 					&models.RunAction{
-						Path: "/tmp/s3tool",
+						Path: "/tmp/davtool",
 						Dir:  "/",
-						Args: []string{"put", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/droplet.tgz", "/tmp/droplet"},
+						Args: []string{"put", blobURL + "/droplet.tgz", "/tmp/droplet"},
 						User: "vcap",
 					},
 					&models.RunAction{
-						Path: "/tmp/s3tool",
+						Path: "/tmp/davtool",
 						Dir:  "/",
-						Args: []string{"put", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/result.json", "/tmp/result.json"},
+						Args: []string{"put", blobURL + "/result.json", "/tmp/result.json"},
 						User: "vcap",
 					},
 					&models.RunAction{
-						Path: "/tmp/s3tool",
+						Path: "/tmp/davtool",
 						Dir:  "/",
-						Args: []string{"delete", "access-key", "secret-key", "http://blob-host:7474/", "bucket-name", "droplet-name/bits.zip"},
+						Args: []string{"delete", blobURL + "/bits.zip"},
 						User: "vcap",
 					},
 				},
@@ -302,23 +297,9 @@ var _ = Describe("DropletRunner", func() {
 						To:   "/tmp",
 						User: "vcap",
 					},
-					&models.RunAction{
-						Path: "/tmp/s3tool",
-						Args: []string{
-							"get",
-							"access-key",
-							"secret-key",
-							"http://blob-host:7474",
-							"bucket-name",
-							"droplet-name/droplet.tgz",
-							"/tmp/droplet.tgz",
-						},
-						User: "vcap",
-					},
-					&models.RunAction{
-						Path: "/bin/tar",
-						Dir:  "/home/vcap",
-						Args: []string{"-zxf", "/tmp/droplet.tgz"},
+					&models.DownloadAction{
+						From: "http://access-key:secret-key@blob-host:7474/blobs/droplet-name/droplet.tgz",
+						To:   "/home/vcap",
 						User: "vcap",
 					},
 				},
@@ -369,7 +350,7 @@ var _ = Describe("DropletRunner", func() {
 			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
 			config.Save()
 
-			fakeBlobStore.ListReturns([]s3_blob_store.Blob{
+			fakeBlobStore.ListReturns([]dav_blob_store.Blob{
 				{Path: "drippy/bits.zip"},
 				{Path: "drippy/droplet.tgz"},
 				{Path: "drippy/result.json"},
