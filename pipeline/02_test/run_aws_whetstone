@@ -43,5 +43,6 @@ download_provider_specific_credentials(){
     aws s3 cp s3://lattice-gocd/credentials/ec2-west-1.pem $TF_WORKING_DIR/ec2-west-1.pem
     chmod 600 $TF_WORKING_DIR/ec2-west-1.pem
 }
+export LATTICE_DIR=$(cd `dirname $0` && cd ../.. && pwd)/
 
 source $(dirname $0)/helpers/run_terraform_whetstone

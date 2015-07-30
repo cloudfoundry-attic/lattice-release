@@ -45,5 +45,6 @@ download_provider_specific_credentials(){
     aws s3 cp s3://lattice-gocd/credentials/gce-credentials.tar - | tar -xf - -C $TF_WORKING_DIR
     chmod 600 $TF_WORKING_DIR/gce-ssh-key
 }
+export LATTICE_DIR=$(cd `dirname $0` && cd ../.. && pwd)/
 
 source $(dirname $0)/helpers/run_terraform_whetstone
