@@ -65,6 +65,8 @@ printf "{\"target\":\"%s\",\"blob_target_info\":{\"host\":\"%s\",\"port\":%d,\"a
     > $LATTICE_CLI_HOME/.lattice/config.json
 sync
 
+sleep 180
+
 ltc -v
 ltc test -v --timeout=5m
 
