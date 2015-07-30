@@ -7,78 +7,19 @@ set -e
 
 install_condenser() {
     set -x
-    ## move into upstart, too
-    ulimit -n 65536
 
-    declare -r riak_download_path=/vagrant/build/downloads
-    set +e
-    cat << EOF | md5sum -c -
-132b9f43449d8208e6b8e483fcc5cfe2  /vagrant/build/downloads/riak_2.1.1-1_amd64.deb
-285704b6a8320cd7ccbddb8a54830663  /vagrant/build/downloads/riak-cs_2.0.0-1_amd64.deb
-4cc5f211a75e3f4561195364a5698a58  /vagrant/build/downloads/riak-cs_2.0.1-1_amd64.deb
-f9852a822239f55a32fb156f56e2a47b  /vagrant/build/downloads/stanchion_2.0.0-1_amd64.deb
-EOF
-    md5_result=$?
-    set -e
+    mkdir -p /var/lattice/lighttpd/blobs /var/lattice/etc
+    chown -R www-data:www-data /var/lattice/lighttpd
 
-    if [ "$md5_result" != "0" ]; then
-        rm -rf $riak_download_path/riak* $riak_download_path/stanchion*
-        mkdir -p $riak_download_path
-        wget http://s3.amazonaws.com/downloads.basho.com/riak/2.1/2.1.1/ubuntu/trusty/riak_2.1.1-1_amd64.deb --quiet -O $riak_download_path/riak_2.1.1-1_amd64.deb
-        wget http://s3.amazonaws.com/downloads.basho.com/stanchion/2.0/2.0.0/ubuntu/trusty/stanchion_2.0.0-1_amd64.deb --quiet -O $riak_download_path/stanchion_2.0.0-1_amd64.deb
-        wget http://s3.amazonaws.com/downloads.basho.com/riak-cs/2.0/2.0.0/ubuntu/trusty/riak-cs_2.0.0-1_amd64.deb --quiet -O $riak_download_path/riak-cs_2.0.0-1_amd64.deb
-        wget http://s3.amazonaws.com/downloads.basho.com/riak-cs/2.0/2.0.1/ubuntu/trusty/riak-cs_2.0.1-1_amd64.deb --quiet -O $riak_download_path/riak-cs_2.0.1-1_amd64.deb
-        echo "Downloaded RiakCS!"
-    fi
+    apt-get install -y lighttpd lighttpd-mod-webdav
 
-    sudo dpkg -i $riak_download_path/riak_2.1.1-1_amd64.deb
-    sudo dpkg -i $riak_download_path/stanchion_2.0.0-1_amd64.deb
-    sudo dpkg -i $riak_download_path/riak-cs_2.0.0-1_amd64.deb
+    /etc/init.d/lighttpd stop
 
-    ## UP NEXT:  putting the template in /var/lattice somewhere!!!
-    ## get config files w/ anonymous user creation enabled
-    cp -a /tmp/lattice-build/common/riak/etc/* /etc/
-    sed "s/%%ANONYMOUS_CONFIG%%/anonymous_user_creation = on/" /tmp/lattice-build/common/riak/templates/riak-cs.conf-template | 
-        sed "s/%%ADMIN_KEY%%/\#admin.key=/" | 
-        sed "s/%%ADMIN_SECRET%%/\#admin.secret=/" > /etc/riak-cs/riak-cs.conf
+    cp /tmp/lattice-build/common/webdav/lighttpd.conf /etc/lighttpd/lighttpd.conf
+    echo user:$(openssl passwd -crypt pass) > /var/lattice/etc/lighttpd.user
 
-    ## do this in upstart
-    riak start && riak ping
-    stanchion start && stanchion ping
-    riak-cs start && riak-cs ping
+    /etc/init.d/lighttpd start
 
-    ## take a nap
-    sleep 10
-
-    ## user creation
-    ## TODO:  save off curl, check exit code (or http status), then pretty-print
-    ## so we don't ignore non-zero return from curl
-    curl -s -H 'Content-Type: application/json' \
-        -XPOST http://localhost:8980/riak-cs/user \
-        --data '{"email":"admin@lattice.cf", "name":"admin_user"}' > riak-admin_user.json
-
-    ## parse json
-    access_key=$(jq -r '.key_id'  riak-admin_user.json)
-    secret_key=$(jq -r '.key_secret'  riak-admin_user.json)
-
-    ## disable anon, set access_key / secret_key in riak-cs.conf 
-    sed "s/%%ANONYMOUS_CONFIG%%/anonymous_user_creation = off/" /tmp/lattice-build/common/riak/templates/riak-cs.conf-template |
-        sed "s/%%ADMIN_KEY%%/admin.key=$access_key/" |
-        sed "s/%%ADMIN_SECRET%%/admin.secret=$secret_key/" > /etc/riak-cs/riak-cs.conf
-    ## set access_key / secret_key stanchion.conf
-    sed "s/%%ADMIN_KEY%%/admin.key=$access_key/" /tmp/lattice-build/common/riak/templates/stanchion.conf-template |
-        sed "s/%%ADMIN_SECRET%%/admin.secret=$secret_key/" > /etc/stanchion/stanchion.conf
-
-    ## restart stanchion and riak-cs
-    riak-cs restart && riak-cs ping
-    stanchion restart && stanchion ping
-
-    ## create default condenser-bucket bucket
-    sed "s/%%ACCESS_KEY%%/$access_key/" /tmp/lattice-build/common/riak/templates/s3cfg-riakcs-template |
-        sed "s/%%SECRET_KEY%%/$secret_key/" |
-        sed "s/%%PROXY_HOST%%/localhost/" |
-        sed "s/%%PROXY_PORT%%/8980/" > /tmp/s3cfg-riakcs
-    s3cmd -c /tmp/s3cfg-riakcs mb s3://condenser-bucket
 
     stage_cflinuxfs2_rootfs
 
