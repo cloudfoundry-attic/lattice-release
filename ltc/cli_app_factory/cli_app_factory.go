@@ -11,7 +11,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/cluster_test"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/s3_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
@@ -190,7 +190,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	clusterTestRunner := cluster_test.NewClusterTestRunner(config, ltcConfigRoot)
 	clusterTestCommandFactory := cluster_test_command_factory.NewClusterTestCommandFactory(clusterTestRunner)
 
-	blobStore := blob_store.New(config.BlobTarget())
+	blobStore := s3_blob_store.New(config.BlobTarget())
 
 	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, targetVerifier, appExaminer)
 	cfIgnore := cf_ignore.New()

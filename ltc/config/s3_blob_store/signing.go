@@ -1,4 +1,4 @@
-package blob_store
+package s3_blob_store
 
 import (
 	"crypto/hmac"

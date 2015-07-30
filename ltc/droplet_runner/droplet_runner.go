@@ -13,7 +13,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/s3_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
@@ -53,7 +53,7 @@ type dropletRunner struct {
 
 //go:generate counterfeiter -o fake_blob_store/fake_blob_store.go . BlobStore
 type BlobStore interface {
-	List() ([]blob_store.Blob, error)
+	List() ([]s3_blob_store.Blob, error)
 	Delete(path string) error
 	Upload(path string, contents io.ReadSeeker) error
 	Download(path string) (io.ReadCloser, error)

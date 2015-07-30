@@ -1,4 +1,4 @@
-package blob_store_test
+package s3_blob_store_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestBlobStore(t *testing.T) {
+func TestS3BlobStore(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "BlobStore Suite")
+	RunSpecs(t, "S3BlobStore Suite")
 }

@@ -16,7 +16,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/s3_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
@@ -52,7 +52,7 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("ListDroplets", func() {
 		It("returns a list of droplets in the blob store", func() {
-			fakeBlobStore.ListReturns([]blob_store.Blob{
+			fakeBlobStore.ListReturns([]s3_blob_store.Blob{
 				{Path: "X/bits.zip", Created: time.Unix(1000, 0), Size: 100},
 				{Path: "X/droplet.tgz", Created: time.Unix(2000, 0), Size: 200},
 				{Path: "X/result.json", Created: time.Unix(3000, 0), Size: 300},
@@ -369,7 +369,7 @@ var _ = Describe("DropletRunner", func() {
 			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
 			config.Save()
 
-			fakeBlobStore.ListReturns([]blob_store.Blob{
+			fakeBlobStore.ListReturns([]s3_blob_store.Blob{
 				{Path: "drippy/bits.zip"},
 				{Path: "drippy/droplet.tgz"},
 				{Path: "drippy/result.json"},

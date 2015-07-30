@@ -1,4 +1,4 @@
-package blob_store_test
+package s3_blob_store_test
 
 import (
 	"io/ioutil"
@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/s3_blob_store"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
@@ -20,7 +20,7 @@ import (
 
 var _ = Describe("BlobStore", func() {
 	var (
-		blobStore  *blob_store.BlobStore
+		blobStore  *s3_blob_store.BlobStore
 		fakeServer *ghttp.Server
 	)
 
@@ -43,7 +43,7 @@ var _ = Describe("BlobStore", func() {
 			BucketName: "bucket",
 		}
 
-		blobStore = blob_store.New(blobTargetInfo)
+		blobStore = s3_blob_store.New(blobTargetInfo)
 		blobStore.S3.ShouldRetry = func(_ *aws.Request) bool { return false }
 	})
 
@@ -118,7 +118,7 @@ var _ = Describe("BlobStore", func() {
 			expectedTime, err := time.Parse(time.RFC3339Nano, "2009-10-12T17:50:30.000Z")
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(blobStore.List()).To(Equal([]blob_store.Blob{
+			Expect(blobStore.List()).To(Equal([]s3_blob_store.Blob{
 				{Path: "my-image.jpg", Size: 434234, Created: expectedTime},
 				{Path: "my-third-image.jpg", Size: 64994, Created: expectedTime},
 			}))
