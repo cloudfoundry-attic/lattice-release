@@ -202,8 +202,7 @@ func (appRunner *appRunner) buildRoutes(params CreateAppParams, primaryPort uint
 	}
 
 	var tcpRoutes route_helpers.TcpRoutes
-
-	if len(params.TcpRoutes) > 0 {
+	if !params.NoRoutes && len(params.TcpRoutes) > 0 {
 		for _, tcpRoute := range params.TcpRoutes {
 			tcpRoutes = append(tcpRoutes, route_helpers.TcpRoute{
 				ExternalPort: tcpRoute.ExternalPort,

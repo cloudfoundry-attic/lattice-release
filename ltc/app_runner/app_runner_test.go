@@ -277,6 +277,11 @@ var _ = Describe("AppRunner", func() {
 				createAppParams = app_runner.CreateAppParams{
 					AppEnvironmentParams: app_runner.AppEnvironmentParams{
 						NoRoutes: true,
+						TcpRoutes: app_runner.TcpRoutes{
+							app_runner.TcpRoute{ExternalPort: 60000, Port: 2000},
+							app_runner.TcpRoute{ExternalPort: 60010, Port: 2000},
+							app_runner.TcpRoute{ExternalPort: 60020, Port: 3000},
+						},
 					},
 				}
 
@@ -284,7 +289,8 @@ var _ = Describe("AppRunner", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes).To(Equal(route_helpers.Routes{AppRoutes: route_helpers.AppRoutes{}}.RoutingInfo()))
+				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes).To(
+					Equal(route_helpers.Routes{AppRoutes: route_helpers.AppRoutes{}}.RoutingInfo()))
 			})
 		})
 
