@@ -31,5 +31,7 @@ mkdir -p /var/lattice/log
 
 start bootstrap &>> /var/lattice/log/brain-bootstrap.log
 
+touch /var/lattice/ready
+
 echo "Finished Installing Lattice Brain ($lattice_version) (Diego $diego_version)!"
 
