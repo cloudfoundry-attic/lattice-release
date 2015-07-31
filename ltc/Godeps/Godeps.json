@@ -8,46 +8,6 @@
 			"Rev": "89efc1fea9b8b47f6f6ce72279a7ed9496b4cdb3"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/aws",
-			"Comment": "v0.7.0",
-			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
-		},
-		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
-			"Comment": "v0.7.0",
-			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
-		},
-		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
-			"Comment": "v0.7.0",
-			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
-		},
-		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
-			"Comment": "v0.7.0",
-			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
-		},
-		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/restxml",
-			"Comment": "v0.7.0",
-			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
-		},
-		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
-			"Comment": "v0.7.0",
-			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
-		},
-		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
-			"Comment": "v0.7.0",
-			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
-		},
-		{
-			"ImportPath": "github.com/aws/aws-sdk-go/service/s3",
-			"Comment": "v0.7.0",
-			"Rev": "67dc9f948602be9f85cb640f89b0adec994ccbda"
-		},
-		{
 			"ImportPath": "github.com/bmizerany/pat",
 			"Rev": "b8a35001b773c267eb260a691f4e5499a3531600"
 		},
@@ -267,10 +227,6 @@
 		{
 			"ImportPath": "github.com/tedsuo/rata",
 			"Rev": "6197c97c67a03bfd4d6977a3b6060d6c6b3d581f"
-		},
-		{
-			"ImportPath": "github.com/vaughan0/go-ini",
-			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
 		},
 		{
 			"ImportPath": "github.com/vito/go-sse/sse",
