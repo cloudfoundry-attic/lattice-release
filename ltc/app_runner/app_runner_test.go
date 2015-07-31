@@ -174,6 +174,120 @@ var _ = Describe("AppRunner", func() {
 			})
 		})
 
+		Context("when tcp routes are not empty", func() {
+			BeforeEach(func() {
+				createAppParams.AppEnvironmentParams.TcpRoutes = app_runner.TcpRoutes{
+					app_runner.TcpRoute{ExternalPort: 60000, Port: 2000},
+					app_runner.TcpRoute{ExternalPort: 60010, Port: 2000},
+					app_runner.TcpRoute{ExternalPort: 60020, Port: 3000},
+				}
+			})
+
+			Context("and when route overrides are not empty", func() {
+				BeforeEach(func() {
+					createAppParams.AppEnvironmentParams.RouteOverrides = app_runner.RouteOverrides{
+						app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
+						app_runner.RouteOverride{HostnamePrefix: "swang", Port: 2000},
+						app_runner.RouteOverride{HostnamePrefix: "shuffle", Port: 4000},
+					}
+				})
+
+				It("uses the tcp routes", func() {
+					err := appRunner.CreateApp(createAppParams)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+					routes := route_helpers.RoutesFromRoutingInfo(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes)
+
+					Expect(routes.TcpRoutes).ShouldNot(BeNil())
+					Expect(routes.TcpRoutes).Should(ContainExactly(
+						route_helpers.TcpRoutes{
+							route_helpers.TcpRoute{
+								ExternalPort: 60000,
+								Port:         2000,
+							},
+							route_helpers.TcpRoute{
+								ExternalPort: 60010,
+								Port:         2000,
+							},
+							route_helpers.TcpRoute{
+								ExternalPort: 60020,
+								Port:         3000,
+							},
+						},
+					))
+
+					Expect(routes.AppRoutes).To(ContainExactly(
+						route_helpers.AppRoutes{
+							route_helpers.AppRoute{
+								Hostnames: []string{"wiggle.myDiegoInstall.com", "swang.myDiegoInstall.com"},
+								Port:      2000,
+							},
+							route_helpers.AppRoute{
+								Hostnames: []string{"shuffle.myDiegoInstall.com"},
+								Port:      4000,
+							},
+						}))
+				})
+			})
+
+			Context("and when route overrides are empty", func() {
+				It("uses the tcp routes", func() {
+					err := appRunner.CreateApp(createAppParams)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+					routes := route_helpers.RoutesFromRoutingInfo(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes)
+
+					Expect(routes.TcpRoutes).ShouldNot(BeNil())
+					Expect(routes.TcpRoutes).Should(ContainExactly(
+						route_helpers.TcpRoutes{
+							route_helpers.TcpRoute{
+								ExternalPort: 60000,
+								Port:         2000,
+							},
+							route_helpers.TcpRoute{
+								ExternalPort: 60010,
+								Port:         2000,
+							},
+							route_helpers.TcpRoute{
+								ExternalPort: 60020,
+								Port:         3000,
+							},
+						},
+					))
+
+					Expect(routes.AppRoutes).To(ContainExactly(
+						route_helpers.AppRoutes{
+							route_helpers.AppRoute{
+								Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"},
+								Port:      2000,
+							},
+							route_helpers.AppRoute{
+								Hostnames: []string{"americano-app-4000.myDiegoInstall.com"},
+								Port:      4000,
+							},
+						}))
+				})
+			})
+		})
+
+		Context("and when NoRoutes is true", func() {
+			It("does not register any routes for the app", func() {
+				createAppParams = app_runner.CreateAppParams{
+					AppEnvironmentParams: app_runner.AppEnvironmentParams{
+						NoRoutes: true,
+					},
+				}
+
+				err := appRunner.CreateApp(createAppParams)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes).To(Equal(route_helpers.Routes{AppRoutes: route_helpers.AppRoutes{}}.RoutingInfo()))
+			})
+		})
+
 		Context("when route overrides are not empty", func() {
 			It("uses the overriden routes instead of the defaults", func() {
 				createAppParams = app_runner.CreateAppParams{

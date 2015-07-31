@@ -38,6 +38,13 @@ type RouteOverride struct {
 	Port           uint16
 }
 
+type TcpRoutes []TcpRoute
+
+type TcpRoute struct {
+	ExternalPort uint16
+	Port         uint16
+}
+
 type AppEnvironmentParams struct {
 	EnvironmentVariables map[string]string
 	Privileged           bool
@@ -49,6 +56,7 @@ type AppEnvironmentParams struct {
 	ExposedPorts         []uint16
 	WorkingDir           string
 	RouteOverrides       RouteOverrides
+	TcpRoutes            TcpRoutes
 	NoRoutes             bool
 }
 
@@ -172,16 +180,8 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 	return false, nil
 }
 
-func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
-	primaryPort := uint16(0)
-	if params.Monitor.Port != 0 {
-		primaryPort = params.Monitor.Port
-	} else if len(params.ExposedPorts) > 0 {
-		primaryPort = params.ExposedPorts[0]
-	}
-
-	envVars := buildEnvironmentVariables(params.EnvironmentVariables)
-	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", primaryPort)})
+func (appRunner *appRunner) buildRoutes(params CreateAppParams, primaryPort uint16) route_helpers.Routes {
+	var routes route_helpers.Routes
 
 	var appRoutes route_helpers.AppRoutes
 	if params.NoRoutes {
@@ -201,12 +201,41 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		appRoutes = appRunner.buildDefaultRoutingInfo(params.Name, params.ExposedPorts, primaryPort)
 	}
 
+	var tcpRoutes route_helpers.TcpRoutes
+
+	if len(params.TcpRoutes) > 0 {
+		for _, tcpRoute := range params.TcpRoutes {
+			tcpRoutes = append(tcpRoutes, route_helpers.TcpRoute{
+				ExternalPort: tcpRoute.ExternalPort,
+				Port:         tcpRoute.Port,
+			})
+		}
+		routes.TcpRoutes = tcpRoutes
+	}
+
+	routes.AppRoutes = appRoutes
+	return routes
+}
+
+func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
+	primaryPort := uint16(0)
+	if params.Monitor.Port != 0 {
+		primaryPort = params.Monitor.Port
+	} else if len(params.ExposedPorts) > 0 {
+		primaryPort = params.ExposedPorts[0]
+	}
+
+	envVars := buildEnvironmentVariables(params.EnvironmentVariables)
+	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", primaryPort)})
+
+	routes := appRunner.buildRoutes(params, primaryPort)
+
 	req := receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
 		Domain:               lrpDomain,
 		RootFS:               params.RootFS,
 		Instances:            params.Instances,
-		Routes:               appRoutes.RoutingInfo(),
+		Routes:               routes.RoutingInfo(),
 		CPUWeight:            params.CPUWeight,
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
