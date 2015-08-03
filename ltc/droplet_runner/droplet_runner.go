@@ -61,7 +61,7 @@ type BlobStore interface {
 
 type annotation struct {
 	DropletSource struct {
-		config.BlobTargetInfo
+		dav_blob_store.Config
 		DropletName string `json:"droplet_name"`
 	} `json:"droplet_source"`
 }
@@ -107,10 +107,10 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 	builderConfig := buildpack_app_lifecycle.NewLifecycleBuilderConfig([]string{buildpackUrl}, true, false)
 
 	dropletURL := fmt.Sprintf("http://%s:%s@%s:%d%s",
-		dr.config.BlobTarget().AccessKey,
-		dr.config.BlobTarget().SecretKey,
-		dr.config.BlobTarget().TargetHost,
-		dr.config.BlobTarget().TargetPort,
+		dr.config.BlobTarget().Username,
+		dr.config.BlobTarget().Password,
+		dr.config.BlobTarget().Host,
+		dr.config.BlobTarget().Port,
 		path.Join("/blobs", dropletName))
 
 	action := &models.SerialAction{
@@ -176,9 +176,8 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 	}
 
 	dropletAnnotation := annotation{}
-	dropletAnnotation.DropletSource.BlobTargetInfo.TargetHost = dr.config.BlobTarget().TargetHost
-	dropletAnnotation.DropletSource.BlobTargetInfo.TargetPort = dr.config.BlobTarget().TargetPort
-	dropletAnnotation.DropletSource.BlobTargetInfo.BucketName = dr.config.BlobTarget().BucketName
+	dropletAnnotation.DropletSource.Config.Host = dr.config.BlobTarget().Host
+	dropletAnnotation.DropletSource.Config.Port = dr.config.BlobTarget().Port
 	dropletAnnotation.DropletSource.DropletName = dropletName
 
 	annotationBytes, err := json.Marshal(dropletAnnotation)
@@ -187,10 +186,10 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 	}
 
 	dropletURL := fmt.Sprintf("http://%s:%s@%s:%d%s",
-		dr.config.BlobTarget().AccessKey,
-		dr.config.BlobTarget().SecretKey,
-		dr.config.BlobTarget().TargetHost,
-		dr.config.BlobTarget().TargetPort,
+		dr.config.BlobTarget().Username,
+		dr.config.BlobTarget().Password,
+		dr.config.BlobTarget().Host,
+		dr.config.BlobTarget().Port,
 		path.Join("/blobs", dropletName))
 
 	appParams := app_runner.CreateAppParams{
@@ -249,11 +248,10 @@ func (dr *dropletRunner) getExecutionMetadata(path string) (string, error) {
 	return result.ExecutionMetadata, nil
 }
 
-func dropletMatchesAnnotation(blobTarget config.BlobTargetInfo, dropletName string, a annotation) bool {
+func dropletMatchesAnnotation(blobTarget dav_blob_store.Config, dropletName string, a annotation) bool {
 	return a.DropletSource.DropletName == dropletName &&
-		a.DropletSource.TargetHost == blobTarget.TargetHost &&
-		a.DropletSource.TargetPort == blobTarget.TargetPort &&
-		a.DropletSource.BucketName == blobTarget.BucketName
+		a.DropletSource.Host == blobTarget.Host &&
+		a.DropletSource.Port == blobTarget.Port
 }
 
 func (dr *dropletRunner) RemoveDroplet(dropletName string) error {

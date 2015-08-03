@@ -10,8 +10,6 @@ import (
 	"path"
 	"strings"
 	"time"
-
-	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
 type BlobStore struct {
@@ -24,12 +22,19 @@ type Blob struct {
 	Size    int64
 }
 
-func New(blobTarget config.BlobTargetInfo) *BlobStore {
+type Config struct {
+	Host     string `json:"host,omitempty"`
+	Port     uint16 `json:"port,omitempty"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
+func New(config Config) *BlobStore {
 	return &BlobStore{
 		url: url.URL{
 			Scheme: "http",
-			Host:   fmt.Sprintf("%s:%d", blobTarget.TargetHost, blobTarget.TargetPort),
-			User:   url.UserPassword(blobTarget.AccessKey, blobTarget.SecretKey),
+			Host:   fmt.Sprintf("%s:%d", config.Host, config.Port),
+			User:   url.UserPassword(config.Username, config.Password),
 		},
 	}
 }

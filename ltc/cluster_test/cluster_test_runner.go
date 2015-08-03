@@ -144,7 +144,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 			})
 		})
 
-		if runner.config.BlobTarget().AccessKey != "" && runner.config.BlobTarget().SecretKey != "" {
+		if runner.config.BlobTarget().Username != "" && runner.config.BlobTarget().Password != "" {
 			Context("droplets", func() {
 				var dropletName, appName, dropletFolderURL, appRoute string
 
@@ -158,10 +158,10 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 
 					blobTarget := runner.config.BlobTarget()
 					dropletFolderURL = fmt.Sprintf("%s:%s@%s:%d/blobs/%s",
-						blobTarget.AccessKey,
-						blobTarget.SecretKey,
-						blobTarget.TargetHost,
-						blobTarget.TargetPort,
+						blobTarget.Username,
+						blobTarget.Password,
+						blobTarget.Host,
+						blobTarget.Port,
 						dropletName)
 
 					appRoute = fmt.Sprintf("%s.%s", appName, runner.config.Target())

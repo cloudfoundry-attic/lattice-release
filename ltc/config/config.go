@@ -1,20 +1,15 @@
 package config
 
-import "github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
+import (
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
+)
 
 type Data struct {
-	Target     string         `json:"target"`
-	Username   string         `json:"username,omitempty"`
-	Password   string         `json:"password,omitempty"`
-	BlobTarget BlobTargetInfo `json:"blob_target_info"`
-}
-
-type BlobTargetInfo struct {
-	TargetHost string `json:"host,omitempty"`
-	TargetPort uint16 `json:"port,omitempty"`
-	AccessKey  string `json:"access_key,omitempty"`
-	SecretKey  string `json:"secret_key,omitempty"`
-	BucketName string `json:"bucket_name,omitempty"`
+	Target     string                `json:"target"`
+	Username   string                `json:"username,omitempty"`
+	Password   string                `json:"password,omitempty"`
+	BlobTarget dav_blob_store.Config `json:"dav_blob_store"`
 }
 
 type Config struct {
@@ -63,14 +58,13 @@ func (c *Config) Save() error {
 	return c.persister.Save(c.data)
 }
 
-func (c *Config) SetBlobTarget(host string, port uint16, accessKey, secretKey, bucketName string) {
-	c.data.BlobTarget.TargetHost = host
-	c.data.BlobTarget.TargetPort = port
-	c.data.BlobTarget.AccessKey = accessKey
-	c.data.BlobTarget.SecretKey = secretKey
-	c.data.BlobTarget.BucketName = bucketName
+func (c *Config) SetBlobTarget(host string, port uint16, username, password string) {
+	c.data.BlobTarget.Host = host
+	c.data.BlobTarget.Port = port
+	c.data.BlobTarget.Username = username
+	c.data.BlobTarget.Password = password
 }
 
-func (c *Config) BlobTarget() BlobTargetInfo {
+func (c *Config) BlobTarget() dav_blob_store.Config {
 	return c.data.BlobTarget
 }

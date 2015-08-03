@@ -7,13 +7,18 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 )
 
 var _ = Describe("Config", func() {
-	var testConfig *config.Config
+	var (
+		testPersister *fakePersister
+		testConfig    *config.Config
+	)
 
 	BeforeEach(func() {
-		testConfig = config.New(&fakePersister{})
+		testPersister = &fakePersister{}
+		testConfig = config.New(testPersister)
 	})
 
 	Describe("Target", func() {
@@ -58,58 +63,53 @@ var _ = Describe("Config", func() {
 
 	Describe("Save", func() {
 		It("Saves the target with the persistor", func() {
-			fakePersister := &fakePersister{}
-			testConfig = config.New(fakePersister)
-
 			testConfig.SetTarget("mynewapi.com")
 			testConfig.SetLogin("testusername", "testpassword")
+			Expect(testConfig.Save()).To(Succeed())
 
-			testConfig.Save()
-
-			Expect(fakePersister.target).To(Equal("mynewapi.com"))
-			Expect(fakePersister.username).To(Equal("testusername"))
-			Expect(fakePersister.password).To(Equal("testpassword"))
+			Expect(testPersister.target).To(Equal("mynewapi.com"))
+			Expect(testPersister.username).To(Equal("testusername"))
+			Expect(testPersister.password).To(Equal("testpassword"))
 		})
 
 		It("returns errors from the persistor", func() {
-			testConfig = config.New(&fakePersister{err: errors.New("Error")})
+			testPersister.err = errors.New("Error")
 
 			err := testConfig.Save()
-
 			Expect(err).To(MatchError("Error"))
 		})
 	})
 
 	Describe("Load", func() {
 		It("loads the target, username, and password from the persister", func() {
-			fakePersister := &fakePersister{target: "mysavedapi.com", username: "saveduser", password: "password"}
-			testConfig = config.New(fakePersister)
+			testPersister.target = "mysavedapi.com"
+			testPersister.username = "saveduser"
+			testPersister.password = "password"
 
-			testConfig.Load()
+			Expect(testConfig.Load()).To(Succeed())
 
-			Expect(fakePersister.target).To(Equal("mysavedapi.com"))
+			Expect(testPersister.target).To(Equal("mysavedapi.com"))
 			Expect(testConfig.Receptor()).To(Equal("http://saveduser:password@receptor.mysavedapi.com"))
 		})
 
 		It("returns errors from loading the config", func() {
-			testConfig = config.New(&fakePersister{err: errors.New("Error")})
+			testPersister.err = errors.New("Error")
 
 			err := testConfig.Load()
-
 			Expect(err).To(MatchError("Error"))
 		})
 	})
 
 	Describe("TargetBlob", func() {
 		It("sets the blob target", func() {
-			testConfig.SetBlobTarget("s3-compatible-store", 7474, "NUYP3C_MBM-WDDWYKIUN", "Nb5vjT2V-ZX0O0s00xURSsg2Se0w-bmX40IQNg4==", "the-bucket")
+			testConfig.SetBlobTarget("some-host", 7474, "some-username", "some-password")
 
-			blobTarget := testConfig.BlobTarget()
-			Expect(blobTarget.TargetHost).To(Equal("s3-compatible-store"))
-			Expect(blobTarget.TargetPort).To(Equal(uint16(7474)))
-			Expect(blobTarget.AccessKey).To(Equal("NUYP3C_MBM-WDDWYKIUN"))
-			Expect(blobTarget.SecretKey).To(Equal("Nb5vjT2V-ZX0O0s00xURSsg2Se0w-bmX40IQNg4=="))
-			Expect(blobTarget.BucketName).To(Equal("the-bucket"))
+			Expect(testConfig.BlobTarget()).To(Equal(dav_blob_store.Config{
+				Host:     "some-host",
+				Port:     7474,
+				Username: "some-username",
+				Password: "some-password",
+			}))
 		})
 	})
 })

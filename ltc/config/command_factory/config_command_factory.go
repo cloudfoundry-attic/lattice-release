@@ -47,11 +47,13 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 	factory.config.SetTarget(target)
 	factory.config.SetLogin("", "")
 
-	if _, authorized, err := factory.targetVerifier.VerifyTarget(factory.config.Receptor()); err != nil {
+	_, authorized, err := factory.targetVerifier.VerifyTarget(factory.config.Receptor())
+	if err != nil {
 		factory.ui.Say("Error verifying target: " + err.Error())
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
-	} else if authorized {
+	}
+	if authorized {
 		factory.save()
 		return
 	}
@@ -60,11 +62,13 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 	password := factory.ui.PromptForPassword("Password")
 
 	factory.config.SetLogin(username, password)
-	if _, authorized, err := factory.targetVerifier.VerifyTarget(factory.config.Receptor()); err != nil {
+	_, authorized, err = factory.targetVerifier.VerifyTarget(factory.config.Receptor())
+	if err != nil {
 		factory.ui.Say("Error verifying target: " + err.Error())
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
-	} else if !authorized {
+	}
+	if !authorized {
 		factory.ui.Say("Could not authorize target.")
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return

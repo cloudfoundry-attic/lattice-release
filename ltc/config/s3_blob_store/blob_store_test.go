@@ -9,13 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/s3_blob_store"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
-	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/s3_blob_store"
 )
 
 var _ = Describe("BlobStore", func() {
@@ -26,7 +25,6 @@ var _ = Describe("BlobStore", func() {
 
 	BeforeEach(func() {
 		fakeServer = ghttp.NewServer()
-
 		fakeServerURL, err := url.Parse(fakeServer.URL())
 		Expect(err).NotTo(HaveOccurred())
 
@@ -35,9 +33,9 @@ var _ = Describe("BlobStore", func() {
 		proxyPort, err := strconv.Atoi(serverPort)
 		Expect(err).NotTo(HaveOccurred())
 
-		blobTargetInfo := config_package.BlobTargetInfo{
-			TargetHost: serverHost,
-			TargetPort: uint16(proxyPort),
+		blobTargetInfo := s3_blob_store.Config{
+			Host:       serverHost,
+			Port:       uint16(proxyPort),
 			AccessKey:  "V8GDQFR_VDOGM55IV8OH",
 			SecretKey:  "Wv_kltnl98hNWNdNwyQPYnFhK4gVPTxVS3NNMg==",
 			BucketName: "bucket",

@@ -117,22 +117,22 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("BuildDroplet", func() {
 		It("does the build droplet task", func() {
-			config.SetBlobTarget("blob-host", 7474, "dav-user", "dav-pass", "does-not-matter")
-			config.Save()
+			config.SetBlobTarget("blob-host", 7474, "dav-user", "dav-pass")
+			Expect(config.Save()).To(Succeed())
 
 			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{})
-
 			Expect(err).NotTo(HaveOccurred())
+
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
 			createTaskParams := fakeTaskRunner.CreateTaskArgsForCall(0)
 			Expect(createTaskParams).ToNot(BeNil())
 			receptorRequest := createTaskParams.GetReceptorRequest()
 
 			blobURL := fmt.Sprintf("http://%s:%s@%s:%d%s",
-				config.BlobTarget().AccessKey,
-				config.BlobTarget().SecretKey,
-				config.BlobTarget().TargetHost,
-				config.BlobTarget().TargetPort,
+				config.BlobTarget().Username,
+				config.BlobTarget().Password,
+				config.BlobTarget().Host,
+				config.BlobTarget().Port,
 				"/blobs/droplet-name")
 
 			expectedActions := &models.SerialAction{
@@ -189,14 +189,8 @@ var _ = Describe("DropletRunner", func() {
 			Expect(receptorRequest.MetricsGuid).To(Equal("task-name"))
 			Expect(receptorRequest.RootFS).To(Equal("preloaded:cflinuxfs2"))
 			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
-				receptor.EnvironmentVariable{
-					Name:  "CF_STACK",
-					Value: "cflinuxfs2",
-				},
-				receptor.EnvironmentVariable{
-					Name:  "MEMORY_LIMIT",
-					Value: "128M",
-				},
+				{Name: "CF_STACK", Value: "cflinuxfs2"},
+				{Name: "MEMORY_LIMIT", Value: "128M"},
 			}))
 			Expect(receptorRequest.LogSource).To(Equal("BUILD"))
 			Expect(receptorRequest.Domain).To(Equal("lattice"))
@@ -207,8 +201,8 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("passes through user environment variables", func() {
-			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
-			config.Save()
+			config.SetBlobTarget("blob-host", 7474, "dav-user", "dav-pass")
+			Expect(config.Save()).To(Succeed())
 
 			env := map[string]string{
 				"ENV_VAR":   "stuff",
@@ -216,30 +210,18 @@ var _ = Describe("DropletRunner", func() {
 			}
 
 			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", env)
-
 			Expect(err).NotTo(HaveOccurred())
+
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
 			createTaskParams := fakeTaskRunner.CreateTaskArgsForCall(0)
 			Expect(createTaskParams).ToNot(BeNil())
 			receptorRequest := createTaskParams.GetReceptorRequest()
 
 			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
-				receptor.EnvironmentVariable{
-					Name:  "CF_STACK",
-					Value: "cflinuxfs2",
-				},
-				receptor.EnvironmentVariable{
-					Name:  "MEMORY_LIMIT",
-					Value: "128M",
-				},
-				receptor.EnvironmentVariable{
-					Name:  "ENV_VAR",
-					Value: "stuff",
-				},
-				receptor.EnvironmentVariable{
-					Name:  "OTHER_VAR",
-					Value: "same",
-				},
+				{Name: "CF_STACK", Value: "cflinuxfs2"},
+				{Name: "MEMORY_LIMIT", Value: "128M"},
+				{Name: "ENV_VAR", Value: "stuff"},
+				{Name: "OTHER_VAR", Value: "same"},
 			}))
 		})
 
@@ -255,8 +237,8 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("LaunchDroplet", func() {
 		BeforeEach(func() {
-			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
-			config.Save()
+			config.SetBlobTarget("blob-host", 7474, "dav-user", "dav-pass")
+			Expect(config.Save()).To(Succeed())
 		})
 
 		It("launches the droplet lrp task with a start command from buildpack results", func() {
@@ -279,7 +261,6 @@ var _ = Describe("DropletRunner", func() {
 				"droplet_source": {
 					"host": "blob-host",
 					"port": 7474,
-					"bucket_name": "bucket-name",
 					"droplet_name": "droplet-name"
 				}
 			}`))
@@ -298,7 +279,7 @@ var _ = Describe("DropletRunner", func() {
 						User: "vcap",
 					},
 					&models.DownloadAction{
-						From: "http://access-key:secret-key@blob-host:7474/blobs/droplet-name/droplet.tgz",
+						From: "http://dav-user:dav-pass@blob-host:7474/blobs/droplet-name/droplet.tgz",
 						To:   "/home/vcap",
 						User: "vcap",
 					},
@@ -347,8 +328,8 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("RemoveDroplet", func() {
 		It("recursively removes a droplets from the blob store", func() {
-			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
-			config.Save()
+			config.SetBlobTarget("blob-host", 7474, "dav-user", "dav-pass")
+			Expect(config.Save()).To(Succeed())
 
 			fakeBlobStore.ListReturns([]dav_blob_store.Blob{
 				{Path: "drippy/bits.zip"},
@@ -365,7 +346,6 @@ var _ = Describe("DropletRunner", func() {
 						"droplet_source": {
 							"host": "other-blob-host",
 							"port": 7474,
-							"bucket_name": "bucket-name",
 							"droplet_name": "drippy"
 						}
 					}`,
@@ -375,7 +355,6 @@ var _ = Describe("DropletRunner", func() {
 						"droplet_source": {
 							"host": "blob-host",
 							"port": 1234,
-							"bucket_name": "bucket-name",
 							"droplet_name": "drippy"
 						}
 					}`,
@@ -388,17 +367,6 @@ var _ = Describe("DropletRunner", func() {
 						"droplet_source": {
 							"host": "blob-host",
 							"port": 7474,
-							"bucket_name": "other-bucket-name",
-							"droplet_name": "drippy"
-						}
-					}`,
-				},
-				{
-					Annotation: `{
-						"droplet_source": {
-							"host": "blob-host",
-							"port": 7474,
-							"bucket_name": "bucket-name",
 							"droplet_name": "other-drippy"
 						}
 					}`,
@@ -425,8 +393,8 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("returns an error when the app specifies that the droplet is in use", func() {
-			config.SetBlobTarget("blob-host", 7474, "access-key", "secret-key", "bucket-name")
-			config.Save()
+			config.SetBlobTarget("blob-host", 7474, "dav-user", "dav-pass")
+			Expect(config.Save()).To(Succeed())
 
 			appInfos := []app_examiner.AppInfo{{
 				ProcessGuid: "dripapp",
@@ -434,7 +402,6 @@ var _ = Describe("DropletRunner", func() {
 					"droplet_source": {
 						"host": "blob-host",
 						"port": 7474,
-						"bucket_name": "bucket-name",
 						"droplet_name": "drippy"
 					}
 				}`,
@@ -530,7 +497,6 @@ var _ = Describe("DropletRunner", func() {
 				path, contents = fakeBlobStore.UploadArgsForCall(1)
 				Expect(path).To(Equal("drippy/result.json"))
 				Expect(ioutil.ReadAll(contents)).To(Equal([]byte("result metadata")))
-
 			})
 
 			Context("when the blob bucket returns error(s)", func() {

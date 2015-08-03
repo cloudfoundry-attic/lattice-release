@@ -81,7 +81,7 @@ var _ = Describe("LatticeCli Main", func() {
 		listenerHost, listenerPort, err = net.SplitHostPort(listenerAddr)
 		Expect(err).NotTo(HaveOccurred())
 		ltcConfig.SetTarget(fmt.Sprintf("%s.xip.io:%s", listenerHost, listenerPort))
-		ltcConfig.Save()
+		Expect(ltcConfig.Save()).To(Succeed())
 
 		os.Setenv(latticeCliHomeVar, configRoot)
 	})

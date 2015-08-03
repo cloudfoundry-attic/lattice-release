@@ -699,7 +699,7 @@ var _ = Describe("CommandFactory", func() {
 					"/start-me-please",
 				}
 
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
+				doneChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
 
@@ -714,13 +714,13 @@ var _ = Describe("CommandFactory", func() {
 
 				fakeAppExaminer.RunningAppInstancesInfoReturns(9, false, nil)
 				fakeClock.IncrementBySeconds(1)
-				Expect(commandFinishChan).ShouldNot(BeClosed())
+				Expect(doneChan).ShouldNot(BeClosed())
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
 				fakeAppExaminer.RunningAppInstancesInfoReturns(10, false, nil)
 				fakeClock.IncrementBySeconds(1)
 
-				Eventually(commandFinishChan).Should(BeClosed())
+				Eventually(doneChan).Should(BeClosed())
 
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
 				Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
@@ -741,14 +741,14 @@ var _ = Describe("CommandFactory", func() {
 						"/start-me-please",
 					}
 
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
+					doneChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
 
 					Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
 
 					fakeClock.IncrementBySeconds(120)
 
-					Eventually(commandFinishChan).Should(BeClosed())
+					Eventually(doneChan).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to come up.")))
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
@@ -775,7 +775,7 @@ var _ = Describe("CommandFactory", func() {
 						"/start-me-please",
 					}
 
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
+					doneChan := test_helpers.AsyncExecuteCommandWithArgs(createCommand, args)
 
 					Eventually(outputBuffer).Should(test_helpers.Say("Monitoring the app on port 3000..."))
 					Eventually(outputBuffer).Should(test_helpers.Say("Creating App: cool-web-app"))
@@ -789,7 +789,7 @@ var _ = Describe("CommandFactory", func() {
 
 					fakeAppExaminer.RunningAppInstancesInfoReturns(9, true, nil)
 					fakeClock.IncrementBySeconds(1)
-					Eventually(commandFinishChan).Should(BeClosed())
+					Eventually(doneChan).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
 					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))

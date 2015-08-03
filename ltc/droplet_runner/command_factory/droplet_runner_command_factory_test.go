@@ -443,14 +443,13 @@ var _ = Describe("CommandFactory", func() {
 
 		Describe("waiting for the build to finish", func() {
 			It("polls for the build to complete, outputting logs while the build runs", func() {
+				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "PENDING"}, nil)
 				args := []string{
 					"droplet-name",
 					"http://some.url/for/buildpack",
 				}
 
-				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "PENDING"}, nil)
-
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
+				doneChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droplet-name"))
 
@@ -461,19 +460,19 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("build-droplet-droplet-name"))
 
 				fakeClock.IncrementBySeconds(1)
-				Expect(commandFinishChan).ShouldNot(BeClosed())
+				Expect(doneChan).ShouldNot(BeClosed())
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
 				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "RUNNING"}, nil)
 
 				fakeClock.IncrementBySeconds(1)
-				Expect(commandFinishChan).ShouldNot(BeClosed())
+				Expect(doneChan).ShouldNot(BeClosed())
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
 				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "COMPLETED"}, nil)
 
 				fakeClock.IncrementBySeconds(1)
-				Eventually(commandFinishChan).Should(BeClosed())
+				Eventually(doneChan).Should(BeClosed())
 
 				Expect(outputBuffer).To(test_helpers.SayLine("Build completed"))
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
@@ -490,14 +489,14 @@ var _ = Describe("CommandFactory", func() {
 
 					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "RUNNING"}, nil)
 
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
+					doneChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
 
 					Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droppo-the-clown"))
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
 
 					fakeClock.IncrementBySeconds(17)
 
-					Eventually(commandFinishChan).Should(BeClosed())
+					Eventually(doneChan).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the build to complete.")))
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
@@ -536,7 +535,7 @@ var _ = Describe("CommandFactory", func() {
 						"http://some.url/for/buildpack",
 					}
 
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
+					doneChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
 
 					Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droppo-the-clown"))
 
@@ -547,7 +546,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakeExitHandler.ExitCalledWith).To(BeEmpty())
 
 					fakeClock.IncrementBySeconds(1)
-					Eventually(commandFinishChan).Should(BeClosed())
+					Eventually(doneChan).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
 					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error requesting task status: dropped the ball")))
@@ -593,16 +592,8 @@ var _ = Describe("CommandFactory", func() {
 				time.Date(2015, 6, 15, 16, 11, 33, 0, time.Local),
 			}
 			droplets := []droplet_runner.Droplet{
-				droplet_runner.Droplet{
-					Name:    "drop-a",
-					Created: times[0],
-					Size:    789 * 1024 * 1024,
-				},
-				droplet_runner.Droplet{
-					Name:    "drop-b",
-					Created: times[1],
-					Size:    456 * 1024,
-				},
+				{Name: "drop-a", Created: times[0], Size: 789 * 1024 * 1024},
+				{Name: "drop-b", Created: times[1], Size: 456 * 1024},
 			}
 			fakeDropletRunner.ListDropletsReturns(droplets, nil)
 
@@ -617,15 +608,8 @@ var _ = Describe("CommandFactory", func() {
 			time := time.Date(2014, 12, 31, 14, 33, 52, 0, time.Local)
 
 			droplets := []droplet_runner.Droplet{
-				droplet_runner.Droplet{
-					Name:    "drop-a",
-					Created: time,
-					Size:    789 * 1024 * 1024,
-				},
-				droplet_runner.Droplet{
-					Name: "drop-b",
-					Size: 456 * 1024,
-				},
+				{Name: "drop-a", Created: time, Size: 789 * 1024 * 1024},
+				{Name: "drop-b", Size: 456 * 1024},
 			}
 			fakeDropletRunner.ListDropletsReturns(droplets, nil)
 
@@ -714,8 +698,8 @@ var _ = Describe("CommandFactory", func() {
 				"MEMORY_LIMIT": "12M",
 			}))
 			Expect(appEnvParam.RouteOverrides).To(ContainExactly(app_runner.RouteOverrides{
-				app_runner.RouteOverride{HostnamePrefix: "ninetyninety", Port: 4444},
-				app_runner.RouteOverride{HostnamePrefix: "fourtyfourfourtyfour", Port: 9090},
+				{HostnamePrefix: "ninetyninety", Port: 4444},
+				{HostnamePrefix: "fourtyfourfourtyfour", Port: 9090},
 			}))
 		})
 
@@ -1004,6 +988,16 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
+
+		Context("when the required arguments are missing", func() {
+			It("prints incorrect usage", func() {
+				test_helpers.ExecuteCommandWithArgs(exportDropletCommand, []string{""})
+
+				Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
+				Expect(fakeDropletRunner.ExportDropletCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+		})
 	})
 
 	Describe("ImportDropletCommand", func() {
@@ -1057,7 +1051,13 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		Context("when required arguments are missing", func() {
-			It("prints incorrect usage", func() {})
+			It("prints incorrect usage", func() {
+				test_helpers.ExecuteCommandWithArgs(importDropletCommand, []string{"droplet-name", "some-path"})
+
+				Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
+				Expect(fakeDropletRunner.ImportDropletCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
 		})
 	})
 })

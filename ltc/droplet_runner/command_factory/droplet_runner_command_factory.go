@@ -227,6 +227,11 @@ func (factory *DropletRunnerCommandFactory) importDroplet(context *cli.Context) 
 	dropletName := context.Args().First()
 	dropletPath := context.Args().Get(1)
 	metadataPath := context.Args().Get(2)
+	if dropletName == "" || dropletPath == "" || metadataPath == "" {
+		factory.UI.SayIncorrectUsage("")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
 
 	if err := factory.dropletRunner.ImportDroplet(dropletName, dropletPath, metadataPath); err != nil {
 		factory.UI.Say(fmt.Sprintf("Error importing %s: %s", dropletName, err))
@@ -475,6 +480,11 @@ func (factory *DropletRunnerCommandFactory) removeDroplet(context *cli.Context) 
 
 func (factory *DropletRunnerCommandFactory) exportDroplet(context *cli.Context) {
 	dropletName := context.Args().First()
+	if dropletName == "" {
+		factory.UI.SayIncorrectUsage("")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
 
 	dropletReader, metadataReader, err := factory.dropletRunner.ExportDroplet(dropletName)
 	if err != nil {

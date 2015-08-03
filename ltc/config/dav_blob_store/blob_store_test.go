@@ -13,7 +13,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
-	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 )
 
@@ -25,7 +24,6 @@ var _ = Describe("BlobStore", func() {
 
 	BeforeEach(func() {
 		fakeServer = ghttp.NewServer()
-
 		fakeServerURL, err := url.Parse(fakeServer.URL())
 		Expect(err).NotTo(HaveOccurred())
 
@@ -34,11 +32,11 @@ var _ = Describe("BlobStore", func() {
 		proxyPort, err := strconv.Atoi(serverPort)
 		Expect(err).NotTo(HaveOccurred())
 
-		blobTargetInfo := config_package.BlobTargetInfo{
-			TargetHost: serverHost,
-			TargetPort: uint16(proxyPort),
-			AccessKey:  "user",
-			SecretKey:  "pass",
+		blobTargetInfo := dav_blob_store.Config{
+			Host:     serverHost,
+			Port:     uint16(proxyPort),
+			Username: "user",
+			Password: "pass",
 		}
 
 		blobStore = dav_blob_store.New(blobTargetInfo)
@@ -400,7 +398,7 @@ var _ = Describe("BlobStore", func() {
 
 				go func() {
 					defer GinkgoRecover()
-					Eventually(doneChan).Should(Receive(&struct{}{}))
+					Eventually(doneChan).Should(Receive())
 					fakeServer.Close()
 					fakeServer = nil
 				}()

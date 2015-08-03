@@ -3,12 +3,11 @@ package target_verifier
 import (
 	"fmt"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 )
 
 // TODO: should be separate object
-func (t *targetVerifier) VerifyBlobTarget(targetInfo config.BlobTargetInfo) error {
+func (t *targetVerifier) VerifyBlobTarget(targetInfo dav_blob_store.Config) error {
 	blobStore := dav_blob_store.New(targetInfo)
 
 	if _, err := blobStore.List(); err != nil {

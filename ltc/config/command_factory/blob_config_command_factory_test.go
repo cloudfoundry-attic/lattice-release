@@ -26,6 +26,7 @@ var _ = Describe("CommandFactory", func() {
 		stdinWriter        *io.PipeWriter
 		outputBuffer       *gbytes.Buffer
 		terminalUI         terminal.UI
+		configPersister    persister.Persister
 		config             *config_package.Config
 		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
 		fakeExitHandler    *fake_exit_handler.FakeExitHandler
@@ -37,7 +38,8 @@ var _ = Describe("CommandFactory", func() {
 		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 		fakeExitHandler = new(fake_exit_handler.FakeExitHandler)
 		terminalUI = terminal.NewUI(stdinReader, outputBuffer, nil)
-		config = config_package.New(persister.NewMemPersister())
+		configPersister = persister.NewMemPersister()
+		config = config_package.New(configPersister)
 	})
 
 	Describe("TargetBlobCommand", func() {
@@ -50,109 +52,105 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("displaying the blob target", func() {
 			It("outputs the current target", func() {
-				config.SetBlobTarget("192.168.11.11", 8980, "datkeyyo", "supersecretJKJK", "bucket")
-				config.Save()
+				config.SetBlobTarget("192.168.11.11", 8980, "some-username", "some-password")
+				Expect(config.Save()).To(Succeed())
 
 				test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{})
 
-				Expect(outputBuffer).To(test_helpers.Say("Blob Target:\t192.168.11.11:8980\n"))
-				Expect(outputBuffer).To(test_helpers.Say("Access Key:\tdatkeyyo"))
-				Expect(outputBuffer).To(test_helpers.Say("Secret Key:\tsupersecretJKJK"))
-				Expect(outputBuffer).To(test_helpers.Say("Bucket Name:\tbucket"))
+				Expect(outputBuffer).To(test_helpers.Say("Blob Store:\t192.168.11.11:8980\n"))
+				Expect(outputBuffer).To(test_helpers.Say("Username:\tsome-username"))
+				Expect(outputBuffer).To(test_helpers.Say("Password:\tsome-password"))
 			})
 
 			It("alerts the user if no target is set", func() {
-				config.SetBlobTarget("", 0, "", "", "")
-				config.Save()
+				config.SetBlobTarget("", 0, "", "")
+				Expect(config.Save()).To(Succeed())
 
 				test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{})
 
-				Expect(outputBuffer).To(test_helpers.SayLine("Blob target not set"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Blob store not set"))
 			})
 		})
 
 		Context("setting the blob target", func() {
 			It("sets the blob target and credentials", func() {
-				fakeTargetVerifier.VerifyBlobTargetReturns(nil)
+				doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8980"})
 
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8980"})
+				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
+				stdinWriter.Write([]byte("some-username\n"))
+				Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
+				stdinWriter.Write([]byte("some-password\n"))
 
-				Eventually(outputBuffer).Should(test_helpers.Say("Access Key: "))
-				stdinWriter.Write([]byte("yaykey\n"))
-				Eventually(outputBuffer).Should(test_helpers.Say("Secret Key: "))
-				stdinWriter.Write([]byte("superserial\n"))
-				Eventually(outputBuffer).Should(test_helpers.Say("Bucket Name [condenser-bucket]: "))
-				stdinWriter.Write([]byte("bhuket\n"))
+				Eventually(doneChan).Should(BeClosed())
 
-				Eventually(commandFinishChan).Should(BeClosed())
+				Expect(outputBuffer).To(test_helpers.Say("Blob Location Set"))
 
 				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
 				blobTargetInfo := fakeTargetVerifier.VerifyBlobTargetArgsForCall(0)
-				Expect(blobTargetInfo.TargetHost).To(Equal("192.168.11.11"))
-				Expect(blobTargetInfo.TargetPort).To(Equal(uint16(8980)))
-				Expect(blobTargetInfo.AccessKey).To(Equal("yaykey"))
-				Expect(blobTargetInfo.SecretKey).To(Equal("superserial"))
-				Expect(blobTargetInfo.BucketName).To(Equal("bhuket"))
+				Expect(blobTargetInfo.Host).To(Equal("192.168.11.11"))
+				Expect(blobTargetInfo.Port).To(Equal(uint16(8980)))
+				Expect(blobTargetInfo.Username).To(Equal("some-username"))
+				Expect(blobTargetInfo.Password).To(Equal("some-password"))
 
-				blobTarget := config.BlobTarget()
-				Expect(outputBuffer).To(test_helpers.Say("Blob Location Set"))
-				Expect(blobTarget.TargetHost).To(Equal("192.168.11.11"))
-				Expect(blobTarget.TargetPort).To(Equal(uint16(8980)))
-				Expect(blobTarget.AccessKey).To(Equal("yaykey"))
-				Expect(blobTarget.SecretKey).To(Equal("superserial"))
+				newConfig := config_package.New(configPersister)
+				Expect(newConfig.Load()).To(Succeed())
+				blobTarget := newConfig.BlobTarget()
+				Expect(blobTarget.Host).To(Equal("192.168.11.11"))
+				Expect(blobTarget.Port).To(Equal(uint16(8980)))
+				Expect(blobTarget.Username).To(Equal("some-username"))
+				Expect(blobTarget.Password).To(Equal("some-password"))
 			})
 
 			It("sets the blob target and credentials using the default bucket name", func() {
 				fakeTargetVerifier.VerifyBlobTargetReturns(nil)
 
-				commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8980"})
+				doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8980"})
 
-				Eventually(outputBuffer).Should(test_helpers.Say("Access Key: "))
-				stdinWriter.Write([]byte("yaykey\n"))
-				Eventually(outputBuffer).Should(test_helpers.Say("Secret Key: "))
-				stdinWriter.Write([]byte("superserial\n"))
-				Eventually(outputBuffer).Should(test_helpers.Say("Bucket Name [condenser-bucket]: "))
-				stdinWriter.Write([]byte("\n"))
+				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
+				stdinWriter.Write([]byte("some-username\n"))
+				Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
+				stdinWriter.Write([]byte("some-password\n"))
 
-				Eventually(commandFinishChan).Should(BeClosed())
+				Eventually(doneChan).Should(BeClosed())
+
+				Expect(outputBuffer).To(test_helpers.Say("Blob Location Set"))
 
 				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
 				blobTargetInfo := fakeTargetVerifier.VerifyBlobTargetArgsForCall(0)
-				Expect(blobTargetInfo.TargetHost).To(Equal("192.168.11.11"))
-				Expect(blobTargetInfo.TargetPort).To(Equal(uint16(8980)))
-				Expect(blobTargetInfo.AccessKey).To(Equal("yaykey"))
-				Expect(blobTargetInfo.SecretKey).To(Equal("superserial"))
-				Expect(blobTargetInfo.BucketName).To(Equal("condenser-bucket"))
+				Expect(blobTargetInfo.Host).To(Equal("192.168.11.11"))
+				Expect(blobTargetInfo.Port).To(Equal(uint16(8980)))
+				Expect(blobTargetInfo.Username).To(Equal("some-username"))
+				Expect(blobTargetInfo.Password).To(Equal("some-password"))
 
-				blobTarget := config.BlobTarget()
-				Expect(outputBuffer).To(test_helpers.Say("Blob Location Set"))
-				Expect(blobTarget.TargetHost).To(Equal("192.168.11.11"))
-				Expect(blobTarget.TargetPort).To(Equal(uint16(8980)))
-				Expect(blobTarget.AccessKey).To(Equal("yaykey"))
-				Expect(blobTarget.SecretKey).To(Equal("superserial"))
+				newConfig := config_package.New(configPersister)
+				Expect(newConfig.Load()).To(Succeed())
+				blobTarget := newConfig.BlobTarget()
+				Expect(blobTarget.Host).To(Equal("192.168.11.11"))
+				Expect(blobTarget.Port).To(Equal(uint16(8980)))
+				Expect(blobTarget.Username).To(Equal("some-username"))
+				Expect(blobTarget.Password).To(Equal("some-password"))
 			})
 
 			Context("invalid syntax", func() {
 				It("errors when target is malformed", func() {
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"huehue8980"})
+					test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{"huehue8980"})
 
-					Eventually(commandFinishChan).Should(BeClosed())
 					Expect(outputBuffer).To(test_helpers.SayLine("Error setting blob target: malformed target"))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(BeZero())
 				})
 				It("errors when port is non-numeric", func() {
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:haiii"})
+					doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:haiii"})
 
-					Eventually(commandFinishChan).Should(BeClosed())
+					Eventually(doneChan).Should(BeClosed())
 					Expect(outputBuffer).To(test_helpers.SayLine("Error setting blob target: malformed port"))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(BeZero())
 				})
 				It("errors when port exceeds 65536", func() {
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:70000"})
+					doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:70000"})
 
-					Eventually(commandFinishChan).Should(BeClosed())
+					Eventually(doneChan).Should(BeClosed())
 					Expect(outputBuffer).To(test_helpers.SayLine("Error setting blob target: malformed port"))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(BeZero())
@@ -163,43 +161,39 @@ var _ = Describe("CommandFactory", func() {
 				verifyConfigNotSaved := func(failMessage string) {
 					Expect(outputBuffer).NotTo(test_helpers.Say("Blob Location Set"))
 					Expect(outputBuffer).To(test_helpers.Say(failMessage))
-					config.Load()
-					blobTarget := config.BlobTarget()
-					Expect(blobTarget.TargetHost).To(Equal("original-host"))
-					Expect(blobTarget.TargetPort).To(Equal(uint16(8989)))
-					Expect(blobTarget.AccessKey).To(Equal("original-key"))
-					Expect(blobTarget.SecretKey).To(Equal("original-secret"))
-					Expect(blobTarget.BucketName).To(Equal("original-bucket"))
+					newConfig := config_package.New(configPersister)
+					Expect(newConfig.Load()).To(Succeed())
+					blobTarget := newConfig.BlobTarget()
+					Expect(blobTarget.Host).To(Equal("original-host"))
+					Expect(blobTarget.Port).To(Equal(uint16(8989)))
+					Expect(blobTarget.Username).To(Equal("original-key"))
+					Expect(blobTarget.Password).To(Equal("original-secret"))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 				}
 
 				BeforeEach(func() {
-					config.SetBlobTarget("original-host", 8989, "original-key", "original-secret", "original-bucket")
-					config.Save()
+					config.SetBlobTarget("original-host", 8989, "original-key", "original-secret")
+					Expect(config.Save()).To(Succeed())
 				})
 
 				It("does not save the config when there is an error connecting to the target", func() {
 					fakeTargetVerifier.VerifyBlobTargetReturns(errors.New("fail"))
 
-					commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8980"})
+					doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8980"})
 
-					Eventually(outputBuffer).Should(test_helpers.Say("Access Key: "))
-					stdinWriter.Write([]byte("yaykey\n"))
-					Eventually(outputBuffer).Should(test_helpers.Say("Secret Key: "))
-					stdinWriter.Write([]byte("superserial\n"))
-					Eventually(outputBuffer).Should(test_helpers.Say("Bucket Name [condenser-bucket]: "))
-					stdinWriter.Write([]byte("buckit\n"))
+					Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
+					stdinWriter.Write([]byte("some-username\n"))
+					Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
+					stdinWriter.Write([]byte("some-password\n"))
 
-					Eventually(commandFinishChan).Should(BeClosed())
-
-					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
+					Eventually(doneChan).Should(BeClosed())
 
 					verifyConfigNotSaved("Unable to verify blob store: fail")
+					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
 				})
 
 				Context("when the persister returns errors", func() {
 					BeforeEach(func() {
-						fakeTargetVerifier.VerifyBlobTargetReturns(nil)
 						commandFactory := command_factory.NewConfigCommandFactory(
 							config_package.New(errorPersister("Failure setting blob target")),
 							terminalUI,
@@ -209,31 +203,30 @@ var _ = Describe("CommandFactory", func() {
 						targetBlobCommand = commandFactory.MakeTargetBlobCommand()
 					})
 					It("bubbles up errors from saving the config", func() {
-						config.SetBlobTarget("192.168.11.11", 8980, "datkeyyo", "supersecretJKJK", "buckit")
-						config.Save()
+						config.SetBlobTarget("192.168.11.11", 8980, "some-username", "some-password")
+						Expect(config.Save()).To(Succeed())
 
-						commandFinishChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"199.112.3432:8980"})
-						Eventually(outputBuffer).Should(test_helpers.Say("Access Key: "))
-						stdinWriter.Write([]byte("booookey\n"))
-						Eventually(outputBuffer).Should(test_helpers.Say("Secret Key: "))
-						stdinWriter.Write([]byte("unicorns\n"))
-						Eventually(outputBuffer).Should(test_helpers.Say("Bucket Name [condenser-bucket]: "))
-						stdinWriter.Write([]byte("bkkt\n"))
+						doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"199.112.3432:8980"})
 
-						Eventually(commandFinishChan).Should(BeClosed())
+						Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
+						stdinWriter.Write([]byte("some-different-username\n"))
+						Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
+						stdinWriter.Write([]byte("some-different-password\n"))
+
+						Eventually(doneChan).Should(BeClosed())
 
 						Expect(outputBuffer).To(test_helpers.Say("Failure setting blob target"))
-						config.Load()
 
-						blobTarget := config.BlobTarget()
-						Expect(blobTarget.TargetHost).To(Equal("192.168.11.11"))
-						Expect(blobTarget.TargetPort).To(Equal(uint16(8980)))
-						Expect(blobTarget.AccessKey).To(Equal("datkeyyo"))
-						Expect(blobTarget.SecretKey).To(Equal("supersecretJKJK"))
-						Expect(blobTarget.BucketName).To(Equal("buckit"))
+						newConfig := config_package.New(configPersister)
+						Expect(newConfig.Load()).To(Succeed())
+						blobTarget := newConfig.BlobTarget()
+						Expect(blobTarget.Host).To(Equal("192.168.11.11"))
+						Expect(blobTarget.Port).To(Equal(uint16(8980)))
+						Expect(blobTarget.Username).To(Equal("some-username"))
+						Expect(blobTarget.Password).To(Equal("some-password"))
 
-						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
 						Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
+						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
 					})
 				})
 			})

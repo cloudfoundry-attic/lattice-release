@@ -125,8 +125,7 @@ var _ = Describe("filePersister", func() {
 
 		It("Returns an error rather than save invalid JSON", func() {
 			err := filePersister.Save(func() {})
-
-			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError(ContainSubstring("unsupported type")))
 		})
 
 		Context("when reading nonexistant files", func() {
@@ -145,7 +144,7 @@ var _ = Describe("filePersister", func() {
 			})
 
 			It("writes to nonexistant directories", func() {
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 			})
 		})
 
@@ -164,7 +163,7 @@ var _ = Describe("filePersister", func() {
 			})
 
 			It("returns errors from making the directory", func() {
-				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError(ContainSubstring("not a directory")))
 			})
 		})
 
@@ -174,7 +173,7 @@ var _ = Describe("filePersister", func() {
 			})
 
 			It("returns errors from writing the file", func() {
-				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError(ContainSubstring("is a directory")))
 			})
 		})
 

@@ -2,10 +2,10 @@ package command_factory
 
 import (
 	"fmt"
+	"net"
 	"strconv"
-	"strings"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/codegangsta/cli"
 )
@@ -29,50 +29,45 @@ func (factory *ConfigCommandFactory) targetBlob(context *cli.Context) {
 
 	if endpoint == "" {
 		blobTarget := factory.config.BlobTarget()
-		if blobTarget.TargetHost == "" {
-			factory.ui.SayLine("Blob target not set")
+		if blobTarget.Host == "" {
+			factory.ui.SayLine("Blob store not set")
 			return
 		}
-		factory.ui.Say(fmt.Sprintf("Blob Target:\t%s:%d\n", blobTarget.TargetHost, blobTarget.TargetPort))
-		factory.ui.Say(fmt.Sprintf("Access Key:\t%s\n", blobTarget.AccessKey))
-		factory.ui.Say(fmt.Sprintf("Secret Key:\t%s\n", blobTarget.SecretKey))
-		factory.ui.Say(fmt.Sprintf("Bucket Name:\t%s\n", blobTarget.BucketName))
+		factory.ui.Say(fmt.Sprintf("Blob Store:\t%s:%d\n", blobTarget.Host, blobTarget.Port))
+		factory.ui.Say(fmt.Sprintf("Username:\t%s\n", blobTarget.Username))
+		factory.ui.Say(fmt.Sprintf("Password:\t%s\n", blobTarget.Password))
 		return
 	}
 
-	var port int
-	endpointArr := strings.Split(endpoint, ":")
-	if len(endpointArr) != 2 {
+	blobHost, blobPort, err := net.SplitHostPort(endpoint)
+	if err != nil {
 		factory.ui.SayLine("Error setting blob target: malformed target")
 		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
-	host := endpointArr[0]
 
-	port, err := strconv.Atoi(endpointArr[1])
+	port, err := strconv.Atoi(blobPort)
 	if err != nil || port > 65536 {
 		factory.ui.SayLine("Error setting blob target: malformed port")
 		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
-	accessKey := factory.ui.Prompt("Access Key")
-	secretKey := factory.ui.Prompt("Secret Key")
-	bucketName := factory.ui.PromptWithDefault("Bucket Name", "condenser-bucket")
+	username := factory.ui.Prompt("Username")
+	password := factory.ui.Prompt("Password")
 
-	if err := factory.targetVerifier.VerifyBlobTarget(config.BlobTargetInfo{
-		TargetHost: host,
-		TargetPort: uint16(port),
-		AccessKey:  accessKey,
-		SecretKey:  secretKey,
-		BucketName: bucketName,
+	if err := factory.targetVerifier.VerifyBlobTarget(dav_blob_store.Config{
+		Host:     blobHost,
+		Port:     uint16(port),
+		Username: username,
+		Password: password,
 	}); err != nil {
 		factory.ui.Say("Unable to verify blob store: " + err.Error())
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	}
 
-	factory.config.SetBlobTarget(host, uint16(port), accessKey, secretKey, bucketName)
+	factory.config.SetBlobTarget(blobHost, uint16(port), username, password)
 	if err := factory.config.Save(); err != nil {
 		factory.ui.SayLine(err.Error())
 		factory.exitHandler.Exit(exit_codes.FileSystemError)

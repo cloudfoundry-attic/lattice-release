@@ -5,13 +5,12 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 )
 
@@ -22,7 +21,7 @@ var _ = Describe("TargetVerifier", func() {
 			targetVerifier target_verifier.TargetVerifier
 			statusCode     int
 			responseBody   string
-			targetInfo     config.BlobTargetInfo
+			targetInfo     dav_blob_store.Config
 		)
 
 		BeforeEach(func() {
@@ -30,16 +29,17 @@ var _ = Describe("TargetVerifier", func() {
 			fakeServer = ghttp.NewServer()
 			proxyURL, err := url.Parse(fakeServer.URL())
 			Expect(err).NotTo(HaveOccurred())
-			proxyHostArr := strings.Split(proxyURL.Host, ":")
-			Expect(proxyHostArr).To(HaveLen(2))
-			proxyHostPort, err := strconv.Atoi(proxyHostArr[1])
+
+			serverHost, serverPort, err := net.SplitHostPort(proxyURL.Host)
+			Expect(err).NotTo(HaveOccurred())
+			port, err := strconv.Atoi(serverPort)
 			Expect(err).NotTo(HaveOccurred())
 
-			targetInfo = config.BlobTargetInfo{
-				TargetHost: proxyHostArr[0],
-				TargetPort: uint16(proxyHostPort),
-				AccessKey:  "some-access-key",
-				SecretKey:  "some-secret-key",
+			targetInfo = dav_blob_store.Config{
+				Host:     serverHost,
+				Port:     uint16(port),
+				Username: "some-username",
+				Password: "some-password",
 			}
 
 			httpHeader := http.Header{

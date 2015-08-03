@@ -4,7 +4,7 @@ package fake_target_verifier
 import (
 	"sync"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 )
 
@@ -19,10 +19,10 @@ type FakeTargetVerifier struct {
 		result2 bool
 		result3 error
 	}
-	VerifyBlobTargetStub        func(targetInfo config.BlobTargetInfo) error
+	VerifyBlobTargetStub        func(targetInfo dav_blob_store.Config) error
 	verifyBlobTargetMutex       sync.RWMutex
 	verifyBlobTargetArgsForCall []struct {
-		targetInfo config.BlobTargetInfo
+		targetInfo dav_blob_store.Config
 	}
 	verifyBlobTargetReturns struct {
 		result1 error
@@ -63,10 +63,10 @@ func (fake *FakeTargetVerifier) VerifyTargetReturns(result1 bool, result2 bool, 
 	}{result1, result2, result3}
 }
 
-func (fake *FakeTargetVerifier) VerifyBlobTarget(targetInfo config.BlobTargetInfo) error {
+func (fake *FakeTargetVerifier) VerifyBlobTarget(targetInfo dav_blob_store.Config) error {
 	fake.verifyBlobTargetMutex.Lock()
 	fake.verifyBlobTargetArgsForCall = append(fake.verifyBlobTargetArgsForCall, struct {
-		targetInfo config.BlobTargetInfo
+		targetInfo dav_blob_store.Config
 	}{targetInfo})
 	fake.verifyBlobTargetMutex.Unlock()
 	if fake.VerifyBlobTargetStub != nil {
@@ -82,7 +82,7 @@ func (fake *FakeTargetVerifier) VerifyBlobTargetCallCount() int {
 	return len(fake.verifyBlobTargetArgsForCall)
 }
 
-func (fake *FakeTargetVerifier) VerifyBlobTargetArgsForCall(i int) config.BlobTargetInfo {
+func (fake *FakeTargetVerifier) VerifyBlobTargetArgsForCall(i int) dav_blob_store.Config {
 	fake.verifyBlobTargetMutex.RLock()
 	defer fake.verifyBlobTargetMutex.RUnlock()
 	return fake.verifyBlobTargetArgsForCall[i].targetInfo
