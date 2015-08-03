@@ -1,0 +1,86 @@
+syntax = "proto2";
+
+package models;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "environment_variables.proto";
+
+message Action {
+  option (gogoproto.onlyone) = true;
+  oneof action {
+    DownloadAction download_action = 1 [(gogoproto.jsontag) = "download,omitempty"];
+    UploadAction upload_action = 2 [(gogoproto.jsontag) = "upload,omitempty"];
+    RunAction run_action = 3 [(gogoproto.jsontag) = "run,omitempty"];
+    TimeoutAction timeout_action = 4 [(gogoproto.jsontag) = "timeout,omitempty"];
+    EmitProgressAction emit_progress_action = 5 [(gogoproto.jsontag) = "emit_progress,omitempty"];
+    TryAction try_action = 6 [(gogoproto.jsontag) = "try,omitempty"];
+    ParallelAction parallel_action = 7 [(gogoproto.jsontag) = "parallel,omitempty"];
+    SerialAction serial_action = 8 [(gogoproto.jsontag) = "serial,omitempty"];
+    CodependentAction codependent_action = 9 [(gogoproto.jsontag) = "codependent,omitempty"];
+  }
+}
+
+message DownloadAction {
+  optional string artifact = 1 [(gogoproto.jsontag) = "artifact,omitempty"];
+  optional string from = 2;
+  optional string to = 3;
+  optional string cache_key = 4;
+  optional string log_source = 5 [(gogoproto.jsontag) = "log_source,omitempty"];
+  optional string user = 6;
+}
+
+message UploadAction {
+  optional string artifact = 1 [ (gogoproto.jsontag) = "artifact,omitempty"];
+  optional string from = 2;
+  optional string to = 3;
+  optional string log_source = 4 [(gogoproto.jsontag) = "log_source,omitempty"];
+  optional string user = 5;
+}
+
+message RunAction {
+  optional string path = 1;
+  repeated string args = 2;
+  optional string dir = 3 [(gogoproto.jsontag) = "dir,omitempty"];
+  repeated EnvironmentVariable env = 4;
+  optional ResourceLimits resource_limits = 5;
+  optional string user = 6;
+  optional string log_source = 7 [(gogoproto.jsontag) = "log_source,omitempty"];
+}
+
+message TimeoutAction {
+  optional Action action = 1;
+  optional int64 timeout = 2;
+  optional string log_source = 3 [(gogoproto.jsontag) = "log_source,omitempty"];
+}
+
+message EmitProgressAction {
+  optional Action action = 1;
+  optional string start_message = 2;
+  optional string success_message = 3;
+  optional string failure_message_prefix = 4;
+  optional string log_source = 5 [(gogoproto.jsontag) = "log_source,omitempty"];
+}
+
+message TryAction {
+  optional Action action = 1;
+  optional string log_source = 2 [(gogoproto.jsontag) = "log_source,omitempty"];
+}
+
+message ParallelAction {
+  repeated Action actions = 1;
+  optional string log_source = 2 [(gogoproto.jsontag) = "log_source,omitempty"];
+}
+
+message SerialAction {
+  repeated Action actions = 1;
+  optional string log_source = 2 [(gogoproto.jsontag) = "log_source,omitempty"];
+}
+
+message CodependentAction {
+  repeated Action actions = 1;
+  optional string log_source = 2 [(gogoproto.jsontag) = "log_source,omitempty"];
+}
+
+message ResourceLimits {
+  optional uint64 nofile = 1 [(gogoproto.jsontag) = "nofile,omitempty"];
+}

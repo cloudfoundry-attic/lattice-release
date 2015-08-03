@@ -1,0 +1,60 @@
+syntax = "proto2";
+
+package models;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "modification_tag.proto";
+import "actions.proto";
+import "environment_variables.proto";
+
+message DesiredLRPs {
+  repeated DesiredLRP desired_lrps = 1;
+}
+
+message DesiredLRP {
+  optional string process_guid = 1;
+  optional string domain = 2;
+  optional string root_fs = 3 [(gogoproto.jsontag) = "rootfs"];
+  optional int32 instances = 4;
+  repeated EnvironmentVariable environment_variables = 5 [(gogoproto.jsontag) = "env"];
+  optional Action setup = 6;
+  optional Action action = 7;
+  optional uint32 start_timeout = 8;
+  optional Action monitor = 9;
+  optional int32 disk_mb = 10;
+  optional int32 memory_mb = 11;
+  optional uint32 cpu_weight = 12;
+  optional bool privileged = 13;
+  repeated uint32 ports = 14;
+  optional bytes routes = 15 [(gogoproto.nullable) = true, (gogoproto.customtype) = "Routes"];
+  optional string log_source = 16;
+  optional string log_guid = 17;
+  optional string metrics_guid = 18;
+  optional string annotation = 19;
+  repeated SecurityGroupRule egress_rules = 20;
+  optional ModificationTag modification_tag = 21;
+}
+
+// helper message for marshalling routes
+message proto_routes {
+  map<string, bytes> routes = 1;
+}
+
+message PortRange {
+  optional uint32 start = 1;
+  optional uint32 end = 2;
+}
+
+message ICMPInfo {
+  optional int32 type = 1;
+  optional int32 code = 2;
+}
+
+message SecurityGroupRule {
+  optional string protocol = 1 [(gogoproto.jsontag) = "protocol,omitempty"];
+  repeated string destinations = 2;
+  repeated uint32 ports = 3;
+  optional PortRange port_range = 4;
+  optional ICMPInfo icmp_info = 5;
+  optional bool log = 6;
+}

@@ -1,0 +1,33 @@
+syntax = "proto2";
+
+package models;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "actual_lrp.proto";
+import "desired_lrp.proto";
+
+message ActualLRPCreatedEvent  {
+  optional ActualLRPGroup actual_lrp_group = 1;
+}
+
+message ActualLRPChangedEvent {
+  optional ActualLRPGroup before = 1;
+  optional ActualLRPGroup after = 2;
+}
+
+message ActualLRPRemovedEvent {
+  optional ActualLRPGroup actual_lrp_group = 1;
+}
+
+message DesiredLRPCreatedEvent {
+  optional DesiredLRP desired_lrp = 1;
+}
+
+message DesiredLRPChangedEvent {
+  optional DesiredLRP before = 1;
+  optional DesiredLRP after = 2;
+}
+
+message DesiredLRPRemovedEvent {
+  optional DesiredLRP desired_lrp = 1;
+}

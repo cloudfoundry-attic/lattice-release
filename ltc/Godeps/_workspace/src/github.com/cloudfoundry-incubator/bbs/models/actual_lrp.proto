@@ -1,0 +1,66 @@
+syntax = "proto2";
+
+package models;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "modification_tag.proto";
+
+message ActualLRPGroup {
+  optional ActualLRP instance = 1;
+  optional ActualLRP evacuating = 2;
+}
+
+message PortMapping {
+  optional uint32 container_port = 1;
+  optional uint32 host_port = 2;
+}
+
+message ActualLRPKey {
+  optional string process_guid = 1;
+  optional int32 index = 2;
+  optional string domain = 3;
+}
+
+message ActualLRPInstanceKey {
+  optional string instance_guid = 1;
+  optional string cell_id = 2;
+}
+
+message ActualLRPNetInfo {
+  optional string address = 1;
+  repeated PortMapping ports = 2 [(gogoproto.jsontag) = "ports"];
+}
+
+message ActualLRP {
+  optional ActualLRPKey actual_lrp_key = 1 [(gogoproto.nullable) = false, (gogoproto.jsontag) = "", (gogoproto.embed) = true];
+  optional ActualLRPInstanceKey actual_lrp_instance_key = 2 [(gogoproto.nullable) = false, (gogoproto.jsontag) = "", (gogoproto.embed) = true];
+  optional ActualLRPNetInfo actual_lrp_net_info = 3 [(gogoproto.nullable) = false, (gogoproto.jsontag) = "", (gogoproto.embed) = true];
+  optional int32 crash_count = 4;
+  optional string crash_reason = 5 [(gogoproto.jsontag) = "crash_reason,omitempty"];
+  optional string state = 6;
+  optional string placement_error = 7 [(gogoproto.jsontag) = "placement_error,omitempty"];
+  optional int64 since = 8;
+  optional ModificationTag modification_tag = 9 [(gogoproto.nullable) = false];
+}
+
+message ActualLRPGroups {
+  repeated ActualLRPGroup actual_lrp_groups = 1;
+}
+
+message ClaimActualLRPRequest {
+  optional string process_guid = 1;
+  optional int32 index = 2;
+  optional ActualLRPInstanceKey actual_lrp_instance_key = 3;
+}
+
+message StartActualLRPRequest {
+  optional ActualLRPKey actual_lrp_key = 1;
+  optional ActualLRPInstanceKey actual_lrp_instance_key = 2;
+  optional ActualLRPNetInfo actual_lrp_net_info = 3;
+}
+
+message FailActualLRPRequest {
+  optional ActualLRPKey actual_lrp_key = 1;
+  optional string error_message = 2;
+}
+

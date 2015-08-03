@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+package models;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.equal_all) = false;
+
+message Error {
+  optional string type = 1 [(gogoproto.nullable) = false];
+  optional string message = 2 [(gogoproto.nullable) = false];
+}
