@@ -42,13 +42,13 @@ compile_garden_linux() {
 
     mkdir -p ${output_dir}/cell/garden
     rm -rf ${GOPATH}/pkg/*
-    rm -rf ${GOPATH}/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace/pkg/*
+    rm -rf ${GOPATH}/src/garden-linux-release/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace/pkg/*
 
-    GOPATH=${GOPATH}/src/github.com/cloudfoundry-incubator/garden-linux/Godeps/_workspace:${GOPATH} \
+    GOPATH=${GOPATH}/src/garden-linux-release:${GOPATH} \
         go install -tags daemon github.com/cloudfoundry-incubator/garden-linux
 
-    pushd ${diego_release_path}/src/github.com/cloudfoundry-incubator/garden-linux
-        make
+    pushd ${diego_release_path}/src/garden-linux-release/src/github.com/cloudfoundry-incubator/garden-linux
+        GOPATH=${GOPATH}/src/garden-linux-release:${GOPATH} make
         cp -a linux_backend/bin ${output_dir}/cell/garden/garden-bin
         cp -a linux_backend/skeleton ${output_dir}/cell/garden/skeleton
     popd
