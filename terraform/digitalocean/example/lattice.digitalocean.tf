@@ -1,5 +1,5 @@
 module "lattice-digitalocean" {
-    source = "github.com/cloudfoundry-incubator/lattice//terraform//digitalocean?ref=v0.2.7-88-gf030f80"
+    source = "github.com/cloudfoundry-incubator/lattice//terraform//digitalocean?ref=v0.2.7-97-ga8987de"
 
     # Digital Ocean API token
     do_token = "<CHANGE-ME>"
