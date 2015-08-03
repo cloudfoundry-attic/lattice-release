@@ -132,7 +132,7 @@ var _ = Describe("CommandFactory", func() {
 
 					newConfig := config_package.New(configPersister)
 					Expect(newConfig.Load()).To(Succeed())
-					Expect(newConfig.BlobTarget()).To(Equal(dav_blob_store.Config{
+					Expect(newConfig.BlobStore()).To(Equal(dav_blob_store.Config{
 						Host: "myapi.com",
 						Port: "8444",
 					}))
@@ -174,7 +174,7 @@ var _ = Describe("CommandFactory", func() {
 					newConfig := config_package.New(configPersister)
 					Expect(newConfig.Load()).To(Succeed())
 					Expect(newConfig.Receptor()).To(Equal("http://receptor.myapi.com"))
-					Expect(newConfig.BlobTarget()).To(Equal(dav_blob_store.Config{}))
+					Expect(newConfig.BlobStore()).To(Equal(dav_blob_store.Config{}))
 				})
 			})
 
@@ -285,7 +285,7 @@ var _ = Describe("CommandFactory", func() {
 					newConfig := config_package.New(configPersister)
 					Expect(newConfig.Load()).To(Succeed())
 					Expect(newConfig.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
-					Expect(newConfig.BlobTarget()).To(Equal(dav_blob_store.Config{
+					Expect(newConfig.BlobStore()).To(Equal(dav_blob_store.Config{
 						Host:     "myapi.com",
 						Port:     "8444",
 						Username: "testusername",
@@ -345,7 +345,7 @@ var _ = Describe("CommandFactory", func() {
 					newConfig := config_package.New(configPersister)
 					Expect(newConfig.Load()).To(Succeed())
 					Expect(newConfig.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
-					Expect(newConfig.BlobTarget()).To(Equal(dav_blob_store.Config{}))
+					Expect(newConfig.BlobStore()).To(Equal(dav_blob_store.Config{}))
 				})
 			})
 

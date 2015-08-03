@@ -55,7 +55,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("displaying the blob target", func() {
 			It("outputs the current target", func() {
-				config.SetBlobTarget("192.168.11.11", "8980", "some-username", "some-password")
+				config.SetBlobStore("192.168.11.11", "8980", "some-username", "some-password")
 				Expect(config.Save()).To(Succeed())
 
 				test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{})
@@ -66,7 +66,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("alerts the user if no target is set", func() {
-				config.SetBlobTarget("", "", "", "")
+				config.SetBlobStore("", "", "", "")
 				Expect(config.Save()).To(Succeed())
 
 				test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{})
@@ -97,7 +97,7 @@ var _ = Describe("CommandFactory", func() {
 
 				newConfig := config_package.New(configPersister)
 				Expect(newConfig.Load()).To(Succeed())
-				blobTarget := newConfig.BlobTarget()
+				blobTarget := newConfig.BlobStore()
 				Expect(blobTarget.Host).To(Equal("192.168.11.11"))
 				Expect(blobTarget.Port).To(Equal("8980"))
 				Expect(blobTarget.Username).To(Equal("some-username"))
@@ -125,7 +125,7 @@ var _ = Describe("CommandFactory", func() {
 
 				newConfig := config_package.New(configPersister)
 				Expect(newConfig.Load()).To(Succeed())
-				blobTarget := newConfig.BlobTarget()
+				blobTarget := newConfig.BlobStore()
 				Expect(blobTarget.Host).To(Equal("192.168.11.11"))
 				Expect(blobTarget.Port).To(Equal("8980"))
 				Expect(blobTarget.Username).To(Equal("some-username"))
@@ -180,7 +180,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(outputBuffer).To(test_helpers.Say(failMessage))
 					newConfig := config_package.New(configPersister)
 					Expect(newConfig.Load()).To(Succeed())
-					blobTarget := newConfig.BlobTarget()
+					blobTarget := newConfig.BlobStore()
 					Expect(blobTarget.Host).To(Equal("original-host"))
 					Expect(blobTarget.Port).To(Equal("8989"))
 					Expect(blobTarget.Username).To(Equal("original-key"))
@@ -189,7 +189,7 @@ var _ = Describe("CommandFactory", func() {
 				}
 
 				BeforeEach(func() {
-					config.SetBlobTarget("original-host", "8989", "original-key", "original-secret")
+					config.SetBlobStore("original-host", "8989", "original-key", "original-secret")
 					Expect(config.Save()).To(Succeed())
 				})
 
@@ -221,7 +221,7 @@ var _ = Describe("CommandFactory", func() {
 						targetBlobCommand = commandFactory.MakeTargetBlobCommand()
 					})
 					It("bubbles up errors from saving the config", func() {
-						config.SetBlobTarget("192.168.11.11", "8980", "some-username", "some-password")
+						config.SetBlobStore("192.168.11.11", "8980", "some-username", "some-password")
 						Expect(config.Save()).To(Succeed())
 
 						doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"199.112.3432:8980"})
@@ -237,7 +237,7 @@ var _ = Describe("CommandFactory", func() {
 
 						newConfig := config_package.New(configPersister)
 						Expect(newConfig.Load()).To(Succeed())
-						blobTarget := newConfig.BlobTarget()
+						blobTarget := newConfig.BlobStore()
 						Expect(blobTarget.Host).To(Equal("192.168.11.11"))
 						Expect(blobTarget.Port).To(Equal("8980"))
 						Expect(blobTarget.Username).To(Equal("some-username"))

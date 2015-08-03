@@ -102,9 +102,9 @@ var _ = Describe("Config", func() {
 
 	Describe("TargetBlob", func() {
 		It("sets the blob target", func() {
-			testConfig.SetBlobTarget("some-host", "7474", "some-username", "some-password")
+			testConfig.SetBlobStore("some-host", "7474", "some-username", "some-password")
 
-			Expect(testConfig.BlobTarget()).To(Equal(dav_blob_store.Config{
+			Expect(testConfig.BlobStore()).To(Equal(dav_blob_store.Config{
 				Host:     "some-host",
 				Port:     "7474",
 				Username: "some-username",

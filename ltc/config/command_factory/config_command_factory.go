@@ -64,10 +64,10 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 		return
 	}
 	if authorized {
-		factory.config.SetBlobTarget(target, blobTargetPort, "", "")
-		authorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobTarget())
+		factory.config.SetBlobStore(target, blobTargetPort, "", "")
+		authorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobStore())
 		if err != nil {
-			factory.config.SetBlobTarget("", "", "", "")
+			factory.config.SetBlobStore("", "", "", "")
 			factory.save()
 			return
 		}
@@ -98,10 +98,10 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 		return
 	}
 
-	factory.config.SetBlobTarget(target, blobTargetPort, username, password)
-	blobStoreAuthorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobTarget())
+	factory.config.SetBlobStore(target, blobTargetPort, username, password)
+	blobStoreAuthorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobStore())
 	if err != nil {
-		factory.config.SetBlobTarget("", "", "", "")
+		factory.config.SetBlobStore("", "", "", "")
 		factory.save()
 		return
 	}

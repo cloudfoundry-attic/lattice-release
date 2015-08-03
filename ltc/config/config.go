@@ -6,10 +6,10 @@ import (
 )
 
 type Data struct {
-	Target     string                `json:"target"`
-	Username   string                `json:"username,omitempty"`
-	Password   string                `json:"password,omitempty"`
-	BlobTarget dav_blob_store.Config `json:"dav_blob_store"`
+	Target    string                `json:"target"`
+	Username  string                `json:"username,omitempty"`
+	Password  string                `json:"password,omitempty"`
+	BlobStore dav_blob_store.Config `json:"dav_blob_store"`
 }
 
 type Config struct {
@@ -25,7 +25,7 @@ func (c *Config) SetTarget(target string) {
 	c.data.Target = target
 }
 
-func (c *Config) SetLogin(username string, password string) {
+func (c *Config) SetLogin(username, password string) {
 	c.data.Username = username
 	c.data.Password = password
 }
@@ -58,13 +58,13 @@ func (c *Config) Save() error {
 	return c.persister.Save(c.data)
 }
 
-func (c *Config) SetBlobTarget(host, port, username, password string) {
-	c.data.BlobTarget.Host = host
-	c.data.BlobTarget.Port = port
-	c.data.BlobTarget.Username = username
-	c.data.BlobTarget.Password = password
+func (c *Config) SetBlobStore(host, port, username, password string) {
+	c.data.BlobStore.Host = host
+	c.data.BlobStore.Port = port
+	c.data.BlobStore.Username = username
+	c.data.BlobStore.Password = password
 }
 
-func (c *Config) BlobTarget() dav_blob_store.Config {
-	return c.data.BlobTarget
+func (c *Config) BlobStore() dav_blob_store.Config {
+	return c.data.BlobStore
 }

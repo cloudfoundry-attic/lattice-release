@@ -117,7 +117,7 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("BuildDroplet", func() {
 		It("does the build droplet task", func() {
-			config.SetBlobTarget("blob-host", "7474", "dav-user", "dav-pass")
+			config.SetBlobStore("blob-host", "7474", "dav-user", "dav-pass")
 			Expect(config.Save()).To(Succeed())
 
 			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{})
@@ -129,10 +129,10 @@ var _ = Describe("DropletRunner", func() {
 			receptorRequest := createTaskParams.GetReceptorRequest()
 
 			blobURL := fmt.Sprintf("http://%s:%s@%s:%s%s",
-				config.BlobTarget().Username,
-				config.BlobTarget().Password,
-				config.BlobTarget().Host,
-				config.BlobTarget().Port,
+				config.BlobStore().Username,
+				config.BlobStore().Password,
+				config.BlobStore().Host,
+				config.BlobStore().Port,
 				"/blobs/droplet-name")
 
 			expectedActions := &models.SerialAction{
@@ -201,7 +201,7 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("passes through user environment variables", func() {
-			config.SetBlobTarget("blob-host", "7474", "dav-user", "dav-pass")
+			config.SetBlobStore("blob-host", "7474", "dav-user", "dav-pass")
 			Expect(config.Save()).To(Succeed())
 
 			env := map[string]string{
@@ -237,7 +237,7 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("LaunchDroplet", func() {
 		BeforeEach(func() {
-			config.SetBlobTarget("blob-host", "7474", "dav-user", "dav-pass")
+			config.SetBlobStore("blob-host", "7474", "dav-user", "dav-pass")
 			Expect(config.Save()).To(Succeed())
 		})
 
@@ -328,7 +328,7 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("RemoveDroplet", func() {
 		It("recursively removes a droplets from the blob store", func() {
-			config.SetBlobTarget("blob-host", "7474", "dav-user", "dav-pass")
+			config.SetBlobStore("blob-host", "7474", "dav-user", "dav-pass")
 			Expect(config.Save()).To(Succeed())
 
 			fakeBlobStore.ListReturns([]dav_blob_store.Blob{
@@ -393,7 +393,7 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("returns an error when the app specifies that the droplet is in use", func() {
-			config.SetBlobTarget("blob-host", "7474", "dav-user", "dav-pass")
+			config.SetBlobStore("blob-host", "7474", "dav-user", "dav-pass")
 			Expect(config.Save()).To(Succeed())
 
 			appInfos := []app_examiner.AppInfo{{

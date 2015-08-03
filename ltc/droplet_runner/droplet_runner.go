@@ -107,10 +107,10 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 	builderConfig := buildpack_app_lifecycle.NewLifecycleBuilderConfig([]string{buildpackUrl}, true, false)
 
 	dropletURL := fmt.Sprintf("http://%s:%s@%s:%s%s",
-		dr.config.BlobTarget().Username,
-		dr.config.BlobTarget().Password,
-		dr.config.BlobTarget().Host,
-		dr.config.BlobTarget().Port,
+		dr.config.BlobStore().Username,
+		dr.config.BlobStore().Password,
+		dr.config.BlobStore().Host,
+		dr.config.BlobStore().Port,
 		path.Join("/blobs", dropletName))
 
 	action := &models.SerialAction{
@@ -176,8 +176,8 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 	}
 
 	dropletAnnotation := annotation{}
-	dropletAnnotation.DropletSource.Config.Host = dr.config.BlobTarget().Host
-	dropletAnnotation.DropletSource.Config.Port = dr.config.BlobTarget().Port
+	dropletAnnotation.DropletSource.Config.Host = dr.config.BlobStore().Host
+	dropletAnnotation.DropletSource.Config.Port = dr.config.BlobStore().Port
 	dropletAnnotation.DropletSource.DropletName = dropletName
 
 	annotationBytes, err := json.Marshal(dropletAnnotation)
@@ -186,10 +186,10 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 	}
 
 	dropletURL := fmt.Sprintf("http://%s:%s@%s:%s%s",
-		dr.config.BlobTarget().Username,
-		dr.config.BlobTarget().Password,
-		dr.config.BlobTarget().Host,
-		dr.config.BlobTarget().Port,
+		dr.config.BlobStore().Username,
+		dr.config.BlobStore().Password,
+		dr.config.BlobStore().Host,
+		dr.config.BlobStore().Port,
 		path.Join("/blobs", dropletName))
 
 	appParams := app_runner.CreateAppParams{
@@ -265,7 +265,7 @@ func (dr *dropletRunner) RemoveDroplet(dropletName string) error {
 			continue
 		}
 
-		if dropletMatchesAnnotation(dr.config.BlobTarget(), dropletName, dropletAnnotation) {
+		if dropletMatchesAnnotation(dr.config.BlobStore(), dropletName, dropletAnnotation) {
 			return fmt.Errorf("app %s was launched from droplet", app.ProcessGuid)
 		}
 	}

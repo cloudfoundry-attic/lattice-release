@@ -27,7 +27,7 @@ func (factory *ConfigCommandFactory) targetBlob(context *cli.Context) {
 	endpoint := context.Args().First()
 
 	if endpoint == "" {
-		blobTarget := factory.config.BlobTarget()
+		blobTarget := factory.config.BlobStore()
 		if blobTarget.Host == "" {
 			factory.ui.SayLine("Blob store not set")
 			return
@@ -59,7 +59,7 @@ func (factory *ConfigCommandFactory) targetBlob(context *cli.Context) {
 		return
 	}
 
-	factory.config.SetBlobTarget(blobHost, blobPort, username, password)
+	factory.config.SetBlobStore(blobHost, blobPort, username, password)
 	if err := factory.config.Save(); err != nil {
 		factory.ui.SayLine(err.Error())
 		factory.exitHandler.Exit(exit_codes.FileSystemError)
