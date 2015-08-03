@@ -1,14 +1,10 @@
 package target_verifier
 
-import (
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
-	"github.com/cloudfoundry-incubator/receptor"
-)
+import "github.com/cloudfoundry-incubator/receptor"
 
 //go:generate counterfeiter -o fake_target_verifier/fake_target_verifier.go . TargetVerifier
 type TargetVerifier interface {
 	VerifyTarget(name string) (up bool, auth bool, err error)
-	VerifyBlobTarget(targetInfo dav_blob_store.Config) error
 }
 
 func New(receptorClientFactory func(target string) receptor.Client) TargetVerifier {
