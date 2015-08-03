@@ -24,7 +24,7 @@ type Blob struct {
 
 type Config struct {
 	Host     string `json:"host,omitempty"`
-	Port     uint16 `json:"port,omitempty"`
+	Port     string `json:"port,omitempty"`
 	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
 }
@@ -33,7 +33,7 @@ func New(config Config) *BlobStore {
 	return &BlobStore{
 		url: url.URL{
 			Scheme: "http",
-			Host:   fmt.Sprintf("%s:%d", config.Host, config.Port),
+			Host:   fmt.Sprintf("%s:%s", config.Host, config.Port),
 			User:   url.UserPassword(config.Username, config.Password),
 		},
 	}

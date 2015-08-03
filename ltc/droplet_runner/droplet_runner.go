@@ -106,7 +106,7 @@ func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
 func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string) error {
 	builderConfig := buildpack_app_lifecycle.NewLifecycleBuilderConfig([]string{buildpackUrl}, true, false)
 
-	dropletURL := fmt.Sprintf("http://%s:%s@%s:%d%s",
+	dropletURL := fmt.Sprintf("http://%s:%s@%s:%s%s",
 		dr.config.BlobTarget().Username,
 		dr.config.BlobTarget().Password,
 		dr.config.BlobTarget().Host,
@@ -185,7 +185,7 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 		return err
 	}
 
-	dropletURL := fmt.Sprintf("http://%s:%s@%s:%d%s",
+	dropletURL := fmt.Sprintf("http://%s:%s@%s:%s%s",
 		dr.config.BlobTarget().Username,
 		dr.config.BlobTarget().Password,
 		dr.config.BlobTarget().Host,

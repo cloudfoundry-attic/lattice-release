@@ -52,7 +52,7 @@ var _ = Describe("CommandFactory", func() {
 
 		Context("displaying the blob target", func() {
 			It("outputs the current target", func() {
-				config.SetBlobTarget("192.168.11.11", 8980, "some-username", "some-password")
+				config.SetBlobTarget("192.168.11.11", "8980", "some-username", "some-password")
 				Expect(config.Save()).To(Succeed())
 
 				test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{})
@@ -63,7 +63,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("alerts the user if no target is set", func() {
-				config.SetBlobTarget("", 0, "", "")
+				config.SetBlobTarget("", "", "", "")
 				Expect(config.Save()).To(Succeed())
 
 				test_helpers.ExecuteCommandWithArgs(targetBlobCommand, []string{})
@@ -88,7 +88,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
 				blobTargetInfo := fakeTargetVerifier.VerifyBlobTargetArgsForCall(0)
 				Expect(blobTargetInfo.Host).To(Equal("192.168.11.11"))
-				Expect(blobTargetInfo.Port).To(Equal(uint16(8980)))
+				Expect(blobTargetInfo.Port).To(Equal("8980"))
 				Expect(blobTargetInfo.Username).To(Equal("some-username"))
 				Expect(blobTargetInfo.Password).To(Equal("some-password"))
 
@@ -96,14 +96,12 @@ var _ = Describe("CommandFactory", func() {
 				Expect(newConfig.Load()).To(Succeed())
 				blobTarget := newConfig.BlobTarget()
 				Expect(blobTarget.Host).To(Equal("192.168.11.11"))
-				Expect(blobTarget.Port).To(Equal(uint16(8980)))
+				Expect(blobTarget.Port).To(Equal("8980"))
 				Expect(blobTarget.Username).To(Equal("some-username"))
 				Expect(blobTarget.Password).To(Equal("some-password"))
 			})
 
 			It("sets the blob target and credentials using the default bucket name", func() {
-				fakeTargetVerifier.VerifyBlobTargetReturns(nil)
-
 				doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:8980"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
@@ -118,7 +116,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
 				blobTargetInfo := fakeTargetVerifier.VerifyBlobTargetArgsForCall(0)
 				Expect(blobTargetInfo.Host).To(Equal("192.168.11.11"))
-				Expect(blobTargetInfo.Port).To(Equal(uint16(8980)))
+				Expect(blobTargetInfo.Port).To(Equal("8980"))
 				Expect(blobTargetInfo.Username).To(Equal("some-username"))
 				Expect(blobTargetInfo.Password).To(Equal("some-password"))
 
@@ -126,7 +124,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(newConfig.Load()).To(Succeed())
 				blobTarget := newConfig.BlobTarget()
 				Expect(blobTarget.Host).To(Equal("192.168.11.11"))
-				Expect(blobTarget.Port).To(Equal(uint16(8980)))
+				Expect(blobTarget.Port).To(Equal("8980"))
 				Expect(blobTarget.Username).To(Equal("some-username"))
 				Expect(blobTarget.Password).To(Equal("some-password"))
 			})
@@ -140,20 +138,36 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(BeZero())
 				})
 				It("errors when port is non-numeric", func() {
+					fakeTargetVerifier.VerifyBlobTargetReturns(errors.New("blob target is down: dial tcp: unknown port tcp/haiii"))
+
 					doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:haiii"})
 
-					Eventually(doneChan).Should(BeClosed())
-					Expect(outputBuffer).To(test_helpers.SayLine("Error setting blob target: malformed port"))
-					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(BeZero())
-				})
-				It("errors when port exceeds 65536", func() {
-					doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:70000"})
+					Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
+					stdinWriter.Write([]byte("some-username\n"))
+					Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
+					stdinWriter.Write([]byte("some-password\n"))
 
 					Eventually(doneChan).Should(BeClosed())
-					Expect(outputBuffer).To(test_helpers.SayLine("Error setting blob target: malformed port"))
-					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(BeZero())
+
+					Expect(outputBuffer).To(test_helpers.Say("Unable to verify blob store: blob target is down: dial tcp: unknown port tcp/haiii"))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
+					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
+				})
+				It("errors when port exceeds 65536", func() {
+					fakeTargetVerifier.VerifyBlobTargetReturns(errors.New("blob target is down: dial tcp: invalid port 70000"))
+
+					doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"192.168.11.11:70000"})
+
+					Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
+					stdinWriter.Write([]byte("some-username\n"))
+					Eventually(outputBuffer).Should(test_helpers.Say("Password: "))
+					stdinWriter.Write([]byte("some-password\n"))
+
+					Eventually(doneChan).Should(BeClosed())
+
+					Expect(outputBuffer).To(test_helpers.Say("Unable to verify blob store: blob target is down: dial tcp: invalid port 70000"))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
+					Expect(fakeTargetVerifier.VerifyBlobTargetCallCount()).To(Equal(1))
 				})
 			})
 
@@ -165,14 +179,14 @@ var _ = Describe("CommandFactory", func() {
 					Expect(newConfig.Load()).To(Succeed())
 					blobTarget := newConfig.BlobTarget()
 					Expect(blobTarget.Host).To(Equal("original-host"))
-					Expect(blobTarget.Port).To(Equal(uint16(8989)))
+					Expect(blobTarget.Port).To(Equal("8989"))
 					Expect(blobTarget.Username).To(Equal("original-key"))
 					Expect(blobTarget.Password).To(Equal("original-secret"))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 				}
 
 				BeforeEach(func() {
-					config.SetBlobTarget("original-host", 8989, "original-key", "original-secret")
+					config.SetBlobTarget("original-host", "8989", "original-key", "original-secret")
 					Expect(config.Save()).To(Succeed())
 				})
 
@@ -203,7 +217,7 @@ var _ = Describe("CommandFactory", func() {
 						targetBlobCommand = commandFactory.MakeTargetBlobCommand()
 					})
 					It("bubbles up errors from saving the config", func() {
-						config.SetBlobTarget("192.168.11.11", 8980, "some-username", "some-password")
+						config.SetBlobTarget("192.168.11.11", "8980", "some-username", "some-password")
 						Expect(config.Save()).To(Succeed())
 
 						doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetBlobCommand, []string{"199.112.3432:8980"})
@@ -221,7 +235,7 @@ var _ = Describe("CommandFactory", func() {
 						Expect(newConfig.Load()).To(Succeed())
 						blobTarget := newConfig.BlobTarget()
 						Expect(blobTarget.Host).To(Equal("192.168.11.11"))
-						Expect(blobTarget.Port).To(Equal(uint16(8980)))
+						Expect(blobTarget.Port).To(Equal("8980"))
 						Expect(blobTarget.Username).To(Equal("some-username"))
 						Expect(blobTarget.Password).To(Equal("some-password"))
 

@@ -4,7 +4,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -32,12 +31,10 @@ var _ = Describe("TargetVerifier", func() {
 
 			serverHost, serverPort, err := net.SplitHostPort(proxyURL.Host)
 			Expect(err).NotTo(HaveOccurred())
-			port, err := strconv.Atoi(serverPort)
-			Expect(err).NotTo(HaveOccurred())
 
 			targetInfo = dav_blob_store.Config{
 				Host:     serverHost,
-				Port:     uint16(port),
+				Port:     serverPort,
 				Username: "some-username",
 				Password: "some-password",
 			}

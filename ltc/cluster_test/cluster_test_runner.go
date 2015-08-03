@@ -157,7 +157,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 					appName = "running-" + dropletName
 
 					blobTarget := runner.config.BlobTarget()
-					dropletFolderURL = fmt.Sprintf("%s:%s@%s:%d/blobs/%s",
+					dropletFolderURL = fmt.Sprintf("%s:%s@%s:%s/blobs/%s",
 						blobTarget.Username,
 						blobTarget.Password,
 						blobTarget.Host,

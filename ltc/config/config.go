@@ -58,7 +58,7 @@ func (c *Config) Save() error {
 	return c.persister.Save(c.data)
 }
 
-func (c *Config) SetBlobTarget(host string, port uint16, username, password string) {
+func (c *Config) SetBlobTarget(host, port, username, password string) {
 	c.data.BlobTarget.Host = host
 	c.data.BlobTarget.Port = port
 	c.data.BlobTarget.Username = username

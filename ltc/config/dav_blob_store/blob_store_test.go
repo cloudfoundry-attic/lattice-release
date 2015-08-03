@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -29,12 +28,10 @@ var _ = Describe("BlobStore", func() {
 
 		serverHost, serverPort, err := net.SplitHostPort(fakeServerURL.Host)
 		Expect(err).NotTo(HaveOccurred())
-		proxyPort, err := strconv.Atoi(serverPort)
-		Expect(err).NotTo(HaveOccurred())
 
 		blobTargetInfo := dav_blob_store.Config{
 			Host:     serverHost,
-			Port:     uint16(proxyPort),
+			Port:     serverPort,
 			Username: "user",
 			Password: "pass",
 		}

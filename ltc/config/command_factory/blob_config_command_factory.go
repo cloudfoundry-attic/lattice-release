@@ -3,7 +3,6 @@ package command_factory
 import (
 	"fmt"
 	"net"
-	"strconv"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
@@ -33,7 +32,7 @@ func (factory *ConfigCommandFactory) targetBlob(context *cli.Context) {
 			factory.ui.SayLine("Blob store not set")
 			return
 		}
-		factory.ui.Say(fmt.Sprintf("Blob Store:\t%s:%d\n", blobTarget.Host, blobTarget.Port))
+		factory.ui.Say(fmt.Sprintf("Blob Store:\t%s:%s\n", blobTarget.Host, blobTarget.Port))
 		factory.ui.Say(fmt.Sprintf("Username:\t%s\n", blobTarget.Username))
 		factory.ui.Say(fmt.Sprintf("Password:\t%s\n", blobTarget.Password))
 		return
@@ -46,19 +45,12 @@ func (factory *ConfigCommandFactory) targetBlob(context *cli.Context) {
 		return
 	}
 
-	port, err := strconv.Atoi(blobPort)
-	if err != nil || port > 65536 {
-		factory.ui.SayLine("Error setting blob target: malformed port")
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
-		return
-	}
-
 	username := factory.ui.Prompt("Username")
 	password := factory.ui.Prompt("Password")
 
 	if err := factory.targetVerifier.VerifyBlobTarget(dav_blob_store.Config{
 		Host:     blobHost,
-		Port:     uint16(port),
+		Port:     blobPort,
 		Username: username,
 		Password: password,
 	}); err != nil {
@@ -67,7 +59,7 @@ func (factory *ConfigCommandFactory) targetBlob(context *cli.Context) {
 		return
 	}
 
-	factory.config.SetBlobTarget(blobHost, uint16(port), username, password)
+	factory.config.SetBlobTarget(blobHost, blobPort, username, password)
 	if err := factory.config.Save(); err != nil {
 		factory.ui.SayLine(err.Error())
 		factory.exitHandler.Exit(exit_codes.FileSystemError)

@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -30,12 +29,10 @@ var _ = Describe("BlobStore", func() {
 
 		serverHost, serverPort, err := net.SplitHostPort(fakeServerURL.Host)
 		Expect(err).NotTo(HaveOccurred())
-		proxyPort, err := strconv.Atoi(serverPort)
-		Expect(err).NotTo(HaveOccurred())
 
 		blobTargetInfo := s3_blob_store.Config{
 			Host:       serverHost,
-			Port:       uint16(proxyPort),
+			Port:       serverPort,
 			AccessKey:  "V8GDQFR_VDOGM55IV8OH",
 			SecretKey:  "Wv_kltnl98hNWNdNwyQPYnFhK4gVPTxVS3NNMg==",
 			BucketName: "bucket",

@@ -23,14 +23,14 @@ type Blob struct {
 
 type Config struct {
 	Host       string `json:"host,omitempty"`
-	Port       uint16 `json:"port,omitempty"`
+	Port       string `json:"port,omitempty"`
 	AccessKey  string `json:"access_key,omitempty"`
 	SecretKey  string `json:"secret_key,omitempty"`
 	BucketName string `json:"bucket_name,omitempty"`
 }
 
 func New(blobTarget Config) *BlobStore {
-	endpoint := fmt.Sprintf("http://%s:%d/", blobTarget.Host, blobTarget.Port)
+	endpoint := fmt.Sprintf("http://%s:%s/", blobTarget.Host, blobTarget.Port)
 	awsRegion, awsS3ForcePathStyle := "riak-region-1", true
 	client := s3.New(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(blobTarget.AccessKey, blobTarget.SecretKey, ""),
