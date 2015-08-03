@@ -62,35 +62,64 @@ var _ = Describe("CommandFactory", func() {
 		BeforeEach(func() {
 			commandFactory := command_factory.NewConfigCommandFactory(config, terminalUI, fakeTargetVerifier, fakeBlobStoreVerifier, fakeExitHandler)
 			targetCommand = commandFactory.MakeTargetCommand()
-		})
 
-		JustBeforeEach(func() {
 			config.SetTarget("oldtarget.com")
 			config.SetLogin("olduser", "oldpass")
 			Expect(config.Save()).To(Succeed())
 		})
 
 		Context("displaying the target", func() {
-			It("outputs the current target", func() {
+			JustBeforeEach(func() {
 				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{})
-
-				Expect(outputBuffer).To(test_helpers.Say("Target:\t\toldtarget.com\n"))
-				Expect(outputBuffer).To(test_helpers.Say("Username:\tolduser"))
 			})
 
-			It("does not show the username if no username is set", func() {
-				config.SetLogin("", "")
-
-				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{})
-
-				Expect(outputBuffer).ToNot(test_helpers.Say("Username:"))
+			It("outputs the current user and target host", func() {
+				Expect(outputBuffer).To(test_helpers.SayLine("Target:\t\tolduser@oldtarget.com"))
 			})
 
-			It("alerts the user if no target is set", func() {
-				config.SetTarget("")
-				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{})
+			Context("when no username is set", func() {
+				BeforeEach(func() {
+					config.SetLogin("", "")
+					Expect(config.Save()).To(Succeed())
+				})
+				It("only prints the target", func() {
+					Expect(outputBuffer).To(test_helpers.SayLine("Target:\t\toldtarget.com"))
+				})
+			})
 
-				Expect(outputBuffer).To(test_helpers.Say("Target not set."))
+			Context("when no target is set", func() {
+				BeforeEach(func() {
+					config.SetTarget("")
+					Expect(config.Save()).To(Succeed())
+				})
+				It("informs the user the target is not set", func() {
+					Expect(outputBuffer).To(test_helpers.SayLine("Target not set."))
+				})
+			})
+
+			Context("when no blob store is targeted", func() {
+				It("should specify that no blob store is targeted", func() {
+					Expect(outputBuffer).To(test_helpers.SayLine("\tNo blob store specified."))
+				})
+			})
+
+			Context("when a blob store is targeted", func() {
+				BeforeEach(func() {
+					config.SetBlobStore("blobtarget.com", "8444", "blobUser", "password")
+					Expect(config.Save()).To(Succeed())
+				})
+				It("outputs the current user and blob store host", func() {
+					Expect(outputBuffer).To(test_helpers.SayLine("Blob Store:\tblobUser@blobtarget.com:8444"))
+				})
+				Context("when no blob store username is set", func() {
+					BeforeEach(func() {
+						config.SetBlobStore("blobtarget.com", "8444", "", "")
+						Expect(config.Save()).To(Succeed())
+					})
+					It("only prints the blob store host", func() {
+						Expect(outputBuffer).To(test_helpers.SayLine("Blob Store:\tblobtarget.com:8444"))
+					})
+				})
 			})
 		})
 
@@ -152,7 +181,7 @@ var _ = Describe("CommandFactory", func() {
 							Port: "8444",
 						}))
 
-						Expect(outputBuffer).To(test_helpers.Say("Blob store requires authorization"))
+						Expect(outputBuffer).To(test_helpers.SayLine("Blob store requires authorization."))
 						verifyOldTargetStillSet()
 						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 					})
@@ -292,33 +321,33 @@ var _ = Describe("CommandFactory", func() {
 						Password: "testpassword",
 					}))
 
-					Expect(outputBuffer).To(test_helpers.Say("Blob store is targeted."))
+					Expect(outputBuffer).To(test_helpers.SayLine("Blob store is targeted."))
 				})
+			})
 
-				Context("when the receptor credentials don't work on the blob store", func() {
-					It("exits", func() {
-						fakeBlobStoreVerifier.VerifyReturns(false, nil)
+			Context("when the receptor credentials don't work on the blob store", func() {
+				It("exits", func() {
+					fakeBlobStoreVerifier.VerifyReturns(false, nil)
 
-						doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
+					doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
-						Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
-						fakeTargetVerifier.VerifyTargetReturns(true, true, nil)
-						stdinWriter.Write([]byte("testusername\n"))
+					Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
+					fakeTargetVerifier.VerifyTargetReturns(true, true, nil)
+					stdinWriter.Write([]byte("testusername\n"))
 
-						Eventually(doneChan).Should(BeClosed())
+					Eventually(doneChan).Should(BeClosed())
 
-						Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
-						Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(dav_blob_store.Config{
-							Host:     "myapi.com",
-							Port:     "8444",
-							Username: "testusername",
-							Password: "testpassword",
-						}))
+					Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
+					Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(dav_blob_store.Config{
+						Host:     "myapi.com",
+						Port:     "8444",
+						Username: "testusername",
+						Password: "testpassword",
+					}))
 
-						Expect(outputBuffer).To(test_helpers.Say("Invalid credentials for blob store."))
-						verifyOldTargetStillSet()
-						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
-					})
+					Expect(outputBuffer).To(test_helpers.SayLine("Blob store requires authorization."))
+					verifyOldTargetStillSet()
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 				})
 			})
 

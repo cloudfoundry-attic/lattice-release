@@ -51,6 +51,7 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 
 	if target == "" {
 		factory.printTarget()
+		factory.printBlobTarget()
 		return
 	}
 
@@ -64,16 +65,7 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 		return
 	}
 	if authorized {
-		factory.config.SetBlobStore(target, blobTargetPort, "", "")
-		authorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobStore())
-		if err != nil {
-			factory.config.SetBlobStore("", "", "", "")
-			factory.save()
-			return
-		}
-		if !authorized {
-			factory.ui.Say("Blob store requires authorization")
-			factory.exitHandler.Exit(exit_codes.BadTarget)
+		if !factory.verifyBlobStore(target, blobTargetPort, "", "") {
 			return
 		}
 
@@ -98,23 +90,28 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 		return
 	}
 
-	factory.config.SetBlobStore(target, blobTargetPort, username, password)
-	blobStoreAuthorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobStore())
+	if !factory.verifyBlobStore(target, blobTargetPort, username, password) {
+		return
+	}
+
+	factory.ui.SayLine("Blob store is targeted.")
+	factory.save()
+}
+
+func (factory *ConfigCommandFactory) verifyBlobStore(host, port, username, password string) bool {
+	factory.config.SetBlobStore(host, port, username, password)
+	authorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobStore())
 	if err != nil {
 		factory.config.SetBlobStore("", "", "", "")
 		factory.save()
-		return
+		return false
 	}
-
-	if !blobStoreAuthorized {
-		factory.ui.Say("Invalid credentials for blob store.")
+	if !authorized {
+		factory.ui.SayLine("Blob store requires authorization.")
 		factory.exitHandler.Exit(exit_codes.BadTarget)
-		return
+		return false
 	}
-
-	factory.ui.Say("Blob store is targeted.")
-
-	factory.save()
+	return true
 }
 
 func (factory *ConfigCommandFactory) save() {
@@ -130,12 +127,26 @@ func (factory *ConfigCommandFactory) save() {
 
 func (factory *ConfigCommandFactory) printTarget() {
 	if factory.config.Target() == "" {
-		factory.ui.Say("Target not set.")
+		factory.ui.SayLine("Target not set.")
 		return
 	}
-	factory.ui.Say(fmt.Sprintf("Target:\t\t%s", factory.config.Target()))
-
-	if factory.config.Username() != "" {
-		factory.ui.Say(fmt.Sprintf("\nUsername:\t%s", factory.config.Username()))
+	target := factory.config.Target()
+	if username := factory.config.Username(); username != "" {
+		target = fmt.Sprintf("%s@%s", username, target)
 	}
+	factory.ui.SayLine(fmt.Sprintf("Target:\t\t%s", target))
+}
+
+func (factory *ConfigCommandFactory) printBlobTarget() {
+	blobStore := factory.config.BlobStore()
+	if blobStore.Host == "" {
+		factory.ui.SayLine("\tNo blob store specified.")
+		return
+	}
+
+	endpoint := fmt.Sprintf("%s:%s", blobStore.Host, blobStore.Port)
+	if username := blobStore.Username; username != "" {
+		endpoint = fmt.Sprintf("%s@%s", username, endpoint)
+	}
+	factory.ui.SayLine(fmt.Sprintf("Blob Store:\t%s", endpoint))
 }
