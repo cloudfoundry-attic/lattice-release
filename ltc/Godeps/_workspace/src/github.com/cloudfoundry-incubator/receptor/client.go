@@ -59,6 +59,9 @@ type Client interface {
 
 	UpsertDomain(domain string, ttl time.Duration) error
 	Domains() ([]string, error)
+
+	GetClient() *http.Client
+	GetStreamingClient() *http.Client
 }
 
 func NewClient(url string) Client {
@@ -75,6 +78,14 @@ type client struct {
 	streamingHTTPClient *http.Client
 
 	reqGen *rata.RequestGenerator
+}
+
+func (c *client) GetClient() *http.Client {
+	return c.httpClient
+}
+
+func (c *client) GetStreamingClient() *http.Client {
+	return c.streamingHTTPClient
 }
 
 func (c *client) CreateTask(request TaskCreateRequest) error {

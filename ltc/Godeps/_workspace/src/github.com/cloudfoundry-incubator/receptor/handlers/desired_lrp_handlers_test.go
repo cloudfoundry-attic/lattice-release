@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 
-	"github.com/cloudfoundry-incubator/bbs"
 	"github.com/cloudfoundry-incubator/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
@@ -15,7 +14,6 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/bbserrors"
 	fake_legacy_bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
 	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
-	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-golang/lager"
@@ -198,11 +196,11 @@ var _ = Describe("Desired LRP Handlers", func() {
 		Context("when reading tasks from BBS succeeds", func() {
 			BeforeEach(func() {
 				fakeBBS.DesiredLRPByProcessGuidReturns(&models.DesiredLRP{
-					ProcessGuid: proto.String("process-guid-0"),
-					Domain:      proto.String("domain-1"),
+					ProcessGuid: "process-guid-0",
+					Domain:      "domain-1",
 					Action: models.WrapAction(&models.RunAction{
-						User: proto.String("me"),
-						Path: proto.String("the-path"),
+						User: "me",
+						Path: "the-path",
 					}),
 				}, nil)
 			})
@@ -227,7 +225,7 @@ var _ = Describe("Desired LRP Handlers", func() {
 
 		Context("when reading from the BBS fails", func() {
 			BeforeEach(func() {
-				fakeBBS.DesiredLRPByProcessGuidReturns(&models.DesiredLRP{}, bbs.ErrUnknownError)
+				fakeBBS.DesiredLRPByProcessGuidReturns(&models.DesiredLRP{}, models.ErrUnknownError)
 			})
 
 			It("responds with an error", func() {
@@ -237,7 +235,7 @@ var _ = Describe("Desired LRP Handlers", func() {
 
 		Context("when the BBS reports no lrp found", func() {
 			BeforeEach(func() {
-				fakeBBS.DesiredLRPByProcessGuidReturns(&models.DesiredLRP{}, bbs.ErrResourceNotFound)
+				fakeBBS.DesiredLRPByProcessGuidReturns(&models.DesiredLRP{}, models.ErrResourceNotFound)
 			})
 
 			It("responds with 404 Status NOT FOUND", func() {
@@ -601,30 +599,30 @@ var _ = Describe("Desired LRP Handlers", func() {
 					if filter.Domain != "" {
 						return []*models.DesiredLRP{
 							{
-								ProcessGuid: proto.String("process-guid-2"),
-								Domain:      proto.String("domain-2"),
+								ProcessGuid: "process-guid-2",
+								Domain:      "domain-2",
 								Action: models.WrapAction(&models.RunAction{
-									User: proto.String("me"),
-									Path: proto.String("the-path"),
+									User: "me",
+									Path: "the-path",
 								}),
 							},
 						}, nil
 					}
 					return []*models.DesiredLRP{
 						{
-							ProcessGuid: proto.String("process-guid-1"),
-							Domain:      proto.String("domain-1"),
+							ProcessGuid: "process-guid-1",
+							Domain:      "domain-1",
 							Action: models.WrapAction(&models.RunAction{
-								User: proto.String("me"),
-								Path: proto.String("the-path"),
+								User: "me",
+								Path: "the-path",
 							}),
 						},
 						{
-							ProcessGuid: proto.String("process-guid-2"),
-							Domain:      proto.String("domain-2"),
+							ProcessGuid: "process-guid-2",
+							Domain:      "domain-2",
 							Action: models.WrapAction(&models.RunAction{
-								User: proto.String("me"),
-								Path: proto.String("the-path"),
+								User: "me",
+								Path: "the-path",
 							}),
 						},
 					}, nil

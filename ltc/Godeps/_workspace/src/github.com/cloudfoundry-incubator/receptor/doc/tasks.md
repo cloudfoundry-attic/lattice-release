@@ -142,9 +142,9 @@ When the `action` on a Task terminates the Task is marked as `COMPLETED`.
 
 #### `result_file` [optional]
 
-When a Task completes succesfully Diego can fetch and return the contents of a file in the container.  This is made available in the `result` field of the `TaskResponse` (see [below](#retreiving-tasks)).
+When a Task completes succesfully Diego can fetch and return the contents of a file in the container.  This is made available in the `result` field of the `TaskResponse` (see [below](#retrieving-tasks)).
 
-To do this, set `result_file` to a valid path in the container.
+To do this, set `result_file` to a valid absolute path in the container.
 
 - Diego only returns the first 10KB of the `result_file`.  If you need to communicate back larger datasets, consider using an `UploadAction` to upload the result file to a blob store.
 
@@ -152,7 +152,7 @@ To do this, set `result_file` to a valid path in the container.
 
 Consumers of Diego have two options to learn that a Task has `COMPLETED`: they can either poll the action or register a callback.
 
-If a `completion_callback_url` is provided Diego will `POST` to the provided URL as soon as the Task completes.  The body of the `POST` will include the `TaskResponse` (see [below](#retreiving-tasks)).
+If a `completion_callback_url` is provided Diego will `POST` to the provided URL as soon as the Task completes.  The body of the `POST` will include the `TaskResponse` (see [below](#retrieving-tasks)).
 
 - Any response from the callback (be it success or failure) will resolve the Task (removing it from Diego).
 - However, if the callback responds with `503` or `504` Diego will immediately retry the callback up to 3 times.  If the `503/504` status persists Diego will try again after a period of time (typically within ~30 seconds).
@@ -262,7 +262,7 @@ Diego uses [doppler](https://github.com/cloudfoundry/loggregator) to emit logs g
 
 Diego allows arbitrary annotations to be attached to a Task.  The annotation must not exceed 10 kilobytes in size.
 
-## Retreiving Tasks
+## Retrieving Tasks
 
 To learn that a Task is completed you must either register a `completion_callback_url` or periodically poll the API to fetch the Task in question.  In both cases, you will receive an object that includes **all the fields on the `TaskCreateRequest`** and the following additional fields:
 

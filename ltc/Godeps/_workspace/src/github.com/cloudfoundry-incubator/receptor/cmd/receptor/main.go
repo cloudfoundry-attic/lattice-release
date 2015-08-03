@@ -15,10 +15,8 @@ import (
 	"github.com/cloudfoundry-incubator/cf_http"
 	"github.com/cloudfoundry-incubator/consuladapter"
 	"github.com/cloudfoundry-incubator/natbeat"
-	"github.com/cloudfoundry-incubator/receptor/event"
 	"github.com/cloudfoundry-incubator/receptor/handlers"
 	"github.com/cloudfoundry-incubator/receptor/task_handler"
-	"github.com/cloudfoundry-incubator/receptor/watcher"
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/lock_bbs"
 	"github.com/cloudfoundry/dropsonde"
@@ -153,28 +151,18 @@ func main() {
 	}
 
 	legacyBBS := initializeReceptorBBS(etcdOptions, logger)
-	hub := event.NewHub()
 
 	bbs := bbs.NewClient(*bbsAddress)
 
-	handler := handlers.New(bbs, legacyBBS, hub, logger, *username, *password, *corsEnabled)
+	handler := handlers.New(bbs, legacyBBS, logger, *username, *password, *corsEnabled)
 
 	worker, enqueue := task_handler.NewTaskWorkerPool(legacyBBS, logger)
 	taskHandler := task_handler.New(enqueue, logger)
-	lrpChangeWatcher := watcher.NewWatcher(
-		legacyBBS,
-		hub,
-		clock.NewClock(),
-		bbsWatchRetryWaitDuration,
-		logger,
-	)
 
 	members := grouper.Members{
-		{"lrp-change-watcher", lrpChangeWatcher},
 		{"server", http_server.New(*serverAddress, handler)},
 		{"worker", worker},
 		{"task-complete-handler", http_server.New(*taskHandlerAddress, taskHandler)},
-		{"hub-closer", closeHub(logger.Session("hub-closer"), hub)},
 	}
 
 	if *registerWithRouter {
@@ -221,22 +209,6 @@ func validateNatsArguments() error {
 		}
 	}
 	return nil
-}
-
-func closeHub(logger lager.Logger, hub event.Hub) ifrit.Runner {
-	return ifrit.RunFunc(func(signals <-chan os.Signal, ready chan<- struct{}) error {
-		logger.Info("starting")
-		defer logger.Info("finished")
-
-		close(ready)
-		logger.Info("started")
-
-		<-signals
-		logger.Info("shutting-down")
-		hub.Close()
-
-		return nil
-	})
 }
 
 func initializeDropsonde(logger lager.Logger) {

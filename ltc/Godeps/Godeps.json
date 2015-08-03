@@ -21,15 +21,15 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/cf_http",
-			"Rev": "ff7e3614c359812c9903a1e611619cd1f3dd4d97"
+			"Rev": "428f6839ba6b1707e80289c611c8f50f1fee2fee"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/receptor",
-			"Rev": "a8b5ec18cf9d88146f9a2fb158742dd034b57580"
+			"Rev": "6319b1055e179cc1e257166174ea842356c72da4"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "262620fbebd3d653849bf873d3f0b4805fea855b"
+			"Rev": "46bef00e8081e7773a57f106da787d8804a18563"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
@@ -179,11 +179,11 @@
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
-			"Rev": "64f27bf06efee53589314a6e5a4af34cdd85adf6"
+			"Rev": "5ba1012ef3868db1b9ff374280a558c1bfff39c3"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/sortkeys",
-			"Rev": "64f27bf06efee53589314a6e5a4af34cdd85adf6"
+			"Rev": "5ba1012ef3868db1b9ff374280a558c1bfff39c3"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",

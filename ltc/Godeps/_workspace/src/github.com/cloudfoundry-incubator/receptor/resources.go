@@ -3,7 +3,8 @@ package receptor
 import (
 	"encoding/json"
 
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	"github.com/cloudfoundry-incubator/bbs/models"
+	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 const AuthorizationCookieName = "receptor_authorization"
@@ -27,22 +28,22 @@ const (
 )
 
 type TaskCreateRequest struct {
-	Action                models.Action              `json:"-"`
-	Annotation            string                     `json:"annotation,omitempty"`
-	CompletionCallbackURL string                     `json:"completion_callback_url"`
-	CPUWeight             uint                       `json:"cpu_weight"`
-	DiskMB                int                        `json:"disk_mb"`
-	Domain                string                     `json:"domain"`
-	LogGuid               string                     `json:"log_guid"`
-	LogSource             string                     `json:"log_source"`
-	MetricsGuid           string                     `json:"metrics_guid"`
-	MemoryMB              int                        `json:"memory_mb"`
-	ResultFile            string                     `json:"result_file"`
-	TaskGuid              string                     `json:"task_guid"`
-	RootFS                string                     `json:"rootfs"`
-	Privileged            bool                       `json:"privileged"`
-	EnvironmentVariables  []EnvironmentVariable      `json:"env,omitempty"`
-	EgressRules           []models.SecurityGroupRule `json:"egress_rules,omitempty"`
+	Action                oldmodels.Action              `json:"-"`
+	Annotation            string                        `json:"annotation,omitempty"`
+	CompletionCallbackURL string                        `json:"completion_callback_url"`
+	CPUWeight             uint                          `json:"cpu_weight"`
+	DiskMB                int                           `json:"disk_mb"`
+	Domain                string                        `json:"domain"`
+	LogGuid               string                        `json:"log_guid"`
+	LogSource             string                        `json:"log_source"`
+	MetricsGuid           string                        `json:"metrics_guid"`
+	MemoryMB              int                           `json:"memory_mb"`
+	ResultFile            string                        `json:"result_file"`
+	TaskGuid              string                        `json:"task_guid"`
+	RootFS                string                        `json:"rootfs"`
+	Privileged            bool                          `json:"privileged"`
+	EnvironmentVariables  []EnvironmentVariable         `json:"env,omitempty"`
+	EgressRules           []oldmodels.SecurityGroupRule `json:"egress_rules,omitempty"`
 }
 
 type InnerTaskCreateRequest TaskCreateRequest
@@ -53,7 +54,7 @@ type mTaskCreateRequest struct {
 }
 
 func (request TaskCreateRequest) MarshalJSON() ([]byte, error) {
-	actionRaw, err := models.MarshalAction(request.Action)
+	actionRaw, err := oldmodels.MarshalAction(request.Action)
 	if err != nil {
 		return nil, err
 	}
@@ -74,11 +75,11 @@ func (request *TaskCreateRequest) UnmarshalJSON(payload []byte) error {
 		return err
 	}
 
-	var a models.Action
+	var a oldmodels.Action
 	if mRequest.ActionRaw == nil {
 		a = nil
 	} else {
-		a, err = models.UnmarshalAction(mRequest.ActionRaw)
+		a, err = oldmodels.UnmarshalAction(mRequest.ActionRaw)
 		if err != nil {
 			return err
 		}
@@ -89,28 +90,28 @@ func (request *TaskCreateRequest) UnmarshalJSON(payload []byte) error {
 }
 
 type TaskResponse struct {
-	Action                models.Action              `json:"-"`
-	Annotation            string                     `json:"annotation,omitempty"`
-	CompletionCallbackURL string                     `json:"completion_callback_url"`
-	CPUWeight             uint                       `json:"cpu_weight"`
-	DiskMB                int                        `json:"disk_mb"`
-	Domain                string                     `json:"domain"`
-	LogGuid               string                     `json:"log_guid"`
-	LogSource             string                     `json:"log_source"`
-	MetricsGuid           string                     `json:"metrics_guid"`
-	MemoryMB              int                        `json:"memory_mb"`
-	ResultFile            string                     `json:"result_file"`
-	TaskGuid              string                     `json:"task_guid"`
-	RootFS                string                     `json:"rootfs"`
-	Privileged            bool                       `json:"privileged"`
-	EnvironmentVariables  []EnvironmentVariable      `json:"env,omitempty"`
-	CellID                string                     `json:"cell_id"`
-	CreatedAt             int64                      `json:"created_at"`
-	Failed                bool                       `json:"failed"`
-	FailureReason         string                     `json:"failure_reason"`
-	Result                string                     `json:"result"`
-	State                 string                     `json:"state"`
-	EgressRules           []models.SecurityGroupRule `json:"egress_rules,omitempty"`
+	Action                oldmodels.Action              `json:"-"`
+	Annotation            string                        `json:"annotation,omitempty"`
+	CompletionCallbackURL string                        `json:"completion_callback_url"`
+	CPUWeight             uint                          `json:"cpu_weight"`
+	DiskMB                int                           `json:"disk_mb"`
+	Domain                string                        `json:"domain"`
+	LogGuid               string                        `json:"log_guid"`
+	LogSource             string                        `json:"log_source"`
+	MetricsGuid           string                        `json:"metrics_guid"`
+	MemoryMB              int                           `json:"memory_mb"`
+	ResultFile            string                        `json:"result_file"`
+	TaskGuid              string                        `json:"task_guid"`
+	RootFS                string                        `json:"rootfs"`
+	Privileged            bool                          `json:"privileged"`
+	EnvironmentVariables  []EnvironmentVariable         `json:"env,omitempty"`
+	CellID                string                        `json:"cell_id"`
+	CreatedAt             int64                         `json:"created_at"`
+	Failed                bool                          `json:"failed"`
+	FailureReason         string                        `json:"failure_reason"`
+	Result                string                        `json:"result"`
+	State                 string                        `json:"state"`
+	EgressRules           []oldmodels.SecurityGroupRule `json:"egress_rules,omitempty"`
 }
 
 type InnerTaskResponse TaskResponse
@@ -121,7 +122,7 @@ type mTaskResponse struct {
 }
 
 func (response TaskResponse) MarshalJSON() ([]byte, error) {
-	actionRaw, err := models.MarshalAction(response.Action)
+	actionRaw, err := oldmodels.MarshalAction(response.Action)
 	if err != nil {
 		return nil, err
 	}
@@ -142,11 +143,11 @@ func (response *TaskResponse) UnmarshalJSON(payload []byte) error {
 		return err
 	}
 
-	var a models.Action
+	var a oldmodels.Action
 	if mResponse.ActionRaw == nil {
 		a = nil
 	} else {
-		a, err = models.UnmarshalAction(mResponse.ActionRaw)
+		a, err = oldmodels.UnmarshalAction(mResponse.ActionRaw)
 		if err != nil {
 			return err
 		}
@@ -159,26 +160,26 @@ func (response *TaskResponse) UnmarshalJSON(payload []byte) error {
 type RoutingInfo map[string]*json.RawMessage
 
 type DesiredLRPCreateRequest struct {
-	ProcessGuid          string                     `json:"process_guid"`
-	Domain               string                     `json:"domain"`
-	RootFS               string                     `json:"rootfs"`
-	Instances            int                        `json:"instances"`
-	EnvironmentVariables []EnvironmentVariable      `json:"env,omitempty"`
-	Setup                models.Action              `json:"-"`
-	Action               models.Action              `json:"-"`
-	Monitor              models.Action              `json:"-"`
-	StartTimeout         uint                       `json:"start_timeout"`
-	DiskMB               int                        `json:"disk_mb"`
-	MemoryMB             int                        `json:"memory_mb"`
-	CPUWeight            uint                       `json:"cpu_weight"`
-	Privileged           bool                       `json:"privileged"`
-	Ports                []uint16                   `json:"ports"`
-	Routes               RoutingInfo                `json:"routes,omitempty"`
-	LogGuid              string                     `json:"log_guid"`
-	LogSource            string                     `json:"log_source"`
-	MetricsGuid          string                     `json:"metrics_guid"`
-	Annotation           string                     `json:"annotation,omitempty"`
-	EgressRules          []models.SecurityGroupRule `json:"egress_rules,omitempty"`
+	ProcessGuid          string                        `json:"process_guid"`
+	Domain               string                        `json:"domain"`
+	RootFS               string                        `json:"rootfs"`
+	Instances            int                           `json:"instances"`
+	EnvironmentVariables []EnvironmentVariable         `json:"env,omitempty"`
+	Setup                oldmodels.Action              `json:"-"`
+	Action               oldmodels.Action              `json:"-"`
+	Monitor              oldmodels.Action              `json:"-"`
+	StartTimeout         uint                          `json:"start_timeout"`
+	DiskMB               int                           `json:"disk_mb"`
+	MemoryMB             int                           `json:"memory_mb"`
+	CPUWeight            uint                          `json:"cpu_weight"`
+	Privileged           bool                          `json:"privileged"`
+	Ports                []uint16                      `json:"ports"`
+	Routes               RoutingInfo                   `json:"routes,omitempty"`
+	LogGuid              string                        `json:"log_guid"`
+	LogSource            string                        `json:"log_source"`
+	MetricsGuid          string                        `json:"metrics_guid"`
+	Annotation           string                        `json:"annotation,omitempty"`
+	EgressRules          []oldmodels.SecurityGroupRule `json:"egress_rules,omitempty"`
 }
 
 type InnerDesiredLRPCreateRequest DesiredLRPCreateRequest
@@ -194,7 +195,7 @@ func (request DesiredLRPCreateRequest) MarshalJSON() ([]byte, error) {
 	var setupRaw, actionRaw, monitorRaw *json.RawMessage
 
 	if request.Action != nil {
-		raw, err := models.MarshalAction(request.Action)
+		raw, err := oldmodels.MarshalAction(request.Action)
 		if err != nil {
 			return nil, err
 		}
@@ -203,7 +204,7 @@ func (request DesiredLRPCreateRequest) MarshalJSON() ([]byte, error) {
 	}
 
 	if request.Setup != nil {
-		raw, err := models.MarshalAction(request.Setup)
+		raw, err := oldmodels.MarshalAction(request.Setup)
 		if err != nil {
 			return nil, err
 		}
@@ -212,7 +213,7 @@ func (request DesiredLRPCreateRequest) MarshalJSON() ([]byte, error) {
 	}
 
 	if request.Monitor != nil {
-		raw, err := models.MarshalAction(request.Monitor)
+		raw, err := oldmodels.MarshalAction(request.Monitor)
 		if err != nil {
 			return nil, err
 		}
@@ -238,12 +239,12 @@ func (request *DesiredLRPCreateRequest) UnmarshalJSON(payload []byte) error {
 		return err
 	}
 
-	var a models.Action
+	var a oldmodels.Action
 
 	if mRequest.ActionRaw == nil {
 		a = nil
 	} else {
-		a, err = models.UnmarshalAction(*mRequest.ActionRaw)
+		a, err = oldmodels.UnmarshalAction(*mRequest.ActionRaw)
 		if err != nil {
 			return err
 		}
@@ -253,7 +254,7 @@ func (request *DesiredLRPCreateRequest) UnmarshalJSON(payload []byte) error {
 	if mRequest.SetupRaw == nil {
 		a = nil
 	} else {
-		a, err = models.UnmarshalAction(*mRequest.SetupRaw)
+		a, err = oldmodels.UnmarshalAction(*mRequest.SetupRaw)
 		if err != nil {
 			return err
 		}
@@ -263,7 +264,7 @@ func (request *DesiredLRPCreateRequest) UnmarshalJSON(payload []byte) error {
 	if mRequest.MonitorRaw == nil {
 		a = nil
 	} else {
-		a, err = models.UnmarshalAction(*mRequest.MonitorRaw)
+		a, err = oldmodels.UnmarshalAction(*mRequest.MonitorRaw)
 		if err != nil {
 			return err
 		}
@@ -280,118 +281,27 @@ type DesiredLRPUpdateRequest struct {
 }
 
 type DesiredLRPResponse struct {
-	ProcessGuid          string                     `json:"process_guid"`
-	Domain               string                     `json:"domain"`
-	RootFS               string                     `json:"rootfs"`
-	Instances            int                        `json:"instances"`
-	EnvironmentVariables []EnvironmentVariable      `json:"env,omitempty"`
-	Setup                models.Action              `json:"setup"`
-	Action               models.Action              `json:"action"`
-	Monitor              models.Action              `json:"monitor"`
-	StartTimeout         uint                       `json:"start_timeout"`
-	DiskMB               int                        `json:"disk_mb"`
-	MemoryMB             int                        `json:"memory_mb"`
-	CPUWeight            uint                       `json:"cpu_weight"`
-	Privileged           bool                       `json:"privileged"`
-	Ports                []uint16                   `json:"ports"`
-	Routes               RoutingInfo                `json:"routes,omitempty"`
-	LogGuid              string                     `json:"log_guid"`
-	LogSource            string                     `json:"log_source"`
-	MetricsGuid          string                     `json:"metrics_guid"`
-	Annotation           string                     `json:"annotation,omitempty"`
-	EgressRules          []models.SecurityGroupRule `json:"egress_rules,omitempty"`
-	ModificationTag      ModificationTag            `json:"modification_tag"`
-}
-
-type InnerDesiredLRPResponse DesiredLRPResponse
-
-type mDesiredLRPResponse struct {
-	SetupRaw   *json.RawMessage `json:"setup,omitempty"`
-	ActionRaw  *json.RawMessage `json:"action"`
-	MonitorRaw *json.RawMessage `json:"monitor,omitempty"`
-	*InnerDesiredLRPResponse
-}
-
-func (response DesiredLRPResponse) MarshalJSON() ([]byte, error) {
-	var setupRaw, actionRaw, monitorRaw *json.RawMessage
-
-	if response.Action != nil {
-		raw, err := models.MarshalAction(response.Action)
-		if err != nil {
-			return nil, err
-		}
-		rm := json.RawMessage(raw)
-		actionRaw = &rm
-	}
-
-	if response.Setup != nil {
-		raw, err := models.MarshalAction(response.Setup)
-		if err != nil {
-			return nil, err
-		}
-		rm := json.RawMessage(raw)
-		setupRaw = &rm
-	}
-	if response.Monitor != nil {
-		raw, err := models.MarshalAction(response.Monitor)
-		if err != nil {
-			return nil, err
-		}
-		rm := json.RawMessage(raw)
-		monitorRaw = &rm
-	}
-
-	innerResponse := InnerDesiredLRPResponse(response)
-	mResponse := &mDesiredLRPResponse{
-		SetupRaw:                setupRaw,
-		ActionRaw:               actionRaw,
-		MonitorRaw:              monitorRaw,
-		InnerDesiredLRPResponse: &innerResponse,
-	}
-
-	return json.Marshal(mResponse)
-}
-
-func (response *DesiredLRPResponse) UnmarshalJSON(payload []byte) error {
-	mResponse := &mDesiredLRPResponse{InnerDesiredLRPResponse: (*InnerDesiredLRPResponse)(response)}
-	err := json.Unmarshal(payload, mResponse)
-	if err != nil {
-		return err
-	}
-
-	var a models.Action
-
-	if mResponse.ActionRaw == nil {
-		a = nil
-	} else {
-		a, err = models.UnmarshalAction(*mResponse.ActionRaw)
-		if err != nil {
-			return err
-		}
-	}
-	response.Action = a
-
-	if mResponse.SetupRaw == nil {
-		a = nil
-	} else {
-		a, err = models.UnmarshalAction(*mResponse.SetupRaw)
-		if err != nil {
-			return err
-		}
-	}
-	response.Setup = a
-
-	if mResponse.MonitorRaw == nil {
-		a = nil
-	} else {
-		a, err = models.UnmarshalAction(*mResponse.MonitorRaw)
-		if err != nil {
-			return err
-		}
-	}
-	response.Monitor = a
-
-	return nil
+	ProcessGuid          string                      `json:"process_guid"`
+	Domain               string                      `json:"domain"`
+	RootFS               string                      `json:"rootfs"`
+	Instances            int                         `json:"instances"`
+	EnvironmentVariables []EnvironmentVariable       `json:"env,omitempty"`
+	Setup                *models.Action              `json:"setup"`
+	Action               *models.Action              `json:"action"`
+	Monitor              *models.Action              `json:"monitor"`
+	StartTimeout         uint                        `json:"start_timeout"`
+	DiskMB               int                         `json:"disk_mb"`
+	MemoryMB             int                         `json:"memory_mb"`
+	CPUWeight            uint                        `json:"cpu_weight"`
+	Privileged           bool                        `json:"privileged"`
+	Ports                []uint16                    `json:"ports"`
+	Routes               RoutingInfo                 `json:"routes,omitempty"`
+	LogGuid              string                      `json:"log_guid"`
+	LogSource            string                      `json:"log_source"`
+	MetricsGuid          string                      `json:"metrics_guid"`
+	Annotation           string                      `json:"annotation,omitempty"`
+	EgressRules          []*models.SecurityGroupRule `json:"egress_rules,omitempty"`
+	ModificationTag      ModificationTag             `json:"modification_tag"`
 }
 
 type ActualLRPState string

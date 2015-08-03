@@ -41,7 +41,7 @@ var _ = Describe("Desired LRP API", func() {
 			Eventually(func() ([]*models.DesiredLRP, error) { return bbsClient.DesiredLRPs(models.DesiredLRPFilter{}) }).Should(HaveLen(1))
 			desiredLRPs, err := bbsClient.DesiredLRPs(models.DesiredLRPFilter{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(desiredLRPs[0].GetProcessGuid()).To(Equal(lrpToCreate.ProcessGuid))
+			Expect(desiredLRPs[0].ProcessGuid).To(Equal(lrpToCreate.ProcessGuid))
 		})
 
 		Context("when the desired LRP already exists", func() {
@@ -117,8 +117,8 @@ var _ = Describe("Desired LRP API", func() {
 			Eventually(func() ([]*models.DesiredLRP, error) { return bbsClient.DesiredLRPs(models.DesiredLRPFilter{}) }).Should(HaveLen(1))
 			desiredLRPs, err := bbsClient.DesiredLRPs(models.DesiredLRPFilter{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(desiredLRPs[0].GetInstances()).To(BeNumerically("==", instances))
-			Expect(desiredLRPs[0].GetAnnotation()).To(Equal(annotation))
+			Expect(desiredLRPs[0].Instances).To(BeNumerically("==", instances))
+			Expect(desiredLRPs[0].Annotation).To(Equal(annotation))
 			Expect(*desiredLRPs[0].Routes).To(BeEquivalentTo(map[string]*json.RawMessage(routingInfo)))
 		})
 	})

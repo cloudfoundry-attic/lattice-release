@@ -78,7 +78,7 @@ func (h *DesiredLRPHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	desiredLRP, err := h.bbs.DesiredLRPByProcessGuid(processGuid)
-	if e, ok := err.(*bbs.Error); ok && e.Equal(bbs.ErrResourceNotFound) {
+	if e, ok := err.(*models.Error); ok && e.Equal(models.ErrResourceNotFound) {
 		writeDesiredLRPNotFoundResponse(w, processGuid)
 		return
 	}

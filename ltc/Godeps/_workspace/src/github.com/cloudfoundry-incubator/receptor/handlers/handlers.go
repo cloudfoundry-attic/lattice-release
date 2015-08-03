@@ -5,19 +5,18 @@ import (
 
 	"github.com/cloudfoundry-incubator/bbs"
 	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/cloudfoundry-incubator/receptor/event"
 	legacybbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/pivotal-golang/lager"
 	"github.com/tedsuo/rata"
 )
 
-func New(bbs bbs.Client, receptorBBS legacybbs.ReceptorBBS, hub event.Hub, logger lager.Logger, username, password string, corsEnabled bool) http.Handler {
+func New(bbs bbs.Client, receptorBBS legacybbs.ReceptorBBS, logger lager.Logger, username, password string, corsEnabled bool) http.Handler {
 	taskHandler := NewTaskHandler(receptorBBS, logger)
 	desiredLRPHandler := NewDesiredLRPHandler(bbs, receptorBBS, logger)
 	actualLRPHandler := NewActualLRPHandler(bbs, receptorBBS, logger)
 	cellHandler := NewCellHandler(receptorBBS, logger)
 	domainHandler := NewDomainHandler(bbs, receptorBBS, logger)
-	eventStreamHandler := NewEventStreamHandler(hub, logger)
+	eventStreamHandler := NewEventStreamHandler(bbs, logger)
 	authCookieHandler := NewAuthCookieHandler(logger)
 
 	actions := rata.Handlers{

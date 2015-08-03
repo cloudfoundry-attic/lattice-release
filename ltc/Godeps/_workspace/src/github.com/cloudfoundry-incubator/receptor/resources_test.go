@@ -3,9 +3,10 @@ package receptor_test
 import (
 	"encoding/json"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/route-emitter/cfroutes"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -67,11 +68,11 @@ var _ = Describe("Resources", func() {
 		        ]
 					}`
 					expectedRequest = receptor.TaskCreateRequest{
-						EgressRules: []models.SecurityGroupRule{
+						EgressRules: []oldmodels.SecurityGroupRule{
 							{
 								Protocol:     "tcp",
 								Destinations: []string{"0.0.0.0/0"},
-								PortRange: &models.PortRange{
+								PortRange: &oldmodels.PortRange{
 									Start: 1,
 									End:   1024,
 								},
@@ -145,11 +146,11 @@ var _ = Describe("Resources", func() {
 		        ]
 					}`
 					expectedResponse = receptor.TaskResponse{
-						EgressRules: []models.SecurityGroupRule{
+						EgressRules: []oldmodels.SecurityGroupRule{
 							{
 								Protocol:     "tcp",
 								Destinations: []string{"0.0.0.0/0"},
-								PortRange: &models.PortRange{
+								PortRange: &oldmodels.PortRange{
 									Start: 1,
 									End:   1024,
 								},
@@ -224,7 +225,7 @@ var _ = Describe("Resources", func() {
 		        ]
 					}`
 					expectedRequest = receptor.DesiredLRPCreateRequest{
-						EgressRules: []models.SecurityGroupRule{
+						EgressRules: []oldmodels.SecurityGroupRule{
 							{
 								Protocol:     "tcp",
 								Destinations: []string{"0.0.0.0/0"},
@@ -303,7 +304,7 @@ var _ = Describe("Resources", func() {
 		        ]
 					}`
 					expectedResponse = receptor.DesiredLRPResponse{
-						EgressRules: []models.SecurityGroupRule{
+						EgressRules: []*models.SecurityGroupRule{
 							{
 								Protocol:     "tcp",
 								Destinations: []string{"0.0.0.0/0"},

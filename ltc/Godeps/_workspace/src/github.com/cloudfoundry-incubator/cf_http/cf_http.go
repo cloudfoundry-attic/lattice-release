@@ -1,6 +1,10 @@
 package cf_http
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
@@ -34,4 +38,31 @@ func newClient(dialTimeout, keepAliveTimeout, timeout time.Duration) *http.Clien
 		},
 		Timeout: timeout,
 	}
+}
+
+func NewTLSConfig(certFile, keyFile, caCertFile string) (*tls.Config, error) {
+	tlsCert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, err
+	}
+
+	tlsConfig := &tls.Config{
+		Certificates:       []tls.Certificate{tlsCert},
+		InsecureSkipVerify: false,
+	}
+
+	certBytes, err := ioutil.ReadFile(caCertFile)
+	if err != nil {
+		return nil, err
+	}
+
+	if caCertFile != "" {
+		caCertPool := x509.NewCertPool()
+		if ok := caCertPool.AppendCertsFromPEM(certBytes); !ok {
+			return nil, errors.New("Unable to load caCert")
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	return tlsConfig, nil
 }

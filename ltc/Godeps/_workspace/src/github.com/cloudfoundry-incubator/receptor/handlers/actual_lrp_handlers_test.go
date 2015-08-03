@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 
-	"github.com/cloudfoundry-incubator/bbs"
 	"github.com/cloudfoundry-incubator/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
@@ -15,7 +14,6 @@ import (
 	"github.com/cloudfoundry-incubator/receptor/serialization"
 	fake_legacy_bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
 	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
-	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pivotal-golang/lager"
@@ -29,13 +27,12 @@ var _ = Describe("Actual LRP Handlers", func() {
 		responseRecorder *httptest.ResponseRecorder
 		handler          *handlers.ActualLRPHandler
 
-		oldActualLRP1     oldmodels.ActualLRP
 		oldActualLRP2     oldmodels.ActualLRP
 		oldEvacuatingLRP2 oldmodels.ActualLRP
 
-		actualLRP1     models.ActualLRP
-		actualLRP2     models.ActualLRP
-		evacuatingLRP2 models.ActualLRP
+		actualLRP1     *models.ActualLRP
+		actualLRP2     *models.ActualLRP
+		evacuatingLRP2 *models.ActualLRP
 	)
 
 	BeforeEach(func() {
@@ -46,55 +43,50 @@ var _ = Describe("Actual LRP Handlers", func() {
 		responseRecorder = httptest.NewRecorder()
 		handler = handlers.NewActualLRPHandler(fakeBBS, fakeLegacyBBS, logger)
 
-		actualLRP1 = models.ActualLRP{
-			ActualLRPKey: models.NewActualLRPKey(
+		actualLRP1 = models.NewRunningActualLRP(
+			models.NewActualLRPKey(
 				"process-guid-0",
 				1,
 				"domain-0",
 			),
-			ActualLRPInstanceKey: models.NewActualLRPInstanceKey(
+			models.NewActualLRPInstanceKey(
 				"instance-guid-0",
 				"cell-id-0",
 			),
-			State: proto.String(models.ActualLRPStateRunning),
-			Since: proto.Int64(1138),
-		}
+			models.NewActualLRPNetInfo("1.1.1.1", models.NewPortMapping(80, 5050)),
+			1138,
+		)
 
-		actualLRP2 = models.ActualLRP{
-			ActualLRPKey: models.NewActualLRPKey(
+		actualLRP2 = models.NewClaimedActualLRP(
+			models.NewActualLRPKey(
 				"process-guid-1",
 				2,
 				"domain-1",
 			),
-			ActualLRPInstanceKey: models.NewActualLRPInstanceKey(
+			models.NewActualLRPInstanceKey(
 				"instance-guid-1",
 				"cell-id-1",
 			),
-			State: proto.String(models.ActualLRPStateClaimed),
-			Since: proto.Int64(4444),
-		}
+			4444,
+		)
 
-		evacuatingLRP2 = actualLRP2
-		evacuatingLRP2.State = proto.String(models.ActualLRPStateRunning)
-		evacuatingLRP2.Since = proto.Int64(3417)
+		evacuatingLRP2 = models.NewRunningActualLRP(
+			models.NewActualLRPKey(
+				"process-guid-1",
+				2,
+				"domain-1",
+			),
+			models.NewActualLRPInstanceKey(
+				"instance-guid-1",
+				"cell-id-1",
+			),
+			models.NewActualLRPNetInfo(""),
+			3417,
+		)
 	})
 
 	// old before each
 	BeforeEach(func() {
-		oldActualLRP1 = oldmodels.ActualLRP{
-			ActualLRPKey: oldmodels.NewActualLRPKey(
-				"process-guid-0",
-				1,
-				"domain-0",
-			),
-			ActualLRPInstanceKey: oldmodels.NewActualLRPInstanceKey(
-				"instance-guid-0",
-				"cell-id-0",
-			),
-			State: oldmodels.ActualLRPStateRunning,
-			Since: 1138,
-		}
-
 		oldActualLRP2 = oldmodels.ActualLRP{
 			ActualLRPKey: oldmodels.NewActualLRPKey(
 				"process-guid-1",
@@ -120,9 +112,9 @@ var _ = Describe("Actual LRP Handlers", func() {
 				fakeBBS.ActualLRPGroupsStub = func(filter models.ActualLRPFilter) ([]*models.ActualLRPGroup, error) {
 					groups := []*models.ActualLRPGroup{}
 					if filter.Domain == "" {
-						groups = append(groups, &models.ActualLRPGroup{Instance: &actualLRP1})
+						groups = append(groups, &models.ActualLRPGroup{Instance: actualLRP1})
 					}
-					groups = append(groups, &models.ActualLRPGroup{Instance: &actualLRP2, Evacuating: &evacuatingLRP2})
+					groups = append(groups, &models.ActualLRPGroup{Instance: actualLRP2, Evacuating: evacuatingLRP2})
 					return groups, nil
 				}
 			})
@@ -163,8 +155,8 @@ var _ = Describe("Actual LRP Handlers", func() {
 					Expect(response[0].ProcessGuid).To(Equal("process-guid-0"))
 					Expect(response[1].ProcessGuid).To(Equal("process-guid-1"))
 					expectedResponses := []receptor.ActualLRPResponse{
-						serialization.ActualLRPToResponse(oldActualLRP1, false),
-						serialization.ActualLRPToResponse(oldEvacuatingLRP2, true),
+						serialization.ActualLRPProtoToResponse(actualLRP1, false),
+						serialization.ActualLRPProtoToResponse(evacuatingLRP2, true),
 					}
 
 					Expect(response).To(ConsistOf(expectedResponses))
@@ -232,7 +224,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 
 		Context("when reading LRPs from BBS succeeds", func() {
 			BeforeEach(func() {
-				fakeBBS.ActualLRPGroupsByProcessGuidReturns([]*models.ActualLRPGroup{&models.ActualLRPGroup{Instance: &actualLRP1}}, nil)
+				fakeBBS.ActualLRPGroupsByProcessGuidReturns([]*models.ActualLRPGroup{&models.ActualLRPGroup{Instance: actualLRP1}}, nil)
 			})
 
 			It("calls the BBS to retrieve the actual LRPs", func() {
@@ -251,14 +243,14 @@ var _ = Describe("Actual LRP Handlers", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(response).To(HaveLen(1))
-				Expect(response).To(ContainElement(serialization.ActualLRPToResponse(oldActualLRP1, false)))
+				Expect(response).To(ContainElement(serialization.ActualLRPProtoToResponse(actualLRP1, false)))
 			})
 
 			Context("when the index is evacuating", func() {
 				BeforeEach(func() {
 					req.Form = url.Values{":process_guid": []string{"process-guid-1"}}
 
-					fakeBBS.ActualLRPGroupsByProcessGuidReturns([]*models.ActualLRPGroup{&models.ActualLRPGroup{Instance: &actualLRP2, Evacuating: &evacuatingLRP2}}, nil)
+					fakeBBS.ActualLRPGroupsByProcessGuidReturns([]*models.ActualLRPGroup{&models.ActualLRPGroup{Instance: actualLRP2, Evacuating: evacuatingLRP2}}, nil)
 				})
 
 				It("calls the BBS to retrieve the actual LRPs", func() {
@@ -277,7 +269,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(response).To(HaveLen(1))
-					Expect(response).To(ContainElement(serialization.ActualLRPToResponse(oldEvacuatingLRP2, true)))
+					Expect(response).To(ContainElement(serialization.ActualLRPProtoToResponse(evacuatingLRP2, true)))
 				})
 			})
 		})
@@ -358,7 +350,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 		Context("when getting the LRP group from the BBS succeeds", func() {
 			BeforeEach(func() {
 				fakeBBS.ActualLRPGroupByProcessGuidAndIndexReturns(
-					&models.ActualLRPGroup{Instance: &actualLRP2},
+					&models.ActualLRPGroup{Instance: actualLRP2},
 					nil,
 				)
 			})
@@ -379,13 +371,13 @@ var _ = Describe("Actual LRP Handlers", func() {
 				err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(response).To(Equal(serialization.ActualLRPToResponse(oldActualLRP2, false)))
+				Expect(response).To(Equal(serialization.ActualLRPProtoToResponse(actualLRP2, false)))
 			})
 
 			Context("when the LRP group contains an evacuating", func() {
 				BeforeEach(func() {
 					fakeBBS.ActualLRPGroupByProcessGuidAndIndexReturns(
-						&models.ActualLRPGroup{Instance: &actualLRP2, Evacuating: &evacuatingLRP2},
+						&models.ActualLRPGroup{Instance: actualLRP2, Evacuating: evacuatingLRP2},
 						nil,
 					)
 				})
@@ -395,7 +387,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 					err := json.Unmarshal(responseRecorder.Body.Bytes(), &response)
 					Expect(err).NotTo(HaveOccurred())
 
-					Expect(response).To(Equal(serialization.ActualLRPToResponse(oldEvacuatingLRP2, true)))
+					Expect(response).To(Equal(serialization.ActualLRPProtoToResponse(evacuatingLRP2, true)))
 				})
 			})
 		})
@@ -421,7 +413,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 
 		Context("when the BBS does not return any actual LRP", func() {
 			BeforeEach(func() {
-				fakeBBS.ActualLRPGroupByProcessGuidAndIndexReturns(&models.ActualLRPGroup{}, bbs.ErrResourceNotFound)
+				fakeBBS.ActualLRPGroupByProcessGuidAndIndexReturns(&models.ActualLRPGroup{}, models.ErrResourceNotFound)
 			})
 
 			It("responds with 404 Not Found", func() {
@@ -473,7 +465,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 			Context("when getting the LRP group from BBS succeeds", func() {
 				BeforeEach(func() {
 					fakeBBS.ActualLRPGroupByProcessGuidAndIndexReturns(
-						&models.ActualLRPGroup{Instance: &actualLRP2, Evacuating: nil},
+						&models.ActualLRPGroup{Instance: actualLRP2, Evacuating: nil},
 						nil,
 					)
 				})
@@ -498,7 +490,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 				Context("when the LRP group contains an evacuating", func() {
 					BeforeEach(func() {
 						fakeBBS.ActualLRPGroupByProcessGuidAndIndexReturns(
-							&models.ActualLRPGroup{Instance: &actualLRP2, Evacuating: &evacuatingLRP2},
+							&models.ActualLRPGroup{Instance: actualLRP2, Evacuating: evacuatingLRP2},
 							nil,
 						)
 					})
@@ -515,7 +507,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 				BeforeEach(func() {
 					fakeBBS.ActualLRPGroupByProcessGuidAndIndexReturns(
 						&models.ActualLRPGroup{},
-						bbs.ErrResourceNotFound,
+						models.ErrResourceNotFound,
 					)
 				})
 
@@ -623,4 +615,3 @@ var _ = Describe("Actual LRP Handlers", func() {
 		})
 	})
 })
-

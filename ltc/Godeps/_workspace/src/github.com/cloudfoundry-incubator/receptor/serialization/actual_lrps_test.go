@@ -1,20 +1,20 @@
 package serialization_test
 
 import (
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
-	"github.com/cloudfoundry-incubator/runtime-schema/diego_errors"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("ActualLRP Serialization", func() {
-	Describe("ActualLRPToResponse", func() {
-		var actualLRP models.ActualLRP
+	Describe("ActualLRPProtoToResponse", func() {
+		var actualLRP *models.ActualLRP
+
 		BeforeEach(func() {
-			actualLRP = models.ActualLRP{
+			actualLRP = &models.ActualLRP{
 				ActualLRPKey: models.NewActualLRPKey(
 					"process-guid-0",
 					3,
@@ -26,12 +26,7 @@ var _ = Describe("ActualLRP Serialization", func() {
 				),
 				ActualLRPNetInfo: models.NewActualLRPNetInfo(
 					"address-0",
-					[]models.PortMapping{
-						{
-							ContainerPort: 2345,
-							HostPort:      9876,
-						},
-					},
+					models.NewPortMapping(9876, 2345),
 				),
 				State:      models.ActualLRPStateRunning,
 				CrashCount: 42,
@@ -67,12 +62,12 @@ var _ = Describe("ActualLRP Serialization", func() {
 				},
 			}
 
-			actualResponse := serialization.ActualLRPToResponse(actualLRP, true)
+			actualResponse := serialization.ActualLRPProtoToResponse(actualLRP, true)
 			Expect(actualResponse).To(Equal(expectedResponse))
 		})
 
 		It("maps model states to receptor states", func() {
-			expectedStateMap := map[models.ActualLRPState]receptor.ActualLRPState{
+			expectedStateMap := map[string]receptor.ActualLRPState{
 				models.ActualLRPStateUnclaimed: receptor.ActualLRPStateUnclaimed,
 				models.ActualLRPStateClaimed:   receptor.ActualLRPStateClaimed,
 				models.ActualLRPStateRunning:   receptor.ActualLRPStateRunning,
@@ -81,22 +76,22 @@ var _ = Describe("ActualLRP Serialization", func() {
 
 			for modelState, jsonState := range expectedStateMap {
 				actualLRP.State = modelState
-				Expect(serialization.ActualLRPToResponse(actualLRP, false).State).To(Equal(jsonState))
+				Expect(serialization.ActualLRPProtoToResponse(actualLRP, false).State).To(Equal(jsonState))
 			}
 
 			actualLRP.State = ""
-			Expect(serialization.ActualLRPToResponse(actualLRP, false).State).To(Equal(receptor.ActualLRPStateInvalid))
+			Expect(serialization.ActualLRPProtoToResponse(actualLRP, false).State).To(Equal(receptor.ActualLRPStateInvalid))
 		})
 
 		Context("when there is placement error", func() {
 			BeforeEach(func() {
 				actualLRP.State = models.ActualLRPStateUnclaimed
-				actualLRP.PlacementError = diego_errors.INSUFFICIENT_RESOURCES_MESSAGE
+				actualLRP.PlacementError = "some-error"
 			})
 
 			It("includes the placement error", func() {
-				actualResponse := serialization.ActualLRPToResponse(actualLRP, false)
-				Expect(actualResponse.PlacementError).To(Equal(diego_errors.INSUFFICIENT_RESOURCES_MESSAGE))
+				actualResponse := serialization.ActualLRPProtoToResponse(actualLRP, false)
+				Expect(actualResponse.PlacementError).To(Equal("some-error"))
 			})
 		})
 
@@ -107,10 +102,9 @@ var _ = Describe("ActualLRP Serialization", func() {
 			})
 
 			It("includes the placement error", func() {
-				actualResponse := serialization.ActualLRPToResponse(actualLRP, false)
+				actualResponse := serialization.ActualLRPProtoToResponse(actualLRP, false)
 				Expect(actualResponse.CrashReason).To(Equal("crashed"))
 			})
 		})
-
 	})
 })
