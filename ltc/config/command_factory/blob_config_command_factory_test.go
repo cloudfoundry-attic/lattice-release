@@ -9,6 +9,7 @@ import (
 	"github.com/onsi/gomega/gbytes"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory/fake_blob_store_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
@@ -22,20 +23,22 @@ import (
 
 var _ = Describe("CommandFactory", func() {
 	var (
-		stdinReader        *io.PipeReader
-		stdinWriter        *io.PipeWriter
-		outputBuffer       *gbytes.Buffer
-		terminalUI         terminal.UI
-		configPersister    persister.Persister
-		config             *config_package.Config
-		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
-		fakeExitHandler    *fake_exit_handler.FakeExitHandler
+		stdinReader           *io.PipeReader
+		stdinWriter           *io.PipeWriter
+		outputBuffer          *gbytes.Buffer
+		terminalUI            terminal.UI
+		configPersister       persister.Persister
+		config                *config_package.Config
+		fakeTargetVerifier    *fake_target_verifier.FakeTargetVerifier
+		fakeBlobStoreVerifier *fake_blob_store_verifier.FakeBlobStoreVerifier
+		fakeExitHandler       *fake_exit_handler.FakeExitHandler
 	)
 
 	BeforeEach(func() {
 		stdinReader, stdinWriter = io.Pipe()
 		outputBuffer = gbytes.NewBuffer()
 		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
+		fakeBlobStoreVerifier = &fake_blob_store_verifier.FakeBlobStoreVerifier{}
 		fakeExitHandler = new(fake_exit_handler.FakeExitHandler)
 		terminalUI = terminal.NewUI(stdinReader, outputBuffer, nil)
 		configPersister = persister.NewMemPersister()
@@ -46,7 +49,7 @@ var _ = Describe("CommandFactory", func() {
 		var targetBlobCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewConfigCommandFactory(config, terminalUI, fakeTargetVerifier, fakeExitHandler)
+			commandFactory := command_factory.NewConfigCommandFactory(config, terminalUI, fakeTargetVerifier, fakeBlobStoreVerifier, fakeExitHandler)
 			targetBlobCommand = commandFactory.MakeTargetBlobCommand()
 		})
 
@@ -212,6 +215,7 @@ var _ = Describe("CommandFactory", func() {
 							config_package.New(errorPersister("Failure setting blob target")),
 							terminalUI,
 							fakeTargetVerifier,
+							fakeBlobStoreVerifier,
 							fakeExitHandler,
 						)
 						targetBlobCommand = commandFactory.MakeTargetBlobCommand()

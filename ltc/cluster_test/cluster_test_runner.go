@@ -144,7 +144,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 			})
 		})
 
-		if runner.config.BlobTarget().Username != "" && runner.config.BlobTarget().Password != "" {
+		if runner.config.BlobStore().Host != "" {
 			Context("droplets", func() {
 				var dropletName, appName, dropletFolderURL, appRoute string
 

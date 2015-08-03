@@ -185,8 +185,6 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(appExaminer, ui, tailedLogsOutputter, exitHandler)
 
-	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, exitHandler)
-
 	clusterTestRunner := cluster_test.NewClusterTestRunner(config, ltcConfigRoot)
 	clusterTestCommandFactory := cluster_test_command_factory.NewClusterTestCommandFactory(clusterTestRunner)
 
@@ -195,6 +193,8 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, targetVerifier, appExaminer)
 	cfIgnore := cf_ignore.New()
 	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, taskExaminer, dropletRunner, cfIgnore)
+
+	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, blobStore, exitHandler)
 
 	helpCommand := cli.Command{
 		Name:        "help",
