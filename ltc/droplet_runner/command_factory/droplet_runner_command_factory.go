@@ -185,7 +185,7 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 		cli.StringFlag{
 			Name: "tcp-routes",
 			Usage: "Create mappings between external ports and container ports for TCP traffic as follows:\n\t\t" +
-				"--tcp-routes=5222:50000 will route traffic from the external port 50000 to the container port 5222",
+				"--tcp-routes=5222:50000,6379:50001 will route traffic from the external port 50000 to the container port 5222\n\t\t and external port 50001 to container port 6379",
 		},
 		cli.IntFlag{
 			Name:  "instances, i",
