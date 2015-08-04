@@ -44,7 +44,8 @@ resource "digitalocean_droplet" "lattice-brain" {
             "sudo apt-get -y install gcc",
             "sudo apt-get -y install make",
             "sudo apt-get -y install quota",
-            "sudo apt-get -y install linux-image-extra-$(uname -r)"
+            "sudo apt-get -y install linux-image-extra-$(uname -r)",
+            "sudo apt-get -y install btrfs-tools",
         ]
     }
     #/COMMON
@@ -111,7 +112,8 @@ resource "digitalocean_droplet" "cell" {
             "sudo apt-get -y install gcc",
             "sudo apt-get -y install make",
             "sudo apt-get -y install quota",
-            "sudo apt-get -y install linux-image-extra-$(uname -r)"
+            "sudo apt-get -y install linux-image-extra-$(uname -r)",
+            "sudo apt-get -y install btrfs-tools",
         ]
     }
     #/COMMON
