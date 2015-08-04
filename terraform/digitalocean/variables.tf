@@ -22,7 +22,7 @@ variable "do_image" {
 
 variable "do_size_brain" {
     description = "The DO size to use for the Lattice Brain instance."
-    default = "512mb"
+    default = "1gb"
 }
 
 variable "do_size_cell" {
