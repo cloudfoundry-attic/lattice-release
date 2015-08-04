@@ -126,6 +126,13 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\"" #SHOULDN'T PATH_TO_LATTICE_TAR be set to /tmp/lattice.tgz???
       ]
     }
+
+    provisioner "remote-exec" {
+        inline = [
+            "sudo apt-get update",
+            "sudo apt-get -y install btrfs-tools",
+        ]
+    }
     #/COMMON
 
     provisioner "remote-exec" {
@@ -142,9 +149,6 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
         script = "${path.module}/../scripts/remote/install-brain"
     }
 }
-
-
-
 
 resource "openstack_compute_instance_v2" "lattice-cell" {
     count = "${var.num_cells}"
@@ -189,6 +193,13 @@ resource "openstack_compute_instance_v2" "lattice-cell" {
           "sudo chmod 755 /tmp/install-from-tar",
           "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
       ]
+    }
+
+    provisioner "remote-exec" {
+        inline = [
+            "sudo apt-get update",
+            "sudo apt-get -y install btrfs-tools",
+        ]
     }
     #/COMMON
 
