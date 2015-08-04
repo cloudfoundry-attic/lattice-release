@@ -29,6 +29,10 @@ after_success:
 
 install:
 - pushd ltc
+- go get -v -d ./... || true		## FIXME
+- pushd $GOPATH/src/github.com/aws/aws-sdk-go
+- git checkout v0.7.0
+- popd
 - PATH=$HOME/gopath/bin:$PATH godep restore
 - popd
 
