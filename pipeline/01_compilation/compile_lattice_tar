@@ -23,6 +23,7 @@ $LATTICE_SRC_PATH/cluster/scripts/compile \
     $LATTICE_SRC_PATH/build/lattice-build \
     $LATTICE_SRC_PATH/build/diego-release \
     $LATTICE_SRC_PATH/build/cf-release \
+    $LATTICE_SRC_PATH/build/cf-routing-release \
     $LATTICE_SRC_PATH
 
 stage_version_files
