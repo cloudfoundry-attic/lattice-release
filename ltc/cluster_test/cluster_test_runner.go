@@ -26,7 +26,6 @@ package cluster_test
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
-	"github.com/nu7hatch/gouuid"
 )
 
 var numCpu int
