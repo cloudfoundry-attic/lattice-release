@@ -8,8 +8,6 @@ install_condenser() {
     mkdir -p /var/lattice/lighttpd/blobs /var/lattice/etc
     chown -R www-data:www-data /var/lattice/lighttpd
 
-    apt-get install -y lighttpd lighttpd-mod-webdav
-
     /etc/init.d/lighttpd stop
 
     if [ -n "$LATTICE_USERNAME" ]; then

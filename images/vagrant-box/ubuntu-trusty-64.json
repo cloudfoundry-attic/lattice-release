@@ -103,6 +103,8 @@
                 "apt-get -y install jq",
                 "apt-get -y install s3cmd",
                 "apt-get -y install unzip",
+                "apt-get -y install lighttpd lighttpd-mod-webdav",
+                "apt-get -y install btrfs-tools",
                 "apt-get -y install linux-image-extra-$(uname -r)"
             ]
         },
@@ -129,13 +131,7 @@
             "execute_command": "sudo {{.Path}}",
             "inline": [
                 "echo 'installing virtualbox guest additions version {{.Version}}'",
-                "sudo apt-get install -y linux-headers-generic dkms virtualbox-guest-utils",
-                "mkdir /tmp/virtualbox",
-                "mount -o loop /home/vagrant/VBoxGuestAdditions.iso /tmp/virtualbox",
-                "sh /tmp/vbox/VBoxLinuxAdditions.run",
-                "umount /tmp/virtualbox",
-                "rm -rf /tmp/virtualbox",
-                "rm /home/vagrant/*.iso"
+                "sudo apt-get install -y linux-headers-generic dkms virtualbox-guest-utils"
             ]
         },
         {
@@ -144,7 +140,7 @@
             "inline": [
                 "apt-get -y autoremove",
                 "apt-get -y clean",
-                "dd if=/dev/zero of=/EMPTY bs=1M",
+                "dd if=/dev/zero of=/EMPTY bs=1M || true",
                 "rm -f /EMPTY"
             ]
         }
