@@ -70,10 +70,28 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 				},
 			},
 		}, {
-			Name: "CREATE AND MODIFY APPS",
+			Name: "MANAGE DOCKER APPS",
 			CommandSubGroups: [][]cmdPresenter{
 				{
 					presentCommand("create"),
+				},
+			},
+		}, {
+			Name: "MANAGE DROPLETS",
+			CommandSubGroups: [][]cmdPresenter{
+				{
+					presentCommand("build-droplet"),
+					presentCommand("export-droplet"),
+					presentCommand("import-droplet"),
+					presentCommand("launch-droplet"),
+					presentCommand("list-droplets"),
+					presentCommand("remove-droplet"),
+				},
+			},
+		}, {
+			Name: "MANAGE ALL APPS",
+			CommandSubGroups: [][]cmdPresenter{
+				{
 					presentCommand("remove"),
 					presentCommand("scale"),
 					presentCommand("update-routes"),
@@ -83,10 +101,9 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 			Name: "TASKS",
 			CommandSubGroups: [][]cmdPresenter{
 				{
-					presentCommand("submit-task"),
-					presentCommand("task"),
-					presentCommand("delete-task"),
 					presentCommand("cancel-task"),
+					presentCommand("delete-task"),
+					presentCommand("task"),
 				},
 			},
 		}, {
@@ -111,12 +128,7 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 			CommandSubGroups: [][]cmdPresenter{
 				{
 					presentCommand("submit-lrp"),
-					presentCommand("build-droplet"),
-					presentCommand("list-droplets"),
-					presentCommand("launch-droplet"),
-					presentCommand("remove-droplet"),
-					presentCommand("import-droplet"),
-					presentCommand("export-droplet"),
+					presentCommand("submit-task"),
 				},
 			},
 		}, {
@@ -124,8 +136,8 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 			CommandSubGroups: [][]cmdPresenter{
 				{
 					presentCommand("debug-logs"),
-					presentCommand("test"),
 					presentCommand("help"),
+					presentCommand("test"),
 				},
 			},
 		},

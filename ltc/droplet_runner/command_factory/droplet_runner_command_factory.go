@@ -78,7 +78,7 @@ func (factory *DropletRunnerCommandFactory) MakeListDropletsCommand() cli.Comman
 	var listDropletsCommand = cli.Command{
 		Name:        "list-droplets",
 		Aliases:     []string{"lsd"},
-		Usage:       "List the droplets available to launch",
+		Usage:       "Lists the droplets in the droplet store",
 		Description: "ltc list-droplets",
 		Action:      factory.listDroplets,
 	}
@@ -207,8 +207,8 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 func (factory *DropletRunnerCommandFactory) MakeRemoveDropletCommand() cli.Command {
 	var removeDropletCommand = cli.Command{
 		Name:        "remove-droplet",
-		Aliases:     []string{"rmd"},
-		Usage:       "Removes a droplet stored in the lattice blob store",
+		Aliases:     []string{"rd"},
+		Usage:       "Removes a droplet from the droplet store",
 		Description: "ltc remove-droplet DROPLET_NAME",
 		Action:      factory.removeDroplet,
 	}
@@ -220,7 +220,7 @@ func (factory *DropletRunnerCommandFactory) MakeImportDropletCommand() cli.Comma
 	var importDropletCommand = cli.Command{
 		Name:        "import-droplet",
 		Aliases:     []string{"id"},
-		Usage:       "Imports the droplet",
+		Usage:       "Imports a droplet from disk to the droplet store",
 		Description: "ltc import-droplet DROPLET-NAME /path/droplet.tgz /path/result.json",
 		Action:      factory.importDroplet,
 	}
@@ -249,8 +249,8 @@ func (factory *DropletRunnerCommandFactory) importDroplet(context *cli.Context) 
 func (factory *DropletRunnerCommandFactory) MakeExportDropletCommand() cli.Command {
 	var exportDropletCommand = cli.Command{
 		Name:        "export-droplet",
-		Aliases:     []string{"exd"},
-		Usage:       "Exports a droplet from the lattice blob store",
+		Aliases:     []string{"ed"},
+		Usage:       "Exports a droplet from the droplet store to disk",
 		Description: "ltc export-droplet DROPLET_NAME",
 		Action:      factory.exportDroplet,
 	}

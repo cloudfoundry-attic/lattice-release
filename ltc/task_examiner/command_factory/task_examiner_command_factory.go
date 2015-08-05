@@ -23,10 +23,9 @@ func NewTaskExaminerCommandFactory(taskExaminer task_examiner.TaskExaminer, ui t
 }
 
 func (factory *TaskExaminerCommandFactory) MakeTaskCommand() cli.Command {
-
 	var taskCommand = cli.Command{
 		Name:        "task",
-		Aliases:     []string{},
+		Aliases:     []string{"tk"},
 		Usage:       "Displays the status of a given task",
 		Description: "ltc task TASK_NAME",
 		Action:      factory.task,
