@@ -81,11 +81,13 @@ By default, `ltc` selects the *lowest* exposed port to healthcheck against;  if 
 
 ### `ltc build-droplet`
 
-`ltc build-droplet DROPLET_NAME http://buildpack/uri` modifies the number of running instances of an application.
+`ltc build-droplet DROPLET_NAME http://github.com/buildpack-url` modifies the number of running instances of an application.
 
 - **`--path=.`** path to droplet source (file or folder)
 - **`--env NAME[=VALUE]`** specifies environment variables. You can have multiple `--env` flags.  Passing an `--env` flag without explicitly setting the VALUE uses the current execution context to set the value.
 - **`--timeout=2m`** sets the maximum polling duration for building the droplet.
+
+> As an alternative to specifying the URL for a given Buildpack, we also support the following aliases: go, java, python, ruby, nodejs, php, binary, or staticfile. 
 
 ### `ltc launch-droplet`
 
@@ -142,13 +144,13 @@ The set of routes passed into `ltc update-routes` will *override* the existing s
 
 `ltc list-droplets` lists the droplets available to launch on the droplet store.
 
-### `ltc remove-droplet DROPLET_NAME`
+### `ltc remove-droplet`
 
-`ltc list-droplets` removes a droplet from the droplet store.
+`ltc remove-droplet DROPLET_NAME` removes a droplet from the droplet store.
 
-### `ltc export-droplet DROPLET_NAME`
+### `ltc export-droplet`
 
-`ltc export-droplet` exports a droplet from the droplet store to disk.
+`ltc export-droplet DROPLET_NAME` exports a droplet from the droplet store to disk.
 
 ### `ltc import-droplet`
 
