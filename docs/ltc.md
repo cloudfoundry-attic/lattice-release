@@ -4,7 +4,7 @@
 
 You can download the CLI from the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page.
 
-## Targetting Lattice
+## Targeting Lattice
 
 ### `ltc target`
 
@@ -12,9 +12,11 @@ You use `ltc target` to point `ltc` at a deployed Lattice installation. For a Va
 
 If the Lattice API is password protected, `ltc` will prompt you for a username and password.
 
-Run `ltc target` with no arguments to get the current target.
+Run `ltc target` with no arguments to get the current target.  It will also indicate whether a droplet store is available.
 
-## Launching and Managing Applications
+> As of v0.3.0, `ltc target` looks for a droplet store bundled with Lattice to enable Buildpacks functionality.
+
+## Launching Docker Applications
 
 ### `ltc create`
 
@@ -73,6 +75,26 @@ By default, `ltc` selects the *lowest* exposed port to healthcheck against;  if 
 - **`--monitor-timeout=1s`** sets the wait time for the application to respond to the healthcheck.
 - **`--no-monitor`** disables health monitoring.  Lattice will consider the application crashed only if it exits.
 
+## Building and Launching Droplets
+
+> The -droplet commands require a "Droplet Store" configured by `ltc target`.
+
+### `ltc build-droplet`
+
+`ltc build-droplet DROPLET_NAME http://buildpack/uri` modifies the number of running instances of an application.
+
+- **`--path=.`** path to droplet source (file or folder)
+- **`--env NAME[=VALUE]`** specifies environment variables. You can have multiple `--env` flags.  Passing an `--env` flag without explicitly setting the VALUE uses the current execution context to set the value.
+- **`--timeout=2m`** sets the maximum polling duration for building the droplet.
+
+### `ltc launch-droplet`
+
+`ltc launch-droplet APP_NAME DROPLET_NAME` modifies the number of running instances of an application.
+
+> `ltc launch-droplet` has the same options as [`ltc create`](/docs/ltc.md#ltc-create), except for `--run-as-root`.  Droplets expect to run under the "vcap" user context.
+
+## Managing Applications
+
 ### `ltc remove`
 
 `ltc remove APP1_NAME [APP2_NAME APP3_NAME...]` removes the specified applications from a Lattice deployment.  
@@ -111,6 +133,26 @@ The set of routes passed into `ltc update-routes` will *override* the existing s
 ### `ltc delete-task`
 
 `ltc delete-task TASK_GUID` deletes a completed task.  If a task has not compeleted yet, it will cancel and then delete the task.
+
+## Managing Droplets
+
+> The -droplet commands require a droplet store configured by `ltc target`.
+
+### `ltc list-droplets`
+
+`ltc list-droplets` lists the droplets available to launch on the droplet store.
+
+### `ltc remove-droplet DROPLET_NAME`
+
+`ltc list-droplets` removes a droplet from the droplet store.
+
+### `ltc export-droplet DROPLET_NAME`
+
+`ltc export-droplet` exports a droplet from the droplet store to disk.
+
+### `ltc import-droplet`
+
+`ltc import-droplet DROPLET-NAME /path/droplet.tgz /path/result.json` imports a droplet from disk into the droplet store.
 
 ## Streaming Logs
 
