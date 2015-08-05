@@ -18,7 +18,7 @@ $HTTP["url"] =~ "^/blobs($|/)" {
     webdav.activate = "enable"
     webdav.is-readonly = "disable"
     webdav.sqlite-db-name = "/var/run/lighttpd/lighttpd.webdav_lock.db"
-    auth.backend                = "htpasswd"
+    auth.backend = "htpasswd"
     auth.backend.htpasswd.userfile = "/var/lattice/etc/lighttpd.user"
     auth.require = ( "/blobs" =>
         (

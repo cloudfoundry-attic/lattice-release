@@ -90,7 +90,7 @@ resource "aws_instance" "lattice-brain" {
     key_name = "${var.aws_key_name}"
     subnet_id = "${aws_subnet.lattice-network.id}"
     security_groups = [
-      "${aws_security_group.lattice-network.id}",
+        "${aws_security_group.lattice-network.id}",
     ]
     tags {
         Name = "lattice-brain"
@@ -104,24 +104,17 @@ resource "aws_instance" "lattice-brain" {
 
     #COMMON
     provisioner "local-exec" {
-      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
+        command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
     }
 
     provisioner "file" {
-      source = "${var.local_lattice_tar_path}"
-      destination = "/tmp/lattice.tgz"
+        source = "${var.local_lattice_tar_path}"
+        destination = "/tmp/lattice.tgz"
     }
 
     provisioner "file" {
-      source = "${path.module}/../scripts/remote/install-from-tar"
-      destination = "/tmp/install-from-tar"
-    }
-
-    provisioner "remote-exec" {
-      inline = [
-          "sudo chmod 755 /tmp/install-from-tar",
-          "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\"" #SHOULDN'T PATH_TO_LATTICE_TAR be set to /tmp/lattice.tgz???
-      ]
+        source = "${path.module}/../scripts/remote/install-from-tar"
+        destination = "/tmp/install-from-tar"
     }
 
     provisioner "remote-exec" {
@@ -142,7 +135,11 @@ resource "aws_instance" "lattice-brain" {
     }
 
     provisioner "remote-exec" {
-        script = "${path.module}/../scripts/remote/install-brain"
+        inline = [
+            "sudo apt-get -y install lighttpd lighttpd-mod-webdav",
+            "sudo chmod 755 /tmp/install-from-tar",
+            "sudo /tmp/install-from-tar brain",
+        ]
     }
 }
 
@@ -154,7 +151,7 @@ resource "aws_instance" "cell" {
     key_name = "${var.aws_key_name}"
     subnet_id = "${aws_subnet.lattice-network.id}"
     security_groups = [
-      "${aws_security_group.lattice-network.id}",
+        "${aws_security_group.lattice-network.id}",
     ]
     tags {
         Name = "cell-${count.index}"
@@ -168,24 +165,17 @@ resource "aws_instance" "cell" {
 
     #COMMON
     provisioner "local-exec" {
-      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
+        command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
     }
 
     provisioner "file" {
-      source = "${var.local_lattice_tar_path}"
-      destination = "/tmp/lattice.tgz"
+        source = "${var.local_lattice_tar_path}"
+        destination = "/tmp/lattice.tgz"
     }
 
     provisioner "file" {
-      source = "${path.module}/../scripts/remote/install-from-tar"
-      destination = "/tmp/install-from-tar"
-    }
-
-    provisioner "remote-exec" {
-      inline = [
-          "sudo chmod 755 /tmp/install-from-tar",
-          "sudo bash -c \"echo 'PATH_TO_LATTICE_TAR=${var.local_lattice_tar_path}' >> /etc/environment\""
-      ]
+        source = "${path.module}/../scripts/remote/install-from-tar"
+        destination = "/tmp/install-from-tar"
     }
 
     provisioner "remote-exec" {
@@ -207,9 +197,11 @@ resource "aws_instance" "cell" {
     }
 
     provisioner "remote-exec" {
-        script = "${path.module}/../scripts/remote/install-cell"
+        inline = [
+            "sudo chmod 755 /tmp/install-from-tar",
+            "sudo /tmp/install-from-tar cell",
+        ]
     }
-
 }
 
 
