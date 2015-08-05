@@ -17,12 +17,17 @@ module "lattice-digitalocean" {
     ###  Optional Settings Below  ###
     #################################
 
-    #If you wish to use your own lattice release instead of the latest version, uncomment the variable assignment below
-    #and set it to your own lattice tar's path.
+    # If you wish to use your own lattice release instead of the latest version, 
+    # uncomment the variable assignment below and set it to your own lattice tar's path.
     # local_lattice_tar_path = "~/lattice.tgz"
 
     # Digital Ocean region
     # do_region = "<CHANGE-ME>"
+
+    # By default, the lattice username is "user" and the password is "pass".
+    # Uncomment these settings to change the default credentials. 
+    # lattice_username = ""
+    # lattice_password = ""
 }
 
 output "lattice_target" {
