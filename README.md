@@ -42,7 +42,7 @@ Make sure you have [Vagrant](https://vagrantup.com/) installed (version 1.6 or b
 ```bash
 git clone https://github.com/cloudfoundry-incubator/lattice.git
 cd lattice
-git checkout v0.2.7
+git checkout v0.3.0
 vagrant up
 ```
 
@@ -106,7 +106,7 @@ Currently, Lattice does not support updating via provision. So to update, you ha
 ```bash
  vagrant destroy --force
  git pull
- git checkout v0.2.7 #specify the version tag you want
+ git checkout v0.3.0 #specify the version tag you want
  vagrant up
 ```
 
@@ -184,6 +184,7 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 
   Lattice | Recommended | Not Supported
   ------------|-------------|--------------
+  v0.3.0 | Terraform 0.6.1 |
   v0.2.7 | Terraform 0.6.1 |
   v0.2.6 | Terraform 0.5.3 | Terraform 0.6
   v0.2.5 | Terraform 0.5.0 | Terraform 0.6
@@ -242,7 +243,7 @@ If you want to update to a specific version of Lattice:
   - Choose a version from either the [Bump commits](https://github.com/cloudfoundry-incubator/lattice/commits/master) or [Releases](https://github.com/cloudfoundry-incubator/lattice/releases).
   - Update the `ref` in the `source` directive of your `lattice.<platform>.tf` to that version.
   - Examples:
-      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=v0.2.7"`
+      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=v0.3.0"`
       - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=aa1b301"`
 
 If you want to update to the latest version of Lattice:  
