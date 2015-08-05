@@ -1,5 +1,6 @@
 package cluster_test
 
+import (
 	"bufio"
 	"encoding/json"
 	"errors"
@@ -464,22 +465,6 @@ func getStyledWriter(prefix string) io.Writer {
 
 func errorCheckForConnection(ip string, port uint16) func() error {
 	fmt.Fprintln(getStyledWriter("test"), "Connection to ", ip, ":", port)
-	return func() error {
-		response, err := makeTcpConnRequest(ip, port, "test")
-		if err != nil {
-			return err
-		}
-
-		if response != "server-1:test" {
-			errors.New("Did not get correct response from connection")
-		}
-
-		return nil
-	}
-}
-
-func errorCheckForRoute(route string) func() error {
-	fmt.Fprintln(getStyledWriter("test"), "Polling for the route", route)
 	return func() error {
 		response, err := makeTcpConnRequest(ip, port, "test")
 		if err != nil {
