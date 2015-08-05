@@ -3,7 +3,6 @@
 set -e
 
 install_condenser() {
-    set -x
 
     mkdir -p /var/lattice/lighttpd/blobs /var/lattice/etc
     chown -R www-data:www-data /var/lattice/lighttpd
@@ -19,13 +18,10 @@ install_condenser() {
 
     /etc/init.d/lighttpd start
 
-    set +x 
     sleep 1
 }
 
 stage_cflinuxfs2_rootfs() {
-    set -x
-
     declare -r rootfs_download_path=~/download
     mkdir -p $rootfs_download_path
     wget http://cf-runtime-stacks.s3.amazonaws.com/cflinuxfs2.dev.tgz --quiet -O $rootfs_download_path/cflinuxfs2.tar.gz
@@ -38,7 +34,6 @@ stage_cflinuxfs2_rootfs() {
     rm -f $rootfs_download_path/cflinuxfs2.tar.tgz
     echo "Preloaded CFLinuxFS2 RootFS enabled."
 
-    set +x
     sleep 1
 }
 
