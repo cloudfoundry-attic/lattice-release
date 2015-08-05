@@ -116,13 +116,6 @@ resource "aws_instance" "lattice-brain" {
         source = "${path.module}/../scripts/remote/install-from-tar"
         destination = "/tmp/install-from-tar"
     }
-
-    provisioner "remote-exec" {
-        inline = [
-            "sudo apt-get update",
-            "sudo apt-get -y install btrfs-tools",
-        ]
-    }
     #/COMMON
 
     provisioner "remote-exec" {
@@ -136,7 +129,6 @@ resource "aws_instance" "lattice-brain" {
 
     provisioner "remote-exec" {
         inline = [
-            "sudo apt-get -y install lighttpd lighttpd-mod-webdav",
             "sudo chmod 755 /tmp/install-from-tar",
             "sudo /tmp/install-from-tar brain",
         ]
@@ -176,13 +168,6 @@ resource "aws_instance" "cell" {
     provisioner "file" {
         source = "${path.module}/../scripts/remote/install-from-tar"
         destination = "/tmp/install-from-tar"
-    }
-
-    provisioner "remote-exec" {
-        inline = [
-            "sudo apt-get update",
-            "sudo apt-get -y install btrfs-tools",
-        ]
     }
     #/COMMON
 
