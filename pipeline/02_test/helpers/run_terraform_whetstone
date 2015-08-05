@@ -27,12 +27,15 @@ setup_and_run_whetstone(){
 
     echo "=========================Lattice Integration Tests=============================\n"
 
-    printf "{\"Target\":\"%s\",\"Username\":\"%s\",\"Password\":\"%s\"}" \
+    printf "{\"target\":\"%s\",\"username\":\"%s\",\"password\":\"%s\",\"dav_blob_store\":{\"host\":\"%s\",\"port\":\"%s\",\"username\":\"%s\",\"password\":\"%s\"}}" \
         "$(cd $TF_WORKING_DIR && terraform output lattice_target)" \
         "$(cd $TF_WORKING_DIR && terraform output lattice_username)" \
-        "$(cd $TF_WORKING_DIR && terraform output lattice_password)" | json_pp \
-        > $LATTICE_CLI_HOME/.lattice/config.json
-    sync
+        "$(cd $TF_WORKING_DIR && terraform output lattice_password)" \
+        "$(cd $TF_WORKING_DIR && terraform output lattice_target)" \
+        "8444" \
+        "$(cd $TF_WORKING_DIR && terraform output lattice_username)" \
+        "$(cd $TF_WORKING_DIR && terraform output lattice_password)" | 
+        json_pp > $LATTICE_CLI_HOME/.lattice/config.json
 
     ltc test -v --timeout=5m
 
