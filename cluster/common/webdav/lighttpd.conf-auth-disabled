@@ -1,6 +1,5 @@
 server.modules = (
     "mod_webdav",
-    "mod_auth",
 )
 
 server.document-root        = "/var/lattice/lighttpd"

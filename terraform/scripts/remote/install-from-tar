@@ -2,6 +2,46 @@
 
 set -e
 
+install_condenser() {
+    set -x
+
+    mkdir -p /var/lattice/lighttpd/blobs /var/lattice/etc
+    chown -R www-data:www-data /var/lattice/lighttpd
+
+    /etc/init.d/lighttpd stop
+
+    if [ -n "$LATTICE_USERNAME" ]; then
+        cp /tmp/lattice-build/common/webdav/lighttpd.conf-auth-enabled /etc/lighttpd/lighttpd.conf
+        echo $LATTICE_USERNAME:$(openssl passwd -crypt "$LATTICE_PASSWORD") > /var/lattice/etc/lighttpd.user
+    else
+        cp /tmp/lattice-build/common/webdav/lighttpd.conf-auth-disabled /etc/lighttpd/lighttpd.conf
+    fi
+
+    /etc/init.d/lighttpd start
+
+    set +x 
+    sleep 1
+}
+
+stage_cflinuxfs2_rootfs() {
+    set -x
+
+    declare -r rootfs_download_path=~/download
+    mkdir -p $rootfs_download_path
+    wget http://cf-runtime-stacks.s3.amazonaws.com/cflinuxfs2.dev.tgz --quiet -O $rootfs_download_path/cflinuxfs2.tar.gz
+    echo "Downloaded RootFS!"
+
+    ## unpack to some fixed folder
+    mkdir -p /var/lattice/rootfs/cflinuxfs2
+    tar -xzf $rootfs_download_path/cflinuxfs2.tar.gz -C /var/lattice/rootfs/cflinuxfs2
+
+    rm -f $rootfs_download_path/cflinuxfs2.tar.tgz
+    echo "Preloaded CFLinuxFS2 RootFS enabled."
+
+    set +x
+    sleep 1
+}
+
 COMPONENT_TO_INSTALL=$1
 
 if [ $COMPONENT_TO_INSTALL != "cell" ] && [ $COMPONENT_TO_INSTALL != "brain" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
@@ -17,8 +57,13 @@ tar -xf /tmp/lattice.tgz -C /tmp #File Provisioner puts it in /tmp/lattice.tgz
 
 /tmp/lattice-build/scripts/install-common
 
+# check for opt-in to condenser 
+export $(cat /var/lattice/setup/lattice-environment)
 if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
     /tmp/lattice-build/scripts/install-brain
+
+    install_condenser
+    stage_cflinuxfs2_rootfs
 
     #Stop consul and bootstrap in collocated install so we can trigger dependencies to fire off the single bootstrap script
     #once the cell is installed too.
@@ -28,7 +73,15 @@ if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
     sleep 2
 
     /tmp/lattice-build/scripts/install-cell
+elif [ $COMPONENT_TO_INSTALL == "brain" ]; then
+    install_condenser
+
+    /tmp/lattice-build/scripts/install-brain
+elif [ $COMPONENT_TO_INSTALL == "cell" ]; then
+    stage_cflinuxfs2_rootfs 
+
+    /tmp/lattice-build/scripts/install-cell
 else
-    /tmp/lattice-build/scripts/install-$COMPONENT_TO_INSTALL
+    exit 2
 fi
 
