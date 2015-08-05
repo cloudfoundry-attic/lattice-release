@@ -7,4 +7,4 @@ export CI_DIR=$1
 LATTICE_DIR=$(cd `dirname $0` && cd ../../.. && pwd)
 source $LATTICE_DIR/pipeline/local/env
 
-CONDENSER_ON=1 $CI_DIR/lattice/pipeline/02_test/run_vagrant_whetstone
+$CI_DIR/lattice/pipeline/02_test/run_vagrant_whetstone
