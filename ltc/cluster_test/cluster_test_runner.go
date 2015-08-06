@@ -2,7 +2,6 @@ package cluster_test
 
 import (
 	"bufio"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -24,9 +23,6 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
-	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
-	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 var numCPU int
@@ -147,9 +143,35 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 						Expect(respBytes).To(MatchRegexp("<dt>USER</dt><dd>root</dd>"), "lattice-app should report running as root")
 					})
 				})
+
+				Context("tcp routing", func() {
+					Context("when desiring a docker-based LRP with tcp routes", func() {
+						var (
+							appName      string
+							externalPort uint16
+						)
+
+						BeforeEach(func() {
+							appGuid, err := uuid.NewV4()
+							Expect(err).ToNot(HaveOccurred())
+							externalPort = 50000
+
+							appName = fmt.Sprintf("tcp-sample-receiver-%s", appGuid.String())
+						})
+
+						AfterEach(func() {
+							runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
+						})
+
+						It("should run a docker app exposing tcp routes", func() {
+							runner.createDockerApp(timeout, appName, "cloudfoundry/tcp-sample-receiver", fmt.Sprintf("--tcp-routes=5222:%d", externalPort))
+
+							Eventually(errorCheckForConnection(runner.config.Target(), externalPort), timeout, 1).ShouldNot(HaveOccurred())
+						})
+					})
+				})
 			})
 		})
-
 		Context("droplets", func() {
 			var dropletName, appName, dropletFolderURL, appRoute string
 
@@ -200,97 +222,6 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
 			})
 		})
-
-		Context("tcp routing", func() {
-			var (
-				appName      string
-				externalPort uint16
-				desiredLrp   receptor.DesiredLRPCreateRequest
-			)
-
-			BeforeEach(func() {
-				appGuid, err := uuid.NewV4()
-				Expect(err).ToNot(HaveOccurred())
-
-				appName = fmt.Sprintf("lattice-test-app-%s", appGuid.String())
-				externalPort = 64000
-				containerPort := uint16(5222)
-				routingInfo := json.RawMessage([]byte(fmt.Sprintf("{\"external_port\":%d, \"container_port\":%d}", externalPort, containerPort)))
-
-				desiredLrp = receptor.DesiredLRPCreateRequest{
-					ProcessGuid: appGuid.String(),
-					LogGuid:     "log-guid",
-					Domain:      "ge",
-					Instances:   1,
-					Setup: &models.SerialAction{
-						Actions: []models.Action{
-							&models.RunAction{
-								Path: "sh",
-								User: "vcap",
-								Args: []string{
-									"-c",
-									"curl https://s3.amazonaws.com/router-release-blobs/tcp-sample-receiver.linux -o /tmp/tcp-sample-receiver && chmod +x /tmp/tcp-sample-receiver",
-								},
-							},
-						},
-					},
-					Action: &models.ParallelAction{
-						Actions: []models.Action{
-							&models.RunAction{
-								Path: "sh",
-								User: "vcap",
-								Args: []string{
-									"-c",
-									fmt.Sprintf("/tmp/tcp-sample-receiver -address 0.0.0.0:%d -serverId %s", containerPort, 1),
-								},
-							},
-						},
-					},
-					Monitor: &models.RunAction{
-						Path: "sh",
-						User: "vcap",
-						Args: []string{
-							"-c",
-							fmt.Sprintf("nc -z 0.0.0.0 %d", containerPort),
-						}},
-					StartTimeout: 60,
-					RootFS:       "docker:///cloudfoundry/trusty64",
-					MemoryMB:     128,
-					DiskMB:       128,
-					Ports:        []uint16{containerPort},
-					Routes: receptor.RoutingInfo{
-						"tcp-router": &routingInfo,
-					},
-					EgressRules: []models.SecurityGroupRule{
-						{
-							Protocol:     models.TCPProtocol,
-							Destinations: []string{"0.0.0.0-255.255.255.255"},
-							Ports:        []uint16{80, 443},
-						},
-						{
-							Protocol:     models.UDPProtocol,
-							Destinations: []string{"0.0.0.0/0"},
-							PortRange: &models.PortRange{
-								Start: 53,
-								End:   53,
-							},
-						},
-					},
-				}
-			})
-
-			It("routes tcp traffic to a container", func() {
-				helperErr := test_helpers.TempJsonFile(desiredLrp, func(file string) {
-					By("Submitting an LRP")
-					runner.submitLrp(timeout, file)
-				})
-				Expect(helperErr).NotTo(HaveOccurred())
-
-				By("connecting to the running LRP over TCP")
-				Eventually(errorCheckForConnection(runner.config.Target(), externalPort), timeout, 1).ShouldNot(HaveOccurred())
-			})
-		})
-
 	})
 }
 
