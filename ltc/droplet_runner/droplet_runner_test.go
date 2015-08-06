@@ -120,7 +120,7 @@ var _ = Describe("DropletRunner", func() {
 			config.SetBlobStore("blob-host", "7474", "dav-user", "dav-pass")
 			Expect(config.Save()).To(Succeed())
 
-			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{})
+			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{}, 128, 100, 800)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
@@ -209,7 +209,7 @@ var _ = Describe("DropletRunner", func() {
 				"OTHER_VAR": "same",
 			}
 
-			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", env)
+			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", env, 128, 100, 800)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
@@ -225,10 +225,27 @@ var _ = Describe("DropletRunner", func() {
 			}))
 		})
 
+		It("passes through cpuWeight, memoryMB and diskMB", func() {
+			config.SetBlobStore("blob-host", "7474", "dav-user", "dav-pass")
+			Expect(config.Save()).To(Succeed())
+
+			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{}, 1, 2, 3)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
+			createTaskParams := fakeTaskRunner.CreateTaskArgsForCall(0)
+			Expect(createTaskParams).ToNot(BeNil())
+			receptorRequest := createTaskParams.GetReceptorRequest()
+
+			Expect(receptorRequest.MemoryMB).To(Equal(1))
+			Expect(receptorRequest.CPUWeight).To(Equal(uint(2)))
+			Expect(receptorRequest.DiskMB).To(Equal(3))
+		})
+
 		It("returns an error when create task fails", func() {
 			fakeTaskRunner.CreateTaskReturns(errors.New("creating task failed"))
 
-			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{})
+			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{}, 0, 0, 0)
 
 			Expect(err).To(MatchError("creating task failed"))
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))

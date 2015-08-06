@@ -19,13 +19,16 @@ type FakeDropletRunner struct {
 	uploadBitsReturns struct {
 		result1 error
 	}
-	BuildDropletStub        func(taskName, dropletName, buildpackUrl string, environment map[string]string) error
+	BuildDropletStub        func(taskName, dropletName, buildpackUrl string, environment map[string]string, memoryMB, cpuWeight, diskMB int) error
 	buildDropletMutex       sync.RWMutex
 	buildDropletArgsForCall []struct {
 		taskName     string
 		dropletName  string
 		buildpackUrl string
 		environment  map[string]string
+		memoryMB     int
+		cpuWeight    int
+		diskMB       int
 	}
 	buildDropletReturns struct {
 		result1 error
@@ -112,17 +115,20 @@ func (fake *FakeDropletRunner) UploadBitsReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeDropletRunner) BuildDroplet(taskName string, dropletName string, buildpackUrl string, environment map[string]string) error {
+func (fake *FakeDropletRunner) BuildDroplet(taskName string, dropletName string, buildpackUrl string, environment map[string]string, memoryMB, cpuWeight, diskMB int) error {
 	fake.buildDropletMutex.Lock()
 	fake.buildDropletArgsForCall = append(fake.buildDropletArgsForCall, struct {
 		taskName     string
 		dropletName  string
 		buildpackUrl string
 		environment  map[string]string
-	}{taskName, dropletName, buildpackUrl, environment})
+		memoryMB     int
+		cpuWeight    int
+		diskMB       int
+	}{taskName, dropletName, buildpackUrl, environment, memoryMB, cpuWeight, diskMB})
 	fake.buildDropletMutex.Unlock()
 	if fake.BuildDropletStub != nil {
-		return fake.BuildDropletStub(taskName, dropletName, buildpackUrl, environment)
+		return fake.BuildDropletStub(taskName, dropletName, buildpackUrl, environment, memoryMB, cpuWeight, diskMB)
 	} else {
 		return fake.buildDropletReturns.result1
 	}
@@ -134,10 +140,10 @@ func (fake *FakeDropletRunner) BuildDropletCallCount() int {
 	return len(fake.buildDropletArgsForCall)
 }
 
-func (fake *FakeDropletRunner) BuildDropletArgsForCall(i int) (string, string, string, map[string]string) {
+func (fake *FakeDropletRunner) BuildDropletArgsForCall(i int) (string, string, string, map[string]string, int, int, int) {
 	fake.buildDropletMutex.RLock()
 	defer fake.buildDropletMutex.RUnlock()
-	return fake.buildDropletArgsForCall[i].taskName, fake.buildDropletArgsForCall[i].dropletName, fake.buildDropletArgsForCall[i].buildpackUrl, fake.buildDropletArgsForCall[i].environment
+	return fake.buildDropletArgsForCall[i].taskName, fake.buildDropletArgsForCall[i].dropletName, fake.buildDropletArgsForCall[i].buildpackUrl, fake.buildDropletArgsForCall[i].environment, fake.buildDropletArgsForCall[i].memoryMB, fake.buildDropletArgsForCall[i].cpuWeight, fake.buildDropletArgsForCall[i].diskMB
 }
 
 func (fake *FakeDropletRunner) BuildDropletReturns(result1 error) {
