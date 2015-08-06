@@ -56,7 +56,7 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 
 	_, authorized, err := factory.targetVerifier.VerifyTarget(factory.config.Receptor())
 	if err != nil {
-		factory.ui.Say(fmt.Sprint("Error verifying target: ", err))
+		factory.ui.SayLine(fmt.Sprint("Error verifying target: ", err))
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	}
@@ -78,12 +78,12 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 
 	_, authorized, err = factory.targetVerifier.VerifyTarget(factory.config.Receptor())
 	if err != nil {
-		factory.ui.Say(fmt.Sprint("Error verifying target: ", err))
+		factory.ui.SayLine(fmt.Sprint("Error verifying target: ", err))
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	}
 	if !authorized {
-		factory.ui.Say("Could not authorize target.")
+		factory.ui.SayLine("Could not authorize target.")
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	}
@@ -99,12 +99,11 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 func (factory *ConfigCommandFactory) verifyBlobStore() bool {
 	authorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobStore())
 	if err != nil {
-		factory.config.SetBlobStore("", "", "", "")
-		factory.save()
+		factory.ui.Say("Could not connect to the droplet store.")
 		return false
 	}
 	if !authorized {
-		factory.ui.Say("Could not authenticate with the droplet store.")
+		factory.ui.SayLine("Could not authenticate with the droplet store.")
 		return false
 	}
 	return true
@@ -113,12 +112,12 @@ func (factory *ConfigCommandFactory) verifyBlobStore() bool {
 func (factory *ConfigCommandFactory) save() {
 	err := factory.config.Save()
 	if err != nil {
-		factory.ui.Say(err.Error())
+		factory.ui.SayLine(err.Error())
 		factory.exitHandler.Exit(exit_codes.FileSystemError)
 		return
 	}
 
-	factory.ui.Say("Api Location Set")
+	factory.ui.SayLine("API location set.")
 }
 
 func (factory *ConfigCommandFactory) printTarget() {

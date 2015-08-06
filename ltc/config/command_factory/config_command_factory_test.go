@@ -183,7 +183,7 @@ var _ = Describe("CommandFactory", func() {
 						Port: "8444",
 					}))
 
-					Expect(outputBuffer).To(test_helpers.Say("Could not authenticate with the droplet store."))
+					Expect(outputBuffer).To(test_helpers.SayLine("Could not authenticate with the droplet store."))
 					verifyOldTargetStillSet()
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 				})
@@ -201,23 +201,22 @@ var _ = Describe("CommandFactory", func() {
 						Port: "8444",
 					}))
 
-					newConfig := config_package.New(configPersister)
-					Expect(newConfig.Load()).To(Succeed())
-					Expect(newConfig.Receptor()).To(Equal("http://receptor.myapi.com"))
-					Expect(newConfig.BlobStore()).To(Equal(dav_blob_store.Config{}))
+					Expect(outputBuffer).To(test_helpers.Say("Could not connect to the droplet store."))
+					verifyOldTargetStillSet()
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 				})
 			})
 
 			Context("when the persister returns errors", func() {
 				BeforeEach(func() {
-					commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("FAILURE setting api")), terminalUI, fakeTargetVerifier, fakeBlobStoreVerifier, fakeExitHandler)
+					commandFactory := command_factory.NewConfigCommandFactory(config_package.New(errorPersister("some error")), terminalUI, fakeTargetVerifier, fakeBlobStoreVerifier, fakeExitHandler)
 					targetCommand = commandFactory.MakeTargetCommand()
 				})
 
 				It("exits", func() {
 					test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
-					Eventually(outputBuffer).Should(test_helpers.Say("FAILURE setting api"))
+					Eventually(outputBuffer).Should(test_helpers.SayLine("some error"))
 					verifyOldTargetStillSet()
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
 				})
@@ -242,7 +241,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(config.Target()).To(Equal("myapi.com"))
 				Expect(config.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
-				Expect(outputBuffer).To(test_helpers.Say("Api Location Set"))
+				Expect(outputBuffer).To(test_helpers.SayLine("API location set."))
 
 				Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
 				Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password"))
@@ -265,7 +264,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
 					Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password"))
 
-					Expect(outputBuffer).To(test_helpers.Say("Could not authorize target."))
+					Expect(outputBuffer).To(test_helpers.SayLine("Could not authorize target."))
 
 					verifyOldTargetStillSet()
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
@@ -287,7 +286,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
 					Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password"))
 
-					Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
+					Expect(outputBuffer).To(test_helpers.SayLine("Error verifying target: Unknown Error"))
 
 					verifyOldTargetStillSet()
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
@@ -346,7 +345,7 @@ var _ = Describe("CommandFactory", func() {
 						Password: "testpassword",
 					}))
 
-					Expect(outputBuffer).To(test_helpers.Say("Could not authenticate with the droplet store."))
+					Expect(outputBuffer).To(test_helpers.SayLine("Could not authenticate with the droplet store."))
 					verifyOldTargetStillSet()
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 				})
@@ -372,7 +371,7 @@ var _ = Describe("CommandFactory", func() {
 						Password: "testpassword",
 					}))
 
-					Expect(outputBuffer).To(test_helpers.Say("Could not connect to the droplet store."))
+					Expect(outputBuffer).To(test_helpers.SayLine("Could not connect to the droplet store."))
 					verifyOldTargetStillSet()
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 				})
@@ -385,7 +384,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"newtarget.com"})
 
-				Expect(outputBuffer).To(test_helpers.Say("Error verifying target: Unknown Error"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error verifying target: Unknown Error"))
 
 				verifyOldTargetStillSet()
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
