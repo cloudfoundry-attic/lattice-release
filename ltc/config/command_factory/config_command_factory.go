@@ -12,11 +12,6 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-const (
-	TargetCommandName = "target"
-	blobTargetPort    = "8444"
-)
-
 type ConfigCommandFactory struct {
 	config            *config.Config
 	ui                terminal.UI
@@ -36,7 +31,7 @@ func NewConfigCommandFactory(config *config.Config, ui terminal.UI, targetVerifi
 
 func (factory *ConfigCommandFactory) MakeTargetCommand() cli.Command {
 	var targetCommand = cli.Command{
-		Name:        TargetCommandName,
+		Name:        "target",
 		Aliases:     []string{"ta"},
 		Usage:       "Targets a lattice cluster",
 		Description: "ltc target TARGET (e.g., 192.168.11.11.xip.io)",
@@ -57,19 +52,20 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 
 	factory.config.SetTarget(target)
 	factory.config.SetLogin("", "")
+	factory.config.SetBlobStore(target, "8444", "", "")
 
 	_, authorized, err := factory.targetVerifier.VerifyTarget(factory.config.Receptor())
 	if err != nil {
-		factory.ui.Say("Error verifying target: " + err.Error())
+		factory.ui.Say(fmt.Sprint("Error verifying target: ", err))
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	}
 	if authorized {
-		if !factory.verifyBlobStore(target, blobTargetPort, "", "") {
+		if !factory.verifyBlobStore() {
+			factory.exitHandler.Exit(exit_codes.BadTarget)
 			return
 		}
 
-		factory.ui.SayLine("Blob store is targeted.")
 		factory.save()
 		return
 	}
@@ -78,9 +74,11 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 	password := factory.ui.PromptForPassword("Password")
 
 	factory.config.SetLogin(username, password)
+	factory.config.SetBlobStore(target, "8444", username, password)
+
 	_, authorized, err = factory.targetVerifier.VerifyTarget(factory.config.Receptor())
 	if err != nil {
-		factory.ui.Say("Error verifying target: " + err.Error())
+		factory.ui.Say(fmt.Sprint("Error verifying target: ", err))
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	}
@@ -90,26 +88,23 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 		return
 	}
 
-	if !factory.verifyBlobStore(target, blobTargetPort, username, password) {
+	if !factory.verifyBlobStore() {
+		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	}
 
-	factory.ui.SayLine("Blob store is targeted.")
 	factory.save()
 }
 
-func (factory *ConfigCommandFactory) verifyBlobStore(host, port, username, password string) bool {
-	factory.config.SetBlobStore(host, port, username, password)
+func (factory *ConfigCommandFactory) verifyBlobStore() bool {
 	authorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobStore())
 	if err != nil {
 		factory.config.SetBlobStore("", "", "", "")
-		factory.ui.SayLine("Warning: Blob store not running, buildpack support disabled.")
 		factory.save()
 		return false
 	}
 	if !authorized {
-		factory.ui.SayLine("Blob store requires authorization.")
-		factory.exitHandler.Exit(exit_codes.BadTarget)
+		factory.ui.Say("Could not authenticate with the droplet store.")
 		return false
 	}
 	return true
@@ -141,7 +136,7 @@ func (factory *ConfigCommandFactory) printTarget() {
 func (factory *ConfigCommandFactory) printBlobTarget() {
 	blobStore := factory.config.BlobStore()
 	if blobStore.Host == "" {
-		factory.ui.SayLine("\tNo blob store specified.")
+		factory.ui.SayLine("\tNo droplet store specified.")
 		return
 	}
 
@@ -149,5 +144,5 @@ func (factory *ConfigCommandFactory) printBlobTarget() {
 	if username := blobStore.Username; username != "" {
 		endpoint = fmt.Sprintf("%s@%s", username, endpoint)
 	}
-	factory.ui.SayLine(fmt.Sprintf("Blob Store:\t%s", endpoint))
+	factory.ui.SayLine(fmt.Sprintf("Droplet store:\t%s", endpoint))
 }

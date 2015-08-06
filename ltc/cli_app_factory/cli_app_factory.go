@@ -42,8 +42,8 @@ import (
 
 var (
 	nonTargetVerifiedCommandNames = map[string]struct{}{
-		config_command_factory.TargetCommandName: {},
-		"help": {},
+		"target": {},
+		"help":   {},
 	}
 
 	defaultAction = func(context *cli.Context) {

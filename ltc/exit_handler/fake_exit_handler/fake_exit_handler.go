@@ -14,9 +14,7 @@ func (f *FakeExitHandler) OnExit(exitHandler func()) {
 	f.exitFunc = exitHandler
 }
 
-func (f *FakeExitHandler) Run() {
-
-}
+func (*FakeExitHandler) Run() {}
 
 func (f *FakeExitHandler) Exit(code int) {
 	f.Lock()
