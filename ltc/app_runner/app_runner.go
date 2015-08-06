@@ -238,7 +238,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		CPUWeight:            params.CPUWeight,
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
-		Privileged:           true,
+		Privileged:           params.Privileged,
 		Ports:                params.ExposedPorts,
 		LogGuid:              params.Name,
 		LogSource:            "APP",
