@@ -22,11 +22,11 @@ import (
 	"github.com/nu7hatch/gouuid"
 )
 
-var numCpu int
+var numCPU int
 
 func init() {
-	numCpu = runtime.NumCPU()
-	runtime.GOMAXPROCS(numCpu)
+	numCPU = runtime.NumCPU()
+	runtime.GOMAXPROCS(numCPU)
 }
 
 type ClusterTestRunner interface {
@@ -65,8 +65,7 @@ func (runner *clusterTestRunner) Run(timeout time.Duration, verbose bool) {
 
 func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 	BeforeSuite(func() {
-		err := runner.config.Load()
-		if err != nil {
+		if err := runner.config.Load(); err != nil {
 			fmt.Fprintln(getStyledWriter("test"), "Error loading config")
 			return
 		}
@@ -82,10 +81,10 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				var appName, appRoute string
 
 				BeforeEach(func() {
-					appGuid, err := uuid.NewV4()
-					Expect(err).ToNot(HaveOccurred())
+					appGUID, err := uuid.NewV4()
+					Expect(err).NotTo(HaveOccurred())
 
-					appName = fmt.Sprintf("lattice-test-app-%s", appGuid.String())
+					appName = fmt.Sprintf("lattice-test-app-%s", appGUID.String())
 					appRoute = fmt.Sprintf("%s.%s", appName, runner.config.Target())
 				})
 
@@ -114,7 +113,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 
 					runner.scaleApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
 
-					instanceCountChan := make(chan int, numCpu)
+					instanceCountChan := make(chan int, numCPU)
 					go countInstances(appRoute, instanceCountChan)
 					Eventually(instanceCountChan, timeout).Should(Receive(Equal(3)))
 				})
@@ -144,71 +143,69 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 			})
 		})
 
-		if runner.config.BlobStore().Host != "" {
-			Context("droplets", func() {
-				var dropletName, appName, dropletFolderURL, appRoute string
+		Context("droplets", func() {
+			var dropletName, appName, dropletFolderURL, appRoute string
 
-				BeforeEach(func() {
-					// Generate a droplet name up front so that it can persist across droplet tests
-					dropletGuid, err := uuid.NewV4()
-					Expect(err).ToNot(HaveOccurred())
-					dropletName = "droplet-" + dropletGuid.String()
+			BeforeEach(func() {
+				// Generate a droplet name up front so that it can persist across droplet tests
+				dropletGUID, err := uuid.NewV4()
+				Expect(err).NotTo(HaveOccurred())
+				dropletName = "droplet-" + dropletGUID.String()
 
-					appName = "running-" + dropletName
+				appName = "running-" + dropletName
 
-					blobTarget := runner.config.BlobStore()
-					dropletFolderURL = fmt.Sprintf("%s:%s@%s:%s/blobs/%s",
-						blobTarget.Username,
-						blobTarget.Password,
-						blobTarget.Host,
-						blobTarget.Port,
-						dropletName)
+				blobTarget := runner.config.BlobStore()
+				dropletFolderURL = fmt.Sprintf("%s:%s@%s:%s/blobs/%s",
+					blobTarget.Username,
+					blobTarget.Password,
+					blobTarget.Host,
+					blobTarget.Port,
+					dropletName)
 
-					appRoute = fmt.Sprintf("%s.%s", appName, runner.config.Target())
-				})
-
-				AfterEach(func() {
-					runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
-					Eventually(errorCheckForRoute(appRoute), timeout, .5).Should(HaveOccurred())
-
-					runner.removeDroplet(timeout, dropletName)
-					Eventually(errorCheckURLExists(dropletFolderURL+"/droplet.tgz"), timeout, 1).Should(HaveOccurred())
-				})
-
-				It("builds, lists and launches a droplet", func() {
-					By("checking out lattice-app from github")
-					gitDir := runner.cloneRepo(timeout, "https://github.com/pivotal-cf-experimental/lattice-app.git")
-					defer os.RemoveAll(gitDir)
-
-					By("launching a build task")
-					runner.buildDroplet(timeout, dropletName, "https://github.com/cloudfoundry/go-buildpack.git", gitDir)
-
-					By("uploading a compiled droplet to the blob store")
-					Eventually(errorCheckURLExists(dropletFolderURL+"/droplet.tgz"), timeout, 1).ShouldNot(HaveOccurred())
-
-					By("listing droplets")
-					runner.listDroplets(timeout, dropletName)
-
-					By("launching the droplet")
-					runner.launchDroplet(timeout, appName, dropletName)
-
-					Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
-				})
+				appRoute = fmt.Sprintf("%s.%s", appName, runner.config.Target())
 			})
-		}
+
+			AfterEach(func() {
+				runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
+				Eventually(errorCheckForRoute(appRoute), timeout, .5).Should(HaveOccurred())
+
+				runner.removeDroplet(timeout, dropletName)
+				Eventually(errorCheckURLExists(dropletFolderURL+"/droplet.tgz"), timeout, 1).Should(HaveOccurred())
+			})
+
+			It("builds, lists and launches a droplet", func() {
+				By("checking out lattice-app from github")
+				gitDir := runner.cloneRepo(timeout, "https://github.com/pivotal-cf-experimental/lattice-app.git")
+				defer os.RemoveAll(gitDir)
+
+				By("launching a build task")
+				runner.buildDroplet(timeout, dropletName, "https://github.com/cloudfoundry/go-buildpack.git", gitDir)
+
+				By("uploading a compiled droplet to the blob store")
+				Eventually(errorCheckURLExists(dropletFolderURL+"/droplet.tgz"), timeout, 1).ShouldNot(HaveOccurred())
+
+				By("listing droplets")
+				runner.listDroplets(timeout, dropletName)
+
+				By("launching the droplet")
+				runner.launchDroplet(timeout, appName, dropletName)
+
+				Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
+			})
+		})
 	})
 }
 
 func (runner *clusterTestRunner) cloneRepo(timeout time.Duration, repoURL string) string {
 	tmpDir, err := ioutil.TempDir("", "repo")
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to clone %s to %s", repoURL, tmpDir)))
 
 	command := exec.Command("/usr/bin/env", "git", "clone", repoURL, tmpDir)
 
 	session, err := gexec.Start(command, getStyledWriter("git-clone"), getStyledWriter("git-clone"))
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	expectExitInBuffer(timeout, session, session.Err)
 
 	Eventually(session.Err).Should(gbytes.Say(fmt.Sprintf("Cloning into '%s'...", tmpDir)))
@@ -225,7 +222,7 @@ func (runner *clusterTestRunner) buildDroplet(timeout time.Duration, dropletName
 	command.Dir = srcDir
 
 	session, err := gexec.Start(command, getStyledWriter("build-droplet"), getStyledWriter("build-droplet"))
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	expectExit(timeout, session)
 
 	Expect(session.Out).To(gbytes.Say("Submitted build of " + dropletName))
@@ -237,7 +234,7 @@ func (runner *clusterTestRunner) launchDroplet(timeout time.Duration, appName, d
 	command := runner.command("launch-droplet", appName, dropletName)
 
 	session, err := gexec.Start(command, getStyledWriter("launch-droplet"), getStyledWriter("launch-droplet"))
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	expectExit(timeout, session)
 
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
@@ -249,7 +246,7 @@ func (runner *clusterTestRunner) listDroplets(timeout time.Duration, dropletName
 	command := runner.command("list-droplets")
 
 	session, err := gexec.Start(command, getStyledWriter("list-droplets"), getStyledWriter("list-droplets"))
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	expectExit(timeout, session)
 
 	Expect(session.Out).To(gbytes.Say(dropletName))
@@ -263,7 +260,7 @@ func (runner *clusterTestRunner) removeDroplet(timeout time.Duration, dropletNam
 	command := runner.command("remove-droplet", dropletName)
 
 	session, err := gexec.Start(command, getStyledWriter("remove-droplet"), getStyledWriter("remove-droplet"))
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	expectExit(timeout, session)
 
 	Expect(session.Out).To(gbytes.Say("Droplet removed"))
@@ -278,7 +275,7 @@ func (runner *clusterTestRunner) createDockerApp(timeout time.Duration, appName 
 
 	session, err := gexec.Start(command, getStyledWriter("create"), getStyledWriter("create"))
 
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	expectExit(timeout, session)
 
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
@@ -291,7 +288,7 @@ func (runner *clusterTestRunner) streamLogs(timeout time.Duration, appName strin
 
 	session, err := gexec.Start(command, getStyledWriter("logs"), getStyledWriter("logs"))
 
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	return session
 }
 
@@ -301,7 +298,7 @@ func (runner *clusterTestRunner) streamDebugLogs(timeout time.Duration, args ...
 
 	session, err := gexec.Start(command, getStyledWriter("debug"), getStyledWriter("debug"))
 
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	return session
 }
 
@@ -311,7 +308,7 @@ func (runner *clusterTestRunner) scaleApp(timeout time.Duration, appName string,
 
 	session, err := gexec.Start(command, getStyledWriter("scale"), getStyledWriter("scale"))
 
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	expectExit(timeout, session)
 }
 
@@ -321,7 +318,7 @@ func (runner *clusterTestRunner) removeApp(timeout time.Duration, appName string
 
 	session, err := gexec.Start(command, getStyledWriter("remove"), getStyledWriter("remove"))
 
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 	expectExit(timeout, session)
 }
 
@@ -381,9 +378,9 @@ func countInstances(appRoute string, instanceCountChan chan<- int) {
 	instanceIndexRoute := fmt.Sprintf("%s/index", appRoute)
 	instancesSeen := make(map[int]bool)
 
-	instanceIndexChan := make(chan int, numCpu)
+	instanceIndexChan := make(chan int, numCPU)
 
-	for i := 0; i < numCpu; i++ {
+	for i := 0; i < numCPU; i++ {
 		go pollForInstanceIndices(instanceIndexRoute, instanceIndexChan)
 	}
 
