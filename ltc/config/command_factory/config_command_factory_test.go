@@ -204,6 +204,8 @@ var _ = Describe("CommandFactory", func() {
 					Expect(newConfig.Load()).To(Succeed())
 					Expect(newConfig.Receptor()).To(Equal("http://receptor.myapi.com"))
 					Expect(newConfig.BlobStore()).To(Equal(dav_blob_store.Config{}))
+
+					Expect(outputBuffer).Should(test_helpers.Say("Warning: Blob store not running, buildpack support disabled."))
 				})
 			})
 

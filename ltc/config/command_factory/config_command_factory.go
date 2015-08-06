@@ -103,6 +103,7 @@ func (factory *ConfigCommandFactory) verifyBlobStore(host, port, username, passw
 	authorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobStore())
 	if err != nil {
 		factory.config.SetBlobStore("", "", "", "")
+		factory.ui.SayLine("Warning: Blob store not running, buildpack support disabled.")
 		factory.save()
 		return false
 	}

@@ -40,6 +40,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       echo "SYSTEM_IP=#{system_ip}" >> /var/lattice/setup/lattice-environment
       echo "LATTICE_CELL_ID=cell-01" >> /var/lattice/setup/lattice-environment
       echo "GARDEN_EXTERNAL_IP=#{system_ip}" >> /var/lattice/setup/lattice-environment
+      echo "DISABLE_BUILDPACKS=#{ENV['DISABLE_BUILDPACKS'].to_s}" >> /var/lattice/setup/lattice-environment
     SCRIPT
 
     s.inline = populate_lattice_env_file_script
