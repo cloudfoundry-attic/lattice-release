@@ -22,13 +22,12 @@ import (
 const (
 	DropletStack    = "cflinuxfs2"
 	DropletRootFS   = "preloaded:" + DropletStack
-	DropletMemoryMB = 128
 )
 
 //go:generate counterfeiter -o fake_droplet_runner/fake_droplet_runner.go . DropletRunner
 type DropletRunner interface {
 	UploadBits(dropletName, uploadPath string) error
-	BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string) error
+	BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string, memoryMB, cpuWeight, diskMB int) error
 	LaunchDroplet(appName, dropletName, startCommand string, startArgs []string, appEnvironmentParams app_runner.AppEnvironmentParams) error
 	ListDroplets() ([]Droplet, error)
 	RemoveDroplet(dropletName string) error
@@ -103,7 +102,7 @@ func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
 	return dr.blobStore.Upload(path.Join(dropletName, "bits.zip"), uploadFile)
 }
 
-func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string) error {
+func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string, memoryMB, cpuWeight, diskMB int) error {
 	builderConfig := buildpack_app_lifecycle.NewLifecycleBuilderConfig([]string{buildpackUrl}, true, false)
 
 	dropletURL := fmt.Sprintf("http://%s:%s@%s:%s%s",
@@ -153,7 +152,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 	}
 
 	environment["CF_STACK"] = DropletStack
-	environment["MEMORY_LIMIT"] = fmt.Sprintf("%dM", DropletMemoryMB)
+	environment["MEMORY_LIMIT"] = fmt.Sprintf("%dM", memoryMB)
 
 	createTaskParams := task_runner.NewCreateTaskParams(
 		action,
@@ -163,7 +162,9 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 		"BUILD",
 		environment,
 		[]models.SecurityGroupRule{},
-		DropletMemoryMB,
+		memoryMB,
+		cpuWeight,
+		diskMB,
 	)
 
 	return dr.taskRunner.CreateTask(createTaskParams)

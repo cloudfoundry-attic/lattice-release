@@ -67,6 +67,8 @@ var _ = Describe("TaskRunner", func() {
 				},
 				securityGroupRules,
 				128,
+				100,
+				0,
 			)
 		})
 
@@ -126,6 +128,8 @@ var _ = Describe("TaskRunner", func() {
 					nil,
 					securityGroupRules,
 					128,
+					100,
+					0,
 				)
 
 				err := taskRunner.CreateTask(createTaskParams)

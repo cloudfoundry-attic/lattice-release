@@ -93,6 +93,21 @@ func (factory *DropletRunnerCommandFactory) MakeBuildDropletCommand() cli.Comman
 			Usage: "Path to droplet source",
 			Value: ".",
 		},
+		cli.IntFlag{
+			Name:  "cpu-weight, c",
+			Usage: "Relative CPU weight for the container (valid values: 1-100)",
+			Value: 100,
+		},
+		cli.IntFlag{
+			Name:  "memory-mb, m",
+			Usage: "Memory limit for container in MB",
+			Value: 128,
+		},
+		cli.IntFlag{
+			Name:  "disk-mb, d",
+			Usage: "Disk limit for container in MB",
+			Value: 0,
+		},
 		cli.StringSliceFlag{
 			Name:  "env, e",
 			Usage: "Environment variables (can be passed multiple times)",
@@ -192,7 +207,7 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 		},
 	}
 
-	var buildDropletCommand = cli.Command{
+	var launchDropletCommand = cli.Command{
 		Name:        "launch-droplet",
 		Aliases:     []string{"ld"},
 		Usage:       "Launches a droplet as an app running on lattice",
@@ -201,7 +216,7 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 		Flags:       launchFlags,
 	}
 
-	return buildDropletCommand
+	return launchDropletCommand
 }
 
 func (factory *DropletRunnerCommandFactory) MakeRemoveDropletCommand() cli.Command {
@@ -286,6 +301,9 @@ func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
 
 func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	pathFlag := context.String("path")
+	cpuWeightFlag := context.Int("cpu-weight")
+	memoryMBFlag := context.Int("memory-mb")
+	diskMBFlag := context.Int("disk-mb")
 	envFlag := context.StringSlice("env")
 	timeoutFlag := context.Duration("timeout")
 	dropletName := context.Args().First()
@@ -308,6 +326,12 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 		return
 	}
 
+	if cpuWeightFlag < 1 || cpuWeightFlag > 100 {
+		factory.UI.SayIncorrectUsage("Invalid CPU Weight")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
 	archivePath, err := factory.makeZip(pathFlag)
 	if err != nil {
 		factory.UI.Say(fmt.Sprintf("Error archiving %s: %s", pathFlag, err))
@@ -324,7 +348,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	environment := factory.AppRunnerCommandFactory.BuildEnvironment(envFlag)
 
 	taskName := "build-droplet-" + dropletName
-	if err = factory.dropletRunner.BuildDroplet(taskName, dropletName, buildpackUrl, environment); err != nil {
+	if err = factory.dropletRunner.BuildDroplet(taskName, dropletName, buildpackUrl, environment, memoryMBFlag, cpuWeightFlag, diskMBFlag); err != nil {
 		factory.UI.Say(fmt.Sprintf("Error submitting build of %s: %s", dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return

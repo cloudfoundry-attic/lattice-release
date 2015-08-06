@@ -9,7 +9,7 @@ type CreateTaskParams struct {
 	receptorRequest receptor.TaskCreateRequest
 }
 
-func NewCreateTaskParams(action models.Action, taskGuid, rootFS, domain, logSource string, env map[string]string, egressRules []models.SecurityGroupRule, memoryMB int) CreateTaskParams {
+func NewCreateTaskParams(action models.Action, taskGuid, rootFS, domain, logSource string, env map[string]string, egressRules []models.SecurityGroupRule, memoryMB, cpuWeight, diskMB int) CreateTaskParams {
 	return CreateTaskParams{
 		receptor.TaskCreateRequest{
 			Action:               action,
@@ -23,6 +23,8 @@ func NewCreateTaskParams(action models.Action, taskGuid, rootFS, domain, logSour
 			EgressRules:          egressRules,
 			Privileged:           true,
 			MemoryMB:             memoryMB,
+			CPUWeight:            uint(cpuWeight),
+			DiskMB:               diskMB,
 		},
 	}
 }
