@@ -15,7 +15,7 @@ import (
 
 var _ = Describe("BlobStore", func() {
 	var (
-		blobStore              *dav_blob_store.BlobStore
+		verifier               dav_blob_store.Verifier
 		fakeServer             *ghttp.Server
 		serverHost, serverPort string
 	)
@@ -29,7 +29,7 @@ var _ = Describe("BlobStore", func() {
 		serverHost, serverPort, err = net.SplitHostPort(fakeServerURL.Host)
 		Expect(err).NotTo(HaveOccurred())
 
-		blobStore = dav_blob_store.New(dav_blob_store.Config{})
+		verifier = dav_blob_store.Verifier{}
 	})
 
 	AfterEach(func() {
@@ -79,7 +79,7 @@ var _ = Describe("BlobStore", func() {
 				ghttp.RespondWith(207, responseBodyRoot, http.Header{"Content-Type": []string{"application/xml"}}),
 			))
 
-			authorized, err := blobStore.Verify(blobTargetInfo)
+			authorized, err := verifier.Verify(blobTargetInfo)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(authorized).To(BeTrue())
 
@@ -112,7 +112,7 @@ var _ = Describe("BlobStore", func() {
 					ghttp.RespondWith(401, responseBody, http.Header{"Content-Type": []string{"application/xml"}}),
 				))
 
-				authorized, err := blobStore.Verify(blobTargetInfo)
+				authorized, err := verifier.Verify(blobTargetInfo)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(authorized).To(BeFalse())
 
@@ -132,7 +132,7 @@ var _ = Describe("BlobStore", func() {
 				fakeServer.Close()
 				fakeServer = nil
 
-				_, err := blobStore.Verify(blobTargetInfo)
+				_, err := verifier.Verify(blobTargetInfo)
 				Expect(err).To(HaveOccurred())
 			})
 		})

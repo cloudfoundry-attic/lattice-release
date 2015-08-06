@@ -193,7 +193,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	cfIgnore := cf_ignore.New()
 	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, taskExaminer, dropletRunner, cfIgnore)
 
-	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, blobStore, exitHandler)
+	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, dav_blob_store.Verifier{}, exitHandler)
 
 	helpCommand := cli.Command{
 		Name:        "help",

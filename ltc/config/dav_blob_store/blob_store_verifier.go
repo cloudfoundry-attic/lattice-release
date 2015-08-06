@@ -6,7 +6,9 @@ import (
 	"net/url"
 )
 
-func (b *BlobStore) Verify(config Config) (authorized bool, err error) {
+type Verifier struct{}
+
+func (Verifier) Verify(config Config) (authorized bool, err error) {
 	blobStoreURL := url.URL{
 		Scheme: "http",
 		Host:   fmt.Sprintf("%s:%s", config.Host, config.Port),
