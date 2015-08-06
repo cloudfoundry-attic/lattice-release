@@ -138,7 +138,21 @@ var _ = Describe("davtool", func() {
 			Expect(os.Remove(tmpFile.Name())).To(Succeed())
 		})
 
-		It("does a PUT to the DAV server to upload the file", func() {
+		It("does a PUT to the DAV server to create a new file", func() {
+			command := exec.Command(davtoolPath, "put", fakeServerURL, tmpFile.Name())
+			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session).Should(gexec.Exit(0))
+			Expect(session.Out).To(gbytes.Say("Uploaded %s to %s.", tmpFile.Name(), sanitizedURL))
+
+			Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
+			Expect(httpBody).To(Equal([]byte("some-file-contents")))
+		})
+
+		It("does a PUT to the DAV server to replace an existing file", func() {
+			httpStatusCode = 200
+
 			command := exec.Command(davtoolPath, "put", fakeServerURL, tmpFile.Name())
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())

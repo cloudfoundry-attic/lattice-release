@@ -99,7 +99,7 @@ func putAction(args []string) {
 		os.Exit(2)
 	}
 
-	if resp.StatusCode != http.StatusCreated {
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		fmt.Printf("Error uploading %s: %s\n", sourcePath, resp.Status)
 		os.Exit(2)
 	}
