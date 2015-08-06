@@ -17,6 +17,7 @@ If you have not developed a golang project before, please see the [Golang docs](
 ```bash
     $ git clone git@github.com:cloudfoundry-incubator/lattice.git -b develop # may be unstable!
     $ cd lattice
+    $ $(boot2docker shellinit)
     $ development/setup
     $ development/build
 ```
