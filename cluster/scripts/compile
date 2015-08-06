@@ -29,6 +29,7 @@ compile_garden_linux() {
 
     mkdir -p /tmp/btrfs-progs
     pushd /tmp/btrfs-progs
+        apt-get update
         apt-get install -y asciidoc xmlto --no-install-recommends
         apt-get install -y pkg-config autoconf
         apt-get install -y uuid-dev libattr1-dev zlib1g-dev libacl1-dev e2fslibs-dev libblkid-dev liblzo2-dev
