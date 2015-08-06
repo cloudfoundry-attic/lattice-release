@@ -14,7 +14,7 @@ pushd $LATTICE_DIR/build >/dev/null
     git clone git@github.com:cloudfoundry/cf-release.git
     ( cd cf-release && git checkout $CF_VERSION )
   else
-    ( cd cf-release && git reset --hard && git checkout "$CF_VERSION" && git clean -xffd )
+    ( cd cf-release && git fetch && git reset --hard && git checkout "$CF_VERSION" && git clean -xffd )
   fi
   ( cd cf-release && ./update )
 
@@ -22,7 +22,7 @@ pushd $LATTICE_DIR/build >/dev/null
     git clone git@github.com:cloudfoundry-incubator/diego-release.git -b "$DIEGO_VERSION"
   else
     rm -f diego-release/src/github.com/cloudfoundry-incubator/lattice
-    ( cd diego-release && git reset --hard && git checkout "$DIEGO_VERSION" && git clean -xffd )
+    ( cd diego-release && git fetch && git reset --hard && git checkout "$DIEGO_VERSION" && git clean -xffd )
   fi
   ( cd diego-release && ./scripts/update )
 
