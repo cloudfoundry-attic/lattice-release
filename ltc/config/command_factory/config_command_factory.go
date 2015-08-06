@@ -99,7 +99,7 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 func (factory *ConfigCommandFactory) verifyBlobStore() bool {
 	authorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobStore())
 	if err != nil {
-		factory.ui.Say("Could not connect to the droplet store.")
+		factory.ui.SayLine("Could not connect to the droplet store.")
 		return false
 	}
 	if !authorized {
@@ -117,25 +117,25 @@ func (factory *ConfigCommandFactory) save() {
 		return
 	}
 
-	factory.ui.SayLine("API location set.")
+	factory.ui.Say("API location set.")
 }
 
 func (factory *ConfigCommandFactory) printTarget() {
 	if factory.config.Target() == "" {
-		factory.ui.SayLine("Target not set.")
+		factory.ui.Say("Target not set.")
 		return
 	}
 	target := factory.config.Target()
 	if username := factory.config.Username(); username != "" {
 		target = fmt.Sprintf("%s@%s", username, target)
 	}
-	factory.ui.SayLine(fmt.Sprintf("Target:\t\t%s", target))
+	factory.ui.Say(fmt.Sprintf("Target:\t\t%s", target))
 }
 
 func (factory *ConfigCommandFactory) printBlobTarget() {
 	blobStore := factory.config.BlobStore()
 	if blobStore.Host == "" {
-		factory.ui.SayLine("\tNo droplet store specified.")
+		factory.ui.Say("\tNo droplet store specified.")
 		return
 	}
 
@@ -143,5 +143,5 @@ func (factory *ConfigCommandFactory) printBlobTarget() {
 	if username := blobStore.Username; username != "" {
 		endpoint = fmt.Sprintf("%s@%s", username, endpoint)
 	}
-	factory.ui.SayLine(fmt.Sprintf("Droplet store:\t%s", endpoint))
+	factory.ui.Say(fmt.Sprintf("Droplet store:\t%s", endpoint))
 }

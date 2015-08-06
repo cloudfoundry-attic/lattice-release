@@ -74,7 +74,7 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			It("outputs the current user and target host", func() {
-				Expect(outputBuffer).To(test_helpers.SayLine("Target:\t\tolduser@oldtarget.com"))
+				Expect(outputBuffer).To(test_helpers.Say("Target:\t\tolduser@oldtarget.com"))
 			})
 
 			Context("when no username is set", func() {
@@ -84,7 +84,7 @@ var _ = Describe("CommandFactory", func() {
 				})
 
 				It("only prints the target", func() {
-					Expect(outputBuffer).To(test_helpers.SayLine("Target:\t\toldtarget.com"))
+					Expect(outputBuffer).To(test_helpers.Say("Target:\t\toldtarget.com"))
 				})
 			})
 
@@ -95,13 +95,13 @@ var _ = Describe("CommandFactory", func() {
 				})
 
 				It("informs the user the target is not set", func() {
-					Expect(outputBuffer).To(test_helpers.SayLine("Target not set."))
+					Expect(outputBuffer).To(test_helpers.Say("Target not set."))
 				})
 			})
 
 			Context("when no blob store is targeted", func() {
 				It("should specify that no blob store is targeted", func() {
-					Expect(outputBuffer).To(test_helpers.SayLine("\tNo droplet store specified."))
+					Expect(outputBuffer).To(test_helpers.Say("\tNo droplet store specified."))
 				})
 			})
 
@@ -112,7 +112,7 @@ var _ = Describe("CommandFactory", func() {
 				})
 
 				It("outputs the current user and blob store host", func() {
-					Expect(outputBuffer).To(test_helpers.SayLine("Droplet store:\tblobUser@blobtarget.com:8444"))
+					Expect(outputBuffer).To(test_helpers.Say("Droplet store:\tblobUser@blobtarget.com:8444"))
 				})
 
 				Context("when no blob store username is set", func() {
@@ -122,7 +122,7 @@ var _ = Describe("CommandFactory", func() {
 					})
 
 					It("only prints the blob store host", func() {
-						Expect(outputBuffer).To(test_helpers.SayLine("Droplet store:\tblobtarget.com:8444"))
+						Expect(outputBuffer).To(test_helpers.Say("Droplet store:\tblobtarget.com:8444"))
 					})
 				})
 			})
@@ -241,7 +241,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(config.Target()).To(Equal("myapi.com"))
 				Expect(config.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
-				Expect(outputBuffer).To(test_helpers.SayLine("API location set."))
+				Expect(outputBuffer).To(test_helpers.Say("API location set."))
 
 				Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
 				Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password"))
