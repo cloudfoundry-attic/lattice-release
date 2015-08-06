@@ -17,8 +17,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/lager"
-
-	config_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
 )
 
 var _ = Describe("CliAppFactory", func() {
@@ -135,18 +133,14 @@ var _ = Describe("CliAppFactory", func() {
 
 					cliApp.Commands = []cli.Command{
 						cli.Command{
-							Name: config_command_factory.TargetCommandName,
+							Name: "target",
 							Action: func(ctx *cli.Context) {
 								commandRan = true
 							},
 						},
 					}
 
-					cliAppArgs := []string{"ltc", config_command_factory.TargetCommandName}
-
-					err := cliApp.Run(cliAppArgs)
-					Expect(err).NotTo(HaveOccurred())
-
+					Expect(cliApp.Run([]string{"ltc", "target"})).To(Succeed())
 					Expect(commandRan).To(BeTrue())
 					Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(0))
 				})

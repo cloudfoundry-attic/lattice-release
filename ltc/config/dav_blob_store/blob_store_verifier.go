@@ -23,6 +23,9 @@ func (Verifier) Verify(config Config) (authorized bool, err error) {
 	}
 
 	req, err := http.NewRequest("PROPFIND", baseURL.String(), nil)
+	if err != nil {
+		return false, err
+	}
 
 	req.Header.Add("Depth", "1")
 	resp, err := http.DefaultClient.Do(req)
