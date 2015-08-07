@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/nu7hatch/gouuid"
@@ -143,23 +144,33 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 						Expect(respBytes).To(MatchRegexp("<dt>USER</dt><dd>root</dd>"), "lattice-app should report running as root")
 					})
 				})
+			})
 
-				Context("tcp routing", func() {
-					Context("when desiring a docker-based LRP with tcp routes", func() {
-						var externalPort uint16
+			Context("when desiring a docker-based LRP with tcp routes", func() {
+				var (
+					externalPort uint16
+					appName      string
+				)
 
-						BeforeEach(func() {
-							externalPort = 50000
-						})
+				BeforeEach(func() {
+					externalPort = 50000
+					appGUID, err := uuid.NewV4()
+					Expect(err).NotTo(HaveOccurred())
 
-						It("should run a docker app exposing tcp routes", func() {
-							runner.createDockerApp(timeout, appName, "cloudfoundry/tcp-sample-receiver", fmt.Sprintf("--tcp-routes=5222:%d", externalPort))
-							Eventually(errorCheckForConnection(runner.config.Target(), externalPort), timeout, 1).ShouldNot(HaveOccurred())
-						})
-					})
+					appName = fmt.Sprintf("lattice-test-app-%s", appGUID.String())
+				})
+
+				AfterEach(func() {
+					runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
+				})
+
+				It("should run a docker app exposing tcp routes", func() {
+					runner.createDockerApp(timeout, appName, "cloudfoundry/tcp-sample-receiver", fmt.Sprintf("--tcp-routes=5222:%d", externalPort))
+					Eventually(errorCheckForConnection(runner.config.Target(), externalPort), timeout, 1).ShouldNot(HaveOccurred())
 				})
 			})
 		})
+
 		Context("droplets", func() {
 			var dropletName, appName, dropletFolderURL, appRoute string
 
@@ -387,9 +398,10 @@ func errorCheckForConnection(ip string, port uint16) func() error {
 		if err != nil {
 			return err
 		}
+		fmt.Fprintln(getStyledWriter("test"), "Received response '", response, "'")
 
-		if response != "server-1:test" {
-			errors.New("Did not get correct response from connection")
+		if !strings.Contains(response, "docker-server1:test") {
+			return errors.New("Did not get correct response from connection")
 		}
 
 		return nil
