@@ -146,26 +146,14 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 
 				Context("tcp routing", func() {
 					Context("when desiring a docker-based LRP with tcp routes", func() {
-						var (
-							appName      string
-							externalPort uint16
-						)
+						var externalPort uint16
 
 						BeforeEach(func() {
-							appGuid, err := uuid.NewV4()
-							Expect(err).ToNot(HaveOccurred())
 							externalPort = 50000
-
-							appName = fmt.Sprintf("tcp-sample-receiver-%s", appGuid.String())
-						})
-
-						AfterEach(func() {
-							runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
 						})
 
 						It("should run a docker app exposing tcp routes", func() {
 							runner.createDockerApp(timeout, appName, "cloudfoundry/tcp-sample-receiver", fmt.Sprintf("--tcp-routes=5222:%d", externalPort))
-
 							Eventually(errorCheckForConnection(runner.config.Target(), externalPort), timeout, 1).ShouldNot(HaveOccurred())
 						})
 					})
@@ -497,8 +485,8 @@ func makeTcpConnRequest(ip string, port uint16, req string) (string, error) {
 	return line, nil
 }
 
-func makeGetRequestToURL(route string) (*http.Response, error) {
-	routeWithScheme := fmt.Sprintf("http://%s", route)
+func makeGetRequestToURL(url string) (*http.Response, error) {
+	routeWithScheme := fmt.Sprintf("http://%s", url)
 	resp, err := http.DefaultClient.Get(routeWithScheme)
 	if err != nil {
 		return nil, err
