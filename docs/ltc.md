@@ -14,7 +14,7 @@ If the Lattice API is password protected, `ltc` will prompt you for a username a
 
 Run `ltc target` with no arguments to get the current target.  It will also indicate whether a droplet store is available.
 
-> As of v0.3.0, `ltc target` looks for a droplet store bundled with Lattice to enable Buildpacks functionality.
+- Starting with v0.3.0, `ltc target` looks for a droplet store bundled with Lattice to enable Buildpacks functionality.
 
 ## Launching Docker Applications
 
@@ -75,26 +75,6 @@ By default, `ltc` selects the *lowest* exposed port to healthcheck against;  if 
 - **`--monitor-timeout=1s`** sets the wait time for the application to respond to the healthcheck.
 - **`--no-monitor`** disables health monitoring.  Lattice will consider the application crashed only if it exits.
 
-## Building and Launching Droplets
-
-> The -droplet commands require a "Droplet Store" configured by `ltc target`.
-
-### `ltc build-droplet`
-
-`ltc build-droplet DROPLET_NAME http://github.com/buildpack-url` modifies the number of running instances of an application.
-
-- **`--path=.`** path to droplet source (file or folder)
-- **`--env NAME[=VALUE]`** specifies environment variables. You can have multiple `--env` flags.  Passing an `--env` flag without explicitly setting the VALUE uses the current execution context to set the value.
-- **`--timeout=2m`** sets the maximum polling duration for building the droplet.
-
-> As an alternative to specifying the URL for a given Buildpack, we also support the following aliases: go, java, python, ruby, nodejs, php, binary, or staticfile. 
-
-### `ltc launch-droplet`
-
-`ltc launch-droplet APP_NAME DROPLET_NAME` modifies the number of running instances of an application.
-
-> `ltc launch-droplet` has the same options as [`ltc create`](/docs/ltc.md#ltc-create), except for `--run-as-root`.  Droplets expect to run under the "vcap" user context.
-
 ## Managing Applications
 
 ### `ltc remove`
@@ -118,6 +98,53 @@ The set of routes passed into `ltc update-routes` will *override* the existing s
 
 - **`--no-routes`** specifies that no routes be registered. 
 
+## Building and Launching Droplets
+
+**Note**: Buildpack support requires a Droplet Store configured by `ltc target`.
+
+### `ltc build-droplet`
+
+`ltc build-droplet DROPLET_NAME http://github.com/buildpack-url` creates a droplet by running a Cloud Foundry Buildpack on an application directory.
+
+- **`--path=.`** path to droplet source (file or folder)
+- **`--env NAME[=VALUE]`** specifies environment variables. You can have multiple `--env` flags.  Passing an `--env` flag without explicitly setting the VALUE uses the current execution context to set the value.
+- **`--timeout=2m`** sets the maximum polling duration for building the droplet.
+
+  As an alternative to specifying the URL for a given Buildpack, we also support the following aliases: go, java, python, ruby, nodejs, php, binary, or staticfile.
+  
+  If the application directory contains a `.cfignore` file, `build-droplet` will not upload files that match the contents of the `.cfignore` file.
+
+### `ltc launch-droplet`
+
+`ltc launch-droplet APP_NAME DROPLET_NAME` launches a droplet as an app running on lattice
+
+   `ltc launch-droplet` has the same options as [`ltc create`](/docs/ltc.md#ltc-create), except for `--run-as-root`.  Droplets are run as the user `vcap`.
+   
+   Finally, one can override the default start command by specifiying a start command after a `--` separator.  This can be followed by any arguments one wishes to pass to the app.  For example:
+
+    ltc launch-droplet lattice-app lattice-app -- /lattice-app -quiet=true
+
+### Managing Droplets
+
+
+#### `ltc list-droplets`
+
+`ltc list-droplets` lists the droplets available to launch on the droplet store.
+
+#### `ltc remove-droplet`
+
+`ltc remove-droplet DROPLET_NAME` removes a droplet from the droplet store. `remove-droplet` will error if an App based on the droplet is currently running in the cluster.
+
+#### `ltc export-droplet`
+
+`ltc export-droplet DROPLET_NAME` exports a droplet from the droplet store to disk.
+
+#### `ltc import-droplet`
+
+`ltc import-droplet DROPLET-NAME /path/droplet.tgz /path/result.json` imports a droplet from disk into the droplet store.
+
+
+
 ### `ltc submit-lrp`
 
 `ltc submit-lrp /path/to/json` creates an application with the configuration specified in the JSON.  The syntax of the JSON can be found at the [Receptor API docs](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/lrps.md#describing-desiredlrps)
@@ -135,26 +162,6 @@ The set of routes passed into `ltc update-routes` will *override* the existing s
 ### `ltc delete-task`
 
 `ltc delete-task TASK_GUID` deletes a completed task.  If a task has not compeleted yet, it will cancel and then delete the task.
-
-## Managing Droplets
-
-> The -droplet commands require a droplet store configured by `ltc target`.
-
-### `ltc list-droplets`
-
-`ltc list-droplets` lists the droplets available to launch on the droplet store.
-
-### `ltc remove-droplet`
-
-`ltc remove-droplet DROPLET_NAME` removes a droplet from the droplet store.
-
-### `ltc export-droplet`
-
-`ltc export-droplet DROPLET_NAME` exports a droplet from the droplet store to disk.
-
-### `ltc import-droplet`
-
-`ltc import-droplet DROPLET-NAME /path/droplet.tgz /path/result.json` imports a droplet from disk into the droplet store.
 
 ## Streaming Logs
 
