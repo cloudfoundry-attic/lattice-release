@@ -93,7 +93,7 @@ By default, `ltc` selects the *lowest* exposed port to healthcheck against;  if 
 
 `ltc launch-droplet APP_NAME DROPLET_NAME` modifies the number of running instances of an application.
 
-> `ltc launch-droplet` has the same options as [`ltc create`](/docs/ltc.md#ltc-create), except for `--run-as-root`.  Droplets expect to run under the "vcap" user context.
+> `ltc launch-droplet` has the same options as [`ltc create`](/docs/ltc.md#ltc-create), except for `--run-as-root`.  Droplets are run under the "vcap" user context.
 
 ## Managing Applications
 
