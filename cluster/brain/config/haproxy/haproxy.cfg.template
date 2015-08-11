@@ -1,0 +1,15 @@
+global
+  maxconn 4096
+
+defaults
+  log global
+  timeout connect 300000
+  timeout client 300000
+  timeout server 300000
+  maxconn 2000
+
+frontend http-in
+  mode http
+  bind :1234
+  option forwardfor
+  reqadd X-Forwarded-Proto:\ http
