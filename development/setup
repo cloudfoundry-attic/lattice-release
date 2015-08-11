@@ -37,7 +37,8 @@ pushd $GOPATH/src/github.com/cloudfoundry-incubator >/dev/null
   ln -sfh ../../../../.. lattice
 
   pushd lattice >/dev/null
-    go get -v ./cell-helpers/...
+    go get -v ./cell-helpers/davtool/...
+    go get -v ./cell-helpers/tee2metron/...
   popd >/dev/null
 
   pushd lattice/ltc >/dev/null
