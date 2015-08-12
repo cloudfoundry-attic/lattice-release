@@ -619,18 +619,26 @@ func (factory *DropletRunnerCommandFactory) makeZip(contentsPath string) (string
 				if err != nil {
 					return err
 				}
+
 				if li.Mode()&os.ModeSymlink == os.ModeSymlink {
-					return nil
+					dest, err := os.Readlink(fullPath)
+					if err != nil {
+						return err
+					}
+					if _, err := io.Copy(writer, strings.NewReader(dest)); err != nil {
+						return err
+					}
+				} else {
+					fr, err := os.Open(fullPath)
+					if err != nil {
+						return err
+					}
+					defer fr.Close()
+					if _, err := io.Copy(writer, fr); err != nil {
+						return err
+					}
 				}
 
-				fr, err := os.Open(fullPath)
-				if err != nil {
-					return err
-				}
-				defer fr.Close()
-				if _, err := io.Copy(writer, fr); err != nil {
-					return err
-				}
 			}
 
 			return nil

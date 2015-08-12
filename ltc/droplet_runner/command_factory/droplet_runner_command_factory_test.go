@@ -124,12 +124,12 @@ var _ = Describe("CommandFactory", func() {
 				Expect(uploadPath).ToNot(BeNil())
 				Expect(uploadPath).To(HaveSuffix(".zip"))
 
-				buffer := make([]byte, 12)
 				zipReader, err := zip.OpenReader(uploadPath)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(zipReader.File).To(HaveLen(6))
 
+				buffer := make([]byte, 12)
 				h := zipReader.File[0].FileHeader
 				f, err := zipReader.File[0].Open()
 				Expect(err).NotTo(HaveOccurred())
@@ -139,6 +139,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(f.Read(buffer)).To(Equal(12))
 				Expect(string(buffer)).To(Equal("aaa contents"))
 
+				buffer = make([]byte, 12)
 				h = zipReader.File[1].FileHeader
 				f, err = zipReader.File[1].Open()
 				Expect(err).NotTo(HaveOccurred())
@@ -148,6 +149,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(f.Read(buffer)).To(Equal(12))
 				Expect(string(buffer)).To(Equal("bbb contents"))
 
+				buffer = make([]byte, 12)
 				h = zipReader.File[2].FileHeader
 				f, err = zipReader.File[2].Open()
 				Expect(err).NotTo(HaveOccurred())
@@ -157,15 +159,17 @@ var _ = Describe("CommandFactory", func() {
 				Expect(f.Read(buffer)).To(Equal(12))
 				Expect(string(buffer)).To(Equal("ccc contents"))
 
+				buffer = make([]byte, 3)
 				h = zipReader.File[3].FileHeader
 				f, err = zipReader.File[3].Open()
 				Expect(err).NotTo(HaveOccurred())
 				defer f.Close()
 				Expect(h.Name).To(Equal("ddd"))
 				Expect(h.FileInfo().Mode() & os.ModeSymlink).To(Equal(os.ModeSymlink))
-				_, err = f.Read(buffer)
-				Expect(err).To(MatchError("EOF"))
+				Expect(f.Read(buffer)).To(Equal(3))
+				Expect(string(buffer)).To(Equal("ccc"))
 
+				buffer = make([]byte, 1)
 				h = zipReader.File[4].FileHeader
 				f, err = zipReader.File[4].Open()
 				Expect(err).NotTo(HaveOccurred())
@@ -176,6 +180,7 @@ var _ = Describe("CommandFactory", func() {
 				_, err = f.Read(buffer)
 				Expect(err).To(MatchError("EOF"))
 
+				buffer = make([]byte, 12)
 				h = zipReader.File[5].FileHeader
 				f, err = zipReader.File[5].Open()
 				Expect(err).NotTo(HaveOccurred())
@@ -193,7 +198,7 @@ var _ = Describe("CommandFactory", func() {
 
 					zipFilePath := tmpFile.Name() + ".zip"
 
-					zipCommand := exec.Command("/usr/bin/zip", "-yr", zipFilePath, "aaa", "bbb", "ccc", "ddd", "some-ignored-file", "subfolder")
+					zipCommand := exec.Command("/usr/bin/zip", "--symlinks", "-yr", zipFilePath, "aaa", "bbb", "ccc", "ddd", "some-ignored-file", "subfolder")
 					zipCommand.Dir = tmpDir
 					Expect(zipCommand.Run()).To(Succeed())
 					defer os.Remove(zipFilePath)
@@ -217,12 +222,12 @@ var _ = Describe("CommandFactory", func() {
 					Expect(uploadPath).ToNot(BeNil())
 					Expect(uploadPath).To(HaveSuffix(".zip"))
 
-					buffer := make([]byte, 12)
 					zipReader, err := zip.OpenReader(uploadPath)
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(zipReader.File).To(HaveLen(7))
 
+					buffer := make([]byte, 12)
 					h := zipReader.File[0].FileHeader
 					f, err := zipReader.File[0].Open()
 					Expect(err).NotTo(HaveOccurred())
@@ -232,6 +237,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(f.Read(buffer)).To(Equal(12))
 					Expect(string(buffer)).To(Equal("aaa contents"))
 
+					buffer = make([]byte, 12)
 					h = zipReader.File[1].FileHeader
 					f, err = zipReader.File[1].Open()
 					Expect(err).NotTo(HaveOccurred())
@@ -241,6 +247,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(f.Read(buffer)).To(Equal(12))
 					Expect(string(buffer)).To(Equal("bbb contents"))
 
+					buffer = make([]byte, 12)
 					h = zipReader.File[2].FileHeader
 					f, err = zipReader.File[2].Open()
 					Expect(err).NotTo(HaveOccurred())
@@ -250,6 +257,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(f.Read(buffer)).To(Equal(12))
 					Expect(string(buffer)).To(Equal("ccc contents"))
 
+					buffer = make([]byte, 3)
 					h = zipReader.File[3].FileHeader
 					f, err = zipReader.File[3].Open()
 					Expect(err).NotTo(HaveOccurred())
@@ -257,8 +265,9 @@ var _ = Describe("CommandFactory", func() {
 					Expect(h.Name).To(Equal("ddd"))
 					Expect(h.FileInfo().Mode() & os.ModeSymlink).To(Equal(os.ModeSymlink))
 					Expect(f.Read(buffer)).To(Equal(3))
-					Expect(string(buffer)).To(Equal("ccc contents"))
+					Expect(string(buffer)).To(Equal("ccc"))
 
+					buffer = make([]byte, 12)
 					h = zipReader.File[4].FileHeader
 					f, err = zipReader.File[4].Open()
 					Expect(err).NotTo(HaveOccurred())
@@ -268,6 +277,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(f.Read(buffer)).To(Equal(12))
 					Expect(string(buffer)).To(Equal("ignored cont"))
 
+					buffer = make([]byte, 1)
 					h = zipReader.File[5].FileHeader
 					f, err = zipReader.File[5].Open()
 					Expect(err).NotTo(HaveOccurred())
@@ -278,6 +288,7 @@ var _ = Describe("CommandFactory", func() {
 					_, err = f.Read(buffer)
 					Expect(err).To(MatchError("EOF"))
 
+					buffer = make([]byte, 12)
 					h = zipReader.File[6].FileHeader
 					f, err = zipReader.File[6].Open()
 					Expect(err).NotTo(HaveOccurred())
