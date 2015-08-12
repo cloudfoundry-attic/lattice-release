@@ -441,6 +441,17 @@ var _ = Describe("DropletRunner", func() {
 			err := dropletRunner.RemoveDroplet("drippy")
 			Expect(err).To(MatchError("some error"))
 		})
+
+		It("returns an error when the droplet doesn't exist", func() {
+			fakeBlobStore.ListReturns([]dav_blob_store.Blob{
+				{Path: "drippy/bits.zip"},
+				{Path: "drippy/droplet.tgz"},
+				{Path: "drippy/result.json"},
+			}, nil)
+
+			err := dropletRunner.RemoveDroplet("droopy")
+			Expect(err).To(MatchError("droplet not found"))
+		})
 	})
 
 	Describe("ExportDroplet", func() {

@@ -2,6 +2,7 @@ package droplet_runner
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -282,12 +283,19 @@ func (dr *dropletRunner) RemoveDroplet(dropletName string) error {
 		return err
 	}
 
+	found := false
 	for _, blob := range blobs {
 		if strings.HasPrefix(blob.Path, dropletName+"/") {
 			if err := dr.blobStore.Delete(blob.Path); err != nil {
 				return err
+			} else {
+				found = true
 			}
 		}
+	}
+
+	if !found {
+		return errors.New("droplet not found")
 	}
 
 	return nil
