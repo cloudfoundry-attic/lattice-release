@@ -13,6 +13,8 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/fake_task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
@@ -21,6 +23,7 @@ import (
 var _ = Describe("CommandFactory", func() {
 	var (
 		appExaminer             *fake_app_examiner.FakeAppExaminer
+		taskExaminer            *fake_task_examiner.FakeTaskExaminer
 		outputBuffer            *gbytes.Buffer
 		terminalUI              terminal.UI
 		fakeTailedLogsOutputter *fake_tailed_logs_outputter.FakeTailedLogsOutputter
@@ -30,6 +33,7 @@ var _ = Describe("CommandFactory", func() {
 
 	BeforeEach(func() {
 		appExaminer = &fake_app_examiner.FakeAppExaminer{}
+		taskExaminer = &fake_task_examiner.FakeTaskExaminer{}
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		fakeTailedLogsOutputter = fake_tailed_logs_outputter.NewFakeTailedLogsOutputter()
@@ -41,7 +45,7 @@ var _ = Describe("CommandFactory", func() {
 		var logsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewLogsCommandFactory(appExaminer, terminalUI, fakeTailedLogsOutputter, fakeExitHandler)
+			commandFactory := command_factory.NewLogsCommandFactory(appExaminer, taskExaminer, terminalUI, fakeTailedLogsOutputter, fakeExitHandler)
 			logsCommand = commandFactory.MakeLogsCommand()
 		})
 
@@ -64,12 +68,27 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		It("handles non existent application", func() {
+			appExaminer.AppExistsReturns(false, nil)
+			taskExaminer.TaskStatusReturns(task_examiner.TaskInfo{}, errors.New("task not found"))
+
 			doneChan := test_helpers.AsyncExecuteCommandWithArgs(logsCommand, []string{"non_existent_app"})
 
 			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
 			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("non_existent_app"))
-			Expect(outputBuffer).To(test_helpers.Say("Application non_existent_app not found."))
+			Expect(outputBuffer).To(test_helpers.Say("Application or task non_existent_app not found."))
 			Expect(outputBuffer).To(test_helpers.Say("Tailing logs and waiting for non_existent_app to appear..."))
+
+			Consistently(doneChan).ShouldNot(BeClosed())
+		})
+
+		It("handles tasks", func() {
+			appExaminer.AppExistsReturns(false, nil)
+			taskExaminer.TaskStatusReturns(task_examiner.TaskInfo{}, nil)
+
+			doneChan := test_helpers.AsyncExecuteCommandWithArgs(logsCommand, []string{"task-guid"})
+
+			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
+			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("task-guid"))
 
 			Consistently(doneChan).ShouldNot(BeClosed())
 		})
@@ -91,7 +110,7 @@ var _ = Describe("CommandFactory", func() {
 		var debugLogsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewLogsCommandFactory(appExaminer, terminalUI, fakeTailedLogsOutputter, fakeExitHandler)
+			commandFactory := command_factory.NewLogsCommandFactory(appExaminer, taskExaminer, terminalUI, fakeTailedLogsOutputter, fakeExitHandler)
 			debugLogsCommand = commandFactory.MakeDebugLogsCommand()
 		})
 

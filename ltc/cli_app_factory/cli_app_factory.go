@@ -182,7 +182,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	}
 	dockerRunnerCommandFactory := docker_runner_command_factory.NewDockerRunnerCommandFactory(dockerRunnerCommandFactoryConfig)
 
-	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(appExaminer, ui, tailedLogsOutputter, exitHandler)
+	logsCommandFactory := logs_command_factory.NewLogsCommandFactory(appExaminer, taskExaminer, ui, tailedLogsOutputter, exitHandler)
 
 	clusterTestRunner := cluster_test.NewClusterTestRunner(config, ltcConfigRoot)
 	clusterTestCommandFactory := cluster_test_command_factory.NewClusterTestCommandFactory(clusterTestRunner)
