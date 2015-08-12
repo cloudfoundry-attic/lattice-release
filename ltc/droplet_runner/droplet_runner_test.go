@@ -148,6 +148,12 @@ var _ = Describe("DropletRunner", func() {
 						User: "vcap",
 					},
 					&models.RunAction{
+						Path: "/tmp/davtool",
+						Dir:  "/",
+						Args: []string{"delete", blobURL + "/bits.zip"},
+						User: "vcap",
+					},
+					&models.RunAction{
 						Path: "/tmp/builder",
 						Dir:  "/",
 						Args: []string{
@@ -173,12 +179,6 @@ var _ = Describe("DropletRunner", func() {
 						Path: "/tmp/davtool",
 						Dir:  "/",
 						Args: []string{"put", blobURL + "/result.json", "/tmp/result.json"},
-						User: "vcap",
-					},
-					&models.RunAction{
-						Path: "/tmp/davtool",
-						Dir:  "/",
-						Args: []string{"delete", blobURL + "/bits.zip"},
 						User: "vcap",
 					},
 				},

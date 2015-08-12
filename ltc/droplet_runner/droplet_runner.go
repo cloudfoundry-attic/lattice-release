@@ -125,6 +125,12 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				User: "vcap",
 			},
 			&models.RunAction{
+				Path: "/tmp/davtool",
+				Dir:  "/",
+				Args: []string{"delete", dropletURL + "/bits.zip"},
+				User: "vcap",
+			},
+			&models.RunAction{
 				Path: "/tmp/builder",
 				Dir:  "/",
 				Args: builderConfig.Args(),
@@ -140,12 +146,6 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				Path: "/tmp/davtool",
 				Dir:  "/",
 				Args: []string{"put", dropletURL + "/result.json", "/tmp/result.json"},
-				User: "vcap",
-			},
-			&models.RunAction{
-				Path: "/tmp/davtool",
-				Dir:  "/",
-				Args: []string{"delete", dropletURL + "/bits.zip"},
 				User: "vcap",
 			},
 		},
