@@ -720,7 +720,7 @@ var _ = Describe("CommandFactory", func() {
 				fakeClock.IncrementBySeconds(1)
 
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
-				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(24)))
+				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(25)))
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
 				roundedTimeSince = roundTime(fakeClock.Now(), time.Unix(0, refreshTime*1e9))
 				Eventually(outputBuffer).Should(test_helpers.Say(roundedTimeSince))

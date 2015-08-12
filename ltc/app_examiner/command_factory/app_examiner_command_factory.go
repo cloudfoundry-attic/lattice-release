@@ -327,6 +327,9 @@ func appStatusLinesWritten(appInfo app_examiner.AppInfo) int {
 	for _, appRoute := range appInfo.Routes {
 		linesWritten += len(appRoute.Hostnames)
 	}
+	if appInfo.Annotation != "" {
+		linesWritten += 1
+	}
 	linesWritten += 3
 	linesWritten += len(appInfo.EnvironmentVariables)
 	linesWritten += 4
