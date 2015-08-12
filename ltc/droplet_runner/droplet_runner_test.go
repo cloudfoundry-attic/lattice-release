@@ -154,6 +154,12 @@ var _ = Describe("DropletRunner", func() {
 						User: "vcap",
 					},
 					&models.RunAction{
+						Path: "/bin/chmod",
+						Dir:  "/tmp/app",
+						Args: []string{"-R", "a+X", "."},
+						User: "vcap",
+					},
+					&models.RunAction{
 						Path: "/tmp/builder",
 						Dir:  "/",
 						Args: []string{

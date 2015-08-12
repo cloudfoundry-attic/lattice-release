@@ -131,6 +131,12 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				User: "vcap",
 			},
 			&models.RunAction{
+				Path: "/bin/chmod",
+				Dir:  "/tmp/app",
+				Args: []string{"-R", "a+X", "."},
+				User: "vcap",
+			},
+			&models.RunAction{
 				Path: "/tmp/builder",
 				Dir:  "/",
 				Args: builderConfig.Args(),
