@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 print_provider_specific_terraform_configuration(){
