@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -46,12 +48,24 @@ func (g *ginkgoTestingT) Fail() {
 	os.Exit(1)
 }
 
+func forceAbs(path string) string {
+	if filepath.IsAbs(path) || !strings.Contains(path, "/") {
+		return path
+	}
+
+	abs, err := filepath.Abs(os.Args[0])
+	if err != nil {
+		panic(err)
+	}
+	return abs
+}
+
 func NewClusterTestRunner(config *config.Config, latticeCliHome string) ClusterTestRunner {
 	return &clusterTestRunner{
 		config:            config,
 		testingT:          &ginkgoTestingT{},
 		latticeCliHome:    latticeCliHome,
-		ltcExecutablePath: os.Args[0],
+		ltcExecutablePath: forceAbs(os.Args[0]),
 	}
 }
 
