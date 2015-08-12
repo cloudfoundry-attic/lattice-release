@@ -21,6 +21,19 @@ RUN \
     jq \
     ruby \
     ruby-dev; \
+  apt-get -y install \
+    asciidoc xmlto --no-install-recommends; \
+  apt-get -y install \
+    pkg-config \
+    autoconf; \
+  apt-get -y install \
+    uuid-dev \
+    libattr1-dev \
+    zlib1g-dev \
+    libacl1-dev \
+    e2fslibs-dev \
+    libblkid-dev \
+    liblzo2-dev; \
   add-apt-repository ppa:git-core/ppa -y; \
   apt-get update; \
   apt-get -y install git; \
