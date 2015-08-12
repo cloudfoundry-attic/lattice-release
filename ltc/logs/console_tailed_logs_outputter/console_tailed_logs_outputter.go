@@ -40,7 +40,7 @@ func (ctlo *ConsoleTailedLogsOutputter) OutputDebugLogs(pretty bool) {
 		go ctlo.logReader.TailLogs(reserved_app_ids.LatticeDebugLogStreamAppId, ctlo.rawDebugLogCallback, ctlo.rawDebugErrorCallback)
 	}
 	for log := range ctlo.outputChan {
-		ctlo.ui.Say(log + "\n")
+		ctlo.ui.SayLine(log)
 	}
 }
 
@@ -48,7 +48,7 @@ func (ctlo *ConsoleTailedLogsOutputter) OutputTailedLogs(appGuid string) {
 	go ctlo.logReader.TailLogs(appGuid, ctlo.logCallback, ctlo.errorCallback)
 
 	for log := range ctlo.outputChan {
-		ctlo.ui.Say(log + "\n")
+		ctlo.ui.SayLine(log)
 	}
 }
 

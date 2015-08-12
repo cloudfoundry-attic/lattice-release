@@ -208,21 +208,21 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 
 	imageMetadata, err := factory.dockerMetadataFetcher.FetchMetadata(dockerPath)
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error fetching image metadata: %s", err))
+		factory.UI.SayLine(fmt.Sprintf("Error fetching image metadata: %s", err))
 		factory.ExitHandler.Exit(exit_codes.BadDocker)
 		return
 	}
 
 	exposedPorts, err := factory.getExposedPortsFromArgs(portsFlag, imageMetadata)
 	if err != nil {
-		factory.UI.Say(err.Error())
+		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	monitorConfig, err := factory.GetMonitorConfig(exposedPorts, portMonitorFlag, noMonitorFlag, urlMonitorFlag, monitorTimeoutFlag)
 	if err != nil {
-		factory.UI.Say(err.Error())
+		factory.UI.SayLine(err.Error())
 		if err.Error() == command_factory.MonitorPortNotExposed {
 			factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		} else {
@@ -232,20 +232,20 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	}
 
 	if workingDirFlag == "" {
-		factory.UI.Say("No working directory specified, using working directory from the image metadata...\n")
+		factory.UI.SayLine("No working directory specified, using working directory from the image metadata...")
 		if imageMetadata.WorkingDir != "" {
 			workingDirFlag = imageMetadata.WorkingDir
-			factory.UI.Say("Working directory is:\n")
-			factory.UI.Say(workingDirFlag + "\n")
+			factory.UI.SayLine("Working directory is:")
+			factory.UI.SayLine(workingDirFlag)
 		} else {
 			workingDirFlag = "/"
 		}
 	}
 
 	if !noMonitorFlag {
-		factory.UI.Say(fmt.Sprintf("Monitoring the app on port %d...\n", monitorConfig.Port))
+		factory.UI.SayLine(fmt.Sprintf("Monitoring the app on port %d...", monitorConfig.Port))
 	} else {
-		factory.UI.Say("No ports will be monitored.\n")
+		factory.UI.SayLine("No ports will be monitored.")
 	}
 
 	if startCommand == "" {
@@ -255,25 +255,25 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 			return
 		}
 
-		factory.UI.Say("No start command specified, using start command from the image metadata...\n")
+		factory.UI.SayLine("No start command specified, using start command from the image metadata...")
 		startCommand = imageMetadata.StartCommand[0]
 
-		factory.UI.Say("Start command is:\n")
-		factory.UI.Say(strings.Join(imageMetadata.StartCommand, " ") + "\n")
+		factory.UI.SayLine("Start command is:")
+		factory.UI.SayLine(strings.Join(imageMetadata.StartCommand, " "))
 
 		appArgs = imageMetadata.StartCommand[1:]
 	}
 
 	routeOverrides, err := factory.ParseRouteOverrides(routesFlag)
 	if err != nil {
-		factory.UI.Say(err.Error())
+		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	rootFS, err := docker_repository_name_formatter.FormatForReceptor(dockerPath)
 	if err != nil {
-		factory.UI.Say(err.Error())
+		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -306,7 +306,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		},
 	})
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error creating app: %s", err))
+		factory.UI.SayLine(fmt.Sprintf("Error creating app: %s", err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -335,10 +335,10 @@ func (factory *DockerRunnerCommandFactory) getExposedPortsFromArgs(portsFlag str
 		for _, port := range imageMetadata.ExposedPorts {
 			exposedPortStrings = append(exposedPortStrings, strconv.Itoa(int(port)))
 		}
-		factory.UI.Say(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s\n", strings.Join(exposedPortStrings, ", ")))
+		factory.UI.SayLine(fmt.Sprintf("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: %s", strings.Join(exposedPortStrings, ", ")))
 		return imageMetadata.ExposedPorts, nil
 	}
 
-	factory.UI.Say(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080.\n"))
+	factory.UI.SayLine(fmt.Sprintf("No port specified, image metadata did not contain exposed ports. Defaulting to 8080."))
 	return []uint16{8080}, nil
 }

@@ -46,11 +46,11 @@ func (factory *TaskExaminerCommandFactory) task(context *cli.Context) {
 	taskInfo, err := factory.taskExaminer.TaskStatus(taskName)
 	if err != nil {
 		if err.Error() == task_examiner.TaskNotFoundErrorMessage {
-			factory.ui.Say(colors.Red(fmt.Sprintf("No task '%s' was found", taskName)))
+			factory.ui.SayLine(colors.Red(fmt.Sprintf("No task '%s' was found", taskName)))
 			factory.exitHandler.Exit(exit_codes.CommandFailed)
 			return
 		}
-		factory.ui.Say(colors.Red("Error fetching task result: " + err.Error()))
+		factory.ui.SayLine(colors.Red("Error fetching task result: " + err.Error()))
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}

@@ -144,12 +144,12 @@ var _ = Describe("CommandFactory", func() {
 			Expect(reqSetup.To).To(Equal("/tmp"))
 			Expect(reqSetup.User).To(Equal("vcap"))
 
-			Expect(outputBuffer).To(test_helpers.Say("Creating App: cool-web-app\n"))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-3000-yay.192.168.11.11.xip.io\n")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-wahoo.192.168.11.11.xip.io\n")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://route-1111-me-too.192.168.11.11.xip.io\n")))
+			Expect(outputBuffer).To(test_helpers.SayLine("Creating App: cool-web-app"))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))
+			Expect(outputBuffer).To(test_helpers.SayLine("App is reachable at:"))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://route-3000-yay.192.168.11.11.xip.io")))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://route-1111-wahoo.192.168.11.11.xip.io")))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://route-1111-me-too.192.168.11.11.xip.io")))
 		})
 
 		Context("when the PROCESS_GUID is passed in as --env", func() {
@@ -723,9 +723,9 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(doneChan).Should(BeClosed())
 
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
-				Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-				Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
-				Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io\n")))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))
+				Expect(outputBuffer).To(test_helpers.SayLine("App is reachable at:"))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
 
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 			})
@@ -750,14 +750,13 @@ var _ = Describe("CommandFactory", func() {
 
 					Eventually(doneChan).Should(BeClosed())
 
-					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to come up.")))
-					Expect(outputBuffer).To(test_helpers.SayNewLine())
+					Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Timed out waiting for the container to come up.")))
 					Expect(outputBuffer).To(test_helpers.SayLine("This typically happens because docker layers can take time to download."))
 					Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still downloading your application in the background."))
 					Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs cool-web-app"))
 					Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
-					Expect(outputBuffer).To(test_helpers.Say("App will be reachable at:\n"))
-					Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://cool-web-app.192.168.11.11.xip.io\n")))
+					Expect(outputBuffer).To(test_helpers.SayLine("App will be reachable at:"))
+					Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
 				})
 			})
 

@@ -131,7 +131,7 @@ func (factory *AppExaminerCommandFactory) MakeCellsCommand() cli.Command {
 func (factory *AppExaminerCommandFactory) cells(context *cli.Context) {
 	cellList, err := factory.appExaminer.ListCells()
 	if err != nil {
-		factory.ui.Say(err.Error())
+		factory.ui.SayLine(err.Error())
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -180,14 +180,14 @@ func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 		}
 		w.Flush()
 	} else {
-		factory.ui.Say("Error listing apps: " + err.Error())
+		factory.ui.SayLine("Error listing apps: " + err.Error())
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 	}
 	taskList, err := factory.taskExaminer.ListTasks()
 	if err == nil {
 		wTask := &tabwriter.Writer{}
 		wTask.Init(factory.ui, 10+colors.ColorCodeLength, 8, 1, '\t', 0)
-		factory.ui.Say("\n")
+		factory.ui.SayNewLine()
 		taskTableHeader := strings.Repeat("-", 30) + "= Tasks =" + strings.Repeat("-", 30)
 		fmt.Fprintln(wTask, taskTableHeader)
 		if len(taskList) != 0 {
@@ -213,7 +213,7 @@ func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 		}
 		wTask.Flush()
 	} else {
-		factory.ui.Say("Error listing tasks: " + err.Error())
+		factory.ui.SayLine("Error listing tasks: " + err.Error())
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 	}
 }
@@ -233,7 +233,7 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 
 	appInfo, err := factory.appExaminer.AppStatus(appName)
 	if err != nil {
-		factory.ui.Say(err.Error())
+		factory.ui.SayLine(err.Error())
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -267,7 +267,7 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 		case <-factory.clock.NewTimer(rateFlag).C():
 			appInfo, err = factory.appExaminer.AppStatus(appName)
 			if err != nil {
-				factory.ui.Say("Error getting status: " + err.Error())
+				factory.ui.SayLine("Error getting status: " + err.Error())
 				return
 			}
 			factory.ui.Say(cursor.Up(linesWritten))
@@ -437,7 +437,7 @@ func (factory *AppExaminerCommandFactory) visualizeCells(context *cli.Context) {
 		return
 	}
 
-	factory.ui.Say(colors.Bold("Distribution\n"))
+	factory.ui.SayLine(colors.Bold("Distribution"))
 	linesWritten := factory.printDistribution()
 
 	if rate == 0 {

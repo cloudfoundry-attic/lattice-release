@@ -249,11 +249,11 @@ func (factory *DropletRunnerCommandFactory) importDroplet(context *cli.Context) 
 	}
 
 	if err := factory.dropletRunner.ImportDroplet(dropletName, dropletPath, metadataPath); err != nil {
-		factory.UI.Say(fmt.Sprintf("Error importing %s: %s", dropletName, err))
+		factory.UI.SayLine(fmt.Sprintf("Error importing %s: %s", dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
-	factory.UI.Say("Imported " + dropletName)
+	factory.UI.SayLine("Imported " + dropletName)
 }
 
 func (factory *DropletRunnerCommandFactory) MakeExportDropletCommand() cli.Command {
@@ -271,7 +271,7 @@ func (factory *DropletRunnerCommandFactory) MakeExportDropletCommand() cli.Comma
 func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
 	droplets, err := factory.dropletRunner.ListDroplets()
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error listing droplets: %s", err))
+		factory.UI.SayLine(fmt.Sprintf("Error listing droplets: %s", err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -329,13 +329,13 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 
 	archivePath, err := factory.makeZip(pathFlag)
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error archiving %s: %s", pathFlag, err))
+		factory.UI.SayLine(fmt.Sprintf("Error archiving %s: %s", pathFlag, err))
 		factory.ExitHandler.Exit(exit_codes.FileSystemError)
 		return
 	}
 
 	if err = factory.dropletRunner.UploadBits(dropletName, archivePath); err != nil {
-		factory.UI.Say(fmt.Sprintf("Error uploading to %s: %s", dropletName, err))
+		factory.UI.SayLine(fmt.Sprintf("Error uploading to %s: %s", dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -344,7 +344,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 
 	taskName := "build-droplet-" + dropletName
 	if err = factory.dropletRunner.BuildDroplet(taskName, dropletName, buildpackUrl, environment, memoryMBFlag, cpuWeightFlag, diskMBFlag); err != nil {
-		factory.UI.Say(fmt.Sprintf("Error submitting build of %s: %s", dropletName, err))
+		factory.UI.SayLine(fmt.Sprintf("Error submitting build of %s: %s", dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -363,8 +363,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 			factory.UI.SayLine("Build completed")
 		}
 	} else {
-		factory.UI.Say(colors.Red("Timed out waiting for the build to complete."))
-		factory.UI.SayNewLine()
+		factory.UI.SayLine(colors.Red("Timed out waiting for the build to complete."))
 		factory.UI.SayLine("Lattice is still building your application in the background.")
 
 		factory.UI.SayLine(fmt.Sprintf("To view logs:\n\tltc logs %s", taskName))
@@ -382,7 +381,7 @@ func (factory *DropletRunnerCommandFactory) waitForBuildTask(pollTimeout time.Du
 	ok := factory.pollUntilSuccess(pollTimeout, func() bool {
 		taskInfo, err = factory.taskExaminer.TaskStatus(taskName)
 		if err != nil {
-			factory.UI.Say(colors.Red("Error requesting task status: " + err.Error()))
+			factory.UI.SayLine(colors.Red("Error requesting task status: " + err.Error()))
 			return true
 		}
 
@@ -445,21 +444,21 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 
 	exposedPorts, err := factory.parsePortsFromArgs(portsFlag)
 	if err != nil {
-		factory.UI.Say(err.Error())
+		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	monitorConfig, err := factory.GetMonitorConfig(exposedPorts, portMonitorFlag, noMonitorFlag, urlMonitorFlag, monitorTimeoutFlag)
 	if err != nil {
-		factory.UI.Say(err.Error())
+		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	routeOverrides, err := factory.ParseRouteOverrides(routesFlag)
 	if err != nil {
-		factory.UI.Say(err.Error())
+		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
@@ -481,7 +480,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 	appEnvironmentParams.EnvironmentVariables["MEMORY_LIMIT"] = fmt.Sprintf("%dM", memoryMBFlag)
 
 	if err := factory.dropletRunner.LaunchDroplet(appName, dropletName, startCommand, startArgs, appEnvironmentParams); err != nil {
-		factory.UI.Say(fmt.Sprintf("Error launching app %s from droplet %s: %s", appName, dropletName, err))
+		factory.UI.SayLine(fmt.Sprintf("Error launching app %s from droplet %s: %s", appName, dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -494,7 +493,7 @@ func (factory *DropletRunnerCommandFactory) removeDroplet(context *cli.Context) 
 
 	err := factory.dropletRunner.RemoveDroplet(dropletName)
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error removing droplet %s: %s", dropletName, err))
+		factory.UI.SayLine(fmt.Sprintf("Error removing droplet %s: %s", dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -512,7 +511,7 @@ func (factory *DropletRunnerCommandFactory) exportDroplet(context *cli.Context) 
 
 	dropletReader, metadataReader, err := factory.dropletRunner.ExportDroplet(dropletName)
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error exporting droplet %s: %s", dropletName, err))
+		factory.UI.SayLine(fmt.Sprintf("Error exporting droplet %s: %s", dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -524,28 +523,28 @@ func (factory *DropletRunnerCommandFactory) exportDroplet(context *cli.Context) 
 
 	dropletWriter, err := os.OpenFile(dropletPath, os.O_WRONLY|os.O_CREATE, os.FileMode(0644))
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error exporting droplet '%s' to %s: %s", dropletName, dropletPath, err))
+		factory.UI.SayLine(fmt.Sprintf("Error exporting droplet '%s' to %s: %s", dropletName, dropletPath, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
 	_, err = io.Copy(dropletWriter, dropletReader)
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error exporting droplet '%s' to %s: %s", dropletName, dropletPath, err))
+		factory.UI.SayLine(fmt.Sprintf("Error exporting droplet '%s' to %s: %s", dropletName, dropletPath, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
 	metadataWriter, err := os.OpenFile(metadataPath, os.O_WRONLY|os.O_CREATE, os.FileMode(0644))
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error exporting metadata for '%s' to %s: %s", dropletName, metadataPath, err))
+		factory.UI.SayLine(fmt.Sprintf("Error exporting metadata for '%s' to %s: %s", dropletName, metadataPath, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
 	_, err = io.Copy(metadataWriter, metadataReader)
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error exporting metadata for '%s' to %s: %s", dropletName, metadataPath, err))
+		factory.UI.SayLine(fmt.Sprintf("Error exporting metadata for '%s' to %s: %s", dropletName, metadataPath, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -680,7 +679,7 @@ func (factory *DropletRunnerCommandFactory) parsePortsFromArgs(portsFlag string)
 		return convertedPorts, nil
 	}
 
-	factory.UI.Say(fmt.Sprintf("No port specified. Defaulting to 8080.\n"))
+	factory.UI.SayLine(fmt.Sprintf("No port specified. Defaulting to 8080."))
 
 	return []uint16{8080}, nil
 }

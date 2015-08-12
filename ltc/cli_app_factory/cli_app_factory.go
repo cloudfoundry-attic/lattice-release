@@ -115,10 +115,10 @@ func MakeCliApp(
 		}
 
 		if receptorUp, authorized, err := targetVerifier.VerifyTarget(config.Receptor()); !receptorUp {
-			ui.Say(fmt.Sprintf("Error connecting to the receptor. Make sure your lattice target is set, and that lattice is up and running.\n\tUnderlying error: %s", err.Error()))
+			ui.SayLine(fmt.Sprintf("Error connecting to the receptor. Make sure your lattice target is set, and that lattice is up and running.\n\tUnderlying error: %s", err.Error()))
 			return err
 		} else if !authorized {
-			ui.Say("Could not authenticate with the receptor. Please run ltc target with the correct credentials.")
+			ui.SayLine("Could not authenticate with the receptor. Please run ltc target with the correct credentials.")
 			return errors.New("Could not authenticate with the receptor.")
 		}
 		return nil
@@ -126,7 +126,7 @@ func MakeCliApp(
 
 	app.Action = defaultAction
 	app.CommandNotFound = func(c *cli.Context, command string) {
-		ui.Say(fmt.Sprintf(unknownCommand, command))
+		ui.SayLine(fmt.Sprintf(unknownCommand, command))
 		exitHandler.Exit(1)
 	}
 	app.Commands = cliCommands(ltcConfigRoot, exitHandler, config, logger, targetVerifier, ui)

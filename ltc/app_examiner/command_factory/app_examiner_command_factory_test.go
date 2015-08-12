@@ -305,11 +305,10 @@ var _ = Describe("CommandFactory", func() {
 
 			test_helpers.ExecuteCommandWithArgs(visualizeCommand, []string{})
 
-			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("Distribution\n")))
-			Expect(outputBuffer).To(test_helpers.Say("cell-1: " + colors.Green("•••") + colors.Yellow("••") + cursor.ClearToEndOfLine() + "\n"))
-			Expect(outputBuffer).To(test_helpers.Say("cell-2: " + colors.Green("••") + colors.Yellow("•") + cursor.ClearToEndOfLine() + "\n"))
-			Expect(outputBuffer).To(test_helpers.Say("cell-3: " + colors.Red("empty")))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Bold("Distribution")))
+			Expect(outputBuffer).To(test_helpers.SayLine("cell-1: " + colors.Green("•••") + colors.Yellow("••") + cursor.ClearToEndOfLine()))
+			Expect(outputBuffer).To(test_helpers.SayLine("cell-2: " + colors.Green("••") + colors.Yellow("•") + cursor.ClearToEndOfLine()))
+			Expect(outputBuffer).To(test_helpers.SayLine("cell-3: " + colors.Red("empty") + cursor.ClearToEndOfLine()))
 		})
 
 		Context("when the app examiner returns an error", func() {

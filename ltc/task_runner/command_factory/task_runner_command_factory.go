@@ -68,25 +68,25 @@ func (factory *TaskRunnerCommandFactory) MakeCancelTaskCommand() cli.Command {
 func (factory *TaskRunnerCommandFactory) submitTask(context *cli.Context) {
 	filePath := context.Args().First()
 	if filePath == "" {
-		factory.ui.Say("Path to JSON is required")
+		factory.ui.SayLine("Path to JSON is required")
 		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	jsonBytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		factory.ui.Say("Error reading file: " + err.Error())
+		factory.ui.SayLine("Error reading file: " + err.Error())
 		factory.exitHandler.Exit(exit_codes.FileSystemError)
 		return
 	}
 
 	taskName, err := factory.taskRunner.SubmitTask(jsonBytes)
 	if err != nil {
-		factory.ui.Say(fmt.Sprintf("Error submitting %s: %s", taskName, err))
+		factory.ui.SayLine(fmt.Sprintf("Error submitting %s: %s", taskName, err))
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
-	factory.ui.Say(colors.Green("Successfully submitted "+taskName) + "\n")
+	factory.ui.SayLine(colors.Green("Successfully submitted " + taskName))
 }
 
 func (factory *TaskRunnerCommandFactory) deleteTask(context *cli.Context) {
@@ -98,11 +98,11 @@ func (factory *TaskRunnerCommandFactory) deleteTask(context *cli.Context) {
 	}
 
 	if err := factory.taskRunner.DeleteTask(taskGuid); err != nil {
-		factory.ui.Say(fmt.Sprintf(colors.Red("Error deleting %s: %s\n"), taskGuid, err.Error()))
+		factory.ui.SayLine(fmt.Sprintf(colors.Red("Error deleting %s: %s"), taskGuid, err.Error()))
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
-	factory.ui.Say(colors.Green("OK"))
+	factory.ui.SayLine(colors.Green("OK"))
 }
 
 func (factory *TaskRunnerCommandFactory) cancelTask(context *cli.Context) {
@@ -114,9 +114,9 @@ func (factory *TaskRunnerCommandFactory) cancelTask(context *cli.Context) {
 	}
 
 	if err := factory.taskRunner.CancelTask(taskGuid); err != nil {
-		factory.ui.Say(fmt.Sprintf(colors.Red("Error cancelling %s: %s\n"), taskGuid, err.Error()))
+		factory.ui.SayLine(fmt.Sprintf(colors.Red("Error cancelling %s: %s"), taskGuid, err.Error()))
 		factory.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
-	factory.ui.Say(colors.Green("OK"))
+	factory.ui.SayLine(colors.Green("OK"))
 }

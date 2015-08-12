@@ -137,27 +137,27 @@ func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 func (factory *AppRunnerCommandFactory) submitLrp(context *cli.Context) {
 	filePath := context.Args().First()
 	if filePath == "" {
-		factory.UI.Say("Path to JSON is required")
+		factory.UI.SayLine("Path to JSON is required")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
 	jsonBytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error reading file: %s", err.Error()))
+		factory.UI.SayLine(fmt.Sprintf("Error reading file: %s", err.Error()))
 		factory.ExitHandler.Exit(exit_codes.FileSystemError)
 		return
 	}
 
 	lrpName, err := factory.AppRunner.SubmitLrp(jsonBytes)
 	if err != nil {
-		factory.UI.Say(fmt.Sprintf("Error creating %s: %s", lrpName, err.Error()))
+		factory.UI.SayLine(fmt.Sprintf("Error creating %s: %s", lrpName, err.Error()))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
-	factory.UI.Say(colors.Green(fmt.Sprintf("Successfully submitted %s.", lrpName)) + "\n")
-	factory.UI.Say(fmt.Sprintf("To view the status of your application: ltc status %s\n", lrpName))
+	factory.UI.SayLine(colors.Green(fmt.Sprintf("Successfully submitted %s.", lrpName)))
+	factory.UI.SayLine(fmt.Sprintf("To view the status of your application: ltc status %s", lrpName))
 }
 
 func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
@@ -196,32 +196,32 @@ func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
 	if !noRoutesFlag {
 		desiredRoutes, err = factory.ParseRouteOverrides(userDefinedRoutes)
 		if err != nil {
-			factory.UI.Say(fmt.Sprintf("%s", err))
+			factory.UI.SayLine(err.Error())
 			factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 			return
 		}
 	}
 
 	if err := factory.AppRunner.UpdateAppRoutes(appName, desiredRoutes); err != nil {
-		factory.UI.Say(fmt.Sprintf("Error updating routes: %s", err))
+		factory.UI.SayLine(fmt.Sprintf("Error updating routes: %s", err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
-	factory.UI.Say(fmt.Sprintf("Updating %s routes. You can check this app's current routes by running 'ltc status %s'", appName, appName))
+	factory.UI.SayLine(fmt.Sprintf("Updating %s routes. You can check this app's current routes by running 'ltc status %s'", appName, appName))
 }
 
 func (factory *AppRunnerCommandFactory) setAppInstances(pollTimeout time.Duration, appName string, instances int) {
 	if err := factory.AppRunner.ScaleApp(appName, instances); err != nil {
-		factory.UI.Say(fmt.Sprintf("Error Scaling App to %d instances: %s", instances, err))
+		factory.UI.SayLine(fmt.Sprintf("Error Scaling App to %d instances: %s", instances, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
-	factory.UI.Say(fmt.Sprintf("Scaling %s to %d instances \n", appName, instances))
+	factory.UI.SayLine(fmt.Sprintf("Scaling %s to %d instances", appName, instances))
 
 	if ok := factory.pollUntilAllInstancesRunning(pollTimeout, appName, instances, "scale"); ok {
-		factory.UI.Say(colors.Green("App Scaled Successfully"))
+		factory.UI.SayLine(colors.Green("App Scaled Successfully"))
 	}
 }
 
@@ -245,33 +245,33 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 }
 
 func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollTimeout time.Duration, instanceCount int, noRoutesFlag bool, routeOverrides app_runner.RouteOverrides) {
-	factory.UI.Say("Creating App: " + appName + "\n")
+	factory.UI.SayLine("Creating App: " + appName)
 
 	go factory.TailedLogsOutputter.OutputTailedLogs(appName)
 	defer factory.TailedLogsOutputter.StopOutputting()
 
 	ok := factory.pollUntilAllInstancesRunning(pollTimeout, appName, instanceCount, "start")
 	if noRoutesFlag {
-		factory.UI.Say(colors.Green(appName + " is now running.\n"))
+		factory.UI.SayLine(colors.Green(appName + " is now running."))
 		return
 	} else if ok {
-		factory.UI.Say(colors.Green(appName + " is now running.\n"))
-		factory.UI.Say("App is reachable at:\n")
+		factory.UI.SayLine(colors.Green(appName + " is now running."))
+		factory.UI.SayLine("App is reachable at:")
 	} else {
-		factory.UI.Say("App will be reachable at:\n")
+		factory.UI.SayLine("App will be reachable at:")
 	}
 
 	if routeOverrides != nil {
 		for _, route := range routeOverrides {
-			factory.UI.Say(colors.Green(factory.urlForAppName(route.HostnamePrefix)))
+			factory.UI.SayLine(colors.Green(factory.urlForAppName(route.HostnamePrefix)))
 		}
 	} else {
-		factory.UI.Say(colors.Green(factory.urlForAppName(appName)))
+		factory.UI.SayLine(colors.Green(factory.urlForAppName(appName)))
 	}
 }
 
 func (factory *AppRunnerCommandFactory) urlForAppName(name string) string {
-	return fmt.Sprintf("http://%s.%s\n", name, factory.Domain)
+	return fmt.Sprintf("http://%s.%s", name, factory.Domain)
 }
 
 func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout time.Duration, appName string, instances int, action pollingAction) bool {
@@ -279,7 +279,7 @@ func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout
 	ok := factory.pollUntilSuccess(pollTimeout, func() bool {
 		numberOfRunningInstances, placementError, _ := factory.AppExaminer.RunningAppInstancesInfo(appName)
 		if placementError {
-			factory.UI.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
+			factory.UI.SayLine(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity."))
 			placementErrorOccurred = true
 			return true
 		}
@@ -291,13 +291,11 @@ func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout
 		return false
 	} else if !ok {
 		if action == pollingStart {
-			factory.UI.Say(colors.Red("Timed out waiting for the container to come up."))
-			factory.UI.SayNewLine()
+			factory.UI.SayLine(colors.Red("Timed out waiting for the container to come up."))
 			factory.UI.SayLine("This typically happens because docker layers can take time to download.")
 			factory.UI.SayLine("Lattice is still downloading your application in the background.")
 		} else {
-			factory.UI.Say(colors.Red("Timed out waiting for the container to scale."))
-			factory.UI.SayNewLine()
+			factory.UI.SayLine(colors.Red("Timed out waiting for the container to scale."))
 			factory.UI.SayLine("Lattice is still scaling your application in the background.")
 		}
 		factory.UI.SayLine(fmt.Sprintf("To view logs:\n\tltc logs %s", appName))

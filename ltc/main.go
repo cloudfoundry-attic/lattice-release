@@ -7,8 +7,6 @@ import (
 )
 
 func main() {
-	defer os.Stdout.Write([]byte("\n"))
-
 	if err := setup_cli.NewCliApp().Run(os.Args); err != nil {
 		os.Exit(1)
 	}
