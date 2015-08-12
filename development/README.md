@@ -10,7 +10,7 @@ If you have not developed a golang project before, please see the [Golang docs](
 1. [Golang](https://golang.org/)
 1. [Terraform](http://terraform.io)
 1. [Vagrant](http://vagrantup.com) with the default Virtualbox provider
-1. [Docker](https://docs.docker.com/installation/)
+1. [Docker](https://docs.docker.com/installation/) (Either a Linux-local dockerd, or on OSX, via [boot2docker](http://boot2docker.io))
 
 ### Build Lattice from source
 

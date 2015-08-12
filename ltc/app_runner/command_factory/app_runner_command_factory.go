@@ -25,7 +25,9 @@ type pollingAction string
 
 const (
 	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a comma-delimited list of integers between 0-65535."
+	InvalidRoutePortErrorMessage     = "Invalid port specified. Ports must be a positive integer less than 65536."
 	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format port:route"
+	MalformedTcpRouteErrorMessage    = "Malformed TCP route. A TCP Route must be of the format container_Port:external_port"
 	MustSetMonitoredPortErrorMessage = "Must set monitor-port when specifying multiple exposed ports unless --no-monitor is set."
 	MonitorPortNotExposed            = "Must have an exposed port that matches the monitored port"
 
@@ -244,7 +246,8 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	}
 }
 
-func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollTimeout time.Duration, instanceCount int, noRoutesFlag bool, routeOverrides app_runner.RouteOverrides) {
+func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollTimeout time.Duration,
+	instanceCount int, noRoutesFlag bool, routeOverrides app_runner.RouteOverrides, tcpRoutes app_runner.TcpRoutes) {
 	factory.UI.Say("Creating App: " + appName + "\n")
 
 	go factory.TailedLogsOutputter.OutputTailedLogs(appName)
@@ -260,7 +263,11 @@ func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollT
 	} else {
 		factory.UI.Say("App will be reachable at:\n")
 	}
-
+	if tcpRoutes != nil {
+		for _, tcpRoute := range tcpRoutes {
+			factory.UI.Say(colors.Green(factory.externalPortMappingForApp(tcpRoute.ExternalPort, tcpRoute.Port)))
+		}
+	}
 	if routeOverrides != nil {
 		for _, route := range routeOverrides {
 			factory.UI.Say(colors.Green(factory.urlForAppName(route.HostnamePrefix)))
@@ -268,6 +275,10 @@ func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollT
 	} else {
 		factory.UI.Say(colors.Green(factory.urlForAppName(appName)))
 	}
+}
+
+func (factory *AppRunnerCommandFactory) externalPortMappingForApp(externalPort uint16, containerPort uint16) string {
+	return fmt.Sprintf("External TCP Port %d mapped to application port %d\n", externalPort, containerPort)
 }
 
 func (factory *AppRunnerCommandFactory) urlForAppName(name string) string {
@@ -354,6 +365,46 @@ func (factory *AppRunnerCommandFactory) grabVarFromEnv(name string) string {
 		}
 	}
 	return ""
+}
+
+func (factory *AppRunnerCommandFactory) ParseTcpRoutes(tcpRoutesFlag string) (app_runner.TcpRoutes, error) {
+	var tcpRoutes app_runner.TcpRoutes
+
+	if tcpRoutesFlag == "" {
+		return tcpRoutes, nil
+	}
+
+	for _, tcpRoute := range strings.Split(tcpRoutesFlag, ",") {
+		if tcpRoute == "" {
+			continue
+		}
+		portsArr := strings.Split(tcpRoute, ":")
+		if len(portsArr) < 2 {
+			return nil, errors.New(MalformedTcpRouteErrorMessage)
+		}
+		containerPort, err := factory.getPort(portsArr[0])
+		if err != nil {
+			return nil, err
+		}
+		externalPort, err := factory.getPort(portsArr[1])
+		if err != nil {
+			return nil, err
+		}
+		tcpRoutes = append(tcpRoutes, app_runner.TcpRoute{ExternalPort: externalPort, Port: containerPort})
+	}
+
+	return tcpRoutes, nil
+}
+
+func (factory *AppRunnerCommandFactory) getPort(port string) (uint16, error) {
+	mayBePort, err := strconv.Atoi(port)
+	if err != nil {
+		return 0, errors.New(InvalidRoutePortErrorMessage)
+	}
+	if mayBePort <= 0 || mayBePort > 65535 {
+		return 0, errors.New(InvalidRoutePortErrorMessage)
+	}
+	return uint16(mayBePort), nil
 }
 
 func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes string) (app_runner.RouteOverrides, error) {

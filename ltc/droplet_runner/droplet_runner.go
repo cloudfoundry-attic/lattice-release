@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	DropletStack    = "cflinuxfs2"
-	DropletRootFS   = "preloaded:" + DropletStack
+	DropletStack  = "cflinuxfs2"
+	DropletRootFS = "preloaded:" + DropletStack
 )
 
 //go:generate counterfeiter -o fake_droplet_runner/fake_droplet_runner.go . DropletRunner
