@@ -118,7 +118,7 @@ var _ = Describe("CliAppFactory", func() {
 
 				cliApp.CommandNotFound(testContext, "do_it")
 
-				Expect(outputBuffer).To(test_helpers.Say("ltc: 'do_it' is not a registered command. See 'ltc help'\n\n"))
+				Expect(outputBuffer).To(test_helpers.Say("ltc: 'do_it' is not a registered command. See 'ltc help'"))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{1}))
 			})
 		})
