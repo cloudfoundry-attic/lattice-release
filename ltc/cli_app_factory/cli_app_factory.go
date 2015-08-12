@@ -61,7 +61,7 @@ const (
 	AppName           = "ltc"
 	latticeCliAuthor  = "Pivotal"
 	latticeCliHomeVar = "LATTICE_CLI_HOME"
-	unknownCommand    = "ltc: '%s' is not a registered command. See 'ltc help'\n\n"
+	unknownCommand    = "ltc: '%s' is not a registered command. See 'ltc help'"
 )
 
 func init() {
