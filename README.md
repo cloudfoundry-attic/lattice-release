@@ -182,14 +182,15 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 * Credentials for your choice of IaaS
 * [Terraform](https://www.terraform.io/intro/getting-started/install.html)
 
-  Lattice | Recommended | Not Supported
-  ------------|-------------|--------------
-  v0.3.0 | Terraform 0.6.1 |
-  v0.2.7 | Terraform 0.6.1 |
-  v0.2.6 | Terraform 0.5.3 | Terraform 0.6
-  v0.2.5 | Terraform 0.5.0 | Terraform 0.6
-  v0.2.4 | Terraform 0.4.2 | Terraform 0.5
-  v0.2.3 | Terraform 0.3.7 | Terraform 0.4
+  Lattice | Compatible Versions
+  --------|-----------------------
+  v0.3.1  | Terraform 0.6.2+
+  v0.3.0  | Terraform 0.6.1
+  v0.2.7  | Terraform 0.6.1
+  v0.2.6  | Terraform 0.5.0-0.5.3
+  v0.2.5  | Terraform 0.5.0-0.5.3
+  v0.2.4  | Terraform 0.4.1-0.4.2
+  v0.2.3  | Terraform 0.3.5-0.3.7
 
 ## Deploying
 
