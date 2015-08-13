@@ -36,9 +36,10 @@ go get github.com/maxbrunsfeld/counterfeiter
 pushd $GOPATH/src/github.com/cloudfoundry-incubator >/dev/null
   ln -sfh ../../../../.. lattice
 
-  pushd lattice >/dev/null
-    go get -v ./cell-helpers/davtool/...
-    go get -v ./cell-helpers/tee2metron/...
+  pushd lattice/cell-helpers >/dev/null
+    godep restore
+    go install ./davtool/
+    go install ./tee2metron/
   popd >/dev/null
 
   pushd lattice/ltc >/dev/null
