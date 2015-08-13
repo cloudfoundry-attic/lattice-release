@@ -48,7 +48,7 @@ pushd $TERRAFORM_TMP_DIR
     terraform apply || terraform apply
 popd
 
-sleep 180
+sleep 60
 
 tar xzf ltc-tar-experimental/ltc-v${LTC_VERSION}.tgz
 
