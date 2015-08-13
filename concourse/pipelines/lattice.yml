@@ -117,12 +117,31 @@ jobs:
             from: lattice/build/ltc-v(.*).tgz
             to: /experimental/
 
-  - name: cluster-test
+  - name: cluster-test-vagrant
     plan:
       - aggregate:
         - get: lattice
-          trigger: true
           passed: [compile]
+          trigger: true
+        - get: lattice-tar-experimental
+          passed: [compile]
+        - get: ltc-tar-experimental
+          passed: [compile]
+      - aggregate:
+        - task: cluster-test-vagrant
+          file: lattice/concourse/tasks/cluster-test-vagrant/task.yml
+          config:
+            params:
+              AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+              AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+
+  - name: cluster-test-terraform
+    plan:
+      - aggregate:
+        - get: lattice
+          passed: [compile]
+          trigger: true
         - get: lattice-tar-experimental
           passed: [compile]
         - get: ltc-tar-experimental
@@ -135,13 +154,6 @@ jobs:
               AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
               AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
               AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
-        - task: cluster-test-vagrant
-          file: lattice/concourse/tasks/cluster-test-vagrant/task.yml
-          config:
-            params:
-              AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
-              AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
-              AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
 
   - name: publish-nightly
     plan:
@@ -149,11 +161,17 @@ jobs:
         trigger: true
       - aggregate:
         - get: lattice
-          passed: [cluster-test]
+          passed:
+          - cluster-test-vagrant
+          - cluster-test-terraform
         - get: lattice-tar-experimental
-          passed: [cluster-test]
+          passed:
+          - cluster-test-vagrant
+          - cluster-test-terraform
         - get: ltc-tar-experimental
-          passed: [cluster-test]
+          passed:
+          - cluster-test-vagrant
+          - cluster-test-terraform
       - aggregate:
         - task: generate-terraform-templates
           file: lattice/concourse/tasks/generate-terraform-templates/task.yml
