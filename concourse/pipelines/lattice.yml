@@ -1,0 +1,29 @@
+resources:
+  - name: lattice
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry-incubator/lattice.git
+      branch: concourse
+
+jobs:
+  - name: unit-test-ltc
+    plan:
+      - get: lattice
+        trigger: true
+      - task: unit-test-ltc
+        file: lattice/concourse/tasks/unit-test-ltc/task.yml
+
+  - name: unit-test-s3tool
+    plan:
+      - get: lattice
+        trigger: true
+      - task: unit-test-s3tool
+        file: lattice/concourse/tasks/unit-test-s3tool/task.yml
+
+  - name: unit-test-tee2metron
+    plan:
+      - get: lattice
+        trigger: true
+      - task: unit-test-tee2metron
+        file: lattice/concourse/tasks/unit-test-tee2metron/task.yml
+

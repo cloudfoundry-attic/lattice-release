@@ -1,15 +1,14 @@
-Vagrantfile-e
 .vagrant
 .idea
 *.iml
-bin/linux_amd64/*
+.agignore
+
 lattice.tgz
 ltc.tar.gz
-.system-domain
 .lattice-environment
-*.box
-*.iso
 /build
+/images/**/*.box
+packer_cache
 
 *.test
 *.coverprofile
@@ -30,3 +29,5 @@ lattice.gce.tf
 !terraform/aws/example/lattice.aws.tf
 !terraform/digitalocean/example/lattice.digitalocean.tf
 !terraform/gce/example/lattice.gce.tf
+
+/concourse/credentials.yml
