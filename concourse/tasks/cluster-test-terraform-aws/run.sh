@@ -17,7 +17,7 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
     "module": {
         "lattice-aws": {
             "source": "${LATTICE_DIR}/terraform/aws",
-            "local_lattice_tar_path": "${PWD}/lattice-tar-experimental/lattice-${LATTICE_VERSION}.tgz",
+            "local_lattice_tar_path": "${PWD}/lattice-tar-experimental/lattice-v${LATTICE_VERSION}.tgz",
             "num_cells": "1",
             "aws_access_key": "${AWS_ACCESS_KEY_ID}",
             "aws_secret_key": "${AWS_SECRET_ACCESS_KEY}",
@@ -50,7 +50,7 @@ popd
 
 sleep 180
 
-tar xzf ltc-tar-experimental/ltc-${LTC_VERSION}.tgz
+tar xzf ltc-tar-experimental/ltc-v${LTC_VERSION}.tgz
 
 pushd $TERRAFORM_TMP_DIR
     LATTICE_TARGET=$(terraform output lattice_target)
