@@ -5,4 +5,7 @@ inputs:
 - name: lattice
 run:
   path: lattice/concourse/tasks/cluster-test-terraform/run.sh
-
+  params:
+    AWS_ACCESS_KEY_ID: some-access-key-id
+    AWS_SECRET_ACCESS_KEY: some-secret-access-key
+    VAGRANT_SSH_KEY: some-vagrant-ssh-key

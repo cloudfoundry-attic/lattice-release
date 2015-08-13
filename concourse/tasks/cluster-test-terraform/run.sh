@@ -11,7 +11,7 @@ mkdir -p $TF_WORKING_DIR
 
 trap cleanup EXIT
 
-cp concourse-key/concourse-test-v0.pem $TF_WORKING_DIR/
+cat <<< "$VAGRANT_SSH_KEY" > $TF_WORKING_DIR/concourse-test.pem
 
 printf '{
     "module":{
@@ -23,7 +23,7 @@ printf '{
             "aws_secret_key": "%s",
             "aws_region": "us-east-1",
             "aws_key_name": "concourse-test",
-            "aws_ssh_private_key_file": "%s/concourse-test-v0.pem"
+            "aws_ssh_private_key_file": "%s/concourse-test.pem"
         }
     }
     "output": {
