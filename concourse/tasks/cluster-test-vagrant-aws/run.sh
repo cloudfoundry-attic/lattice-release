@@ -19,9 +19,6 @@ vagrant box add lattice/ubuntu-trusty-64 --provider=aws
 cp lattice-tar-experimental/lattice-*.tgz $VAGRANT_TMP_DIR/lattice.tgz
 cp lattice/Vagrantfile $VAGRANT_TMP_DIR/
 
-cleanup() { ( cd $VAGRANT_TMP_DIR && vagrant destroy -f ) }
-trap cleanup EXIT
-
 pushd $VAGRANT_TMP_DIR
     vagrant up --provider=aws
     export $(vagrant ssh -c "grep SYSTEM_DOMAIN /var/lattice/setup/lattice-environment" | egrep -o '(SYSTEM_DOMAIN=.+\.io)')

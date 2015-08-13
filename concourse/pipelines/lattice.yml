@@ -150,6 +150,14 @@ jobs:
             AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
             AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
             AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+        ensure:
+          task: vagrant-aws-cleanup
+          file: lattice/concourse/tasks/vagrant-aws-cleanup/run.sh
+          config:
+            params:
+              AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+              AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
 
   - name: cluster-test-terraform-aws
     plan:
