@@ -9,26 +9,12 @@ echo "Installing Lattice ($lattice_version) (Diego $diego_version) - Lattice Cel
 
 cell_build_path=/tmp/lattice-build/cell
 
-install_dependencies() {
-    echo "Installing Dependencies..."
-    pushd /tmp
-        SHADOW_TAR_OBJECT_ID="8f17023f-2a94-4d98-a737-ddbf166e7188"
-        wget "http://go-diego-go.s3.amazonaws.com/${SHADOW_TAR_OBJECT_ID}" -O - | tar xzf -
-        pushd shadow-4.2.1
-            ./configure --prefix=/var/lattice
-            make
-            make install
-        popd
-    popd
-}
-
 #-n so we don't overwrite the brain upstart scripts in collocated installation.
 #In collocated, Consul should run only in server mode and not use the cell consul upstart which is client-only mode
 cp -n $cell_build_path/upstart/* /etc/init
 cp -n $cell_build_path/bin/* /usr/local/bin
 cp -a $cell_build_path/cell_health_check /var/lattice
 
-mkdir -p /var/lattice/garden
 mkdir -p /var/lattice/garden/depot
 mkdir -p /var/lattice/garden/rootfs
 mkdir -p /var/lattice/garden/overlays
@@ -43,7 +29,6 @@ cp -an $cell_build_path/config /var/lattice
 mkdir -p /var/lattice/run
 mkdir -p /var/lattice/log
 
-install_dependencies &> /var/lattice/log/cell-install.log
 start bootstrap
 
 touch /var/lattice/ready
