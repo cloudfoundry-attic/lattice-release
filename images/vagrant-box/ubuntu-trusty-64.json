@@ -7,6 +7,19 @@
     },
     "builders": [
         {
+            "type": "amazon-ebs",
+            "region": "us-east-1",
+            "source_ami": "ami-f63b3e9e",
+            "instance_type": "m3.medium",
+            "ami_name": "ubuntu-trusty-64-v{{isotime \"20060102-0304\"}}-vagrant",
+            "ami_groups": ["all"],
+            "ami_regions": [
+                "us-west-1",
+                "us-west-2"
+            ],
+            "ssh_username": "ubuntu"
+        },
+        {
             "type": "vmware-iso",
             "headless": true,
             "vm_name": "packer-ubuntu-14.04-amd64",
@@ -81,14 +94,28 @@
             "type": "shell",
             "execute_command": "sudo {{.Path}}",
             "inline": [
-                "apt-get update",
-                "apt-get -y upgrade",
-                "apt-get -y install build-essential linux-headers-$(uname -r)",
-
+                "apt-get -y update",
+                "apt-get -y --force-yes upgrade",
+                "apt-get -y update",
+                "apt-get -y install build-essential linux-headers-$(uname -r)"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["vmware-iso", "virtualbox-iso"],
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
                 "mkdir -p /home/vagrant/.ssh",
                 "wget --no-check-certificate -O authorized_keys 'https://github.com/mitchellh/vagrant/raw/master/keys/vagrant.pub'",
                 "mv authorized_keys /home/vagrant/.ssh/",
                 "chown -R vagrant /home/vagrant/.ssh",
+                "apt-get -y install linux-image-extra-$(uname -r)"
+            ]
+        },
+        {
+            "type": "shell",
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
                 "echo 'UseDNS no' >> /etc/ssh/sshd_config"
             ]
         },

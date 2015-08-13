@@ -40,7 +40,6 @@ stage_cflinuxfs2_rootfs() {
 
 COMPONENT_TO_INSTALL=$1
 PATH_TO_LATTICE_TAR=$2
-LATTICE_TAR_URL=$3
 
 if [ $COMPONENT_TO_INSTALL != "cell" ] && [ $COMPONENT_TO_INSTALL != "brain" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
     echo "Incorrect Usage. Must install either cell or brain or both.
@@ -49,18 +48,6 @@ if [ $COMPONENT_TO_INSTALL != "cell" ] && [ $COMPONENT_TO_INSTALL != "brain" ] &
            install-from-tar collocated [LATTICE_TAR_PATH]
     "
     exit 2
-fi
-
-if [ -z "${PATH_TO_LATTICE_TAR}" ] && [ -n "${LATTICE_TAR_URL}" ]; then
-    PATH_TO_LATTICE_TAR=/tmp/lattice.tgz
-    echo -n "Downloading $LATTICE_TAR_URL .."
-    wget $LATTICE_TAR_URL --quiet -O $PATH_TO_LATTICE_TAR && echo "DONE!"
-    ## TODO: check for 404, default to latest unstable build
-elif [ -z "${PATH_TO_LATTICE_TAR}" ]; then
-    PATH_TO_LATTICE_TAR=/tmp/lattice.tgz
-    LATTICE_TAR_URL="https://s3-us-west-2.amazonaws.com/lattice/unstable/latest/lattice.tgz"
-    echo -n "Downloading $LATTICE_TAR_URL .."
-    wget $LATTICE_TAR_URL --quiet -O $PATH_TO_LATTICE_TAR && echo "DONE!"
 fi
 
 tar -xf $PATH_TO_LATTICE_TAR -C /tmp
