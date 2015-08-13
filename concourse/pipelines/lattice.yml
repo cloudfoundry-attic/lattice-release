@@ -102,8 +102,6 @@ jobs:
           trigger: true
         - get: diego-release
         - get: cf-release
-#        - get: lattice-tar-experimental # remove me
-#        - get: ltc-tar-experimental # remove me
       - aggregate:
         - task: compile-lattice-tar
           file: lattice/concourse/tasks/compile-lattice-tar/task.yml

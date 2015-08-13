@@ -27,8 +27,6 @@ Vagrant.configure("2") do |config|
 
     override.ssh.username = "ubuntu"
     override.ssh.private_key_path = ENV["AWS_SSH_PRIVATE_KEY_PATH"]
-
-    #config.vm.synced_folder ".", "/vagrant", type: "rsync"
     override.nfs.functional = false
   end
 
@@ -56,7 +54,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.box = "lattice/ubuntu-trusty-64"
-  config.vm.box_version = '0'
+  config.vm.box_version = '0.3.0'
 
   config.vm.provision "shell" do |s|
     s.inline = <<-SCRIPT
