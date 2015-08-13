@@ -30,6 +30,44 @@ resources:
       private: true
       access_key_id: {{s3-access-key-id}}
       secret_access_key: {{s3-secret-access-key}}
+  - name: lattice-tar-nightly
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: nightly/lattice-v(.*).tgz
+      private: true
+      access_key_id: {{s3-access-key-id}}
+      secret_access_key: {{s3-secret-access-key}}
+  - name: ltc-tar-nightly
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: nightly/ltc-v(.*).tgz
+      private: true
+      access_key_id: {{s3-access-key-id}}
+      secret_access_key: {{s3-secret-access-key}}
+  - name: terraform-templates-nightly
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: nightly/lattice-v(.*).tf
+      private: true
+      access_key_id: {{s3-access-key-id}}
+      secret_access_key: {{s3-secret-access-key}}
+  - name: vagrantfile-nightly
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: nightly/Vagrantfile-v(.*)
+      private: true
+      access_key_id: {{s3-access-key-id}}
+      secret_access_key: {{s3-secret-access-key}}
+  - name: publish-nightly-timer
+    type: time
+    source:
+      start: 00:00 -0500
+      stop: 01:00 -0500
+      interval: 1h
 
 jobs:
   - name: unit-test-ltc
@@ -78,4 +116,74 @@ jobs:
           params:
             from: lattice/build/ltc-v(.*).tgz
             to: /experimental/
+
+  - name: cluster-test
+    plan:
+      - aggregate:
+        - get: lattice
+          trigger: true
+          passed: [compile]
+        - get: lattice-tar-experimental
+          passed: [compile]
+        - get: ltc-tar-experimental
+          passed: [compile]
+      - aggregate:
+        - task: cluster-test-terraform
+          file: lattice/concourse/tasks/cluster-test-terraform/task.yml
+        - task: cluster-test-vagrant
+          file: lattice/concourse/tasks/cluster-test-vagrant/task.yml
+
+  - name: publish-nightly
+    plan:
+      - get: publish-nightly-timer
+        trigger: true
+      - aggregate:
+        - get: lattice
+          passed: [cluster-test]
+        - get: lattice-tar-experimental
+          passed: [cluster-test]
+        - get: ltc-tar-experimental
+          passed: [cluster-test]
+      - aggregate:
+        - task: generate-terraform-templates
+          file: lattice/concourse/tasks/generate-terraform-templates/task.yml
+        - task: generate-vagrantfile
+          file: lattice/concourse/tasks/generate-vagrantfile/task.yml
+      - aggregate:
+        - put: lattice-tar-nightly
+          params:
+            from: lattice-tar-experimental/lattice-v(.*).tgz
+            to: /nightly/
+        - put: lattice-tar-nightly
+          params:
+            from: lattice-tar-experimental/lattice-v(.*).tgz
+            to: /nightly/lattice-latest.tgz
+        - put: ltc-tar-nightly
+          params:
+            from: ltc-tar-experimental/ltc-v(.*).tgz
+            to: /nightly/
+        - put: ltc-tar-nightly
+          params:
+            from: ltc-tar-experimental/ltc-v(.*).tgz
+            to: /nightly/ltc-latest.tgz
+        - put: terraform-templates-nightly
+          params:
+            from: lattice-v(.*).aws.tf
+            to: /nightly/
+        - put: terraform-templates-nightly
+          params:
+            from: lattice-v(.*).digitalocean.tf
+            to: /nightly/
+        - put: terraform-templates-nightly
+          params:
+            from: lattice-v(.*).google.tf
+            to: /nightly/
+        - put: terraform-templates-nightly
+          params:
+            from: lattice-v(.*).openstack.tf
+            to: /nightly/
+        - put: vagrantfile-nightly
+          params:
+            from: Vagrantfile-v(.*)
+            to: /nightly/
 
