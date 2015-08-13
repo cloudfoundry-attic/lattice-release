@@ -37,12 +37,10 @@ variable "num_cells" {
 
 variable "lattice_username" {
     description = "Lattice username."
-    default = "user"
 }
 
 variable "lattice_password" {
     description = "Lattice password."
-    default = "pass"
 }
 
 variable "local_lattice_tar_path" {

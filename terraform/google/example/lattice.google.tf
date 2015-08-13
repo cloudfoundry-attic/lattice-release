@@ -1,6 +1,10 @@
 module "lattice-google" {
     source = "github.com/cloudfoundry-incubator/lattice//terraform//google?ref=v0.3.0-34-gd0965ae"
 
+    # Specify an API username and password for your lattice cluster
+    # lattice_username = "<CHANGE-ME>"
+    # lattice_password = "<CHANGE-ME>"
+
     # Path to the JSON file used to describe your account credentials, downloaded from Google Cloud Console
     gce_account_file = "<CHANGE-ME>"
 
@@ -26,11 +30,6 @@ module "lattice-google" {
 
     # Google Compute Engine zone
     # gce_zone = "<CHANGE-ME>"
-
-    # By default, the lattice username is "user" and the password is "pass".
-    # Uncomment these settings to change the default credentials. 
-    # lattice_username = ""
-    # lattice_password = ""
 }
 
 output "lattice_target" {

@@ -1,6 +1,10 @@
 module "lattice-aws" {
     source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=v0.3.0-34-gd0965ae"
 
+    # Specify an API username and password for your lattice cluster
+    # lattice_username = "<CHANGE-ME>"
+    # lattice_password = "<CHANGE-ME>"
+
     # AWS access key
     aws_access_key = "<CHANGE-ME>"
 
@@ -26,11 +30,6 @@ module "lattice-aws" {
 
     # AWS region (e.g., us-west-1)
     # aws_region = "<CHANGE-ME>"
-
-    # By default, the lattice username is "user" and the password is "pass".
-    # Uncomment these settings to change the default credentials. 
-    # lattice_username = ""
-    # lattice_password = ""
 }
 
 output "lattice_target" {

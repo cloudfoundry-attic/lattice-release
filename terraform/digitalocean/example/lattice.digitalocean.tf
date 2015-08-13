@@ -1,6 +1,10 @@
 module "lattice-digitalocean" {
     source = "github.com/cloudfoundry-incubator/lattice//terraform//digitalocean?ref=v0.3.0-34-gd0965ae"
 
+    # Specify an API username and password for your lattice cluster
+    # lattice_username = "<CHANGE-ME>"
+    # lattice_password = "<CHANGE-ME>"
+
     # Digital Ocean API token
     do_token = "<CHANGE-ME>"
 
@@ -23,11 +27,6 @@ module "lattice-digitalocean" {
 
     # Digital Ocean region
     # do_region = "<CHANGE-ME>"
-
-    # By default, the lattice username is "user" and the password is "pass".
-    # Uncomment these settings to change the default credentials. 
-    # lattice_username = ""
-    # lattice_password = ""
 }
 
 output "lattice_target" {

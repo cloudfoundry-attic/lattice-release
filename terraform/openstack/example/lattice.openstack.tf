@@ -1,6 +1,10 @@
 module "lattice-openstack" {
     source = "github.com/cloudfoundry-incubator/lattice//terraform//openstack?ref=v0.3.0-34-gd0965ae"
 
+    # Specify an API username and password for your lattice cluster
+    # lattice_username = "<CHANGE-ME>"
+    # lattice_password = "<CHANGE-ME>"
+
     # OpenStack User Account
     openstack_access_key = "<CHANGE-ME>"
 
@@ -48,11 +52,6 @@ module "lattice-openstack" {
 
     # Openstack Region (Blank default for 'no region' installations)
     # openstack_region = "<CHANGE-ME>"
-
-    # By default, the lattice username is "user" and the password is "pass".
-    # Uncomment these settings to change the default credentials. 
-    # lattice_username = ""
-    # lattice_password = ""
 }
 
 output "lattice_target" {
