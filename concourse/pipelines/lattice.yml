@@ -65,8 +65,8 @@ resources:
   - name: publish-nightly-timer
     type: time
     source:
-      start: 00:00 -0500
-      stop: 01:00 -0500
+      start: 18:00 -0500
+      stop: 19:00 -0500
       interval: 1h
 
 jobs:
