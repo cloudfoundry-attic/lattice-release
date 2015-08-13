@@ -139,6 +139,10 @@ jobs:
       - aggregate:
         - task: cluster-test-terraform
           file: lattice/concourse/tasks/cluster-test-terraform/task.yml
+          config:
+            params:
+              AWS_ACCESS_KEY_ID: {{s3-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{s3-secret-access-key}}
         - task: cluster-test-vagrant
           file: lattice/concourse/tasks/cluster-test-vagrant/task.yml
           config:
