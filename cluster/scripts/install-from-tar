@@ -54,13 +54,11 @@ tar -xf $PATH_TO_LATTICE_TAR -C /tmp
 
 /tmp/lattice-build/scripts/install-common
 
+
+# check for opt-in to condenser 
 export $(cat /var/lattice/setup/lattice-environment)
 
-if [ "$DISABLE_BUILDPACKS" != "1" ]; then
-    install_condenser
-else
-    /etc/init.d/lighttpd stop
-fi
+install_condenser
 
 if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
     /tmp/lattice-build/scripts/install-brain

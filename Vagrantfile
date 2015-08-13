@@ -66,7 +66,6 @@ Vagrant.configure("2") do |config|
       echo "SYSTEM_DOMAIN=$SYSTEM_DOMAIN" >> /var/lattice/setup/lattice-environment
       echo "GARDEN_EXTERNAL_IP=$PRIVATE_IP" >> /var/lattice/setup/lattice-environment
       echo "LATTICE_CELL_ID=cell-01" >> /var/lattice/setup/lattice-environment
-      echo "DISABLE_BUILDPACKS=#{ENV['DISABLE_BUILDPACKS'].to_s}" >> /var/lattice/setup/lattice-environment
     SCRIPT
   end
 
