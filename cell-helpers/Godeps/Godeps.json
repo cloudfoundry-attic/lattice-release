@@ -1,0 +1,88 @@
+{
+	"ImportPath": "github.com/cloudfoundry-incubator/lattice/cell-helpers",
+	"GoVersion": "go1.4.2",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/aws",
+			"Comment": "v0.7.4-2-gf93c0ea",
+			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
+			"Comment": "v0.7.4-2-gf93c0ea",
+			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
+			"Comment": "v0.7.4-2-gf93c0ea",
+			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
+			"Comment": "v0.7.4-2-gf93c0ea",
+			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/restxml",
+			"Comment": "v0.7.4-2-gf93c0ea",
+			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
+			"Comment": "v0.7.4-2-gf93c0ea",
+			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
+			"Comment": "v0.7.4-2-gf93c0ea",
+			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/s3",
+			"Comment": "v0.7.4-2-gf93c0ea",
+			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/dropsonde",
+			"Rev": "579dee9d84217b4bb011dd4c2d0855e49b019ed6"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/gosteno",
+			"Comment": "scotty_09012012-41-g5c1406e",
+			"Rev": "5c1406e9ea0ab919f92e1b194169565def41147b"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/sonde-go/control",
+			"Rev": "06a12a31436a1d91d00fad354682a38cc0503636"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/sonde-go/events",
+			"Rev": "06a12a31436a1d91d00fad354682a38cc0503636"
+		},
+		{
+			"ImportPath": "github.com/gogo/protobuf/proto",
+			"Rev": "5ba1012ef3868db1b9ff374280a558c1bfff39c3"
+		},
+		{
+			"ImportPath": "github.com/nu7hatch/gouuid",
+			"Rev": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo",
+			"Comment": "v1.2.0-beta",
+			"Rev": "0efbdc3a60137c0757b84e994a56037378170913"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega",
+			"Comment": "v1.0-48-g766f404",
+			"Rev": "766f4042b942146e90594d145c5071fa92c0aa9a"
+		},
+		{
+			"ImportPath": "github.com/vaughan0/go-ini",
+			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
+		}
+	]
+}

@@ -1,0 +1,11 @@
+package control;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+/// A HeartbeatRequest command elicits a heartbeat from a component or app. When a HeartbeatRequest is received, a Heartbeat event MUST be returned with controlMessageIdentifier set to the UUID received in the request.
+message HeartbeatRequest {
+}

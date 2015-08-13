@@ -12,7 +12,5 @@ export GOPATH=$LATTICE_DIR/ltc/Godeps/_workspace:$PWD/go
 export PATH=$GOBIN:$PATH
 
 go install github.com/onsi/ginkgo/ginkgo
-go get -v -d github.com/aws/aws-sdk-go/...
-
 ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race $LATTICE_DIR/ltc
 

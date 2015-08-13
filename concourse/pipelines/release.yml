@@ -79,10 +79,21 @@ jobs:
       - aggregate:
         - task: unit-test-ltc
           file: lattice/concourse/tasks/unit-test-ltc/task.yml
-        - task: unit-test-s3tool
-          file: lattice/concourse/tasks/unit-test-s3tool/task.yml
-        - task: unit-test-tee2metron
-          file: lattice/concourse/tasks/unit-test-tee2metron/task.yml
+        - task: unit-test-cell-helper-davtool
+          file: lattice/concourse/tasks/unit-test-cell-helper/task.yml
+          config:
+            params:
+              CELL_HELPER: davtool
+        - task: unit-test-cell-helper-s3tool
+          file: lattice/concourse/tasks/unit-test-cell-helper/task.yml
+          config:
+            params:
+              CELL_HELPER: s3tool
+        - task: unit-test-cell-helper-tee2metron
+          file: lattice/concourse/tasks/unit-test-cell-helper/task.yml
+          config:
+            params:
+              CELL_HELPER: tee2metron
 
   - name: compile
     plan:
