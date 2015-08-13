@@ -2,7 +2,6 @@
 
 set -x -e
 
-
 export LATTICE_DIR=$PWD/lattice
 export DOT_LATTICE_DIR=$HOME/.lattice
 export LATTICE_VERSION=$(cat lattice-tar-experimental/version)
@@ -11,7 +10,7 @@ export TERRAFORM_TMP_DIR=$PWD/terraform-tmp
 
 mkdir -p $TERRAFORM_TMP_DIR $DOT_LATTICE_DIR
 
-cat <<< "$VAGRANT_SSH_KEY" > $TERRAFORM_TMP_DIR/concourse-test.pem
+cat <<< "$AWS_SSH_PRIVATE_KEY" > $TERRAFORM_TMP_DIR/concourse-test.pem
 
 cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
 {

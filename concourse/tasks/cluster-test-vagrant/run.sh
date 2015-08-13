@@ -5,7 +5,7 @@ set -x -e
 export LATTICE_DIR=$PWD/lattice
 export AWS_SSH_PRIVATE_KEY_PATH=$PWD/vagrant.pem
 
-cat <<< "$VAGRANT_SSH_KEY" > $PWD/vagrant.pem
+cat <<< "$AWS_SSH_PRIVATE_KEY" > "$AWS_SSH_PRIVATE_KEY_PATH"
 
 curl -LO https://dl.bintray.com/mitchellh/vagrant/vagrant_1.7.4_x86_64.deb
 dpkg -i vagrant_1.7.4_x86_64.deb

@@ -118,10 +118,20 @@ jobs:
         - get: ltc-tar-experimental-release
           passed: [compile]
       - aggregate:
-        - task: cluster-test-terraform
-          file: lattice/concourse/tasks/cluster-test-terraform/task.yml
+        - task: cluster-test-terraform-aws
+          file: lattice/concourse/tasks/cluster-test-terraform-aws/task.yml
+          config:
+            params:
+              AWS_ACCESS_KEY_ID: {{s3-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{s3-secret-access-key}}
+              AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
         - task: cluster-test-vagrant
           file: lattice/concourse/tasks/cluster-test-vagrant/task.yml
+          config:
+            params:
+              AWS_ACCESS_KEY_ID: {{s3-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{s3-secret-access-key}}
+              AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
 
   - name: publish-release
     plan:
