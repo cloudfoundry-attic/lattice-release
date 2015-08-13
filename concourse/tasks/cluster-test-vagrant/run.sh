@@ -27,4 +27,4 @@ sleep 180
 
 tar zxf ltc-tar-experimental/ltc-*.tgz ltc-linux-amd64
 $PWD/ltc-linux-amd64 target "$SYSTEM_DOMAIN"
-$PWD/ltc-linux-amd64 test -v -t 10m
+$PWD/ltc-linux-amd64 test -v -t 10m || $PWD/ltc-linux-amd64 test -v -t 10m
