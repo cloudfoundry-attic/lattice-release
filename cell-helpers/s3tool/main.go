@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/service"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -124,8 +125,8 @@ func connect(accessKey, secretKey, url string) *s3.S3 {
 		S3ForcePathStyle: &awsS3ForcePathStyle,
 	})
 	client.Handlers.Sign.Clear()
-	client.Handlers.Sign.PushBack(aws.BuildContentLength)
-	client.Handlers.Sign.PushBack(func(request *aws.Request) {
+	client.Handlers.Sign.PushBack(service.BuildContentLength)
+	client.Handlers.Sign.PushBack(func(request *service.Request) {
 		v2Sign(accessKey, secretKey, request.Time, request.HTTPRequest)
 	})
 	return client
