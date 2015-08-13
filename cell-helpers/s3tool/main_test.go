@@ -14,18 +14,6 @@ import (
 )
 
 var _ = Describe("s3tool", func() {
-	var s3toolPath string
-
-	BeforeSuite(func() {
-		var err error
-		s3toolPath, err = gexec.Build("github.com/cloudfoundry-incubator/lattice/cell-helpers/s3tool")
-		Expect(err).NotTo(HaveOccurred())
-	})
-
-	AfterSuite(func() {
-		gexec.CleanupBuildArtifacts()
-	})
-
 	Describe("invalid action", func() {
 		It("prints an error message and exits", func() {
 			command := exec.Command(s3toolPath, "invalid")
