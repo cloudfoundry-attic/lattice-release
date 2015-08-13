@@ -29,7 +29,7 @@ cp -a $lattice_brain_path/setup /var/lattice
 mkdir -p /var/lattice/run
 mkdir -p /var/lattice/log
 
-touch /var/lattice/ready
+touch /var/lattice/brain-ready
 
 echo "Finished Installing Lattice Brain ($lattice_version) (Diego $diego_version)!"
 
