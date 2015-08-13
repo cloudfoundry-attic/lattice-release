@@ -24,8 +24,7 @@ import (
 type pollingAction string
 
 const (
-	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a comma-delimited list of integers between 0-65535."
-	InvalidRoutePortErrorMessage     = "Invalid port specified. Ports must be a positive integer less than 65536."
+	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a positive integer less than 65536."
 	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format port:route"
 	MalformedTcpRouteErrorMessage    = "Malformed TCP route. A TCP Route must be of the format container_Port:external_port"
 	MustSetMonitoredPortErrorMessage = "Must set monitor-port when specifying multiple exposed ports unless --no-monitor is set."
@@ -379,11 +378,11 @@ func (factory *AppRunnerCommandFactory) ParseTcpRoutes(tcpRoutesFlag string) (ap
 		if len(portsArr) < 2 {
 			return nil, errors.New(MalformedTcpRouteErrorMessage)
 		}
-		containerPort, err := factory.getPort(portsArr[0])
+		externalPort, err := factory.getPort(portsArr[0])
 		if err != nil {
 			return nil, err
 		}
-		externalPort, err := factory.getPort(portsArr[1])
+		containerPort, err := factory.getPort(portsArr[1])
 		if err != nil {
 			return nil, err
 		}
@@ -396,10 +395,10 @@ func (factory *AppRunnerCommandFactory) ParseTcpRoutes(tcpRoutesFlag string) (ap
 func (factory *AppRunnerCommandFactory) getPort(port string) (uint16, error) {
 	mayBePort, err := strconv.Atoi(port)
 	if err != nil {
-		return 0, errors.New(InvalidRoutePortErrorMessage)
+		return 0, errors.New(InvalidPortErrorMessage)
 	}
 	if mayBePort <= 0 || mayBePort > 65535 {
-		return 0, errors.New(InvalidRoutePortErrorMessage)
+		return 0, errors.New(InvalidPortErrorMessage)
 	}
 	return uint16(mayBePort), nil
 }
@@ -412,13 +411,20 @@ func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes string) (app_
 			continue
 		}
 		routeArr := strings.Split(route, ":")
-		maybePort, err := strconv.Atoi(routeArr[0])
-		if err != nil || len(routeArr) < 2 {
+		if len(routeArr) < 2 {
 			return nil, errors.New(MalformedRouteErrorMessage)
 		}
 
-		port := uint16(maybePort)
-		hostnamePrefix := routeArr[1]
+		hostnamePrefix := strings.Trim(routeArr[0], " ")
+		if len(hostnamePrefix) == 0 {
+			return nil, errors.New(MalformedRouteErrorMessage)
+		}
+
+		port, err := factory.getPort(routeArr[1])
+		if err != nil {
+			return nil, err
+		}
+
 		routeOverrides = append(routeOverrides, app_runner.RouteOverride{HostnamePrefix: hostnamePrefix, Port: port})
 	}
 

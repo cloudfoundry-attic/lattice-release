@@ -111,14 +111,16 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Value: time.Second,
 		},
 		cli.StringFlag{
-			Name: "routes, R",
-			Usage: "Route mappings to exposed ports as follows:\n\t\t" +
-				"--routes=80:web,8080:api will route web to 80 and api to 8080",
+			Name: "http-routes, R",
+			Usage: "Comma separated list of hostnames and ports. Usage: HOST:CONTAINER_PORT[,…].\n\t\t" +
+				"E.g. given —http-routes=foo:8080, requests for foo.SYSTEM_DOMAIN on port 80\n\t\t" +
+				"will be forwarded to container port 8080.",
 		},
 		cli.StringFlag{
-			Name: "tcp-routes",
-			Usage: "Create mappings between external ports and container ports for TCP traffic as follows:\n\t\t" +
-				"--tcp-routes=5222:50000,6379:50001 will route traffic from the external port 50000 to the container port 5222\n\t\t and external port 50001 to container port 6379",
+			Name: "tcp-routes, T",
+			Usage: "Comma separated list of external port and container port. Usage: EXTERNAL_PORT:CONTAINER_PORT[,…].\n\t\t" +
+				"E.g. given —tcp-routes=50000:5222, requests for port 50000\n\t\t" +
+				"will be forwarded to container port 5222.",
 		},
 		cli.IntFlag{
 			Name:  "instances, i",
@@ -163,6 +165,20 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 
    To specify environment variables:
    ltc create APP_NAME DOCKER_IMAGE -e FOO=BAR -e BAZ=WIBBLE
+
+   By default, http routes will be created for all container ports specified in the EXPOSE directive in
+   the Docker image. E.g. for application myapp and a Docker image that specifies ports 80 and 8080,
+   two http routes will be created by default: 
+
+     - requests to myapp.SYSTEM_DOMAIN:80 will be routed to container port 80
+     - requests to myapp-8080.SYSTEM_DOMAIN:80 will be routed to container port 8080
+
+   To configure your own routing:
+   ltc create APP_NAME DOCKER_IMAGE --http-routes HOST:CONTAINER_PORT[,...] --tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]
+
+   Examples:
+     ltc create myapp mydockerimage --http-routes=myapp-admin:6000 will route requests received at myapp-admin.SYSTEM_DOMAIN:80 to container port 6000.
+     ltc create myredis redis --tcp-routes=50000:6379 will route requests received at SYSTEM_DOMAIN:50000 to container port 6379.
 `,
 		Action: factory.createApp,
 		Flags:  createFlags,
@@ -184,7 +200,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	portMonitorFlag := context.Int("monitor-port")
 	urlMonitorFlag := context.String("monitor-url")
 	monitorTimeoutFlag := context.Duration("monitor-timeout")
-	routesFlag := context.String("routes")
+	httpRoutesFlag := context.String("http-routes")
 	tcpRoutesFlag := context.String("tcp-routes")
 	noRoutesFlag := context.Bool("no-routes")
 	timeoutFlag := context.Duration("timeout")
@@ -269,7 +285,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		appArgs = imageMetadata.StartCommand[1:]
 	}
 
-	routeOverrides, err := factory.ParseRouteOverrides(routesFlag)
+	routeOverrides, err := factory.ParseRouteOverrides(httpRoutesFlag)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
