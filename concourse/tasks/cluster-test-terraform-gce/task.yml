@@ -1,0 +1,13 @@
+---
+platform: linux
+image: docker:///cloudfoundry/lattice-pipeline
+inputs:
+- name: lattice
+- name: lattice-tar-experimental
+- name: ltc-tar-experimental
+run:
+  path: lattice/concourse/tasks/cluster-test-terraform-gce/run.sh
+  params:
+    GCE_SSH_PRIVATE_KEY: some-ssh-private-key
+    GCE_PROJECT_NAME: some-project-name
+    GCE_ACCOUNT_FILE_JSON: some-account-file-json

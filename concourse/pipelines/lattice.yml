@@ -127,14 +127,13 @@ jobs:
           passed: [compile]
         - get: ltc-tar-experimental
           passed: [compile]
-      - aggregate:
-        - task: cluster-test-vagrant
-          file: lattice/concourse/tasks/cluster-test-vagrant/task.yml
-          config:
-            params:
-              AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
-              AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
-              AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+      - task: cluster-test-vagrant
+        file: lattice/concourse/tasks/cluster-test-vagrant/task.yml
+        config:
+          params:
+            AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+            AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+            AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
 
   - name: cluster-test-terraform
     plan:
@@ -154,6 +153,14 @@ jobs:
               AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
               AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
               AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+        - task: cluster-test-terraform-gce
+          file: lattice/concourse/tasks/cluster-test-terraform-gce/task.yml
+          config:
+            params:
+              GCE_SSH_PRIVATE_KEY: {{gce-ssh-private-key}}
+              GCE_PROJECT_NAME: {{gce-project-name}}
+              GCE_ACCOUNT_FILE_JSON: {{gce-account-file-json}}
+
 
   - name: publish-nightly
     plan:
