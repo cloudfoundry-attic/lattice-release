@@ -11,9 +11,9 @@ import (
 	"github.com/cloudfoundry/dropsonde/logs"
 )
 
-var dropsondeDestination, sourceInstance string
-
 const latticeDebugStreamId = "lattice-debug"
+
+var dropsondeDestination, sourceInstance string
 
 func init() {
 	flag.StringVar(
@@ -30,10 +30,10 @@ func init() {
 		"",
 		"The label for the log source instance that shows up when consuming the stream",
 	)
-	flag.Parse()
 }
 
 func main() {
+	flag.Parse()
 	if dropsondeDestination == "" {
 		fmt.Println("dropsondeDestination flag is required")
 		os.Exit(1)
@@ -50,9 +50,8 @@ func main() {
 		fmt.Println("Usage: tee2metron -dropsondeDestionation=127.0.0.1:3457 -sourceInstance=cell-21 COMMAND")
 		os.Exit(3)
 	}
-	err := dropsonde.Initialize(dropsondeDestination, sourceInstance, args[0])
 
-	if err != nil {
+	if err := dropsonde.Initialize(dropsondeDestination, sourceInstance, args[0]); err != nil {
 		panic("error initializing dropsonde" + err.Error())
 	}
 
@@ -72,15 +71,13 @@ func main() {
 	go logs.ScanLogStream(latticeDebugStreamId, args[0], sourceInstance, dropsondeStdoutReader)
 	go logs.ScanErrorLogStream(latticeDebugStreamId, args[0], sourceInstance, dropsondeStderrReader)
 
-	err = cmd.Start()
-	if err != nil {
+	if err := cmd.Start(); err != nil {
 		fmt.Println(err)
 		os.Exit(3)
 	}
 
 	// if the child is killed abnormally we would know
-	err = cmd.Wait()
-	if err != nil {
+	if err := cmd.Wait(); err != nil {
 		fmt.Println(args[0], ":", err)
 		os.Exit(3)
 	}
