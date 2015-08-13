@@ -6,7 +6,7 @@ inputs:
 - name: lattice-tar-experimental
 - name: ltc-tar-experimental
 run:
-  path: lattice/concourse/tasks/cluster-test-vagrant/run.sh
+  path: lattice/concourse/tasks/cluster-test-vagrant-aws/run.sh
   params:
     AWS_ACCESS_KEY_ID: some-access-key-id
     AWS_SECRET_ACCESS_KEY: some-secret-access-key
