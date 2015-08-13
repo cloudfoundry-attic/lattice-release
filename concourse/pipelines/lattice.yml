@@ -152,7 +152,7 @@ jobs:
             AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
         ensure:
           task: vagrant-aws-cleanup
-          file: lattice/concourse/tasks/vagrant-aws-cleanup/run.sh
+          file: lattice/concourse/tasks/vagrant-aws-cleanup/task.yml
           config:
             params:
               AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
