@@ -2,77 +2,74 @@
 
 set -x -e
 
+
 export LATTICE_DIR=$PWD/lattice
-export LATTICE_VERSION=$(cat lattice/Version)
+export DOT_LATTICE_DIR=$HOME/.lattice
+export LATTICE_VERSION=$(cat lattice-tar-experimental/version)
+export LTC_VERSION=$(cat ltc-tar-experimental/version)
+export TERRAFORM_TMP_DIR=$PWD/terraform-tmp
 
-export LATTICE_TAR_PATH=$LATTICE_DIR/build/lattice.tgz
-export TF_WORKING_DIR=$HOME/terraform-work # ephemeral folder in docker context
-mkdir -p $TF_WORKING_DIR
+mkdir -p $TERRAFORM_TMP_DIR $DOT_LATTICE_DIR
 
-trap cleanup EXIT
+cat <<< "$VAGRANT_SSH_KEY" > $TERRAFORM_TMP_DIR/concourse-test.pem
 
-cat <<< "$VAGRANT_SSH_KEY" > $TF_WORKING_DIR/concourse-test.pem
-
-printf '{
-    "module":{
-        "lattice-aws":{
-            "source":"%s",
-            "local_lattice_tar_path": "%s",
+cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
+{
+    "module": {
+        "lattice-aws": {
+            "source": "${LATTICE_DIR}/terraform/aws",
+            "local_lattice_tar_path": "${PWD}/lattice-tar-experimental/lattice-${LATTICE_VERSION}.tgz",
             "num_cells": "1",
-            "aws_access_key": "%s",
-            "aws_secret_key": "%s",
+            "aws_access_key": "${AWS_ACCESS_KEY_ID}",
+            "aws_secret_key": "${AWS_SECRET_ACCESS_KEY}",
             "aws_region": "us-east-1",
             "aws_key_name": "concourse-test",
-            "aws_ssh_private_key_file": "%s/concourse-test.pem"
+            "aws_ssh_private_key_file": "${TERRAFORM_TMP_DIR}/concourse-test.pem"
         }
-    }
+    },
     "output": {
         "lattice_target": {
-            "value": "${module.lattice-aws.lattice_target}"
+            "value": "\${module.lattice-aws.lattice_target}"
         },
         "lattice_username": {
-            "value": "${module.lattice-aws.lattice_username}"
+            "value": "\${module.lattice-aws.lattice_username}"
         },
         "lattice_password": {
-            "value": "${module.lattice-aws.lattice_password}"
+            "value": "\${module.lattice-aws.lattice_password}"
         }
     }
-}' \
-"$LATTICE_DIR/terraform/aws" \
-"$LATTICE_TAR_PATH" \
-"$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY" "$TF_WORKING_DIR" \
-"$terraform_outputs" \
-> $TF_WORKING_DIR/lattice.tf
+}
+EOF
 
-echo "== lattice.tf =="
-    cat $TF_WORKING_DIR/lattice.tf
-echo "===="
+cleanup() { ( cd $TERRAFORM_TMP_DIR && terraform destroy -force || terraform destroy -force ) }
+trap cleanup EXIT
 
-
-pushd $TF_WORKING_DIR
+pushd $TERRAFORM_TMP_DIR
     terraform get -update
-    terraform apply || { echo "=====>First terraform apply failed. Retrying..."; terraform apply; }
+    terraform apply || terraform apply
 popd
 
-echo "Sleeping for 3 minutes.."
 sleep 180
 
-tar xzf ltc-tar-experimental
-LTC_PATH = $PWD/ltc-darwin-amd64
-mkdir -p .lattice
+tar xzf ltc-tar-experimental/ltc-${LTC_VERSION}.tgz
 
-echo "=========================Lattice Integration Tests=============================\n"
+pushd $TERRAFORM_TMP_DIR
+    LATTICE_TARGET=$(terraform output lattice_target)
+    LATTICE_USERNAME=$(terraform output lattice_username)
+    LATTICE_PASSWORD=$(terraform output lattice_password)
+    cat << EOF > $DOT_LATTICE_DIR/config.json
+{
+    "target": "${LATTICE_TARGET}",
+    "username": "${LATTICE_USERNAME}",
+    "password": "${LATTICE_PASSWORD}",
+    "dav_blob_store": {
+        "host": "${LATTICE_TARGET}",
+        "port": "8444",
+        "username": "${LATTICE_USERNAME}",
+        "password": "${LATTICE_PASSWORD}"
+    }
+}
+EOF
+popd
 
-printf "{\"target\":\"%s\",\"username\":\"%s\",\"password\":\"%s\",\"dav_blob_store\":{\"host\":\"%s\",\"port\":\"%s\",\"username\":\"%s\",\"password\":\"%s\"}}" \
-    "$(cd $TF_WORKING_DIR && terraform output lattice_target)" \
-    "$(cd $TF_WORKING_DIR && terraform output lattice_username)" \
-    "$(cd $TF_WORKING_DIR && terraform output lattice_password)" \
-    "$(cd $TF_WORKING_DIR && terraform output lattice_target)" \
-    "8444" \
-    "$(cd $TF_WORKING_DIR && terraform output lattice_username)" \
-    "$(cd $TF_WORKING_DIR && terraform output lattice_password)" | 
-    json_pp > $PWD/.lattice/config.json
-
-ltc test -v --timeout=5m
-
-echo "===============================================================================\n"
+$PWD/ltc-linux-amd64 test -v --timeout=5m
