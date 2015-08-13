@@ -18,6 +18,8 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
     "module": {
         "lattice-google": {
             "source": "${LATTICE_DIR}/terraform/google",
+            "lattice_username": "user",
+            "lattice_password": "pass",
             "local_lattice_tar_path": "${PWD}/lattice-tar-experimental/lattice-v${LATTICE_VERSION}.tgz",
             "gce_ssh_user": "pivotal",
             "gce_ssh_private_key_file": "${TERRAFORM_TMP_DIR}/concourse-test.pem",
