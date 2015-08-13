@@ -29,8 +29,6 @@ cp -an $cell_build_path/config /var/lattice
 mkdir -p /var/lattice/run
 mkdir -p /var/lattice/log
 
-start bootstrap
-
 touch /var/lattice/ready
 
 echo "Finished Installing Lattice Cell ($lattice_version) (Diego $diego_version)!"

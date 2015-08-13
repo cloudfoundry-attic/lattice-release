@@ -10,7 +10,7 @@
             "type": "amazon-ebs",
             "region": "us-east-1",
             "source_ami": "ami-f63b3e9e",
-            "instance_type": "m3.medium",
+            "instance_type": "m3.large",
             "ami_name": "ubuntu-trusty-64-v{{isotime \"20060102-0304\"}}-vagrant",
             "ami_groups": ["all"],
             "ami_regions": [

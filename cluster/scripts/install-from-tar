@@ -64,18 +64,9 @@ fi
 
 if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
     /tmp/lattice-build/scripts/install-brain
-
-    sleep 10
-
-    #Stop consul and bootstrap in collocated install so we can trigger dependencies to fire off the single bootstrap script
-    #once the cell is installed too.
-    stop consul
-    stop bootstrap
-
-    sleep 2
-
     /tmp/lattice-build/scripts/install-cell
 else
     /tmp/lattice-build/scripts/install-$COMPONENT_TO_INSTALL
 fi
 
+start bootstrap
