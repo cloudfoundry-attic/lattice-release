@@ -4,6 +4,32 @@ resources:
     source:
       uri: https://github.com/cloudfoundry-incubator/lattice.git
       branch: concourse
+  - name: diego-release
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry-incubator/diego-release.git
+      branch: master
+  - name: cf-release
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry/cf-release.git
+      branch: runtime-passed
+  - name: lattice-tar-experimental
+    type: s3
+    source:
+      bucket: lattice-concourse
+      private: true
+      regexp: experimental/lattice-v(.*).tgz
+      access_key_id: {{s3-access-key-id}}
+      secret_access_key: {{s3-secret-access-key}}
+  - name: ltc-tar-experimental
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: experimental/ltc-v(.*).tgz
+      private: true
+      access_key_id: {{s3-access-key-id}}
+      secret_access_key: {{s3-secret-access-key}}
 
 jobs:
   - name: unit-test-ltc
@@ -26,4 +52,30 @@ jobs:
         trigger: true
       - task: unit-test-tee2metron
         file: lattice/concourse/tasks/unit-test-tee2metron/task.yml
+
+  - name: compile
+    plan:
+      - aggregate:
+        - get: lattice
+          passed:
+            - unit-test-ltc
+            - unit-test-s3tool
+            - unit-test-tee2metron
+          trigger: true
+        - get: diego-release
+        - get: cf-release
+      - aggregate:
+        - task: compile-lattice-tar
+          file: lattice/concourse/tasks/compile-lattice-tar/task.yml
+        - task: compile-ltc
+          file: lattice/concourse/tasks/compile-ltc/task.yml
+      - aggregate:
+        - put: lattice-tar-experimental
+          params:
+            from: lattice/build/lattice-v(.*).tgz
+            to: /experimental/
+        - put: ltc-tar-experimental
+          params:
+            from: lattice/build/ltc-v(.*).tgz
+            to: /experimental/
 

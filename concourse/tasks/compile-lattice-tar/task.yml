@@ -1,0 +1,12 @@
+---
+platform: linux
+image: docker:///cloudfoundry/lattice-pipeline
+inputs:
+- name: lattice
+- name: diego-release
+  path: lattice/build/diego-release
+- name: cf-release
+  path: lattice/build/cf-release
+run:
+  path: lattice/concourse/tasks/compile-lattice-tar/run.sh
+
