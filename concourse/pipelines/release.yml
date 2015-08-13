@@ -21,8 +21,8 @@ resources:
       bucket: lattice-concourse
       regexp: experimental-releases/lattice-v(.*).tgz
       private: true
-      access_key_id: {{s3-access-key-id}}
-      secret_access_key: {{s3-secret-access-key}}
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
   - name: lattice-release
     type: github-relesase
     source:
@@ -35,40 +35,40 @@ resources:
       bucket: lattice-concourse
       regexp: experimental-releases/ltc-v(.*).tgz
       private: true
-      access_key_id: {{s3-access-key-id}}
-      secret_access_key: {{s3-secret-access-key}}
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
   - name: lattice-tar-release
     type: s3
     source:
       bucket: lattice-concourse
       regexp: releases/lattice-v(.*).tgz
       private: true
-      access_key_id: {{s3-access-key-id}}
-      secret_access_key: {{s3-secret-access-key}}
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
   - name: ltc-tar-release
     type: s3
     source:
       bucket: lattice-concourse
       regexp: releases/ltc-v(.*).tgz
       private: true
-      access_key_id: {{s3-access-key-id}}
-      secret_access_key: {{s3-secret-access-key}}
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
   - name: terraform-templates-release
     type: s3
     source:
       bucket: lattice-concourse
       regexp: releases/lattice-v(.*).tf
       private: true
-      access_key_id: {{s3-access-key-id}}
-      secret_access_key: {{s3-secret-access-key}}
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
   - name: vagrantfile-release
     type: s3
     source:
       bucket: lattice-concourse
       regexp: releases/Vagrantfile-v(.*)
       private: true
-      access_key_id: {{s3-access-key-id}}
-      secret_access_key: {{s3-secret-access-key}}
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
 
 
 jobs:
@@ -122,15 +122,15 @@ jobs:
           file: lattice/concourse/tasks/cluster-test-terraform-aws/task.yml
           config:
             params:
-              AWS_ACCESS_KEY_ID: {{s3-access-key-id}}
-              AWS_SECRET_ACCESS_KEY: {{s3-secret-access-key}}
+              AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
               AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
         - task: cluster-test-vagrant
           file: lattice/concourse/tasks/cluster-test-vagrant/task.yml
           config:
             params:
-              AWS_ACCESS_KEY_ID: {{s3-access-key-id}}
-              AWS_SECRET_ACCESS_KEY: {{s3-secret-access-key}}
+              AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
               AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
 
   - name: publish-release
