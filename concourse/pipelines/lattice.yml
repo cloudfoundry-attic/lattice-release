@@ -30,6 +30,14 @@ resources:
       private: true
       access_key_id: {{s3-access-key-id}}
       secret_access_key: {{s3-secret-access-key}}
+  - name: concourse-key
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: private/concourse-test-v(.*).pem
+      private: true
+      access_key_id: {{s3-access-key-id}}
+      secret_access_key: {{s3-secret-access-key}}
   - name: lattice-tar-nightly
     type: s3
     source:
@@ -127,11 +135,16 @@ jobs:
           passed: [compile]
         - get: ltc-tar-experimental
           passed: [compile]
+        - get: concourse-key
       - aggregate:
         - task: cluster-test-terraform
           file: lattice/concourse/tasks/cluster-test-terraform/task.yml
         - task: cluster-test-vagrant
           file: lattice/concourse/tasks/cluster-test-vagrant/task.yml
+          config:
+            params:
+              AWS_ACCESS_KEY_ID: {{s3-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{s3-secret-access-key}}
 
   - name: publish-nightly
     plan:
