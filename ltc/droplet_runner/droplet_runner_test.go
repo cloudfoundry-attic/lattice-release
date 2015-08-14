@@ -197,6 +197,8 @@ var _ = Describe("DropletRunner", func() {
 			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
 				{Name: "CF_STACK", Value: "cflinuxfs2"},
 				{Name: "MEMORY_LIMIT", Value: "128M"},
+				{Name: "PWD", Value: "/home/vcap"},
+				{Name: "TMPDIR", Value: "/home/vcap/tmp"},
 			}))
 			Expect(receptorRequest.LogSource).To(Equal("BUILD"))
 			Expect(receptorRequest.Domain).To(Equal("lattice"))
@@ -228,6 +230,8 @@ var _ = Describe("DropletRunner", func() {
 				{Name: "MEMORY_LIMIT", Value: "128M"},
 				{Name: "ENV_VAR", Value: "stuff"},
 				{Name: "OTHER_VAR", Value: "same"},
+				{Name: "PWD", Value: "/home/vcap"},
+				{Name: "TMPDIR", Value: "/home/vcap/tmp"},
 			}))
 		})
 

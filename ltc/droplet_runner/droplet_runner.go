@@ -160,6 +160,8 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 
 	environment["CF_STACK"] = DropletStack
 	environment["MEMORY_LIMIT"] = fmt.Sprintf("%dM", memoryMB)
+	environment["PWD"] = "/home/vcap"
+	environment["TMPDIR"] = "/home/vcap/tmp"
 
 	createTaskParams := task_runner.NewCreateTaskParams(
 		action,
@@ -199,6 +201,13 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 		dr.config.BlobStore().Host,
 		dr.config.BlobStore().Port,
 		path.Join("/blobs", dropletName))
+
+	if appEnvironmentParams.EnvironmentVariables == nil {
+		appEnvironmentParams.EnvironmentVariables = map[string]string{}
+	}
+
+	appEnvironmentParams.EnvironmentVariables["PWD"] = "/home/vcap"
+	appEnvironmentParams.EnvironmentVariables["TMPDIR"] = "/home/vcap/tmp"
 
 	appParams := app_runner.CreateAppParams{
 		AppEnvironmentParams: appEnvironmentParams,

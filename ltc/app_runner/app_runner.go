@@ -224,10 +224,39 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		primaryPort = params.ExposedPorts[0]
 	}
 
-	envVars := buildEnvironmentVariables(params.EnvironmentVariables)
-	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", primaryPort)})
-
 	routes := appRunner.buildRoutes(params, primaryPort)
+
+	vcapAppURIs := []string{}
+	for _, route := range routes.AppRoutes {
+		vcapAppURIs = append(vcapAppURIs, route.Hostnames...)
+	}
+
+	vcapApplication := struct {
+		ApplicationName string   `json:"application_name"`
+		ApplicationURIs []string `json:"application_uris"`
+		Name            string   `json:"name"`
+		URIs            []string `json:"uris"`
+		Limits          struct {
+			Disk   int `json:"disk,omitempty"`
+			Memory int `json:"mem,omitempty"`
+		} `json:"limits,omitempty"`
+	}{}
+
+	vcapApplication.ApplicationName = params.Name
+	vcapApplication.Name = params.Name
+	vcapApplication.ApplicationURIs = vcapAppURIs
+	vcapApplication.URIs = vcapAppURIs
+	vcapApplication.Limits.Disk = params.DiskMB
+	vcapApplication.Limits.Memory = params.MemoryMB
+
+	vcapAppBytes, err := json.Marshal(vcapApplication)
+	if err != nil {
+		return err
+	}
+
+	envVars := buildEnvironmentVariables(params.EnvironmentVariables)
+	envVars = append(envVars, receptor.EnvironmentVariable{Name: "VCAP_APPLICATION", Value: string(vcapAppBytes)})
+	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", primaryPort)})
 
 	req := receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
