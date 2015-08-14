@@ -730,11 +730,11 @@ var _ = Describe("CommandFactory", func() {
 
 			test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
-			Expect(outputBuffer).To(test_helpers.Say("Creating App: droppy\n"))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("droppy is now running.\n")))
-			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://ninetyninety.192.168.11.11.xip.io\n")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://fourtyfourfourtyfour.192.168.11.11.xip.io\n")))
+			Expect(outputBuffer).To(test_helpers.SayLine("Creating App: droppy"))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("droppy is now running.")))
+			Expect(outputBuffer).To(test_helpers.SayLine("App is reachable at:"))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://ninetyninety.192.168.11.11.xip.io")))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://fourtyfourfourtyfour.192.168.11.11.xip.io")))
 
 			Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(1))
 			appName, dropletNameParam, startCommandParam, _, appEnvParam := fakeDropletRunner.LaunchDropletArgsForCall(0)

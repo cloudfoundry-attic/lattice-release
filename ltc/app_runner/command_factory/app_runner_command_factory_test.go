@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
@@ -23,6 +22,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
+	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock/fakeclock"
 )

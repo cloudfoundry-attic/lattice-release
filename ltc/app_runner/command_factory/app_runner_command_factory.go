@@ -264,7 +264,7 @@ func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollT
 	}
 	if tcpRoutes != nil {
 		for _, tcpRoute := range tcpRoutes {
-			factory.UI.Say(colors.Green(factory.externalPortMappingForApp(tcpRoute.ExternalPort, tcpRoute.Port)))
+			factory.UI.SayLine(colors.Green(factory.externalPortMappingForApp(tcpRoute.ExternalPort, tcpRoute.Port)))
 		}
 	}
 	if routeOverrides != nil {
@@ -277,7 +277,7 @@ func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollT
 }
 
 func (factory *AppRunnerCommandFactory) externalPortMappingForApp(externalPort uint16, containerPort uint16) string {
-	return fmt.Sprintf("External TCP Port %d mapped to application port %d\n", externalPort, containerPort)
+	return fmt.Sprintf("External TCP Port %d mapped to application port %d", externalPort, containerPort)
 }
 
 func (factory *AppRunnerCommandFactory) urlForAppName(name string) string {

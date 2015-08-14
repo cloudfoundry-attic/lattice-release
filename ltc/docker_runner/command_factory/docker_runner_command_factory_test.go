@@ -241,7 +241,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: 1200, 2701, 4302\n"))
+				Expect(outputBuffer).To(test_helpers.SayLine("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: 1200, 2701, 4302"))
 				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				Expect(createAppParams.ExposedPorts).To(Equal([]uint16{1200, 2701, 4302}))
 			})
@@ -957,12 +957,12 @@ var _ = Describe("CommandFactory", func() {
 			Expect(reqSetup.To).To(Equal("/tmp"))
 			Expect(reqSetup.User).To(Equal("vcap"))
 
-			Expect(outputBuffer).To(test_helpers.Say("Creating App: cool-web-app\n"))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
-			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
+			Expect(outputBuffer).To(test_helpers.SayLine("Creating App: cool-web-app"))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))
+			Expect(outputBuffer).To(test_helpers.SayLine("App is reachable at:"))
 
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("External TCP Port 50000 mapped to application port 5222\n")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("External TCP Port 50001 mapped to application port 5223\n")))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("External TCP Port 50000 mapped to application port 5222")))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("External TCP Port 50001 mapped to application port 5223")))
 		})
 	})
 
