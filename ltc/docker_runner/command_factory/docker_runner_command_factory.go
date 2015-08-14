@@ -115,6 +115,11 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Usage: "Route mappings to exposed ports as follows:\n\t\t" +
 				"--routes=80:web,8080:api will route web to 80 and api to 8080",
 		},
+		cli.StringFlag{
+			Name: "tcp-routes",
+			Usage: "Create mappings between external ports and container ports for TCP traffic as follows:\n\t\t" +
+				"--tcp-routes=5222:50000 will route traffic from the external port 50000 to the container port 5222",
+		},
 		cli.IntFlag{
 			Name:  "instances, i",
 			Usage: "Number of application instances to spawn on launch",
