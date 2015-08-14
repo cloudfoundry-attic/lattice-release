@@ -2,6 +2,7 @@
 
 export GO_REVISION_DIEGO_RELEASE=2271f35d71875deb173e2f83584c60656d2c997a
 export GO_REVISION_CF_RELEASE=8a4f7526ae1c9957f3b3bbda7981cefeb195f09f
+export GO_REVISION_CF_ROUTING_RELEASE=6e78e974bf39382c4b0b69c33ec2358414ecafba
 export GOPATH=$CI_DIR/lattice/build/diego-release
 export PATH=$GOPATH/bin:$PATH
 export DOCKER_IMAGE=cloudfoundry/lattice-pipeline

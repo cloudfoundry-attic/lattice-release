@@ -57,6 +57,12 @@ get_cf_version() {
     popd > /dev/null
 }
 
+get_routing_version() {
+    pushd $LATTICE_SRC_PATH/build/cf-routing-release > /dev/null
+        routing_version=$(git rev-parse HEAD)
+    popd > /dev/null
+}
+
 git_describe_lattice() {
     if [ -z "${LATTICE_RELEASE_VERSION}" ]; then
         pushd $LATTICE_SRC_PATH > /dev/null
@@ -105,7 +111,10 @@ construct_ltc_gopath() {
 
     echo -n "Copying $LATTICE_SRC_PATH/build/diego-release/src/* into compilation GOPATH (Prefer Diego-Release dependencies over ltc's Godeps) .."
     ## locally, this copies all of lattice again because we usually develop lattice using diego-release as the GOPATH
-    rsync -a $LATTICE_SRC_PATH/build/diego-release/src $GOPATH/ --exclude src/github.com/docker && echo "DONE!"
+    rsync -a $LATTICE_SRC_PATH/build/diego-release/src $GOPATH/ \
+        --exclude src/github.com/docker/docker \
+        --exclude src/github.com/cloudfoundry-incubator/lattice
+    echo "DONE!"
 
     echo -n "Copying over git modules for later godeps saves from constructed path .."
     cp -af $LATTICE_SRC_PATH/build/diego-release/.git* $GOPATH/ && echo "DONE!"
@@ -114,7 +123,7 @@ construct_ltc_gopath() {
 }
 
 run_unit_tests() {
-    go get -v github.com/onsi/ginkgo/ginkgo
+    go get github.com/onsi/ginkgo/ginkgo
 
     echo "Running ltc unit tests..."
     $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc/scripts/test
@@ -185,6 +194,7 @@ bump_lattice_version() {
     git_describe_lattice
     git_describe_diego
     get_cf_version
+    get_routing_version
 
     pushd $LATTICE_SRC_PATH > /dev/null
         previous_lattice_version=$(cat Version)
@@ -195,10 +205,12 @@ bump_lattice_version() {
 
         echo "$diego_version" > DIEGO_VERSION
         echo "$cf_version" > CF_VERSION
+        echo "$routing_version" > ROUTING_VERSION
 
         git add Version
         git add DIEGO_VERSION
         git add CF_VERSION
+        git add ROUTING_VERSION
 
         git commit -m "Bump Version: $previous_lattice_version -> $new_lattice_version
 
