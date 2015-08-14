@@ -5,6 +5,7 @@ set -e
 LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd)
 DIEGO_VERSION=${1-`cat $LATTICE_DIR/DIEGO_VERSION`}
 CF_VERSION=${2-`cat $LATTICE_DIR/CF_VERSION`}
+ROUTING_VERSION=${3-`cat $LATTICE_DIR/ROUTING_VERSION`}
 
 source $LATTICE_DIR/development/env
 
@@ -25,6 +26,15 @@ pushd $LATTICE_DIR/build >/dev/null
     ( cd diego-release && git fetch && git reset --hard && git checkout "$DIEGO_VERSION" && git clean -xffd )
   fi
   ( cd diego-release && ./scripts/update )
+
+  if [ ! -d "cf-routing-release" ]; then
+    git clone git@github.com:cloudfoundry-incubator/cf-routing-release.git
+    ( cd cf-routing-release && git checkout $ROUTING_VERSION )
+  else
+    ( cd cf-routing-release && git reset --hard && git checkout "$ROUTING_VERSION" && git clean -xffd )
+  fi
+  ( cd cf-routing-release/scripts && ./update )
+
 
   rm -rf $GOPATH/src/github.com/docker/docker
 popd >/dev/null
