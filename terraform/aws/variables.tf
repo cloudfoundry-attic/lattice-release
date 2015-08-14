@@ -11,6 +11,21 @@ variable "aws_region" {
     default = "us-east-1"
 }
 
+variable "aws_nat_ami" {
+	  description = "AMI of the AWS nat image"
+    default = {
+        ap-northeast-1 = "ami-c7e016c7"
+        ap-southeast-1 = "ami-b098a9e2"
+        ap-southeast-2 = "ami-0fed9d35"
+        eu-central-1 = "ami-08f5f115"
+        eu-west-1 = "ami-cb7de3bc"
+        sa-east-1 = "ami-93fb408e"
+        us-east-1 = "ami-c02b04a8"
+        us-west-1 = "ami-67a54423"
+        us-west-2 = "ami-2dae821d"
+    }
+}
+
 variable "aws_key_name" {
     description = "The SSH key name to use for the instances."
 }
@@ -32,6 +47,11 @@ variable "aws_vpc_cidr_block" {
 variable "aws_subnet_cidr_block" {
     description = "The IPv4 address range that machines in the network are assigned to, represented as a CIDR block."
     default = "10.0.1.0/24"
+}
+
+variable "aws_private_subnet_cidr_block" {
+    description = "The IPv4 address range that machines in the network are assigned to, represented as a CIDR block."
+    default = "10.0.2.0/24"
 }
 
 variable "aws_image" {
