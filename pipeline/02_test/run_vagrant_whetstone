@@ -60,5 +60,5 @@ sleep 180
 ltc target $SYSTEM_DOMAIN
 
 ltc -v
-ltc test -v --timeout=5m
+ltc test -v --timeout=5m || ltc test -v --timeout=5m
 

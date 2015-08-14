@@ -178,7 +178,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				})
 
 				It("should run a docker app exposing tcp routes", func() {
-					runner.createDockerApp(timeout, appName, "cloudfoundry/tcp-sample-receiver", fmt.Sprintf("--tcp-routes=5222:%d", externalPort))
+					runner.createDockerApp(timeout, appName, "cloudfoundry/tcp-sample-receiver", fmt.Sprintf("--tcp-routes=5222:%d", externalPort), fmt.Sprintf("--timeout=%s", timeout.String()))
 					Eventually(errorCheckForConnection(runner.config.Target(), externalPort), timeout, 1).ShouldNot(HaveOccurred())
 				})
 			})
