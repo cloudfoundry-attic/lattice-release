@@ -182,6 +182,11 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 			Usage: "Route mappings to exposed ports as follows:\n\t\t" +
 				"--routes=80:web,8080:api will route web to 80 and api to 8080",
 		},
+		cli.StringFlag{
+			Name: "tcp-routes",
+			Usage: "Create mappings between external ports and container ports for TCP traffic as follows:\n\t\t" +
+				"--tcp-routes=5222:50000 will route traffic from the external port 50000 to the container port 5222",
+		},
 		cli.IntFlag{
 			Name:  "instances, i",
 			Usage: "Number of application instances to spawn on launch",
@@ -416,6 +421,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 	urlMonitorFlag := context.String("monitor-url")
 	monitorTimeoutFlag := context.Duration("monitor-timeout")
 	routesFlag := context.String("routes")
+	tcpRoutesFlag := context.String("tcp-routes")
 	noRoutesFlag := context.Bool("no-routes")
 	timeoutFlag := context.Duration("timeout")
 	appName := context.Args().Get(0)
@@ -463,6 +469,13 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 		return
 	}
 
+	tcpRoutes, err := factory.ParseTcpRoutes(tcpRoutesFlag)
+	if err != nil {
+		factory.UI.Say(err.Error())
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
 	appEnvironmentParams := app_runner.AppEnvironmentParams{
 		EnvironmentVariables: factory.BuildAppEnvironment(envVarsFlag, appName),
 		Privileged:           true,
@@ -474,6 +487,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 		ExposedPorts:         exposedPorts,
 		WorkingDir:           workingDirFlag,
 		RouteOverrides:       routeOverrides,
+		TcpRoutes:            tcpRoutes,
 		NoRoutes:             noRoutesFlag,
 	}
 
@@ -485,7 +499,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 		return
 	}
 
-	factory.WaitForAppCreation(appName, timeoutFlag, instancesFlag, noRoutesFlag, routeOverrides)
+	factory.WaitForAppCreation(appName, timeoutFlag, instancesFlag, noRoutesFlag, routeOverrides, tcpRoutes)
 }
 
 func (factory *DropletRunnerCommandFactory) removeDroplet(context *cli.Context) {

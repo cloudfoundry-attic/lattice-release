@@ -872,5 +872,98 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
+
+		Context("when a malformed tcp routes flag is passed", func() {
+			It("errors out when the container port is not an int", func() {
+				args := []string{
+					"cool-web-app",
+					"superfun/app",
+					"--tcp-routes=woo:50000",
+					"--",
+					"/start-me-please",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+
+			It("errors out when the tcp route is incomplete", func() {
+				args := []string{
+					"cool-web-app",
+					"superfun/app",
+					"--tcp-routes=5222,50000",
+					"--",
+					"/start-me-please",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MalformedTcpRouteErrorMessage))
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+
+		})
+
+		It("creates a Docker based app with tcp routes as specified in the command via the AppRunner", func() {
+			args := []string{
+				"--tcp-routes=5222:50000,5223:50001",
+				"cool-web-app",
+				"superfun/app:mycooltag",
+				"--",
+				"/start-me-please",
+			}
+			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+
+			test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+			Expect(fakeDockerMetadataFetcher.FetchMetadataCallCount()).To(Equal(1))
+			Expect(fakeDockerMetadataFetcher.FetchMetadataArgsForCall(0)).To(Equal("superfun/app:mycooltag"))
+
+			Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+			createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+
+			Expect(createAppParams.Name).To(Equal("cool-web-app"))
+			Expect(createAppParams.StartCommand).To(Equal("/start-me-please"))
+			Expect(createAppParams.RootFS).To(Equal("docker:///superfun/app#mycooltag"))
+			Expect(createAppParams.Instances).To(Equal(1))
+
+			Expect(createAppParams.TcpRoutes).ShouldNot(BeNil())
+
+			Expect(createAppParams.TcpRoutes).Should(ContainExactly(
+				app_runner.TcpRoutes{
+					app_runner.TcpRoute{
+						ExternalPort: 50000,
+						Port:         5222,
+					},
+					app_runner.TcpRoute{
+						ExternalPort: 50001,
+						Port:         5223,
+					},
+				},
+			))
+
+			Expect(createAppParams.Monitor.Method).To(Equal(app_runner.PortMonitor))
+
+			Expect(createAppParams.NoRoutes).To(BeFalse())
+
+			Expect(createAppParams.Setup).To(BeAssignableToTypeOf(&models.DownloadAction{}))
+			reqSetup, ok := createAppParams.Setup.(*models.DownloadAction)
+			Expect(ok).To(BeTrue())
+			Expect(reqSetup.From).To(Equal("http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"))
+			Expect(reqSetup.To).To(Equal("/tmp"))
+			Expect(reqSetup.User).To(Equal("vcap"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Creating App: cool-web-app\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("cool-web-app is now running.\n")))
+			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
+
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("External TCP Port 50000 mapped to application port 5222\n")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("External TCP Port 50001 mapped to application port 5223\n")))
+		})
 	})
+
 })

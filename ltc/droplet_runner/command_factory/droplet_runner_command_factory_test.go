@@ -683,6 +683,87 @@ var _ = Describe("CommandFactory", func() {
 			launchDropletCommand = commandFactory.MakeLaunchDropletCommand()
 		})
 
+		Context("when a malformed tcp routes flag is passed", func() {
+			It("errors out when the container port is not an int", func() {
+				args := []string{
+					"cool-web-app",
+					"superfun/app",
+					"--tcp-routes=woo:50000",
+					"--",
+					"/start-me-please",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+
+			It("errors out when the tcp route is incomplete", func() {
+				args := []string{
+					"cool-web-app",
+					"superfun/app",
+					"--tcp-routes=5222,50000",
+					"--",
+					"/start-me-please",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MalformedTcpRouteErrorMessage))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+
+		})
+		It("launches the specified droplet with tcp routes", func() {
+			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+			args := []string{
+				"--routes=4444:ninetyninety,9090:fourtyfourfourtyfour",
+				"--tcp-routes=5222:50000,5223:50001",
+				"droppy",
+				"droplet-name",
+				"--",
+				"start-em",
+			}
+
+			test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+			Expect(outputBuffer).To(test_helpers.Say("Creating App: droppy\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("droppy is now running.\n")))
+			Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://ninetyninety.192.168.11.11.xip.io\n")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green("http://fourtyfourfourtyfour.192.168.11.11.xip.io\n")))
+
+			Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(1))
+			appName, dropletNameParam, startCommandParam, _, appEnvParam := fakeDropletRunner.LaunchDropletArgsForCall(0)
+			Expect(appName).To(Equal("droppy"))
+			Expect(dropletNameParam).To(Equal("droplet-name"))
+			Expect(startCommandParam).To(Equal("start-em"))
+			Expect(appEnvParam.Instances).To(Equal(1))
+			Expect(appEnvParam.NoRoutes).To(BeFalse())
+			Expect(appEnvParam.RouteOverrides).To(ContainExactly(app_runner.RouteOverrides{
+				app_runner.RouteOverride{HostnamePrefix: "ninetyninety", Port: 4444},
+				app_runner.RouteOverride{HostnamePrefix: "fourtyfourfourtyfour", Port: 9090},
+			}))
+			tcpRoutes := appEnvParam.TcpRoutes
+
+			Expect(tcpRoutes).ShouldNot(BeNil())
+			Expect(tcpRoutes).Should(ContainExactly(
+				app_runner.TcpRoutes{
+					app_runner.TcpRoute{
+						ExternalPort: 50000,
+						Port:         5222,
+					},
+					app_runner.TcpRoute{
+						ExternalPort: 50001,
+						Port:         5223,
+					},
+				},
+			))
+		})
+
 		It("launches the specified droplet", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(11, false, nil)
 			args := []string{
