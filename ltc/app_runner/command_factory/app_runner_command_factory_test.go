@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
@@ -76,6 +77,70 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				Expect(env["AAA"]).To(Equal("2"))
 				Expect(env["AAAAA"]).To(BeEmpty())
 			})
+		})
+
+		Describe("ParseTcpRoutes", func() {
+			Context("when valid tcp routes is passed", func() {
+
+				It("returns a valid TcpRoutes", func() {
+					tcpRoutes, err := factory.ParseTcpRoutes("6379:50000,5222:50001")
+					Expect(err).ShouldNot(HaveOccurred())
+					Expect(tcpRoutes).Should(ContainExactly(
+						app_runner.TcpRoutes{
+							app_runner.TcpRoute{
+								ExternalPort: 50000,
+								Port:         6379,
+							},
+							app_runner.TcpRoute{
+								ExternalPort: 50001,
+								Port:         5222,
+							},
+						},
+					))
+				})
+			})
+
+			Context("when a malformed tcp routes is passed", func() {
+				It("errors out when the container port is not an int", func() {
+					_, err := factory.ParseTcpRoutes("woo:50000")
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).Should(Equal(command_factory.InvalidRoutePortErrorMessage))
+
+				})
+
+				It("errors out when the tcp route is incomplete", func() {
+					_, err := factory.ParseTcpRoutes("5222,50000")
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).Should(Equal(command_factory.MalformedTcpRouteErrorMessage))
+				})
+			})
+
+			Context("when invalid port is passed in tcp routes", func() {
+				It("errors out when the container port is a negative number", func() {
+					_, err := factory.ParseTcpRoutes("-1:50000")
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).Should(Equal(command_factory.InvalidRoutePortErrorMessage))
+				})
+
+				It("errors out when the container port is bigger than 65535", func() {
+					_, err := factory.ParseTcpRoutes("65536:50000")
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).Should(Equal(command_factory.InvalidRoutePortErrorMessage))
+				})
+
+				It("errors out when the external port is a negative number", func() {
+					_, err := factory.ParseTcpRoutes("6379:-1")
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).Should(Equal(command_factory.InvalidRoutePortErrorMessage))
+				})
+
+				It("errors out when the external port is bigger than 65535", func() {
+					_, err := factory.ParseTcpRoutes("6379:65536")
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).Should(Equal(command_factory.InvalidRoutePortErrorMessage))
+				})
+			})
+
 		})
 	})
 

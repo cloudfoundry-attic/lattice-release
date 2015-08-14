@@ -25,6 +25,7 @@ type pollingAction string
 
 const (
 	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a comma-delimited list of integers between 0-65535."
+	InvalidRoutePortErrorMessage     = "Invalid port specified. Ports must be a positive integer less than 65536."
 	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format port:route"
 	MalformedTcpRouteErrorMessage    = "Malformed TCP route. A TCP Route must be of the format container_Port:external_port"
 	MustSetMonitoredPortErrorMessage = "Must set monitor-port when specifying multiple exposed ports unless --no-monitor is set."
@@ -378,18 +379,29 @@ func (factory *AppRunnerCommandFactory) ParseTcpRoutes(tcpRoutesFlag string) (ap
 		if len(portsArr) < 2 {
 			return nil, errors.New(MalformedTcpRouteErrorMessage)
 		}
-		containerPort, err := strconv.Atoi(portsArr[0])
+		containerPort, err := factory.getPort(portsArr[0])
 		if err != nil {
-			return nil, errors.New(InvalidPortErrorMessage)
+			return nil, err
 		}
-		externalPort, err := strconv.Atoi(portsArr[1])
+		externalPort, err := factory.getPort(portsArr[1])
 		if err != nil {
-			return nil, errors.New(InvalidPortErrorMessage)
+			return nil, err
 		}
-		tcpRoutes = append(tcpRoutes, app_runner.TcpRoute{ExternalPort: uint16(externalPort), Port: uint16(containerPort)})
+		tcpRoutes = append(tcpRoutes, app_runner.TcpRoute{ExternalPort: externalPort, Port: containerPort})
 	}
 
 	return tcpRoutes, nil
+}
+
+func (factory *AppRunnerCommandFactory) getPort(port string) (uint16, error) {
+	mayBePort, err := strconv.Atoi(port)
+	if err != nil {
+		return 0, errors.New(InvalidRoutePortErrorMessage)
+	}
+	if mayBePort <= 0 || mayBePort > 65535 {
+		return 0, errors.New(InvalidRoutePortErrorMessage)
+	}
+	return uint16(mayBePort), nil
 }
 
 func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes string) (app_runner.RouteOverrides, error) {
