@@ -25,7 +25,7 @@ type AppInfo struct {
 	MemoryMB               int
 	CPUWeight              uint
 	Ports                  []uint16
-	Routes                 route_helpers.AppRoutes
+	Routes                 route_helpers.Routes
 	LogGuid                string
 	LogSource              string
 	Annotation             string
@@ -256,7 +256,7 @@ func mergeDesiredActualLRPs(desiredLRPs []receptor.DesiredLRPResponse, actualLRP
 			MemoryMB:               desiredLRP.MemoryMB,
 			CPUWeight:              desiredLRP.CPUWeight,
 			Ports:                  desiredLRP.Ports,
-			Routes:                 route_helpers.AppRoutesFromRoutingInfo(desiredLRP.Routes),
+			Routes:                 route_helpers.RoutesFromRoutingInfo(desiredLRP.Routes),
 			LogGuid:                desiredLRP.LogGuid,
 			LogSource:              desiredLRP.LogSource,
 			Annotation:             desiredLRP.Annotation,
