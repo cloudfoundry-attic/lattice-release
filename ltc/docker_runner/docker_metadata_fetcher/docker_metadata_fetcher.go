@@ -14,6 +14,7 @@ type ImageMetadata struct {
 	WorkingDir   string
 	ExposedPorts []uint16
 	StartCommand []string
+	Env          []string
 }
 
 //go:generate counterfeiter -o fake_docker_metadata_fetcher/fake_docker_metadata_fetcher.go . DockerMetadataFetcher
@@ -93,6 +94,7 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(dockerPath string) (*ImageMe
 		WorkingDir:   img.Config.WorkingDir,
 		StartCommand: startCommand,
 		ExposedPorts: exposedPorts,
+		Env:          img.Config.Env,
 	}, nil
 }
 

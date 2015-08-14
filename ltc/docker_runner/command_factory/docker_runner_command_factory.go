@@ -290,9 +290,23 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		return
 	}
 
+	envVars := map[string]string{}
+
+	for _, dockerEnv := range imageMetadata.Env {
+		split := strings.SplitN(dockerEnv, "=", 2)
+		if len(split) == 2 {
+			envVars[split[0]] = split[1]
+		}
+	}
+
+	appEnvVars := factory.BuildAppEnvironment(envVarsFlag, name)
+	for appEnvKey := range appEnvVars {
+		envVars[appEnvKey] = appEnvVars[appEnvKey]
+	}
+
 	err = factory.AppRunner.CreateApp(app_runner.CreateAppParams{
 		AppEnvironmentParams: app_runner.AppEnvironmentParams{
-			EnvironmentVariables: factory.BuildAppEnvironment(envVarsFlag, name),
+			EnvironmentVariables: envVars,
 			Privileged:           runAsRootFlag,
 			Monitor:              monitorConfig,
 			Instances:            instancesFlag,

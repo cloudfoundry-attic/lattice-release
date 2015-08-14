@@ -50,7 +50,8 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				 	"config":{
 				 				"WorkingDir":"/home/app",
 				 				"Entrypoint":["/lattice-app"],
-				 				"Cmd":["--enableAwesomeMode=true","iloveargs"]
+				 				"Cmd":["--enableAwesomeMode=true","iloveargs"],
+				 				"Env":["A=1","B=2"]
 							}
 						}`),
 					0,
@@ -64,6 +65,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
 				Expect(imageMetadata.StartCommand).To(ConsistOf("/lattice-app", "--enableAwesomeMode=true", "iloveargs"))
 				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{uint16(27017), uint16(28321)}))
+				Expect(imageMetadata.Env).To(ConsistOf([]string{"A=1", "B=2"}))
 
 				Expect(fakeDockerSessionFactory.MakeSessionCallCount()).To(Equal(1))
 				Expect(fakeDockerSessionFactory.MakeSessionArgsForCall(0)).To(Equal(dockerImageNoTag))

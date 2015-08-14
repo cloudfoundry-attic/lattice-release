@@ -76,7 +76,9 @@ var _ = Describe("CommandFactory", func() {
 			commandFactory := command_factory.NewDockerRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			createCommand = commandFactory.MakeCreateAppCommand()
 
-			fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+			fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{
+				Env: []string{"TIMEZONE=PST", "DOCKER=ME"},
+			}, nil)
 		})
 
 		It("creates a Docker based app as specified in the command via the AppRunner", func() {
@@ -116,6 +118,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(createAppParams.AppArgs).To(Equal([]string{"AppArg0", "--appFlavor=\"purple\""}))
 			Expect(createAppParams.Instances).To(Equal(22))
 			Expect(createAppParams.EnvironmentVariables).To(Equal(map[string]string{
+				"DOCKER":       "ME",
 				"TIMEZONE":     "CST",
 				"LANG":         `"Chicago English"`,
 				"JAVA_OPTS":    `"-Djava.arg=/dev/urandom"`,
