@@ -1,5 +1,5 @@
 module "lattice-google" {
-    source = "github.com/cloudfoundry-incubator/lattice//terraform//google?ref=v0.3.1"
+    source = "github.com/cloudfoundry-incubator/lattice//terraform//google?ref=v0.3.1-15-g59bf81e"
 
     # Specify an API username and password for your lattice cluster
     # lattice_username = "<CHANGE-ME>"
