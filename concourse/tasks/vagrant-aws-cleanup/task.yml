@@ -2,7 +2,7 @@
 platform: linux
 image: docker:///cloudfoundry/lattice-pipeline
 inputs:
-- lattice
+- name: lattice
 run:
   path: lattice/concourse/tasks/vagrant-aws-cleanup/run.sh
   params:
