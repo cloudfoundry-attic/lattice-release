@@ -22,6 +22,11 @@ construct_temp_workspace() {
     echo "copying cell helpers"
     mkdir -p ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator/lattice/
     cp -a ${lattice_path}/cell-helpers/ ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator/lattice/
+    echo "copying routing release"
+    cp -a ${routing_release_path}/src/github.com/cloudfoundry-incubator/tcp-emitter \
+        ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator
+    cp -a ${routing_release_path}/src/github.com/cloudfoundry-incubator/cf-tcp-router \
+        ${temp_workspace}/diego-release/src/github.com/cloudfoundry-incubator
 }
 
 compile_garden_linux() {
@@ -57,6 +62,13 @@ compile_gorouter() {
     rm -rf ${GOPATH}/src/github.com/cloudfoundry/gorouter/Godeps/_workspace/pkg
     GOPATH=${GOPATH}/src/github.com/cloudfoundry/gorouter/Godeps/_workspace:${GOPATH} \
         go install github.com/cloudfoundry/gorouter
+}
+
+compile_tcp_routing() {
+    echo "compiling tcp routing"
+    pushd ${GOPATH}
+        go install github.com/cloudfoundry-incubator/tcp-emitter/cmd/tcp-emitter
+    popd
 }
 
 compile_brain_loggregator() {
@@ -141,6 +153,7 @@ compile_brain() {
     rm -rf ${GOPATH}/pkg
 
     compile_gorouter
+    compile_tcp_routing
     compile_brain_loggregator
 
     pushd ${GOBIN}
@@ -153,15 +166,16 @@ compile_brain() {
     unset GOBIN
 }
 
-if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
-    echo "Incorrect Usage. Usage: $0 output-dir diego-release-path cf-release-path lattice-path"
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] || [ -z "$5" ]; then
+    echo "Incorrect Usage. Usage: $0 output-dir diego-release-path cf-release-path routing-release-path lattice-path"
     exit 1
 fi
 
 declare -r output_dir=$1
 declare -r diego_release_path=$2
 declare -r cf_release_path=$3
-declare -r lattice_path=$4
+declare -r routing_release_path=$4
+declare -r lattice_path=$5
 export GOOS=linux
 export GOARCH=amd64
 declare -r temp_workspace=`mktemp -d /tmp/lattice.XXXXXX`
