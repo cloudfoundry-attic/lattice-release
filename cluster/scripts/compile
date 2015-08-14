@@ -68,6 +68,29 @@ compile_tcp_routing() {
     echo "compiling tcp routing"
     pushd ${GOPATH}
         go install github.com/cloudfoundry-incubator/tcp-emitter/cmd/tcp-emitter
+        go install github.com/cloudfoundry-incubator/cf-tcp-router/cmd/router-configurer
+    popd
+
+    compile_haproxy
+}
+
+compile_haproxy() {
+    pushd ${temp_workspace}
+        echo "Extracting pcre..."
+        tar xzf ./download/haproxy_pcre.tgz
+        pushd pcre-8.37
+            ./configure
+            make
+            make install
+        popd
+
+
+        tar xzf ./download/haproxy.tgz
+        pushd haproxy-1.5.14
+            make TARGET=linux2628 USE_OPENSSL=1 USE_STATIC_PCRE=1
+            cp haproxy $GOBIN/
+            chmod +x $GOBIN/haproxy
+        popd
     popd
 }
 
@@ -95,6 +118,17 @@ stage_common() {
 
     mkdir -p ${output_dir}/common
     cp -a ${lattice_path}/cluster/common/* ${output_dir}/common/
+
+    stage_haproxy
+}
+
+stage_haproxy() {
+    echo "staging haproxy"
+    HAPROXY_OBJECT_ID="02657a44-3292-4e0b-8b18-bcad061a2381"
+    HAPROXY_PCRE_OBJECT_ID="22601a5f-4ef4-4621-80aa-0fa1f8067db6"
+
+    wget --quiet "http://blob.cfblob.com/${HAPROXY_OBJECT_ID}" -O ${temp_workspace}/download/haproxy.tgz
+    wget --quiet "http://blob.cfblob.com/${HAPROXY_PCRE_OBJECT_ID}" -O ${temp_workspace}/download/haproxy_pcre.tgz
 }
 
 stage_scripts() {
