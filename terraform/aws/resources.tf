@@ -124,6 +124,7 @@ resource "aws_instance" "lattice-brain" {
             "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${aws_instance.lattice-brain.private_ip}\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'apt-get install incron -y && echo root >> /etc/incron.allow'",
         ]
     }
 
