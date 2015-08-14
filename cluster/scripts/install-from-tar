@@ -27,7 +27,7 @@ stage_cflinuxfs2_rootfs() {
     if [ ! -f "$rootfs_download_path/cflinuxfs2.tar.gz" ]; then
         rm -f $rootfs_download_path/cflinuxfs2.tar.gz
         mkdir -p $rootfs_download_path
-        wget http://cf-runtime-stacks.s3.amazonaws.com/cflinuxfs2.dev.tgz --quiet -O $rootfs_download_path/cflinuxfs2.tar.gz
+        wget https://github.com/cloudfoundry/stacks/releases/download/1.4.0/cflinuxfs2-1.4.0.tar.gz --quiet -O $rootfs_download_path/cflinuxfs2.tar.gz
         echo "Downloaded RootFS!"
     fi
 
