@@ -1,9 +1,12 @@
 package cluster_test
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -155,6 +158,30 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 					})
 				})
 			})
+
+			Context("when desiring a docker-based LRP with tcp routes", func() {
+				var (
+					externalPort uint16
+					appName      string
+				)
+
+				BeforeEach(func() {
+					externalPort = 50000
+					appGUID, err := uuid.NewV4()
+					Expect(err).NotTo(HaveOccurred())
+
+					appName = fmt.Sprintf("lattice-test-app-%s", appGUID.String())
+				})
+
+				AfterEach(func() {
+					runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
+				})
+
+				It("should run a docker app exposing tcp routes", func() {
+					runner.createDockerApp(timeout, appName, "cloudfoundry/tcp-sample-receiver", fmt.Sprintf("--tcp-routes=5222:%d", externalPort), fmt.Sprintf("--timeout=%s", timeout.String()))
+					Eventually(errorCheckForConnection(runner.config.Target(), externalPort), timeout, 1).ShouldNot(HaveOccurred())
+				})
+			})
 		})
 
 		Context("droplets", func() {
@@ -169,12 +196,20 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				appName = "running-" + dropletName
 
 				blobTarget := runner.config.BlobStore()
-				dropletFolderURL = fmt.Sprintf("%s:%s@%s:%s/blobs/%s",
-					blobTarget.Username,
-					blobTarget.Password,
-					blobTarget.Host,
-					blobTarget.Port,
-					dropletName)
+
+				if blobTarget.Username != "" {
+					dropletFolderURL = fmt.Sprintf("%s:%s@%s:%s/blobs/%s",
+						blobTarget.Username,
+						blobTarget.Password,
+						blobTarget.Host,
+						blobTarget.Port,
+						dropletName)
+				} else {
+					dropletFolderURL = fmt.Sprintf("%s:%s/blobs/%s",
+						blobTarget.Host,
+						blobTarget.Port,
+						dropletName)
+				}
 
 				appRoute = fmt.Sprintf("%s.%s", appName, runner.config.Target())
 			})
@@ -349,6 +384,23 @@ func getStyledWriter(prefix string) io.Writer {
 	return gexec.NewPrefixedWriter(fmt.Sprintf("[%s] ", colors.Yellow(prefix)), GinkgoWriter)
 }
 
+func errorCheckForConnection(ip string, port uint16) func() error {
+	fmt.Fprintln(getStyledWriter("test"), "Connection to ", ip, ":", port)
+	return func() error {
+		response, err := makeTcpConnRequest(ip, port, "test")
+		if err != nil {
+			return err
+		}
+		fmt.Fprintln(getStyledWriter("test"), "Received response '", response, "'")
+
+		if !strings.Contains(response, "docker-server1:test") {
+			return errors.New("Did not get correct response from connection")
+		}
+
+		return nil
+	}
+}
+
 func errorCheckForRoute(appRoute string) func() error {
 	fmt.Fprintln(getStyledWriter("test"), "Polling for the appRoute", appRoute)
 	return func() error {
@@ -421,6 +473,21 @@ func pollForInstanceIndices(appRoute string, instanceIndexChan chan<- int) {
 		}
 		instanceIndexChan <- instanceIndex
 	}
+}
+
+func makeTcpConnRequest(ip string, port uint16, req string) (string, error) {
+	conn, err := net.Dial("tcp", ip+fmt.Sprintf(":%d", port))
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Fprintf(conn, req+"\n")
+	line, err := bufio.NewReader(conn).ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+
+	return line, nil
 }
 
 func makeGetRequestToURL(url string) (*http.Response, error) {

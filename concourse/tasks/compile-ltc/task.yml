@@ -1,0 +1,8 @@
+---
+platform: linux
+image: docker:///cloudfoundry/lattice-pipeline
+inputs:
+- name: lattice
+run:
+  path: lattice/concourse/tasks/compile-ltc/run.sh
+

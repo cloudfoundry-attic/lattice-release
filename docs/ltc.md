@@ -63,6 +63,8 @@ You can modify all of this behavior from the command line:
 - **`--routes=8080:my-app,9000:my-app-admin`** allows you to specify the routes to map to the requested ports.  In this example, `my-app.192.168.11.11.xip.io` will map to port `8080` and `my-app-admin.192.168.11.11.xip.io` will map to port `9000`.
   - You can comma-delimit multiple routes to the same port (e.g. `--routes=8080:my-app,8080:my-app-alias`).
 - **`--no-routes`** allows you to specify that no routes be registered. 
+- **`--tcp-routes=6379:50000,6000:50001`** allows you to specify external ports that will be routed to container ports. In this example, given a TCP router at 192.168.11.11, then 192.168.11.11:50000 will be routed to port container port 6379, and 192.168.11.11:50001 will be routed to container port 6000. As Lattice assigned container ports starting at 60000, and the router runs on the same IP as the app container, choose an external port below 60000. You can map multiple external ports to the same container port (e.g. --tcp-routes=6379:50000,6379:50001).
+
 
 #### Managing Healthchecks
 

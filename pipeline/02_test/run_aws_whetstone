@@ -23,6 +23,8 @@ print_provider_specific_terraform_configuration(){
                 "module":{
                     "lattice-aws":{
                         "source":"%s",
+                        "lattice_username": "user",
+                        "lattice_password": "pass",
                         "local_lattice_tar_path": "%s",
                         "num_cells": "1",
                         "aws_access_key": "%s",

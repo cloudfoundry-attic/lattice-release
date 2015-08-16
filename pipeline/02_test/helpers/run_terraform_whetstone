@@ -37,7 +37,8 @@ setup_and_run_whetstone(){
         "$(cd $TF_WORKING_DIR && terraform output lattice_password)" | 
         json_pp > $LATTICE_CLI_HOME/.lattice/config.json
 
-    ltc test -v --timeout=5m
+    ltc -v
+    ltc test -v --timeout=5m || ltc test -v --timeout=5m
 
     echo "===============================================================================\n"
 }

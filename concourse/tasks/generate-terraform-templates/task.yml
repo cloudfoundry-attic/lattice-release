@@ -1,0 +1,7 @@
+---
+platform: linux
+image: docker:///cloudfoundry/lattice-pipeline
+inputs:
+- name: lattice
+run:
+  path: lattice/concourse/tasks/generate-terraform-templates/run.sh

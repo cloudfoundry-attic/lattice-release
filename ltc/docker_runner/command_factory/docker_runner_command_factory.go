@@ -115,6 +115,11 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Usage: "Route mappings to exposed ports as follows:\n\t\t" +
 				"--routes=80:web,8080:api will route web to 80 and api to 8080",
 		},
+		cli.StringFlag{
+			Name: "tcp-routes",
+			Usage: "Create mappings between external ports and container ports for TCP traffic as follows:\n\t\t" +
+				"--tcp-routes=5222:50000,6379:50001 will route traffic from the external port 50000 to the container port 5222\n\t\t and external port 50001 to container port 6379",
+		},
 		cli.IntFlag{
 			Name:  "instances, i",
 			Usage: "Number of application instances to spawn on launch",
@@ -180,13 +185,13 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	urlMonitorFlag := context.String("monitor-url")
 	monitorTimeoutFlag := context.Duration("monitor-timeout")
 	routesFlag := context.String("routes")
+	tcpRoutesFlag := context.String("tcp-routes")
 	noRoutesFlag := context.Bool("no-routes")
 	timeoutFlag := context.Duration("timeout")
 	name := context.Args().Get(0)
 	dockerPath := context.Args().Get(1)
 	terminator := context.Args().Get(2)
 	startCommand := context.Args().Get(3)
-
 	var appArgs []string
 
 	switch {
@@ -271,6 +276,13 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		return
 	}
 
+	tcpRoutes, err := factory.ParseTcpRoutes(tcpRoutesFlag)
+	if err != nil {
+		factory.UI.Say(err.Error())
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
 	rootFS, err := docker_repository_name_formatter.FormatForReceptor(dockerPath)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
@@ -290,6 +302,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 			ExposedPorts:         exposedPorts,
 			WorkingDir:           workingDirFlag,
 			RouteOverrides:       routeOverrides,
+			TcpRoutes:            tcpRoutes,
 			NoRoutes:             noRoutesFlag,
 		},
 
@@ -311,7 +324,8 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		return
 	}
 
-	factory.WaitForAppCreation(name, timeoutFlag, instancesFlag, noRoutesFlag, routeOverrides)
+	factory.WaitForAppCreation(name, timeoutFlag, instancesFlag,
+		noRoutesFlag, routeOverrides, tcpRoutes)
 }
 
 func (factory *DockerRunnerCommandFactory) getExposedPortsFromArgs(portsFlag string, imageMetadata *docker_metadata_fetcher.ImageMetadata) ([]uint16, error) {

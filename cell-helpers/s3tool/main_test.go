@@ -14,28 +14,14 @@ import (
 )
 
 var _ = Describe("s3tool", func() {
-	var s3toolPath string
-
-	BeforeSuite(func() {
-		var err error
-		s3toolPath, err = gexec.Build("github.com/cloudfoundry-incubator/lattice/cell-helpers/s3tool")
-		Expect(err).NotTo(HaveOccurred())
-	})
-
-	AfterSuite(func() {
-		gexec.CleanupBuildArtifacts()
-	})
-
 	Describe("invalid action", func() {
 		It("prints an error message and exits", func() {
 			command := exec.Command(s3toolPath, "invalid")
-
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-
 			Expect(err).NotTo(HaveOccurred())
-			Eventually(session.Out).Should(gbytes.Say("Usage: s3tool \\[get\\|put\\|delete\\] arguments..."))
-			Eventually(session.Exited).Should(BeClosed())
-			Expect(session.ExitCode()).To(Equal(3))
+
+			Eventually(session).Should(gexec.Exit(3))
+			Expect(session.Out).To(gbytes.Say("Usage: s3tool \\[get\\|put\\|delete\\] arguments..."))
 		})
 	})
 
@@ -51,10 +37,9 @@ var _ = Describe("s3tool", func() {
 			fakeServer.AppendHandlers(ghttp.CombineHandlers(
 				ghttp.VerifyRequest("DELETE", "/bucket/key"),
 				ghttp.RespondWithPtr(&httpStatusCode, nil),
-				func(_ http.ResponseWriter, request *http.Request) {
-					auth, ok := request.Header[http.CanonicalHeaderKey("Authorization")]
-					Expect(ok).To(BeTrue())
-					Expect(auth).To(ConsistOf(HavePrefix("AWS ")))
+				func(_ http.ResponseWriter, req *http.Request) {
+					auth := req.Header.Get(http.CanonicalHeaderKey("Authorization"))
+					Expect(auth).To(HavePrefix("AWS "))
 				},
 			))
 		})
@@ -65,16 +50,13 @@ var _ = Describe("s3tool", func() {
 
 		It("does a DELETE to the S3 server to delete the file", func() {
 			command := exec.Command(s3toolPath, "delete", "access", "secret", fakeServer.URL(), "bucket", "key")
-
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session.Out).Should(gbytes.Say("Deleted s3://bucket/key."))
+			Eventually(session).Should(gexec.Exit(0))
+			Expect(session.Out).To(gbytes.Say("Deleted s3://bucket/key."))
 
 			Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
-
-			Eventually(session.Exited).Should(BeClosed())
-			Expect(session.ExitCode()).To(Equal(0))
 		})
 
 		Context("when the S3 delete fails", func() {
@@ -82,26 +64,22 @@ var _ = Describe("s3tool", func() {
 				httpStatusCode = 404
 
 				command := exec.Command(s3toolPath, "delete", "access", "secret", fakeServer.URL(), "bucket", "key")
-
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session.Out).Should(gbytes.Say("Error deleting s3://bucket/key: "))
-				Eventually(session.Exited).Should(BeClosed())
-				Expect(session.ExitCode()).To(Equal(2))
+
+				Eventually(session).Should(gexec.Exit(2))
+				Expect(session.Out).To(gbytes.Say("Error deleting s3://bucket/key: "))
 			})
 		})
 
 		Context("when arguments for the delete action are invalid", func() {
 			It("prints an error message and exits", func() {
 				command := exec.Command(s3toolPath, "delete", "invalid")
-
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
-
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session.Out).Should(gbytes.Say("Usage: s3tool delete s3AccessKey s3SecretKey blobStoreURL s3Bucket s3Path"))
-				Eventually(session.Exited).Should(BeClosed())
-				Expect(session.ExitCode()).To(Equal(3))
+
+				Eventually(session).Should(gexec.Exit(3))
+				Expect(session.Out).To(gbytes.Say("Usage: s3tool delete s3AccessKey s3SecretKey blobStoreURL s3Bucket s3Path"))
 			})
 		})
 	})
@@ -120,10 +98,9 @@ var _ = Describe("s3tool", func() {
 			fakeServer.AppendHandlers(ghttp.CombineHandlers(
 				ghttp.VerifyRequest("GET", "/bucket/key"),
 				ghttp.RespondWithPtr(&httpStatusCode, &httpResponse),
-				func(_ http.ResponseWriter, request *http.Request) {
-					auth, ok := request.Header[http.CanonicalHeaderKey("Authorization")]
-					Expect(ok).To(BeTrue())
-					Expect(auth).To(ConsistOf(HavePrefix("AWS ")))
+				func(_ http.ResponseWriter, req *http.Request) {
+					auth := req.Header.Get(http.CanonicalHeaderKey("Authorization"))
+					Expect(auth).To(HavePrefix("AWS "))
 				},
 			))
 		})
@@ -140,13 +117,11 @@ var _ = Describe("s3tool", func() {
 			defer os.Remove(tmpFile.Name())
 
 			command := exec.Command(s3toolPath, "get", "access", "secret", fakeServer.URL(), "bucket", "key", tmpFile.Name())
-
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session.Out).Should(gbytes.Say("Downloaded s3://bucket/key to " + tmpFile.Name() + "."))
-			Eventually(session.Exited).Should(BeClosed())
-			Expect(session.ExitCode()).To(Equal(0))
+			Eventually(session).Should(gexec.Exit(0))
+			Expect(session.Out).To(gbytes.Say("Downloaded s3://bucket/key to %s", tmpFile.Name()))
 
 			Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
 			Expect(ioutil.ReadFile(tmpFile.Name())).To(Equal([]byte("some-file-contents")))
@@ -159,9 +134,9 @@ var _ = Describe("s3tool", func() {
 				command := exec.Command(s3toolPath, "get", "access", "secret", fakeServer.URL(), "bucket", "key", "some-missing-file")
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session.Out).Should(gbytes.Say("Error downloading s3://bucket/key:"))
-				Eventually(session.Exited).Should(BeClosed())
-				Expect(session.ExitCode()).To(Equal(2))
+
+				Eventually(session).Should(gexec.Exit(2))
+				Expect(session.Out).To(gbytes.Say("Error downloading s3://bucket/key:"))
 
 				_, err = os.Stat("some-missing-file")
 				Expect(err).To(MatchError("stat some-missing-file: no such file or directory"))
@@ -173,9 +148,9 @@ var _ = Describe("s3tool", func() {
 				command := exec.Command(s3toolPath, "get", "access", "secret", fakeServer.URL(), "bucket", "key", "/")
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session.Out).Should(gbytes.Say("Error opening /: "))
-				Eventually(session.Exited).Should(BeClosed())
-				Expect(session.ExitCode()).To(Equal(2))
+
+				Eventually(session).Should(gexec.Exit(2))
+				Expect(session.Out).To(gbytes.Say("Error opening /: "))
 			})
 		})
 
@@ -184,9 +159,9 @@ var _ = Describe("s3tool", func() {
 				command := exec.Command(s3toolPath, "get", "invalid")
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session.Out).Should(gbytes.Say("Usage: s3tool get s3AccessKey s3SecretKey blobStoreURL s3Bucket s3Path destinationFilePath"))
-				Eventually(session.Exited).Should(BeClosed())
-				Expect(session.ExitCode()).To(Equal(3))
+
+				Eventually(session).Should(gexec.Exit(3))
+				Expect(session.Out).To(gbytes.Say("Usage: s3tool get s3AccessKey s3SecretKey blobStoreURL s3Bucket s3Path destinationFilePath"))
 			})
 		})
 	})
@@ -205,12 +180,11 @@ var _ = Describe("s3tool", func() {
 			fakeServer.AppendHandlers(ghttp.CombineHandlers(
 				ghttp.VerifyRequest("PUT", "/bucket/key"),
 				ghttp.RespondWithPtr(&httpStatusCode, nil),
-				func(_ http.ResponseWriter, request *http.Request) {
-					auth, ok := request.Header[http.CanonicalHeaderKey("Authorization")]
-					Expect(ok).To(BeTrue())
-					Expect(auth).To(ConsistOf(HavePrefix("AWS ")))
+				func(_ http.ResponseWriter, req *http.Request) {
+					auth := req.Header.Get(http.CanonicalHeaderKey("Authorization"))
+					Expect(auth).To(HavePrefix("AWS "))
 					var err error
-					httpBody, err = ioutil.ReadAll(request.Body)
+					httpBody, err = ioutil.ReadAll(req.Body)
 					Expect(err).NotTo(HaveOccurred())
 				},
 			))
@@ -230,13 +204,11 @@ var _ = Describe("s3tool", func() {
 
 		It("does a PUT to the S3 server to upload the file", func() {
 			command := exec.Command(s3toolPath, "put", "access", "secret", fakeServer.URL(), "bucket", "key", tmpFile.Name())
-
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session.Out).Should(gbytes.Say("Uploaded " + tmpFile.Name() + " to s3://bucket/key."))
-			Eventually(session.Exited).Should(BeClosed())
-			Expect(session.ExitCode()).To(Equal(0))
+			Eventually(session).Should(gexec.Exit(0))
+			Expect(session.Out).To(gbytes.Say("Uploaded " + tmpFile.Name() + " to s3://bucket/key."))
 
 			Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
 			Expect(httpBody).To(Equal([]byte("some-file-contents")))
@@ -249,9 +221,9 @@ var _ = Describe("s3tool", func() {
 				command := exec.Command(s3toolPath, "put", "access", "secret", fakeServer.URL(), "bucket", "key", tmpFile.Name())
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session.Out).Should(gbytes.Say("Error uploading " + tmpFile.Name() + ": 404NotFound: 404 Not Found"))
-				Eventually(session.Exited).Should(BeClosed())
-				Expect(session.ExitCode()).To(Equal(2))
+
+				Eventually(session).Should(gexec.Exit(2))
+				Expect(session.Out).To(gbytes.Say("Error uploading " + tmpFile.Name() + ": 404NotFound: 404 Not Found"))
 			})
 		})
 
@@ -260,9 +232,9 @@ var _ = Describe("s3tool", func() {
 				command := exec.Command(s3toolPath, "put", "access", "secret", fakeServer.URL(), "bucket", "key", "some-missing-file")
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session.Out).Should(gbytes.Say("Error opening some-missing-file: open some-missing-file: no such file or directory"))
-				Eventually(session.Exited).Should(BeClosed())
-				Expect(session.ExitCode()).To(Equal(2))
+
+				Eventually(session).Should(gexec.Exit(2))
+				Expect(session.Out).To(gbytes.Say("Error opening some-missing-file: open some-missing-file: no such file or directory"))
 			})
 		})
 
@@ -271,9 +243,9 @@ var _ = Describe("s3tool", func() {
 				command := exec.Command(s3toolPath, "put", "invalid")
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
-				Eventually(session.Out).Should(gbytes.Say("Usage: s3tool put s3AccessKey s3SecretKey blobStoreURL s3Bucket s3Path fileToUpload"))
-				Eventually(session.Exited).Should(BeClosed())
-				Expect(session.ExitCode()).To(Equal(3))
+
+				Eventually(session).Should(gexec.Exit(3))
+				Expect(session.Out).To(gbytes.Say("Usage: s3tool put s3AccessKey s3SecretKey blobStoreURL s3Bucket s3Path fileToUpload"))
 			})
 		})
 	})

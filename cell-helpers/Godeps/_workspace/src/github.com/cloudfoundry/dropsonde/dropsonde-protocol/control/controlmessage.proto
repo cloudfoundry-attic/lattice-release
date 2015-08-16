@@ -1,0 +1,24 @@
+package control;
+
+import "heartbeatrequest.proto";
+import "uuid.proto";
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+/// ControlMessage wraps a control command and adds metadata.
+message ControlMessage {
+    /// Type of the wrapped control.
+    enum ControlType {
+        HeartbeatRequest = 1;
+    }
+
+    required string origin = 1;               /// Unique description of the origin of this event.
+    required UUID identifier = 2;             /// A unique identifier for this control
+    required int64 timestamp = 3;             /// UNIX timestamp (in nanoseconds) event was wrapped in this ControlMessage.
+    required ControlType controlType = 4;     /// Type of wrapped control. Only the optional field corresponding to the value of ControlType should be set.
+
+    optional HeartbeatRequest heartbeatRequest = 5;
+}

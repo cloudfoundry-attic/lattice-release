@@ -1,0 +1,11 @@
+---
+platform: linux
+image: docker:///cloudfoundry/lattice-pipeline
+inputs:
+- name: lattice
+run:
+  path: lattice/concourse/tasks/vagrant-aws-cleanup/run.sh
+  params:
+    AWS_ACCESS_KEY_ID: some-access-key-id
+    AWS_SECRET_ACCESS_KEY: some-secret-access-key
+    AWS_SSH_PRIVATE_KEY: some-ssh-private-key

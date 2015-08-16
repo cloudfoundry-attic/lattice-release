@@ -5,6 +5,7 @@ set -e
 LATTICE_DIR=$(cd `dirname $0` && cd .. && pwd)
 DIEGO_VERSION=${1-`cat $LATTICE_DIR/DIEGO_VERSION`}
 CF_VERSION=${2-`cat $LATTICE_DIR/CF_VERSION`}
+ROUTING_VERSION=${3-`cat $LATTICE_DIR/ROUTING_VERSION`}
 
 source $LATTICE_DIR/development/env
 
@@ -26,6 +27,15 @@ pushd $LATTICE_DIR/build >/dev/null
   fi
   ( cd diego-release && ./scripts/update )
 
+  if [ ! -d "cf-routing-release" ]; then
+    git clone git@github.com:cloudfoundry-incubator/cf-routing-release.git
+    ( cd cf-routing-release && git checkout $ROUTING_VERSION )
+  else
+    ( cd cf-routing-release && git reset --hard && git checkout "$ROUTING_VERSION" && git clean -xffd )
+  fi
+  ( cd cf-routing-release/scripts && ./update )
+
+
   rm -rf $GOPATH/src/github.com/docker/docker
 popd >/dev/null
 
@@ -36,9 +46,10 @@ go get github.com/maxbrunsfeld/counterfeiter
 pushd $GOPATH/src/github.com/cloudfoundry-incubator >/dev/null
   ln -sfh ../../../../.. lattice
 
-  pushd lattice >/dev/null
-    go get -v ./cell-helpers/davtool/...
-    go get -v ./cell-helpers/tee2metron/...
+  pushd lattice/cell-helpers >/dev/null
+    godep restore
+    go install ./davtool/
+    go install ./tee2metron/
   popd >/dev/null
 
   pushd lattice/ltc >/dev/null

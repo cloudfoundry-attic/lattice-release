@@ -25,7 +25,7 @@ cleanup(){
 start_lattice_vagrant(){
     pushd $LATTICE_DIR
         vagrant up --provider=virtualbox
-        export $(cat .lattice-environment)
+        export $(vagrant ssh -c "grep SYSTEM_DOMAIN /var/lattice/setup/lattice-environment" | egrep -o '(SYSTEM_DOMAIN=.+\.io)')
     popd
 }
 
@@ -60,5 +60,5 @@ sleep 180
 ltc target $SYSTEM_DOMAIN
 
 ltc -v
-ltc test -v --timeout=5m
+ltc test -v --timeout=5m || ltc test -v --timeout=5m
 

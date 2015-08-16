@@ -1,0 +1,76 @@
+package events;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+option java_package = "org.cloudfoundry.dropsonde.events";
+option java_outer_classname = "HttpFactory";
+
+import "uuid.proto";
+
+/// Type of peer handling request.
+enum PeerType {
+    Client = 1; /// Request is made by this process.
+    Server = 2; /// Request is received by this process.
+}
+
+/// HTTP method.
+enum Method {
+    GET = 1;
+    POST = 2;
+    PUT = 3;
+    DELETE = 4;
+    HEAD = 5;
+}
+
+/// An HttpStart event is emitted when a client sends a request (or immediately when a server receives the request).
+message HttpStart {
+    required int64 timestamp = 1;      /// UNIX timestamp (in nanoseconds) when the request was sent (by a client) or received (by a server).
+    required UUID requestId = 2;       /// ID for tracking lifecycle of request.
+    required PeerType peerType = 3;    /// Role of the emitting process in the request cycle.
+    required Method method = 4;        /// Method of the request.
+    required string uri = 5;           /// Destination of the request.
+    required string remoteAddress = 6; /// Remote address of the request. (For a server, this should be the origin of the request.)
+    required string userAgent = 7;     /// Contents of the UserAgent header on the request.
+
+    optional UUID parentRequestId = 8; /// If this request was made in order to service an incoming request, this field should track the ID of the parent.
+    optional UUID applicationId = 9;   /// If this request was made in relation to an appliciation, this field should track that application's ID.
+    optional int32 instanceIndex = 10; /// Index of the application instance.
+    optional string instanceId = 11;   /// ID of the application instance.
+}
+
+/// An HttpStop event is emitted when a client receives a response to its request (or when a server completes its handling and returns a response).
+message HttpStop {
+    required int64 timestamp = 1;      /// UNIX timestamp (in nanoseconds) when the request was received.
+    required string uri = 2;           /// URI of request.
+    required UUID requestId = 3;       /// ID for tracking lifecycle of request. Should match requestId of a HttpStart event.
+    required PeerType peerType = 4;    /// Role of the emitting process in the request cycle.
+    required int32 statusCode = 5;     /// Status code returned with the response to the request.
+    required int64 contentLength = 6;  /// Length of response (bytes).
+
+    optional UUID applicationId = 7;   /// If this request was made in relation to an appliciation, this field should track that application's ID.
+}
+
+/// An HttpStartStop event represents the whole lifecycle of an HTTP request.
+message HttpStartStop {
+    required int64 startTimestamp = 1;  /// UNIX timestamp (in nanoseconds) when the request was sent (by a client) or received (by a server).
+    required int64 stopTimestamp = 2;   /// UNIX timestamp (in nanoseconds) when the request was received.
+
+    required UUID requestId = 3;        /// ID for tracking lifecycle of request. Should match requestId of a HttpStart event.
+    required PeerType peerType = 4;     /// Role of the emitting process in the request cycle.
+    required Method method = 5;         /// Method of the request.
+    required string uri = 6;            /// Destination of the request.
+    required string remoteAddress = 7;  /// Remote address of the request. (For a server, this should be the origin of the request.)
+    required string userAgent = 8;      /// Contents of the UserAgent header on the request.
+
+    required int32 statusCode = 9;      /// Status code returned with the response to the request.
+    required int64 contentLength = 10;  /// Length of response (bytes).
+
+    optional UUID parentRequestId = 11; /// If this request was made in order to service an incoming request, this field should track the ID of the parent.
+    optional UUID applicationId = 12;   /// If this request was made in relation to an appliciation, this field should track that application's ID.
+    optional int32 instanceIndex = 13;  /// Index of the application instance.
+    optional string instanceId = 14;    /// ID of the application instance.
+}

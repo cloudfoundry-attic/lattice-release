@@ -1,0 +1,260 @@
+resources:
+  - name: lattice
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry-incubator/lattice.git
+      branch: develop
+  - name: diego-release
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry-incubator/diego-release.git
+      branch: master
+  - name: cf-release
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry/cf-release.git
+      branch: runtime-passed
+  - name: lattice-tar-experimental
+    type: s3
+    source:
+      bucket: lattice-concourse
+      private: true
+      regexp: experimental/lattice-v(.*).tgz
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: ltc-tar-experimental
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: experimental/ltc-v(.*).tgz
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: lattice-tar-nightly
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: nightly/lattice-v(.*).tgz
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: ltc-tar-nightly
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: nightly/ltc-v(.*).tgz
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: terraform-templates-nightly
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: nightly/lattice-v(.*).tf
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: vagrantfile-nightly
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: nightly/Vagrantfile-v(.*)
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: publish-nightly-timer
+    type: time
+    source:
+      start: 18:00 -0500
+      stop: 19:00 -0500
+      interval: 1h
+
+jobs:
+  - name: unit-test-ltc
+    plan:
+      - get: lattice
+        trigger: true
+      - task: unit-test-ltc
+        file: lattice/concourse/tasks/unit-test-ltc/task.yml
+
+  - name: unit-test-davtool
+    plan:
+      - get: lattice
+        trigger: true
+      - task: unit-test-cell-helper
+        file: lattice/concourse/tasks/unit-test-cell-helper/task.yml
+        config:
+          params:
+            CELL_HELPER: davtool
+
+  - name: unit-test-s3tool
+    plan:
+      - get: lattice
+        trigger: true
+      - task: unit-test-cell-helper
+        file: lattice/concourse/tasks/unit-test-cell-helper/task.yml
+        config:
+          params:
+            CELL_HELPER: s3tool
+
+  - name: unit-test-tee2metron
+    plan:
+      - get: lattice
+        trigger: true
+      - task: unit-test-cell-helper
+        file: lattice/concourse/tasks/unit-test-cell-helper/task.yml
+        config:
+          params:
+            CELL_HELPER: tee2metron
+
+  - name: compile
+    plan:
+      - aggregate:
+        - get: lattice
+          passed:
+            - unit-test-ltc
+            - unit-test-s3tool
+            - unit-test-tee2metron
+          trigger: true
+        - get: diego-release
+        - get: cf-release
+      - aggregate:
+        - task: compile-lattice-tar
+          file: lattice/concourse/tasks/compile-lattice-tar/task.yml
+        - task: compile-ltc
+          file: lattice/concourse/tasks/compile-ltc/task.yml
+      - aggregate:
+        - put: lattice-tar-experimental
+          params:
+            from: lattice/build/lattice-v(.*).tgz
+            to: /experimental/
+        - put: ltc-tar-experimental
+          params:
+            from: lattice/build/ltc-v(.*).tgz
+            to: /experimental/
+
+  - name: cluster-test-vagrant-aws
+    plan:
+      - aggregate:
+        - get: lattice
+          passed: [compile]
+          trigger: true
+        - get: lattice-tar-experimental
+          passed: [compile]
+        - get: ltc-tar-experimental
+          passed: [compile]
+      - task: cluster-test-vagrant-aws
+        file: lattice/concourse/tasks/cluster-test-vagrant-aws/task.yml
+        config:
+          params:
+            AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+            AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+            AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+        ensure:
+          task: vagrant-aws-cleanup
+          file: lattice/concourse/tasks/vagrant-aws-cleanup/task.yml
+          config:
+            params:
+              AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+              AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+
+  - name: cluster-test-terraform-aws
+    plan:
+      - aggregate:
+        - get: lattice
+          passed: [compile]
+          trigger: true
+        - get: lattice-tar-experimental
+          passed: [compile]
+        - get: ltc-tar-experimental
+          passed: [compile]
+      - task: cluster-test-terraform-aws
+        file: lattice/concourse/tasks/cluster-test-terraform-aws/task.yml
+        config:
+          params:
+            AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+            AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+            AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+
+  - name: cluster-test-terraform-gce
+    plan:
+      - aggregate:
+        - get: lattice
+          passed: [compile]
+          trigger: true
+        - get: lattice-tar-experimental
+          passed: [compile]
+        - get: ltc-tar-experimental
+          passed: [compile]
+      - task: cluster-test-terraform-gce
+        file: lattice/concourse/tasks/cluster-test-terraform-gce/task.yml
+        config:
+          params:
+            GCE_SSH_PRIVATE_KEY: {{gce-ssh-private-key}}
+            GCE_PROJECT_NAME: {{gce-project-name}}
+            GCE_ACCOUNT_FILE_JSON: {{gce-account-file-json}}
+
+  - name: publish-nightly
+    plan:
+      - get: publish-nightly-timer
+        trigger: true
+      - aggregate:
+        - get: lattice
+          passed:
+          - cluster-test-vagrant-aws
+          - cluster-test-terraform-aws
+          - cluster-test-terraform-gce
+        - get: lattice-tar-experimental
+          passed:
+          - cluster-test-vagrant-aws
+          - cluster-test-terraform-aws
+          - cluster-test-terraform-gce
+        - get: ltc-tar-experimental
+          passed:
+          - cluster-test-vagrant-aws
+          - cluster-test-terraform-aws
+          - cluster-test-terraform-gce
+      - aggregate:
+        - task: generate-terraform-templates
+          file: lattice/concourse/tasks/generate-terraform-templates/task.yml
+        - task: generate-vagrantfile
+          file: lattice/concourse/tasks/generate-vagrantfile/task.yml
+      - aggregate:
+        - put: lattice-tar-nightly
+          params:
+            from: lattice-tar-experimental/lattice-v(.*).tgz
+            to: /nightly/
+        - put: lattice-tar-nightly
+          params:
+            from: lattice-tar-experimental/lattice-v(.*).tgz
+            to: /nightly/lattice-latest.tgz
+        - put: ltc-tar-nightly
+          params:
+            from: ltc-tar-experimental/ltc-v(.*).tgz
+            to: /nightly/
+        - put: ltc-tar-nightly
+          params:
+            from: ltc-tar-experimental/ltc-v(.*).tgz
+            to: /nightly/ltc-latest.tgz
+        - put: terraform-templates-nightly
+          params:
+            from: lattice-v(.*).aws.tf
+            to: /nightly/
+        - put: terraform-templates-nightly
+          params:
+            from: lattice-v(.*).digitalocean.tf
+            to: /nightly/
+        - put: terraform-templates-nightly
+          params:
+            from: lattice-v(.*).google.tf
+            to: /nightly/
+        - put: terraform-templates-nightly
+          params:
+            from: lattice-v(.*).openstack.tf
+            to: /nightly/
+        - put: vagrantfile-nightly
+          params:
+            from: Vagrantfile-v(.*)
+            to: /nightly/
+

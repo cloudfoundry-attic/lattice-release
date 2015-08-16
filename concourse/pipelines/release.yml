@@ -1,0 +1,202 @@
+resources:
+  - name: lattice
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry-incubator/lattice.git
+      branch: develop
+      paths: [/Version]
+  - name: diego-release
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry-incubator/diego-release.git
+      branch: master
+  - name: cf-release
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry/cf-release.git
+      branch: runtime-passed
+  - name: lattice-tar-experimental-release
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: experimental-releases/lattice-v(.*).tgz
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: lattice-release
+    type: github-relesase
+    source:
+      user: {{github-api-user}}
+      repository: sclevine/dummy-lattice
+      access_token: {{github-api-token}}
+  - name: ltc-tar-experimental-release
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: experimental-releases/ltc-v(.*).tgz
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: lattice-tar-release
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: releases/lattice-v(.*).tgz
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: ltc-tar-release
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: releases/ltc-v(.*).tgz
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: terraform-templates-release
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: releases/lattice-v(.*).tf
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: vagrantfile-release
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: releases/Vagrantfile-v(.*)
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+
+
+jobs:
+  - name: unit-tests
+    plan:
+      - get: lattice
+        trigger: true
+      - aggregate:
+        - task: unit-test-ltc
+          file: lattice/concourse/tasks/unit-test-ltc/task.yml
+        - task: unit-test-cell-helper-davtool
+          file: lattice/concourse/tasks/unit-test-cell-helper/task.yml
+          config:
+            params:
+              CELL_HELPER: davtool
+        - task: unit-test-cell-helper-s3tool
+          file: lattice/concourse/tasks/unit-test-cell-helper/task.yml
+          config:
+            params:
+              CELL_HELPER: s3tool
+        - task: unit-test-cell-helper-tee2metron
+          file: lattice/concourse/tasks/unit-test-cell-helper/task.yml
+          config:
+            params:
+              CELL_HELPER: tee2metron
+
+  - name: compile
+    plan:
+      - aggregate:
+        - get: lattice
+          trigger: true
+          passed: [unit-tests]
+        - get: diego-release
+        - get: cf-release
+      - aggregate:
+        - task: compile-lattice-tar
+          file: lattice/concourse/tasks/compile-lattice-tar/task.yml
+        - task: compile-ltc
+          file: lattice/concourse/tasks/compile-ltc/task.yml
+      - aggregate:
+        - put: lattice-tar-experimental-release
+          params:
+            from: lattice/build/lattice-v(.*).tgz
+            to: /experimental-releases/
+        - put: ltc-tar-experimental-release
+          params:
+            from: lattice/build/ltc-v(.*).tgz
+            to: /experimental-releases/
+
+  - name: cluster-test
+    plan:
+      - aggregate:
+        - get: lattice
+          trigger: true
+          passed: [compile]
+        - get: lattice-tar-experimental-release
+          passed: [compile]
+        - get: ltc-tar-experimental-release
+          passed: [compile]
+      - aggregate:
+        - task: cluster-test-terraform-aws
+          file: lattice/concourse/tasks/cluster-test-terraform-aws/task.yml
+          config:
+            params:
+              AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+              AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+        - task: cluster-test-vagrant
+          file: lattice/concourse/tasks/cluster-test-vagrant/task.yml
+          config:
+            params:
+              AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+              AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+
+  - name: publish-release
+    plan:
+      - aggregate:
+        - get: lattice
+          trigger: true
+          passed: [cluster-test]
+        - get: lattice-tar-experimental-release
+          passed: [cluster-test]
+        - get: ltc-tar-experimental-release
+          passed: [cluster-test]
+      - aggregate:
+        - task: generate-terraform-templates
+          file: lattice/concourse/tasks/generate-terraform-templates/task.yml
+        - task: generate-vagrantfile
+          file: lattice/concourse/tasks/generate-vagrantfile/task.yml
+      - aggregate:
+        - put: lattice-tar-release
+          params:
+            from: lattice-tar-experimental/lattice-v(.*).tgz
+            to: /releases/
+        - put: ltc-tar-release
+          params:
+            from: ltc-tar-experimental/ltc-v(.*).tgz
+            to: /releases/
+        - put: terraform-templates-release
+          params:
+            from: lattice-v(.*).aws.tf
+            to: /releases/
+        - put: terraform-templates-release
+          params:
+            from: lattice-v(.*).digitalocean.tf
+            to: /releases/
+        - put: terraform-templates-release
+          params:
+            from: lattice-v(.*).google.tf
+            to: /releases/
+        - put: terraform-templates-release
+          params:
+            from: lattice-v(.*).openstack.tf
+            to: /releases/
+        - put: vagrantfile-release
+          params:
+            from: Vagrantfile-v(.*)
+            to: /releases/
+      - put: lattice-release
+        params:
+          tag: lattice/Version
+          globs:
+            - lattice-tar-experimental/lattice-v(.*).tgz
+            - lattice-tar-experimental/ltc-v(.*).tgz
+            - lattice-v(.*).aws.tf
+            - lattice-v(.*).digitalocean.tf
+            - lattice-v(.*).google.tf
+            - lattice-v(.*).openstack.tf
+            - Vagrantfile-v(.*)
+
