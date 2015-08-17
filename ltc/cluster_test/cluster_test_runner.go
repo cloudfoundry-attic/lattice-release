@@ -180,6 +180,11 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				It("should run a docker app exposing tcp routes", func() {
 					runner.createDockerApp(timeout, appName, "cloudfoundry/tcp-sample-receiver", fmt.Sprintf("--tcp-routes=%d:5222", externalPort), fmt.Sprintf("--timeout=%s", timeout.String()))
 					Eventually(errorCheckForConnection(runner.config.Target(), externalPort, "docker-server1"), timeout, 1).ShouldNot(HaveOccurred())
+
+					externalPort = 53000
+					By("Updating the routes")
+					runner.updateApp(timeout, appName, fmt.Sprintf("--tcp-routes=%d:5222", externalPort))
+					Eventually(errorCheckForConnection(runner.config.Target(), externalPort, "docker-server1"), timeout, 1).ShouldNot(HaveOccurred())
 				})
 			})
 		})
@@ -363,6 +368,20 @@ func (runner *clusterTestRunner) createDockerApp(timeout time.Duration, appName 
 
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
 	fmt.Fprintln(getStyledWriter("test"), "Yay! Created", appName)
+}
+
+func (runner *clusterTestRunner) updateApp(timeout time.Duration, appName string, args ...string) {
+	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to update %s", appName)))
+	updateArgs := append([]string{"update", appName}, args...)
+	command := runner.command(updateArgs...)
+
+	session, err := gexec.Start(command, getStyledWriter("update"), getStyledWriter("update"))
+
+	Expect(err).NotTo(HaveOccurred())
+	expectExit(timeout, session)
+
+	Expect(session.Out).To(gbytes.Say("Updating " + appName + " routes"))
+	fmt.Fprintln(getStyledWriter("test"), "Yay! updated", appName)
 }
 
 func (runner *clusterTestRunner) streamLogs(timeout time.Duration, appName string, args ...string) *gexec.Session {
