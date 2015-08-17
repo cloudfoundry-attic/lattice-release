@@ -160,8 +160,6 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 
 	environment["CF_STACK"] = DropletStack
 	environment["MEMORY_LIMIT"] = fmt.Sprintf("%dM", memoryMB)
-	environment["PWD"] = "/home/vcap"
-	environment["TMPDIR"] = "/home/vcap/tmp"
 
 	createTaskParams := task_runner.NewCreateTaskParams(
 		action,
