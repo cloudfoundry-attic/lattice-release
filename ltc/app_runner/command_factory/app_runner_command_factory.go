@@ -270,7 +270,7 @@ func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollT
 		for _, route := range routeOverrides {
 			factory.UI.SayLine(colors.Green(factory.urlForAppName(route.HostnamePrefix)))
 		}
-	} else {
+	} else if len(tcpRoutes) == 0 {
 		factory.UI.SayLine(colors.Green(factory.urlForAppName(appName)))
 	}
 }
