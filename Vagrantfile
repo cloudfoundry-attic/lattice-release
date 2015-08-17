@@ -1,3 +1,5 @@
+LATTICE_URL = "https://s3-us-west-2.amazonaws.com/lattice/releases/v0.3.1/lattice.tgz"
+
 Vagrant.configure("2") do |config|
 
   ## credit: https://stefanwrobel.com/how-to-make-vagrant-performance-not-suck
