@@ -1,5 +1,5 @@
 module "lattice-openstack" {
-    source = "github.com/cloudfoundry-incubator/lattice//terraform//openstack?ref=v0.3.1-24-g7534faa"
+    source = "github.com/cloudfoundry-incubator/lattice//terraform//openstack?ref=v0.3.0-109-g99bef44"
 
     # Specify an API username and password for your lattice cluster
     # lattice_username = "<CHANGE-ME>"
