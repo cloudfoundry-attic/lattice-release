@@ -1,5 +1,5 @@
 module "lattice-digitalocean" {
-    source = "github.com/cloudfoundry-incubator/lattice//terraform//digitalocean?ref=v0.3.0-109-g99bef44"
+    source = "github.com/cloudfoundry-incubator/lattice//terraform//digitalocean?ref=v0.3.2"
 
     # Specify an API username and password for your lattice cluster
     # lattice_username = "<CHANGE-ME>"
