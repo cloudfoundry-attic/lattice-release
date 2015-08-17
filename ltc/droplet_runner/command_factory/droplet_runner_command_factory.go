@@ -178,14 +178,16 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 			Value: time.Second,
 		},
 		cli.StringFlag{
-			Name: "routes, R",
-			Usage: "Route mappings to exposed ports as follows:\n\t\t" +
-				"--routes=80:web,8080:api will route web to 80 and api to 8080",
+			Name: "http-routes, R",
+			Usage: "Comma separated list of hostnames and ports. Usage: HOST:CONTAINER_PORT[,…].\n\t\t" +
+				"E.g. given —http-routes=foo:8080, requests for foo.SYSTEM_DOMAIN on port 80\n\t\t" +
+				"will be forwarded to container port 8080.",
 		},
 		cli.StringFlag{
-			Name: "tcp-routes",
-			Usage: "Create mappings between external ports and container ports for TCP traffic as follows:\n\t\t" +
-				"--tcp-routes=5222:50000,6379:50001 will route traffic from the external port 50000 to the container port 5222\n\t\t and external port 50001 to container port 6379",
+			Name: "tcp-routes, T",
+			Usage: "Comma separated list of external port and container port. Usage: EXTERNAL_PORT:CONTAINER_PORT[,…].\n\t\t" +
+				"E.g. given —tcp-routes=50000:5222, requests for port 50000\n\t\t" +
+				"will be forwarded to container port 5222.",
 		},
 		cli.IntFlag{
 			Name:  "instances, i",
@@ -208,12 +210,24 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 	}
 
 	var launchDropletCommand = cli.Command{
-		Name:        "launch-droplet",
-		Aliases:     []string{"ld"},
-		Usage:       "Launches a droplet as an app running on lattice",
-		Description: "ltc launch-droplet APP_NAME DROPLET_NAME",
-		Action:      factory.launchDroplet,
-		Flags:       launchFlags,
+		Name:    "launch-droplet",
+		Aliases: []string{"ld"},
+		Usage:   "Launches a droplet as an app running on lattice",
+		Description: `ltc launch-droplet APP_NAME DROPLET_NAME
+
+   Two http routes are created by default, both routing to container port 8080. E.g. for application myapp:
+     - requests to myapp.SYSTEM_DOMAIN:80 will be routed to container port 8080
+     - requests to myapp-8080.SYSTEM_DOMAIN:80 will be routed to container port 8080
+
+   To configure your own routing:
+     ltc launch-droplet APP_NAME DROPLET_NAME --http-routes HOST:CONTAINER_PORT[,...] --tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]
+
+     Examples:
+       ltc launch-droplet myapp ruby --http-routes=myapp-admin:6000 will route requests received at myapp-admin.SYSTEM_DOMAIN:80 to container port 6000.
+       ltc launch-droplet myapp ruby --tcp-routes=50000:6379 will route requests received at SYSTEM_DOMAIN:50000 to container port 6379.
+`,
+		Action: factory.launchDroplet,
+		Flags:  launchFlags,
 	}
 
 	return launchDropletCommand
@@ -420,7 +434,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 	portMonitorFlag := context.Int("monitor-port")
 	urlMonitorFlag := context.String("monitor-url")
 	monitorTimeoutFlag := context.Duration("monitor-timeout")
-	routesFlag := context.String("routes")
+	httpRoutesFlag := context.String("http-routes")
 	tcpRoutesFlag := context.String("tcp-routes")
 	noRoutesFlag := context.Bool("no-routes")
 	timeoutFlag := context.Duration("timeout")
@@ -462,7 +476,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 		return
 	}
 
-	routeOverrides, err := factory.ParseRouteOverrides(routesFlag)
+	routeOverrides, err := factory.ParseRouteOverrides(httpRoutesFlag)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)

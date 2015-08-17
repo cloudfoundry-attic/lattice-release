@@ -58,17 +58,24 @@ By default, `ltc` requests that Lattice open up all ports specified by the `EXPO
 
 You can modify all of this behavior from the command line:
 
-- **`--ports=8080,9000`** allows you to specify the set of ports to open on the container.  This overrides any `EXPOSE` directives associated with the Docker image.  
+- **`--ports=8080,9000,6379,6000`** allows you to specify the set of ports to open on the container.  This overrides any `EXPOSE` directives associated with the Docker image.
     - When specifying multiple ports via `--port` you should also specify a `--monitor-port` or `--monitor-url` to perform the healthcheck on (or, alternatively, turn off the health-check via `--no-monitor`).
-- **`--routes=8080:my-app,9000:my-app-admin`** allows you to specify the routes to map to the requested ports.  In this example, `my-app.192.168.11.11.xip.io` will map to port `8080` and `my-app-admin.192.168.11.11.xip.io` will map to port `9000`.
-  - You can comma-delimit multiple routes to the same port (e.g. `--routes=8080:my-app,8080:my-app-alias`).
-- **`--no-routes`** allows you to specify that no routes be registered. 
-- **`--tcp-routes=6379:50000,6000:50001`** allows you to specify external ports that will be routed to container ports. In this example, given a TCP router at 192.168.11.11, then 192.168.11.11:50000 will be routed to port container port 6379, and 192.168.11.11:50001 will be routed to container port 6000. As Lattice assigned container ports starting at 60000, and the router runs on the same IP as the app container, choose an external port below 60000. You can map multiple external ports to the same container port (e.g. --tcp-routes=6379:50000,6379:50001).
+
+    NOTE: Container ports provided with --http-routes and --tcp-routes must be among the container ports specified with --ports.
+
+- **`--http-routes=my-app:8080,my-app-admin:9000`** allows you to specify the routes to map to the requested ports.  In this example, `my-app.192.168.11.11.xip.io` on port 80 will map to port `8080` and `my-app-admin.192.168.11.11.xip.io` on port 80 will map to port `9000`.
+  - You can comma-delimit multiple routes to the same port (e.g. `--http-routes=my-app:8080,my-app-alias:8080`).
+
+
+- **`--tcp-routes=50000:6379,50001:6000,`** allows you to specify external ports that will be routed to container ports. In this example, given a TCP router at 192.168.11.11, then 192.168.11.11:50000 will be routed to port container port 6379, and 192.168.11.11:50001 will be routed to container port 6000. As Lattice assigned container ports starting at 60000, and the router runs on the same IP as the app container, choose an external port below 60000. You can map multiple external ports to the same container port (e.g. --tcp-routes=50000:6379,50001:6000).
+
+- **`--no-routes`** allows you to specify that no routes be registered.
+
 
 
 #### Managing Healthchecks
 
-In addition, `ltc` sets up a healthcheck that verifies the application responds on a given port or to a specified HTTP request. 
+In addition, `ltc` sets up a healthcheck that verifies the application responds on a given port or to a specified HTTP request.
 
 By default, `ltc` selects the *lowest* exposed port to healthcheck against;  if no monitoring options are specified, 8080 is the default unless `--no-monitor` is set.
 
@@ -83,10 +90,10 @@ By default, `ltc` selects the *lowest* exposed port to healthcheck against;  if 
 
 `ltc remove APP1_NAME [APP2_NAME APP3_NAME...]` removes the specified applications from a Lattice deployment.  
 
-- This operation is performed in the background. `ltc list` may still show the app as running immediately after running `ltc remove`. 
+- This operation is performed in the background. `ltc list` may still show the app as running immediately after running `ltc remove`.
 - To stop an application without removing it, try `ltc scale APP_NAME 0`.
 
-### `ltc scale` 
+### `ltc scale`
 
 `ltc scale APP_NAME NUM_INSTANCES` modifies the number of running instances of an application.
 
@@ -94,11 +101,11 @@ By default, `ltc` selects the *lowest* exposed port to healthcheck against;  if 
 
 ### `ltc update-routes`
 
-`ltc update-routes APP_NAME PORT:ROUTE,PORT:ROUTE,...` allows you to update the routes associated with an application *after* it has been deployed.  The format is identical to the `--routes` option on `ltc create`. 
+`ltc update-routes APP_NAME PORT:ROUTE,PORT:ROUTE,...` allows you to update the routes associated with an application *after* it has been deployed.  The format is identical to the `--routes` option on `ltc create`.
 
 The set of routes passed into `ltc update-routes` will *override* the existing set of routes - these modification will start working shortly after the call to `update-routes`.
 
-- **`--no-routes`** specifies that no routes be registered. 
+- **`--no-routes`** specifies that no routes be registered.
 
 ## Building and Launching Droplets
 
@@ -119,7 +126,7 @@ Lattice has the ability to build and run droplets generated by CF Buildpacks. Bo
 - **`--timeout=2m`** sets the maximum polling duration for building the droplet.
 
   As an alternative to specifying the URL for a given Buildpack, we also support the following aliases: go, java, python, ruby, nodejs, php, binary, or staticfile.
-  
+
   If the application directory contains a `.cfignore` file, `build-droplet` will not upload files that match the contents of the `.cfignore` file.
 
 ### `ltc launch-droplet`
@@ -127,7 +134,7 @@ Lattice has the ability to build and run droplets generated by CF Buildpacks. Bo
 `ltc launch-droplet APP_NAME DROPLET_NAME` launches a droplet as an app running on lattice
 
    `ltc launch-droplet` has the same options as [`ltc create`](/docs/ltc.md#ltc-create), except for `--run-as-root`.  Droplets are run as the user `vcap`.
-   
+
    Finally, one can override the default start command by specifiying a start command after a `--` separator.  This can be followed by any arguments one wishes to pass to the app.  For example:
 
     ltc launch-droplet lattice-app lattice-app -- /lattice-app -quiet=true
@@ -235,4 +242,3 @@ This indicates that instance 0 of the application has been `RUNNING` on `lattice
 `ltc debug-logs` streams back logs from some of Lattice's key components.  This is useful for debugging situations where containers fail to get created/torn down.
 
 - **`--raw`** prints the cluster logs with no styling.
-

@@ -24,8 +24,7 @@ import (
 type pollingAction string
 
 const (
-	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a comma-delimited list of integers between 0-65535."
-	InvalidRoutePortErrorMessage     = "Invalid port specified. Ports must be a positive integer less than 65536."
+	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a positive integer less than 65536."
 	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format port:route"
 	MalformedTcpRouteErrorMessage    = "Malformed TCP route. A TCP Route must be of the format container_Port:external_port"
 	MustSetMonitoredPortErrorMessage = "Must set monitor-port when specifying multiple exposed ports unless --no-monitor is set."
@@ -124,6 +123,38 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 	return updateRoutesCommand
 }
 
+func (factory *AppRunnerCommandFactory) MakeUpdateCommand() cli.Command {
+	var updateFlags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "no-routes",
+			Usage: "Registers no routes for the app",
+		},
+		cli.StringFlag{
+			Name: "http-routes, R",
+			Usage: "Comma separated list of hostnames and ports. Usage: HOST:CONTAINER_PORT[,…].\n\t\t" +
+				"E.g. given —http-routes=foo:8080, requests for foo.SYSTEM_DOMAIN on port 80\n\t\t" +
+				"will be forwarded to container port 8080.",
+		},
+		cli.StringFlag{
+			Name: "tcp-routes, T",
+			Usage: "Comma separated list of external port and container port. Usage: EXTERNAL_PORT:CONTAINER_PORT[,…].\n\t\t" +
+				"E.g. given —tcp-routes=50000:5222, requests for port 50000\n\t\t" +
+				"will be forwarded to container port 5222.",
+		},
+	}
+	var updateCommand = cli.Command{
+		Name:    "update",
+		Aliases: []string{"u"},
+		Usage:   "Updates attributes of an existing application",
+		Description: `ltc update APP_NAME [--http-routes HOST:CONTAINER_PORT[,...]] [--tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]]
+		`,
+		Action: factory.updateApp,
+		Flags:  updateFlags,
+	}
+
+	return updateCommand
+}
+
 func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	var removeAppCommand = cli.Command{
 		Name:        "remove",
@@ -180,6 +211,53 @@ func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
 	}
 
 	factory.setAppInstances(timeoutFlag, appName, instances)
+}
+
+func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
+	appName := c.Args().First()
+	if appName == "" {
+		factory.UI.SayIncorrectUsage("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag.")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	httpRoutesFlag := c.String("http-routes")
+	tcpRoutesFlag := c.String("tcp-routes")
+	noRoutes := c.Bool("no-routes")
+
+	if httpRoutesFlag == "" && tcpRoutesFlag == "" && !noRoutes {
+		factory.UI.SayIncorrectUsage("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag.")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	updateAppParams := app_runner.UpdateAppParams{}
+	updateAppParams.Name = appName
+	updateAppParams.NoRoutes = noRoutes
+
+	routeOverrides, err := factory.ParseRouteOverrides(httpRoutesFlag)
+	if err != nil {
+		factory.UI.Say(err.Error())
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+	updateAppParams.RouteOverrides = routeOverrides
+
+	tcpRoutes, err := factory.ParseTcpRoutes(tcpRoutesFlag)
+	if err != nil {
+		factory.UI.Say(err.Error())
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+	updateAppParams.TcpRoutes = tcpRoutes
+
+	if err := factory.AppRunner.UpdateApp(updateAppParams); err != nil {
+		factory.UI.Say(fmt.Sprintf("Error updating application: %s\n", err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
+	factory.UI.SayLine(fmt.Sprintf("Updating %s routes. You can check this app's current routes by running 'ltc status %s'", appName, appName))
 }
 
 func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
@@ -271,13 +349,13 @@ func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollT
 		for _, route := range routeOverrides {
 			factory.UI.SayLine(colors.Green(factory.urlForAppName(route.HostnamePrefix)))
 		}
-	} else {
+	} else if len(tcpRoutes) == 0 {
 		factory.UI.SayLine(colors.Green(factory.urlForAppName(appName)))
 	}
 }
 
 func (factory *AppRunnerCommandFactory) externalPortMappingForApp(externalPort uint16, containerPort uint16) string {
-	return fmt.Sprintf("External TCP Port %d mapped to application port %d", externalPort, containerPort)
+	return fmt.Sprintf("%s:%d\n", factory.Domain, externalPort)
 }
 
 func (factory *AppRunnerCommandFactory) urlForAppName(name string) string {
@@ -379,11 +457,11 @@ func (factory *AppRunnerCommandFactory) ParseTcpRoutes(tcpRoutesFlag string) (ap
 		if len(portsArr) < 2 {
 			return nil, errors.New(MalformedTcpRouteErrorMessage)
 		}
-		containerPort, err := factory.getPort(portsArr[0])
+		externalPort, err := factory.getPort(portsArr[0])
 		if err != nil {
 			return nil, err
 		}
-		externalPort, err := factory.getPort(portsArr[1])
+		containerPort, err := factory.getPort(portsArr[1])
 		if err != nil {
 			return nil, err
 		}
@@ -396,10 +474,10 @@ func (factory *AppRunnerCommandFactory) ParseTcpRoutes(tcpRoutesFlag string) (ap
 func (factory *AppRunnerCommandFactory) getPort(port string) (uint16, error) {
 	mayBePort, err := strconv.Atoi(port)
 	if err != nil {
-		return 0, errors.New(InvalidRoutePortErrorMessage)
+		return 0, errors.New(InvalidPortErrorMessage)
 	}
 	if mayBePort <= 0 || mayBePort > 65535 {
-		return 0, errors.New(InvalidRoutePortErrorMessage)
+		return 0, errors.New(InvalidPortErrorMessage)
 	}
 	return uint16(mayBePort), nil
 }
@@ -412,13 +490,20 @@ func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes string) (app_
 			continue
 		}
 		routeArr := strings.Split(route, ":")
-		maybePort, err := strconv.Atoi(routeArr[0])
-		if err != nil || len(routeArr) < 2 {
+		if len(routeArr) < 2 {
 			return nil, errors.New(MalformedRouteErrorMessage)
 		}
 
-		port := uint16(maybePort)
-		hostnamePrefix := routeArr[1]
+		hostnamePrefix := strings.Trim(routeArr[0], " ")
+		if len(hostnamePrefix) == 0 {
+			return nil, errors.New(MalformedRouteErrorMessage)
+		}
+
+		port, err := factory.getPort(routeArr[1])
+		if err != nil {
+			return nil, err
+		}
+
 		routeOverrides = append(routeOverrides, app_runner.RouteOverride{HostnamePrefix: hostnamePrefix, Port: port})
 	}
 
