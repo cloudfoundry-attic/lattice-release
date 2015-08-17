@@ -355,7 +355,7 @@ func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollT
 }
 
 func (factory *AppRunnerCommandFactory) externalPortMappingForApp(externalPort uint16, containerPort uint16) string {
-	return fmt.Sprintf("External TCP Port %d mapped to application port %d", externalPort, containerPort)
+	return fmt.Sprintf("%s:%d\n", factory.Domain, externalPort)
 }
 
 func (factory *AppRunnerCommandFactory) urlForAppName(name string) string {

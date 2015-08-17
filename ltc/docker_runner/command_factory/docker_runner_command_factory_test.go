@@ -966,8 +966,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))
 			Expect(outputBuffer).To(test_helpers.SayLine("App is reachable at:"))
 
-			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("External TCP Port 50000 mapped to application port 5222")))
-			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("External TCP Port 50001 mapped to application port 5223")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green(domain + ":50000\n")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green(domain + ":50001\n")))
 		})
 	})
 
