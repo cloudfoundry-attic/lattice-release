@@ -845,6 +845,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(startArgsParam).To(BeNil())
 			Expect(appEnvParam.WorkingDir).To(Equal("/home/vcap/app"))
 			Expect(appEnvParam.Privileged).To(BeTrue())
+			Expect(appEnvParam.User).To(Equal("vcap"))
 			Expect(appEnvParam.Instances).To(Equal(1))
 			Expect(appEnvParam.Monitor).To(Equal(app_runner.MonitorConfig{
 				Method:  app_runner.PortMonitor,

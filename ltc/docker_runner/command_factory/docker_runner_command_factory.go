@@ -304,10 +304,16 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		envVars[appEnvKey] = appEnvVars[appEnvKey]
 	}
 
+	user := "vcap"
+	if runAsRootFlag {
+		user = "root"
+	}
+
 	err = factory.AppRunner.CreateApp(app_runner.CreateAppParams{
 		AppEnvironmentParams: app_runner.AppEnvironmentParams{
 			EnvironmentVariables: envVars,
 			Privileged:           runAsRootFlag,
+			User:                 user,
 			Monitor:              monitorConfig,
 			Instances:            instancesFlag,
 			CPUWeight:            cpuWeightFlag,

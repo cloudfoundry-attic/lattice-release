@@ -48,6 +48,8 @@ var _ = Describe("AppRunner", func() {
 					DiskMB:       1024,
 					ExposedPorts: []uint16{2000, 4000},
 					WorkingDir:   "/user/web/myappdir",
+					Privileged:   true,
+					User:         "start-user",
 				},
 
 				Name:         "americano-app",
@@ -59,7 +61,7 @@ var _ = Describe("AppRunner", func() {
 				Setup: &models.DownloadAction{
 					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
 					To:   "/tmp",
-					User: "vcap",
+					User: "download-user",
 				},
 			}
 		})
@@ -94,7 +96,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(req.CPUWeight).To(Equal(uint(67)))
 			Expect(req.MemoryMB).To(Equal(128))
 			Expect(req.DiskMB).To(Equal(1024))
-			Expect(req.Privileged).To(BeFalse())
+			Expect(req.Privileged).To(BeTrue())
 			Expect(req.Ports).To(ConsistOf(uint16(2000), uint16(4000)))
 			Expect(req.LogGuid).To(Equal("americano-app"))
 			Expect(req.LogSource).To(Equal("APP"))
@@ -106,7 +108,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(ok).To(BeTrue())
 			Expect(reqSetup.From).To(Equal("http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"))
 			Expect(reqSetup.To).To(Equal("/tmp"))
-			Expect(reqSetup.User).To(Equal("vcap"))
+			Expect(reqSetup.User).To(Equal("download-user"))
 
 			Expect(req.Action).To(BeAssignableToTypeOf(&models.RunAction{}))
 			reqAction, ok := req.Action.(*models.RunAction)
@@ -114,7 +116,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(reqAction.Path).To(Equal("/app-run-statement"))
 			Expect(reqAction.Args).To(Equal([]string{"app", "arg1", "--app", "arg 2"}))
 			Expect(reqAction.Dir).To(Equal("/user/web/myappdir"))
-			Expect(reqAction.User).To(Equal("vcap"))
+			Expect(reqAction.User).To(Equal("start-user"))
 
 			Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
 			reqMonitor, ok := req.Monitor.(*models.RunAction)
@@ -122,7 +124,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 			Expect(reqMonitor.Args).To(Equal([]string{"-port", "2000"}))
 			Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
-			Expect(reqMonitor.User).To(Equal("vcap"))
+			Expect(reqMonitor.User).To(Equal("start-user"))
 		})
 
 		Context("when 'lattice-debug' is passed as the appId", func() {
@@ -133,48 +135,6 @@ var _ = Describe("AppRunner", func() {
 
 				err := appRunner.CreateApp(createAppParams)
 				Expect(err).To(MatchError(app_runner.AttemptedToCreateLatticeDebugErrorMessage))
-			})
-		})
-
-		Context("when Privileged is true on the CreateAppParams", func() {
-			It("sets Privileged=true and User=root on the lrp request and RunActions, respectively", func() {
-				createAppParams.Privileged = true
-
-				err := appRunner.CreateApp(createAppParams)
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
-				Expect(req.Privileged).To(BeTrue())
-
-				reqAction, ok := req.Action.(*models.RunAction)
-				Expect(ok).To(BeTrue())
-				Expect(reqAction.User).To(Equal("root"))
-
-				reqMonitor, ok := req.Monitor.(*models.RunAction)
-				Expect(ok).To(BeTrue())
-				Expect(reqMonitor.User).To(Equal("root"))
-			})
-		})
-
-		Context("when Privileged is false on the CreateAppParams", func() {
-			It("sets Privileged=false and User=vcap on the lrp request and RunActions, respectively", func() {
-				createAppParams.Privileged = false
-
-				err := appRunner.CreateApp(createAppParams)
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
-				Expect(req.Privileged).To(BeFalse())
-
-				reqAction, ok := req.Action.(*models.RunAction)
-				Expect(ok).To(BeTrue())
-				Expect(reqAction.User).To(Equal("vcap"))
-
-				reqMonitor, ok := req.Monitor.(*models.RunAction)
-				Expect(ok).To(BeTrue())
-				Expect(reqMonitor.User).To(Equal("vcap"))
 			})
 		})
 
@@ -393,7 +353,6 @@ var _ = Describe("AppRunner", func() {
 				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-timeout", "15s", "-port", "2345"}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
-				Expect(reqMonitor.User).To(Equal("vcap"))
 			})
 		})
 
@@ -422,7 +381,6 @@ var _ = Describe("AppRunner", func() {
 				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-port", "1234", "-uri", "/healthy/endpoint"}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
-				Expect(reqMonitor.User).To(Equal("vcap"))
 			})
 
 			It("sets the timeout for the monitor", func() {
@@ -450,7 +408,6 @@ var _ = Describe("AppRunner", func() {
 				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-timeout", "20s", "-port", "1234", "-uri", "/healthy/endpoint"}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
-				Expect(reqMonitor.User).To(Equal("vcap"))
 			})
 		})
 
@@ -523,19 +480,19 @@ var _ = Describe("AppRunner", func() {
 				Setup: &models.DownloadAction{
 					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
 					To:   "/tmp",
-					User: "vcap",
+					User: "zcap",
 				},
 				Action: &models.RunAction{
 					Path: "/app-run-statement",
 					Args: []string{"app", "arg1", "--app", "arg 2"},
 					Dir:  "/user/web/myappdir",
-					User: "vcap",
+					User: "zcap",
 				},
 				Monitor: &models.RunAction{
 					Path:      "/tmp/healthcheck",
 					Args:      []string{"-port", "2000"},
 					LogSource: "HEALTH",
-					User:      "vcap",
+					User:      "zcap",
 				},
 			}
 

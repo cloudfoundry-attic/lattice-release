@@ -126,7 +126,8 @@ var _ = Describe("CommandFactory", func() {
 				"COLOR":        "Blue",
 				"UNSET":        "",
 			}))
-			Expect(createAppParams.Privileged).To(Equal(true))
+			Expect(createAppParams.Privileged).To(BeTrue())
+			Expect(createAppParams.User).To(Equal("root"))
 			Expect(createAppParams.CPUWeight).To(Equal(uint(57)))
 			Expect(createAppParams.MemoryMB).To(Equal(12))
 			Expect(createAppParams.DiskMB).To(Equal(12))
@@ -342,7 +343,8 @@ var _ = Describe("CommandFactory", func() {
 
 					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
-					Expect(createAppParams.Privileged).To(Equal(false))
+					Expect(createAppParams.Privileged).To(BeFalse())
+					Expect(createAppParams.User).To(Equal("vcap"))
 					Expect(createAppParams.MemoryMB).To(Equal(128))
 					Expect(createAppParams.DiskMB).To(Equal(0))
 					Expect(createAppParams.Monitor.Port).To(Equal(uint16(8080)))
