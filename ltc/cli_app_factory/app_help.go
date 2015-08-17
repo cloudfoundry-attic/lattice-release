@@ -95,6 +95,7 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 					presentCommand("remove"),
 					presentCommand("scale"),
 					presentCommand("update-routes"),
+					presentCommand("update"),
 				},
 			},
 		}, {

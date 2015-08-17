@@ -123,6 +123,38 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 	return updateRoutesCommand
 }
 
+func (factory *AppRunnerCommandFactory) MakeUpdateCommand() cli.Command {
+	var updateFlags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "no-routes",
+			Usage: "Registers no routes for the app",
+		},
+		cli.StringFlag{
+			Name: "http-routes, R",
+			Usage: "Comma separated list of hostnames and ports. Usage: HOST:CONTAINER_PORT[,…].\n\t\t" +
+				"E.g. given —http-routes=foo:8080, requests for foo.SYSTEM_DOMAIN on port 80\n\t\t" +
+				"will be forwarded to container port 8080.",
+		},
+		cli.StringFlag{
+			Name: "tcp-routes, T",
+			Usage: "Comma separated list of external port and container port. Usage: EXTERNAL_PORT:CONTAINER_PORT[,…].\n\t\t" +
+				"E.g. given —tcp-routes=50000:5222, requests for port 50000\n\t\t" +
+				"will be forwarded to container port 5222.",
+		},
+	}
+	var updateCommand = cli.Command{
+		Name:    "update",
+		Aliases: []string{"u"},
+		Usage:   "Updates attributes of an existing application",
+		Description: `ltc update APP_NAME [--http-routes HOST:CONTAINER_PORT[,...]] [--tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]]
+		`,
+		Action: factory.updateApp,
+		Flags:  updateFlags,
+	}
+
+	return updateCommand
+}
+
 func (factory *AppRunnerCommandFactory) MakeRemoveAppCommand() cli.Command {
 	var removeAppCommand = cli.Command{
 		Name:        "remove",
@@ -179,6 +211,53 @@ func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
 	}
 
 	factory.setAppInstances(timeoutFlag, appName, instances)
+}
+
+func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
+	appName := c.Args().First()
+	if appName == "" {
+		factory.UI.SayIncorrectUsage("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag.")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	httpRoutesFlag := c.String("http-routes")
+	tcpRoutesFlag := c.String("tcp-routes")
+	noRoutes := c.Bool("no-routes")
+
+	if httpRoutesFlag == "" && tcpRoutesFlag == "" && !noRoutes {
+		factory.UI.SayIncorrectUsage("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag.")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	updateAppParams := app_runner.UpdateAppParams{}
+	updateAppParams.Name = appName
+	updateAppParams.NoRoutes = noRoutes
+
+	routeOverrides, err := factory.ParseRouteOverrides(httpRoutesFlag)
+	if err != nil {
+		factory.UI.Say(err.Error())
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+	updateAppParams.RouteOverrides = routeOverrides
+
+	tcpRoutes, err := factory.ParseTcpRoutes(tcpRoutesFlag)
+	if err != nil {
+		factory.UI.Say(err.Error())
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+	updateAppParams.TcpRoutes = tcpRoutes
+
+	if err := factory.AppRunner.UpdateApp(updateAppParams); err != nil {
+		factory.UI.Say(fmt.Sprintf("Error updating application: %s\n", err))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
+	factory.UI.SayLine(fmt.Sprintf("Updating %s routes. You can check this app's current routes by running 'ltc status %s'", appName, appName))
 }
 
 func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
