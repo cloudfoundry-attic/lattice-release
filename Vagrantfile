@@ -85,7 +85,11 @@ Vagrant.configure("2") do |config|
       exit(1)
     end
 
-    system('curl', '-o', 'lattice.tgz', lattice_url)
+    puts 'Local lattice.tgz not found, downloading...'
+    unless system('curl', '-sfo', 'lattice.tgz', lattice_url)
+      puts "Failed to download #{lattice_url}."
+      exit(1)
+    end
   end
 
   config.vm.provision "shell" do |s|
