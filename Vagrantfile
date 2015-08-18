@@ -2,6 +2,18 @@ LATTICE_URL = "https://s3-us-west-2.amazonaws.com/lattice/releases/v0.3.2/lattic
 
 Vagrant.configure("2") do |config|
 
+  if Vagrant.has_plugin?("vagrant-proxyconf")
+    config.proxy.http     = ENV["http_proxy"]
+    config.proxy.https    = ENV["https_proxy"]
+    config.proxy.no_proxy = [
+      "localhost", 
+      "127.0.0.1", 
+      (ENV["LATTICE_SYSTEM_IP"] || "192.168.11.11"), 
+      (ENV["LATTICE_SYSTEM_DOMAIN"] || "192.168.11.11.xip.io"), 
+      ".consul"
+    ].join(',')
+  end
+
   ## credit: https://stefanwrobel.com/how-to-make-vagrant-performance-not-suck
   config.vm.provider "virtualbox" do |v|
     host = RbConfig::CONFIG['host_os']
