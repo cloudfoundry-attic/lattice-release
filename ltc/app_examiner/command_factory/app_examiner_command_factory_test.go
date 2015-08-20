@@ -40,6 +40,7 @@ var _ = Describe("CommandFactory", func() {
 		fakeExitHandler         *fake_exit_handler.FakeExitHandler
 		fakeGraphicalVisualizer *fake_graphical_visualizer.FakeGraphicalVisualizer
 		fakeTaskExaminer        *fake_task_examiner.FakeTaskExaminer
+		systemDomain            string
 	)
 
 	BeforeEach(func() {
@@ -53,13 +54,14 @@ var _ = Describe("CommandFactory", func() {
 		fakeClock = fakeclock.NewFakeClock(time.Date(2012, time.February, 29, 6, 45, 30, 820, location))
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 		fakeGraphicalVisualizer = &fake_graphical_visualizer.FakeGraphicalVisualizer{}
+		systemDomain = "system.domain"
 	})
 
 	Describe("ListAppsCommand", func() {
 		var listAppsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer, systemDomain)
 			listAppsCommand = commandFactory.MakeListAppCommand()
 		})
 
@@ -72,10 +74,12 @@ var _ = Describe("CommandFactory", func() {
 					DiskMB:                 100,
 					MemoryMB:               50,
 					Ports:                  []uint16{54321},
-					Routes: route_helpers.AppRoutes{
-						route_helpers.AppRoute{
-							Hostnames: []string{"alldaylong.com"},
-							Port:      54321,
+					Routes: route_helpers.Routes{
+						AppRoutes: route_helpers.AppRoutes{
+							route_helpers.AppRoute{
+								Hostnames: []string{"alldaylong.com"},
+								Port:      54321,
+							},
 						},
 					},
 				},
@@ -86,10 +90,12 @@ var _ = Describe("CommandFactory", func() {
 					DiskMB:                 400,
 					MemoryMB:               30,
 					Ports:                  []uint16{1234},
-					Routes: route_helpers.AppRoutes{
-						route_helpers.AppRoute{
-							Hostnames: []string{"never.io"},
-							Port:      1234,
+					Routes: route_helpers.Routes{
+						AppRoutes: route_helpers.AppRoutes{
+							route_helpers.AppRoute{
+								Hostnames: []string{"never.io"},
+								Port:      1234,
+							},
 						},
 					},
 				},
@@ -100,10 +106,12 @@ var _ = Describe("CommandFactory", func() {
 					DiskMB:                 600,
 					MemoryMB:               90,
 					Ports:                  []uint16{1234},
-					Routes: route_helpers.AppRoutes{
-						route_helpers.AppRoute{
-							Hostnames: []string{"allthetime.com", "herewego.org"},
-							Port:      1234,
+					Routes: route_helpers.Routes{
+						AppRoutes: route_helpers.AppRoutes{
+							route_helpers.AppRoute{
+								Hostnames: []string{"allthetime.com", "herewego.org"},
+								Port:      1234,
+							},
 						},
 					},
 				},
@@ -113,7 +121,7 @@ var _ = Describe("CommandFactory", func() {
 					ActualRunningInstances: 0,
 					DiskMB:                 10,
 					MemoryMB:               10,
-					Routes:                 route_helpers.AppRoutes{},
+					Routes:                 route_helpers.Routes{},
 				},
 			}
 			fakeAppExaminer.ListAppsReturns(listApps, nil)
@@ -169,7 +177,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("5/5")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("600")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.NoColor("90")))
-			Expect(outputBuffer).To(test_helpers.Say("allthetime.com, herewego.org => 1234"))
+			Expect(outputBuffer).To(test_helpers.Say("allthetime.com => 1234, herewego.org => 1234"))
 
 			Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process4")))
 			Expect(outputBuffer).To(test_helpers.Say(colors.Green("0/0")))
@@ -256,10 +264,12 @@ var _ = Describe("CommandFactory", func() {
 						DiskMB:                 100,
 						MemoryMB:               50,
 						Ports:                  []uint16{54321},
-						Routes: route_helpers.AppRoutes{
-							route_helpers.AppRoute{
-								Hostnames: []string{"alldaylong.com"},
-								Port:      54321,
+						Routes: route_helpers.Routes{
+							AppRoutes: route_helpers.AppRoutes{
+								route_helpers.AppRoute{
+									Hostnames: []string{"alldaylong.com"},
+									Port:      54321,
+								},
 							},
 						},
 					},
@@ -285,13 +295,168 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
+
+		Context("when app has tcp routes", func() {
+			It("displays all tcp routes along with http routes", func() {
+				listApps := []app_examiner.AppInfo{
+					app_examiner.AppInfo{
+						ProcessGuid:            "process1",
+						DesiredInstances:       21,
+						ActualRunningInstances: 0,
+						DiskMB:                 100,
+						MemoryMB:               50,
+						Ports:                  []uint16{54321, 5222},
+						Routes: route_helpers.Routes{
+							AppRoutes: route_helpers.AppRoutes{
+								route_helpers.AppRoute{
+									Hostnames: []string{"alldaylong.com"},
+									Port:      54321,
+								},
+							},
+							TcpRoutes: route_helpers.TcpRoutes{
+								route_helpers.TcpRoute{
+									ExternalPort: 51000,
+									Port:         5222,
+								},
+							},
+						},
+					},
+					app_examiner.AppInfo{
+						ProcessGuid:            "process2",
+						DesiredInstances:       8,
+						ActualRunningInstances: 9,
+						DiskMB:                 400,
+						MemoryMB:               30,
+						Ports:                  []uint16{1234, 7400},
+						Routes: route_helpers.Routes{
+							AppRoutes: route_helpers.AppRoutes{
+								route_helpers.AppRoute{
+									Hostnames: []string{"never.io"},
+									Port:      1234,
+								},
+							},
+							TcpRoutes: route_helpers.TcpRoutes{
+								route_helpers.TcpRoute{
+									ExternalPort: 52000,
+									Port:         7400,
+								},
+							},
+						},
+					},
+					app_examiner.AppInfo{
+						ProcessGuid:            "process3",
+						DesiredInstances:       5,
+						ActualRunningInstances: 5,
+						DiskMB:                 600,
+						MemoryMB:               90,
+						Ports:                  []uint16{1234, 1883},
+						Routes: route_helpers.Routes{
+							AppRoutes: route_helpers.AppRoutes{
+								route_helpers.AppRoute{
+									Hostnames: []string{"allthetime.com", "herewego.org"},
+									Port:      1234,
+								},
+							},
+							TcpRoutes: route_helpers.TcpRoutes{
+								route_helpers.TcpRoute{
+									ExternalPort: 53000,
+									Port:         1883,
+								},
+							},
+						},
+					},
+					app_examiner.AppInfo{
+						ProcessGuid:            "process4",
+						DesiredInstances:       0,
+						ActualRunningInstances: 0,
+						DiskMB:                 10,
+						MemoryMB:               10,
+						Routes:                 route_helpers.Routes{},
+					},
+				}
+				fakeAppExaminer.ListAppsReturns(listApps, nil)
+
+				test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process1")))
+				Expect(outputBuffer).To(test_helpers.Say("alldaylong.com => 54321, system.domain:51000 => 5222"))
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process2")))
+				Expect(outputBuffer).To(test_helpers.Say("never.io => 1234, system.domain:52000 => 7400"))
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process3")))
+				Expect(outputBuffer).To(test_helpers.Say("allthetime.com => 1234, herewego.org => 1234, system.domain:53000 => 1883"))
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process4")))
+			})
+		})
+
+		Context("when app has routes with container ports not listed in ports section", func() {
+			It("displays all tcp routes along with http routes", func() {
+				listApps := []app_examiner.AppInfo{
+					app_examiner.AppInfo{
+						ProcessGuid:            "process1",
+						DesiredInstances:       21,
+						ActualRunningInstances: 0,
+						DiskMB:                 100,
+						MemoryMB:               50,
+						Ports:                  []uint16{54321},
+						Routes: route_helpers.Routes{
+							AppRoutes: route_helpers.AppRoutes{
+								route_helpers.AppRoute{
+									Hostnames: []string{"alldaylong.com"},
+									Port:      54321,
+								},
+							},
+							TcpRoutes: route_helpers.TcpRoutes{
+								route_helpers.TcpRoute{
+									ExternalPort: 51000,
+									Port:         5222,
+								},
+							},
+						},
+					},
+					app_examiner.AppInfo{
+						ProcessGuid:            "process2",
+						DesiredInstances:       8,
+						ActualRunningInstances: 9,
+						DiskMB:                 400,
+						MemoryMB:               30,
+						Ports:                  []uint16{7400},
+						Routes: route_helpers.Routes{
+							AppRoutes: route_helpers.AppRoutes{
+								route_helpers.AppRoute{
+									Hostnames: []string{"never.io"},
+									Port:      1234,
+								},
+							},
+							TcpRoutes: route_helpers.TcpRoutes{
+								route_helpers.TcpRoute{
+									ExternalPort: 52000,
+									Port:         7400,
+								},
+							},
+						},
+					},
+				}
+				fakeAppExaminer.ListAppsReturns(listApps, nil)
+
+				test_helpers.ExecuteCommandWithArgs(listAppsCommand, []string{})
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process1")))
+				Expect(outputBuffer).To(test_helpers.Say("alldaylong.com => 54321"))
+
+				Expect(outputBuffer).To(test_helpers.Say(colors.Bold("process2")))
+				Expect(outputBuffer).To(test_helpers.Say("system.domain:52000 => 7400"))
+			})
+		})
 	})
 
 	Describe("VisualizeCommand", func() {
 		var visualizeCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, fakeGraphicalVisualizer, fakeTaskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, fakeGraphicalVisualizer, fakeTaskExaminer, systemDomain)
 			visualizeCommand = commandFactory.MakeVisualizeCommand()
 		})
 
@@ -444,7 +609,7 @@ var _ = Describe("CommandFactory", func() {
 		}
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer, systemDomain)
 			statusCommand = commandFactory.MakeStatusCommand()
 
 			sampleAppInfo = app_examiner.AppInfo{
@@ -460,14 +625,16 @@ var _ = Describe("CommandFactory", func() {
 				MemoryMB:     256,
 				CPUWeight:    100,
 				Ports:        []uint16{8887, 9000},
-				Routes: route_helpers.AppRoutes{
-					route_helpers.AppRoute{
-						Port:      9090,
-						Hostnames: []string{"route-me.my-fun-domain.com"},
-					},
-					route_helpers.AppRoute{
-						Port:      8080,
-						Hostnames: []string{"wompy-app.my-fun-domain.com", "cranky-app.my-fun-domain.com"},
+				Routes: route_helpers.Routes{
+					AppRoutes: route_helpers.AppRoutes{
+						route_helpers.AppRoute{
+							Port:      9000,
+							Hostnames: []string{"route-me.my-fun-domain.com"},
+						},
+						route_helpers.AppRoute{
+							Port:      8887,
+							Hostnames: []string{"wompy-app.my-fun-domain.com", "cranky-app.my-fun-domain.com"},
+						},
 					},
 				},
 				LogGuid:    "a9s8dfa99023r",
@@ -543,9 +710,9 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("9000"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Routes"))
-			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com => 8080"))
-			Expect(outputBuffer).To(test_helpers.Say("cranky-app.my-fun-domain.com => 8080"))
-			Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9090"))
+			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com => 8887"))
+			Expect(outputBuffer).To(test_helpers.Say("cranky-app.my-fun-domain.com => 8887"))
+			Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9000"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Annotation"))
 			Expect(outputBuffer).To(test_helpers.Say("I love this app. So wompy."))
@@ -604,6 +771,74 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).NotTo(test_helpers.Say("CPU"))
 			Expect(outputBuffer).NotTo(test_helpers.Say("Memory"))
+		})
+
+		Context("when there are only tcp routes", func() {
+			BeforeEach(func() {
+				sampleAppInfo.Routes = route_helpers.Routes{
+					TcpRoutes: route_helpers.TcpRoutes{
+						route_helpers.TcpRoute{
+							Port:         9000,
+							ExternalPort: 52000,
+						},
+						route_helpers.TcpRoute{
+							Port:         8887,
+							ExternalPort: 51000,
+						},
+					},
+				}
+			})
+
+			It("emits a pretty representation of the DesiredLRP", func() {
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Ports"))
+				Expect(outputBuffer).To(test_helpers.Say("8887"))
+				Expect(outputBuffer).To(test_helpers.Say("9000"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Routes"))
+				Expect(outputBuffer).To(test_helpers.Say("system.domain:51000 => 8887"))
+				Expect(outputBuffer).To(test_helpers.Say("system.domain:52000 => 9000"))
+			})
+		})
+
+		Context("when there are both http and tcp routes", func() {
+			BeforeEach(func() {
+				sampleAppInfo.Routes = route_helpers.Routes{
+					TcpRoutes: route_helpers.TcpRoutes{
+						route_helpers.TcpRoute{
+							Port:         8887,
+							ExternalPort: 51000,
+						},
+					},
+					AppRoutes: route_helpers.AppRoutes{
+						route_helpers.AppRoute{
+							Port:      9000,
+							Hostnames: []string{"route-me.my-fun-domain.com"},
+						},
+					},
+				}
+			})
+
+			It("emits a pretty representation of the DesiredLRP", func() {
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Ports"))
+				Expect(outputBuffer).To(test_helpers.Say("8887"))
+				Expect(outputBuffer).To(test_helpers.Say("9000"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Routes"))
+				Expect(outputBuffer).To(test_helpers.Say("system.domain:51000 => 8887"))
+				Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9000"))
+			})
 		})
 
 		Context("when there is a placement error on an actualLRP", func() {
@@ -793,7 +1028,7 @@ var _ = Describe("CommandFactory", func() {
 		var cellsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer, systemDomain)
 			cellsCommand = commandFactory.MakeCellsCommand()
 		})
 

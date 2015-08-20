@@ -221,17 +221,7 @@ var _ = Describe("AppRunner", func() {
 						},
 					))
 
-					Expect(routes.AppRoutes).To(ContainExactly(
-						route_helpers.AppRoutes{
-							route_helpers.AppRoute{
-								Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"},
-								Port:      2000,
-							},
-							route_helpers.AppRoute{
-								Hostnames: []string{"americano-app-4000.myDiegoInstall.com"},
-								Port:      4000,
-							},
-						}))
+					Expect(routes.AppRoutes).To(BeNil())
 				})
 			})
 		})
@@ -274,8 +264,10 @@ var _ = Describe("AppRunner", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				appRoutes := route_helpers.AppRoutesFromRoutingInfo(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes)
-				Expect(appRoutes).To(ContainExactly(
+
+				routes := route_helpers.RoutesFromRoutingInfo(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes)
+
+				Expect(routes.AppRoutes).To(ContainExactly(
 					route_helpers.AppRoutes{
 						route_helpers.AppRoute{
 							Hostnames: []string{"wiggle.myDiegoInstall.com", "swang.myDiegoInstall.com"},
@@ -286,6 +278,7 @@ var _ = Describe("AppRunner", func() {
 							Port:      4000,
 						},
 					}))
+				Expect(routes.TcpRoutes).To(BeNil())
 			})
 		})
 
@@ -734,6 +727,266 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
 
 				err := appRunner.UpdateAppRoutes("nescafe-app", nil)
+				Expect(err).To(MatchError(receptorError))
+			})
+		})
+	})
+
+	Describe("UpdateApp", func() {
+
+		Context("when http routes are updated", func() {
+			It("updates the Routes", func() {
+				desiredLRPs := []receptor.DesiredLRPResponse{
+					receptor.DesiredLRPResponse{ProcessGuid: "test-app"},
+				}
+				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+				expectedRouteOverrides := app_runner.RouteOverrides{
+					app_runner.RouteOverride{
+						HostnamePrefix: "foo.com",
+						Port:           8080,
+					},
+					app_runner.RouteOverride{
+						HostnamePrefix: "bar.com",
+						Port:           9090,
+					},
+				}
+				updateAppParams := app_runner.UpdateAppParams{
+					Name:           "test-app",
+					RouteOverrides: expectedRouteOverrides,
+				}
+
+				err := appRunner.UpdateApp(updateAppParams)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeReceptorClient.UpdateDesiredLRPCallCount()).To(Equal(1))
+				processGuid, updateRequest := fakeReceptorClient.UpdateDesiredLRPArgsForCall(0)
+				Expect(processGuid).To(Equal("test-app"))
+				expectedRoutes := route_helpers.AppRoutes{
+					route_helpers.AppRoute{Hostnames: []string{"foo.com.myDiegoInstall.com"}, Port: 8080},
+					route_helpers.AppRoute{Hostnames: []string{"bar.com.myDiegoInstall.com"}, Port: 9090},
+				}
+				routes := route_helpers.RoutesFromRoutingInfo(updateRequest.Routes)
+				Expect(routes.AppRoutes).To(ContainExactly(expectedRoutes))
+				Expect(routes.TcpRoutes).To(BeNil())
+			})
+		})
+
+		Context("when tcp routes are updated", func() {
+			It("updates the Routes", func() {
+				desiredLRPs := []receptor.DesiredLRPResponse{
+					receptor.DesiredLRPResponse{ProcessGuid: "test-app"},
+				}
+				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+				expectedTcpRoutes := app_runner.TcpRoutes{
+					app_runner.TcpRoute{
+						ExternalPort: 51000,
+						Port:         8080,
+					},
+					app_runner.TcpRoute{
+						ExternalPort: 52000,
+						Port:         9090,
+					},
+				}
+				updateAppParams := app_runner.UpdateAppParams{
+					Name:      "test-app",
+					TcpRoutes: expectedTcpRoutes,
+				}
+
+				err := appRunner.UpdateApp(updateAppParams)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeReceptorClient.UpdateDesiredLRPCallCount()).To(Equal(1))
+				processGuid, updateRequest := fakeReceptorClient.UpdateDesiredLRPArgsForCall(0)
+				Expect(processGuid).To(Equal("test-app"))
+				expectedRoutes := route_helpers.TcpRoutes{
+					route_helpers.TcpRoute{ExternalPort: 51000, Port: 8080},
+					route_helpers.TcpRoute{ExternalPort: 52000, Port: 9090},
+				}
+				routes := route_helpers.RoutesFromRoutingInfo(updateRequest.Routes)
+				Expect(routes.TcpRoutes).To(ContainExactly(expectedRoutes))
+				Expect(routes.AppRoutes).To(BeNil())
+			})
+		})
+
+		Context("when both http and tcp routes are updated", func() {
+			It("updates the Routes", func() {
+				desiredLRPs := []receptor.DesiredLRPResponse{
+					receptor.DesiredLRPResponse{ProcessGuid: "test-app"},
+				}
+				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+				expectedRouteOverrides := app_runner.RouteOverrides{
+					app_runner.RouteOverride{
+						HostnamePrefix: "foo.com",
+						Port:           8080,
+					},
+					app_runner.RouteOverride{
+						HostnamePrefix: "bar.com",
+						Port:           9090,
+					},
+				}
+				expectedTcpRoutes := app_runner.TcpRoutes{
+					app_runner.TcpRoute{
+						ExternalPort: 51000,
+						Port:         5222,
+					},
+					app_runner.TcpRoute{
+						ExternalPort: 52000,
+						Port:         6379,
+					},
+				}
+				updateAppParams := app_runner.UpdateAppParams{
+					Name:           "test-app",
+					TcpRoutes:      expectedTcpRoutes,
+					RouteOverrides: expectedRouteOverrides,
+				}
+
+				err := appRunner.UpdateApp(updateAppParams)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeReceptorClient.UpdateDesiredLRPCallCount()).To(Equal(1))
+				processGuid, updateRequest := fakeReceptorClient.UpdateDesiredLRPArgsForCall(0)
+				Expect(processGuid).To(Equal("test-app"))
+
+				expectedAppRoutes := route_helpers.AppRoutes{
+					route_helpers.AppRoute{Hostnames: []string{"foo.com.myDiegoInstall.com"}, Port: 8080},
+					route_helpers.AppRoute{Hostnames: []string{"bar.com.myDiegoInstall.com"}, Port: 9090},
+				}
+				expectedRoutes := route_helpers.TcpRoutes{
+					route_helpers.TcpRoute{ExternalPort: 51000, Port: 5222},
+					route_helpers.TcpRoute{ExternalPort: 52000, Port: 6379},
+				}
+
+				routes := route_helpers.RoutesFromRoutingInfo(updateRequest.Routes)
+				Expect(routes.TcpRoutes).To(ContainExactly(expectedRoutes))
+				Expect(routes.AppRoutes).To(ContainExactly(expectedAppRoutes))
+			})
+		})
+
+		Context("when no routes is true", func() {
+			It("deregisters all the routes", func() {
+				desiredLRPs := []receptor.DesiredLRPResponse{
+					receptor.DesiredLRPResponse{ProcessGuid: "test-app"},
+				}
+				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+				expectedRouteOverrides := app_runner.RouteOverrides{
+					app_runner.RouteOverride{
+						HostnamePrefix: "foo.com",
+						Port:           8080,
+					},
+					app_runner.RouteOverride{
+						HostnamePrefix: "bar.com",
+						Port:           9090,
+					},
+				}
+				expectedTcpRoutes := app_runner.TcpRoutes{
+					app_runner.TcpRoute{
+						ExternalPort: 51000,
+						Port:         5222,
+					},
+					app_runner.TcpRoute{
+						ExternalPort: 52000,
+						Port:         6379,
+					},
+				}
+				updateAppParams := app_runner.UpdateAppParams{
+					Name:           "test-app",
+					TcpRoutes:      expectedTcpRoutes,
+					RouteOverrides: expectedRouteOverrides,
+					NoRoutes:       true,
+				}
+
+				err := appRunner.UpdateApp(updateAppParams)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeReceptorClient.UpdateDesiredLRPCallCount()).To(Equal(1))
+				processGuid, updateRequest := fakeReceptorClient.UpdateDesiredLRPArgsForCall(0)
+				Expect(processGuid).To(Equal("test-app"))
+				Expect(updateRequest.Routes).To(Equal(route_helpers.Routes{AppRoutes: route_helpers.AppRoutes{}}.RoutingInfo()))
+			})
+		})
+
+		Context("when an empty routes is passed", func() {
+			It("deregisters the routes", func() {
+				desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "test-app"}}
+				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+
+				updateAppParams := app_runner.UpdateAppParams{
+					Name: "test-app",
+				}
+
+				err := appRunner.UpdateApp(updateAppParams)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeReceptorClient.UpdateDesiredLRPCallCount()).To(Equal(1))
+				processGuid, updateRequest := fakeReceptorClient.UpdateDesiredLRPArgsForCall(0)
+				Expect(processGuid).To(Equal("test-app"))
+				Expect(updateRequest.Routes).To(Equal(route_helpers.Routes{}.RoutingInfo()))
+			})
+		})
+
+		Context("when app is not started", func() {
+			It("returns errors", func() {
+				expectedRouteOverrides := app_runner.RouteOverrides{
+					app_runner.RouteOverride{
+						HostnamePrefix: "foo.com",
+						Port:           8080,
+					},
+					app_runner.RouteOverride{
+						HostnamePrefix: "bar.com",
+						Port:           9090,
+					},
+				}
+				desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{ProcessGuid: "test-app"}}
+				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+
+				updateAppParams := app_runner.UpdateAppParams{
+					Name:           "app-not-running",
+					RouteOverrides: expectedRouteOverrides,
+				}
+
+				err := appRunner.UpdateApp(updateAppParams)
+				Expect(err).To(MatchError("app-not-running is not started."))
+				Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
+			})
+		})
+
+		Context("returning errors from the receptor", func() {
+			It("returns desiring lrp errors", func() {
+				desiredLRPs := []receptor.DesiredLRPResponse{receptor.DesiredLRPResponse{
+					ProcessGuid: "test-app", Instances: 1},
+				}
+				fakeReceptorClient.DesiredLRPsReturns(desiredLRPs, nil)
+				receptorError := errors.New("error - Updating an LRP")
+				fakeReceptorClient.UpdateDesiredLRPReturns(receptorError)
+
+				expectedRouteOverrides := app_runner.RouteOverrides{
+					app_runner.RouteOverride{
+						HostnamePrefix: "foo.com",
+						Port:           8080,
+					},
+					app_runner.RouteOverride{
+						HostnamePrefix: "bar.com",
+						Port:           9090,
+					},
+				}
+				updateAppParams := app_runner.UpdateAppParams{
+					Name:           "test-app",
+					RouteOverrides: expectedRouteOverrides,
+				}
+
+				err := appRunner.UpdateApp(updateAppParams)
+				Expect(err).To(MatchError(receptorError))
+			})
+
+			It("returns errors fetching the existing lrp count", func() {
+				receptorError := errors.New("error - Existing Count")
+				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, receptorError)
+
+				updateAppParams := app_runner.UpdateAppParams{
+					Name: "test-app",
+				}
+
+				err := appRunner.UpdateApp(updateAppParams)
 				Expect(err).To(MatchError(receptorError))
 			})
 		})

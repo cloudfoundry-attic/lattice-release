@@ -43,6 +43,14 @@ type FakeAppRunner struct {
 	updateAppRoutesReturns struct {
 		result1 error
 	}
+	UpdateAppStub        func(updateAppParams app_runner.UpdateAppParams) error
+	updateAppMutex       sync.RWMutex
+	updateAppArgsForCall []struct {
+		updateAppParams app_runner.UpdateAppParams
+	}
+	updateAppReturns struct {
+		result1 error
+	}
 	RemoveAppStub        func(name string) error
 	removeAppMutex       sync.RWMutex
 	removeAppArgsForCall []struct {
@@ -180,6 +188,38 @@ func (fake *FakeAppRunner) UpdateAppRoutesArgsForCall(i int) (string, app_runner
 func (fake *FakeAppRunner) UpdateAppRoutesReturns(result1 error) {
 	fake.UpdateAppRoutesStub = nil
 	fake.updateAppRoutesReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeAppRunner) UpdateApp(updateAppParams app_runner.UpdateAppParams) error {
+	fake.updateAppMutex.Lock()
+	fake.updateAppArgsForCall = append(fake.updateAppArgsForCall, struct {
+		updateAppParams app_runner.UpdateAppParams
+	}{updateAppParams})
+	fake.updateAppMutex.Unlock()
+	if fake.UpdateAppStub != nil {
+		return fake.UpdateAppStub(updateAppParams)
+	} else {
+		return fake.updateAppReturns.result1
+	}
+}
+
+func (fake *FakeAppRunner) UpdateAppCallCount() int {
+	fake.updateAppMutex.RLock()
+	defer fake.updateAppMutex.RUnlock()
+	return len(fake.updateAppArgsForCall)
+}
+
+func (fake *FakeAppRunner) UpdateAppArgsForCall(i int) app_runner.UpdateAppParams {
+	fake.updateAppMutex.RLock()
+	defer fake.updateAppMutex.RUnlock()
+	return fake.updateAppArgsForCall[i].updateAppParams
+}
+
+func (fake *FakeAppRunner) UpdateAppReturns(result1 error) {
+	fake.UpdateAppStub = nil
+	fake.updateAppReturns = struct {
 		result1 error
 	}{result1}
 }

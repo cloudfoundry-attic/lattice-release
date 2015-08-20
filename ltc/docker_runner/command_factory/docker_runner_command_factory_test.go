@@ -86,7 +86,7 @@ var _ = Describe("CommandFactory", func() {
 				"--cpu-weight=57",
 				"--memory-mb=12",
 				"--disk-mb=12",
-				"--routes=3000:route-3000-yay,1111:route-1111-wahoo,1111:route-1111-me-too",
+				"--http-routes=route-3000-yay:3000,route-1111-wahoo:1111,route-1111-me-too:1111",
 				"--working-dir=/applications",
 				"--run-as-root=true",
 				"--instances=22",
@@ -182,14 +182,14 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 					"superfun/app",
-					"--routes=woo:aahh",
+					"--http-routes=woo:aahh",
 					"--",
 					"/start-me-please",
 				}
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MalformedRouteErrorMessage))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
 				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -198,7 +198,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 					"superfun/app",
-					"--routes=8888",
+					"--http-routes=8888",
 					"--",
 					"/start-me-please",
 				}
@@ -890,7 +890,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidRoutePortErrorMessage))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
 				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -915,7 +915,7 @@ var _ = Describe("CommandFactory", func() {
 
 		It("creates a Docker based app with tcp routes as specified in the command via the AppRunner", func() {
 			args := []string{
-				"--tcp-routes=5222:50000,5223:50001",
+				"--tcp-routes=50000:5222,50001:5223",
 				"cool-web-app",
 				"superfun/app:mycooltag",
 				"--",
@@ -966,8 +966,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))
 			Expect(outputBuffer).To(test_helpers.SayLine("App is reachable at:"))
 
-			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("External TCP Port 50000 mapped to application port 5222")))
-			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("External TCP Port 50001 mapped to application port 5223")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green(domain + ":50000\n")))
+			Expect(outputBuffer).To(test_helpers.Say(colors.Green(domain + ":50001\n")))
 		})
 	})
 

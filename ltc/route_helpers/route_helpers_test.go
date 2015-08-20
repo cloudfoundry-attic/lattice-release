@@ -12,28 +12,29 @@ import (
 
 var _ = Describe("RoutingInfoHelpers", func() {
 	var (
-		route1 route_helpers.AppRoute
-		route2 route_helpers.AppRoute
-		route3 route_helpers.AppRoute
+		appRoute1 route_helpers.AppRoute
+		appRoute2 route_helpers.AppRoute
+		appRoute3 route_helpers.AppRoute
 
-		routes route_helpers.AppRoutes
+		appRoutes route_helpers.AppRoutes
 	)
 
 	BeforeEach(func() {
-		route1 = route_helpers.AppRoute{
+		appRoute1 = route_helpers.AppRoute{
 			Hostnames: []string{"foo1.example.com", "bar1.examaple.com"},
 			Port:      11111,
 		}
-		route2 = route_helpers.AppRoute{
+		appRoute2 = route_helpers.AppRoute{
 			Hostnames: []string{"foo2.example.com", "bar2.examaple.com"},
 			Port:      22222,
 		}
-		route3 = route_helpers.AppRoute{
+		appRoute3 = route_helpers.AppRoute{
 			Hostnames: []string{"foo3.example.com", "bar3.examaple.com"},
 			Port:      33333,
 		}
 
-		routes = route_helpers.AppRoutes{route1, route2, route3}
+		appRoutes = route_helpers.AppRoutes{appRoute1, appRoute2, appRoute3}
+
 	})
 
 	Describe("AppRoutes", func() {
@@ -41,11 +42,11 @@ var _ = Describe("RoutingInfoHelpers", func() {
 			var routingInfo receptor.RoutingInfo
 
 			JustBeforeEach(func() {
-				routingInfo = routes.RoutingInfo()
+				routingInfo = appRoutes.RoutingInfo()
 			})
 
 			It("wraps the serialized routes with the correct key", func() {
-				expectedBytes, err := json.Marshal(routes)
+				expectedBytes, err := json.Marshal(appRoutes)
 				Expect(err).ToNot(HaveOccurred())
 
 				payload, err := routingInfo[route_helpers.AppRouter].MarshalJSON()
@@ -56,7 +57,7 @@ var _ = Describe("RoutingInfoHelpers", func() {
 
 			Context("when AppRoutes is empty", func() {
 				BeforeEach(func() {
-					routes = route_helpers.AppRoutes{}
+					appRoutes = route_helpers.AppRoutes{}
 				})
 
 				It("marshals an empty list", func() {
@@ -81,11 +82,11 @@ var _ = Describe("RoutingInfoHelpers", func() {
 
 			Context("when lattice app routes are present in the routing info", func() {
 				BeforeEach(func() {
-					routingInfo = routes.RoutingInfo()
+					routingInfo = appRoutes.RoutingInfo()
 				})
 
 				It("returns the routes", func() {
-					Expect(routes).To(Equal(routesResult))
+					Expect(appRoutes).To(Equal(routesResult))
 				})
 			})
 
@@ -147,7 +148,183 @@ var _ = Describe("RoutingInfoHelpers", func() {
 				33333: []string{"foo3.example.com", "bar3.examaple.com"},
 			}
 
-			Expect(routes.HostnamesByPort()).To(Equal(expectedHostnamesByPort))
+			Expect(appRoutes.HostnamesByPort()).To(Equal(expectedHostnamesByPort))
+		})
+	})
+
+	Describe("Routes", func() {
+
+		var (
+			routes    route_helpers.Routes
+			tcpRoute1 route_helpers.TcpRoute
+			tcpRoute2 route_helpers.TcpRoute
+		)
+
+		BeforeEach(func() {
+
+			tcpRoute1 = route_helpers.TcpRoute{
+				ExternalPort: 50000,
+				Port:         5222,
+			}
+			tcpRoute2 = route_helpers.TcpRoute{
+				ExternalPort: 51000,
+				Port:         5223,
+			}
+			routes = route_helpers.Routes{
+				AppRoutes: route_helpers.AppRoutes{
+					appRoute1, appRoute2,
+				},
+				TcpRoutes: route_helpers.TcpRoutes{
+					tcpRoute1, tcpRoute2,
+				},
+			}
+		})
+
+		Describe("RoutingInfo", func() {
+			var routingInfo receptor.RoutingInfo
+
+			JustBeforeEach(func() {
+				routingInfo = routes.RoutingInfo()
+			})
+
+			It("wraps the serialized routes with the correct key", func() {
+				expectedBytes, err := json.Marshal(route_helpers.AppRoutes{appRoute1, appRoute2})
+				Expect(err).ToNot(HaveOccurred())
+
+				payload, err := routingInfo[route_helpers.AppRouter].MarshalJSON()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(payload).To(MatchJSON(expectedBytes))
+
+				expectedBytes, err = json.Marshal(route_helpers.TcpRoutes{tcpRoute1, tcpRoute2})
+				Expect(err).ToNot(HaveOccurred())
+
+				payload, err = routingInfo[route_helpers.TcpRouter].MarshalJSON()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(payload).To(MatchJSON(expectedBytes))
+			})
+
+			Context("when Routes is empty", func() {
+				BeforeEach(func() {
+					routes = route_helpers.Routes{
+						AppRoutes: route_helpers.AppRoutes{},
+						TcpRoutes: route_helpers.TcpRoutes{},
+					}
+				})
+
+				It("marshals an empty list", func() {
+					payload, err := routingInfo[route_helpers.AppRouter].MarshalJSON()
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(payload).To(MatchJSON(`[]`))
+
+					payload, err = routingInfo[route_helpers.TcpRouter].MarshalJSON()
+					Expect(err).ToNot(HaveOccurred())
+
+					Expect(payload).To(MatchJSON(`[]`))
+				})
+			})
+		})
+
+		Describe("RoutesFromRoutingInfo", func() {
+			var routingInfo receptor.RoutingInfo
+
+			Context("when the method returns a value", func() {
+				var routesResult route_helpers.Routes
+
+				JustBeforeEach(func() {
+					routesResult = route_helpers.RoutesFromRoutingInfo(routingInfo)
+				})
+
+				Context("when lattice app routes are present in the routing info", func() {
+					BeforeEach(func() {
+						routingInfo = routes.RoutingInfo()
+					})
+
+					It("returns the routes", func() {
+						Expect(routesResult).To(Equal(routes))
+					})
+				})
+
+				Context("when the result should be nil", func() {
+					itReturnsEmptyRoutes := func() {
+						It("returns nil routes", func() {
+							Expect(routesResult).To(BeZero())
+						})
+					}
+
+					Context("when the both http and tcp routes are nil", func() {
+						BeforeEach(func() {
+							routingInfo = receptor.RoutingInfo{
+								route_helpers.AppRouter: nil,
+								route_helpers.TcpRouter: nil,
+							}
+						})
+
+						itReturnsEmptyRoutes()
+					})
+
+					Context("when lattice app and tcp routes are not present in the routing info", func() {
+						BeforeEach(func() {
+							routingInfo = receptor.RoutingInfo{}
+						})
+
+						itReturnsEmptyRoutes()
+					})
+
+					Context("when the routing info is nil", func() {
+						BeforeEach(func() {
+							routingInfo = nil
+						})
+
+						itReturnsEmptyRoutes()
+					})
+
+					Context("when the http routes are nil", func() {
+						var onlyTcpRoutes route_helpers.Routes
+						BeforeEach(func() {
+							onlyTcpRoutes = route_helpers.Routes{
+								TcpRoutes: route_helpers.TcpRoutes{tcpRoute1},
+							}
+							routingInfo = onlyTcpRoutes.RoutingInfo()
+						})
+
+						It("returns only tcp routes", func() {
+							Expect(routesResult).To(Equal(onlyTcpRoutes))
+						})
+					})
+
+					Context("when the tcp routes are nil", func() {
+						var onlyHttpRoutes route_helpers.Routes
+						BeforeEach(func() {
+							onlyHttpRoutes = route_helpers.Routes{
+								AppRoutes: route_helpers.AppRoutes{appRoute1},
+							}
+							routingInfo = onlyHttpRoutes.RoutingInfo()
+						})
+
+						It("returns only http routes", func() {
+							Expect(routesResult).To(Equal(onlyHttpRoutes))
+						})
+					})
+				})
+			})
+
+			Context("when the json.RawMessage is malformed", func() {
+				BeforeEach(func() {
+					routingInfo = receptor.RoutingInfo{}
+					jsonMessage := json.RawMessage(`{"what": "up`)
+					routingInfo[route_helpers.TcpRouter] = &jsonMessage
+				})
+
+				It("panics", func() {
+					routesFromRoutingInfo := func() func() {
+						return func() { route_helpers.RoutesFromRoutingInfo(routingInfo) }
+					}
+					Consistently(routesFromRoutingInfo).Should(Panic(), "invalid json.RawMessage ought to panic")
+				})
+			})
 		})
 	})
 })
