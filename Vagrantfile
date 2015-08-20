@@ -1,4 +1,4 @@
-LATTICE_URL = "https://s3-us-west-2.amazonaws.com/lattice/releases/v0.3.2/lattice.tgz"
+LATTICE_URL = "https://s3-us-west-2.amazonaws.com/lattice/releases/v0.3.3/lattice.tgz"
 
 Vagrant.configure("2") do |config|
 
