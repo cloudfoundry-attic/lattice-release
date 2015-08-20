@@ -89,7 +89,8 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  if !File.exists?(File.join(File.dirname(__FILE__), "lattice.tgz"))
+  provision_required = (!ARGV.nil? && ['up', 'provision', 'reload'].include?(ARGV[0]))
+  if provision_required && !File.exists?(File.join(File.dirname(__FILE__), "lattice.tgz"))
     lattice_url = defined?(LATTICE_URL) && LATTICE_URL
 
     if !lattice_url
