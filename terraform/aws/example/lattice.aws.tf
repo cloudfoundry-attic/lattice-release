@@ -1,5 +1,5 @@
 module "lattice-aws" {
-    source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=v0.3.0-119-g25aaef4"
+    source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=v0.3.3"
 
     # Specify an API username and password for your lattice cluster
     # lattice_username = "<CHANGE-ME>"
