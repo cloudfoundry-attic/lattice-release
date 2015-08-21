@@ -21,6 +21,7 @@ type AppRunner interface {
 	SubmitLrp(lrpJSON []byte) (string, error)
 	ScaleApp(name string, instances int) error
 	UpdateAppRoutes(name string, routes RouteOverrides) error
+	UpdateApp(updateAppParams UpdateAppParams) error
 	RemoveApp(name string) error
 }
 
@@ -71,6 +72,13 @@ type CreateAppParams struct {
 	Timeout      time.Duration
 	Annotation   string
 	Setup        models.Action
+}
+
+type UpdateAppParams struct {
+	Name           string
+	RouteOverrides RouteOverrides
+	TcpRoutes      TcpRoutes
+	NoRoutes       bool
 }
 
 const (
@@ -156,6 +164,23 @@ func (appRunner *appRunner) UpdateAppRoutes(name string, routes RouteOverrides) 
 	return appRunner.updateLrpRoutes(name, routes)
 }
 
+func (appRunner *appRunner) UpdateApp(params UpdateAppParams) error {
+	if exists, err := appRunner.desiredLRPExists(params.Name); err != nil {
+		return err
+	} else if !exists {
+		return newAppNotStartedError(params.Name)
+	}
+
+	routes := appRunner.buildRoutes(params.NoRoutes, params.RouteOverrides, params.TcpRoutes)
+	err := appRunner.receptorClient.UpdateDesiredLRP(
+		params.Name,
+		receptor.DesiredLRPUpdateRequest{
+			Routes: routes.RoutingInfo(),
+		},
+	)
+	return err
+}
+
 func (appRunner *appRunner) RemoveApp(name string) error {
 	if lrpExists, err := appRunner.desiredLRPExists(name); err != nil {
 		return err
@@ -181,15 +206,15 @@ func (appRunner *appRunner) desiredLRPExists(name string) (exists bool, err erro
 	return false, nil
 }
 
-func (appRunner *appRunner) buildRoutes(params CreateAppParams, primaryPort uint16) route_helpers.Routes {
+func (appRunner *appRunner) buildRoutes(noRoutes bool, routeOverrides RouteOverrides, tcpRoutes TcpRoutes) route_helpers.Routes {
 	var routes route_helpers.Routes
 
 	var appRoutes route_helpers.AppRoutes
-	if params.NoRoutes {
+	if noRoutes {
 		appRoutes = route_helpers.AppRoutes{}
-	} else if len(params.RouteOverrides) > 0 {
+	} else if len(routeOverrides) > 0 {
 		routeMap := make(map[uint16][]string)
-		for _, override := range params.RouteOverrides {
+		for _, override := range routeOverrides {
 			routeMap[override.Port] = append(routeMap[override.Port], fmt.Sprintf("%s.%s", override.HostnamePrefix, appRunner.systemDomain))
 		}
 		for port, hostnames := range routeMap {
@@ -198,22 +223,30 @@ func (appRunner *appRunner) buildRoutes(params CreateAppParams, primaryPort uint
 				Port:      port,
 			})
 		}
-	} else if len(params.TcpRoutes) == 0 {
-		appRoutes = appRunner.buildDefaultRoutingInfo(params.Name, params.ExposedPorts, primaryPort)
 	}
 
-	var tcpRoutes route_helpers.TcpRoutes
-	if !params.NoRoutes && len(params.TcpRoutes) > 0 {
-		for _, tcpRoute := range params.TcpRoutes {
-			tcpRoutes = append(tcpRoutes, route_helpers.TcpRoute{
+	var appTcpRoutes route_helpers.TcpRoutes
+	if !noRoutes && len(tcpRoutes) > 0 {
+		for _, tcpRoute := range tcpRoutes {
+			appTcpRoutes = append(appTcpRoutes, route_helpers.TcpRoute{
 				ExternalPort: tcpRoute.ExternalPort,
 				Port:         tcpRoute.Port,
 			})
 		}
-		routes.TcpRoutes = tcpRoutes
+		routes.TcpRoutes = appTcpRoutes
 	}
 
 	routes.AppRoutes = appRoutes
+	return routes
+}
+
+func (appRunner *appRunner) buildRoutesWithDefaults(params CreateAppParams, primaryPort uint16) route_helpers.Routes {
+	routes := appRunner.buildRoutes(params.NoRoutes, params.RouteOverrides, params.TcpRoutes)
+
+	if len(routes.AppRoutes) == 0 && len(routes.TcpRoutes) == 0 && !params.NoRoutes {
+		routes.AppRoutes = appRunner.buildDefaultRoutingInfo(params.Name, params.ExposedPorts, primaryPort)
+	}
+
 	return routes
 }
 
@@ -225,7 +258,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		primaryPort = params.ExposedPorts[0]
 	}
 
-	routes := appRunner.buildRoutes(params, primaryPort)
+	routes := appRunner.buildRoutesWithDefaults(params, primaryPort)
 
 	vcapAppURIs := []string{}
 	for _, route := range routes.AppRoutes {

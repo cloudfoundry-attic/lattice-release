@@ -571,6 +571,243 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		})
 	})
 
+	Describe("UpdateCommand", func() {
+		var updateCommand cli.Command
+
+		BeforeEach(func() {
+			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
+				AppRunner:   fakeAppRunner,
+				UI:          terminalUI,
+				ExitHandler: fakeExitHandler,
+			}
+
+			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
+			updateCommand = commandFactory.MakeUpdateCommand()
+		})
+
+		Context("when only http routes are passed", func() {
+			It("updates the http routes and removes any tcp routes", func() {
+				expectedRouteOverrides := app_runner.RouteOverrides{
+					app_runner.RouteOverride{
+						HostnamePrefix: "foo.com",
+						Port:           8080,
+					},
+					app_runner.RouteOverride{
+						HostnamePrefix: "bar.com",
+						Port:           9090,
+					},
+				}
+
+				args := []string{
+					"cool-web-app",
+					"--http-routes=foo.com:8080,bar.com:9090",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+				Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(1))
+				updateAppParams := fakeAppRunner.UpdateAppArgsForCall(0)
+				Expect(updateAppParams.Name).To(Equal("cool-web-app"))
+				Expect(updateAppParams.RouteOverrides).To(Equal(expectedRouteOverrides))
+				Expect(updateAppParams.TcpRoutes).To(BeNil())
+				Expect(updateAppParams.NoRoutes).To(BeFalse())
+			})
+		})
+
+		Context("when only tcp routes are passed", func() {
+			It("updates the tcp routes and removes the http routes", func() {
+				expectedTcpRoutes := app_runner.TcpRoutes{
+					app_runner.TcpRoute{
+						ExternalPort: 50000,
+						Port:         8080,
+					},
+					app_runner.TcpRoute{
+						ExternalPort: 51000,
+						Port:         8181,
+					},
+				}
+
+				args := []string{
+					"cool-web-app",
+					"--tcp-routes=50000:8080,51000:8181",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+				Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(1))
+				updateAppParams := fakeAppRunner.UpdateAppArgsForCall(0)
+				Expect(updateAppParams.Name).To(Equal("cool-web-app"))
+				Expect(updateAppParams.TcpRoutes).To(Equal(expectedTcpRoutes))
+				Expect(updateAppParams.RouteOverrides).To(BeNil())
+				Expect(updateAppParams.NoRoutes).To(BeFalse())
+
+			})
+		})
+
+		Context("when both http and tcp routes are passed", func() {
+			It("updates both the http and tcp routes", func() {
+				expectedRouteOverrides := app_runner.RouteOverrides{
+					app_runner.RouteOverride{
+						HostnamePrefix: "foo.com",
+						Port:           8080,
+					},
+					app_runner.RouteOverride{
+						HostnamePrefix: "bar.com",
+						Port:           9090,
+					},
+				}
+				expectedTcpRoutes := app_runner.TcpRoutes{
+					app_runner.TcpRoute{
+						ExternalPort: 50000,
+						Port:         5222,
+					},
+					app_runner.TcpRoute{
+						ExternalPort: 51000,
+						Port:         6379,
+					},
+				}
+
+				args := []string{
+					"cool-web-app",
+					"--http-routes=foo.com:8080,bar.com:9090",
+					"--tcp-routes=50000:5222,51000:6379",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+				Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(1))
+				updateAppParams := fakeAppRunner.UpdateAppArgsForCall(0)
+				Expect(updateAppParams.Name).To(Equal("cool-web-app"))
+				Expect(updateAppParams.RouteOverrides).To(Equal(expectedRouteOverrides))
+				Expect(updateAppParams.TcpRoutes).To(Equal(expectedTcpRoutes))
+				Expect(updateAppParams.NoRoutes).To(BeFalse())
+			})
+		})
+
+		Context("invalid syntax", func() {
+			Context("when no app name is passed", func() {
+				Context("when no other arguments are passed", func() {
+					It("returns usage message", func() {
+						args := []string{}
+						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+						Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+					})
+				})
+
+				Context("when http routes are passed", func() {
+					It("returns usage message", func() {
+						args := []string{"--http-routes=foo.com:8080,bar.com:9090"}
+						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+						Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+					})
+				})
+
+				Context("when tcp routes are passed", func() {
+					It("returns usage message", func() {
+						args := []string{"--tcp-routes=50000:5222,51000:6379"}
+						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+						Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+					})
+				})
+
+				Context("when both http and tcp routes are passed", func() {
+					It("returns usage message", func() {
+						args := []string{"--tcp-routes=50000:5222,51000:6379", "--http-routes=foo.com:8080,bar.com:9090"}
+						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+						Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+					})
+				})
+
+				Context("when no routes are passed", func() {
+					It("returns usage message", func() {
+						args := []string{"--no-routes"}
+						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+						Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+					})
+				})
+			})
+
+			Context("when no arguments but app name are passed", func() {
+				It("returns usage message", func() {
+					args := []string{"cool-web-app"}
+					test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+					Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+				})
+			})
+		})
+
+		Context("when the --no-routes flag is passed", func() {
+			It("deregisters all the routes", func() {
+				args := []string{
+					"cool-web-app",
+					"--no-routes",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+
+				Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(1))
+				updateAppParams := fakeAppRunner.UpdateAppArgsForCall(0)
+				Expect(updateAppParams.Name).To(Equal("cool-web-app"))
+				Expect(updateAppParams.NoRoutes).To(BeTrue())
+				Expect(updateAppParams.TcpRoutes).To(BeNil())
+				Expect(updateAppParams.RouteOverrides).To(BeNil())
+			})
+		})
+
+		Context("when the receptor returns errors", func() {
+			It("outputs error messages", func() {
+				fakeAppRunner.UpdateAppReturns(errors.New("Major Fault"))
+				args := []string{
+					"cool-web-app",
+					"--http-routes=foo.com:8080",
+				}
+
+				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.Say("Error updating application: Major Fault"))
+				Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(1))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+			})
+		})
+
+		Context("malformed route", func() {
+			Context("when the http route is malformed", func() {
+				It("returns invalid syntax error", func() {
+					args := []string{
+						"cool-web-app",
+						"--http-routes=woo:aahh",
+					}
+
+					test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+
+					Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
+					Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+				})
+			})
+
+			Context("when the tcp route is malformed", func() {
+				It("returns invalid syntax error", func() {
+					args := []string{
+						"cool-web-app",
+						"--tcp-routes=-1:5222",
+					}
+
+					test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+
+					Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
+					Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+				})
+			})
+		})
+	})
+
 	Describe("RemoveAppCommand", func() {
 		var removeCommand cli.Command
 
