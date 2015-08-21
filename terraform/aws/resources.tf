@@ -73,7 +73,6 @@ resource "aws_eip" "ip" {
         host = "${aws_eip.ip.public_ip}"
         user = "${var.aws_ssh_user}"
         key_file = "${var.aws_ssh_private_key_file}"
-        agent = false
     }
     provisioner "remote-exec" {
         inline = [       
@@ -99,7 +98,6 @@ resource "aws_instance" "lattice-brain" {
     connection {
         user = "${var.aws_ssh_user}"
         key_file = "${var.aws_ssh_private_key_file}"
-        agent = false
     }
 
     provisioner "local-exec" {
@@ -150,7 +148,6 @@ resource "aws_instance" "cell" {
     connection {
         user = "${var.aws_ssh_user}"
         key_file = "${var.aws_ssh_private_key_file}"
-        agent = false
     }
 
     provisioner "local-exec" {
