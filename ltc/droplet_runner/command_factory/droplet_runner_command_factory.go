@@ -378,12 +378,9 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 }
 
 func (factory *DropletRunnerCommandFactory) waitForBuildTask(pollTimeout time.Duration, taskName string) (bool, task_examiner.TaskInfo) {
-	var (
-		taskInfo task_examiner.TaskInfo
-		err      error
-	)
-
+	var taskInfo task_examiner.TaskInfo
 	ok := factory.pollUntilSuccess(pollTimeout, func() bool {
+		var err error
 		taskInfo, err = factory.taskExaminer.TaskStatus(taskName)
 		if err != nil {
 			factory.UI.SayLine(colors.Red("Error requesting task status: " + err.Error()))

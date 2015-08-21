@@ -106,7 +106,7 @@ var _ = Describe("LatticeCli Main", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(0))
+			Eventually(session, 3).Should(gexec.Exit(0))
 			Eventually(session.Out).Should(gbytes.Say("ltc - Command line interface for Lattice."))
 		})
 	})
@@ -118,7 +118,7 @@ var _ = Describe("LatticeCli Main", func() {
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(session).Should(gexec.Exit(0))
+			Eventually(session, 3).Should(gexec.Exit(0))
 			Expect(session.Out).To(gbytes.Say("Target:"))
 			Expect(session.Out).To(gbytes.Say(fmt.Sprintf("%s.xip.io:%s", listenerHost, listenerPort)))
 		})
@@ -130,7 +130,7 @@ var _ = Describe("LatticeCli Main", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(session).Should(gexec.Exit(1))
+				Eventually(session, 3).Should(gexec.Exit(1))
 				Expect(session.Out).To(gbytes.Say("not a registered command"))
 			})
 		})
@@ -142,7 +142,7 @@ var _ = Describe("LatticeCli Main", func() {
 				session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(session).Should(gexec.Exit(1))
+				Eventually(session, 3).Should(gexec.Exit(1))
 				Expect(session.Out).To(test_helpers.SayIncorrectUsage())
 			})
 		})

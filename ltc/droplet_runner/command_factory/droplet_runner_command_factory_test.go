@@ -484,22 +484,22 @@ var _ = Describe("CommandFactory", func() {
 
 				doneChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
 
-				Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droplet-name"))
+				Eventually(outputBuffer).Should(test_helpers.SayLine("Submitted build of droplet-name"))
 
-				Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(Equal(1))
+				Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
 				Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("build-droplet-droplet-name"))
 
-				Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
+				Eventually(fakeTaskExaminer.TaskStatusCallCount).Should(Equal(1))
 				Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("build-droplet-droplet-name"))
 
 				fakeClock.IncrementBySeconds(1)
-				Expect(doneChan).ShouldNot(BeClosed())
+				Expect(doneChan).NotTo(BeClosed())
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
 				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "RUNNING"}, nil)
 
 				fakeClock.IncrementBySeconds(1)
-				Expect(doneChan).ShouldNot(BeClosed())
+				Expect(doneChan).NotTo(BeClosed())
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
 				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "COMPLETED"}, nil)
@@ -529,7 +529,7 @@ var _ = Describe("CommandFactory", func() {
 
 					fakeClock.IncrementBySeconds(17)
 
-					Eventually(doneChan).Should(BeClosed())
+					Eventually(doneChan, 3).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the build to complete.")))
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
@@ -570,9 +570,9 @@ var _ = Describe("CommandFactory", func() {
 
 					doneChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
 
-					Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droppo-the-clown"))
+					Eventually(outputBuffer).Should(test_helpers.SayLine("Submitted build of droppo-the-clown"))
 
-					Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
+					Eventually(fakeTaskExaminer.TaskStatusCallCount).Should(Equal(1))
 					Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("build-droplet-droppo-the-clown"))
 
 					fakeClock.IncrementBySeconds(1)
@@ -581,8 +581,7 @@ var _ = Describe("CommandFactory", func() {
 					fakeClock.IncrementBySeconds(1)
 					Eventually(doneChan).Should(BeClosed())
 
-					Expect(outputBuffer).To(test_helpers.SayNewLine())
-					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error requesting task status: dropped the ball")))
+					Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Error requesting task status: dropped the ball")))
 					Expect(outputBuffer).ToNot(test_helpers.Say("Timed out waiting for the build to complete."))
 					Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 				})
