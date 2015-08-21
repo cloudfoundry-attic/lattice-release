@@ -529,7 +529,7 @@ var _ = Describe("CommandFactory", func() {
 
 					fakeClock.IncrementBySeconds(17)
 
-					Eventually(doneChan, 3).Should(BeClosed())
+					Eventually(doneChan, 5).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the build to complete.")))
 					Expect(outputBuffer).To(test_helpers.SayNewLine())
