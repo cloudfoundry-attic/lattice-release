@@ -19,5 +19,5 @@ cp -r generate-terraform-templates/templates $OSX_DIR/terraform
 cp generate-vagrantfile/Vagrantfile $LINUX_DIR/vagrant/
 cp generate-vagrantfile/Vagrantfile $OSX_DIR/vagrant/
 
-zip -r $LINUX_DIR $LINUX_DIR
-zip -r $OSX_DIR $OSX_DIR
+zip -r ${LINUX_DIR}.zip $LINUX_DIR
+zip -r ${OSX_DIR}.zip $OSX_DIR
