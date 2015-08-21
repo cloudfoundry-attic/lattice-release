@@ -106,6 +106,19 @@ The set of routes passed into `ltc update-routes` will *override* the existing s
 
 - **`--no-routes`** specifies that no routes be registered.
 
+### `ltc update`
+
+`ltc update APP_NAME [--http-routes HOST:CONTAINER_PORT[,...]] [--tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]]` updates attributes of an existing application.
+
+- **`--http-routes HOST:CONTAINER_PORT[,...]`**
+Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port.  Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive. Replaces all existing routes.
+
+- **`--tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]`**
+Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port.  Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive. Replaces all existing routes.
+
+- **`--no-routes`**
+Removes all existing routes. When this flag is provided, --http-routes and --tcp-routes will be ignored if they are also provided.
+
 ## Building and Launching Droplets
 
 **Note**: Buildpack support requires a Droplet Store, which is automatically configured when you run `ltc target`. You can validate that the Droplet store has been automatically detected by running `ltc target`. If Buildpack support is working correctly, you'll see two lines of output:
