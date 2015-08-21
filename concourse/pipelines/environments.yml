@@ -1,0 +1,56 @@
+resources:
+  - name: lattice
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry-incubator/lattice.git
+      branch: develop
+
+jobs:
+  - name: concourse-cloudformation
+    serial_groups: [ concourse-setup ]
+    plan:
+      - get: lattice
+      - task: cloudformation
+        file: lattice/concourse/tasks/cloudformation/task.yml
+        config:
+          params:
+            AWS_DEFAULT_REGION: us-east-1
+            AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+            AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+            CLOUDFORMATION_STACK_NAME: concourse
+            HOSTED_ZONE_NAME: {{lattice-domain-name}}
+            SSL_CERT_ARN: {{lattice-ssl-certificate-arn}}
+            NAT_AMI: {{concourse-nat-ami}}
+
+  - name: concourse-bosh-deploy
+    serial_groups: [ concourse-setup ]
+    plan:
+      - get: lattice
+        passed: [ concourse-cloudformation ]
+      - task: bosh-deploy
+        file: lattice/concourse/tasks/bosh-deploy/task.yml
+        config:
+          params:
+            AWS_DEFAULT_REGION: us-east-1
+            AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+            AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+            CLOUDFORMATION_STACK_NAME: concourse
+            KEY_NAME: {{aws-ssh-private-key-name}}
+            PRIVATE_KEY: {{aws-ssh-private-key}}
+            BOSH_USER: {{concourse-bosh-user}}
+            BOSH_PASSWORD: {{concourse-bosh-password}}
+
+  - name: concourse-deploy
+    serial_groups: [ concourse-setup ]
+    plan:
+      - get: lattice
+      - task: concourse-deploy
+        file: lattice/concourse/tasks/concourse-deploy/task.yml
+        config:
+          params:
+            BOSH_TARGET: {{concourse-bosh-target}}
+            BOSH_USER: {{concourse-bosh-user}}
+            BOSH_PASSWORD: {{concourse-bosh-password}}
+            CONCOURSE_VERSION: 0.59.1
+            GARDEN_LINUX_VERSION: 0.284.0
+

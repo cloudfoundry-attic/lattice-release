@@ -9,7 +9,7 @@ export TERRAFORM_TMP_DIR=$PWD/terraform-tmp
 
 mkdir -p $TERRAFORM_TMP_DIR $DOT_LATTICE_DIR
 
-cat <<< "$GCE_SSH_PRIVATE_KEY" > $TERRAFORM_TMP_DIR/concourse-test.pem
+cat <<< "$GCE_SSH_PRIVATE_KEY" > $TERRAFORM_TMP_DIR/key.pem
 cat <<< "$GCE_ACCOUNT_FILE_JSON" > $TERRAFORM_TMP_DIR/gce-account.json
 
 cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
@@ -21,7 +21,7 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
             "lattice_password": "pass",
             "local_lattice_tar_path": "${PWD}/lattice-tar-experimental/lattice-v${LATTICE_VERSION}.tgz",
             "gce_ssh_user": "pivotal",
-            "gce_ssh_private_key_file": "${TERRAFORM_TMP_DIR}/concourse-test.pem",
+            "gce_ssh_private_key_file": "${TERRAFORM_TMP_DIR}/key.pem",
             "gce_project": "${GCE_PROJECT_NAME}",
             "gce_account_file": "${TERRAFORM_TMP_DIR}/gce-account.json"
         }

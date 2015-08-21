@@ -1,0 +1,16 @@
+---
+platform: linux
+image: docker:///cloudfoundry/lattice-bosh
+inputs:
+- name: lattice
+run:
+  path: lattice/concourse/tasks/bosh-deploy/run.sh
+params:
+  AWS_DEFAULT_REGION: some-region
+  AWS_ACCESS_KEY_ID: some-access-key-id
+  AWS_SECRET_ACCESS_KEY: some-secret-access-key
+  CLOUDFORMATION_STACK_NAME: some-stack-name
+  KEY_NAME: some-name
+  PRIVATE_KEY: some-key
+  BOSH_USER: some-user
+  BOSH_PASSWORD: some-password

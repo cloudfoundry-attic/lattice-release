@@ -9,7 +9,7 @@ export TERRAFORM_TMP_DIR=$PWD/terraform-tmp
 
 mkdir -p $TERRAFORM_TMP_DIR $DOT_LATTICE_DIR
 
-cat <<< "$AWS_SSH_PRIVATE_KEY" > $TERRAFORM_TMP_DIR/concourse-test.pem
+cat <<< "$AWS_SSH_PRIVATE_KEY" > $TERRAFORM_TMP_DIR/key.pem
 
 cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
 {
@@ -23,8 +23,8 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
             "aws_access_key": "${AWS_ACCESS_KEY_ID}",
             "aws_secret_key": "${AWS_SECRET_ACCESS_KEY}",
             "aws_region": "us-east-1",
-            "aws_key_name": "concourse-test",
-            "aws_ssh_private_key_file": "${TERRAFORM_TMP_DIR}/concourse-test.pem"
+            "aws_key_name": "${AWS_SSH_PRIVATE_KEY_NAME}",
+            "aws_ssh_private_key_file": "${TERRAFORM_TMP_DIR}/key.pem"
         }
     },
     "output": {

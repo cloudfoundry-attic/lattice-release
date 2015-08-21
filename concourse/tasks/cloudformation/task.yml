@@ -1,0 +1,15 @@
+---
+platform: linux
+image: docker:///cloudfoundry/lattice-bosh
+inputs:
+- name: lattice
+run:
+  path: lattice/concourse/tasks/cloudformation/run.sh
+params:
+  AWS_DEFAULT_REGION: some-region
+  AWS_ACCESS_KEY_ID: some-access-key-id
+  AWS_SECRET_ACCESS_KEY: some-secret-access-key
+  CLOUDFORMATION_STACK_NAME: some-stack-name
+  HOSTED_ZONE_NAME: some-zone-name
+  SSL_CERT_ARN: "arn:aws:iam::some-account-id:server-certificate/some-server-certificate-name"
+  NAT_AMI: some-ami

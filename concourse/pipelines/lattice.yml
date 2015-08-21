@@ -3,7 +3,7 @@ resources:
     type: git
     source:
       uri: https://github.com/cloudfoundry-incubator/lattice.git
-      branch: develop
+      branch: concourse
   - name: diego-release
     type: git
     source:
@@ -176,6 +176,7 @@ jobs:
             AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
             AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
             AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+            AWS_SSH_PRIVATE_KEY_NAME: {{aws-ssh-private-key-name}}
         ensure:
           task: cleanup-cluster-test-terraform-aws
           file: lattice/concourse/tasks/cleanup-cluster-test-terraform-aws/task.yml
