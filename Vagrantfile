@@ -1,5 +1,3 @@
-LATTICE_URL = "https://s3-us-west-2.amazonaws.com/lattice/releases/v0.3.3/lattice.tgz"
-
 Vagrant.configure("2") do |config|
 
   if Vagrant.has_plugin?("vagrant-proxyconf")
