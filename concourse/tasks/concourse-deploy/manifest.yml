@@ -21,8 +21,8 @@ networks:
         dns: [10.0.0.2]
         gateway: 10.0.16.1
         cloud_properties:
-          security_groups: [$CONCOURSE_SECURITY_GROUP_ID]
-          subnet: $CONCOURSE_SUBNET_ID
+          security_groups: [$SECURITY_GROUP_NAME]
+          subnet: $PRIVATE_SUBNET_ID
 
 releases:
   - name: concourse
@@ -117,7 +117,7 @@ resource_pools:
     cloud_properties:
       instance_type: m3.medium
       availability_zone: *az
-      elbs: [$CONCOURSE_ELB_ID]
+      elbs: [$ELB_NAME]
 
   - name: discovery
     network: concourse

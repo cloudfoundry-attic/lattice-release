@@ -53,4 +53,4 @@ jobs:
             BOSH_PASSWORD: {{concourse-bosh-password}}
             CONCOURSE_VERSION: 0.59.1
             GARDEN_LINUX_VERSION: 0.284.0
-
+            CLOUDFORMATION_STACK_NAME: concourse

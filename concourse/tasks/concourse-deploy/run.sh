@@ -1,10 +1,20 @@
 #!/bin/bash -exu
 
+function get_stack_output() {
+  echo "$STACK_INFO" | jq -r "[ .Stacks[0].Outputs[] | { (.OutputKey): .OutputValue } | .$1 ] | add"
+}
+
 bosh -n target $BOSH_TARGET
 bosh login $BOSH_USER $BOSH_PASSWORD
 
 export BOSH_DIRECTOR_UUID=`bosh status --uuid`
 export MANIFEST_FILE=$PWD/lattice/concourse/tasks/concourse-deploy/manifest.yml
+export STACK_INFO=`aws cloudformation describe-stacks --stack-name "$CLOUDFORMATION_STACK_NAME"`
+
+export SECURITY_GROUP_ID=$(get_stack_output "SecurityGroupID")
+export SECURITY_GROUP_NAME=$(aws ec2 describe-security-groups --group-ids=$SECURITY_GROUP_ID | jq -r .SecurityGroups[0].GroupName)
+export PRIVATE_SUBNET_ID=$(get_stack_output "PublicSubnetID")
+export ELB_NAME=$(get_stack_output "ElasticLoadBalancer")
 
 REPLACED_MANIFEST_FILE=`interpolate $MANIFEST_FILE`
 echo "$REPLACED_MANIFEST_FILE" > $MANIFEST_FILE

@@ -11,3 +11,4 @@ params:
   BOSH_PASSWORD: some-password
   CONCOURSE_VERSION: some-concourse-version
   GARDEN_LINUX_VERSION: some-garden-version
+  CLOUDFORMATION_STACK_NAME: some-stack-name

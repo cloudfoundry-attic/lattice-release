@@ -13,7 +13,7 @@ function setup() {
 }
 
 function get_stack_output() {
-	echo "$STACK_INFO" | jq -r "[ .Stacks[0].Outputs[] | { (.OutputKey): .OutputValue } | .$1 ] | add"
+  echo "$STACK_INFO" | jq -r "[ .Stacks[0].Outputs[] | { (.OutputKey): .OutputValue } | .$1 ] | add"
 }
 
 function build_manifest() {
