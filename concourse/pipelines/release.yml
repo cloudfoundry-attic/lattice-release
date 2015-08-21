@@ -24,7 +24,7 @@ resources:
     type: github-relesase
     source:
       user: {{github-api-user}}
-      repository: sclevine/dummy-lattice
+      repository: sclevine/lattice
       access_token: {{github-api-token}}
   - name: lattice-tar-build
     type: s3
