@@ -18,13 +18,13 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
             "source": "../lattice/terraform/aws",
             "lattice_username": "user",
             "lattice_password": "pass",
-            "local_lattice_tar_path": "${PWD}/lattice-tar-experimental/lattice-v${LATTICE_VERSION}.tgz",
+            "local_lattice_tar_path": "../lattice-tar-experimental/lattice-v${LATTICE_VERSION}.tgz",
             "num_cells": "1",
             "aws_access_key": "${AWS_ACCESS_KEY_ID}",
             "aws_secret_key": "${AWS_SECRET_ACCESS_KEY}",
             "aws_region": "us-east-1",
             "aws_key_name": "${AWS_SSH_PRIVATE_KEY_NAME}",
-            "aws_ssh_private_key_file": "${TERRAFORM_TMP_DIR}/key.pem"
+            "aws_ssh_private_key_file": "./key.pem"
         }
     },
     "output": {
@@ -40,9 +40,6 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
     }
 }
 EOF
-
-cleanup() { ( cd $TERRAFORM_TMP_DIR && terraform destroy -force || terraform destroy -force ) }
-trap cleanup EXIT
 
 pushd $TERRAFORM_TMP_DIR
     terraform get -update

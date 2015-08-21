@@ -19,11 +19,11 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
             "source": "../lattice/terraform/google",
             "lattice_username": "user",
             "lattice_password": "pass",
-            "local_lattice_tar_path": "${PWD}/lattice-tar-experimental/lattice-v${LATTICE_VERSION}.tgz",
+            "local_lattice_tar_path": "../lattice-tar-experimental/lattice-v${LATTICE_VERSION}.tgz",
             "gce_ssh_user": "pivotal",
-            "gce_ssh_private_key_file": "${TERRAFORM_TMP_DIR}/key.pem",
+            "gce_ssh_private_key_file": "./key.pem",
             "gce_project": "${GCE_PROJECT_NAME}",
-            "gce_account_file": "${TERRAFORM_TMP_DIR}/gce-account.json"
+            "gce_account_file": "./gce-account.json"
         }
     },
     "output": {
@@ -39,9 +39,6 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
     }
 }
 EOF
-
-cleanup() { ( cd $TERRAFORM_TMP_DIR && terraform destroy -force || terraform destroy -force ) }
-trap cleanup EXIT
 
 pushd $TERRAFORM_TMP_DIR
     terraform get -update
