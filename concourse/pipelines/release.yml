@@ -211,6 +211,7 @@ jobs:
             to: /releases/lattice-bundle-latest-osx.zip
       - put: lattice-release
         params:
+          name: lattice/Version
           tag: lattice/Version
           globs:
             - compile-lattice-bundles/lattice-bundle-v(.*)-linux.zip
