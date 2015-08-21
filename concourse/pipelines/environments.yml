@@ -39,8 +39,6 @@ jobs:
             PRIVATE_KEY: {{aws-ssh-private-key}}
             BOSH_USER: {{concourse-bosh-user}}
             BOSH_PASSWORD: {{concourse-bosh-password}}
-            CONCOURSE_USER: {{concourse-user}}
-            CONCOURSE_PASSWORD: {{concourse-password}}
 
   - name: concourse-deploy
     serial_groups: [ concourse-setup ]
@@ -53,6 +51,8 @@ jobs:
             BOSH_TARGET: {{concourse-bosh-target}}
             BOSH_USER: {{concourse-bosh-user}}
             BOSH_PASSWORD: {{concourse-bosh-password}}
+            CONCOURSE_USER: {{concourse-user}}
+            CONCOURSE_PASSWORD: {{concourse-password}}
             CONCOURSE_VERSION: 0.59.1
             GARDEN_LINUX_VERSION: 0.284.0
             CLOUDFORMATION_STACK_NAME: concourse
