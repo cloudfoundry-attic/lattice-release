@@ -179,15 +179,11 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 		},
 		cli.StringFlag{
 			Name: "http-routes, R",
-			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port. \n\t\t" +
-				"Container ports must be among those specified with --ports or with the EXPOSE Docker image directive. \n\t\t" +
-				"Usage: --http-routes HOST:CONTAINER_PORT[,...].",
+			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port. Container ports must be among those specified with --ports or with the EXPOSE Docker image directive. Usage: --http-routes HOST:CONTAINER_PORT[,...].",
 		},
 		cli.StringFlag{
 			Name: "tcp-routes, T",
-			Usage: "Requests for the provided external port will be forwarded to the associated container port. \n\t\t" +
-				"Container ports must be among those specified with --ports or with the EXPOSE Docker image directive. \n\t\t" +
-				"Usage: --tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]  ",
+			Usage: "Requests for the provided external port will be forwarded to the associated container port. Container ports must be among those specified with --ports or with the EXPOSE Docker image directive. Usage: --tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]  ",
 		},
 		cli.IntFlag{
 			Name:  "instances, i",

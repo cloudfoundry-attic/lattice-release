@@ -132,15 +132,11 @@ func (factory *AppRunnerCommandFactory) MakeUpdateCommand() cli.Command {
 		},
 		cli.StringFlag{
 			Name: "http-routes, R",
-			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port.\n\t\t" +
-				"Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive.\n\t\t" +
-				"Replaces all existing routes. Usage: --http-routes HOST:CONTAINER_PORT[,...]",
+			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port. Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive. Replaces all existing routes. Usage: --http-routes HOST:CONTAINER_PORT[,...]",
 		},
 		cli.StringFlag{
 			Name: "tcp-routes, T",
-			Usage: "Requests for the external port will be forwarded to the associated container port.\n\t\t" +
-				"Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive.\n\t\t" +
-				"Replaces all existing routes. Usage: EXTERNAL_PORT:CONTAINER_PORT[,...]",
+			Usage: "Requests for the external port will be forwarded to the associated container port. Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive. Replaces all existing routes. Usage: EXTERNAL_PORT:CONTAINER_PORT[,...]",
 		},
 	}
 	var updateCommand = cli.Command{
