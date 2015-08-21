@@ -50,7 +50,8 @@ This spins up a virtual environment that is accessible at `192.168.11.11`.
 Use the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) to target Lattice:
 
 ```bash
-ltc target 192.168.11.11.xip.io
+cd lattice-bundle-VERSION-PLATFORM
+./ltc target 192.168.11.11.xip.io
 ```
 
 > NOTE: Ubuntu 14.04 LTS does not install a compatible version of vagrant by default. You can upgrade the version that you get out of the box by downloading the `.deb` file from [Vagrant](http://www.vagrantup.com/downloads.html).
