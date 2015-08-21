@@ -7,7 +7,7 @@ inputs:
 - name: ltc-tar-build
 run:
   path: lattice/concourse/tasks/cluster-test-terraform-gce/run.sh
-  params:
-    GCE_SSH_PRIVATE_KEY: some-ssh-private-key
-    GCE_PROJECT_NAME: some-project-name
-    GCE_ACCOUNT_FILE_JSON: some-account-file-json
+params:
+  GCE_SSH_PRIVATE_KEY: some-ssh-private-key
+  GCE_PROJECT_NAME: some-project-name
+  GCE_ACCOUNT_FILE_JSON: some-account-file-json

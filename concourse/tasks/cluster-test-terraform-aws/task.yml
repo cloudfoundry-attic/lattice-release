@@ -7,8 +7,8 @@ inputs:
 - name: ltc-tar-build
 run:
   path: lattice/concourse/tasks/cluster-test-terraform-aws/run.sh
-  params:
-    AWS_ACCESS_KEY_ID: some-access-key-id
-    AWS_SECRET_ACCESS_KEY: some-secret-access-key
-    AWS_SSH_PRIVATE_KEY: some-ssh-private-key
-    AWS_SSH_PRIVATE_KEY_NAME: some-ssh-private-key-name
+params:
+  AWS_ACCESS_KEY_ID: some-access-key-id
+  AWS_SECRET_ACCESS_KEY: some-secret-access-key
+  AWS_SSH_PRIVATE_KEY: some-ssh-private-key
+  AWS_SSH_PRIVATE_KEY_NAME: some-ssh-private-key-name
