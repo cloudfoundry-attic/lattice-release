@@ -6,7 +6,7 @@ director_uuid: $BOSH_DIRECTOR_UUID
 atc_db_name: &atc-db-name atc
 atc_db_role: &atc-db-role
   name: atc
-  password: $CONCOURSE_PASSWORD
+  password: $BOSH_PASSWORD
 
 availability_zone: &az us-east-1c
 
@@ -56,14 +56,14 @@ jobs:
     properties:
       atc:
         publicly_viewable: true
-        basic_auth_username: lattice
+        basic_auth_username: $CONCOURSE_USER
         basic_auth_password: $CONCOURSE_PASSWORD
         postgresql:
           database: *atc-db-name
           role: *atc-db-role
       tsa:
         atc:
-          username: lattice
+          username: $CONCOURSE_USER
           password: $CONCOURSE_PASSWORD
       consul:
         agent:

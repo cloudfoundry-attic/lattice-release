@@ -13,7 +13,7 @@ export STACK_INFO=`aws cloudformation describe-stacks --stack-name "$CLOUDFORMAT
 
 export SECURITY_GROUP_ID=$(get_stack_output "SecurityGroupID")
 export SECURITY_GROUP_NAME=$(aws ec2 describe-security-groups --group-ids=$SECURITY_GROUP_ID | jq -r .SecurityGroups[0].GroupName)
-export PRIVATE_SUBNET_ID=$(get_stack_output "PublicSubnetID")
+export PRIVATE_SUBNET_ID=$(get_stack_output "PrivateSubnetID")
 export ELB_NAME=$(get_stack_output "ElasticLoadBalancer")
 
 REPLACED_MANIFEST_FILE=`interpolate $MANIFEST_FILE`
