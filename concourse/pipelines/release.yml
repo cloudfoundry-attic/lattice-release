@@ -3,7 +3,7 @@ resources:
     type: git
     source:
       uri: https://github.com/cloudfoundry-incubator/lattice.git
-      branch: develop
+      branch: concourse
       paths: [/Version]
   - name: diego-release
     type: git
