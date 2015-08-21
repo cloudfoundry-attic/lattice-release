@@ -2,6 +2,7 @@
 platform: linux
 image: docker:///cloudfoundry/lattice-pipeline
 inputs:
+- name: lattice
 - name: generate-terraform-templates
 - name: generate-vagrantfile
 - name: ltc-tar-build
