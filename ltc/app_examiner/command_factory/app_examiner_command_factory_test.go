@@ -628,11 +628,11 @@ var _ = Describe("CommandFactory", func() {
 				Routes: route_helpers.Routes{
 					AppRoutes: route_helpers.AppRoutes{
 						route_helpers.AppRoute{
-							Port:      9090,
+							Port:      9000,
 							Hostnames: []string{"route-me.my-fun-domain.com"},
 						},
 						route_helpers.AppRoute{
-							Port:      8080,
+							Port:      8887,
 							Hostnames: []string{"wompy-app.my-fun-domain.com", "cranky-app.my-fun-domain.com"},
 						},
 					},
@@ -710,9 +710,9 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("9000"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Routes"))
-			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com => 8080"))
-			Expect(outputBuffer).To(test_helpers.Say("cranky-app.my-fun-domain.com => 8080"))
-			Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9090"))
+			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com => 8887"))
+			Expect(outputBuffer).To(test_helpers.Say("cranky-app.my-fun-domain.com => 8887"))
+			Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9000"))
 
 			Expect(outputBuffer).To(test_helpers.Say("Annotation"))
 			Expect(outputBuffer).To(test_helpers.Say("I love this app. So wompy."))
@@ -771,6 +771,74 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).NotTo(test_helpers.Say("CPU"))
 			Expect(outputBuffer).NotTo(test_helpers.Say("Memory"))
+		})
+
+		Context("when there are only tcp routes", func() {
+			BeforeEach(func() {
+				sampleAppInfo.Routes = route_helpers.Routes{
+					TcpRoutes: route_helpers.TcpRoutes{
+						route_helpers.TcpRoute{
+							Port:         9000,
+							ExternalPort: 52000,
+						},
+						route_helpers.TcpRoute{
+							Port:         8887,
+							ExternalPort: 51000,
+						},
+					},
+				}
+			})
+
+			It("emits a pretty representation of the DesiredLRP", func() {
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Ports"))
+				Expect(outputBuffer).To(test_helpers.Say("8887"))
+				Expect(outputBuffer).To(test_helpers.Say("9000"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Routes"))
+				Expect(outputBuffer).To(test_helpers.Say("system.domain:51000 => 8887"))
+				Expect(outputBuffer).To(test_helpers.Say("system.domain:52000 => 9000"))
+			})
+		})
+
+		Context("when there are both http and tcp routes", func() {
+			BeforeEach(func() {
+				sampleAppInfo.Routes = route_helpers.Routes{
+					TcpRoutes: route_helpers.TcpRoutes{
+						route_helpers.TcpRoute{
+							Port:         8887,
+							ExternalPort: 51000,
+						},
+					},
+					AppRoutes: route_helpers.AppRoutes{
+						route_helpers.AppRoute{
+							Port:      9000,
+							Hostnames: []string{"route-me.my-fun-domain.com"},
+						},
+					},
+				}
+			})
+
+			It("emits a pretty representation of the DesiredLRP", func() {
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Ports"))
+				Expect(outputBuffer).To(test_helpers.Say("8887"))
+				Expect(outputBuffer).To(test_helpers.Say("9000"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Routes"))
+				Expect(outputBuffer).To(test_helpers.Say("system.domain:51000 => 8887"))
+				Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9000"))
+			})
 		})
 
 		Context("when there is a placement error on an actualLRP", func() {

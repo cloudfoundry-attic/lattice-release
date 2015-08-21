@@ -156,13 +156,18 @@ func (factory *AppExaminerCommandFactory) cells(context *cli.Context) {
 	w.Flush()
 }
 
-func (factory *AppExaminerCommandFactory) getRoutes(appInfo app_examiner.AppInfo) string {
-	var buff bytes.Buffer
-
+func (factory *AppExaminerCommandFactory) getAppPortSet(appInfo app_examiner.AppInfo) map[uint16]struct{} {
 	portSet := make(map[uint16]struct{})
 	for _, port := range appInfo.Ports {
 		portSet[port] = struct{}{}
 	}
+	return portSet
+}
+
+func (factory *AppExaminerCommandFactory) getRoutes(appInfo app_examiner.AppInfo) string {
+	var buff bytes.Buffer
+
+	portSet := factory.getAppPortSet(appInfo)
 
 	numRoutes := 0
 
@@ -342,7 +347,7 @@ func (factory *AppExaminerCommandFactory) printAppInfo(appInfo app_examiner.AppI
 
 	fmt.Fprintf(w, "%s\t%s\n", "Ports", strings.Join(portStrings, ","))
 
-	printAppRoutes(w, appInfo)
+	factory.printAppRoutes(w, appInfo)
 
 	if appInfo.Annotation != "" {
 		fmt.Fprintf(w, "%s\t%s\n", "Annotation", appInfo.Annotation)
@@ -552,26 +557,51 @@ func colorInstances(appInfo app_examiner.AppInfo) string {
 	return colors.Yellow(instances)
 }
 
-func printAppRoutes(w io.Writer, appInfo app_examiner.AppInfo) {
+func (factory *AppExaminerCommandFactory) printAppRoutes(w io.Writer, appInfo app_examiner.AppInfo) {
 	formatRoute := func(hostname string, port uint16) string {
 		return colors.Cyan(fmt.Sprintf("%s => %d", hostname, port))
 	}
 
-	routeStringsByPort := appInfo.Routes.AppRoutes.HostnamesByPort()
-	ports := make(UInt16Slice, 0, len(routeStringsByPort))
-	for port, _ := range routeStringsByPort {
+	portSet := factory.getAppPortSet(appInfo)
+	ports := make(UInt16Slice, 0)
+	for port, _ := range portSet {
 		ports = append(ports, port)
+	}
+
+	routeStringsByPort := appInfo.Routes.AppRoutes.HostnamesByPort()
+	externalPortsByContainerPort := make(map[uint16][]uint16)
+	for _, tcpRoute := range appInfo.Routes.TcpRoutes {
+		if _, ok := portSet[tcpRoute.Port]; ok {
+			if externalPorts, ok := externalPortsByContainerPort[tcpRoute.Port]; ok {
+				externalPortsByContainerPort[tcpRoute.Port] = append(externalPorts, tcpRoute.ExternalPort)
+			} else {
+				externalPortsByContainerPort[tcpRoute.Port] = []uint16{tcpRoute.ExternalPort}
+			}
+		}
 	}
 	sort.Sort(ports)
 
+	routeIndex := 0
 	for portIndex, port := range ports {
 		routeStrs, _ := routeStringsByPort[uint16(port)]
-		for routeIndex, routeStr := range routeStrs {
+		for _, routeStr := range routeStrs {
 			if routeIndex == 0 && portIndex == 0 {
 				fmt.Fprintf(w, "%s\t%s\n", "Routes", formatRoute(routeStrs[0], port))
 			} else {
 				fmt.Fprintf(w, "\t%s\n", formatRoute(routeStr, port))
 			}
+			routeIndex++
+		}
+
+		externalPorts, _ := externalPortsByContainerPort[uint16(port)]
+		for _, externalPort := range externalPorts {
+			route := fmt.Sprintf("%s:%d", factory.systemDomain, externalPort)
+			if routeIndex == 0 && portIndex == 0 {
+				fmt.Fprintf(w, "%s\t%s\n", "Routes", formatRoute(route, port))
+			} else {
+				fmt.Fprintf(w, "\t%s\n", formatRoute(route, port))
+			}
+			routeIndex++
 		}
 	}
 }
