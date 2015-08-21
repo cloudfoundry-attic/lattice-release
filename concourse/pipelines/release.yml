@@ -23,8 +23,8 @@ resources:
   - name: lattice-release
     type: github-release
     source:
-      user: {{github-api-user}}
-      repository: sclevine/lattice
+      user: sclevine # {{github-api-user}}
+      repository: lattice
       access_token: {{github-api-token}}
   - name: lattice-tar-build
     type: s3
@@ -213,6 +213,4 @@ jobs:
         params:
           name: lattice/Version
           tag: lattice/Version
-          globs:
-            - compile-lattice-bundles/lattice-bundle-v(.*)-linux.zip
-            - compile-lattice-bundles/lattice-bundle-v(.*)-osx.zip
+          globs: [compile-lattice-bundles/*.zip]
