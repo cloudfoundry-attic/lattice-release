@@ -11,4 +11,5 @@ inputs:
   path: lattice/build/cf-routing-release
 run:
   path: lattice/concourse/tasks/compile-lattice-tar/run.sh
-
+params:
+  RELEASE: false

@@ -7,10 +7,15 @@ export DIEGO_RELEASE_DIR=$PWD/lattice/build/diego-release
 export GOPATH=$DIEGO_RELEASE_DIR
 export PATH=$GOPATH/bin:$PATH
 
+
 export LATTICE_VERSION=$(git -C $LATTICE_DIR describe)
 export DIEGO_VERSION=$(cat $LATTICE_DIR/DIEGO_VERSION)
 export CF_VERSION=$(cat $LATTICE_DIR/CF_VERSION)
 export ROUTING_VERSION=$(cat $LATTICE_DIR/ROUTING_VERSION)
+
+if [ "$RELEASE" = true ]; then
+  export LATTICE_VERSION=$(cat $LATTICE_DIR/Version)
+fi
 
 pushd $DIEGO_RELEASE_DIR
 	git checkout $DIEGO_VERSION

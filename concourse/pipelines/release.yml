@@ -95,8 +95,14 @@ jobs:
       - aggregate:
         - task: compile-lattice-tar
           file: lattice/concourse/tasks/compile-lattice-tar/task.yml
+          config:
+            params:
+              RELEASE: true
         - task: compile-ltc
           file: lattice/concourse/tasks/compile-ltc/task.yml
+          config:
+            params:
+              RELEASE: true
       - aggregate:
         - put: lattice-tar-build
           params:

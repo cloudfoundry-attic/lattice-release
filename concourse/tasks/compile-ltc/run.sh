@@ -10,6 +10,10 @@ ln -sf $LATTICE_DIR $PWD/go/src/github.com/cloudfoundry-incubator/lattice
 export LATTICE_VERSION=$(git -C $LATTICE_DIR describe)
 export DIEGO_VERSION=$(cat $LATTICE_DIR/DIEGO_VERSION)
 
+if [ "$RELEASE" = true ]; then
+  export LATTICE_VERSION=$(cat $LATTICE_DIR/Version)
+fi
+
 export GOPATH=$LATTICE_DIR/ltc/Godeps/_workspace:$PWD/go
 
 GOARCH=amd64 GOOS=linux go build \
