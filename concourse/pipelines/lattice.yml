@@ -97,11 +97,11 @@ jobs:
     plan:
       - aggregate:
         - get: lattice
+          trigger: true
           passed:
             - unit-test-ltc
             - unit-test-s3tool
             - unit-test-tee2metron
-          trigger: true
         - get: diego-release
         - get: cf-release
         - get: cf-routing-release
@@ -124,8 +124,8 @@ jobs:
     plan:
       - aggregate:
         - get: lattice
-          passed: [compile]
           trigger: true
+          passed: [compile]
         - get: lattice-tar-build
           passed: [compile]
         - get: ltc-tar-build
@@ -150,8 +150,8 @@ jobs:
     plan:
       - aggregate:
         - get: lattice
-          passed: [compile]
           trigger: true
+          passed: [compile]
         - get: lattice-tar-build
           passed: [compile]
         - get: ltc-tar-build

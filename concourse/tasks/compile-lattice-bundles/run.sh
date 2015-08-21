@@ -9,6 +9,7 @@ OSX_DIR=lattice-bundle-${LATTICE_VERSION}-osx
 
 mkdir -p {$LINUX_DIR,$OSX_DIR}/vagrant
 
+( cd ltc-tar-build && tar xvzf ltc-${LATTICE_VERSION}.tgz )
 cp ltc-tar-build/ltc-linux-amd64 $LINUX_DIR/ltc
 cp ltc-tar-build/ltc-darwin-amd64 $OSX_DIR/ltc
 
