@@ -151,8 +151,8 @@ jobs:
             AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
             AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
         ensure:
-          task: cleanup-vagrant-aws
-          file: lattice/concourse/tasks/cleanup-vagrant-aws/task.yml
+          task: cleanup-cluster-test-vagrant-aws
+          file: lattice/concourse/tasks/cleanup-cluster-test-vagrant-aws/task.yml
           config:
             params:
               AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
