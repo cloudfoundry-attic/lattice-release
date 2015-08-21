@@ -22,7 +22,7 @@ resources:
   - name: lattice-tar-build
     type: s3
     source:
-      bucket: lattice-concourse
+      bucket: lattice
       regexp: build/lattice-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
@@ -30,7 +30,7 @@ resources:
   - name: ltc-tar-build
     type: s3
     source:
-      bucket: lattice-concourse
+      bucket: lattice
       regexp: build/ltc-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
@@ -38,7 +38,7 @@ resources:
   - name: lattice-tar-nightly
     type: s3
     source:
-      bucket: lattice-concourse
+      bucket: lattice
       regexp: nightly/backend/lattice-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
@@ -46,7 +46,7 @@ resources:
   - name: lattice-bundle-nightly
     type: s3
     source:
-      bucket: lattice-concourse
+      bucket: lattice
       regexp: nightly/lattice-bundle-v(.*).zip
       private: true
       access_key_id: {{aws-access-key-id}}
@@ -214,12 +214,12 @@ jobs:
           file: lattice/concourse/tasks/generate-terraform-templates/task.yml
           config:
             params:
-              S3_LATTICE_PATH: lattice-concourse/nightly
+              S3_LATTICE_PATH: lattice/nightly
         - task: generate-vagrantfile
           file: lattice/concourse/tasks/generate-vagrantfile/task.yml
           config:
             params:
-              S3_LATTICE_PATH: lattice-concourse/nightly
+              S3_LATTICE_PATH: lattice/nightly
       - task: compile-lattice-bundles
         file: lattice/concourse/tasks/compile-lattice-bundles/task.yml
       - aggregate:

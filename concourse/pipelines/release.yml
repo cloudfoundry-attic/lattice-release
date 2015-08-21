@@ -29,7 +29,7 @@ resources:
   - name: lattice-tar-build
     type: s3
     source:
-      bucket: lattice-concourse
+      bucket: lattice
       regexp: build/lattice-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
@@ -37,7 +37,7 @@ resources:
   - name: ltc-tar-build
     type: s3
     source:
-      bucket: lattice-concourse
+      bucket: lattice
       regexp: build/ltc-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
@@ -45,7 +45,7 @@ resources:
   - name: lattice-tar-release
     type: s3
     source:
-      bucket: lattice-concourse
+      bucket: lattice
       regexp: releases/backend/lattice-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
@@ -53,7 +53,7 @@ resources:
   - name: lattice-bundle-release
     type: s3
     source:
-      bucket: lattice-concourse
+      bucket: lattice
       regexp: releases/lattice-bundle-v(.*).zip
       private: true
       access_key_id: {{aws-access-key-id}}
@@ -177,13 +177,13 @@ jobs:
           config:
             params:
               RELEASE: true
-              S3_LATTICE_PATH: lattice-concourse/releases
+              S3_LATTICE_PATH: lattice/releases
         - task: generate-vagrantfile
           file: lattice/concourse/tasks/generate-vagrantfile/task.yml
           config:
             params:
               RELEASE: true
-              S3_LATTICE_PATH: lattice-concourse/releases
+              S3_LATTICE_PATH: lattice/releases
       - task: compile-lattice-bundles
         file: lattice/concourse/tasks/compile-lattice-bundles/task.yml
       - aggregate:
