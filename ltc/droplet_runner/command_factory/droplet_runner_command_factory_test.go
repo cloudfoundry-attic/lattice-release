@@ -695,7 +695,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidRoutePortErrorMessage))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
@@ -719,8 +719,8 @@ var _ = Describe("CommandFactory", func() {
 		It("launches the specified droplet with tcp routes", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 			args := []string{
-				"--routes=4444:ninetyninety,9090:fourtyfourfourtyfour",
-				"--tcp-routes=5222:50000,5223:50001",
+				"--http-routes=ninetyninety:4444,fourtyfourfourtyfour:9090",
+				"--tcp-routes=50000:5222,50001:5223",
 				"droppy",
 				"droplet-name",
 				"--",
@@ -769,7 +769,7 @@ var _ = Describe("CommandFactory", func() {
 				"--cpu-weight=57",
 				"--memory-mb=12",
 				"--disk-mb=12",
-				"--routes=4444:ninetyninety,9090:fourtyfourfourtyfour",
+				"--http-routes=ninetyninety:4444,fourtyfourfourtyfour:9090",
 				"--working-dir=/xxx",
 				"--instances=11",
 				"--env=TIMEZONE=CST",
@@ -900,13 +900,13 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 					"cool-web-droplet",
-					"--routes=woo:aahh",
+					"--http-routes=woo:aahh",
 				}
 
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MalformedRouteErrorMessage))
+				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
@@ -914,7 +914,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 					"cool-web-droplet",
-					"--routes=8888",
+					"--http-routes=8888",
 				}
 
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)

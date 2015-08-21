@@ -83,7 +83,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 			Context("when valid tcp routes is passed", func() {
 
 				It("returns a valid TcpRoutes", func() {
-					tcpRoutes, err := factory.ParseTcpRoutes("6379:50000,5222:50001")
+					tcpRoutes, err := factory.ParseTcpRoutes("50000:6379,50001:5222")
 					Expect(err).ShouldNot(HaveOccurred())
 					Expect(tcpRoutes).Should(ContainExactly(
 						app_runner.TcpRoutes{
@@ -102,9 +102,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 			Context("when a malformed tcp routes is passed", func() {
 				It("errors out when the container port is not an int", func() {
-					_, err := factory.ParseTcpRoutes("woo:50000")
+					_, err := factory.ParseTcpRoutes("50000:woo")
 					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidRoutePortErrorMessage))
+					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
 
 				})
 
@@ -117,27 +117,85 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 			Context("when invalid port is passed in tcp routes", func() {
 				It("errors out when the container port is a negative number", func() {
-					_, err := factory.ParseTcpRoutes("-1:50000")
+					_, err := factory.ParseTcpRoutes("50000:-1")
 					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidRoutePortErrorMessage))
+					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the container port is bigger than 65535", func() {
-					_, err := factory.ParseTcpRoutes("65536:50000")
+					_, err := factory.ParseTcpRoutes("50000:65536")
 					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidRoutePortErrorMessage))
+					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the external port is a negative number", func() {
-					_, err := factory.ParseTcpRoutes("6379:-1")
+					_, err := factory.ParseTcpRoutes("-1:6379")
 					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidRoutePortErrorMessage))
+					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the external port is bigger than 65535", func() {
-					_, err := factory.ParseTcpRoutes("6379:65536")
+					_, err := factory.ParseTcpRoutes("65536:6379")
 					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidRoutePortErrorMessage))
+					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
+				})
+			})
+
+		})
+
+		Describe("ParseRouteOverrides", func() {
+			Context("when valid http route is passed", func() {
+
+				It("returns a valid RouteOverrides", func() {
+					routeOverrides, err := factory.ParseRouteOverrides("foo.com:8080, bar.com:8181")
+					Expect(err).ShouldNot(HaveOccurred())
+					Expect(routeOverrides).Should(ContainExactly(
+						app_runner.RouteOverrides{
+							app_runner.RouteOverride{
+								HostnamePrefix: "foo.com",
+								Port:           8080,
+							},
+							app_runner.RouteOverride{
+								HostnamePrefix: "bar.com",
+								Port:           8181,
+							},
+						},
+					))
+				})
+			})
+
+			Context("when a malformed http route is passed", func() {
+				It("errors out when the container port is not an int", func() {
+					_, err := factory.ParseRouteOverrides("foo:bar")
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
+
+				})
+
+				It("errors out when the http route is incomplete", func() {
+					_, err := factory.ParseRouteOverrides("foo.com,bar.com")
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).Should(Equal(command_factory.MalformedRouteErrorMessage))
+				})
+			})
+
+			Context("when invalid port is passed in https routes", func() {
+				It("errors out when the container port is a negative number", func() {
+					_, err := factory.ParseRouteOverrides("foo.com:-1")
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
+				})
+
+				It("errors out when the container port is bigger than 65535", func() {
+					_, err := factory.ParseRouteOverrides("foo.com:65536")
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
+				})
+
+				It("errors out when the host name is empty", func() {
+					_, err := factory.ParseRouteOverrides(":6379")
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).Should(Equal(command_factory.MalformedRouteErrorMessage))
 				})
 			})
 
@@ -416,7 +474,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 			args := []string{
 				"cool-web-app",
-				"8080:foo.com,9090:bar.com",
+				"foo.com:8080,bar.com:9090",
 			}
 
 			test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
@@ -451,7 +509,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				fakeAppRunner.UpdateAppRoutesReturns(errors.New("Major Fault"))
 				args := []string{
 					"cool-web-app",
-					"8080:foo.com",
+					"foo.com:8080",
 				}
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
@@ -493,7 +551,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
+				Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
 				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
