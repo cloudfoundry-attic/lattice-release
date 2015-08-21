@@ -10,6 +10,7 @@ export PATH=$GOPATH/bin:$PATH
 export LATTICE_VERSION=$(git -C $LATTICE_DIR describe)
 export DIEGO_VERSION=$(cat $LATTICE_DIR/DIEGO_VERSION)
 export CF_VERSION=$(cat $LATTICE_DIR/CF_VERSION)
+export ROUTING_VERSION=$(cat $LATTICE_DIR/ROUTING_VERSION)
 
 pushd $DIEGO_RELEASE_DIR
 	git checkout $DIEGO_VERSION
@@ -23,15 +24,23 @@ pushd $LATTICE_DIR/build/cf-release
 	./update
 popd
 
+pushd $LATTICE_DIR/build/cf-routing-release
+  git checkout $ROUTING_VERSION
+  git clean -xffd
+  ./scripts/update
+popd
+
 $LATTICE_DIR/cluster/scripts/compile \
     $LATTICE_DIR/build/lattice-build \
     $LATTICE_DIR/build/diego-release \
     $LATTICE_DIR/build/cf-release \
+    $LATTICE_DIR/build/cf-routing-release \
     $LATTICE_DIR
 
 echo $LATTICE_VERSION > $LATTICE_DIR/build/lattice-build/common/LATTICE_VERSION
 echo $DIEGO_VERSION > $LATTICE_DIR/build/lattice-build/common/DIEGO_VERSION
 echo $CF_VERSION > $LATTICE_DIR/build/lattice-build/common/CF_VERSION
+echo $ROUTING_VERSION > $LATTICE_DIR/build/lattice-build/common/ROUTING_VERSION
 
 tar czf $LATTICE_DIR/build/lattice.tgz -C $LATTICE_DIR/build lattice-build
 

@@ -15,6 +15,11 @@ resources:
     source:
       uri: https://github.com/cloudfoundry/cf-release.git
       branch: runtime-passed
+  - name: cf-routing-release
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry-incubator/cf-routing-release.git
+      branch: master
   - name: lattice-tar-experimental-release
     type: s3
     source:
@@ -103,6 +108,7 @@ jobs:
           passed: [unit-tests]
         - get: diego-release
         - get: cf-release
+        - get: cf-routing-release
       - aggregate:
         - task: compile-lattice-tar
           file: lattice/concourse/tasks/compile-lattice-tar/task.yml

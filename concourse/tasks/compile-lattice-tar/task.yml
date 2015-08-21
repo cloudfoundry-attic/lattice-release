@@ -7,6 +7,8 @@ inputs:
   path: lattice/build/diego-release
 - name: cf-release
   path: lattice/build/cf-release
+- name: cf-routing-release
+  path: lattice/build/cf-routing-release
 run:
   path: lattice/concourse/tasks/compile-lattice-tar/run.sh
 
