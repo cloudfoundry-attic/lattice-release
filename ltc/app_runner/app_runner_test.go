@@ -221,17 +221,7 @@ var _ = Describe("AppRunner", func() {
 						},
 					))
 
-					Expect(routes.AppRoutes).To(ContainExactly(
-						route_helpers.AppRoutes{
-							route_helpers.AppRoute{
-								Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"},
-								Port:      2000,
-							},
-							route_helpers.AppRoute{
-								Hostnames: []string{"americano-app-4000.myDiegoInstall.com"},
-								Port:      4000,
-							},
-						}))
+					Expect(routes.AppRoutes).To(BeNil())
 				})
 			})
 		})
@@ -274,8 +264,10 @@ var _ = Describe("AppRunner", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				appRoutes := route_helpers.AppRoutesFromRoutingInfo(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes)
-				Expect(appRoutes).To(ContainExactly(
+
+				routes := route_helpers.RoutesFromRoutingInfo(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes)
+
+				Expect(routes.AppRoutes).To(ContainExactly(
 					route_helpers.AppRoutes{
 						route_helpers.AppRoute{
 							Hostnames: []string{"wiggle.myDiegoInstall.com", "swang.myDiegoInstall.com"},
@@ -286,6 +278,7 @@ var _ = Describe("AppRunner", func() {
 							Port:      4000,
 						},
 					}))
+				Expect(routes.TcpRoutes).To(BeNil())
 			})
 		})
 

@@ -198,7 +198,7 @@ func (appRunner *appRunner) buildRoutes(params CreateAppParams, primaryPort uint
 				Port:      port,
 			})
 		}
-	} else {
+	} else if len(params.TcpRoutes) == 0 {
 		appRoutes = appRunner.buildDefaultRoutingInfo(params.Name, params.ExposedPorts, primaryPort)
 	}
 
