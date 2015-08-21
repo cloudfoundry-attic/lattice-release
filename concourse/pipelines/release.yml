@@ -30,6 +30,7 @@ resources:
     type: s3
     source:
       bucket: lattice
+      region_name: us-west-2
       regexp: build/lattice-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
@@ -38,6 +39,7 @@ resources:
     type: s3
     source:
       bucket: lattice
+      region_name: us-west-2
       regexp: build/ltc-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
@@ -46,6 +48,7 @@ resources:
     type: s3
     source:
       bucket: lattice
+      region_name: us-west-2
       regexp: releases/backend/lattice-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
@@ -54,6 +57,7 @@ resources:
     type: s3
     source:
       bucket: lattice
+      region_name: us-west-2
       regexp: releases/lattice-bundle-v(.*).zip
       private: true
       access_key_id: {{aws-access-key-id}}
