@@ -227,6 +227,9 @@ jobs:
           file: lattice/concourse/tasks/generate-terraform-templates/task.yml
         - task: generate-vagrantfile
           file: lattice/concourse/tasks/generate-vagrantfile/task.yml
+          config:
+            params:
+              S3_LATTICE_PATH: /lattice-concourse/nightly
       - aggregate:
         - put: lattice-tar-nightly
           params:

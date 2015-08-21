@@ -5,3 +5,5 @@ inputs:
 - name: lattice
 run:
   path: lattice/concourse/tasks/generate-vagrantfile/run.sh
+  params:
+    S3_LATTICE_PATH: some-s3-lattice-path
