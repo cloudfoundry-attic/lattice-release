@@ -45,13 +45,12 @@ resource "google_compute_instance" "lattice-brain" {
         agent = false
     }
 
-    #COMMON
     provisioner "local-exec" {
-        command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
+        command = "${path.module}/../scripts/local/get-lattice-tar \"${var.lattice_tar_source}\""
     }
 
     provisioner "file" {
-        source = "${var.local_lattice_tar_path}"
+        source = ".terraform/lattice.tgz"
         destination = "/tmp/lattice.tgz"
     }
 
@@ -72,7 +71,6 @@ resource "google_compute_instance" "lattice-brain" {
             "sudo apt-get -y install btrfs-tools",
         ]
     }
-    #/COMMON
 
     provisioner "remote-exec" {
         inline = [
@@ -117,13 +115,12 @@ resource "google_compute_instance" "cell" {
         agent = false
     }
 
-    #COMMON
     provisioner "local-exec" {
-        command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
+        command = "${path.module}/../scripts/local/get-lattice-tar \"${var.lattice_tar_source}\""
     }
 
     provisioner "file" {
-        source = "${var.local_lattice_tar_path}"
+        source = ".terraform/lattice.tgz"
         destination = "/tmp/lattice.tgz"
     }
 
@@ -144,7 +141,6 @@ resource "google_compute_instance" "cell" {
             "sudo apt-get -y install btrfs-tools",
         ]
     }
-    #/COMMON
 
     provisioner "remote-exec" {
         inline = [

@@ -1,5 +1,9 @@
 module "lattice-digitalocean" {
-    source = "github.com/cloudfoundry-incubator/lattice//terraform//digitalocean?ref=v0.3.3"
+    # Specify a source containing the terraform configuration
+    # source = "<CHANGE ME>"
+
+    # Specify a URL or local path to a lattice.tgz file for deployment
+    # lattice_tar_source = "<CHANGE-ME>"
 
     # Specify an API username and password for your lattice cluster
     # lattice_username = "<CHANGE-ME>"
@@ -17,15 +21,7 @@ module "lattice-digitalocean" {
     # The number of Lattice Cells to launch
     num_cells = "3"
 
-    #################################
-    ###  Optional Settings Below  ###
-    #################################
-
-    # If you wish to use your own lattice release instead of the latest version, 
-    # uncomment the variable assignment below and set it to your own lattice tar's path.
-    # local_lattice_tar_path = "~/lattice.tgz"
-
-    # Digital Ocean region
+    # Digital Ocean region (optional)
     # do_region = "<CHANGE-ME>"
 }
 

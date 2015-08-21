@@ -1,0 +1,10 @@
+#!/bin/bash
+
+[ -f ".terraform/lattice.tgz" ] && exit 0
+
+if [ -f "$1" ]; then
+    LATTICE_TAR_PATH=$(cd $(dirname "$1") && pwd )/$(basename "$1")
+    ln -sf "$LATTICE_TAR_PATH" .terraform/lattice.tgz
+else
+    curl -sL -o .terraform/lattice.tgz "$1"
+fi

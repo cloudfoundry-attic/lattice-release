@@ -1,5 +1,9 @@
 module "lattice-openstack" {
-    source = "github.com/cloudfoundry-incubator/lattice//terraform//openstack?ref=v0.3.3"
+    # Specify a source containing the terraform configuration
+    # source = "<CHANGE ME>"
+
+    # Specify a URL or local path to a lattice.tgz file for deployment
+    # lattice_tar_source = "<CHANGE-ME>"
 
     # Specify an API username and password for your lattice cluster
     # lattice_username = "<CHANGE-ME>"
@@ -42,15 +46,7 @@ module "lattice-openstack" {
     # The name of the Openstack Glance image used to spin up all VM instances.
     openstack_image = "<CHANGE-ME>"
 
-    #################################
-    ###  Optional Settings Below  ###
-    #################################
-
-    # If you wish to use your own lattice release instead of the latest version, 
-    # uncomment the variable assignment below and set it to your own lattice tar's path.
-    # local_lattice_tar_path = "~/lattice.tgz"
-
-    # Openstack Region (Blank default for 'no region' installations)
+    # Openstack Region (leave commented for 'no region' installations)
     # openstack_region = "<CHANGE-ME>"
 }
 

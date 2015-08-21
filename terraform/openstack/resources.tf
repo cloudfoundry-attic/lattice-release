@@ -105,13 +105,12 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
         agent = false
     }
 
-    #COMMON
     provisioner "local-exec" {
-        command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
+        command = "${path.module}/../scripts/local/get-lattice-tar \"${var.lattice_tar_source}\""
     }
 
     provisioner "file" {
-        source = "${var.local_lattice_tar_path}"
+        source = ".terraform/lattice.tgz"
         destination = "/tmp/lattice.tgz"
     }
 
@@ -126,7 +125,6 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
             "sudo apt-get -y install btrfs-tools",
         ]
     }
-    #/COMMON
 
     provisioner "remote-exec" {
         inline = [
@@ -170,14 +168,13 @@ resource "openstack_compute_instance_v2" "lattice-cell" {
         agent = false
     }
 
-    #COMMON
     provisioner "local-exec" {
-      command = "LOCAL_LATTICE_TAR_PATH=${var.local_lattice_tar_path} LATTICE_VERSION_FILE_PATH=${path.module}/../../Version ${path.module}/../scripts/local/download-lattice-tar"
+        command = "${path.module}/../scripts/local/get-lattice-tar \"${var.lattice_tar_source}\""
     }
 
     provisioner "file" {
-      source = "${var.local_lattice_tar_path}"
-      destination = "/tmp/lattice.tgz"
+        source = ".terraform/lattice.tgz"
+        destination = "/tmp/lattice.tgz"
     }
 
     provisioner "file" {
@@ -191,7 +188,6 @@ resource "openstack_compute_instance_v2" "lattice-cell" {
             "sudo apt-get -y install btrfs-tools",
         ]
     }
-    #/COMMON
 
     provisioner "remote-exec" {
         inline = [
