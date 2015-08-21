@@ -7,4 +7,4 @@ run:
   path: lattice/concourse/tasks/generate-terraform-templates/run.sh
 params:
   RELEASE: false
-  S3_LATTICE_PATH: some-s3-lattice-path
+  LATTICE_URL_BASE: some-url-base

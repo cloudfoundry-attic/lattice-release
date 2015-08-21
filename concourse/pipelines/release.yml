@@ -181,13 +181,13 @@ jobs:
           config:
             params:
               RELEASE: true
-              S3_LATTICE_PATH: lattice/releases
+              LATTICE_URL_BASE: http://lattice.s3.amazonaws.com/releases/backend
         - task: generate-vagrantfile
           file: lattice/concourse/tasks/generate-vagrantfile/task.yml
           config:
             params:
               RELEASE: true
-              S3_LATTICE_PATH: lattice/releases
+              LATTICE_URL_BASE: http://lattice.s3.amazonaws.com/releases/backend
       - task: compile-lattice-bundles
         file: lattice/concourse/tasks/compile-lattice-bundles/task.yml
       - aggregate:

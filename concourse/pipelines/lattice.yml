@@ -218,12 +218,12 @@ jobs:
           file: lattice/concourse/tasks/generate-terraform-templates/task.yml
           config:
             params:
-              S3_LATTICE_PATH: lattice/nightly
+              LATTICE_URL_BASE: http://lattice.s3.amazonaws.com/nightly/backend
         - task: generate-vagrantfile
           file: lattice/concourse/tasks/generate-vagrantfile/task.yml
           config:
             params:
-              S3_LATTICE_PATH: lattice/nightly
+              LATTICE_URL_BASE: http://lattice.s3.amazonaws.com/nightly/backend
       - task: compile-lattice-bundles
         file: lattice/concourse/tasks/compile-lattice-bundles/task.yml
       - aggregate:
