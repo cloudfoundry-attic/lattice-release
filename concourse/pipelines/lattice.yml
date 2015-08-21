@@ -81,7 +81,6 @@ jobs:
         trigger: true
       - task: unit-test-ltc
         file: lattice/concourse/tasks/unit-test-ltc/task.yml
-
   - name: unit-test-davtool
     plan:
       - get: lattice
@@ -91,7 +90,6 @@ jobs:
         config:
           params:
             CELL_HELPER: davtool
-
   - name: unit-test-s3tool
     plan:
       - get: lattice
@@ -101,7 +99,6 @@ jobs:
         config:
           params:
             CELL_HELPER: s3tool
-
   - name: unit-test-tee2metron
     plan:
       - get: lattice
@@ -231,6 +228,9 @@ jobs:
       - aggregate:
         - task: generate-terraform-templates
           file: lattice/concourse/tasks/generate-terraform-templates/task.yml
+          config:
+            params:
+              S3_LATTICE_PATH: /lattice-concourse/nightly
         - task: generate-vagrantfile
           file: lattice/concourse/tasks/generate-vagrantfile/task.yml
           config:

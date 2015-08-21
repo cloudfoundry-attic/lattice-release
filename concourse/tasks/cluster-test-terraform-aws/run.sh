@@ -16,9 +16,9 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
     "module": {
         "lattice-aws": {
             "source": "../lattice/terraform/aws",
+            "lattice_tar_source": "../lattice-tar-experimental/lattice-v${LATTICE_VERSION}.tgz",
             "lattice_username": "user",
             "lattice_password": "pass",
-            "local_lattice_tar_path": "../lattice-tar-experimental/lattice-v${LATTICE_VERSION}.tgz",
             "num_cells": "1",
             "aws_access_key": "${AWS_ACCESS_KEY_ID}",
             "aws_secret_key": "${AWS_SECRET_ACCESS_KEY}",

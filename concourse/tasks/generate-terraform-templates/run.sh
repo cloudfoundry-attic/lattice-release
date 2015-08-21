@@ -10,7 +10,7 @@ for PROVIDER in aws digitalocean google openstack; do
 	OUTPUT=lattice-${LATTICE_VERSION}.${PROVIDER}.tf
 
 	SOURCE="github.com/cloudfoundry-incubator/lattice//terraform//${PROVIDER}?ref=${LATTICE_VERSION}"
-	LATTICE_TAR_URL="${S3_DIR}/lattice-${LATTICE_VERSION}.tgz"
+	LATTICE_TAR_URL="https://s3.amazonaws.com/${S3_LATTICE_PATH}/lattice-${LATTICE_VERSION}.tgz"
 
 	(
 		sed 's@# source =.*$@source = "'${SOURCE}'"@' | \
