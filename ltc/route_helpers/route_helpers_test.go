@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
+	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	"github.com/cloudfoundry-incubator/receptor"
 )
 
@@ -324,6 +325,79 @@ var _ = Describe("RoutingInfoHelpers", func() {
 					}
 					Consistently(routesFromRoutingInfo).Should(Panic(), "invalid json.RawMessage ought to panic")
 				})
+			})
+		})
+	})
+
+	Describe("GetPrimaryPort", func() {
+		Context("when there is no monitor port, but exposedPorts are empty", func() {
+			It("return 0", func() {
+				returnPort := route_helpers.GetPrimaryPort(uint16(0), []uint16{})
+				Expect(returnPort).To(BeZero())
+			})
+		})
+
+		Context("when there is monitor port, and exposedPorts are not empty", func() {
+			It("return the first exposed port", func() {
+				returnPort := route_helpers.GetPrimaryPort(uint16(0), []uint16{2000, 3000})
+				Expect(returnPort).To(Equal(uint16(2000)))
+			})
+		})
+
+		Context("when there is monitor port", func() {
+			It("return the monitor port", func() {
+				returnPort := route_helpers.GetPrimaryPort(uint16(1000), []uint16{2000, 3000})
+				Expect(returnPort).To(Equal(uint16(1000)))
+			})
+		})
+
+		Context("when there is monitor port, and the exposedPorts is empty", func() {
+			It("return the monitor port", func() {
+				returnPort := route_helpers.GetPrimaryPort(uint16(1000), []uint16{})
+				Expect(returnPort).To(Equal(uint16(1000)))
+			})
+		})
+	})
+
+	Describe("BuildDefaultRoutingInfo", func() {
+		Context("when no exposedPorts is given", func() {
+			It("output empty approutes", func() {
+				exposedPorts := []uint16{}
+				appRoutes := route_helpers.BuildDefaultRoutingInfo("cool-app", exposedPorts, 5000, "cool-app-domain")
+				Expect(appRoutes).To(BeEmpty())
+			})
+		})
+
+		Context("when primaryPort is not included in the exposedPorts", func() {
+			It("doesn't output the default route", func() {
+				expectedAppRoutes := route_helpers.AppRoutes{
+					route_helpers.AppRoute{
+						Hostnames: []string{"cool-app-2000.cool-app-domain"},
+						Port:      2000,
+					},
+				}
+				exposedPorts := []uint16{2000}
+				appRoutes := route_helpers.BuildDefaultRoutingInfo("cool-app", exposedPorts, 5000, "cool-app-domain")
+				Expect(appRoutes).To(Equal(expectedAppRoutes))
+			})
+		})
+
+		Context("when primaryPort is included in the exposedPorts", func() {
+			It("outputs a default route with primary port in addition to the default route", func() {
+				expectedAppRoutes := route_helpers.AppRoutes{
+					route_helpers.AppRoute{
+						Hostnames: []string{"cool-app-2000.cool-app-domain"},
+						Port:      2000,
+					},
+					route_helpers.AppRoute{
+						Hostnames: []string{"cool-app.cool-app-domain",
+							"cool-app-5000.cool-app-domain"},
+						Port: 5000,
+					},
+				}
+				exposedPorts := []uint16{5000, 2000}
+				appRoutes := route_helpers.BuildDefaultRoutingInfo("cool-app", exposedPorts, 5000, "cool-app-domain")
+				Expect(appRoutes).Should(ContainExactly(expectedAppRoutes))
 			})
 		})
 	})

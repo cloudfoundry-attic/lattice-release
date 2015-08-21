@@ -63,14 +63,13 @@ You can modify all of this behavior from the command line:
 
     NOTE: Container ports provided with --http-routes and --tcp-routes must be among the container ports specified with --ports.
 
-- **`--http-routes=my-app:8080,my-app-admin:9000`** allows you to specify the routes to map to the requested ports.  In this example, `my-app.192.168.11.11.xip.io` on port 80 will map to port `8080` and `my-app-admin.192.168.11.11.xip.io` on port 80 will map to port `9000`.
-  - You can comma-delimit multiple routes to the same port (e.g. `--http-routes=my-app:8080,my-app-alias:8080`).
+- **`--http-routes HOST:CONTAINER_PORT[,...]`**
+    - Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port. Container ports must be among those specified with --ports or with the EXPOSE Docker image directive.
 
-
-- **`--tcp-routes=50000:6379,50001:6000,`** allows you to specify external ports that will be routed to container ports. In this example, given a TCP router at 192.168.11.11, then 192.168.11.11:50000 will be routed to port container port 6379, and 192.168.11.11:50001 will be routed to container port 6000. As Lattice assigned container ports starting at 60000, and the router runs on the same IP as the app container, choose an external port below 60000. You can map multiple external ports to the same container port (e.g. --tcp-routes=50000:6379,50001:6000).
+- **`--tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]`**
+    - Requests for the provided external port will be forwarded to the associated container port. Container ports must be among those specified with --ports or with the EXPOSE Docker image directive.
 
 - **`--no-routes`** allows you to specify that no routes be registered.
-
 
 
 #### Managing Healthchecks

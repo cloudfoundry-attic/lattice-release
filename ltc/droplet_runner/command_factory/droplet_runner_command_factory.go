@@ -511,7 +511,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 		return
 	}
 
-	factory.WaitForAppCreation(appName, timeoutFlag, instancesFlag, noRoutesFlag, routeOverrides, tcpRoutes)
+	factory.WaitForAppCreation(appName, timeoutFlag, instancesFlag, noRoutesFlag, routeOverrides, tcpRoutes, monitorConfig.Port, exposedPorts)
 }
 
 func (factory *DropletRunnerCommandFactory) removeDroplet(context *cli.Context) {

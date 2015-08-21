@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
@@ -244,19 +243,15 @@ func (appRunner *appRunner) buildRoutesWithDefaults(params CreateAppParams, prim
 	routes := appRunner.buildRoutes(params.NoRoutes, params.RouteOverrides, params.TcpRoutes)
 
 	if len(routes.AppRoutes) == 0 && len(routes.TcpRoutes) == 0 && !params.NoRoutes {
-		routes.AppRoutes = appRunner.buildDefaultRoutingInfo(params.Name, params.ExposedPorts, primaryPort)
+		routes.AppRoutes = route_helpers.BuildDefaultRoutingInfo(params.Name, params.ExposedPorts, primaryPort, appRunner.systemDomain)
 	}
 
 	return routes
 }
 
 func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
-	primaryPort := uint16(0)
-	if params.Monitor.Port != 0 {
-		primaryPort = params.Monitor.Port
-	} else if len(params.ExposedPorts) > 0 {
-		primaryPort = params.ExposedPorts[0]
-	}
+
+	primaryPort := route_helpers.GetPrimaryPort(params.Monitor.Port, params.ExposedPorts)
 
 	routes := appRunner.buildRoutesWithDefaults(params, primaryPort)
 
@@ -374,25 +369,6 @@ func (appRunner *appRunner) updateLrpRoutes(name string, routes RouteOverrides) 
 	)
 
 	return err
-}
-
-func (appRunner *appRunner) buildDefaultRoutingInfo(appName string, exposedPorts []uint16, primaryPort uint16) route_helpers.AppRoutes {
-	appRoutes := route_helpers.AppRoutes{}
-
-	for _, port := range exposedPorts {
-		hostnames := []string{}
-		if port == primaryPort {
-			hostnames = append(hostnames, fmt.Sprintf("%s.%s", appName, appRunner.systemDomain))
-		}
-
-		hostnames = append(hostnames, fmt.Sprintf("%s-%s.%s", appName, strconv.Itoa(int(port)), appRunner.systemDomain))
-		appRoutes = append(appRoutes, route_helpers.AppRoute{
-			Hostnames: hostnames,
-			Port:      port,
-		})
-	}
-
-	return appRoutes
 }
 
 func buildEnvironmentVariables(environmentVariables map[string]string) []receptor.EnvironmentVariable {

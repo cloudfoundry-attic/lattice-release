@@ -14,6 +14,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/codegangsta/cli"
@@ -131,15 +132,15 @@ func (factory *AppRunnerCommandFactory) MakeUpdateCommand() cli.Command {
 		},
 		cli.StringFlag{
 			Name: "http-routes, R",
-			Usage: "Comma separated list of hostnames and ports. Usage: HOST:CONTAINER_PORT[,…].\n\t\t" +
-				"E.g. given —http-routes=foo:8080, requests for foo.SYSTEM_DOMAIN on port 80\n\t\t" +
-				"will be forwarded to container port 8080.",
+			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port.\n\t\t" +
+				"Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive.\n\t\t" +
+				"Replaces all existing routes. Usage: --http-routes HOST:CONTAINER_PORT[,...]",
 		},
 		cli.StringFlag{
 			Name: "tcp-routes, T",
-			Usage: "Comma separated list of external port and container port. Usage: EXTERNAL_PORT:CONTAINER_PORT[,…].\n\t\t" +
-				"E.g. given —tcp-routes=50000:5222, requests for port 50000\n\t\t" +
-				"will be forwarded to container port 5222.",
+			Usage: "Requests for the external port will be forwarded to the associated container port.\n\t\t" +
+				"Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive.\n\t\t" +
+				"Replaces all existing routes. Usage: EXTERNAL_PORT:CONTAINER_PORT[,...]",
 		},
 	}
 	var updateCommand = cli.Command{
@@ -324,7 +325,7 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	}
 }
 
-func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollTimeout time.Duration, instanceCount int, noRoutesFlag bool, routeOverrides app_runner.RouteOverrides, tcpRoutes app_runner.TcpRoutes) {
+func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollTimeout time.Duration, instanceCount int, noRoutesFlag bool, routeOverrides app_runner.RouteOverrides, tcpRoutes app_runner.TcpRoutes, monitorPort uint16, exposedPorts []uint16) {
 	factory.UI.SayLine("Creating App: " + appName)
 
 	go factory.TailedLogsOutputter.OutputTailedLogs(appName)
@@ -350,12 +351,26 @@ func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollT
 			factory.UI.SayLine(colors.Green(factory.urlForAppName(route.HostnamePrefix)))
 		}
 	} else if len(tcpRoutes) == 0 {
-		factory.UI.SayLine(colors.Green(factory.urlForAppName(appName)))
+		factory.displayDefaultRoutes(appName, monitorPort, exposedPorts)
+	}
+}
+
+func (factory *AppRunnerCommandFactory) displayDefaultRoutes(appName string, monitorPort uint16, exposedPorts []uint16) {
+	factory.UI.SayLine(colors.Green(factory.urlForAppName(appName)))
+
+	primaryPort := route_helpers.GetPrimaryPort(monitorPort, exposedPorts)
+	appRoutes := route_helpers.BuildDefaultRoutingInfo(appName, exposedPorts, primaryPort, factory.Domain)
+	for _, appRoute := range appRoutes {
+		factory.UI.SayLine(colors.Green(factory.urlForAppNameAndPort(appName, appRoute.Port)))
 	}
 }
 
 func (factory *AppRunnerCommandFactory) externalPortMappingForApp(externalPort uint16, containerPort uint16) string {
-	return fmt.Sprintf("%s:%d\n", factory.Domain, externalPort)
+	return fmt.Sprintf("%s:%d", factory.Domain, externalPort)
+}
+
+func (factory *AppRunnerCommandFactory) urlForAppNameAndPort(name string, port uint16) string {
+	return fmt.Sprintf("http://%s-%d.%s", name, port, factory.Domain)
 }
 
 func (factory *AppRunnerCommandFactory) urlForAppName(name string) string {

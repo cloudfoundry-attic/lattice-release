@@ -2,6 +2,8 @@ package route_helpers
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 
 	"github.com/cloudfoundry-incubator/receptor"
 )
@@ -120,4 +122,33 @@ func AppRoutesFromRoutingInfo(routingInfo receptor.RoutingInfo) AppRoutes {
 	}
 
 	return routes
+}
+
+func BuildDefaultRoutingInfo(appName string, exposedPorts []uint16, primaryPort uint16, systemDomain string) AppRoutes {
+	appRoutes := AppRoutes{}
+
+	for _, port := range exposedPorts {
+		hostnames := []string{}
+		if port == primaryPort {
+			hostnames = append(hostnames, fmt.Sprintf("%s.%s", appName, systemDomain))
+		}
+
+		hostnames = append(hostnames, fmt.Sprintf("%s-%s.%s", appName, strconv.Itoa(int(port)), systemDomain))
+		appRoutes = append(appRoutes, AppRoute{
+			Hostnames: hostnames,
+			Port:      port,
+		})
+	}
+
+	return appRoutes
+}
+
+func GetPrimaryPort(monitorPort uint16, exposedPorts []uint16) uint16 {
+	primaryPort := uint16(0)
+	if monitorPort != 0 {
+		primaryPort = monitorPort
+	} else if len(exposedPorts) > 0 {
+		primaryPort = exposedPorts[0]
+	}
+	return primaryPort
 }

@@ -230,6 +230,10 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				Expect(createAppParams.ExposedPorts).To(Equal([]uint16{8080, 9090}))
+				Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://cool-web-app-8080.192.168.11.11.xip.io")))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://cool-web-app-9090.192.168.11.11.xip.io")))
 			})
 
 			It("exposes ports from image metadata", func() {
@@ -248,6 +252,11 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.SayLine("No port specified, using exposed ports from the image metadata.\n\tExposed Ports: 1200, 2701, 4302"))
 				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				Expect(createAppParams.ExposedPorts).To(Equal([]uint16{1200, 2701, 4302}))
+				Expect(outputBuffer).To(test_helpers.Say("App is reachable at:\n"))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://cool-web-app.192.168.11.11.xip.io")))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://cool-web-app-1200.192.168.11.11.xip.io")))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://cool-web-app-2701.192.168.11.11.xip.io")))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("http://cool-web-app-4302.192.168.11.11.xip.io")))
 			})
 
 			It("exposes --ports ports when both --ports and EXPOSE metadata exist", func() {
@@ -966,8 +975,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))
 			Expect(outputBuffer).To(test_helpers.SayLine("App is reachable at:"))
 
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green(domain + ":50000\n")))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green(domain + ":50001\n")))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green(domain + ":50000")))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green(domain + ":50001")))
 		})
 	})
 
