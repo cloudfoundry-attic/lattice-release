@@ -21,7 +21,7 @@ resources:
       uri: https://github.com/cloudfoundry-incubator/cf-routing-release.git
       branch: master
   - name: lattice-release
-    type: github-relesase
+    type: github-release
     source:
       user: {{github-api-user}}
       repository: sclevine/lattice
