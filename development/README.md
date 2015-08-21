@@ -15,7 +15,7 @@ If you have not developed a golang project before, please see the [Golang docs](
 ### Build Lattice from source
 
 ```bash
-    $ git clone git@github.com:cloudfoundry-incubator/lattice.git -b develop # may be unstable!
+    $ git clone git@github.com:cloudfoundry-incubator/lattice.git
     $ cd lattice
     $ development/setup
     $ development/build

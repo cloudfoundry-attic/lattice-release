@@ -37,16 +37,15 @@ More complex workloads can be constructed and submitted directly to Lattice's Re
 
 ## Launching with Vagrant
 
-Make sure you have [Vagrant](https://vagrantup.com/) installed (version 1.6 or better), then:
+Make sure you have [Vagrant](https://vagrantup.com/) 1.6+ installed, download the Lattice bundle from the [latest release](https://github.com/cloudfoundry-incubator/lattice/releases/latest), and run `vagrant up`:
 
 ```bash
-git clone https://github.com/cloudfoundry-incubator/lattice.git
-cd lattice
-git checkout v0.3.3
+unzip lattice-bundle-VERSION-PLATFORM.zip
+cd lattice-bundle-VERSION-PLATFORM/vagrant
 vagrant up
 ```
 
-This spins up a virtual environment that is accessible at `192.168.11.11`.  
+This spins up a virtual environment that is accessible at `192.168.11.11`.
 
 Use the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) to target Lattice:
 
@@ -86,29 +85,27 @@ ltc target 192.168.80.100.xip.io
 
 ## Miscellaneous
 
-### Running Lattice from source
+### Nightly builds
 
-By default, `vagrant up` will fetch the latest Lattice binary tarball.  To build from source and deploy using Vagrant:
+The latest unsupported nightly build is available [for Linux](http://lattice.s3.amazonaws.com/nightly/lattice-bundle-latest-linux.zip) and [for OS X](http://lattice.s3.amazonaws.com/nightly/lattice-bundle-latest-osx.zip).
+
+### Building Lattice from source
+
+To build Lattice from source and deploy using Vagrant:
 
 ```bash
-    $ git clone git@github.com:cloudfoundry-incubator/lattice.git -b develop # may be unstable!
+    $ git clone git@github.com:cloudfoundry-incubator/lattice.git
     $ cd lattice
     $ development/setup && development/build && development/run
     $ source development/env
 ```
 
-> More information on developing for Lattice can be found on the [Development Readme](development/README.md).
+> More information on developing for Lattice can be found on the [development readme](development/README.md).
 
 ### Updating
 
-Currently, Lattice does not support updating via provision. So to update, you have to destroy the box and bring it back up:
-
-```bash
- vagrant destroy --force
- git pull
- git checkout v0.3.3 #specify the version tag you want
- vagrant up
-```
+Currently, Lattice does not support updating via provision. To update, you have to destroy the box and bring it back up with a new `Vagrantfile`.
+If you have copied a new `Vagrantfile` into an existing directory, make sure to remove any outdated `lattice.tgz` present in that directory.
 
 ### Manual install of Lattice
 
@@ -122,19 +119,7 @@ Install the `vagrant-proxyconf` plugin as follows:
 vagrant plugin install vagrant-proxyconf
 ```
 
-Copy the following into `~/.vagrant.d/Vagrantfile`:
-
-```
-Vagrant.configure("2") do |config|
-  if Vagrant.has_plugin?("vagrant-proxyconf")
-    config.proxy.http     = "http://PROXY_IP:PROXY_PORT"
-    config.proxy.https    = "http://PROXY_IP:PROXY_PORT"
-    config.proxy.no_proxy = "localhost,127.0.0.1,.consul"
-  end
-end
-```
-
-Then proceed with `HTTP_PROXY=http://PROXY_IP:PROXY_PORT vagrant up`.
+Then proceed with `http_proxy=http://PROXY_IP:PROXY_PORT vagrant up`.
 
 ## Troubleshooting
 
@@ -196,10 +181,15 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 
 Here are some step-by-step instructions for deploying a Lattice cluster via Terraform:
 
-1. Visit the [Lattice GitHub Releases page](https://github.com/cloudfoundry-incubator/lattice/releases#)
-2. Select the Lattice version you wish to deploy and download the Terraform example file for your target platform.  The filename will be `lattice.<platform>.tf`
-3. Create an empty folder and place the `lattice.<platform>.tf` file in that folder.
-4. Update the `lattice.<platform>.tf` by filling in the values for the variables. Instructions for each supported platform are here:
+1. Download a lattice bundle from the [latest release](https://github.com/cloudfoundry-incubator/lattice/releases/latest).
+2. Unzip the bundle, and switch to the directory for your intended provider:
+
+  ```bash
+  unzip lattice-bundle-VERSION-PLATFORM.zip
+  cd lattice-bundle-VERSION-PLATFORM/terraform/PROVIDER
+  ```
+
+4. Update the `lattice.<provider>.tf` by filling in the values for the variables. Instructions for each supported platform are here:
   - [Amazon Web Services](terraform/aws/README.md#configure)
   - [DigitalOcean](terraform/digitalocean/README.md#configure)
   - [Google Cloud](terraform/google/README.md#configure)
@@ -238,24 +228,11 @@ terraform destroy
 
 ## Updating
 
-The provided examples (i.e., `lattice.<platform>.tf`) are pinned to a specific Bump commit or release tag in order to maintain compatibility between the Lattice build (`lattice.tgz`) and the Terraform definitions.  Currently, Terraform does not automatically update to newer revisions of Lattice.  
-
-If you want to update to a specific version of Lattice:
-  - Choose a version from either the [Bump commits](https://github.com/cloudfoundry-incubator/lattice/commits/master) or [Releases](https://github.com/cloudfoundry-incubator/lattice/releases).
-  - Update the `ref` in the `source` directive of your `lattice.<platform>.tf` to that version.
-  - Examples:
-      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=v0.3.3"`
-      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=aa1b301"`
-
-If you want to update to the latest version of Lattice:  
-  - Update the `ref` in the `source` directive of your `lattice.<platform>.tf` to `master`.
-      - `source = "github.com/cloudfoundry-incubator/lattice//terraform//aws?ref=master"`
-
-**Note**: Whenever the source directive is changed, make sure to run `terraform get -update` This updates the version of Lattice in the `.terraform/` folder, which is used by Terraform to distribute to each of the VMs.
+To update the cluster, you must destroy your existing cluster and begin the deployment process again using a new lattice bundle.
 
 # Contributing
 
-In the spirit of [free software](http://www.fsf.org/licensing/essays/free-sw.html), **everyone** is encouraged to help improve this project.
+Everyone is encouraged to help improve this project.
 
 Please submit pull requests against the **develop branch**. Only the continuous integration system commits to master.
 
