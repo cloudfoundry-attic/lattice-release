@@ -176,6 +176,9 @@ jobs:
             AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
             AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
             AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+        ensure:
+          task: cleanup-cluster-test-terraform-aws
+          file: lattice/concourse/tasks/cleanup-cluster-test-terraform-aws/task.yml
 
   - name: cluster-test-terraform-gce
     plan:
@@ -194,6 +197,9 @@ jobs:
             GCE_SSH_PRIVATE_KEY: {{gce-ssh-private-key}}
             GCE_PROJECT_NAME: {{gce-project-name}}
             GCE_ACCOUNT_FILE_JSON: {{gce-account-file-json}}
+        ensure:
+          task: cleanup-cluster-test-terraform-gce
+          file: lattice/concourse/tasks/cleanup-cluster-test-terraform-gce/task.yml
 
   - name: publish-nightly
     plan:

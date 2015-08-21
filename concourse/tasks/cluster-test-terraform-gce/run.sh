@@ -2,7 +2,6 @@
 
 set -x -e
 
-export LATTICE_DIR=$PWD/lattice
 export DOT_LATTICE_DIR=$HOME/.lattice
 export LATTICE_VERSION=$(cat lattice-tar-experimental/version)
 export LTC_VERSION=$(cat ltc-tar-experimental/version)
@@ -17,7 +16,7 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
 {
     "module": {
         "lattice-google": {
-            "source": "${LATTICE_DIR}/terraform/google",
+            "source": "../lattice/terraform/google",
             "lattice_username": "user",
             "lattice_password": "pass",
             "local_lattice_tar_path": "${PWD}/lattice-tar-experimental/lattice-v${LATTICE_VERSION}.tgz",
