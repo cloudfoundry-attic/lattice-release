@@ -37,14 +37,14 @@ var _ = Describe("AppExaminer", func() {
 						Instances:   0,
 						DiskMB:      564,
 						MemoryMB:    200,
-						Routes:      route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}}}.RoutingInfo(),
+						Routes:      route_helpers.Routes{AppRoutes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}}}}.RoutingInfo(),
 					},
 					receptor.DesiredLRPResponse{
 						ProcessGuid:          "process1-scalingUp",
 						Instances:            2,
 						DiskMB:               256,
 						MemoryMB:             100,
-						Routes:               route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}}}.RoutingInfo(),
+						Routes:               route_helpers.Routes{AppRoutes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}}}}.RoutingInfo(),
 						EnvironmentVariables: []receptor.EnvironmentVariable{},
 						StartTimeout:         30,
 						CPUWeight:            94,
@@ -77,7 +77,12 @@ var _ = Describe("AppExaminer", func() {
 				Expect(process1.ActualRunningInstances).To(Equal(1))
 				Expect(process1.DiskMB).To(Equal(256))
 				Expect(process1.MemoryMB).To(Equal(100))
-				Expect(process1.Routes).To(ConsistOf(route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}}))
+				Expect(process1.Routes).To(Equal(
+					route_helpers.Routes{
+						AppRoutes: route_helpers.AppRoutes{
+							route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}},
+						},
+					}))
 				Expect(process1.EnvironmentVariables).To(Equal([]app_examiner.EnvironmentVariable{}))
 				Expect(process1.StartTimeout).To(Equal(uint(30)))
 				Expect(process1.CPUWeight).To(Equal(uint(94)))
@@ -92,7 +97,12 @@ var _ = Describe("AppExaminer", func() {
 				Expect(process2.ActualRunningInstances).To(Equal(1))
 				Expect(process2.DiskMB).To(Equal(564))
 				Expect(process2.MemoryMB).To(Equal(200))
-				Expect(process2.Routes).To(ConsistOf(route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}}))
+				Expect(process2.Routes).To(Equal(
+					route_helpers.Routes{
+						AppRoutes: route_helpers.AppRoutes{
+							route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}},
+						},
+					}))
 
 				process3 := appList[2]
 				Expect(process3.ProcessGuid).To(Equal("process3-stopping"))
@@ -100,7 +110,124 @@ var _ = Describe("AppExaminer", func() {
 				Expect(process3.ActualRunningInstances).To(Equal(1))
 				Expect(process3.DiskMB).To(Equal(0))
 				Expect(process3.MemoryMB).To(Equal(0))
-				Expect(process3.Routes).To(BeEmpty())
+				Expect(process3.Routes).To(BeZero())
+			})
+
+			Context("with tcp-routes", func() {
+				BeforeEach(func() {
+					desiredLrps := []receptor.DesiredLRPResponse{
+						receptor.DesiredLRPResponse{
+							ProcessGuid: "process2-scalingDown",
+							Instances:   0,
+							DiskMB:      564,
+							MemoryMB:    200,
+							Routes: route_helpers.Routes{
+								AppRoutes: route_helpers.AppRoutes{
+									route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}},
+								},
+								TcpRoutes: route_helpers.TcpRoutes{
+									route_helpers.TcpRoute{
+										ExternalPort: 51000,
+										Port:         5222,
+									},
+								},
+							}.RoutingInfo(),
+						},
+						receptor.DesiredLRPResponse{
+							ProcessGuid: "process1-scalingUp",
+							Instances:   2,
+							DiskMB:      256,
+							MemoryMB:    100,
+							Routes: route_helpers.Routes{
+								AppRoutes: route_helpers.AppRoutes{
+									route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}},
+								},
+								TcpRoutes: route_helpers.TcpRoutes{
+									route_helpers.TcpRoute{
+										ExternalPort: 52000,
+										Port:         5222,
+									},
+								},
+							}.RoutingInfo(),
+							EnvironmentVariables: []receptor.EnvironmentVariable{},
+							StartTimeout:         30,
+							CPUWeight:            94,
+							Ports:                []uint16{2378, 67},
+							LogGuid:              "asdf-ojf93-9sdcsdk",
+							LogSource:            "proc1-log",
+							Annotation:           "Best process this side o' the Mississippi.",
+						},
+					}
+					fakeReceptorClient.DesiredLRPsReturns(desiredLrps, nil)
+
+					actualLrps := []receptor.ActualLRPResponse{
+						receptor.ActualLRPResponse{ProcessGuid: "process3-stopping", InstanceGuid: "guid4", Index: 1, State: receptor.ActualLRPStateRunning},
+						receptor.ActualLRPResponse{ProcessGuid: "process1-scalingUp", InstanceGuid: "guid1", Index: 1, State: receptor.ActualLRPStateRunning},
+						receptor.ActualLRPResponse{ProcessGuid: "process1-scalingUp", InstanceGuid: "guid2", Index: 2, State: receptor.ActualLRPStateClaimed},
+						receptor.ActualLRPResponse{ProcessGuid: "process2-scalingDown", InstanceGuid: "guid3", Index: 1, State: receptor.ActualLRPStateRunning},
+					}
+					fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
+				})
+
+				It("returns a list of alphabetically sorted examined apps with tcp routes", func() {
+					appList, err := appExaminer.ListApps()
+
+					Expect(err).ToNot(HaveOccurred())
+					Expect(appList).To(HaveLen(3))
+
+					process1 := appList[0]
+					Expect(process1.ProcessGuid).To(Equal("process1-scalingUp"))
+					Expect(process1.DesiredInstances).To(Equal(2))
+					Expect(process1.ActualRunningInstances).To(Equal(1))
+					Expect(process1.DiskMB).To(Equal(256))
+					Expect(process1.MemoryMB).To(Equal(100))
+					Expect(process1.Routes).To(Equal(
+						route_helpers.Routes{
+							AppRoutes: route_helpers.AppRoutes{
+								route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}},
+							},
+							TcpRoutes: route_helpers.TcpRoutes{
+								route_helpers.TcpRoute{
+									ExternalPort: 52000,
+									Port:         5222,
+								},
+							},
+						}))
+					Expect(process1.EnvironmentVariables).To(Equal([]app_examiner.EnvironmentVariable{}))
+					Expect(process1.StartTimeout).To(Equal(uint(30)))
+					Expect(process1.CPUWeight).To(Equal(uint(94)))
+					Expect(process1.Ports).To(Equal([]uint16{2378, 67}))
+					Expect(process1.LogGuid).To(Equal("asdf-ojf93-9sdcsdk"))
+					Expect(process1.LogSource).To(Equal("proc1-log"))
+					Expect(process1.Annotation).To(Equal("Best process this side o' the Mississippi."))
+
+					process2 := appList[1]
+					Expect(process2.ProcessGuid).To(Equal("process2-scalingDown"))
+					Expect(process2.DesiredInstances).To(Equal(0))
+					Expect(process2.ActualRunningInstances).To(Equal(1))
+					Expect(process2.DiskMB).To(Equal(564))
+					Expect(process2.MemoryMB).To(Equal(200))
+					Expect(process2.Routes).To(Equal(
+						route_helpers.Routes{
+							AppRoutes: route_helpers.AppRoutes{
+								route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}},
+							},
+							TcpRoutes: route_helpers.TcpRoutes{
+								route_helpers.TcpRoute{
+									ExternalPort: 51000,
+									Port:         5222,
+								},
+							},
+						}))
+
+					process3 := appList[2]
+					Expect(process3.ProcessGuid).To(Equal("process3-stopping"))
+					Expect(process3.DesiredInstances).To(Equal(0))
+					Expect(process3.ActualRunningInstances).To(Equal(1))
+					Expect(process3.DiskMB).To(Equal(0))
+					Expect(process3.MemoryMB).To(Equal(0))
+					Expect(process3.Routes).To(BeZero())
+				})
 			})
 		})
 
@@ -270,10 +397,20 @@ var _ = Describe("AppExaminer", func() {
 					MemoryMB:     128,
 					CPUWeight:    77,
 					Ports:        []uint16{8765, 2300},
-					Routes:       route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}}}.RoutingInfo(),
-					LogGuid:      "9832-ur98j-idsckl",
-					LogSource:    "peekaboo-lawgz",
-					Annotation:   "best. game. ever.",
+					Routes: route_helpers.Routes{
+						AppRoutes: route_helpers.AppRoutes{
+							route_helpers.AppRoute{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}},
+						},
+						TcpRoutes: route_helpers.TcpRoutes{
+							route_helpers.TcpRoute{
+								ExternalPort: 52220,
+								Port:         5222,
+							},
+						},
+					}.RoutingInfo(),
+					LogGuid:    "9832-ur98j-idsckl",
+					LogSource:  "peekaboo-lawgz",
+					Annotation: "best. game. ever.",
 				}
 
 				actualLRPsByProcessGuidResponse = []receptor.ActualLRPResponse{
@@ -347,8 +484,17 @@ var _ = Describe("AppExaminer", func() {
 				Expect(appInfo.MemoryMB).To(Equal(128))
 				Expect(appInfo.CPUWeight).To(Equal(uint(77)))
 				Expect(appInfo.Ports).To(ConsistOf(uint16(8765), uint16(2300)))
-				Expect(appInfo.Routes).To(Equal(route_helpers.AppRoutes{
-					route_helpers.AppRoute{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}}},
+				Expect(appInfo.Routes).To(Equal(route_helpers.Routes{
+					AppRoutes: route_helpers.AppRoutes{
+						route_helpers.AppRoute{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}},
+					},
+					TcpRoutes: route_helpers.TcpRoutes{
+						route_helpers.TcpRoute{
+							ExternalPort: 52220,
+							Port:         5222,
+						},
+					},
+				},
 				))
 				Expect(appInfo.LogGuid).To(Equal("9832-ur98j-idsckl"))
 				Expect(appInfo.LogSource).To(Equal("peekaboo-lawgz"))
