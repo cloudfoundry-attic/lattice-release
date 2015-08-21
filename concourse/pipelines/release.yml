@@ -20,25 +20,25 @@ resources:
     source:
       uri: https://github.com/cloudfoundry-incubator/cf-routing-release.git
       branch: master
-  - name: lattice-tar-experimental-release
-    type: s3
-    source:
-      bucket: lattice-concourse
-      regexp: experimental-releases/lattice-v(.*).tgz
-      private: true
-      access_key_id: {{aws-access-key-id}}
-      secret_access_key: {{aws-secret-access-key}}
   - name: lattice-release
     type: github-relesase
     source:
       user: {{github-api-user}}
       repository: sclevine/dummy-lattice
       access_token: {{github-api-token}}
-  - name: ltc-tar-experimental-release
+  - name: lattice-tar-build
     type: s3
     source:
       bucket: lattice-concourse
-      regexp: experimental-releases/ltc-v(.*).tgz
+      regexp: build/lattice-v(.*).tgz
+      private: true
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: ltc-tar-build
+    type: s3
+    source:
+      bucket: lattice-concourse
+      regexp: build/ltc-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
@@ -46,35 +46,18 @@ resources:
     type: s3
     source:
       bucket: lattice-concourse
-      regexp: releases/lattice-v(.*).tgz
+      regexp: releases/backend/lattice-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
-  - name: ltc-tar-release
+  - name: lattice-bundle-release
     type: s3
     source:
       bucket: lattice-concourse
-      regexp: releases/ltc-v(.*).tgz
+      regexp: releases/lattice-bundle-v(.*).zip
       private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
-  - name: terraform-templates-release
-    type: s3
-    source:
-      bucket: lattice-concourse
-      regexp: releases/lattice-v(.*).tf
-      private: true
-      access_key_id: {{aws-access-key-id}}
-      secret_access_key: {{aws-secret-access-key}}
-  - name: vagrantfile-release
-    type: s3
-    source:
-      bucket: lattice-concourse
-      regexp: releases/Vagrantfile-v(.*)
-      private: true
-      access_key_id: {{aws-access-key-id}}
-      secret_access_key: {{aws-secret-access-key}}
-
 
 jobs:
   - name: unit-tests
@@ -115,14 +98,14 @@ jobs:
         - task: compile-ltc
           file: lattice/concourse/tasks/compile-ltc/task.yml
       - aggregate:
-        - put: lattice-tar-experimental-release
+        - put: lattice-tar-build
           params:
             from: lattice/build/lattice-v(.*).tgz
-            to: /experimental-releases/
-        - put: ltc-tar-experimental-release
+            to: /build/
+        - put: ltc-tar-build
           params:
             from: lattice/build/ltc-v(.*).tgz
-            to: /experimental-releases/
+            to: /build/
 
   - name: cluster-test
     plan:
@@ -130,9 +113,9 @@ jobs:
         - get: lattice
           trigger: true
           passed: [compile]
-        - get: lattice-tar-experimental-release
+        - get: lattice-tar-build
           passed: [compile]
-        - get: ltc-tar-experimental-release
+        - get: ltc-tar-build
           passed: [compile]
       - aggregate:
         - task: cluster-test-vagrant-aws
@@ -178,59 +161,51 @@ jobs:
         - get: lattice
           trigger: true
           passed: [cluster-test]
-        - get: lattice-tar-experimental-release
+        - get: lattice-tar-build
           passed: [cluster-test]
-        - get: ltc-tar-experimental-release
+        - get: ltc-tar-build
           passed: [cluster-test]
       - aggregate:
         - task: generate-terraform-templates
           file: lattice/concourse/tasks/generate-terraform-templates/task.yml
           config:
             params:
-              S3_LATTICE_PATH: /lattice-concourse/nightly
+              S3_LATTICE_PATH: /lattice-concourse/releases
         - task: generate-vagrantfile
           file: lattice/concourse/tasks/generate-vagrantfile/task.yml
           config:
             params:
               S3_LATTICE_PATH: /lattice-concourse/releases
+      - task: compile-lattice-bundles
+        file: lattice/concourse/tasks/compile-lattice-bundles/task.yml
       - aggregate:
         - put: lattice-tar-release
           params:
-            from: lattice-tar-experimental/lattice-v(.*).tgz
-            to: /releases/
-        - put: ltc-tar-release
+            from: lattice-tar-build/lattice-v(.*).tgz
+            to: /releases/backend/
+        - put: lattice-tar-release
           params:
-            from: ltc-tar-experimental/ltc-v(.*).tgz
-            to: /releases/
-        - put: terraform-templates-release
+            from: lattice-tar-build/lattice-v(.*).tgz
+            to: /releases/backend/lattice-latest.tgz
+        - put: lattice-bundle-release
           params:
-            from: lattice-v(.*).aws.tf
+            from: compile-lattice-bundles/lattice-bundle-v(.*)-linux.zip
             to: /releases/
-        - put: terraform-templates-release
+        - put: lattice-bundle-release
           params:
-            from: lattice-v(.*).digitalocean.tf
-            to: /releases/
-        - put: terraform-templates-release
+            from: compile-lattice-bundles/lattice-bundle-v(.*)-linux.zip
+            to: /releases/lattice-bundle-latest-linux.zip
+        - put: lattice-bundle-release
           params:
-            from: lattice-v(.*).google.tf
+            from: compile-lattice-bundles/lattice-bundle-v(.*)-osx.zip
             to: /releases/
-        - put: terraform-templates-release
+        - put: lattice-bundle-release
           params:
-            from: lattice-v(.*).openstack.tf
-            to: /releases/
-        - put: vagrantfile-release
-          params:
-            from: Vagrantfile-v(.*)
-            to: /releases/
+            from: compile-lattice-bundles/lattice-bundle-v(.*)-osx.zip
+            to: /releases/lattice-bundle-latest-osx.zip
       - put: lattice-release
         params:
           tag: lattice/Version
           globs:
-            - lattice-tar-experimental/lattice-v(.*).tgz
-            - lattice-tar-experimental/ltc-v(.*).tgz
-            - lattice-v(.*).aws.tf
-            - lattice-v(.*).digitalocean.tf
-            - lattice-v(.*).google.tf
-            - lattice-v(.*).openstack.tf
-            - Vagrantfile-v(.*)
-
+            - compile-lattice-bundles/lattice-bundle-v(.*)-linux.zip
+            - compile-lattice-bundles/lattice-bundle-v(.*)-osx.zip

@@ -19,19 +19,19 @@ resources:
     source:
       uri: https://github.com/cloudfoundry-incubator/cf-routing-release.git
       branch: master
-  - name: lattice-tar-experimental
+  - name: lattice-tar-build
     type: s3
     source:
       bucket: lattice-concourse
+      regexp: build/lattice-v(.*).tgz
       private: true
-      regexp: experimental/lattice-v(.*).tgz
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
-  - name: ltc-tar-experimental
+  - name: ltc-tar-build
     type: s3
     source:
       bucket: lattice-concourse
-      regexp: experimental/ltc-v(.*).tgz
+      regexp: build/ltc-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
@@ -39,31 +39,15 @@ resources:
     type: s3
     source:
       bucket: lattice-concourse
-      regexp: nightly/lattice-v(.*).tgz
+      regexp: nightly/backend/lattice-v(.*).tgz
       private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
-  - name: ltc-tar-nightly
+  - name: lattice-bundle-nightly
     type: s3
     source:
       bucket: lattice-concourse
-      regexp: nightly/ltc-v(.*).tgz
-      private: true
-      access_key_id: {{aws-access-key-id}}
-      secret_access_key: {{aws-secret-access-key}}
-  - name: terraform-templates-nightly
-    type: s3
-    source:
-      bucket: lattice-concourse
-      regexp: nightly/lattice-v(.*).tf
-      private: true
-      access_key_id: {{aws-access-key-id}}
-      secret_access_key: {{aws-secret-access-key}}
-  - name: vagrantfile-nightly
-    type: s3
-    source:
-      bucket: lattice-concourse
-      regexp: nightly/Vagrantfile-v(.*)
+      regexp: nightly/lattice-bundle-v(.*).zip
       private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
@@ -127,14 +111,14 @@ jobs:
         - task: compile-ltc
           file: lattice/concourse/tasks/compile-ltc/task.yml
       - aggregate:
-        - put: lattice-tar-experimental
+        - put: lattice-tar-build
           params:
             from: lattice/build/lattice-v(.*).tgz
-            to: /experimental/
-        - put: ltc-tar-experimental
+            to: /build/
+        - put: ltc-tar-build
           params:
             from: lattice/build/ltc-v(.*).tgz
-            to: /experimental/
+            to: /build/
 
   - name: cluster-test-vagrant-aws
     plan:
@@ -142,9 +126,9 @@ jobs:
         - get: lattice
           passed: [compile]
           trigger: true
-        - get: lattice-tar-experimental
+        - get: lattice-tar-build
           passed: [compile]
-        - get: ltc-tar-experimental
+        - get: ltc-tar-build
           passed: [compile]
       - task: cluster-test-vagrant-aws
         file: lattice/concourse/tasks/cluster-test-vagrant-aws/task.yml
@@ -168,9 +152,9 @@ jobs:
         - get: lattice
           passed: [compile]
           trigger: true
-        - get: lattice-tar-experimental
+        - get: lattice-tar-build
           passed: [compile]
-        - get: ltc-tar-experimental
+        - get: ltc-tar-build
           passed: [compile]
       - task: cluster-test-terraform-aws
         file: lattice/concourse/tasks/cluster-test-terraform-aws/task.yml
@@ -190,9 +174,9 @@ jobs:
         - get: lattice
           passed: [compile]
           trigger: true
-        - get: lattice-tar-experimental
+        - get: lattice-tar-build
           passed: [compile]
-        - get: ltc-tar-experimental
+        - get: ltc-tar-build
           passed: [compile]
       - task: cluster-test-terraform-gce
         file: lattice/concourse/tasks/cluster-test-terraform-gce/task.yml
@@ -215,12 +199,12 @@ jobs:
           - cluster-test-vagrant-aws
           - cluster-test-terraform-aws
           - cluster-test-terraform-gce
-        - get: lattice-tar-experimental
+        - get: lattice-tar-build
           passed:
           - cluster-test-vagrant-aws
           - cluster-test-terraform-aws
           - cluster-test-terraform-gce
-        - get: ltc-tar-experimental
+        - get: ltc-tar-build
           passed:
           - cluster-test-vagrant-aws
           - cluster-test-terraform-aws
@@ -236,41 +220,30 @@ jobs:
           config:
             params:
               S3_LATTICE_PATH: /lattice-concourse/nightly
+      - task: compile-lattice-bundles
+        file: lattice/concourse/tasks/compile-lattice-bundles/task.yml
       - aggregate:
         - put: lattice-tar-nightly
           params:
-            from: lattice-tar-experimental/lattice-v(.*).tgz
-            to: /nightly/
+            from: lattice-tar-build/lattice-v(.*).tgz
+            to: /nightly/backend/
         - put: lattice-tar-nightly
           params:
-            from: lattice-tar-experimental/lattice-v(.*).tgz
-            to: /nightly/lattice-latest.tgz
-        - put: ltc-tar-nightly
+            from: lattice-tar-build/lattice-v(.*).tgz
+            to: /nightly/backend/lattice-latest.tgz
+        - put: lattice-bundle-nightly
           params:
-            from: ltc-tar-experimental/ltc-v(.*).tgz
+            from: compile-lattice-bundles/lattice-bundle-v(.*)-linux.zip
             to: /nightly/
-        - put: ltc-tar-nightly
+        - put: lattice-bundle-nightly
           params:
-            from: ltc-tar-experimental/ltc-v(.*).tgz
-            to: /nightly/ltc-latest.tgz
-        - put: terraform-templates-nightly
+            from: compile-lattice-bundles/lattice-bundle-v(.*)-linux.zip
+            to: /nightly/lattice-bundle-latest-linux.zip
+        - put: lattice-bundle-nightly
           params:
-            from: lattice-v(.*).aws.tf
+            from: compile-lattice-bundles/lattice-bundle-v(.*)-osx.zip
             to: /nightly/
-        - put: terraform-templates-nightly
+        - put: lattice-bundle-nightly
           params:
-            from: lattice-v(.*).digitalocean.tf
-            to: /nightly/
-        - put: terraform-templates-nightly
-          params:
-            from: lattice-v(.*).google.tf
-            to: /nightly/
-        - put: terraform-templates-nightly
-          params:
-            from: lattice-v(.*).openstack.tf
-            to: /nightly/
-        - put: vagrantfile-nightly
-          params:
-            from: Vagrantfile-v(.*)
-            to: /nightly/
-
+            from: compile-lattice-bundles/lattice-bundle-v(.*)-osx.zip
+            to: /nightly/lattice-bundle-latest-osx.zip

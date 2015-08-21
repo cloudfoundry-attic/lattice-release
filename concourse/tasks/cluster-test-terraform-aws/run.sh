@@ -3,8 +3,8 @@
 set -x -e
 
 export DOT_LATTICE_DIR=$HOME/.lattice
-export LATTICE_VERSION=$(cat lattice-tar-experimental/version)
-export LTC_VERSION=$(cat ltc-tar-experimental/version)
+export LATTICE_VERSION=v$(cat lattice-tar-build/version)
+export LTC_VERSION=v$(cat ltc-tar-build/version)
 export TERRAFORM_TMP_DIR=$PWD/terraform-tmp
 
 mkdir -p $TERRAFORM_TMP_DIR $DOT_LATTICE_DIR
@@ -16,7 +16,7 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
     "module": {
         "lattice-aws": {
             "source": "../lattice/terraform/aws",
-            "lattice_tar_source": "../lattice-tar-experimental/lattice-v${LATTICE_VERSION}.tgz",
+            "lattice_tar_source": "../lattice-tar-build/lattice-${LATTICE_VERSION}.tgz",
             "lattice_username": "user",
             "lattice_password": "pass",
             "num_cells": "1",
@@ -48,7 +48,7 @@ popd
 
 sleep 60
 
-tar xzf ltc-tar-experimental/ltc-v${LTC_VERSION}.tgz
+tar xzf ltc-tar-build/ltc-${LTC_VERSION}.tgz
 
 pushd $TERRAFORM_TMP_DIR
     LATTICE_TARGET=$(terraform output lattice_target)

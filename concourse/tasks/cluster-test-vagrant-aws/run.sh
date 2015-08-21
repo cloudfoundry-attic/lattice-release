@@ -16,7 +16,7 @@ dpkg -i vagrant_1.7.4_x86_64.deb
 vagrant plugin install vagrant-aws
 vagrant box add lattice/ubuntu-trusty-64 --provider=aws
 
-cp lattice-tar-experimental/lattice-*.tgz $VAGRANT_TMP_DIR/lattice.tgz
+cp lattice-tar-build/lattice-*.tgz $VAGRANT_TMP_DIR/lattice.tgz
 cp lattice/Vagrantfile $VAGRANT_TMP_DIR/
 
 pushd $VAGRANT_TMP_DIR
@@ -26,6 +26,6 @@ popd
 
 sleep 60
 
-tar zxf ltc-tar-experimental/ltc-*.tgz ltc-linux-amd64
+tar zxf ltc-tar-build/ltc-*.tgz ltc-linux-amd64
 $PWD/ltc-linux-amd64 target "$SYSTEM_DOMAIN"
 $PWD/ltc-linux-amd64 test -v -t 10m

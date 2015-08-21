@@ -7,7 +7,8 @@ export LATTICE_VERSION=$(git -C $LATTICE_DIR describe)
 
 for PROVIDER in aws digitalocean google openstack; do
 	INPUT=${LATTICE_DIR}/terraform/${PROVIDER}/example/lattice.${PROVIDER}.tf
-	OUTPUT=lattice-${LATTICE_VERSION}.${PROVIDER}.tf
+	OUTPUT=templates/${PROVIDER}/lattice-${LATTICE_VERSION}.${PROVIDER}.tf
+ 	mkdir -p `dirname $OUTPUT`
 
 	SOURCE="github.com/cloudfoundry-incubator/lattice//terraform//${PROVIDER}?ref=${LATTICE_VERSION}"
 	LATTICE_TAR_URL="https://s3.amazonaws.com/${S3_LATTICE_PATH}/lattice-${LATTICE_VERSION}.tgz"
