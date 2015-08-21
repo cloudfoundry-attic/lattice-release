@@ -176,12 +176,12 @@ jobs:
           file: lattice/concourse/tasks/generate-terraform-templates/task.yml
           config:
             params:
-              S3_LATTICE_PATH: /lattice-concourse/releases
+              S3_LATTICE_PATH: lattice-concourse/releases
         - task: generate-vagrantfile
           file: lattice/concourse/tasks/generate-vagrantfile/task.yml
           config:
             params:
-              S3_LATTICE_PATH: /lattice-concourse/releases
+              S3_LATTICE_PATH: lattice-concourse/releases
       - task: compile-lattice-bundles
         file: lattice/concourse/tasks/compile-lattice-bundles/task.yml
       - aggregate:
@@ -213,4 +213,6 @@ jobs:
         params:
           name: lattice/Version
           tag: lattice/Version
+          commitish: compile-lattice-bundles/commit
+          body: lattice/RELEASE_NOTES.md
           globs: [compile-lattice-bundles/*.zip]

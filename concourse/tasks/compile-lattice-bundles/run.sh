@@ -21,3 +21,5 @@ cp generate-vagrantfile/Vagrantfile $OSX_DIR/vagrant/
 
 zip -r ${LINUX_DIR}.zip $LINUX_DIR
 zip -r ${OSX_DIR}.zip $OSX_DIR
+
+git -C lattice rev-parse HEAD > commit
