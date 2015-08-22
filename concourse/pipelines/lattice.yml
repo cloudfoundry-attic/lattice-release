@@ -104,6 +104,7 @@ jobs:
           trigger: true
           passed:
             - unit-test-ltc
+            - unit-test-davtool
             - unit-test-s3tool
             - unit-test-tee2metron
         - get: diego-release
