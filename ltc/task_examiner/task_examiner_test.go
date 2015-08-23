@@ -37,7 +37,7 @@ var _ = Describe("TaskExaminer", func() {
 
 		It("returns a task status", func() {
 			taskInfo, err := taskExaminer.TaskStatus("boop")
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 			Expect(taskInfo.TaskGuid).To(Equal("boop"))
 			Expect(taskInfo.State).To(Equal(receptor.TaskStateCompleted))
 			Expect(taskInfo.CellID).To(Equal("cell-01"))
@@ -78,7 +78,7 @@ var _ = Describe("TaskExaminer", func() {
 	Describe("ListTasks", func() {
 		It("returns the list of task", func() {
 			taskListReturns := []receptor.TaskResponse{
-				receptor.TaskResponse{
+				{
 					TaskGuid:      "task-guid-1",
 					CellID:        "cell-01",
 					Failed:        false,
@@ -86,7 +86,7 @@ var _ = Describe("TaskExaminer", func() {
 					Result:        "Finished",
 					State:         "COMPLETED",
 				},
-				receptor.TaskResponse{
+				{
 					TaskGuid:      "task-guid-2",
 					CellID:        "cell-02",
 					Failed:        true,
@@ -98,7 +98,7 @@ var _ = Describe("TaskExaminer", func() {
 			fakeReceptorClient.TasksReturns(taskListReturns, nil)
 
 			taskList, err := taskExaminer.ListTasks()
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 			Expect(taskList).To(HaveLen(2))
 
 			task1 := taskList[0]
@@ -125,7 +125,7 @@ var _ = Describe("TaskExaminer", func() {
 			fakeReceptorClient.TasksReturns([]receptor.TaskResponse{}, nil)
 
 			taskList, err := taskExaminer.ListTasks()
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 			Expect(taskList).To(HaveLen(0))
 		})
 	})

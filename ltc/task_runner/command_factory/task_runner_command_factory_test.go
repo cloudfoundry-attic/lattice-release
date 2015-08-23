@@ -35,8 +35,8 @@ var _ = Describe("TaskRunner CommandFactory", func() {
 	BeforeEach(func() {
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
-		fakeTaskRunner = new(fake_task_runner.FakeTaskRunner)
-		fakeTaskExaminer = new(fake_task_examiner.FakeTaskExaminer)
+		fakeTaskRunner = &fake_task_runner.FakeTaskRunner{}
+		fakeTaskExaminer = &fake_task_examiner.FakeTaskExaminer{}
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 	})
 
@@ -44,7 +44,6 @@ var _ = Describe("TaskRunner CommandFactory", func() {
 		var (
 			submitTaskCommand cli.Command
 			tmpFile           *os.File
-			err               error
 			jsonContents      []byte
 		)
 
@@ -55,6 +54,7 @@ var _ = Describe("TaskRunner CommandFactory", func() {
 
 		Context("when the json file exists", func() {
 			BeforeEach(func() {
+				var err error
 				tmpFile, err = ioutil.TempFile("", "tmp_json")
 				Expect(err).ToNot(HaveOccurred())
 
@@ -64,25 +64,25 @@ var _ = Describe("TaskRunner CommandFactory", func() {
 
 			It("submits a task from json", func() {
 				fakeTaskRunner.SubmitTaskReturns("some-task", nil)
-				args := []string{tmpFile.Name()}
 
+				args := []string{tmpFile.Name()}
 				test_helpers.ExecuteCommandWithArgs(submitTaskCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say(colors.Green("Successfully submitted some-task")))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("Successfully submitted some-task")))
 				Expect(fakeTaskRunner.SubmitTaskCallCount()).To(Equal(1))
 				Expect(fakeTaskRunner.SubmitTaskArgsForCall(0)).To(Equal(jsonContents))
 			})
 
 			It("prints an error returned by the task_runner", func() {
 				fakeTaskRunner.SubmitTaskReturns("some-task", errors.New("taskypoo"))
-				args := []string{tmpFile.Name()}
 
+				args := []string{tmpFile.Name()}
 				test_helpers.ExecuteCommandWithArgs(submitTaskCommand, args)
 
 				Expect(fakeTaskRunner.SubmitTaskCallCount()).To(Equal(1))
 				Expect(fakeTaskRunner.SubmitTaskArgsForCall(0)).To(Equal(jsonContents))
 
-				Expect(outputBuffer).To(test_helpers.Say("Error submitting some-task: taskypoo"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error submitting some-task: taskypoo"))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 
@@ -91,7 +91,7 @@ var _ = Describe("TaskRunner CommandFactory", func() {
 		It("is an error when no path is passed in", func() {
 			test_helpers.ExecuteCommandWithArgs(submitTaskCommand, []string{})
 
-			Expect(outputBuffer).To(test_helpers.Say("Path to JSON is required"))
+			Expect(outputBuffer).To(test_helpers.SayLine("Path to JSON is required"))
 			Expect(fakeTaskRunner.SubmitTaskCallCount()).To(BeZero())
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
@@ -102,7 +102,7 @@ var _ = Describe("TaskRunner CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(submitTaskCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say(fmt.Sprintf("Error reading file: open %s: no such file or directory", filepath.Join(os.TempDir(), "file-no-existy"))))
+				Expect(outputBuffer).To(test_helpers.SayLine(fmt.Sprintf("Error reading file: open %s: no such file or directory", filepath.Join(os.TempDir(), "file-no-existy"))))
 				Expect(fakeTaskRunner.SubmitTaskCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
 			})
@@ -127,7 +127,7 @@ var _ = Describe("TaskRunner CommandFactory", func() {
 			fakeTaskRunner.DeleteTaskReturns(nil)
 			test_helpers.ExecuteCommandWithArgs(deleteTaskCommand, []string{"task-guid-1"})
 
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("OK")))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("OK")))
 		})
 
 		It("returns error when fail to delete the task", func() {
@@ -137,16 +137,17 @@ var _ = Describe("TaskRunner CommandFactory", func() {
 			}
 			fakeTaskExaminer.TaskStatusReturns(taskInfo, nil)
 			fakeTaskRunner.DeleteTaskReturns(errors.New("task in unknown state"))
+
 			test_helpers.ExecuteCommandWithArgs(deleteTaskCommand, []string{"task-guid-1"})
 
-			Expect(outputBuffer).To(test_helpers.Say("Error deleting task-guid-1: " + "task in unknown state"))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Error deleting task-guid-1: " + "task in unknown state")))
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 		})
 
 		It("fails with usage", func() {
 			test_helpers.ExecuteCommandWithArgs(deleteTaskCommand, []string{})
 
-			Expect(outputBuffer).To(test_helpers.Say("Please input a valid TASK_GUID"))
+			Expect(outputBuffer).To(test_helpers.SayLine("Please input a valid TASK_GUID"))
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
 	})
@@ -165,10 +166,10 @@ var _ = Describe("TaskRunner CommandFactory", func() {
 				State:    "COMPLETED",
 			}
 			fakeTaskExaminer.TaskStatusReturns(taskInfo, nil)
-			fakeTaskRunner.CancelTaskReturns(nil)
+
 			test_helpers.ExecuteCommandWithArgs(cancelTaskCommand, []string{"task-guid-1"})
 
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("OK")))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("OK")))
 		})
 
 		It("returns error when fail to cancel the task", func() {
@@ -178,16 +179,17 @@ var _ = Describe("TaskRunner CommandFactory", func() {
 			}
 			fakeTaskExaminer.TaskStatusReturns(taskInfo, nil)
 			fakeTaskRunner.CancelTaskReturns(errors.New("task in unknown state"))
+
 			test_helpers.ExecuteCommandWithArgs(cancelTaskCommand, []string{"task-guid-1"})
 
-			Expect(outputBuffer).To(test_helpers.Say("Error cancelling task-guid-1: " + "task in unknown state"))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Error cancelling task-guid-1: " + "task in unknown state")))
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 		})
 
 		It("fails with usage", func() {
 			test_helpers.ExecuteCommandWithArgs(cancelTaskCommand, []string{})
 
-			Expect(outputBuffer).To(test_helpers.Say("Please input a valid TASK_GUID"))
+			Expect(outputBuffer).To(test_helpers.SayLine("Please input a valid TASK_GUID"))
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
 	})

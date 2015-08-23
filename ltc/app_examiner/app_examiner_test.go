@@ -32,19 +32,25 @@ var _ = Describe("AppExaminer", func() {
 		Context("with the receptor returning both desiredlrps and actuallrps", func() {
 			BeforeEach(func() {
 				desiredLrps := []receptor.DesiredLRPResponse{
-					receptor.DesiredLRPResponse{
+					{
 						ProcessGuid: "process2-scalingDown",
 						Instances:   0,
 						DiskMB:      564,
 						MemoryMB:    200,
-						Routes:      route_helpers.Routes{AppRoutes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}}}}.RoutingInfo(),
+						Routes: route_helpers.Routes{
+							AppRoutes: route_helpers.AppRoutes{
+								{Hostnames: []string{"ren", "stimpy"}},
+							}}.RoutingInfo(),
 					},
-					receptor.DesiredLRPResponse{
-						ProcessGuid:          "process1-scalingUp",
-						Instances:            2,
-						DiskMB:               256,
-						MemoryMB:             100,
-						Routes:               route_helpers.Routes{AppRoutes: route_helpers.AppRoutes{route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}}}}.RoutingInfo(),
+					{
+						ProcessGuid: "process1-scalingUp",
+						Instances:   2,
+						DiskMB:      256,
+						MemoryMB:    100,
+						Routes: route_helpers.Routes{
+							AppRoutes: route_helpers.AppRoutes{
+								{Hostnames: []string{"happy", "joy"}},
+							}}.RoutingInfo(),
 						EnvironmentVariables: []receptor.EnvironmentVariable{},
 						StartTimeout:         30,
 						CPUWeight:            94,
@@ -57,10 +63,10 @@ var _ = Describe("AppExaminer", func() {
 				fakeReceptorClient.DesiredLRPsReturns(desiredLrps, nil)
 
 				actualLrps := []receptor.ActualLRPResponse{
-					receptor.ActualLRPResponse{ProcessGuid: "process3-stopping", InstanceGuid: "guid4", Index: 1, State: receptor.ActualLRPStateRunning},
-					receptor.ActualLRPResponse{ProcessGuid: "process1-scalingUp", InstanceGuid: "guid1", Index: 1, State: receptor.ActualLRPStateRunning},
-					receptor.ActualLRPResponse{ProcessGuid: "process1-scalingUp", InstanceGuid: "guid2", Index: 2, State: receptor.ActualLRPStateClaimed},
-					receptor.ActualLRPResponse{ProcessGuid: "process2-scalingDown", InstanceGuid: "guid3", Index: 1, State: receptor.ActualLRPStateRunning},
+					{ProcessGuid: "process3-stopping", InstanceGuid: "guid4", Index: 1, State: receptor.ActualLRPStateRunning},
+					{ProcessGuid: "process1-scalingUp", InstanceGuid: "guid1", Index: 1, State: receptor.ActualLRPStateRunning},
+					{ProcessGuid: "process1-scalingUp", InstanceGuid: "guid2", Index: 2, State: receptor.ActualLRPStateClaimed},
+					{ProcessGuid: "process2-scalingDown", InstanceGuid: "guid3", Index: 1, State: receptor.ActualLRPStateRunning},
 				}
 				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
 			})
@@ -68,7 +74,7 @@ var _ = Describe("AppExaminer", func() {
 			It("returns a list of alphabetically sorted examined apps", func() {
 				appList, err := appExaminer.ListApps()
 
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 				Expect(appList).To(HaveLen(3))
 
 				process1 := appList[0]
@@ -80,7 +86,7 @@ var _ = Describe("AppExaminer", func() {
 				Expect(process1.Routes).To(Equal(
 					route_helpers.Routes{
 						AppRoutes: route_helpers.AppRoutes{
-							route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}},
+							{Hostnames: []string{"happy", "joy"}},
 						},
 					}))
 				Expect(process1.EnvironmentVariables).To(Equal([]app_examiner.EnvironmentVariable{}))
@@ -100,7 +106,7 @@ var _ = Describe("AppExaminer", func() {
 				Expect(process2.Routes).To(Equal(
 					route_helpers.Routes{
 						AppRoutes: route_helpers.AppRoutes{
-							route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}},
+							{Hostnames: []string{"ren", "stimpy"}},
 						},
 					}))
 
@@ -123,13 +129,9 @@ var _ = Describe("AppExaminer", func() {
 							MemoryMB:    200,
 							Routes: route_helpers.Routes{
 								AppRoutes: route_helpers.AppRoutes{
-									route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}},
-								},
+									{Hostnames: []string{"ren", "stimpy"}}},
 								TcpRoutes: route_helpers.TcpRoutes{
-									route_helpers.TcpRoute{
-										ExternalPort: 51000,
-										Port:         5222,
-									},
+									{ExternalPort: 51000, Port: 5222},
 								},
 							}.RoutingInfo(),
 						},
@@ -140,13 +142,10 @@ var _ = Describe("AppExaminer", func() {
 							MemoryMB:    100,
 							Routes: route_helpers.Routes{
 								AppRoutes: route_helpers.AppRoutes{
-									route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}},
+									{Hostnames: []string{"happy", "joy"}},
 								},
 								TcpRoutes: route_helpers.TcpRoutes{
-									route_helpers.TcpRoute{
-										ExternalPort: 52000,
-										Port:         5222,
-									},
+									{ExternalPort: 52000, Port: 5222},
 								},
 							}.RoutingInfo(),
 							EnvironmentVariables: []receptor.EnvironmentVariable{},
@@ -172,7 +171,7 @@ var _ = Describe("AppExaminer", func() {
 				It("returns a list of alphabetically sorted examined apps with tcp routes", func() {
 					appList, err := appExaminer.ListApps()
 
-					Expect(err).ToNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 					Expect(appList).To(HaveLen(3))
 
 					process1 := appList[0]
@@ -184,10 +183,10 @@ var _ = Describe("AppExaminer", func() {
 					Expect(process1.Routes).To(Equal(
 						route_helpers.Routes{
 							AppRoutes: route_helpers.AppRoutes{
-								route_helpers.AppRoute{Hostnames: []string{"happy", "joy"}},
+								{Hostnames: []string{"happy", "joy"}},
 							},
 							TcpRoutes: route_helpers.TcpRoutes{
-								route_helpers.TcpRoute{
+								{
 									ExternalPort: 52000,
 									Port:         5222,
 								},
@@ -210,13 +209,10 @@ var _ = Describe("AppExaminer", func() {
 					Expect(process2.Routes).To(Equal(
 						route_helpers.Routes{
 							AppRoutes: route_helpers.AppRoutes{
-								route_helpers.AppRoute{Hostnames: []string{"ren", "stimpy"}},
+								{Hostnames: []string{"ren", "stimpy"}},
 							},
 							TcpRoutes: route_helpers.TcpRoutes{
-								route_helpers.TcpRoute{
-									ExternalPort: 51000,
-									Port:         5222,
-								},
+								{ExternalPort: 51000, Port: 5222},
 							},
 						}))
 
@@ -234,16 +230,15 @@ var _ = Describe("AppExaminer", func() {
 		Context("when the receptor returns errors", func() {
 			It("returns errors from from fetching the DesiredLRPs", func() {
 				fakeReceptorClient.DesiredLRPsReturns(nil, errors.New("You should go catch it."))
-				_, err := appExaminer.ListApps()
 
+				_, err := appExaminer.ListApps()
 				Expect(err).To(MatchError("You should go catch it."))
 			})
 
 			It("returns errors from fetching the ActualLRPs", func() {
-				fakeReceptorClient.DesiredLRPsReturns(nil, nil)
 				fakeReceptorClient.ActualLRPsReturns(nil, errors.New("Receptor is on fire!!"))
-				_, err := appExaminer.ListApps()
 
+				_, err := appExaminer.ListApps()
 				Expect(err).To(MatchError("Receptor is on fire!!"))
 			})
 		})
@@ -270,7 +265,7 @@ var _ = Describe("AppExaminer", func() {
 
 			It("returns a list of alphabetically sorted examined cells", func() {
 				cellList, err := appExaminer.ListCells()
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 				Expect(cellList).To(HaveLen(3))
 
 				cell1 := cellList[0]
@@ -299,20 +294,20 @@ var _ = Describe("AppExaminer", func() {
 		Context("receptor returns actual lrps, and some of their cells no longer exist", func() {
 			BeforeEach(func() {
 				actualLrps := []receptor.ActualLRPResponse{
-					receptor.ActualLRPResponse{CellID: "Cell-0", State: receptor.ActualLRPStateRunning},
-					receptor.ActualLRPResponse{CellID: "Cell-0", State: receptor.ActualLRPStateClaimed},
-					receptor.ActualLRPResponse{CellID: "Cell-1", State: receptor.ActualLRPStateRunning},
+					{CellID: "Cell-0", State: receptor.ActualLRPStateRunning},
+					{CellID: "Cell-0", State: receptor.ActualLRPStateClaimed},
+					{CellID: "Cell-1", State: receptor.ActualLRPStateRunning},
 				}
 				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
 				cells := []receptor.CellResponse{
-					receptor.CellResponse{CellID: "Cell-1"},
+					{CellID: "Cell-1"},
 				}
 				fakeReceptorClient.CellsReturns(cells, nil)
 			})
 
 			It("returns a list of alphabetically sorted examined cells", func() {
 				cellList, err := appExaminer.ListCells()
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 				Expect(cellList).To(HaveLen(2))
 
 				cell0 := cellList[0]
@@ -326,8 +321,8 @@ var _ = Describe("AppExaminer", func() {
 		Context("receptor returns unclaimed actual lrps", func() {
 			BeforeEach(func() {
 				actualLrps := []receptor.ActualLRPResponse{
-					receptor.ActualLRPResponse{State: receptor.ActualLRPStateUnclaimed},
-					receptor.ActualLRPResponse{State: receptor.ActualLRPStateUnclaimed},
+					{State: receptor.ActualLRPStateUnclaimed},
+					{State: receptor.ActualLRPStateUnclaimed},
 				}
 				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
 				fakeReceptorClient.CellsReturns([]receptor.CellResponse{}, nil)
@@ -383,14 +378,8 @@ var _ = Describe("AppExaminer", func() {
 					RootFS:      "/var/root-fs",
 					Instances:   4,
 					EnvironmentVariables: []receptor.EnvironmentVariable{
-						receptor.EnvironmentVariable{
-							Name:  "API_TOKEN",
-							Value: "98weufsa",
-						},
-						receptor.EnvironmentVariable{
-							Name:  "PEEKABOO_APP_NICKNAME",
-							Value: "Bugs McGee",
-						},
+						{Name: "API_TOKEN", Value: "98weufsa"},
+						{Name: "PEEKABOO_APP_NICKNAME", Value: "Bugs McGee"},
 					},
 					StartTimeout: 5,
 					DiskMB:       256,
@@ -399,13 +388,10 @@ var _ = Describe("AppExaminer", func() {
 					Ports:        []uint16{8765, 2300},
 					Routes: route_helpers.Routes{
 						AppRoutes: route_helpers.AppRoutes{
-							route_helpers.AppRoute{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}},
+							{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}},
 						},
 						TcpRoutes: route_helpers.TcpRoutes{
-							route_helpers.TcpRoute{
-								ExternalPort: 52220,
-								Port:         5222,
-							},
+							{ExternalPort: 52220, Port: 5222},
 						},
 					}.RoutingInfo(),
 					LogGuid:    "9832-ur98j-idsckl",
@@ -414,7 +400,7 @@ var _ = Describe("AppExaminer", func() {
 				}
 
 				actualLRPsByProcessGuidResponse = []receptor.ActualLRPResponse{
-					receptor.ActualLRPResponse{
+					{
 						ProcessGuid:  "peekaboo-app",
 						InstanceGuid: "aisu-8dfy8-9dhu",
 						CellID:       "cell-3",
@@ -422,12 +408,13 @@ var _ = Describe("AppExaminer", func() {
 						Index:        1,
 						Address:      "212.38.11.83",
 						Ports: []receptor.PortMapping{
-							receptor.PortMapping{HostPort: 2983, ContainerPort: 2001},
+							{HostPort: 2983, ContainerPort: 2001},
 						},
 						State:      "CLAIMED",
 						Since:      1982,
 						CrashCount: 3,
-					}, receptor.ActualLRPResponse{
+					},
+					{
 						ProcessGuid:  "peekaboo-app",
 						InstanceGuid: "98s98a-xcvcx4-93isl",
 						CellID:       "cell-2",
@@ -435,17 +422,18 @@ var _ = Describe("AppExaminer", func() {
 						Index:        0,
 						Address:      "211.94.88.63",
 						Ports: []receptor.PortMapping{
-							receptor.PortMapping{HostPort: 2786, ContainerPort: 2020},
+							{HostPort: 2786, ContainerPort: 2020},
 						},
 						State: "RUNNING",
 						Since: 2002,
-					}, receptor.ActualLRPResponse{
+					},
+					{
 						ProcessGuid:    "peekaboo-app",
 						Index:          2,
 						State:          "UNCLAIMED",
 						PlacementError: "not enough resources. eek.",
 					},
-					receptor.ActualLRPResponse{
+					{
 						ProcessGuid: "peekaboo-app",
 						Index:       3,
 						State:       "CRASHED",
@@ -464,7 +452,7 @@ var _ = Describe("AppExaminer", func() {
 				fakeNoaaConsumer.GetContainerMetricsReturns(containerMetrics, nil)
 
 				appInfo, err := appExaminer.AppStatus("peekaboo-app")
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
 				Expect(appInfo.ProcessGuid).To(Equal("peekaboo-app"))
 				Expect(appInfo.DesiredInstances).To(Equal(4))
@@ -486,13 +474,10 @@ var _ = Describe("AppExaminer", func() {
 				Expect(appInfo.Ports).To(ConsistOf(uint16(8765), uint16(2300)))
 				Expect(appInfo.Routes).To(Equal(route_helpers.Routes{
 					AppRoutes: route_helpers.AppRoutes{
-						route_helpers.AppRoute{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}},
+						{Hostnames: []string{"peekaboo-one.example.com", "peekaboo-too.example.com"}},
 					},
 					TcpRoutes: route_helpers.TcpRoutes{
-						route_helpers.TcpRoute{
-							ExternalPort: 52220,
-							Port:         5222,
-						},
+						{ExternalPort: 52220, Port: 5222},
 					},
 				},
 				))
@@ -640,9 +625,8 @@ var _ = Describe("AppExaminer", func() {
 				fakeReceptorClient.GetDesiredLRPReturns(receptor.DesiredLRPResponse{}, nil)
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(make([]receptor.ActualLRPResponse, 0), nil)
 
-				appInfo, err := appExaminer.AppStatus("peekaboo-app")
+				_, err := appExaminer.AppStatus("peekaboo-app")
 				Expect(err).To(MatchError(app_examiner.AppNotFoundErrorMessage))
-				Expect(appInfo).To(BeZero())
 
 				Expect(fakeReceptorClient.GetDesiredLRPCallCount()).To(Equal(1))
 				Expect(fakeReceptorClient.GetDesiredLRPArgsForCall(0)).To(Equal("peekaboo-app"))
@@ -675,8 +659,7 @@ var _ = Describe("AppExaminer", func() {
 
 				appInfo, err := appExaminer.AppStatus("peekaboo-app")
 				Expect(err).NotTo(HaveOccurred())
-
-				Expect(appInfo).ToNot(BeZero())
+				Expect(appInfo).NotTo(BeZero())
 				Expect(appInfo.ActualInstances).To(HaveLen(1))
 				Expect(appInfo.ActualInstances[0].HasMetrics).To(BeFalse())
 			})
@@ -711,10 +694,7 @@ var _ = Describe("AppExaminer", func() {
 					ProcessGuid: "peekaboo-app",
 				}
 				actualLRPs := []receptor.ActualLRPResponse{
-					receptor.ActualLRPResponse{
-						ProcessGuid: "peekaboo-app",
-						Index:       6,
-					},
+					{ProcessGuid: "peekaboo-app", Index: 6},
 				}
 				fakeReceptorClient.GetDesiredLRPReturns(desiredLRPs, nil)
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPs, nil)
@@ -722,8 +702,7 @@ var _ = Describe("AppExaminer", func() {
 
 				appInfo, err := appExaminer.AppStatus("peekaboo-app")
 				Expect(err).NotTo(HaveOccurred())
-
-				Expect(appInfo).ToNot(BeZero())
+				Expect(appInfo).NotTo(BeZero())
 				Expect(appInfo.ActualInstances).To(HaveLen(1))
 				Expect(appInfo.ActualInstances[0].HasMetrics).To(BeFalse())
 			})
@@ -733,9 +712,9 @@ var _ = Describe("AppExaminer", func() {
 	Describe("NumOfRunningAppInstances", func() {
 		It("returns the number of running instances for a given app guid", func() {
 			actualLrpsResponse := []receptor.ActualLRPResponse{
-				receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 1},
-				receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 2},
-				receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateClaimed, Index: 3},
+				{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 1},
+				{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 2},
+				{ProcessGuid: "americano-app", State: receptor.ActualLRPStateClaimed, Index: 3},
 			}
 			fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
 
@@ -759,9 +738,9 @@ var _ = Describe("AppExaminer", func() {
 		Context("when there are placement errors on an instance", func() {
 			It("returns true for placementError", func() {
 				actualLrpsResponse := []receptor.ActualLRPResponse{
-					receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 1},
-					receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateUnclaimed, Index: 2, PlacementError: "could not place!"},
-					receptor.ActualLRPResponse{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 3},
+					{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 1},
+					{ProcessGuid: "americano-app", State: receptor.ActualLRPStateUnclaimed, Index: 2, PlacementError: "could not place!"},
+					{ProcessGuid: "americano-app", State: receptor.ActualLRPStateRunning, Index: 3},
 				}
 				fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLrpsResponse, nil)
 
@@ -775,7 +754,9 @@ var _ = Describe("AppExaminer", func() {
 
 	Describe("AppExists", func() {
 		It("returns true if the docker app exists", func() {
-			actualLRPs := []receptor.ActualLRPResponse{receptor.ActualLRPResponse{ProcessGuid: "americano-app"}}
+			actualLRPs := []receptor.ActualLRPResponse{
+				{ProcessGuid: "americano-app"},
+			}
 			fakeReceptorClient.ActualLRPsReturns(actualLRPs, nil)
 
 			exists, err := appExaminer.AppExists("americano-app")
@@ -784,8 +765,7 @@ var _ = Describe("AppExaminer", func() {
 		})
 
 		It("returns false if the docker app does not exist", func() {
-			actualLRPs := []receptor.ActualLRPResponse{}
-			fakeReceptorClient.ActualLRPsReturns(actualLRPs, nil)
+			fakeReceptorClient.ActualLRPsReturns([]receptor.ActualLRPResponse{}, nil)
 
 			exists, err := appExaminer.AppExists("americano-app")
 			Expect(err).NotTo(HaveOccurred())
@@ -794,12 +774,10 @@ var _ = Describe("AppExaminer", func() {
 
 		Describe("returning errors from the receptor", func() {
 			It("returns errors fetching the status", func() {
-				actualLRPs := []receptor.ActualLRPResponse{}
-				fakeReceptorClient.ActualLRPsReturns(actualLRPs, errors.New("Something Bad"))
+				fakeReceptorClient.ActualLRPsReturns([]receptor.ActualLRPResponse{}, errors.New("Something Bad"))
 
-				exists, err := appExaminer.AppExists("americano-app")
+				_, err := appExaminer.AppExists("americano-app")
 				Expect(err).To(MatchError("Something Bad"))
-				Expect(exists).To(BeFalse())
 			})
 		})
 	})

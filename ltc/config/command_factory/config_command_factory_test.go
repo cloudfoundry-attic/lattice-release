@@ -201,7 +201,7 @@ var _ = Describe("CommandFactory", func() {
 						Port: "8444",
 					}))
 
-					Expect(outputBuffer).To(test_helpers.Say("Could not connect to the droplet store."))
+					Expect(outputBuffer).To(test_helpers.SayLine("Could not connect to the droplet store."))
 					verifyOldTargetStillSet()
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 				})
@@ -241,7 +241,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(config.Target()).To(Equal("myapi.com"))
 				Expect(config.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
-				Expect(outputBuffer).To(test_helpers.Say("API location set."))
+				Expect(outputBuffer).To(test_helpers.SayLine("API location set."))
 
 				Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
 				Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password"))

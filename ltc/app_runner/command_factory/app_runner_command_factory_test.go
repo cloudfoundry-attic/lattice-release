@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -50,9 +49,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 	})
 
 	Describe("helper methods", func() {
-		var (
-			factory *command_factory.AppRunnerCommandFactory
-		)
+		var factory *command_factory.AppRunnerCommandFactory
 
 		BeforeEach(func() {
 			appRunnerCommandFactoryConfig := command_factory.AppRunnerCommandFactoryConfig{
@@ -67,77 +64,69 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		Describe("BuildEnvironment", func() {
 			It("grabs values from the environment when not in its args", func() {
-				env := factory.BuildEnvironment([]string{"AAAAA", "CCC=4"})
-				Expect(env["AAAAA"]).To(Equal("1"))
-				Expect(env["CCC"]).To(Equal("4"))
+				envVars := factory.BuildEnvironment([]string{"AAAAA", "CCC=4"})
+
+				aaaaaVar, found := envVars["AAAAA"]
+				Expect(found).To(BeTrue())
+				Expect(aaaaaVar).To(Equal("1"))
+				cccVar, found := envVars["CCC"]
+				Expect(found).To(BeTrue())
+				Expect(cccVar).To(Equal("4"))
 			})
 
 			It("only uses exact key matches when grabbing from the environment", func() {
-				env := factory.BuildEnvironment([]string{"AAA"})
-				Expect(env["AAA"]).To(Equal("2"))
-				Expect(env["AAAAA"]).To(BeEmpty())
+				envVars := factory.BuildEnvironment([]string{"AAA"})
+
+				aaaVar, found := envVars["AAA"]
+				Expect(found).To(BeTrue())
+				Expect(aaaVar).To(Equal("2"))
+				aaaaaVar, found := envVars["AAAAA"]
+				Expect(found).To(BeFalse())
+				Expect(aaaaaVar).To(BeEmpty())
 			})
 		})
 
 		Describe("ParseTcpRoutes", func() {
-			Context("when valid tcp routes is passed", func() {
-
-				It("returns a valid TcpRoutes", func() {
-					tcpRoutes, err := factory.ParseTcpRoutes("50000:6379,50001:5222")
-					Expect(err).ShouldNot(HaveOccurred())
-					Expect(tcpRoutes).Should(ContainExactly(
-						app_runner.TcpRoutes{
-							app_runner.TcpRoute{
-								ExternalPort: 50000,
-								Port:         6379,
-							},
-							app_runner.TcpRoute{
-								ExternalPort: 50001,
-								Port:         5222,
-							},
-						},
-					))
-				})
+			It("parses delimited tcp routes into the TcpRoutes struct", func() {
+				tcpRoutes, err := factory.ParseTcpRoutes("50000:6379,50001:5222")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(tcpRoutes).To(ContainExactly(app_runner.TcpRoutes{
+					{ExternalPort: 50000, Port: 6379},
+					{ExternalPort: 50001, Port: 5222},
+				}))
 			})
 
 			Context("when a malformed tcp routes is passed", func() {
 				It("errors out when the container port is not an int", func() {
 					_, err := factory.ParseTcpRoutes("50000:woo")
-					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
-
+					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the tcp route is incomplete", func() {
 					_, err := factory.ParseTcpRoutes("5222,50000")
-					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.MalformedTcpRouteErrorMessage))
+					Expect(err).To(MatchError(command_factory.MalformedTcpRouteErrorMessage))
 				})
 			})
 
 			Context("when invalid port is passed in tcp routes", func() {
 				It("errors out when the container port is a negative number", func() {
 					_, err := factory.ParseTcpRoutes("50000:-1")
-					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
+					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the container port is bigger than 65535", func() {
 					_, err := factory.ParseTcpRoutes("50000:65536")
-					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
+					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the external port is a negative number", func() {
 					_, err := factory.ParseTcpRoutes("-1:6379")
-					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
+					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the external port is bigger than 65535", func() {
 					_, err := factory.ParseTcpRoutes("65536:6379")
-					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
+					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 			})
 
@@ -145,20 +134,13 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		Describe("ParseRouteOverrides", func() {
 			Context("when valid http route is passed", func() {
-
 				It("returns a valid RouteOverrides", func() {
 					routeOverrides, err := factory.ParseRouteOverrides("foo.com:8080, bar.com:8181")
-					Expect(err).ShouldNot(HaveOccurred())
-					Expect(routeOverrides).Should(ContainExactly(
+					Expect(err).NotTo(HaveOccurred())
+					Expect(routeOverrides).To(ContainExactly(
 						app_runner.RouteOverrides{
-							app_runner.RouteOverride{
-								HostnamePrefix: "foo.com",
-								Port:           8080,
-							},
-							app_runner.RouteOverride{
-								HostnamePrefix: "bar.com",
-								Port:           8181,
-							},
+							{HostnamePrefix: "foo.com", Port: 8080},
+							{HostnamePrefix: "bar.com", Port: 8181},
 						},
 					))
 				})
@@ -167,35 +149,29 @@ var _ = Describe("AppRunner CommandFactory", func() {
 			Context("when a malformed http route is passed", func() {
 				It("errors out when the container port is not an int", func() {
 					_, err := factory.ParseRouteOverrides("foo:bar")
-					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
-
+					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the http route is incomplete", func() {
 					_, err := factory.ParseRouteOverrides("foo.com,bar.com")
-					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.MalformedRouteErrorMessage))
+					Expect(err).To(MatchError(command_factory.MalformedRouteErrorMessage))
 				})
 			})
 
 			Context("when invalid port is passed in https routes", func() {
 				It("errors out when the container port is a negative number", func() {
 					_, err := factory.ParseRouteOverrides("foo.com:-1")
-					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
+					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the container port is bigger than 65535", func() {
 					_, err := factory.ParseRouteOverrides("foo.com:65536")
-					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.InvalidPortErrorMessage))
+					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the host name is empty", func() {
 					_, err := factory.ParseRouteOverrides(":6379")
-					Expect(err).Should(HaveOccurred())
-					Expect(err.Error()).Should(Equal(command_factory.MalformedRouteErrorMessage))
+					Expect(err).To(MatchError(command_factory.MalformedRouteErrorMessage))
 				})
 			})
 
@@ -203,12 +179,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 	})
 
 	Describe("SubmitLrpCommand", func() {
-		var (
-			submitLrpCommand cli.Command
-			tmpDir           string
-			tmpFile          *os.File
-			err              error
-		)
+		var submitLrpCommand cli.Command
 
 		BeforeEach(func() {
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
@@ -222,22 +193,27 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		})
 
 		Context("when the json file exists", func() {
+			var (
+				tmpDir  string
+				tmpFile *os.File
+			)
 			BeforeEach(func() {
 				tmpDir = os.TempDir()
+				var err error
 				tmpFile, err = ioutil.TempFile(tmpDir, "tmp_json")
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
 				Expect(ioutil.WriteFile(tmpFile.Name(), []byte(`{"Value":"test value"}`), 0700)).To(Succeed())
 			})
 
 			It("creates an app from json", func() {
 				fakeAppRunner.SubmitLrpReturns("my-json-app", nil)
-				args := []string{tmpFile.Name()}
 
+				args := []string{tmpFile.Name()}
 				test_helpers.ExecuteCommandWithArgs(submitLrpCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say(colors.Green("Successfully submitted my-json-app.")))
-				Expect(outputBuffer).To(test_helpers.Say("To view the status of your application: ltc status my-json-app"))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("Successfully submitted my-json-app.")))
+				Expect(outputBuffer).To(test_helpers.SayLine("To view the status of your application: ltc status my-json-app"))
 				Expect(fakeAppRunner.SubmitLrpCallCount()).To(Equal(1))
 				Expect(fakeAppRunner.SubmitLrpArgsForCall(0)).To(Equal([]byte(`{"Value":"test value"}`)))
 			})
@@ -245,10 +221,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 			It("prints an error returned by the app_runner", func() {
 				fakeAppRunner.SubmitLrpReturns("app-that-broke", errors.New("some error"))
 				args := []string{tmpFile.Name()}
-
 				test_helpers.ExecuteCommandWithArgs(submitLrpCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Error creating app-that-broke: some error"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error creating app-that-broke: some error"))
 				Expect(fakeAppRunner.SubmitLrpCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
@@ -257,18 +232,17 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		It("is an error when no path is passed in", func() {
 			test_helpers.ExecuteCommandWithArgs(submitLrpCommand, []string{})
 
-			Expect(outputBuffer).To(test_helpers.Say("Path to JSON is required"))
+			Expect(outputBuffer).To(test_helpers.SayLine("Path to JSON is required"))
 			Expect(fakeAppRunner.SubmitLrpCallCount()).To(BeZero())
 			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 		})
 
 		Context("when the file cannot be read", func() {
 			It("prints an error", func() {
-				args := []string{filepath.Join(tmpDir, "file-no-existy")}
-
+				args := []string{"file-no-existy"}
 				test_helpers.ExecuteCommandWithArgs(submitLrpCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say(fmt.Sprintf("Error reading file: open %s: no such file or directory", filepath.Join(tmpDir, "file-no-existy"))))
+				Expect(outputBuffer).To(test_helpers.SayLine(fmt.Sprintf("Error reading file: open %s: no such file or directory", "file-no-existy")))
 				Expect(fakeAppRunner.SubmitLrpCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
 			})
@@ -293,15 +267,15 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		It("scales an with the specified number of instances", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(22, false, nil)
+
 			args := []string{
 				"cool-web-app",
 				"22",
 			}
-
 			test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
-			Expect(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("App Scaled Successfully")))
+			Expect(outputBuffer).To(test_helpers.SayLine("Scaling cool-web-app to 22 instances"))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("App Scaled Successfully")))
 
 			Expect(fakeAppRunner.ScaleAppCallCount()).To(Equal(1))
 			name, instances := fakeAppRunner.ScaleAppArgsForCall(0)
@@ -311,14 +285,14 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		It("polls until the required number of instances are running", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+
 			args := []string{
 				"cool-web-app",
 				"22",
 			}
-
 			doneChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
-			Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
+			Eventually(outputBuffer).Should(test_helpers.SayLine("Scaling cool-web-app to 22 instances"))
 
 			Expect(fakeAppExaminer.RunningAppInstancesInfoCallCount()).To(Equal(1))
 			Expect(fakeAppExaminer.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
@@ -333,29 +307,26 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 			Eventually(doneChan).Should(BeClosed())
 
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-			Expect(outputBuffer).To(test_helpers.Say(colors.Green("App Scaled Successfully")))
+			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("App Scaled Successfully")))
 		})
 
 		Context("when the app does not scale before the timeout elapses", func() {
 			It("alerts the user the app took too long to scale", func() {
 				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+
 				args := []string{
 					"cool-web-app",
 					"22",
 				}
-
 				doneChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
-				Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 22 instances"))
-				Eventually(outputBuffer).Should(test_helpers.SayNewLine())
+				Eventually(outputBuffer).Should(test_helpers.SayLine("Scaling cool-web-app to 22 instances"))
 
 				fakeClock.IncrementBySeconds(120)
 
 				Eventually(doneChan).Should(BeClosed())
 
-				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the container to scale.")))
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Timed out waiting for the container to scale.")))
 				Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still scaling your application in the background."))
 				Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs cool-web-app"))
 				Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status cool-web-app"))
@@ -366,14 +337,14 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("when the receptor returns errors", func() {
 			It("outputs error messages", func() {
 				fakeAppRunner.ScaleAppReturns(errors.New("Major Fault"))
+
 				args := []string{
 					"cool-web-app",
 					"22",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Error Scaling App to 22 instances: Major Fault"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error Scaling App to 22 instances: Major Fault"))
 				Expect(fakeAppRunner.ScaleAppCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
@@ -382,20 +353,18 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("invalid syntax", func() {
 			It("validates that the name is passed in", func() {
 				args := []string{""}
-
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'"))
 				Expect(fakeAppRunner.ScaleAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
 			It("validates that the number of instances is passed in", func() {
 				args := []string{"cool-web-app"}
-
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Please enter 'ltc scale APP_NAME NUMBER_OF_INSTANCES'"))
 				Expect(fakeAppRunner.ScaleAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -405,10 +374,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					"cool-web-app",
 					"twenty-two",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(scaleCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Number of Instances must be an integer"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Number of Instances must be an integer"))
 				Expect(fakeAppRunner.ScaleAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -417,14 +385,14 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("when there is a placement error when polling for the app to scale", func() {
 			It("prints an error message and exits", func() {
 				fakeAppExaminer.RunningAppInstancesInfoReturns(0, false, nil)
+
 				args := []string{
 					"cool-web-app",
 					"3",
 				}
-
 				doneChan := test_helpers.AsyncExecuteCommandWithArgs(scaleCommand, args)
 
-				Eventually(outputBuffer).Should(test_helpers.Say("Scaling cool-web-app to 3 instances"))
+				Eventually(outputBuffer).Should(test_helpers.SayLine("Scaling cool-web-app to 3 instances"))
 
 				Expect(fakeAppExaminer.RunningAppInstancesInfoCallCount()).To(Equal(1))
 				Expect(fakeAppExaminer.RunningAppInstancesInfoArgsForCall(0)).To(Equal("cool-web-app"))
@@ -437,9 +405,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				fakeClock.IncrementBySeconds(1)
 				Eventually(doneChan).Should(BeClosed())
 
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
-				Expect(outputBuffer).To(test_helpers.Say(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
-				Expect(outputBuffer).ToNot(test_helpers.Say("Timed out waiting for the container"))
+				Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
+				Expect(outputBuffer).NotTo(test_helpers.Say("Timed out waiting for the container"))
 
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.PlacementError}))
 			})
@@ -462,24 +429,17 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		It("updates the routes", func() {
 			expectedRouteOverrides := app_runner.RouteOverrides{
-				app_runner.RouteOverride{
-					HostnamePrefix: "foo.com",
-					Port:           8080,
-				},
-				app_runner.RouteOverride{
-					HostnamePrefix: "bar.com",
-					Port:           9090,
-				},
+				{HostnamePrefix: "foo.com", Port: 8080},
+				{HostnamePrefix: "bar.com", Port: 9090},
 			}
 
 			args := []string{
 				"cool-web-app",
 				"foo.com:8080,bar.com:9090",
 			}
-
 			test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-			Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+			Expect(outputBuffer).To(test_helpers.SayLine("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
 			Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(1))
 			name, routeOverrides := fakeAppRunner.UpdateAppRoutesArgsForCall(0)
 			Expect(name).To(Equal("cool-web-app"))
@@ -492,10 +452,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					"cool-web-app",
 					"--no-routes",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
 
 				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(1))
 				name, routeOverrides := fakeAppRunner.UpdateAppRoutesArgsForCall(0)
@@ -507,14 +466,14 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("when the receptor returns errors", func() {
 			It("outputs error messages", func() {
 				fakeAppRunner.UpdateAppRoutesReturns(errors.New("Major Fault"))
+
 				args := []string{
 					"cool-web-app",
 					"foo.com:8080",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Error updating routes: Major Fault"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error updating routes: Major Fault"))
 				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
@@ -523,20 +482,18 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("invalid syntax", func() {
 			It("validates that the name is passed in", func() {
 				args := []string{""}
-
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag."))
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag."))
 				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
 			It("validates that the routes are passed in", func() {
 				args := []string{"cool-web-app"}
-
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag."))
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag."))
 				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -548,10 +505,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					"cool-web-app",
 					"woo:aahh",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
+				Expect(outputBuffer).To(test_helpers.SayLine(command_factory.InvalidPortErrorMessage))
 				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -561,10 +517,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					"cool-web-app",
 					"8888",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(updateRoutesCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say(command_factory.MalformedRouteErrorMessage))
+				Expect(outputBuffer).To(test_helpers.SayLine(command_factory.MalformedRouteErrorMessage))
 				Expect(fakeAppRunner.UpdateAppRoutesCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -588,24 +543,17 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("when only http routes are passed", func() {
 			It("updates the http routes and removes any tcp routes", func() {
 				expectedRouteOverrides := app_runner.RouteOverrides{
-					app_runner.RouteOverride{
-						HostnamePrefix: "foo.com",
-						Port:           8080,
-					},
-					app_runner.RouteOverride{
-						HostnamePrefix: "bar.com",
-						Port:           9090,
-					},
+					{HostnamePrefix: "foo.com", Port: 8080},
+					{HostnamePrefix: "bar.com", Port: 9090},
 				}
 
 				args := []string{
 					"cool-web-app",
 					"--http-routes=foo.com:8080,bar.com:9090",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
 				Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(1))
 				updateAppParams := fakeAppRunner.UpdateAppArgsForCall(0)
 				Expect(updateAppParams.Name).To(Equal("cool-web-app"))
@@ -618,24 +566,17 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("when only tcp routes are passed", func() {
 			It("updates the tcp routes and removes the http routes", func() {
 				expectedTcpRoutes := app_runner.TcpRoutes{
-					app_runner.TcpRoute{
-						ExternalPort: 50000,
-						Port:         8080,
-					},
-					app_runner.TcpRoute{
-						ExternalPort: 51000,
-						Port:         8181,
-					},
+					{ExternalPort: 50000, Port: 8080},
+					{ExternalPort: 51000, Port: 8181},
 				}
 
 				args := []string{
 					"cool-web-app",
 					"--tcp-routes=50000:8080,51000:8181",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
 				Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(1))
 				updateAppParams := fakeAppRunner.UpdateAppArgsForCall(0)
 				Expect(updateAppParams.Name).To(Equal("cool-web-app"))
@@ -649,24 +590,12 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("when both http and tcp routes are passed", func() {
 			It("updates both the http and tcp routes", func() {
 				expectedRouteOverrides := app_runner.RouteOverrides{
-					app_runner.RouteOverride{
-						HostnamePrefix: "foo.com",
-						Port:           8080,
-					},
-					app_runner.RouteOverride{
-						HostnamePrefix: "bar.com",
-						Port:           9090,
-					},
+					{HostnamePrefix: "foo.com", Port: 8080},
+					{HostnamePrefix: "bar.com", Port: 9090},
 				}
 				expectedTcpRoutes := app_runner.TcpRoutes{
-					app_runner.TcpRoute{
-						ExternalPort: 50000,
-						Port:         5222,
-					},
-					app_runner.TcpRoute{
-						ExternalPort: 51000,
-						Port:         6379,
-					},
+					{ExternalPort: 50000, Port: 5222},
+					{ExternalPort: 51000, Port: 6379},
 				}
 
 				args := []string{
@@ -674,10 +603,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					"--http-routes=foo.com:8080,bar.com:9090",
 					"--tcp-routes=50000:5222,51000:6379",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
 				Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(1))
 				updateAppParams := fakeAppRunner.UpdateAppArgsForCall(0)
 				Expect(updateAppParams.Name).To(Equal("cool-web-app"))
@@ -690,10 +618,10 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("invalid syntax", func() {
 			Context("when no app name is passed", func() {
 				Context("when no other arguments are passed", func() {
-					It("returns usage message", func() {
-						args := []string{}
-						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
-						Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+					It("prints usage message", func() {
+						test_helpers.ExecuteCommandWithArgs(updateCommand, []string{})
+
+						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
 					})
 				})
 
@@ -701,7 +629,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					It("returns usage message", func() {
 						args := []string{"--http-routes=foo.com:8080,bar.com:9090"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
-						Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+
+						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
 					})
 				})
 
@@ -709,7 +638,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					It("returns usage message", func() {
 						args := []string{"--tcp-routes=50000:5222,51000:6379"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
-						Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+
+						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
 					})
 				})
 
@@ -717,7 +647,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					It("returns usage message", func() {
 						args := []string{"--tcp-routes=50000:5222,51000:6379", "--http-routes=foo.com:8080,bar.com:9090"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
-						Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+
+						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
 					})
 				})
 
@@ -725,7 +656,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					It("returns usage message", func() {
 						args := []string{"--no-routes"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
-						Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+
+						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
 					})
 				})
 			})
@@ -734,7 +666,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				It("returns usage message", func() {
 					args := []string{"cool-web-app"}
 					test_helpers.ExecuteCommandWithArgs(updateCommand, args)
-					Expect(outputBuffer).To(test_helpers.Say("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+
+					Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
 				})
 			})
 		})
@@ -745,11 +678,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					"cool-web-app",
 					"--no-routes",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
-
+				Expect(outputBuffer).To(test_helpers.SayLine("Updating cool-web-app routes. You can check this app's current routes by running 'ltc status cool-web-app'"))
 				Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(1))
 				updateAppParams := fakeAppRunner.UpdateAppArgsForCall(0)
 				Expect(updateAppParams.Name).To(Equal("cool-web-app"))
@@ -762,14 +693,14 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("when the receptor returns errors", func() {
 			It("outputs error messages", func() {
 				fakeAppRunner.UpdateAppReturns(errors.New("Major Fault"))
+
 				args := []string{
 					"cool-web-app",
 					"--http-routes=foo.com:8080",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Error updating application: Major Fault"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error updating application: Major Fault"))
 				Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
@@ -782,10 +713,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 						"cool-web-app",
 						"--http-routes=woo:aahh",
 					}
-
 					test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-					Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
+					Expect(outputBuffer).To(test_helpers.SayLine(command_factory.InvalidPortErrorMessage))
 					Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 				})
@@ -797,10 +727,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 						"cool-web-app",
 						"--tcp-routes=-1:5222",
 					}
-
 					test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-					Expect(outputBuffer).To(test_helpers.Say(command_factory.InvalidPortErrorMessage))
+					Expect(outputBuffer).To(test_helpers.SayLine(command_factory.InvalidPortErrorMessage))
 					Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 				})
@@ -824,11 +753,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		It("removes an app", func() {
 			args := []string{"cool"}
-
 			test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
-			Eventually(outputBuffer).Should(test_helpers.Say("Removing cool"))
-
+			Expect(outputBuffer).To(test_helpers.SayLine("Removing cool..."))
 			Expect(fakeAppRunner.RemoveAppCallCount()).To(Equal(1))
 			Expect(fakeAppRunner.RemoveAppArgsForCall(0)).To(Equal("cool"))
 		})
@@ -839,7 +766,6 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				"app2",
 				"app3",
 			}
-
 			test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Removing app1..."))
@@ -855,10 +781,9 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("invalid syntax", func() {
 			It("validates that the name is passed in", func() {
 				args := []string{}
-
 				test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: App Name required"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: App Name required"))
 				Expect(fakeAppRunner.RemoveAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -867,11 +792,11 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Context("when the receptor returns an error", func() {
 			It("outputs error messages when trying to remove the app", func() {
 				fakeAppRunner.RemoveAppReturns(errors.New("Major Fault"))
-				args := []string{"cool-web-app"}
 
+				args := []string{"cool-web-app"}
 				test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Error stopping cool-web-app: Major Fault"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error stopping cool-web-app: Major Fault"))
 				Expect(fakeAppRunner.RemoveAppCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
@@ -884,12 +809,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					return nil
 				}
 
-				args := []string{
-					"app1",
-					"app2",
-					"app3",
-				}
-
+				args := []string{"app1", "app2", "app3"}
 				test_helpers.ExecuteCommandWithArgs(removeCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.SayLine("Removing app1..."))

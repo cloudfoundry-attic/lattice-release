@@ -100,7 +100,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "subfolder", "sub"), []byte("sub contents"), 0644)).To(Succeed())
 
 				prevDir, err = os.Getwd()
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 				Expect(os.Chdir(tmpDir)).To(Succeed())
 
 				fakeCFIgnore.ShouldIgnoreStub = func(path string) bool {
@@ -116,12 +116,12 @@ var _ = Describe("CommandFactory", func() {
 			It("zips up current working folder and uploads as the droplet name", func() {
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
 
-				Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Submitted build of droplet-name"))
 				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
 				dropletName, uploadPath := fakeDropletRunner.UploadBitsArgsForCall(0)
 				Expect(dropletName).To(Equal("droplet-name"))
 
-				Expect(uploadPath).ToNot(BeNil())
+				Expect(uploadPath).NotTo(BeNil())
 				Expect(uploadPath).To(HaveSuffix(".zip"))
 
 				zipReader, err := zip.OpenReader(uploadPath)
@@ -197,7 +197,6 @@ var _ = Describe("CommandFactory", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					zipFilePath := tmpFile.Name() + ".zip"
-
 					zipCommand := exec.Command("/usr/bin/zip", "--symlinks", "-yr", zipFilePath, "aaa", "bbb", "ccc", "ddd", "some-ignored-file", "subfolder")
 					zipCommand.Dir = tmpDir
 					Expect(zipCommand.Run()).To(Succeed())
@@ -211,7 +210,6 @@ var _ = Describe("CommandFactory", func() {
 						"-p",
 						zipFilePath,
 					}
-
 					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
 
 					Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
@@ -219,7 +217,7 @@ var _ = Describe("CommandFactory", func() {
 					dropletName, uploadPath := fakeDropletRunner.UploadBitsArgsForCall(0)
 					Expect(dropletName).To(Equal("droplet-name"))
 
-					Expect(uploadPath).ToNot(BeNil())
+					Expect(uploadPath).NotTo(BeNil())
 					Expect(uploadPath).To(HaveSuffix(".zip"))
 
 					zipReader, err := zip.OpenReader(uploadPath)
@@ -306,7 +304,6 @@ var _ = Describe("CommandFactory", func() {
 						"-p",
 						path.Join(tmpDir, "ccc"),
 					}
-
 					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
 
 					Expect(outputBuffer).To(gbytes.Say("Error archiving .*: ccc must be a zip archive"))
@@ -325,14 +322,18 @@ var _ = Describe("CommandFactory", func() {
 					"droplet-name",
 					"http://some.url/for/buildpack",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
 
-				_, _, _, env, _, _, _ := fakeDropletRunner.BuildDropletArgsForCall(0)
-				Expect(env["AAAA"]).To(Equal("xyz"))
-				Expect(env["BBBB"]).To(Equal("2"))
+				_, _, _, envVars, _, _, _ := fakeDropletRunner.BuildDropletArgsForCall(0)
+
+				aaaaVar, found := envVars["AAAA"]
+				Expect(found).To(BeTrue())
+				Expect(aaaaVar).To(Equal("xyz"))
+				bbbbVar, found := envVars["BBBB"]
+				Expect(found).To(BeTrue())
+				Expect(bbbbVar).To(Equal("2"))
 			})
 
 			It("allows specifying resource parameters on the command-line", func() {
@@ -346,7 +347,6 @@ var _ = Describe("CommandFactory", func() {
 					"droplet-name",
 					"http://some.url/for/buildpack",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
@@ -442,7 +442,7 @@ var _ = Describe("CommandFactory", func() {
 				It("rejects unknown buildpack alias or unparseable URL", func() {
 					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "¥¥¥¥://¥¥¥¥¥¥¥¥"})
 
-					Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: invalid buildpack ¥¥¥¥://¥¥¥¥¥¥¥¥"))
+					Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: invalid buildpack ¥¥¥¥://¥¥¥¥¥¥¥¥"))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 					Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
 					Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
@@ -456,7 +456,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
 
-				Expect(outputBuffer).To(test_helpers.Say("Error uploading to droplet-name: uploading bits failed"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error uploading to droplet-name: uploading bits failed"))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
 				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
@@ -467,7 +467,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
 
-				Expect(outputBuffer).To(test_helpers.Say("Error submitting build of droplet-name: failed"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error submitting build of droplet-name: failed"))
 				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
 				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
@@ -477,11 +477,11 @@ var _ = Describe("CommandFactory", func() {
 		Describe("waiting for the build to finish", func() {
 			It("polls for the build to complete, outputting logs while the build runs", func() {
 				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "PENDING"}, nil)
+
 				args := []string{
 					"droplet-name",
 					"http://some.url/for/buildpack",
 				}
-
 				doneChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
 
 				Eventually(outputBuffer).Should(test_helpers.SayLine("Submitted build of droplet-name"))
@@ -513,39 +513,37 @@ var _ = Describe("CommandFactory", func() {
 
 			Context("when the build doesn't complete before the timeout elapses", func() {
 				It("alerts the user the build took too long", func() {
+					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "RUNNING"}, nil)
+
 					args := []string{
 						"droppo-the-clown",
 						"http://some.url/for/buildpack",
 						"-t",
 						"17s",
 					}
-
-					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "RUNNING"}, nil)
-
 					doneChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
 
-					Eventually(outputBuffer).Should(test_helpers.Say("Submitted build of droppo-the-clown"))
-					Expect(outputBuffer).To(test_helpers.SayNewLine())
+					Eventually(outputBuffer).Should(test_helpers.SayLine("Submitted build of droppo-the-clown"))
 
 					fakeClock.IncrementBySeconds(17)
 
 					Eventually(doneChan, 5).Should(BeClosed())
 
-					Expect(outputBuffer).To(test_helpers.Say(colors.Red("Timed out waiting for the build to complete.")))
-					Expect(outputBuffer).To(test_helpers.SayNewLine())
+					Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Timed out waiting for the build to complete.")))
 					Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still building your application in the background."))
-					Expect(outputBuffer).To(test_helpers.SayLine("To view logs:\n\tltc logs build-droplet-droppo-the-clown"))
-					Expect(outputBuffer).To(test_helpers.SayLine("To view status:\n\tltc status build-droplet-droppo-the-clown"))
+					Expect(outputBuffer).To(test_helpers.SayLine("To view logs:"))
+					Expect(outputBuffer).To(test_helpers.SayLine("ltc logs build-droplet-droppo-the-clown"))
+					Expect(outputBuffer).To(test_helpers.SayLine("To view status:"))
+					Expect(outputBuffer).To(test_helpers.SayLine("ltc status build-droplet-droppo-the-clown"))
 				})
 			})
 
 			Context("when the build completes", func() {
 				It("alerts the user of a complete but failed build", func() {
-					args := []string{"droppo-the-clown", "http://some.url/for/buildpack"}
-
 					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "PENDING"}, nil)
 
-					test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
+					args := []string{"droppo-the-clown", "http://some.url/for/buildpack"}
+					doneChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
 
 					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{
 						State:         "COMPLETED",
@@ -555,7 +553,9 @@ var _ = Describe("CommandFactory", func() {
 
 					fakeClock.IncrementBySeconds(1)
 
-					Eventually(outputBuffer).Should(test_helpers.SayLine("Build failed: oops"))
+					Eventually(doneChan).Should(BeClosed())
+
+					Expect(outputBuffer).To(test_helpers.SayLine("Build failed: oops"))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 				})
 			})
@@ -563,11 +563,11 @@ var _ = Describe("CommandFactory", func() {
 			Context("when there is an error when polling for the build to complete", func() {
 				It("prints an error message and exits", func() {
 					fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{}, errors.New("dropped the ball"))
+
 					args := []string{
 						"droppo-the-clown",
 						"http://some.url/for/buildpack",
 					}
-
 					doneChan := test_helpers.AsyncExecuteCommandWithArgs(buildDropletCommand, args)
 
 					Eventually(outputBuffer).Should(test_helpers.SayLine("Submitted build of droppo-the-clown"))
@@ -582,7 +582,7 @@ var _ = Describe("CommandFactory", func() {
 					Eventually(doneChan).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Error requesting task status: dropped the ball")))
-					Expect(outputBuffer).ToNot(test_helpers.Say("Timed out waiting for the build to complete."))
+					Expect(outputBuffer).NotTo(test_helpers.SayLine("Timed out waiting for the build to complete."))
 					Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
 				})
 			})
@@ -611,7 +611,7 @@ var _ = Describe("CommandFactory", func() {
 			It("validates cpuWeight is between 1 and 100", func() {
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"-c", "9999", "droplet-name", "java"})
 
-				Expect(outputBuffer).To(test_helpers.Say("Invalid CPU Weight"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Invalid CPU Weight"))
 				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
 				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
@@ -667,7 +667,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
 
-				Expect(outputBuffer).To(test_helpers.Say("Error listing droplets: failed"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error listing droplets: failed"))
 				Expect(fakeDropletRunner.ListDropletsCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
@@ -691,11 +691,10 @@ var _ = Describe("CommandFactory", func() {
 					"--",
 					"/start-me-please",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
+				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.InvalidPortErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
@@ -707,17 +706,17 @@ var _ = Describe("CommandFactory", func() {
 					"--",
 					"/start-me-please",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MalformedTcpRouteErrorMessage))
+				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.MalformedTcpRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
 		})
 		It("launches the specified droplet with tcp routes", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+
 			args := []string{
 				"--http-routes=ninetyninety:4444,fourtyfourfourtyfour:9090",
 				"--tcp-routes=50000:5222,50001:5223",
@@ -726,7 +725,6 @@ var _ = Describe("CommandFactory", func() {
 				"--",
 				"start-em",
 			}
-
 			test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Creating App: droppy"))
@@ -743,28 +741,18 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appEnvParam.Instances).To(Equal(1))
 			Expect(appEnvParam.NoRoutes).To(BeFalse())
 			Expect(appEnvParam.RouteOverrides).To(ContainExactly(app_runner.RouteOverrides{
-				app_runner.RouteOverride{HostnamePrefix: "ninetyninety", Port: 4444},
-				app_runner.RouteOverride{HostnamePrefix: "fourtyfourfourtyfour", Port: 9090},
+				{HostnamePrefix: "ninetyninety", Port: 4444},
+				{HostnamePrefix: "fourtyfourfourtyfour", Port: 9090},
 			}))
-			tcpRoutes := appEnvParam.TcpRoutes
-
-			Expect(tcpRoutes).ShouldNot(BeNil())
-			Expect(tcpRoutes).Should(ContainExactly(
-				app_runner.TcpRoutes{
-					app_runner.TcpRoute{
-						ExternalPort: 50000,
-						Port:         5222,
-					},
-					app_runner.TcpRoute{
-						ExternalPort: 50001,
-						Port:         5223,
-					},
-				},
-			))
+			Expect(appEnvParam.TcpRoutes).To(ContainExactly(app_runner.TcpRoutes{
+				{ExternalPort: 50000, Port: 5222},
+				{ExternalPort: 50001, Port: 5223},
+			}))
 		})
 
 		It("launches the specified droplet", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(11, false, nil)
+
 			args := []string{
 				"--cpu-weight=57",
 				"--memory-mb=12",
@@ -784,7 +772,6 @@ var _ = Describe("CommandFactory", func() {
 				"start-em",
 				"-app-arg",
 			}
-
 			test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Creating App: droppy"))
@@ -861,10 +848,9 @@ var _ = Describe("CommandFactory", func() {
 		Context("invalid syntax", func() {
 			It("validates that the name is passed in", func() {
 				args := []string{"appy"}
-
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: APP_NAME and DROPLET_NAME are required"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: APP_NAME and DROPLET_NAME are required"))
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
 			})
 
@@ -877,7 +863,7 @@ var _ = Describe("CommandFactory", func() {
 				}
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: '--' Required before start command"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: '--' Required before start command"))
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
 			})
 
@@ -887,10 +873,9 @@ var _ = Describe("CommandFactory", func() {
 					"cool-droplet",
 					"--cpu-weight=0",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.Say("Incorrect Usage: Invalid CPU Weight"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Invalid CPU Weight"))
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
 			})
 		})
@@ -906,7 +891,7 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
+				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.InvalidPortErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
@@ -916,11 +901,10 @@ var _ = Describe("CommandFactory", func() {
 					"cool-web-droplet",
 					"--http-routes=8888",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MalformedRouteErrorMessage))
+				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
@@ -932,11 +916,10 @@ var _ = Describe("CommandFactory", func() {
 					"cool-web-droplet",
 					"--ports=kablowww",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
+				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.InvalidPortErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
@@ -948,11 +931,10 @@ var _ = Describe("CommandFactory", func() {
 					"cool-web-droplet",
 					"--monitor-url=8080",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
+				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.InvalidPortErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
@@ -962,11 +944,10 @@ var _ = Describe("CommandFactory", func() {
 					"cool-web-droplet",
 					"--monitor-url=port:path",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.InvalidPortErrorMessage))
+				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.InvalidPortErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
@@ -977,11 +958,10 @@ var _ = Describe("CommandFactory", func() {
 					"--ports=9090",
 					"--monitor-url=8080:/path",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MonitorPortNotExposed))
+				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.MonitorPortNotExposed))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
@@ -992,11 +972,10 @@ var _ = Describe("CommandFactory", func() {
 					"--ports=9090",
 					"--monitor-port=8080",
 				}
-
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.Say(app_runner_command_factory.MonitorPortNotExposed))
+				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.MonitorPortNotExposed))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
@@ -1007,9 +986,8 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, []string{"droppy", "droplet-name"})
 
+				Expect(outputBuffer).To(test_helpers.SayLine("Error launching app droppy from droplet droplet-name: failed"))
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(1))
-
-				Expect(outputBuffer).To(test_helpers.Say("Error launching app droppy from droplet droplet-name: failed"))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
@@ -1037,7 +1015,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(removeDropletCommand, []string{"droppo"})
 
-				Expect(outputBuffer).To(test_helpers.Say("Error removing droplet droppo: failed"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error removing droplet droppo: failed"))
 				Expect(fakeDropletRunner.RemoveDropletCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
@@ -1048,7 +1026,6 @@ var _ = Describe("CommandFactory", func() {
 		var (
 			exportDropletCommand           cli.Command
 			exportDir, workingDir, prevDir string
-			err                            error
 		)
 
 		BeforeEach(func() {
@@ -1058,6 +1035,7 @@ var _ = Describe("CommandFactory", func() {
 		})
 
 		BeforeEach(func() {
+			var err error
 			exportDir, err = ioutil.TempDir(os.TempDir(), "exported_stuff")
 			Expect(err).NotTo(HaveOccurred())
 
@@ -1096,8 +1074,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(fakeDropletRunner.ExportDropletCallCount()).To(Equal(1))
 			Expect(fakeDropletRunner.ExportDropletArgsForCall(0)).To(Equal("droppo"))
 
-			Expect(os.Stat("droppo.tgz")).ToNot(BeNil())
-			Expect(os.Stat("droppo-metadata.json")).ToNot(BeNil())
+			Expect(os.Stat("droppo.tgz")).NotTo(BeNil())
+			Expect(os.Stat("droppo-metadata.json")).NotTo(BeNil())
 		})
 
 		Context("when the droplet runner returns errors", func() {
@@ -1106,7 +1084,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(exportDropletCommand, []string{"droppo"})
 
-				Expect(outputBuffer).To(test_helpers.Say("Error exporting droplet droppo: failed"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error exporting droplet droppo: failed"))
 				Expect(fakeDropletRunner.ExportDropletCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
@@ -1151,7 +1129,7 @@ var _ = Describe("CommandFactory", func() {
 			It("imports the droplet", func() {
 				test_helpers.ExecuteCommandWithArgs(importDropletCommand, []string{"droplet-name", dropletPathArg, metadataPathArg})
 
-				Expect(outputBuffer).To(test_helpers.Say("Imported droplet-name"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Imported droplet-name"))
 
 				Expect(fakeDropletRunner.ImportDropletCallCount()).To(Equal(1))
 				dropletName, dropletPath, metadataPath := fakeDropletRunner.ImportDropletArgsForCall(0)
@@ -1166,7 +1144,7 @@ var _ = Describe("CommandFactory", func() {
 
 					test_helpers.ExecuteCommandWithArgs(importDropletCommand, []string{"droplet-name", dropletPathArg, metadataPathArg})
 
-					Expect(outputBuffer).To(test_helpers.Say("Error importing droplet-name: dont tread on me"))
+					Expect(outputBuffer).To(test_helpers.SayLine("Error importing droplet-name: dont tread on me"))
 					Expect(fakeDropletRunner.ImportDropletCallCount()).To(Equal(1))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 				})

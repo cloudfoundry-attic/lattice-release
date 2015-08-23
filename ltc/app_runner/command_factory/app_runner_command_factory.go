@@ -238,7 +238,7 @@ func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
 
 	routeOverrides, err := factory.ParseRouteOverrides(httpRoutesFlag)
 	if err != nil {
-		factory.UI.Say(err.Error())
+		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
@@ -246,14 +246,14 @@ func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
 
 	tcpRoutes, err := factory.ParseTcpRoutes(tcpRoutesFlag)
 	if err != nil {
-		factory.UI.Say(err.Error())
+		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 	updateAppParams.TcpRoutes = tcpRoutes
 
 	if err := factory.AppRunner.UpdateApp(updateAppParams); err != nil {
-		factory.UI.Say(fmt.Sprintf("Error updating application: %s\n", err))
+		factory.UI.SayLine(fmt.Sprintf("Error updating application: %s", err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -308,7 +308,6 @@ func (factory *AppRunnerCommandFactory) setAppInstances(pollTimeout time.Duratio
 
 func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	appNames := c.Args()
-
 	if len(appNames) == 0 {
 		factory.UI.SayIncorrectUsage("App Name required")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
@@ -317,10 +316,9 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 
 	for _, appName := range appNames {
 		factory.UI.SayLine(fmt.Sprintf("Removing %s...", appName))
-		err := factory.AppRunner.RemoveApp(appName)
-		if err != nil {
+		if err := factory.AppRunner.RemoveApp(appName); err != nil {
 			factory.UI.SayLine(fmt.Sprintf("Error stopping %s: %s", appName, err))
-			factory.ExitHandler.Exit(exit_codes.CommandFailed) // TODO: how to handle partial failure
+			factory.ExitHandler.Exit(exit_codes.CommandFailed) // TODO: handle partial failure
 		}
 	}
 }
@@ -378,7 +376,7 @@ func (factory *AppRunnerCommandFactory) urlForAppName(name string) string {
 }
 
 func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout time.Duration, appName string, instances int, action pollingAction) bool {
-	placementErrorOccurred := false
+	var placementErrorOccurred bool
 	ok := factory.pollUntilSuccess(pollTimeout, func() bool {
 		numberOfRunningInstances, placementError, _ := factory.AppExaminer.RunningAppInstancesInfo(appName)
 		if placementError {
@@ -392,7 +390,8 @@ func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout
 	if placementErrorOccurred {
 		factory.ExitHandler.Exit(exit_codes.PlacementError)
 		return false
-	} else if !ok {
+	}
+	if !ok {
 		if action == pollingStart {
 			factory.UI.SayLine(colors.Red("Timed out waiting for the container to come up."))
 			factory.UI.SayLine("This typically happens because docker layers can take time to download.")
@@ -414,7 +413,8 @@ func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Durati
 		if result := pollingFunc(); result {
 			factory.UI.SayNewLine()
 			return true
-		} else if outputProgress {
+		}
+		if outputProgress {
 			factory.UI.Say(".")
 		}
 
@@ -426,7 +426,7 @@ func (factory *AppRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Durati
 
 func (factory *AppRunnerCommandFactory) BuildAppEnvironment(envVars []string, appName string) map[string]string {
 	environment := factory.BuildEnvironment(envVars)
-	if _, ok := environment["PROCESS_GUID"]; !ok {
+	if _, found := environment["PROCESS_GUID"]; !found {
 		environment["PROCESS_GUID"] = appName
 	}
 	return environment
@@ -436,7 +436,6 @@ func (factory *AppRunnerCommandFactory) BuildEnvironment(envVars []string) map[s
 	environment := make(map[string]string)
 	for _, envVarPair := range envVars {
 		name, value := parseEnvVarPair(envVarPair)
-
 		if value == "" {
 			value = factory.grabVarFromEnv(name)
 		}
@@ -448,8 +447,7 @@ func (factory *AppRunnerCommandFactory) BuildEnvironment(envVars []string) map[s
 
 func (factory *AppRunnerCommandFactory) grabVarFromEnv(name string) string {
 	for _, envVarPair := range factory.Env {
-		k := strings.SplitN(envVarPair, "=", 2)[0]
-		if k == name {
+		if k := strings.SplitN(envVarPair, "=", 2)[0]; k == name {
 			_, value := parseEnvVarPair(envVarPair)
 			return value
 		}
@@ -468,32 +466,38 @@ func (factory *AppRunnerCommandFactory) ParseTcpRoutes(tcpRoutesFlag string) (ap
 		if tcpRoute == "" {
 			continue
 		}
+
 		portsArr := strings.Split(tcpRoute, ":")
 		if len(portsArr) < 2 {
 			return nil, errors.New(MalformedTcpRouteErrorMessage)
 		}
-		externalPort, err := factory.getPort(portsArr[0])
+
+		externalPort, err := getPort(portsArr[0])
 		if err != nil {
 			return nil, err
 		}
-		containerPort, err := factory.getPort(portsArr[1])
+
+		containerPort, err := getPort(portsArr[1])
 		if err != nil {
 			return nil, err
 		}
+
 		tcpRoutes = append(tcpRoutes, app_runner.TcpRoute{ExternalPort: externalPort, Port: containerPort})
 	}
 
 	return tcpRoutes, nil
 }
 
-func (factory *AppRunnerCommandFactory) getPort(port string) (uint16, error) {
+func getPort(port string) (uint16, error) {
 	mayBePort, err := strconv.Atoi(port)
 	if err != nil {
 		return 0, errors.New(InvalidPortErrorMessage)
 	}
+
 	if mayBePort <= 0 || mayBePort > 65535 {
 		return 0, errors.New(InvalidPortErrorMessage)
 	}
+
 	return uint16(mayBePort), nil
 }
 
@@ -504,6 +508,7 @@ func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes string) (app_
 		if route == "" {
 			continue
 		}
+
 		routeArr := strings.Split(route, ":")
 		if len(routeArr) < 2 {
 			return nil, errors.New(MalformedRouteErrorMessage)
@@ -514,7 +519,7 @@ func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes string) (app_
 			return nil, errors.New(MalformedRouteErrorMessage)
 		}
 
-		port, err := factory.getPort(routeArr[1])
+		port, err := getPort(routeArr[1])
 		if err != nil {
 			return nil, err
 		}
@@ -535,9 +540,7 @@ func parseEnvVarPair(envVarPair string) (name, value string) {
 
 func (factory *AppRunnerCommandFactory) GetMonitorConfig(exposedPorts []uint16, portMonitorFlag int, noMonitorFlag bool, urlMonitorFlag string, monitorTimeoutFlag time.Duration) (app_runner.MonitorConfig, error) {
 	if noMonitorFlag {
-		return app_runner.MonitorConfig{
-			Method: app_runner.NoMonitor,
-		}, nil
+		return app_runner.MonitorConfig{Method: app_runner.NoMonitor}, nil
 	}
 
 	if urlMonitorFlag != "" {
@@ -587,17 +590,12 @@ func (factory *AppRunnerCommandFactory) GetMonitorConfig(exposedPorts []uint16, 
 	}, nil
 }
 
-func checkPortExposed(exposedPorts []uint16, monitorPort uint16) error {
-	portFound := false
+func checkPortExposed(exposedPorts []uint16, portToCheck uint16) error {
 	for _, port := range exposedPorts {
-		if port == uint16(monitorPort) {
-			portFound = true
-			break
+		if port == uint16(portToCheck) {
+			return nil
 		}
 	}
-	if !portFound {
-		return errors.New(MonitorPortNotExposed)
-	}
 
-	return nil
+	return errors.New(MonitorPortNotExposed)
 }

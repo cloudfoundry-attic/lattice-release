@@ -75,8 +75,9 @@ var _ = Describe("CommandFactory", func() {
 
 			Eventually(fakeTailedLogsOutputter.OutputTailedLogsCallCount).Should(Equal(1))
 			Expect(fakeTailedLogsOutputter.OutputTailedLogsArgsForCall(0)).To(Equal("non_existent_app"))
-			Expect(outputBuffer).To(test_helpers.Say("Application or task non_existent_app not found."))
-			Expect(outputBuffer).To(test_helpers.Say("Tailing logs and waiting for non_existent_app to appear..."))
+
+			Eventually(outputBuffer).Should(test_helpers.SayLine("Application or task non_existent_app not found."))
+			Eventually(outputBuffer).Should(test_helpers.SayLine("Tailing logs and waiting for non_existent_app to appear..."))
 
 			Consistently(doneChan).ShouldNot(BeClosed())
 		})
@@ -99,8 +100,8 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(logsCommand, []string{"non_existent_app"})
 
-				Expect(outputBuffer).To(test_helpers.Say("Error: can't log this"))
-				Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(BeZero())
+				Expect(outputBuffer).To(test_helpers.SayLine("Error: can't log this"))
+				Expect(fakeTailedLogsOutputter.OutputTailedLogsCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})

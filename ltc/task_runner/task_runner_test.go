@@ -24,7 +24,7 @@ var _ = Describe("TaskRunner", func() {
 
 	BeforeEach(func() {
 		fakeReceptorClient = &fake_receptor.FakeClient{}
-		fakeTaskExaminer = new(fake_task_examiner.FakeTaskExaminer)
+		fakeTaskExaminer = &fake_task_examiner.FakeTaskExaminer{}
 		taskRunner = task_runner.New(fakeReceptorClient, fakeTaskExaminer)
 	})
 

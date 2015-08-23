@@ -240,9 +240,7 @@ var _ = Describe("DropletRunner", func() {
 
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
 			createTaskParams := fakeTaskRunner.CreateTaskArgsForCall(0)
-			Expect(createTaskParams).ToNot(BeNil())
 			receptorRequest := createTaskParams.GetReceptorRequest()
-
 			Expect(receptorRequest.MemoryMB).To(Equal(1))
 			Expect(receptorRequest.CPUWeight).To(Equal(uint(2)))
 			Expect(receptorRequest.DiskMB).To(Equal(3))
@@ -252,8 +250,8 @@ var _ = Describe("DropletRunner", func() {
 			fakeTaskRunner.CreateTaskReturns(errors.New("creating task failed"))
 
 			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{}, 0, 0, 0)
-
 			Expect(err).To(MatchError("creating task failed"))
+
 			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
 		})
 	})
@@ -273,13 +271,10 @@ var _ = Describe("DropletRunner", func() {
 
 			Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 			createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
-			Expect(createAppParams).ToNot(BeNil())
-
 			Expect(createAppParams.Name).To(Equal("app-name"))
 			Expect(createAppParams.RootFS).To(Equal(droplet_runner.DropletRootFS))
 			Expect(createAppParams.StartCommand).To(Equal("/tmp/launcher"))
 			Expect(createAppParams.AppArgs).To(Equal([]string{"/home/vcap/app", "", `{"start_command": "start"}`}))
-
 			Expect(createAppParams.Annotation).To(MatchJSON(`{
 				"droplet_source": {
 					"host": "blob-host",
@@ -319,8 +314,6 @@ var _ = Describe("DropletRunner", func() {
 
 			Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 			createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
-			Expect(createAppParams).ToNot(BeNil())
-
 			Expect(createAppParams.Name).To(Equal("app-name"))
 			Expect(createAppParams.StartCommand).To(Equal("/tmp/launcher"))
 			Expect(createAppParams.AppArgs).To(Equal([]string{"/home/vcap/app", "start-r-up -yeah!", `{"start_command": "start"}`}))

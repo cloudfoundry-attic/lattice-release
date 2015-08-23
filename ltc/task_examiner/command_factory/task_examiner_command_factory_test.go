@@ -27,7 +27,7 @@ var _ = Describe("TaskExaminer CommandFactory", func() {
 	)
 
 	BeforeEach(func() {
-		fakeTaskExaminer = new(fake_task_examiner.FakeTaskExaminer)
+		fakeTaskExaminer = &fake_task_examiner.FakeTaskExaminer{}
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
@@ -62,6 +62,7 @@ var _ = Describe("TaskExaminer CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say(colors.Yellow("PENDING")))
 			Expect(outputBuffer).NotTo(test_helpers.Say("Result"))
 			Expect(outputBuffer).NotTo(test_helpers.Say("Failure Reason"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
 
 			Expect(fakeTaskExaminer.TaskStatusCallCount()).To(Equal(1))
 			Expect(fakeTaskExaminer.TaskStatusArgsForCall(0)).To(Equal("boop"))

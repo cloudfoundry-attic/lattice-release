@@ -78,6 +78,7 @@ func (runner *clusterTestRunner) Run(timeout time.Duration, verbose bool) {
 	defineTheGinkgoTests(runner, timeout)
 	RegisterFailHandler(Fail)
 	RunSpecs(runner.testingT, "Lattice Integration Tests")
+	fmt.Fprintln(GinkgoWriter, "")
 }
 
 func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
@@ -248,9 +249,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 			})
 
 			Context("droplet with tcp routes", func() {
-
 				It("should build, lists and launches a droplet with tcp routes", func() {
-
 					externalPort := uint16(51000)
 					By("checking out droplet-receiver from github")
 					gitDir := runner.cloneRepo(timeout, "https://github.com/cloudfoundry-incubator/cf-tcp-router-acceptance-tests.git")
@@ -271,9 +270,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 
 					Eventually(errorCheckForConnection(runner.config.Target(), externalPort, "droplet_server"), timeout, 1).ShouldNot(HaveOccurred())
 				})
-
 			})
-
 		})
 	})
 }
@@ -285,11 +282,10 @@ func (runner *clusterTestRunner) cloneRepo(timeout time.Duration, repoURL string
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to clone %s to %s", repoURL, tmpDir)))
 
 	command := exec.Command("/usr/bin/env", "git", "clone", repoURL, tmpDir)
-
 	session, err := gexec.Start(command, getStyledWriter("git-clone"), getStyledWriter("git-clone"))
 	Expect(err).NotTo(HaveOccurred())
-	expectExitInBuffer(timeout, session, session.Err)
 
+	expectExitInBuffer(timeout, session, session.Err)
 	Eventually(session.Err).Should(gbytes.Say(fmt.Sprintf("Cloning into '%s'...", tmpDir)))
 
 	fmt.Fprintf(getStyledWriter("test"), "Cloned %s into %s\n", repoURL, tmpDir)
@@ -302,29 +298,22 @@ func (runner *clusterTestRunner) buildDroplet(timeout time.Duration, dropletName
 
 	command := runner.command("build-droplet", dropletName, buildpack, "--timeout", timeout.String())
 	command.Dir = srcDir
-
 	session, err := gexec.Start(command, getStyledWriter("build-droplet"), getStyledWriter("build-droplet"))
 	Expect(err).NotTo(HaveOccurred())
-	expectExit(timeout, session)
 
+	expectExit(timeout, session)
 	Expect(session.Out).To(gbytes.Say("Submitted build of " + dropletName))
 }
 
-func (runner *clusterTestRunner) launchDroplet(timeout time.Duration, args ...string) {
-	appName := args[0]
-	dropletName := args[1]
-
+func (runner *clusterTestRunner) launchDroplet(timeout time.Duration, appName, dropletName string, args ...string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Launching droplet %s as %s", dropletName, appName)))
 
-	cmdArgs := make([]string, 0)
-	cmdArgs = append(cmdArgs, "launch-droplet")
-	cmdArgs = append(cmdArgs, args...)
-	command := runner.command(cmdArgs...)
-
+	launchArgs := append([]string{"launch-droplet", appName, dropletName}, args...)
+	command := runner.command(launchArgs...)
 	session, err := gexec.Start(command, getStyledWriter("launch-droplet"), getStyledWriter("launch-droplet"))
 	Expect(err).NotTo(HaveOccurred())
-	expectExit(timeout, session)
 
+	expectExit(timeout, session)
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
 }
 
@@ -332,11 +321,10 @@ func (runner *clusterTestRunner) listDroplets(timeout time.Duration, dropletName
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline("Attempting to find droplet in the list"))
 
 	command := runner.command("list-droplets")
-
 	session, err := gexec.Start(command, getStyledWriter("list-droplets"), getStyledWriter("list-droplets"))
 	Expect(err).NotTo(HaveOccurred())
-	expectExit(timeout, session)
 
+	expectExit(timeout, session)
 	Expect(session.Out).To(gbytes.Say(dropletName))
 
 	fmt.Fprintln(getStyledWriter("test"), "Found", dropletName, "in the list!")
@@ -346,27 +334,26 @@ func (runner *clusterTestRunner) removeDroplet(timeout time.Duration, dropletNam
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to remove droplet %s", dropletName)))
 
 	command := runner.command("remove-droplet", dropletName)
-
 	session, err := gexec.Start(command, getStyledWriter("remove-droplet"), getStyledWriter("remove-droplet"))
 	Expect(err).NotTo(HaveOccurred())
-	expectExit(timeout, session)
 
+	expectExit(timeout, session)
 	Expect(session.Out).To(gbytes.Say("Droplet removed"))
 
 	fmt.Fprintln(getStyledWriter("test"), "Removed", dropletName)
 }
 
-func (runner *clusterTestRunner) createDockerApp(timeout time.Duration, appName string, args ...string) {
+func (runner *clusterTestRunner) createDockerApp(timeout time.Duration, appName, dockerPath string, args ...string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to create %s", appName)))
-	createArgs := append([]string{"create", appName}, args...)
+
+	createArgs := append([]string{"create", appName, dockerPath}, args...)
 	command := runner.command(createArgs...)
-
 	session, err := gexec.Start(command, getStyledWriter("create"), getStyledWriter("create"))
-
 	Expect(err).NotTo(HaveOccurred())
-	expectExit(timeout, session)
 
+	expectExit(timeout, session)
 	Expect(session.Out).To(gbytes.Say(appName + " is now running."))
+
 	fmt.Fprintln(getStyledWriter("test"), "Yay! Created", appName)
 }
 
@@ -386,41 +373,42 @@ func (runner *clusterTestRunner) updateApp(timeout time.Duration, appName string
 
 func (runner *clusterTestRunner) streamLogs(timeout time.Duration, appName string, args ...string) *gexec.Session {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to stream logs from %s", appName)))
+
 	command := runner.command("logs", appName)
-
 	session, err := gexec.Start(command, getStyledWriter("logs"), getStyledWriter("logs"))
-
 	Expect(err).NotTo(HaveOccurred())
+
 	return session
 }
 
 func (runner *clusterTestRunner) streamDebugLogs(timeout time.Duration, args ...string) *gexec.Session {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline("Attempting to stream cluster debug logs"))
+
 	command := runner.command("debug-logs")
-
 	session, err := gexec.Start(command, getStyledWriter("debug"), getStyledWriter("debug"))
-
 	Expect(err).NotTo(HaveOccurred())
+
 	return session
 }
 
 func (runner *clusterTestRunner) scaleApp(timeout time.Duration, appName string, args ...string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to scale %s", appName)))
+
 	command := runner.command("scale", appName, "3")
-
 	session, err := gexec.Start(command, getStyledWriter("scale"), getStyledWriter("scale"))
-
 	Expect(err).NotTo(HaveOccurred())
+
 	expectExit(timeout, session)
+	Expect(session.Out).To(gbytes.Say("App Scaled Successfully"))
 }
 
 func (runner *clusterTestRunner) removeApp(timeout time.Duration, appName string, args ...string) {
 	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline(fmt.Sprintf("Attempting to remove app %s", appName)))
+
 	command := runner.command("remove", appName)
-
 	session, err := gexec.Start(command, getStyledWriter("remove"), getStyledWriter("remove"))
-
 	Expect(err).NotTo(HaveOccurred())
+
 	expectExit(timeout, session)
 }
 

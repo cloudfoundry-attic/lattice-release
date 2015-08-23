@@ -48,10 +48,10 @@ var _ = Describe("RoutingInfoHelpers", func() {
 
 			It("wraps the serialized routes with the correct key", func() {
 				expectedBytes, err := json.Marshal(appRoutes)
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
 				payload, err := routingInfo[route_helpers.AppRouter].MarshalJSON()
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).NotTo(HaveOccurred())
 
 				Expect(payload).To(MatchJSON(expectedBytes))
 			})
@@ -63,7 +63,7 @@ var _ = Describe("RoutingInfoHelpers", func() {
 
 				It("marshals an empty list", func() {
 					payload, err := routingInfo[route_helpers.AppRouter].MarshalJSON()
-					Expect(err).ToNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 
 					Expect(payload).To(MatchJSON(`[]`))
 				})
@@ -156,13 +156,11 @@ var _ = Describe("RoutingInfoHelpers", func() {
 	Describe("Routes", func() {
 
 		var (
-			routes    route_helpers.Routes
-			tcpRoute1 route_helpers.TcpRoute
-			tcpRoute2 route_helpers.TcpRoute
+			routes               route_helpers.Routes
+			tcpRoute1, tcpRoute2 route_helpers.TcpRoute
 		)
 
 		BeforeEach(func() {
-
 			tcpRoute1 = route_helpers.TcpRoute{
 				ExternalPort: 50000,
 				Port:         5222,
@@ -189,21 +187,21 @@ var _ = Describe("RoutingInfoHelpers", func() {
 			})
 
 			It("wraps the serialized routes with the correct key", func() {
-				expectedBytes, err := json.Marshal(route_helpers.AppRoutes{appRoute1, appRoute2})
-				Expect(err).ToNot(HaveOccurred())
+				expectedAppRoutes, err := json.Marshal(route_helpers.AppRoutes{appRoute1, appRoute2})
+				Expect(err).NotTo(HaveOccurred())
 
-				payload, err := routingInfo[route_helpers.AppRouter].MarshalJSON()
-				Expect(err).ToNot(HaveOccurred())
+				appRoutesPayload, err := routingInfo[route_helpers.AppRouter].MarshalJSON()
+				Expect(err).NotTo(HaveOccurred())
 
-				Expect(payload).To(MatchJSON(expectedBytes))
+				Expect(appRoutesPayload).To(MatchJSON(expectedAppRoutes))
 
-				expectedBytes, err = json.Marshal(route_helpers.TcpRoutes{tcpRoute1, tcpRoute2})
-				Expect(err).ToNot(HaveOccurred())
+				expectedTcpRoutes, err := json.Marshal(route_helpers.TcpRoutes{tcpRoute1, tcpRoute2})
+				Expect(err).NotTo(HaveOccurred())
 
-				payload, err = routingInfo[route_helpers.TcpRouter].MarshalJSON()
-				Expect(err).ToNot(HaveOccurred())
+				tcpRoutesPayload, err := routingInfo[route_helpers.TcpRouter].MarshalJSON()
+				Expect(err).NotTo(HaveOccurred())
 
-				Expect(payload).To(MatchJSON(expectedBytes))
+				Expect(tcpRoutesPayload).To(MatchJSON(expectedTcpRoutes))
 			})
 
 			Context("when Routes is empty", func() {
@@ -215,15 +213,13 @@ var _ = Describe("RoutingInfoHelpers", func() {
 				})
 
 				It("marshals an empty list", func() {
-					payload, err := routingInfo[route_helpers.AppRouter].MarshalJSON()
-					Expect(err).ToNot(HaveOccurred())
+					appRoutesPayload, err := routingInfo[route_helpers.AppRouter].MarshalJSON()
+					Expect(err).NotTo(HaveOccurred())
+					Expect(appRoutesPayload).To(MatchJSON("[]"))
 
-					Expect(payload).To(MatchJSON(`[]`))
-
-					payload, err = routingInfo[route_helpers.TcpRouter].MarshalJSON()
-					Expect(err).ToNot(HaveOccurred())
-
-					Expect(payload).To(MatchJSON(`[]`))
+					tcpRoutesPayload, err := routingInfo[route_helpers.TcpRouter].MarshalJSON()
+					Expect(err).NotTo(HaveOccurred())
+					Expect(tcpRoutesPayload).To(MatchJSON("[]"))
 				})
 			})
 		})
@@ -362,8 +358,7 @@ var _ = Describe("RoutingInfoHelpers", func() {
 	Describe("BuildDefaultRoutingInfo", func() {
 		Context("when no exposedPorts is given", func() {
 			It("output empty approutes", func() {
-				exposedPorts := []uint16{}
-				appRoutes := route_helpers.BuildDefaultRoutingInfo("cool-app", exposedPorts, 5000, "cool-app-domain")
+				appRoutes := route_helpers.BuildDefaultRoutingInfo("cool-app", []uint16{}, 5000, "cool-app-domain")
 				Expect(appRoutes).To(BeEmpty())
 			})
 		})
@@ -371,13 +366,9 @@ var _ = Describe("RoutingInfoHelpers", func() {
 		Context("when primaryPort is not included in the exposedPorts", func() {
 			It("doesn't output the default route", func() {
 				expectedAppRoutes := route_helpers.AppRoutes{
-					route_helpers.AppRoute{
-						Hostnames: []string{"cool-app-2000.cool-app-domain"},
-						Port:      2000,
-					},
+					{Hostnames: []string{"cool-app-2000.cool-app-domain"}, Port: 2000},
 				}
-				exposedPorts := []uint16{2000}
-				appRoutes := route_helpers.BuildDefaultRoutingInfo("cool-app", exposedPorts, 5000, "cool-app-domain")
+				appRoutes := route_helpers.BuildDefaultRoutingInfo("cool-app", []uint16{2000}, 5000, "cool-app-domain")
 				Expect(appRoutes).To(Equal(expectedAppRoutes))
 			})
 		})
@@ -385,18 +376,10 @@ var _ = Describe("RoutingInfoHelpers", func() {
 		Context("when primaryPort is included in the exposedPorts", func() {
 			It("outputs a default route with primary port in addition to the default route", func() {
 				expectedAppRoutes := route_helpers.AppRoutes{
-					route_helpers.AppRoute{
-						Hostnames: []string{"cool-app-2000.cool-app-domain"},
-						Port:      2000,
-					},
-					route_helpers.AppRoute{
-						Hostnames: []string{"cool-app.cool-app-domain",
-							"cool-app-5000.cool-app-domain"},
-						Port: 5000,
-					},
+					{Hostnames: []string{"cool-app-2000.cool-app-domain"}, Port: 2000},
+					{Hostnames: []string{"cool-app.cool-app-domain", "cool-app-5000.cool-app-domain"}, Port: 5000},
 				}
-				exposedPorts := []uint16{5000, 2000}
-				appRoutes := route_helpers.BuildDefaultRoutingInfo("cool-app", exposedPorts, 5000, "cool-app-domain")
+				appRoutes := route_helpers.BuildDefaultRoutingInfo("cool-app", []uint16{5000, 2000}, 5000, "cool-app-domain")
 				Expect(appRoutes).Should(ContainExactly(expectedAppRoutes))
 			})
 		})

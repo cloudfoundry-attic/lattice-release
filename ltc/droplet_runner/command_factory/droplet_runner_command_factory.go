@@ -482,7 +482,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 
 	tcpRoutes, err := factory.ParseTcpRoutes(tcpRoutesFlag)
 	if err != nil {
-		factory.UI.Say(err.Error())
+		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}

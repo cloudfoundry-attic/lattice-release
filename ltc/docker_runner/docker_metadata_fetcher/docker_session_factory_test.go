@@ -41,12 +41,12 @@ var _ = Describe("DockerSessionFactory", func() {
 			Context("when connecting to a secure registry", func() {
 				It("creates a registry session for the given repo", func() {
 					session, err := sessionFactory.MakeSession(registryHost+"/lattice-mappppppppppppappapapa", false)
-					Expect(err).ToNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 
 					registrySession, ok := session.(*registry.Session)
 					Expect(ok).To(BeTrue())
-
 					Expect(*registrySession.GetAuthConfig(true)).To(Equal(registry.AuthConfig{}))
+
 					Expect(dockerRegistryServer.ReceivedRequests()).To(HaveLen(2))
 				})
 			})
@@ -54,12 +54,12 @@ var _ = Describe("DockerSessionFactory", func() {
 			Context("when connecting to an insecure registry", func() {
 				It("creates a registry session for the given repo", func() {
 					session, err := sessionFactory.MakeSession(registryHost+"/lattice-mappppppppppppappapapa", true)
-					Expect(err).ToNot(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
 
 					registrySession, ok := session.(*registry.Session)
 					Expect(ok).To(BeTrue())
-
 					Expect(*registrySession.GetAuthConfig(true)).To(Equal(registry.AuthConfig{}))
+
 					Expect(dockerRegistryServer.ReceivedRequests()).To(HaveLen(2))
 				})
 			})
@@ -68,8 +68,8 @@ var _ = Describe("DockerSessionFactory", func() {
 		Context("when resolving the repo name fails", func() {
 			It("returns errors from resolving the repo name", func() {
 				_, err := sessionFactory.MakeSession("¥Not-A-Valid-Repo-Name¥"+"/lattice-mappppppppppppappapapa", false)
-
 				Expect(err).To(MatchError(ContainSubstring("Error resolving Docker repository name:\nInvalid namespace name")))
+
 				Expect(dockerRegistryServer.ReceivedRequests()).To(HaveLen(0))
 			})
 		})
@@ -77,8 +77,8 @@ var _ = Describe("DockerSessionFactory", func() {
 		Context("when creating a new endpoint fails", func() {
 			It("returns an error", func() {
 				_, err := sessionFactory.MakeSession("nonexistantregistry.example.com/lattice-mappppppppppppappapapa", false)
-
 				Expect(err).To(MatchError(ContainSubstring("Error Connecting to Docker registry:\ninvalid registry endpoint")))
+
 				Expect(dockerRegistryServer.ReceivedRequests()).To(HaveLen(0))
 			})
 		})

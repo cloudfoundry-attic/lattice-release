@@ -28,7 +28,8 @@ var _ = Describe("ClusterTestCommandFactory", func() {
 		})
 
 		It("prints the integration test run output and args", func() {
-			test_helpers.ExecuteCommandWithArgs(clusterTestCommand, []string{"--timeout=50s", "--verbose=true"})
+			args := []string{"--timeout=50s", "--verbose=true"}
+			test_helpers.ExecuteCommandWithArgs(clusterTestCommand, args)
 
 			Expect(fakeClusterTestRunner.RunCallCount()).To(Equal(1))
 			timeoutArg, verboseArg := fakeClusterTestRunner.GetArgsForRun()

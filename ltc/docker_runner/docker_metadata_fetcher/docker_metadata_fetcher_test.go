@@ -116,8 +116,8 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 						}`),
 					0,
 					nil)
-				dockerPath := "my.custom.registry:5000/savory-app"
 
+				dockerPath := "my.custom.registry:5000/savory-app"
 				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(dockerPath)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(imageMetadata).ToNot(BeNil())
@@ -182,8 +182,8 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 						}`),
 					0,
 					nil)
-				dockerPath := "my.custom.registry:5000/savory-app"
 
+				dockerPath := "my.custom.registry:5000/savory-app"
 				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(dockerPath)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(imageMetadata).ToNot(BeNil())
@@ -218,11 +218,12 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 			})
 
 			Context("when getting another error after retrying", func() {
+				const insecureRegistryErrorMessage = "If this private registry supports only HTTP or HTTPS with an unknown CA certificate, please add `--insecure-registry 192.168.11.1:5000` to the daemon's arguments. In the case of HTTPS, if you have access to the registry's CA certificate, no need for the flag; simply place the CA certificate at /etc/docker/certs.d/192.168.11.1:5000/ca.crt"
+
 				It("returns the error", func() {
-					insecureRegistryErrorMessage := "If this private registry supports only HTTP or HTTPS with an unknown CA certificate, please add `--insecure-registry 192.168.11.1:5000` to the daemon's arguments. In the case of HTTPS, if you have access to the registry's CA certificate, no need for the flag; simply place the CA certificate at /etc/docker/certs.d/192.168.11.1:5000/ca.crt"
-					dockerPath := "verybad/apple"
 					fakeDockerSessionFactory.MakeSessionReturns(fakeDockerSession, errors.New(insecureRegistryErrorMessage))
 
+					dockerPath := "verybad/apple"
 					_, err := dockerMetadataFetcher.FetchMetadata(dockerPath)
 					Expect(err).To(MatchError(ContainSubstring("private registry supports only HTTP or HTTPS with an unknown CA certificate")))
 
@@ -281,7 +282,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 		Context("when there is an error parsing the docker image reference", func() {
 			It("returns an error", func() {
 				_, err := dockerMetadataFetcher.FetchMetadata("bad/appName")
-				Expect(err).To(HaveOccurred())
 				Expect(err).To(MatchError("Invalid namespace name (bad). Cannot be fewer than 4 or more than 30 characters."))
 			})
 		})
@@ -291,7 +291,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				fakeDockerSessionFactory.MakeSessionReturns(fakeDockerSession, errors.New("Couldn't make a session."))
 
 				_, err := dockerMetadataFetcher.FetchMetadata("verybad/apple")
-
 				Expect(err).To(MatchError("Couldn't make a session."))
 			})
 		})
@@ -302,7 +301,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				fakeDockerSession.GetRepositoryDataReturns(&registry.RepositoryData{}, errors.New("We floundered getting your repo data."))
 
 				_, err := dockerMetadataFetcher.FetchMetadata("cloud_flounder/fishy")
-
 				Expect(err).To(MatchError("We floundered getting your repo data."))
 			})
 		})
@@ -319,7 +317,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				fakeDockerSession.GetRemoteTagsReturns(nil, errors.New("Can't get tags!"))
 
 				_, err := dockerMetadataFetcher.FetchMetadata("tagless/inseattle")
-
 				Expect(err).To(MatchError("Can't get tags!"))
 			})
 		})
@@ -344,7 +341,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				fakeDockerSession.GetRemoteTagsReturns(map[string]string{"latest": "29d531509fb"}, nil)
 
 				_, err := dockerMetadataFetcher.FetchMetadata("wiggle/app:some-unknown-tag-v3245")
-
 				Expect(err).To(MatchError("Unknown tag: wiggle/app:some-unknown-tag-v3245"))
 			})
 		})
@@ -374,7 +370,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 					fakeDockerSession.GetRemoteImageJSONReturns([]byte{}, 0, errors.New("JSON? What's that!???"))
 
 					_, err := dockerMetadataFetcher.FetchMetadata("wiggle/app")
-
 					Expect(err).To(MatchError("JSON? What's that!???"))
 				})
 			})
@@ -384,7 +379,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 					fakeDockerSession.GetRemoteImageJSONReturns([]byte("i'm not valid json"), 0, nil)
 
 					_, err := dockerMetadataFetcher.FetchMetadata("wiggle/app")
-
 					Expect(err).To(MatchError("Error parsing remote image json for specified docker image:\ninvalid character 'i' looking for beginning of value"))
 				})
 			})
@@ -394,7 +388,6 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 					fakeDockerSession.GetRemoteImageJSONReturns([]byte("{}"), 0, nil)
 
 					_, err := dockerMetadataFetcher.FetchMetadata("wiggle/app")
-
 					Expect(err).To(MatchError("Parsing start command failed"))
 				})
 			})

@@ -208,8 +208,8 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	dockerPath := context.Args().Get(1)
 	terminator := context.Args().Get(2)
 	startCommand := context.Args().Get(3)
-	var appArgs []string
 
+	var appArgs []string
 	switch {
 	case len(context.Args()) < 2:
 		factory.UI.SayIncorrectUsage("APP_NAME and DOCKER_IMAGE are required")
@@ -294,7 +294,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 
 	tcpRoutes, err := factory.ParseTcpRoutes(tcpRoutesFlag)
 	if err != nil {
-		factory.UI.Say(err.Error())
+		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}

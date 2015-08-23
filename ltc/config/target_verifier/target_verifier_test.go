@@ -32,10 +32,9 @@ var _ = Describe("TargetVerifier", func() {
 
 		It("returns up=true, auth=true if the receptor does not return an error", func() {
 			up, auth, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
-
+			Expect(err).NotTo(HaveOccurred())
 			Expect(up).To(BeTrue())
 			Expect(auth).To(BeTrue())
-			Expect(err).ToNot(HaveOccurred())
 			Expect(targets).To(ConsistOf("http://receptor.mylattice.com"))
 		})
 
@@ -46,10 +45,9 @@ var _ = Describe("TargetVerifier", func() {
 			})
 
 			up, auth, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
-
+			Expect(err).NotTo(HaveOccurred())
 			Expect(up).To(BeTrue())
 			Expect(auth).To(BeFalse())
-			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("returns up=true, auth=false, err=(the bubbled up error) if there is a receptor error other than unauthorized", func() {
@@ -59,7 +57,6 @@ var _ = Describe("TargetVerifier", func() {
 			})
 
 			up, auth, err := targetVerifier.VerifyTarget("http://receptor.mylattice.com")
-
 			Expect(err).To(BeAssignableToTypeOf(receptor.Error{}))
 			Expect(err).To(MatchError("It all happened so fast... I just dunno what went wrong."))
 			Expect(up).To(BeTrue())
@@ -71,7 +68,6 @@ var _ = Describe("TargetVerifier", func() {
 			fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, errors.New("Couldn't connect to the receptor."))
 
 			up, auth, err := targetVerifier.VerifyTarget("http://receptor.my-borked-lattice.com")
-
 			Expect(err).To(MatchError("Couldn't connect to the receptor."))
 			Expect(up).To(BeFalse())
 			Expect(auth).To(BeFalse())

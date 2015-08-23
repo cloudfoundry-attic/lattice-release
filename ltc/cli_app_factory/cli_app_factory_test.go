@@ -33,7 +33,7 @@ var _ = Describe("CliAppFactory", func() {
 
 	BeforeEach(func() {
 		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
-		fakeExitHandler = new(fake_exit_handler.FakeExitHandler)
+		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 		memPersister := persister.NewMemPersister()
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
@@ -95,7 +95,7 @@ var _ = Describe("CliAppFactory", func() {
 
 					cliApp.Action(testContext)
 
-					Expect(outputBuffer).To(test_helpers.Say("ltc - Command line interface for Lattice."))
+					Expect(outputBuffer).To(test_helpers.SayLine("ltc - Command line interface for Lattice."))
 				})
 			})
 
@@ -107,7 +107,7 @@ var _ = Describe("CliAppFactory", func() {
 
 					cliApp.Action(testContext)
 
-					Expect(outputBuffer).To(test_helpers.Say("ltc: 'one_arg' is not a registered command. See 'ltc help'"))
+					Expect(outputBuffer).To(test_helpers.SayLine("ltc: 'one_arg' is not a registered command. See 'ltc help'"))
 				})
 			})
 		})
@@ -118,7 +118,7 @@ var _ = Describe("CliAppFactory", func() {
 
 				cliApp.CommandNotFound(testContext, "do_it")
 
-				Expect(outputBuffer).To(test_helpers.Say("ltc: 'do_it' is not a registered command. See 'ltc help'"))
+				Expect(outputBuffer).To(test_helpers.SayLine("ltc: 'do_it' is not a registered command. See 'ltc help'"))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{1}))
 			})
 		})
@@ -162,9 +162,7 @@ var _ = Describe("CliAppFactory", func() {
 						},
 					}
 
-					cliAppArgs := []string{"ltc", "help"}
-
-					err := cliApp.Run(cliAppArgs)
+					err := cliApp.Run([]string{"ltc", "help"})
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(commandRan).To(BeTrue())
@@ -182,9 +180,7 @@ var _ = Describe("CliAppFactory", func() {
 						commandRan = true
 					}
 
-					cliAppArgs := []string{"ltc"}
-
-					err := cliApp.Run(cliAppArgs)
+					err := cliApp.Run([]string{"ltc"})
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(commandRan).To(BeTrue())
@@ -202,9 +198,7 @@ var _ = Describe("CliAppFactory", func() {
 						commandRan = true
 					}
 
-					cliAppArgs := []string{"ltc", "buy-me-a-pony"}
-
-					err := cliApp.Run(cliAppArgs)
+					err := cliApp.Run([]string{"ltc", "buy-me-a-pony"})
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(commandRan).To(BeTrue())
@@ -230,9 +224,7 @@ var _ = Describe("CliAppFactory", func() {
 							},
 						}
 
-						cliAppArgs := []string{"ltc", "print-a-unicorn"}
-
-						err := cliApp.Run(cliAppArgs)
+						err := cliApp.Run([]string{"ltc", "print-a-unicorn"})
 						Expect(err).NotTo(HaveOccurred())
 
 						Expect(commandRan).To(BeTrue())
@@ -255,12 +247,10 @@ var _ = Describe("CliAppFactory", func() {
 							},
 						}
 
-						cliAppArgs := []string{"ltc", "print-a-unicorn"}
-
-						err := cliApp.Run(cliAppArgs)
+						err := cliApp.Run([]string{"ltc", "print-a-unicorn"})
 						Expect(err).To(MatchError("Could not authenticate with the receptor."))
 
-						Expect(outputBuffer).To(test_helpers.Say("Could not authenticate with the receptor. Please run ltc target with the correct credentials."))
+						Expect(outputBuffer).To(test_helpers.SayLine("Could not authenticate with the receptor. Please run ltc target with the correct credentials."))
 						Expect(commandRan).To(BeFalse())
 
 						Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(1))
@@ -283,12 +273,10 @@ var _ = Describe("CliAppFactory", func() {
 							},
 						}
 
-						cliAppArgs := []string{"ltc", "print-a-unicorn"}
-
-						err := cliApp.Run(cliAppArgs)
+						err := cliApp.Run([]string{"ltc", "print-a-unicorn"})
 						Expect(err).To(MatchError("oopsie!"))
 
-						Expect(outputBuffer).To(test_helpers.Say("Error connecting to the receptor. Make sure your lattice target is set, and that lattice is up and running.\n\tUnderlying error: oopsie!"))
+						Expect(outputBuffer).To(test_helpers.SayLine("Error connecting to the receptor. Make sure your lattice target is set, and that lattice is up and running.\n\tUnderlying error: oopsie!"))
 						Expect(commandRan).To(BeFalse())
 
 						Expect(fakeTargetVerifier.VerifyTargetCallCount()).To(Equal(1))
