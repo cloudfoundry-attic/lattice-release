@@ -3,6 +3,8 @@ platform: linux
 image: docker:///cloudfoundry/lattice-pipeline
 inputs:
 - name: lattice
-- name: compile-lattice-bundles
 run:
   path: lattice/concourse/tasks/generate-lattice-bundle-listing/run.sh
+params:
+  AWS_ACCESS_KEY_ID: some-access-key-id
+  AWS_SECRET_ACCESS_KEY: some-secret-access-key

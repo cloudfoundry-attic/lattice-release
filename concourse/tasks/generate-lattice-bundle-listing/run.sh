@@ -11,4 +11,4 @@ OUTPUT=$PWD
 cd lattice/concourse/tasks/generate-lattice-bundle-listing
 
 bundler
-bundle exec ./generate-listing.rb > $OUTPUT/index.html
+bundle exec ./generate-listing.rb 
