@@ -55,6 +55,14 @@ resources:
       private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
+  - name: lattice-listing-nightly
+    type: s3
+    source:
+      bucket: lattice
+      region_name: us-west-2
+      private: false
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
   - name: publish-nightly-timer
     type: time
     source:
@@ -252,3 +260,13 @@ jobs:
           params:
             from: compile-lattice-bundles/lattice-bundle-v(.*)-osx.zip
             to: /nightly/lattice-bundle-latest-osx.zip
+      - task: generate-lattice-bundle-listing
+        file: lattice/concourse/tasks/generate-lattice-bundle-listing/task.yml
+        config:
+          params:
+            AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+            AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+      - put: lattice-listing-nightly
+        params:
+          from: generate-lattice-bundle-listing/index(.*).html
+          to: /nightly/

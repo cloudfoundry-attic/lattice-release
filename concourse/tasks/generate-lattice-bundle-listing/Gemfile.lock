@@ -1,0 +1,15 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    proxies (0.2.1)
+    s3 (0.3.23)
+      proxies (~> 0.2.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  s3
+
+BUNDLED WITH
+   1.10.5

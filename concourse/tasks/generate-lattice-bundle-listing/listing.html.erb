@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+    .commasep { display: inline; list-style: none; padding: 0px; }
+    .commasep li { display: inline; }
+    .commasep li:after { content: ", "; }
+    .commasep li:last-child:after { content: ""; }
+    </style>
+  </head>
+  <body>
+    <h2>Nightlies</h2>
+    <% for day in days.keys.sort.reverse %>
+      <h3><%= day.strftime('%Y-%m-%d') %></h3>
+      <% for ver in days[day].keys.sort.reverse %>
+        <div>
+          lattice-bundle-<%= ver %> (<ul class="commasep">
+            <% for obj in days[day][ver] %>
+            <li><a href="https://<%=s3bucket%>.s3.amazonaws.com/<%= obj[:path] %>"><%= obj[:arch] %></a></li>
+            <% end %>
+          </ul>)
+        </div>
+      <% end %>
+    <% end %>
+  </body>
+</html>
