@@ -17,7 +17,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
@@ -53,7 +53,7 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("ListDroplets", func() {
 		It("returns a list of droplets in the blob store", func() {
-			fakeBlobStore.ListReturns([]dav_blob_store.Blob{
+			fakeBlobStore.ListReturns([]blob_store.Blob{
 				{Path: "X/bits.zip", Created: time.Unix(1000, 0), Size: 100},
 				{Path: "X/droplet.tgz", Created: time.Unix(2000, 0), Size: 200},
 				{Path: "X/result.json", Created: time.Unix(3000, 0), Size: 300},
@@ -277,8 +277,6 @@ var _ = Describe("DropletRunner", func() {
 			Expect(createAppParams.AppArgs).To(Equal([]string{"/home/vcap/app", "", `{"start_command": "start"}`}))
 			Expect(createAppParams.Annotation).To(MatchJSON(`{
 				"droplet_source": {
-					"host": "blob-host",
-					"port": "7474",
 					"droplet_name": "droplet-name"
 				}
 			}`))
@@ -347,7 +345,7 @@ var _ = Describe("DropletRunner", func() {
 			config.SetBlobStore("blob-host", "7474", "dav-user", "dav-pass")
 			Expect(config.Save()).To(Succeed())
 
-			fakeBlobStore.ListReturns([]dav_blob_store.Blob{
+			fakeBlobStore.ListReturns([]blob_store.Blob{
 				{Path: "drippy/bits.zip"},
 				{Path: "drippy/droplet.tgz"},
 				{Path: "drippy/result.json"},
@@ -358,31 +356,11 @@ var _ = Describe("DropletRunner", func() {
 					Annotation: "",
 				},
 				{
-					Annotation: `{
-						"droplet_source": {
-							"host": "other-blob-host",
-							"port": "7474",
-							"droplet_name": "drippy"
-						}
-					}`,
-				},
-				{
-					Annotation: `{
-						"droplet_source": {
-							"host": "blob-host",
-							"port": 1234,
-							"droplet_name": "drippy"
-						}
-					}`,
-				},
-				{
 					Annotation: "junk",
 				},
 				{
 					Annotation: `{
 						"droplet_source": {
-							"host": "blob-host",
-							"port": "7474",
 							"droplet_name": "other-drippy"
 						}
 					}`,
@@ -416,8 +394,6 @@ var _ = Describe("DropletRunner", func() {
 				ProcessGuid: "dripapp",
 				Annotation: `{
 					"droplet_source": {
-						"host": "blob-host",
-						"port": "7474",
 						"droplet_name": "drippy"
 					}
 				}`,
@@ -436,7 +412,7 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("returns an error when the droplet doesn't exist", func() {
-			fakeBlobStore.ListReturns([]dav_blob_store.Blob{
+			fakeBlobStore.ListReturns([]blob_store.Blob{
 				{Path: "drippy/bits.zip"},
 				{Path: "drippy/droplet.tgz"},
 				{Path: "drippy/result.json"},

@@ -48,7 +48,7 @@ type FakeDropletRunner struct {
 	ListDropletsStub        func() ([]droplet_runner.Droplet, error)
 	listDropletsMutex       sync.RWMutex
 	listDropletsArgsForCall []struct{}
-	listDropletsReturns     struct {
+	listDropletsReturns struct {
 		result1 []droplet_runner.Droplet
 		result2 error
 	}
@@ -115,7 +115,7 @@ func (fake *FakeDropletRunner) UploadBitsReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeDropletRunner) BuildDroplet(taskName string, dropletName string, buildpackUrl string, environment map[string]string, memoryMB, cpuWeight, diskMB int) error {
+func (fake *FakeDropletRunner) BuildDroplet(taskName string, dropletName string, buildpackUrl string, environment map[string]string, memoryMB int, cpuWeight int, diskMB int) error {
 	fake.buildDropletMutex.Lock()
 	fake.buildDropletArgsForCall = append(fake.buildDropletArgsForCall, struct {
 		taskName     string

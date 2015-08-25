@@ -12,7 +12,9 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/dav_blob_store"
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
 var _ = Describe("BlobStore", func() {
@@ -29,7 +31,7 @@ var _ = Describe("BlobStore", func() {
 		serverHost, serverPort, err := net.SplitHostPort(fakeServerURL.Host)
 		Expect(err).NotTo(HaveOccurred())
 
-		blobTargetInfo := dav_blob_store.Config{
+		blobTargetInfo := config_package.BlobStoreConfig{
 			Host:     serverHost,
 			Port:     serverPort,
 			Username: "user",
@@ -316,12 +318,12 @@ var _ = Describe("BlobStore", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(blobStore.List()).To(ConsistOf(
-				dav_blob_store.Blob{Path: "b/bits.zip", Size: 4096, Created: expectedTime},
-				dav_blob_store.Blob{Path: "b/droplet.tgz", Size: 4096, Created: expectedTime},
-				dav_blob_store.Blob{Path: "a/bits.zip", Size: 4096, Created: expectedTime},
-				dav_blob_store.Blob{Path: "a/droplet.tgz", Size: 4096, Created: expectedTime},
-				dav_blob_store.Blob{Path: "c/bits.zip", Size: 4096, Created: expectedTime},
-				dav_blob_store.Blob{Path: "c/droplet.tgz", Size: 4096, Created: expectedTime},
+				blob_store.Blob{Path: "b/bits.zip", Size: 4096, Created: expectedTime},
+				blob_store.Blob{Path: "b/droplet.tgz", Size: 4096, Created: expectedTime},
+				blob_store.Blob{Path: "a/bits.zip", Size: 4096, Created: expectedTime},
+				blob_store.Blob{Path: "a/droplet.tgz", Size: 4096, Created: expectedTime},
+				blob_store.Blob{Path: "c/bits.zip", Size: 4096, Created: expectedTime},
+				blob_store.Blob{Path: "c/droplet.tgz", Size: 4096, Created: expectedTime},
 			))
 
 			Expect(fakeServer.ReceivedRequests()).To(HaveLen(4))

@@ -175,6 +175,9 @@ compile_brain() {
         go install github.com/cloudfoundry-incubator/buildpack_app_lifecycle/builder
         go install github.com/cloudfoundry-incubator/buildpack_app_lifecycle/launcher
 
+        ## FIXME
+        go get -v -d github.com/aws/aws-sdk-go/...
+        go install github.com/cloudfoundry-incubator/lattice/cell-helpers/s3tool
         go install github.com/cloudfoundry-incubator/lattice/cell-helpers/davtool
 
         pushd src/github.com/coreos/etcd

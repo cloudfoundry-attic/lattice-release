@@ -10,7 +10,9 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/dav_blob_store"
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 )
 
 var _ = Describe("BlobStore", func() {
@@ -67,19 +69,15 @@ var _ = Describe("BlobStore", func() {
 		})
 
 		It("verifies a blob store with valid credentials", func() {
-			blobTargetInfo := dav_blob_store.Config{
-				Host:     serverHost,
-				Port:     serverPort,
-				Username: "",
-				Password: "",
-			}
+			config := config_package.New(persister.NewMemPersister())
+			config.SetBlobStore(serverHost, serverPort, "", "")
 
 			fakeServer.RouteToHandler("PROPFIND", "/blobs/", ghttp.CombineHandlers(
 				ghttp.VerifyHeaderKV("Depth", "1"),
 				ghttp.RespondWith(207, responseBodyRoot, http.Header{"Content-Type": []string{"application/xml"}}),
 			))
 
-			authorized, err := verifier.Verify(blobTargetInfo)
+			authorized, err := verifier.Verify(config)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(authorized).To(BeTrue())
 
@@ -88,12 +86,8 @@ var _ = Describe("BlobStore", func() {
 
 		Context("when the blob store credentials are incorrect", func() {
 			It("rejects a blob store with invalid credentials", func() {
-				blobTargetInfo := dav_blob_store.Config{
-					Host:     serverHost,
-					Port:     serverPort,
-					Username: "",
-					Password: "",
-				}
+				config := config_package.New(persister.NewMemPersister())
+				config.SetBlobStore(serverHost, serverPort, "", "")
 
 				responseBody := `<?xml version="1.0" encoding="iso-8859-1"?>
 				<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -112,7 +106,7 @@ var _ = Describe("BlobStore", func() {
 					ghttp.RespondWith(401, responseBody, http.Header{"Content-Type": []string{"application/xml"}}),
 				))
 
-				authorized, err := verifier.Verify(blobTargetInfo)
+				authorized, err := verifier.Verify(config)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(authorized).To(BeFalse())
 
@@ -122,17 +116,13 @@ var _ = Describe("BlobStore", func() {
 
 		Context("when the blob store is inaccessible", func() {
 			It("returns an error", func() {
-				blobTargetInfo := dav_blob_store.Config{
-					Host:     serverHost,
-					Port:     serverPort,
-					Username: "",
-					Password: "",
-				}
+				config := config_package.New(persister.NewMemPersister())
+				config.SetBlobStore(serverHost, serverPort, "", "")
 
 				fakeServer.Close()
 				fakeServer = nil
 
-				_, err := verifier.Verify(blobTargetInfo)
+				_, err := verifier.Verify(config)
 				Expect(err).To(HaveOccurred())
 			})
 		})

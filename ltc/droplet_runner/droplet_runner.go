@@ -13,8 +13,8 @@ import (
 	"github.com/cloudfoundry-incubator/buildpack_app_lifecycle"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
@@ -53,7 +53,7 @@ type dropletRunner struct {
 
 //go:generate counterfeiter -o fake_blob_store/fake_blob_store.go . BlobStore
 type BlobStore interface {
-	List() ([]dav_blob_store.Blob, error)
+	List() ([]blob_store.Blob, error)
 	Delete(path string) error
 	Upload(path string, contents io.ReadSeeker) error
 	Download(path string) (io.ReadCloser, error)
@@ -61,7 +61,6 @@ type BlobStore interface {
 
 type annotation struct {
 	DropletSource struct {
-		dav_blob_store.Config
 		DropletName string `json:"droplet_name"`
 	} `json:"droplet_source"`
 }
@@ -184,8 +183,6 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 	}
 
 	dropletAnnotation := annotation{}
-	dropletAnnotation.DropletSource.Config.Host = dr.config.BlobStore().Host
-	dropletAnnotation.DropletSource.Config.Port = dr.config.BlobStore().Port
 	dropletAnnotation.DropletSource.DropletName = dropletName
 
 	annotationBytes, err := json.Marshal(dropletAnnotation)
@@ -263,10 +260,8 @@ func (dr *dropletRunner) getExecutionMetadata(path string) (string, error) {
 	return result.ExecutionMetadata, nil
 }
 
-func dropletMatchesAnnotation(blobTarget dav_blob_store.Config, dropletName string, a annotation) bool {
-	return a.DropletSource.DropletName == dropletName &&
-		a.DropletSource.Host == blobTarget.Host &&
-		a.DropletSource.Port == blobTarget.Port
+func dropletMatchesAnnotation(dropletName string, a annotation) bool {
+	return a.DropletSource.DropletName == dropletName
 }
 
 func (dr *dropletRunner) RemoveDroplet(dropletName string) error {
@@ -280,7 +275,7 @@ func (dr *dropletRunner) RemoveDroplet(dropletName string) error {
 			continue
 		}
 
-		if dropletMatchesAnnotation(dr.config.BlobStore(), dropletName, dropletAnnotation) {
+		if dropletMatchesAnnotation(dropletName, dropletAnnotation) {
 			return fmt.Errorf("app %s was launched from droplet", app.ProcessGuid)
 		}
 	}

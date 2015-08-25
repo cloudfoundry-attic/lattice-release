@@ -5,16 +5,16 @@ import (
 	"io"
 	"sync"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 )
 
 type FakeBlobStore struct {
-	ListStub        func() ([]dav_blob_store.Blob, error)
+	ListStub        func() ([]blob_store.Blob, error)
 	listMutex       sync.RWMutex
 	listArgsForCall []struct{}
-	listReturns     struct {
-		result1 []dav_blob_store.Blob
+	listReturns struct {
+		result1 []blob_store.Blob
 		result2 error
 	}
 	DeleteStub        func(path string) error
@@ -45,7 +45,7 @@ type FakeBlobStore struct {
 	}
 }
 
-func (fake *FakeBlobStore) List() ([]dav_blob_store.Blob, error) {
+func (fake *FakeBlobStore) List() ([]blob_store.Blob, error) {
 	fake.listMutex.Lock()
 	fake.listArgsForCall = append(fake.listArgsForCall, struct{}{})
 	fake.listMutex.Unlock()
@@ -62,10 +62,10 @@ func (fake *FakeBlobStore) ListCallCount() int {
 	return len(fake.listArgsForCall)
 }
 
-func (fake *FakeBlobStore) ListReturns(result1 []dav_blob_store.Blob, result2 error) {
+func (fake *FakeBlobStore) ListReturns(result1 []blob_store.Blob, result2 error) {
 	fake.ListStub = nil
 	fake.listReturns = struct {
-		result1 []dav_blob_store.Blob
+		result1 []blob_store.Blob
 		result2 error
 	}{result1, result2}
 }

@@ -1,15 +1,30 @@
 package config
 
 import (
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 )
 
+type BlobStoreConfig struct {
+	Host     string `json:"host,omitempty"`
+	Port     string `json:"port,omitempty"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
+type S3BlobStoreConfig struct {
+	Region     string `json:"region,omitempty"`
+	AccessKey  string `json:"access_key,omitempty"`
+	SecretKey  string `json:"secret_key,omitempty"`
+	BucketName string `json:"bucket_name,omitempty"`
+}
+
 type Data struct {
-	Target    string                `json:"target"`
-	Username  string                `json:"username,omitempty"`
-	Password  string                `json:"password,omitempty"`
-	BlobStore dav_blob_store.Config `json:"dav_blob_store"`
+	Target   string `json:"target"`
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+
+	BlobStore   BlobStoreConfig   `json:"dav_blob_store,omitempty"`
+	S3BlobStore S3BlobStoreConfig `json:"s3_blob_store,omitempty"`
 }
 
 type Config struct {
@@ -65,6 +80,17 @@ func (c *Config) SetBlobStore(host, port, username, password string) {
 	c.data.BlobStore.Password = password
 }
 
-func (c *Config) BlobStore() dav_blob_store.Config {
+func (c *Config) SetS3BlobStore(accessKey, secretKey, bucketName, region string) {
+	c.data.S3BlobStore.AccessKey = accessKey
+	c.data.S3BlobStore.BucketName = bucketName
+	c.data.S3BlobStore.SecretKey = secretKey
+	c.data.S3BlobStore.Region = region
+}
+
+func (c *Config) BlobStore() BlobStoreConfig {
 	return c.data.BlobStore
+}
+
+func (c *Config) S3BlobStore() S3BlobStoreConfig {
+	return c.data.S3BlobStore
 }

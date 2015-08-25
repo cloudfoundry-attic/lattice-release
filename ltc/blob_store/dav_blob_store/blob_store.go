@@ -10,26 +10,16 @@ import (
 	"path"
 	"strings"
 	"time"
+
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
 type BlobStore struct {
 	url url.URL
 }
 
-type Blob struct {
-	Path    string
-	Created time.Time
-	Size    int64
-}
-
-type Config struct {
-	Host     string `json:"host,omitempty"`
-	Port     string `json:"port,omitempty"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
-}
-
-func New(config Config) *BlobStore {
+func New(config config_package.BlobStoreConfig) *BlobStore {
 	return &BlobStore{
 		url: url.URL{
 			Scheme: "http",
@@ -91,13 +81,13 @@ func doListRequest(baseURL *url.URL) (listResponse, error) {
 	return listResp, nil
 }
 
-func listBlobFiles(baseURL *url.URL) ([]Blob, error) {
+func listBlobFiles(baseURL *url.URL) ([]blob_store.Blob, error) {
 	listResp, err := doListRequest(baseURL)
 	if err != nil {
 		return nil, err
 	}
 
-	var blobFiles []Blob
+	var blobFiles []blob_store.Blob
 
 	for _, resp := range listResp.Responses {
 		u, err := url.Parse(resp.Href)
@@ -109,7 +99,7 @@ func listBlobFiles(baseURL *url.URL) ([]Blob, error) {
 			continue
 		}
 
-		blobFiles = append(blobFiles, Blob{
+		blobFiles = append(blobFiles, blob_store.Blob{
 			Path:    strings.Replace(path.Clean(u.Path), "/blobs/", "", 1),
 			Created: resp.LastModified.Time,
 			Size:    resp.ContentLength,
@@ -119,7 +109,7 @@ func listBlobFiles(baseURL *url.URL) ([]Blob, error) {
 	return blobFiles, nil
 }
 
-func (b *BlobStore) List() ([]Blob, error) {
+func (b *BlobStore) List() ([]blob_store.Blob, error) {
 	baseURL := &url.URL{
 		Scheme: b.url.Scheme,
 		Host:   b.url.Host,
@@ -132,7 +122,7 @@ func (b *BlobStore) List() ([]Blob, error) {
 		return nil, err
 	}
 
-	var blobs []Blob
+	var blobs []blob_store.Blob
 
 	for _, resp := range listResp.Responses {
 		u, err := url.Parse(resp.Href)

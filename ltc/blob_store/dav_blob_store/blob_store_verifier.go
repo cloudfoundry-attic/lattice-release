@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
 
 type Verifier struct{}
 
-func (Verifier) Verify(config Config) (authorized bool, err error) {
+func (Verifier) Verify(config *config_package.Config) (authorized bool, err error) {
 	blobStoreURL := url.URL{
 		Scheme: "http",
-		Host:   fmt.Sprintf("%s:%s", config.Host, config.Port),
-		User:   url.UserPassword(config.Username, config.Password),
+		Host:   fmt.Sprintf("%s:%s", config.BlobStore().Host, config.BlobStore().Port),
+		User:   url.UserPassword(config.BlobStore().Username, config.BlobStore().Password),
 	}
 
 	baseURL := &url.URL{

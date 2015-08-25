@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
@@ -22,7 +21,7 @@ type ConfigCommandFactory struct {
 
 //go:generate counterfeiter -o fake_blob_store_verifier/fake_blob_store_verifier.go . BlobStoreVerifier
 type BlobStoreVerifier interface {
-	Verify(config dav_blob_store.Config) (authorized bool, err error)
+	Verify(config *config.Config) (authorized bool, err error)
 }
 
 func NewConfigCommandFactory(config *config.Config, ui terminal.UI, targetVerifier target_verifier.TargetVerifier, blobStoreVerifier BlobStoreVerifier, exitHandler exit_handler.ExitHandler) *ConfigCommandFactory {
@@ -30,12 +29,20 @@ func NewConfigCommandFactory(config *config.Config, ui terminal.UI, targetVerifi
 }
 
 func (factory *ConfigCommandFactory) MakeTargetCommand() cli.Command {
+	var targetFlags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "s3",
+			Usage: "Target an S3 bucket as the droplet store",
+		},
+	}
+
 	var targetCommand = cli.Command{
 		Name:        "target",
 		Aliases:     []string{"ta"},
 		Usage:       "Targets a lattice cluster",
 		Description: "ltc target TARGET (e.g., 192.168.11.11.xip.io)",
 		Action:      factory.target,
+		Flags:       targetFlags,
 	}
 
 	return targetCommand
@@ -43,6 +50,7 @@ func (factory *ConfigCommandFactory) MakeTargetCommand() cli.Command {
 
 func (factory *ConfigCommandFactory) target(context *cli.Context) {
 	target := context.Args().First()
+	s3Enabled := context.Bool("s3")
 
 	if target == "" {
 		factory.printTarget()
@@ -52,7 +60,16 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 
 	factory.config.SetTarget(target)
 	factory.config.SetLogin("", "")
-	factory.config.SetBlobStore(target, "8444", "", "")
+
+	if s3Enabled {
+		accessKey := factory.ui.Prompt("S3 Access Key")
+		secretKey := factory.ui.Prompt("S3 Secret Key")
+		bucketName := factory.ui.Prompt("S3 Bucket")
+		region := factory.ui.Prompt("S3 Region")
+		factory.config.SetS3BlobStore(accessKey, secretKey, bucketName, region)
+	} else {
+		factory.config.SetBlobStore(target, "8444", "", "")
+	}
 
 	_, authorized, err := factory.targetVerifier.VerifyTarget(factory.config.Receptor())
 	if err != nil {
@@ -89,6 +106,7 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 	}
 
 	if !factory.verifyBlobStore() {
+		factory.ui.SayLine("Failed to verify blob store")
 		factory.exitHandler.Exit(exit_codes.BadTarget)
 		return
 	}
@@ -97,7 +115,7 @@ func (factory *ConfigCommandFactory) target(context *cli.Context) {
 }
 
 func (factory *ConfigCommandFactory) verifyBlobStore() bool {
-	authorized, err := factory.blobStoreVerifier.Verify(factory.config.BlobStore())
+	authorized, err := factory.blobStoreVerifier.Verify(factory.config)
 	if err != nil {
 		factory.ui.SayLine("Could not connect to the droplet store.")
 		return false

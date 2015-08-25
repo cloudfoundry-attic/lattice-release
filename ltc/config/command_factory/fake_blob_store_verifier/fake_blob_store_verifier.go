@@ -4,15 +4,15 @@ package fake_blob_store_verifier
 import (
 	"sync"
 
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 )
 
 type FakeBlobStoreVerifier struct {
-	VerifyStub        func(config dav_blob_store.Config) (authorized bool, err error)
+	VerifyStub        func(config *config_package.Config) (authorized bool, err error)
 	verifyMutex       sync.RWMutex
 	verifyArgsForCall []struct {
-		config dav_blob_store.Config
+		config *config_package.Config
 	}
 	verifyReturns struct {
 		result1 bool
@@ -20,10 +20,10 @@ type FakeBlobStoreVerifier struct {
 	}
 }
 
-func (fake *FakeBlobStoreVerifier) Verify(config dav_blob_store.Config) (authorized bool, err error) {
+func (fake *FakeBlobStoreVerifier) Verify(config *config_package.Config) (authorized bool, err error) {
 	fake.verifyMutex.Lock()
 	fake.verifyArgsForCall = append(fake.verifyArgsForCall, struct {
-		config dav_blob_store.Config
+		config *config_package.Config
 	}{config})
 	fake.verifyMutex.Unlock()
 	if fake.VerifyStub != nil {
@@ -39,7 +39,7 @@ func (fake *FakeBlobStoreVerifier) VerifyCallCount() int {
 	return len(fake.verifyArgsForCall)
 }
 
-func (fake *FakeBlobStoreVerifier) VerifyArgsForCall(i int) dav_blob_store.Config {
+func (fake *FakeBlobStoreVerifier) VerifyArgsForCall(i int) *config_package.Config {
 	fake.verifyMutex.RLock()
 	defer fake.verifyMutex.RUnlock()
 	return fake.verifyArgsForCall[i].config

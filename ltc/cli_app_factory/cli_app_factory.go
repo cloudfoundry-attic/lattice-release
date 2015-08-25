@@ -9,9 +9,9 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/cluster_test"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
@@ -187,13 +187,19 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	clusterTestRunner := cluster_test.NewClusterTestRunner(config, ltcConfigRoot)
 	clusterTestCommandFactory := cluster_test_command_factory.NewClusterTestCommandFactory(clusterTestRunner)
 
+	// if s3? {
+	// 	blobStore := s3_blob_store.New(config.S3BlobStore())
+	// 	blobStoreVerifier := s3_blob_store.Verifier{}
+	// } else {
 	blobStore := dav_blob_store.New(config.BlobStore())
+	blobStoreVerifier := dav_blob_store.Verifier{}
+	// }
 
 	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, targetVerifier, appExaminer)
 	cfIgnore := cf_ignore.New()
 	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, taskExaminer, dropletRunner, cfIgnore)
 
-	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, dav_blob_store.Verifier{}, exitHandler)
+	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, blobStoreVerifier, exitHandler)
 
 	helpCommand := cli.Command{
 		Name:        "help",

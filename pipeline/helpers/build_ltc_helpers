@@ -95,6 +95,12 @@ construct_ltc_gopath() {
 
     pushd $GOPATH/src/github.com/cloudfoundry-incubator/lattice/ltc > /dev/null
         set +e      # continue on error
+            ## FIXME:  go getting to make aws-sdk-go happy until it gets back into mainline
+            go get -v -d github.com/aws/aws-sdk-go/...
+            pushd $GOPATH/src/github.com/aws/aws-sdk-go
+                git checkout v0.7.0   ## yuck
+            popd
+
             ## TODO: go get docker/docker separately and unpack its vendored deps.
             echo "Copying docker's vendored dependencies into GOPATH"
             cp -af Godeps/_workspace/src/github.com/docker/docker/vendor/src/* $GOPATH/src/

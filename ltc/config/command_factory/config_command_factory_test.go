@@ -10,7 +10,6 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory/fake_blob_store_verifier"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
@@ -158,14 +157,17 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
 				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
-				Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(dav_blob_store.Config{
+
+				config := fakeBlobStoreVerifier.VerifyArgsForCall(0)
+				blobStoreConfig := config.BlobStore()
+				Expect(blobStoreConfig).To(Equal(config_package.BlobStoreConfig{
 					Host: "myapi.com",
 					Port: "8444",
 				}))
 
 				newConfig := config_package.New(configPersister)
 				Expect(newConfig.Load()).To(Succeed())
-				Expect(newConfig.BlobStore()).To(Equal(dav_blob_store.Config{
+				Expect(newConfig.BlobStore()).To(Equal(config_package.BlobStoreConfig{
 					Host: "myapi.com",
 					Port: "8444",
 				}))
@@ -178,7 +180,10 @@ var _ = Describe("CommandFactory", func() {
 					test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
 					Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
-					Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(dav_blob_store.Config{
+
+					config := fakeBlobStoreVerifier.VerifyArgsForCall(0)
+					blobStoreConfig := config.BlobStore()
+					Expect(blobStoreConfig).To(Equal(config_package.BlobStoreConfig{
 						Host: "myapi.com",
 						Port: "8444",
 					}))
@@ -196,7 +201,10 @@ var _ = Describe("CommandFactory", func() {
 					test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"myapi.com"})
 
 					Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
-					Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(dav_blob_store.Config{
+
+					config := fakeBlobStoreVerifier.VerifyArgsForCall(0)
+					blobStoreConfig := config.BlobStore()
+					Expect(blobStoreConfig).To(Equal(config_package.BlobStoreConfig{
 						Host: "myapi.com",
 						Port: "8444",
 					}))
@@ -306,7 +314,10 @@ var _ = Describe("CommandFactory", func() {
 					Eventually(doneChan).Should(BeClosed())
 
 					Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
-					Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(dav_blob_store.Config{
+
+					config := fakeBlobStoreVerifier.VerifyArgsForCall(0)
+					blobStoreConfig := config.BlobStore()
+					Expect(blobStoreConfig).To(Equal(config_package.BlobStoreConfig{
 						Host:     "myapi.com",
 						Port:     "8444",
 						Username: "testusername",
@@ -316,7 +327,7 @@ var _ = Describe("CommandFactory", func() {
 					newConfig := config_package.New(configPersister)
 					Expect(newConfig.Load()).To(Succeed())
 					Expect(newConfig.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
-					Expect(newConfig.BlobStore()).To(Equal(dav_blob_store.Config{
+					Expect(newConfig.BlobStore()).To(Equal(config_package.BlobStoreConfig{
 						Host:     "myapi.com",
 						Port:     "8444",
 						Username: "testusername",
@@ -338,7 +349,10 @@ var _ = Describe("CommandFactory", func() {
 					Eventually(doneChan).Should(BeClosed())
 
 					Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
-					Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(dav_blob_store.Config{
+
+					config := fakeBlobStoreVerifier.VerifyArgsForCall(0)
+					blobStoreConfig := config.BlobStore()
+					Expect(blobStoreConfig).To(Equal(config_package.BlobStoreConfig{
 						Host:     "myapi.com",
 						Port:     "8444",
 						Username: "testusername",
@@ -364,7 +378,10 @@ var _ = Describe("CommandFactory", func() {
 					Eventually(doneChan).Should(BeClosed())
 
 					Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
-					Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(dav_blob_store.Config{
+
+					config := fakeBlobStoreVerifier.VerifyArgsForCall(0)
+					blobStoreConfig := config.BlobStore()
+					Expect(blobStoreConfig).To(Equal(config_package.BlobStoreConfig{
 						Host:     "myapi.com",
 						Port:     "8444",
 						Username: "testusername",
@@ -375,6 +392,42 @@ var _ = Describe("CommandFactory", func() {
 					verifyOldTargetStillSet()
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadTarget}))
 				})
+			})
+		})
+
+		Context("s3", func() {
+			It("prompts for s3 configuration when --s3 is passed", func() {
+				fakeTargetVerifier.VerifyTargetReturns(true, true, nil)
+				fakeBlobStoreVerifier.VerifyReturns(true, nil)
+
+				doneChan := test_helpers.AsyncExecuteCommandWithArgs(targetCommand, []string{"myapi.com", "--s3"})
+
+				Eventually(outputBuffer).Should(test_helpers.Say("S3 Access Key: "))
+				stdinWriter.Write([]byte("some-access\n"))
+				Eventually(outputBuffer).Should(test_helpers.Say("S3 Secret Key: "))
+				stdinWriter.Write([]byte("some-secret\n"))
+				Eventually(outputBuffer).Should(test_helpers.Say("S3 Bucket: "))
+				stdinWriter.Write([]byte("some-bucket\n"))
+				Eventually(outputBuffer).Should(test_helpers.Say("S3 Region: "))
+				stdinWriter.Write([]byte("some-region\n"))
+
+				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
+				config := fakeBlobStoreVerifier.VerifyArgsForCall(0)
+				s3BlobTargetInfo := config.S3BlobStore()
+				Expect(s3BlobTargetInfo.AccessKey).To(Equal("some-access"))
+				Expect(s3BlobTargetInfo.SecretKey).To(Equal("some-secret"))
+				Expect(s3BlobTargetInfo.BucketName).To(Equal("some-bucket"))
+				Expect(s3BlobTargetInfo.Region).To(Equal("some-region"))
+
+				newConfig := config_package.New(configPersister)
+				Expect(newConfig.Load()).To(Succeed())
+				newS3BlobTargetInfo := newConfig.S3BlobStore()
+				Expect(newS3BlobTargetInfo.AccessKey).To(Equal("some-access"))
+				Expect(newS3BlobTargetInfo.SecretKey).To(Equal("some-secret"))
+				Expect(newS3BlobTargetInfo.BucketName).To(Equal("some-bucket"))
+				Expect(newS3BlobTargetInfo.Region).To(Equal("some-region"))
+
+				Eventually(doneChan).Should(BeClosed())
 			})
 		})
 

@@ -49,6 +49,7 @@ pushd $GOPATH/src/github.com/cloudfoundry-incubator >/dev/null
   pushd lattice/cell-helpers >/dev/null
     godep restore
     go install ./davtool/
+    go install ./s3tool/
     go install ./tee2metron/
   popd >/dev/null
 

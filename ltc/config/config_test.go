@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/dav_blob_store"
 )
 
 var _ = Describe("Config", func() {
@@ -104,7 +103,7 @@ var _ = Describe("Config", func() {
 		It("sets the blob target", func() {
 			testConfig.SetBlobStore("some-host", "7474", "some-username", "some-password")
 
-			Expect(testConfig.BlobStore()).To(Equal(dav_blob_store.Config{
+			Expect(testConfig.BlobStore()).To(Equal(config.BlobStoreConfig{
 				Host:     "some-host",
 				Port:     "7474",
 				Username: "some-username",
