@@ -14,7 +14,7 @@ type FakeBlobStore struct {
 	ListStub        func() ([]blob.Blob, error)
 	listMutex       sync.RWMutex
 	listArgsForCall []struct{}
-	listReturns struct {
+	listReturns     struct {
 		result1 []blob.Blob
 		result2 error
 	}
