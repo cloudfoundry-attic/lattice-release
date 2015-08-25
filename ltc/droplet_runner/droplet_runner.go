@@ -15,7 +15,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
@@ -47,7 +46,6 @@ type dropletRunner struct {
 	taskRunner     task_runner.TaskRunner
 	config         *config.Config
 	blobStore      BlobStore
-	targetVerifier target_verifier.TargetVerifier
 	appExaminer    app_examiner.AppExaminer
 }
 
@@ -65,13 +63,12 @@ type annotation struct {
 	} `json:"droplet_source"`
 }
 
-func New(appRunner app_runner.AppRunner, taskRunner task_runner.TaskRunner, config *config.Config, blobStore BlobStore, targetVerifier target_verifier.TargetVerifier, appExaminer app_examiner.AppExaminer) DropletRunner {
+func New(appRunner app_runner.AppRunner, taskRunner task_runner.TaskRunner, config *config.Config, blobStore BlobStore, appExaminer app_examiner.AppExaminer) DropletRunner {
 	return &dropletRunner{
 		appRunner:      appRunner,
 		taskRunner:     taskRunner,
 		config:         config,
 		blobStore:      blobStore,
-		targetVerifier: targetVerifier,
 		appExaminer:    appExaminer,
 	}
 }

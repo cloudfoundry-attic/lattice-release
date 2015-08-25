@@ -19,7 +19,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner/fake_task_runner"
@@ -36,7 +35,6 @@ var _ = Describe("DropletRunner", func() {
 		fakeTaskRunner     *fake_task_runner.FakeTaskRunner
 		config             *config_package.Config
 		fakeBlobStore      *fake_blob_store.FakeBlobStore
-		fakeTargetVerifier *fake_target_verifier.FakeTargetVerifier
 		fakeAppExaminer    *fake_app_examiner.FakeAppExaminer
 		dropletRunner      droplet_runner.DropletRunner
 	)
@@ -46,9 +44,8 @@ var _ = Describe("DropletRunner", func() {
 		fakeTaskRunner = &fake_task_runner.FakeTaskRunner{}
 		config = config_package.New(persister.NewMemPersister())
 		fakeBlobStore = &fake_blob_store.FakeBlobStore{}
-		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
 		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
-		dropletRunner = droplet_runner.New(fakeAppRunner, fakeTaskRunner, config, fakeBlobStore, fakeTargetVerifier, fakeAppExaminer)
+		dropletRunner = droplet_runner.New(fakeAppRunner, fakeTaskRunner, config, fakeBlobStore, fakeAppExaminer)
 	})
 
 	Describe("ListDroplets", func() {

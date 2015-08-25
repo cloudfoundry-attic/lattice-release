@@ -195,7 +195,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	blobStoreVerifier := dav_blob_store.Verifier{}
 	// }
 
-	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, targetVerifier, appExaminer)
+	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, appExaminer)
 	cfIgnore := cf_ignore.New()
 	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, taskExaminer, dropletRunner, cfIgnore)
 
