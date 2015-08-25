@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/cf_ignore"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
@@ -46,9 +47,16 @@ func init() {
 type DropletRunnerCommandFactory struct {
 	app_runner_command_factory.AppRunnerCommandFactory
 
-	taskExaminer  task_examiner.TaskExaminer
-	dropletRunner droplet_runner.DropletRunner
-	cfIgnore      cf_ignore.CFIgnore
+	blobStoreVerifier BlobStoreVerifier
+	taskExaminer      task_examiner.TaskExaminer
+	dropletRunner     droplet_runner.DropletRunner
+	cfIgnore          cf_ignore.CFIgnore
+	config            *config_package.Config
+}
+
+//go:generate counterfeiter -o fake_blob_store_verifier/fake_blob_store_verifier.go . BlobStoreVerifier
+type BlobStoreVerifier interface {
+	Verify(config *config_package.Config) (authorized bool, err error)
 }
 
 type dropletSliceSortedByCreated []droplet_runner.Droplet
@@ -65,12 +73,14 @@ func (ds dropletSliceSortedByCreated) Less(i, j int) bool {
 }
 func (ds dropletSliceSortedByCreated) Swap(i, j int) { ds[i], ds[j] = ds[j], ds[i] }
 
-func NewDropletRunnerCommandFactory(appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory, taskExaminer task_examiner.TaskExaminer, dropletRunner droplet_runner.DropletRunner, cfIgnore cf_ignore.CFIgnore) *DropletRunnerCommandFactory {
+func NewDropletRunnerCommandFactory(appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory, blobStoreVerifier BlobStoreVerifier, taskExaminer task_examiner.TaskExaminer, dropletRunner droplet_runner.DropletRunner, cfIgnore cf_ignore.CFIgnore, config *config_package.Config) *DropletRunnerCommandFactory {
 	return &DropletRunnerCommandFactory{
 		AppRunnerCommandFactory: appRunnerCommandFactory,
+		blobStoreVerifier:       blobStoreVerifier,
 		taskExaminer:            taskExaminer,
 		dropletRunner:           dropletRunner,
 		cfIgnore:                cfIgnore,
+		config:                  config,
 	}
 }
 
@@ -284,6 +294,10 @@ func (factory *DropletRunnerCommandFactory) MakeExportDropletCommand() cli.Comma
 }
 
 func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
+	if !factory.ensureBlobStoreVerified() {
+		return
+	}
+
 	droplets, err := factory.dropletRunner.ListDroplets()
 	if err != nil {
 		factory.UI.SayLine(fmt.Sprintf("Error listing droplets: %s", err))
@@ -307,6 +321,21 @@ func (factory *DropletRunnerCommandFactory) listDroplets(context *cli.Context) {
 	}
 
 	w.Flush()
+}
+
+func (factory *DropletRunnerCommandFactory) ensureBlobStoreVerified() bool {
+	authorized, err := factory.blobStoreVerifier.Verify(factory.config)
+	if err != nil {
+		factory.UI.SayLine("Error verifying droplet store: " + err.Error())
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return false
+	}
+	if !authorized {
+		factory.UI.SayLine("Error verifying droplet store: unauthorized")
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return false
+	}
+	return true
 }
 
 func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
@@ -339,6 +368,10 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	if cpuWeightFlag < 1 || cpuWeightFlag > 100 {
 		factory.UI.SayIncorrectUsage("Invalid CPU Weight")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	if !factory.ensureBlobStoreVerified() {
 		return
 	}
 

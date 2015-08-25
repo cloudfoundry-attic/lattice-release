@@ -17,8 +17,10 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/cf_ignore/fake_cf_ignore"
+	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/fake_blob_store_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
@@ -46,6 +48,8 @@ var _ = Describe("CommandFactory", func() {
 		fakeAppExaminer         *fake_app_examiner.FakeAppExaminer
 		fakeTaskExaminer        *fake_task_examiner.FakeTaskExaminer
 		fakeCFIgnore            *fake_cf_ignore.FakeCFIgnore
+		fakeBlobStoreVerifier   *fake_blob_store_verifier.FakeBlobStoreVerifier
+		config                  *config_package.Config
 
 		appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory
 	)
@@ -58,6 +62,8 @@ var _ = Describe("CommandFactory", func() {
 		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
 		fakeTaskExaminer = &fake_task_examiner.FakeTaskExaminer{}
 		fakeCFIgnore = &fake_cf_ignore.FakeCFIgnore{}
+		fakeBlobStoreVerifier = &fake_blob_store_verifier.FakeBlobStoreVerifier{}
+		config = config_package.New(nil)
 
 		outputBuffer = gbytes.NewBuffer()
 		appRunnerCommandFactory = app_runner_command_factory.AppRunnerCommandFactory{
@@ -76,8 +82,9 @@ var _ = Describe("CommandFactory", func() {
 		var buildDropletCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner, fakeCFIgnore)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, fakeCFIgnore, config)
 			buildDropletCommand = commandFactory.MakeBuildDropletCommand()
+			fakeBlobStoreVerifier.VerifyReturns(true, nil)
 		})
 
 		Context("when the archive path is a folder and exists", func() {
@@ -115,6 +122,9 @@ var _ = Describe("CommandFactory", func() {
 
 			It("zips up current working folder and uploads as the droplet name", func() {
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
+
+				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
+				Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(config))
 
 				Expect(outputBuffer).To(test_helpers.SayLine("Submitted build of droplet-name"))
 				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
@@ -450,6 +460,32 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
+		Context("when the blob store cannot be verified", func() {
+			It("prints the error and stops when verification fails", func() {
+				fakeBlobStoreVerifier.VerifyReturns(false, errors.New("failed"))
+
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Error verifying droplet store: failed"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
+				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
+			})
+
+			It("prints the error and stops when unauthorized", func() {
+				fakeBlobStoreVerifier.VerifyReturns(false, nil)
+
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Error verifying droplet store: unauthorized"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
+				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
+			})
+		})
+
 		Context("when the droplet runner returns an error", func() {
 			It("prints the error from upload bits", func() {
 				fakeDropletRunner.UploadBitsReturns(errors.New("uploading bits failed"))
@@ -623,8 +659,9 @@ var _ = Describe("CommandFactory", func() {
 		var listDropletsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner, nil)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, config)
 			listDropletsCommand = commandFactory.MakeListDropletsCommand()
+			fakeBlobStoreVerifier.VerifyReturns(true, nil)
 		})
 
 		It("lists the droplets most recent first", func() {
@@ -639,6 +676,9 @@ var _ = Describe("CommandFactory", func() {
 			fakeDropletRunner.ListDropletsReturns(droplets, nil)
 
 			test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
+
+			Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
+			Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(config))
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Droplet\t\tCreated At\t\tSize"))
 			Expect(outputBuffer).To(test_helpers.SayLine("drop-b\t\t06/15 16:11:33.00\t456K"))
@@ -672,13 +712,36 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
+
+		Context("when the blob store cannot be verified", func() {
+			It("prints the error and stops when verification fails", func() {
+				fakeBlobStoreVerifier.VerifyReturns(false, errors.New("failed"))
+
+				test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Error verifying droplet store: failed"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
+			})
+
+			It("prints the error and stops when unauthorized", func() {
+				fakeBlobStoreVerifier.VerifyReturns(false, nil)
+
+				test_helpers.ExecuteCommandWithArgs(listDropletsCommand, []string{})
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Error verifying droplet store: unauthorized"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
+			})
+		})
+
 	})
 
 	Describe("LaunchDropletCommand", func() {
 		var launchDropletCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner, nil)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, config)
 			launchDropletCommand = commandFactory.MakeLaunchDropletCommand()
 		})
 
@@ -997,7 +1060,7 @@ var _ = Describe("CommandFactory", func() {
 		var removeDropletCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner, nil)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, config)
 			removeDropletCommand = commandFactory.MakeRemoveDropletCommand()
 		})
 
@@ -1029,7 +1092,7 @@ var _ = Describe("CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeTaskExaminer, fakeDropletRunner, nil)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, config)
 			exportDropletCommand = commandFactory.MakeExportDropletCommand()
 
 		})
@@ -1105,7 +1168,7 @@ var _ = Describe("CommandFactory", func() {
 		var importDropletCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, nil, fakeDropletRunner, nil)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, nil, fakeDropletRunner, nil, config)
 			importDropletCommand = commandFactory.MakeImportDropletCommand()
 		})
 
