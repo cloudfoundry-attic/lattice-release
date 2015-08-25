@@ -17,7 +17,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
-	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/blob"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_blob_store"
@@ -31,12 +31,12 @@ import (
 
 var _ = Describe("DropletRunner", func() {
 	var (
-		fakeAppRunner      *fake_app_runner.FakeAppRunner
-		fakeTaskRunner     *fake_task_runner.FakeTaskRunner
-		config             *config_package.Config
-		fakeBlobStore      *fake_blob_store.FakeBlobStore
-		fakeAppExaminer    *fake_app_examiner.FakeAppExaminer
-		dropletRunner      droplet_runner.DropletRunner
+		fakeAppRunner   *fake_app_runner.FakeAppRunner
+		fakeTaskRunner  *fake_task_runner.FakeTaskRunner
+		config          *config_package.Config
+		fakeBlobStore   *fake_blob_store.FakeBlobStore
+		fakeAppExaminer *fake_app_examiner.FakeAppExaminer
+		dropletRunner   droplet_runner.DropletRunner
 	)
 
 	BeforeEach(func() {
@@ -50,7 +50,7 @@ var _ = Describe("DropletRunner", func() {
 
 	Describe("ListDroplets", func() {
 		It("returns a list of droplets in the blob store", func() {
-			fakeBlobStore.ListReturns([]blob_store.Blob{
+			fakeBlobStore.ListReturns([]blob.Blob{
 				{Path: "X/bits.zip", Created: time.Unix(1000, 0), Size: 100},
 				{Path: "X/droplet.tgz", Created: time.Unix(2000, 0), Size: 200},
 				{Path: "X/result.json", Created: time.Unix(3000, 0), Size: 300},
@@ -117,6 +117,40 @@ var _ = Describe("DropletRunner", func() {
 			config.SetBlobStore("blob-host", "7474", "dav-user", "dav-pass")
 			Expect(config.Save()).To(Succeed())
 
+			blobURL := fmt.Sprintf("http://%s:%s@%s:%s%s",
+				config.BlobStore().Username,
+				config.BlobStore().Password,
+				config.BlobStore().Host,
+				config.BlobStore().Port,
+				"/blobs/droplet-name")
+
+			fakeBlobStore.DownloadAppBitsActionReturns(&models.DownloadAction{
+				From: blobURL + "/bits.zip",
+				To:   "/tmp/app",
+				User: "vcap",
+			})
+
+			fakeBlobStore.DeleteAppBitsActionReturns(&models.RunAction{
+				Path: "/tmp/davtool",
+				Dir:  "/",
+				Args: []string{"delete", blobURL + "/bits.zip"},
+				User: "vcap",
+			})
+
+			fakeBlobStore.UploadDropletActionReturns(&models.RunAction{
+				Path: "/tmp/davtool",
+				Dir:  "/",
+				Args: []string{"put", blobURL + "/droplet.tgz", "/tmp/droplet"},
+				User: "vcap",
+			})
+
+			fakeBlobStore.UploadDropletMetadataActionReturns(&models.RunAction{
+				Path: "/tmp/davtool",
+				Dir:  "/",
+				Args: []string{"put", blobURL + "/result.json", "/tmp/result.json"},
+				User: "vcap",
+			})
+
 			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{}, 128, 100, 800)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -124,13 +158,6 @@ var _ = Describe("DropletRunner", func() {
 			createTaskParams := fakeTaskRunner.CreateTaskArgsForCall(0)
 			Expect(createTaskParams).ToNot(BeNil())
 			receptorRequest := createTaskParams.GetReceptorRequest()
-
-			blobURL := fmt.Sprintf("http://%s:%s@%s:%s%s",
-				config.BlobStore().Username,
-				config.BlobStore().Password,
-				config.BlobStore().Host,
-				config.BlobStore().Port,
-				"/blobs/droplet-name")
 
 			expectedActions := &models.SerialAction{
 				Actions: []models.Action{
@@ -140,7 +167,7 @@ var _ = Describe("DropletRunner", func() {
 						User: "vcap",
 					},
 					&models.DownloadAction{
-						From: "http://dav-user:dav-pass@blob-host:7474/blobs/droplet-name/bits.zip",
+						From: blobURL + "/bits.zip",
 						To:   "/tmp/app",
 						User: "vcap",
 					},
@@ -263,6 +290,12 @@ var _ = Describe("DropletRunner", func() {
 			executionMetadata := `{"execution_metadata": "{\"start_command\": \"start\"}"}`
 			fakeBlobStore.DownloadReturns(ioutil.NopCloser(strings.NewReader(executionMetadata)), nil)
 
+			fakeBlobStore.DownloadDropletActionReturns(&models.DownloadAction{
+				From: "http://dav-user:dav-pass@blob-host:7474/blobs/droplet-name/droplet.tgz",
+				To:   "/home/vcap",
+				User: "vcap",
+			})
+
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
 			Expect(err).NotTo(HaveOccurred())
 
@@ -342,7 +375,7 @@ var _ = Describe("DropletRunner", func() {
 			config.SetBlobStore("blob-host", "7474", "dav-user", "dav-pass")
 			Expect(config.Save()).To(Succeed())
 
-			fakeBlobStore.ListReturns([]blob_store.Blob{
+			fakeBlobStore.ListReturns([]blob.Blob{
 				{Path: "drippy/bits.zip"},
 				{Path: "drippy/droplet.tgz"},
 				{Path: "drippy/result.json"},
@@ -409,7 +442,7 @@ var _ = Describe("DropletRunner", func() {
 		})
 
 		It("returns an error when the droplet doesn't exist", func() {
-			fakeBlobStore.ListReturns([]blob_store.Blob{
+			fakeBlobStore.ListReturns([]blob.Blob{
 				{Path: "drippy/bits.zip"},
 				{Path: "drippy/droplet.tgz"},
 				{Path: "drippy/result.json"},

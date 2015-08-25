@@ -11,17 +11,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/blob"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 type BlobStore struct {
-	url url.URL
+	URL url.URL
 }
 
 func New(config config_package.BlobStoreConfig) *BlobStore {
 	return &BlobStore{
-		url: url.URL{
+		URL: url.URL{
 			Scheme: "http",
 			Host:   fmt.Sprintf("%s:%s", config.Host, config.Port),
 			User:   url.UserPassword(config.Username, config.Password),
@@ -81,13 +82,13 @@ func doListRequest(baseURL *url.URL) (listResponse, error) {
 	return listResp, nil
 }
 
-func listBlobFiles(baseURL *url.URL) ([]blob_store.Blob, error) {
+func listBlobFiles(baseURL *url.URL) ([]blob.Blob, error) {
 	listResp, err := doListRequest(baseURL)
 	if err != nil {
 		return nil, err
 	}
 
-	var blobFiles []blob_store.Blob
+	var blobFiles []blob.Blob
 
 	for _, resp := range listResp.Responses {
 		u, err := url.Parse(resp.Href)
@@ -99,7 +100,7 @@ func listBlobFiles(baseURL *url.URL) ([]blob_store.Blob, error) {
 			continue
 		}
 
-		blobFiles = append(blobFiles, blob_store.Blob{
+		blobFiles = append(blobFiles, blob.Blob{
 			Path:    strings.Replace(path.Clean(u.Path), "/blobs/", "", 1),
 			Created: resp.LastModified.Time,
 			Size:    resp.ContentLength,
@@ -109,11 +110,11 @@ func listBlobFiles(baseURL *url.URL) ([]blob_store.Blob, error) {
 	return blobFiles, nil
 }
 
-func (b *BlobStore) List() ([]blob_store.Blob, error) {
+func (b *BlobStore) List() ([]blob.Blob, error) {
 	baseURL := &url.URL{
-		Scheme: b.url.Scheme,
-		Host:   b.url.Host,
-		User:   b.url.User,
+		Scheme: b.URL.Scheme,
+		Host:   b.URL.Host,
+		User:   b.URL.User,
 		Path:   "/blobs",
 	}
 
@@ -122,7 +123,7 @@ func (b *BlobStore) List() ([]blob_store.Blob, error) {
 		return nil, err
 	}
 
-	var blobs []blob_store.Blob
+	var blobs []blob.Blob
 
 	for _, resp := range listResp.Responses {
 		u, err := url.Parse(resp.Href)
@@ -130,7 +131,7 @@ func (b *BlobStore) List() ([]blob_store.Blob, error) {
 			return nil, err
 		}
 
-		u.User = b.url.User
+		u.User = b.URL.User
 
 		if path.Clean(baseURL.Path) == path.Clean(u.Path) {
 			continue
@@ -181,9 +182,9 @@ func ensureParentCollectionExists(baseURL *url.URL) error {
 
 func (b *BlobStore) Upload(path string, contents io.ReadSeeker) error {
 	baseURL := &url.URL{
-		Scheme: b.url.Scheme,
-		Host:   b.url.Host,
-		User:   b.url.User,
+		Scheme: b.URL.Scheme,
+		Host:   b.URL.Host,
+		User:   b.URL.User,
 		Path:   "/blobs/" + path,
 	}
 
@@ -218,9 +219,9 @@ func (b *BlobStore) Upload(path string, contents io.ReadSeeker) error {
 
 func (b *BlobStore) Download(path string) (io.ReadCloser, error) {
 	baseURL := &url.URL{
-		Scheme: b.url.Scheme,
-		Host:   b.url.Host,
-		User:   b.url.User,
+		Scheme: b.URL.Scheme,
+		Host:   b.URL.Host,
+		User:   b.URL.User,
 		Path:   "/blobs/" + path,
 	}
 
@@ -243,9 +244,9 @@ func (b *BlobStore) Download(path string) (io.ReadCloser, error) {
 
 func (b *BlobStore) Delete(path string) error {
 	baseURL := &url.URL{
-		Scheme: b.url.Scheme,
-		Host:   b.url.Host,
-		User:   b.url.User,
+		Scheme: b.URL.Scheme,
+		Host:   b.URL.Host,
+		User:   b.URL.User,
 		Path:   "/blobs/" + path,
 	}
 
@@ -264,4 +265,49 @@ func (b *BlobStore) Delete(path string) error {
 	}
 
 	return nil
+}
+
+func (b *BlobStore) DownloadAppBitsAction(dropletName string) models.Action {
+	return &models.DownloadAction{
+		From: b.URL.String() + "/blobs/" + dropletName + "/bits.zip",
+		To:   "/tmp/app",
+		User: "vcap",
+	}
+}
+
+func (b *BlobStore) DeleteAppBitsAction(dropletName string) models.Action {
+	return &models.RunAction{
+		Path: "/tmp/davtool",
+		Dir:  "/",
+		Args: []string{"delete", b.URL.String() + "/blobs/" + dropletName + "/bits.zip"},
+		User: "vcap",
+	}
+}
+
+func (b *BlobStore) UploadDropletAction(dropletName string) models.Action {
+	return &models.RunAction{
+		Path: "/tmp/davtool",
+		Dir:  "/",
+		Args: []string{"put", b.URL.String() + "/blobs/" + dropletName + "/droplet.tgz", "/tmp/droplet"},
+		User: "vcap",
+	}
+
+}
+
+func (b *BlobStore) UploadDropletMetadataAction(dropletName string) models.Action {
+	return &models.RunAction{
+		Path: "/tmp/davtool",
+		Dir:  "/",
+		Args: []string{"put", b.URL.String() + "/blobs/" + dropletName + "/result.json", "/tmp/result.json"},
+		User: "vcap",
+	}
+}
+
+func (b *BlobStore) DownloadDropletAction(dropletName string) models.Action {
+	return &models.DownloadAction{
+		From: b.URL.String() + "/blobs/" + dropletName + "/droplet.tgz",
+		To:   "/home/vcap",
+		User: "vcap",
+	}
+
 }

@@ -1,4 +1,4 @@
-package blob_store
+package blob
 
 import "time"
 

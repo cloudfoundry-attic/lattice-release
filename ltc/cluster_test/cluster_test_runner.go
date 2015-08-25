@@ -2,6 +2,7 @@ package cluster_test
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -225,7 +226,6 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				Eventually(errorCheckForRoute(appRoute), timeout, .5).Should(HaveOccurred())
 
 				runner.removeDroplet(timeout, dropletName)
-				Eventually(errorCheckURLExists(dropletFolderURL+"/droplet.tgz"), timeout, 1).Should(HaveOccurred())
 			})
 
 			It("builds, lists and launches a droplet", func() {
@@ -236,8 +236,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				By("launching a build task")
 				runner.buildDroplet(timeout, dropletName, "https://github.com/cloudfoundry/go-buildpack.git", gitDir)
 
-				By("uploading a compiled droplet to the blob store")
-				Eventually(errorCheckURLExists(dropletFolderURL+"/droplet.tgz"), timeout, 1).ShouldNot(HaveOccurred())
+				Eventually(runner.checkIfTaskCompleted("build-droplet-"+dropletName), timeout, 1).Should(BeTrue())
 
 				By("listing droplets")
 				runner.listDroplets(timeout, dropletName)
@@ -328,6 +327,23 @@ func (runner *clusterTestRunner) listDroplets(timeout time.Duration, dropletName
 	Expect(session.Out).To(gbytes.Say(dropletName))
 
 	fmt.Fprintln(getStyledWriter("test"), "Found", dropletName, "in the list!")
+}
+
+func (runner *clusterTestRunner) checkIfTaskCompleted(taskName string) func() bool {
+	fmt.Fprintln(getStyledWriter("test"), colors.PurpleUnderline("Waiting for task "+taskName+" to complete"))
+	return func() bool {
+		command := runner.command("task", taskName)
+
+		session, err := gexec.Start(command, getStyledWriter("task"), getStyledWriter("task"))
+		if err != nil {
+			panic(err)
+		}
+		if exitCode := session.Wait().ExitCode(); exitCode != 0 {
+			return true
+		}
+
+		return bytes.Contains(session.Out.Contents(), []byte("COMPLETED"))
+	}
 }
 
 func (runner *clusterTestRunner) removeDroplet(timeout time.Duration, dropletName string) {
@@ -455,25 +471,6 @@ func errorCheckForRoute(appRoute string) func() error {
 
 		if response.StatusCode != 200 {
 			return fmt.Errorf("Status code %d should be 200", response.StatusCode)
-		}
-
-		return nil
-	}
-}
-
-func errorCheckURLExists(url string) func() error {
-	fmt.Fprintln(getStyledWriter("test"), "Polling for", url)
-	return func() error {
-		response, err := makeGetRequestToURL(url)
-		if err != nil {
-			return err
-		}
-
-		io.Copy(ioutil.Discard, response.Body)
-		defer response.Body.Close()
-
-		if response.StatusCode == 404 {
-			return fmt.Errorf("URL %s doesn't exist", url)
 		}
 
 		return nil

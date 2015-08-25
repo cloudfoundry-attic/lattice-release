@@ -33,13 +33,13 @@ func main() {
 
 func deleteAction(args []string) {
 	if len(args) != 5 {
-		fmt.Println("Usage: s3tool delete s3AccessKey s3SecretKey blobStoreURL s3Bucket s3Path")
+		fmt.Println("Usage: s3tool delete s3AccessKey s3SecretKey s3Bucket s3Region s3Path")
 		os.Exit(3)
 	}
 
-	accessKey, secretKey, blobStoreURL, bucket, path := args[0], args[1], args[2], args[3], args[4]
+	accessKey, secretKey, bucket, region, path := args[0], args[1], args[2], args[3], args[4]
 
-	client := connect(accessKey, secretKey, blobStoreURL)
+	client := connect(accessKey, secretKey, region)
 
 	if _, err := client.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: aws.String(bucket),
@@ -54,13 +54,13 @@ func deleteAction(args []string) {
 
 func getAction(args []string) {
 	if len(args) != 6 {
-		fmt.Println("Usage: s3tool get s3AccessKey s3SecretKey blobStoreURL s3Bucket s3Path destinationFilePath")
+		fmt.Println("Usage: s3tool get s3AccessKey s3SecretKey s3Bucket s3Region s3Path destinationFilePath")
 		os.Exit(3)
 	}
 
-	accessKey, secretKey, blobStoreURL, bucket, path, destPath := args[0], args[1], args[2], args[3], args[4], args[5]
+	accessKey, secretKey, bucket, region, path, destPath := args[0], args[1], args[2], args[3], args[4], args[5]
 
-	client := connect(accessKey, secretKey, blobStoreURL)
+	client := connect(accessKey, secretKey, region)
 
 	output, err := client.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(bucket),
@@ -88,13 +88,13 @@ func getAction(args []string) {
 
 func putAction(args []string) {
 	if len(args) != 6 {
-		fmt.Println("Usage: s3tool put s3AccessKey s3SecretKey blobStoreURL s3Bucket s3Path fileToUpload")
+		fmt.Println("Usage: s3tool put s3AccessKey s3SecretKey s3Bucket s3Region s3Path fileToUpload")
 		os.Exit(3)
 	}
 
-	accessKey, secretKey, blobStoreURL, bucket, path, sourcePath := args[0], args[1], args[2], args[3], args[4], args[5]
+	accessKey, secretKey, bucket, region, path, sourcePath := args[0], args[1], args[2], args[3], args[4], args[5]
 
-	client := connect(accessKey, secretKey, blobStoreURL)
+	client := connect(accessKey, secretKey, region)
 
 	sourceFile, err := os.OpenFile(sourcePath, os.O_RDONLY, 0444)
 	if err != nil {
@@ -115,18 +115,16 @@ func putAction(args []string) {
 	fmt.Printf("Uploaded %s to s3://%s/%s.\n", sourcePath, bucket, path)
 }
 
-func connect(accessKey, secretKey, url string) *s3.S3 {
-	awsRegion, awsS3ForcePathStyle := "riak-region-1", true
+func connect(accessKey, secretKey, region string) *s3.S3 {
 	client := s3.New(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(accessKey, secretKey, ""),
-		Endpoint:         &url,
-		Region:           &awsRegion,
-		S3ForcePathStyle: &awsS3ForcePathStyle,
+		Region:           aws.String(region),
+		S3ForcePathStyle: aws.Bool(true),
 	})
-	client.Handlers.Sign.Clear()
-	client.Handlers.Sign.PushBack(aws.BuildContentLength)
-	client.Handlers.Sign.PushBack(func(request *aws.Request) {
-		v2Sign(accessKey, secretKey, request.Time, request.HTTPRequest)
-	})
+
+	if override := os.Getenv("AWS_ENDPOINT_OVERRIDE"); override != "" {
+		client.Endpoint = override
+	}
+
 	return client
 }

@@ -99,6 +99,17 @@ var _ = Describe("Config", func() {
 		})
 	})
 
+	Describe("ActiveBlobStore", func() {
+		It("defaults to 'dav'", func() {
+			Expect(testConfig.ActiveBlobStore().String()).To(Equal("dav"))
+		})
+
+		It("reports the active blobstore", func() {
+			testConfig.SetS3BlobStore("some-access-key", "some-secret-key", "some-bucket-name", "some-s3-region")
+			Expect(testConfig.ActiveBlobStore().String()).To(Equal("s3"))
+		})
+	})
+
 	Describe("TargetBlob", func() {
 		It("sets the blob target", func() {
 			testConfig.SetBlobStore("some-host", "7474", "some-username", "some-password")
@@ -109,6 +120,30 @@ var _ = Describe("Config", func() {
 				Username: "some-username",
 				Password: "some-password",
 			}))
+		})
+
+		It("sets the activeBlobStore to 'dav'", func() {
+			testConfig.SetS3BlobStore("some-access-key", "some-secret-key", "some-bucket-name", "some-region")
+			testConfig.SetBlobStore("some-host", "7474", "some-username", "some-password")
+			Expect(testConfig.ActiveBlobStore().String()).To(Equal("dav"))
+		})
+	})
+
+	Describe("TargetS3Blob", func() {
+		It("sets the s3 blob target", func() {
+			testConfig.SetS3BlobStore("some-access-key", "some-secret-key", "some-bucket-name", "some-region")
+
+			Expect(testConfig.S3BlobStore()).To(Equal(config.S3BlobStoreConfig{
+				Region:     "some-region",
+				AccessKey:  "some-access-key",
+				SecretKey:  "some-secret-key",
+				BucketName: "some-bucket-name",
+			}))
+		})
+
+		It("sets the activeBlobStore to 's3'", func() {
+			testConfig.SetS3BlobStore("some-access-key", "some-secret-key", "some-bucket-name", "some-region")
+			Expect(testConfig.ActiveBlobStore().String()).To(Equal("s3"))
 		})
 	})
 })

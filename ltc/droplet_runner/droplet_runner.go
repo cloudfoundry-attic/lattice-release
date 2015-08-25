@@ -14,6 +14,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/blob"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
@@ -42,19 +43,21 @@ type Droplet struct {
 }
 
 type dropletRunner struct {
-	appRunner      app_runner.AppRunner
-	taskRunner     task_runner.TaskRunner
-	config         *config.Config
-	blobStore      BlobStore
-	appExaminer    app_examiner.AppExaminer
+	appRunner   app_runner.AppRunner
+	taskRunner  task_runner.TaskRunner
+	config      *config.Config
+	blobStore   BlobStore
+	appExaminer app_examiner.AppExaminer
 }
 
 //go:generate counterfeiter -o fake_blob_store/fake_blob_store.go . BlobStore
 type BlobStore interface {
-	List() ([]blob_store.Blob, error)
+	List() ([]blob.Blob, error)
 	Delete(path string) error
 	Upload(path string, contents io.ReadSeeker) error
 	Download(path string) (io.ReadCloser, error)
+
+	blob_store.DropletStore
 }
 
 type annotation struct {
@@ -65,11 +68,11 @@ type annotation struct {
 
 func New(appRunner app_runner.AppRunner, taskRunner task_runner.TaskRunner, config *config.Config, blobStore BlobStore, appExaminer app_examiner.AppExaminer) DropletRunner {
 	return &dropletRunner{
-		appRunner:      appRunner,
-		taskRunner:     taskRunner,
-		config:         config,
-		blobStore:      blobStore,
-		appExaminer:    appExaminer,
+		appRunner:   appRunner,
+		taskRunner:  taskRunner,
+		config:      config,
+		blobStore:   blobStore,
+		appExaminer: appExaminer,
 	}
 }
 
@@ -102,13 +105,6 @@ func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
 func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string, memoryMB, cpuWeight, diskMB int) error {
 	builderConfig := buildpack_app_lifecycle.NewLifecycleBuilderConfig([]string{buildpackUrl}, true, false)
 
-	dropletURL := fmt.Sprintf("http://%s:%s@%s:%s%s",
-		dr.config.BlobStore().Username,
-		dr.config.BlobStore().Password,
-		dr.config.BlobStore().Host,
-		dr.config.BlobStore().Port,
-		path.Join("/blobs", dropletName))
-
 	action := &models.SerialAction{
 		Actions: []models.Action{
 			&models.DownloadAction{
@@ -116,17 +112,8 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				To:   "/tmp",
 				User: "vcap",
 			},
-			&models.DownloadAction{
-				From: dropletURL + "/bits.zip",
-				To:   "/tmp/app",
-				User: "vcap",
-			},
-			&models.RunAction{
-				Path: "/tmp/davtool",
-				Dir:  "/",
-				Args: []string{"delete", dropletURL + "/bits.zip"},
-				User: "vcap",
-			},
+			dr.blobStore.DownloadAppBitsAction(dropletName),
+			dr.blobStore.DeleteAppBitsAction(dropletName),
 			&models.RunAction{
 				Path: "/bin/chmod",
 				Dir:  "/tmp/app",
@@ -139,18 +126,8 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 				Args: builderConfig.Args(),
 				User: "vcap",
 			},
-			&models.RunAction{
-				Path: "/tmp/davtool",
-				Dir:  "/",
-				Args: []string{"put", dropletURL + "/droplet.tgz", "/tmp/droplet"},
-				User: "vcap",
-			},
-			&models.RunAction{
-				Path: "/tmp/davtool",
-				Dir:  "/",
-				Args: []string{"put", dropletURL + "/result.json", "/tmp/result.json"},
-				User: "vcap",
-			},
+			dr.blobStore.UploadDropletAction(dropletName),
+			dr.blobStore.UploadDropletMetadataAction(dropletName),
 		},
 	}
 
@@ -187,13 +164,6 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 		return err
 	}
 
-	dropletURL := fmt.Sprintf("http://%s:%s@%s:%s%s",
-		dr.config.BlobStore().Username,
-		dr.config.BlobStore().Password,
-		dr.config.BlobStore().Host,
-		dr.config.BlobStore().Port,
-		path.Join("/blobs", dropletName))
-
 	if appEnvironmentParams.EnvironmentVariables == nil {
 		appEnvironmentParams.EnvironmentVariables = map[string]string{}
 	}
@@ -228,11 +198,7 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 					To:   "/tmp",
 					User: "vcap",
 				},
-				&models.DownloadAction{
-					From: dropletURL + "/droplet.tgz",
-					To:   "/home/vcap",
-					User: "vcap",
-				},
+				dr.blobStore.DownloadDropletAction(dropletName),
 			},
 		},
 	}

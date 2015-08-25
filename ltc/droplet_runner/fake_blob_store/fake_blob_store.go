@@ -5,16 +5,17 @@ import (
 	"io"
 	"sync"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/blob"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
+	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 type FakeBlobStore struct {
-	ListStub        func() ([]blob_store.Blob, error)
+	ListStub        func() ([]blob.Blob, error)
 	listMutex       sync.RWMutex
 	listArgsForCall []struct{}
 	listReturns struct {
-		result1 []blob_store.Blob
+		result1 []blob.Blob
 		result2 error
 	}
 	DeleteStub        func(path string) error
@@ -43,9 +44,49 @@ type FakeBlobStore struct {
 		result1 io.ReadCloser
 		result2 error
 	}
+	DownloadAppBitsActionStub        func(dropletName string) models.Action
+	downloadAppBitsActionMutex       sync.RWMutex
+	downloadAppBitsActionArgsForCall []struct {
+		dropletName string
+	}
+	downloadAppBitsActionReturns struct {
+		result1 models.Action
+	}
+	DeleteAppBitsActionStub        func(dropletName string) models.Action
+	deleteAppBitsActionMutex       sync.RWMutex
+	deleteAppBitsActionArgsForCall []struct {
+		dropletName string
+	}
+	deleteAppBitsActionReturns struct {
+		result1 models.Action
+	}
+	UploadDropletActionStub        func(dropletName string) models.Action
+	uploadDropletActionMutex       sync.RWMutex
+	uploadDropletActionArgsForCall []struct {
+		dropletName string
+	}
+	uploadDropletActionReturns struct {
+		result1 models.Action
+	}
+	UploadDropletMetadataActionStub        func(dropletName string) models.Action
+	uploadDropletMetadataActionMutex       sync.RWMutex
+	uploadDropletMetadataActionArgsForCall []struct {
+		dropletName string
+	}
+	uploadDropletMetadataActionReturns struct {
+		result1 models.Action
+	}
+	DownloadDropletActionStub        func(dropletName string) models.Action
+	downloadDropletActionMutex       sync.RWMutex
+	downloadDropletActionArgsForCall []struct {
+		dropletName string
+	}
+	downloadDropletActionReturns struct {
+		result1 models.Action
+	}
 }
 
-func (fake *FakeBlobStore) List() ([]blob_store.Blob, error) {
+func (fake *FakeBlobStore) List() ([]blob.Blob, error) {
 	fake.listMutex.Lock()
 	fake.listArgsForCall = append(fake.listArgsForCall, struct{}{})
 	fake.listMutex.Unlock()
@@ -62,10 +103,10 @@ func (fake *FakeBlobStore) ListCallCount() int {
 	return len(fake.listArgsForCall)
 }
 
-func (fake *FakeBlobStore) ListReturns(result1 []blob_store.Blob, result2 error) {
+func (fake *FakeBlobStore) ListReturns(result1 []blob.Blob, result2 error) {
 	fake.ListStub = nil
 	fake.listReturns = struct {
-		result1 []blob_store.Blob
+		result1 []blob.Blob
 		result2 error
 	}{result1, result2}
 }
@@ -166,6 +207,166 @@ func (fake *FakeBlobStore) DownloadReturns(result1 io.ReadCloser, result2 error)
 		result1 io.ReadCloser
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakeBlobStore) DownloadAppBitsAction(dropletName string) models.Action {
+	fake.downloadAppBitsActionMutex.Lock()
+	fake.downloadAppBitsActionArgsForCall = append(fake.downloadAppBitsActionArgsForCall, struct {
+		dropletName string
+	}{dropletName})
+	fake.downloadAppBitsActionMutex.Unlock()
+	if fake.DownloadAppBitsActionStub != nil {
+		return fake.DownloadAppBitsActionStub(dropletName)
+	} else {
+		return fake.downloadAppBitsActionReturns.result1
+	}
+}
+
+func (fake *FakeBlobStore) DownloadAppBitsActionCallCount() int {
+	fake.downloadAppBitsActionMutex.RLock()
+	defer fake.downloadAppBitsActionMutex.RUnlock()
+	return len(fake.downloadAppBitsActionArgsForCall)
+}
+
+func (fake *FakeBlobStore) DownloadAppBitsActionArgsForCall(i int) string {
+	fake.downloadAppBitsActionMutex.RLock()
+	defer fake.downloadAppBitsActionMutex.RUnlock()
+	return fake.downloadAppBitsActionArgsForCall[i].dropletName
+}
+
+func (fake *FakeBlobStore) DownloadAppBitsActionReturns(result1 models.Action) {
+	fake.DownloadAppBitsActionStub = nil
+	fake.downloadAppBitsActionReturns = struct {
+		result1 models.Action
+	}{result1}
+}
+
+func (fake *FakeBlobStore) DeleteAppBitsAction(dropletName string) models.Action {
+	fake.deleteAppBitsActionMutex.Lock()
+	fake.deleteAppBitsActionArgsForCall = append(fake.deleteAppBitsActionArgsForCall, struct {
+		dropletName string
+	}{dropletName})
+	fake.deleteAppBitsActionMutex.Unlock()
+	if fake.DeleteAppBitsActionStub != nil {
+		return fake.DeleteAppBitsActionStub(dropletName)
+	} else {
+		return fake.deleteAppBitsActionReturns.result1
+	}
+}
+
+func (fake *FakeBlobStore) DeleteAppBitsActionCallCount() int {
+	fake.deleteAppBitsActionMutex.RLock()
+	defer fake.deleteAppBitsActionMutex.RUnlock()
+	return len(fake.deleteAppBitsActionArgsForCall)
+}
+
+func (fake *FakeBlobStore) DeleteAppBitsActionArgsForCall(i int) string {
+	fake.deleteAppBitsActionMutex.RLock()
+	defer fake.deleteAppBitsActionMutex.RUnlock()
+	return fake.deleteAppBitsActionArgsForCall[i].dropletName
+}
+
+func (fake *FakeBlobStore) DeleteAppBitsActionReturns(result1 models.Action) {
+	fake.DeleteAppBitsActionStub = nil
+	fake.deleteAppBitsActionReturns = struct {
+		result1 models.Action
+	}{result1}
+}
+
+func (fake *FakeBlobStore) UploadDropletAction(dropletName string) models.Action {
+	fake.uploadDropletActionMutex.Lock()
+	fake.uploadDropletActionArgsForCall = append(fake.uploadDropletActionArgsForCall, struct {
+		dropletName string
+	}{dropletName})
+	fake.uploadDropletActionMutex.Unlock()
+	if fake.UploadDropletActionStub != nil {
+		return fake.UploadDropletActionStub(dropletName)
+	} else {
+		return fake.uploadDropletActionReturns.result1
+	}
+}
+
+func (fake *FakeBlobStore) UploadDropletActionCallCount() int {
+	fake.uploadDropletActionMutex.RLock()
+	defer fake.uploadDropletActionMutex.RUnlock()
+	return len(fake.uploadDropletActionArgsForCall)
+}
+
+func (fake *FakeBlobStore) UploadDropletActionArgsForCall(i int) string {
+	fake.uploadDropletActionMutex.RLock()
+	defer fake.uploadDropletActionMutex.RUnlock()
+	return fake.uploadDropletActionArgsForCall[i].dropletName
+}
+
+func (fake *FakeBlobStore) UploadDropletActionReturns(result1 models.Action) {
+	fake.UploadDropletActionStub = nil
+	fake.uploadDropletActionReturns = struct {
+		result1 models.Action
+	}{result1}
+}
+
+func (fake *FakeBlobStore) UploadDropletMetadataAction(dropletName string) models.Action {
+	fake.uploadDropletMetadataActionMutex.Lock()
+	fake.uploadDropletMetadataActionArgsForCall = append(fake.uploadDropletMetadataActionArgsForCall, struct {
+		dropletName string
+	}{dropletName})
+	fake.uploadDropletMetadataActionMutex.Unlock()
+	if fake.UploadDropletMetadataActionStub != nil {
+		return fake.UploadDropletMetadataActionStub(dropletName)
+	} else {
+		return fake.uploadDropletMetadataActionReturns.result1
+	}
+}
+
+func (fake *FakeBlobStore) UploadDropletMetadataActionCallCount() int {
+	fake.uploadDropletMetadataActionMutex.RLock()
+	defer fake.uploadDropletMetadataActionMutex.RUnlock()
+	return len(fake.uploadDropletMetadataActionArgsForCall)
+}
+
+func (fake *FakeBlobStore) UploadDropletMetadataActionArgsForCall(i int) string {
+	fake.uploadDropletMetadataActionMutex.RLock()
+	defer fake.uploadDropletMetadataActionMutex.RUnlock()
+	return fake.uploadDropletMetadataActionArgsForCall[i].dropletName
+}
+
+func (fake *FakeBlobStore) UploadDropletMetadataActionReturns(result1 models.Action) {
+	fake.UploadDropletMetadataActionStub = nil
+	fake.uploadDropletMetadataActionReturns = struct {
+		result1 models.Action
+	}{result1}
+}
+
+func (fake *FakeBlobStore) DownloadDropletAction(dropletName string) models.Action {
+	fake.downloadDropletActionMutex.Lock()
+	fake.downloadDropletActionArgsForCall = append(fake.downloadDropletActionArgsForCall, struct {
+		dropletName string
+	}{dropletName})
+	fake.downloadDropletActionMutex.Unlock()
+	if fake.DownloadDropletActionStub != nil {
+		return fake.DownloadDropletActionStub(dropletName)
+	} else {
+		return fake.downloadDropletActionReturns.result1
+	}
+}
+
+func (fake *FakeBlobStore) DownloadDropletActionCallCount() int {
+	fake.downloadDropletActionMutex.RLock()
+	defer fake.downloadDropletActionMutex.RUnlock()
+	return len(fake.downloadDropletActionArgsForCall)
+}
+
+func (fake *FakeBlobStore) DownloadDropletActionArgsForCall(i int) string {
+	fake.downloadDropletActionMutex.RLock()
+	defer fake.downloadDropletActionMutex.RUnlock()
+	return fake.downloadDropletActionArgsForCall[i].dropletName
+}
+
+func (fake *FakeBlobStore) DownloadDropletActionReturns(result1 models.Action) {
+	fake.DownloadDropletActionStub = nil
+	fake.downloadDropletActionReturns = struct {
+		result1 models.Action
+	}{result1}
 }
 
 var _ droplet_runner.BlobStore = new(FakeBlobStore)

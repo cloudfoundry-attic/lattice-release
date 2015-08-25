@@ -73,6 +73,16 @@ var _ = Describe("CliAppFactory", func() {
 
 		})
 
+		Context("when targeted at a dav blob store", func() {
+			BeforeEach(func() {
+				cliConfig.SetBlobStore("http://test.com", "9999", "username", "password")
+			})
+
+			It("instantiates a new dav blob store object", func() {
+
+			})
+		})
+
 		Context("when invoked without latticeVersion set", func() {
 			BeforeEach(func() {
 				diegoVersion = ""

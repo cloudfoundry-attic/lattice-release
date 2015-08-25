@@ -1,6 +1,7 @@
 package dav_blob_store_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -12,15 +13,17 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/blob"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/dav_blob_store"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 var _ = Describe("BlobStore", func() {
 	var (
-		blobStore  *dav_blob_store.BlobStore
-		fakeServer *ghttp.Server
+		blobStore      *dav_blob_store.BlobStore
+		fakeServer     *ghttp.Server
+		blobTargetInfo config_package.BlobStoreConfig
 	)
 
 	BeforeEach(func() {
@@ -31,7 +34,7 @@ var _ = Describe("BlobStore", func() {
 		serverHost, serverPort, err := net.SplitHostPort(fakeServerURL.Host)
 		Expect(err).NotTo(HaveOccurred())
 
-		blobTargetInfo := config_package.BlobStoreConfig{
+		blobTargetInfo = config_package.BlobStoreConfig{
 			Host:     serverHost,
 			Port:     serverPort,
 			Username: "user",
@@ -318,12 +321,12 @@ var _ = Describe("BlobStore", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(blobStore.List()).To(ConsistOf(
-				blob_store.Blob{Path: "b/bits.zip", Size: 4096, Created: expectedTime},
-				blob_store.Blob{Path: "b/droplet.tgz", Size: 4096, Created: expectedTime},
-				blob_store.Blob{Path: "a/bits.zip", Size: 4096, Created: expectedTime},
-				blob_store.Blob{Path: "a/droplet.tgz", Size: 4096, Created: expectedTime},
-				blob_store.Blob{Path: "c/bits.zip", Size: 4096, Created: expectedTime},
-				blob_store.Blob{Path: "c/droplet.tgz", Size: 4096, Created: expectedTime},
+				blob.Blob{Path: "b/bits.zip", Size: 4096, Created: expectedTime},
+				blob.Blob{Path: "b/droplet.tgz", Size: 4096, Created: expectedTime},
+				blob.Blob{Path: "a/bits.zip", Size: 4096, Created: expectedTime},
+				blob.Blob{Path: "a/droplet.tgz", Size: 4096, Created: expectedTime},
+				blob.Blob{Path: "c/bits.zip", Size: 4096, Created: expectedTime},
+				blob.Blob{Path: "c/droplet.tgz", Size: 4096, Created: expectedTime},
 			))
 
 			Expect(fakeServer.ReceivedRequests()).To(HaveLen(4))
@@ -728,6 +731,67 @@ var _ = Describe("BlobStore", func() {
 
 			err := blobStore.Delete("some-path/some-object")
 			Expect(err).To(MatchError(ContainSubstring("connection refused")))
+		})
+	})
+
+	Context("Droplet Actions", func() {
+		var dropletURL string
+
+		BeforeEach(func() {
+			dropletURL = fmt.Sprintf("http://%s:%s@%s:%s/blobs/droplet-name", blobTargetInfo.Username, blobTargetInfo.Password, blobTargetInfo.Host, blobTargetInfo.Port)
+		})
+
+		Describe("#DownloadAppBitsAction", func() {
+			It("constructs the correct Action to download app bits", func() {
+				Expect(blobStore.DownloadAppBitsAction("droplet-name")).To(Equal(&models.DownloadAction{
+					From: dropletURL + "/bits.zip",
+					To:   "/tmp/app",
+					User: "vcap",
+				}))
+			})
+		})
+
+		Describe("#DeleteAppBitsAction", func() {
+			It("constructs the correct Action to delete app bits", func() {
+				Expect(blobStore.DeleteAppBitsAction("droplet-name")).To(Equal(&models.RunAction{
+					Path: "/tmp/davtool",
+					Dir:  "/",
+					Args: []string{"delete", dropletURL + "/bits.zip"},
+					User: "vcap",
+				}))
+			})
+		})
+
+		Describe("#UploadDropletAction", func() {
+			It("constructs the correct Action to upload the droplet", func() {
+				Expect(blobStore.UploadDropletAction("droplet-name")).To(Equal(&models.RunAction{
+					Path: "/tmp/davtool",
+					Dir:  "/",
+					Args: []string{"put", dropletURL + "/droplet.tgz", "/tmp/droplet"},
+					User: "vcap",
+				}))
+			})
+		})
+
+		Describe("#UploadDropletMetadataAction", func() {
+			It("constructs the correct Action to upload the droplet metadata", func() {
+				Expect(blobStore.UploadDropletMetadataAction("droplet-name")).To(Equal(&models.RunAction{
+					Path: "/tmp/davtool",
+					Dir:  "/",
+					Args: []string{"put", dropletURL + "/result.json", "/tmp/result.json"},
+					User: "vcap",
+				}))
+			})
+		})
+
+		Describe("#DownloadDropletAction", func() {
+			It("constructs the correct Action to download the droplet", func() {
+				Expect(blobStore.DownloadDropletAction("droplet-name")).To(Equal(&models.DownloadAction{
+					From: dropletURL + "/droplet.tgz",
+					To:   "/home/vcap",
+					User: "vcap",
+				}))
+			})
 		})
 	})
 })

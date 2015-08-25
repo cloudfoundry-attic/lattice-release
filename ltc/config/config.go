@@ -4,6 +4,24 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 )
 
+type BlobStoreType int
+
+const (
+	DAVBlobStore BlobStoreType = iota
+	S3BlobStore
+)
+
+func (b BlobStoreType) String() string {
+	switch b {
+	case DAVBlobStore:
+		return "dav"
+	case S3BlobStore:
+		return "s3"
+	}
+
+	return "invalid"
+}
+
 type BlobStoreConfig struct {
 	Host     string `json:"host,omitempty"`
 	Port     string `json:"port,omitempty"`
@@ -19,9 +37,10 @@ type S3BlobStoreConfig struct {
 }
 
 type Data struct {
-	Target   string `json:"target"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
+	Target          string        `json:"target"`
+	Username        string        `json:"username,omitempty"`
+	Password        string        `json:"password,omitempty"`
+	ActiveBlobStore BlobStoreType `json:"active_blob_store,omitempty"`
 
 	BlobStore   BlobStoreConfig   `json:"dav_blob_store,omitempty"`
 	S3BlobStore S3BlobStoreConfig `json:"s3_blob_store,omitempty"`
@@ -78,6 +97,7 @@ func (c *Config) SetBlobStore(host, port, username, password string) {
 	c.data.BlobStore.Port = port
 	c.data.BlobStore.Username = username
 	c.data.BlobStore.Password = password
+	c.data.ActiveBlobStore = DAVBlobStore
 }
 
 func (c *Config) SetS3BlobStore(accessKey, secretKey, bucketName, region string) {
@@ -85,6 +105,7 @@ func (c *Config) SetS3BlobStore(accessKey, secretKey, bucketName, region string)
 	c.data.S3BlobStore.BucketName = bucketName
 	c.data.S3BlobStore.SecretKey = secretKey
 	c.data.S3BlobStore.Region = region
+	c.data.ActiveBlobStore = S3BlobStore
 }
 
 func (c *Config) BlobStore() BlobStoreConfig {
@@ -93,4 +114,8 @@ func (c *Config) BlobStore() BlobStoreConfig {
 
 func (c *Config) S3BlobStore() S3BlobStoreConfig {
 	return c.data.S3BlobStore
+}
+
+func (c *Config) ActiveBlobStore() BlobStoreType {
+	return c.data.ActiveBlobStore
 }
