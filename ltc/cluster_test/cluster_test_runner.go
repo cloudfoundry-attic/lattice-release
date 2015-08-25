@@ -258,8 +258,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 					By("launching a build task")
 					runner.buildDroplet(timeout, dropletName, "https://github.com/cloudfoundry/go-buildpack.git", dropletDir)
 
-					By("uploading a compiled droplet to the blob store")
-					Eventually(errorCheckURLExists(dropletFolderURL+"/droplet.tgz"), timeout, 1).ShouldNot(HaveOccurred())
+					Eventually(runner.checkIfTaskCompleted("build-droplet-"+dropletName), timeout, 1).Should(BeTrue())
 
 					By("listing droplets")
 					runner.listDroplets(timeout, dropletName)
