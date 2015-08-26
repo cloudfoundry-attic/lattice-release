@@ -411,6 +411,8 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say("S3 Region: "))
 				stdinWriter.Write([]byte("some-region\n"))
 
+				Eventually(doneChan).Should(BeClosed())
+
 				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
 				config := fakeBlobStoreVerifier.VerifyArgsForCall(0)
 				s3BlobTargetInfo := config.S3BlobStore()
@@ -426,8 +428,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(newS3BlobTargetInfo.SecretKey).To(Equal("some-secret"))
 				Expect(newS3BlobTargetInfo.BucketName).To(Equal("some-bucket"))
 				Expect(newS3BlobTargetInfo.Region).To(Equal("some-region"))
-
-				Eventually(doneChan).Should(BeClosed())
 			})
 		})
 
