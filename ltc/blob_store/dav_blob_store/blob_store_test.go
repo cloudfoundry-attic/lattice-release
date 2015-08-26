@@ -1,6 +1,7 @@
 package dav_blob_store_test
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -48,6 +49,12 @@ var _ = Describe("BlobStore", func() {
 		if fakeServer != nil {
 			fakeServer.Close()
 		}
+	})
+
+	Describe(".New", func() {
+		It("creates a BlobStore with a timeout of 5 seconds", func() {
+			Expect(dav_blob_store.New(blobTargetInfo).Client.Timeout).To(Equal(5 * time.Second))
+		})
 	})
 
 	Describe("#List", func() {
@@ -530,11 +537,25 @@ var _ = Describe("BlobStore", func() {
 						ghttp.RespondWith(207, responseBodyB, http.Header{"Content-Type": []string{"application/xml"}}),
 					))
 				})
+
 				It("returns an error", func() {
 					_, err := blobStore.List()
 					Expect(err).To(MatchError(ContainSubstring("invalid URL escape")))
 				})
 			})
+		})
+
+		It("uses the correct HTTP client with a specified timeout", func() {
+			usedClient := false
+			blobStore.Client.Transport = &http.Transport{
+				Proxy: func(request *http.Request) (*url.URL, error) {
+					usedClient = true
+					return nil, errors.New("some error")
+				},
+			}
+
+			blobStore.List()
+			Expect(usedClient).To(BeTrue())
 		})
 	})
 

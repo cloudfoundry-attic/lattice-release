@@ -17,22 +17,22 @@ import (
 )
 
 type BlobStore struct {
-	URL url.URL
+	URL    *url.URL
+	Client *http.Client
 }
 
 func New(config config_package.BlobStoreConfig) *BlobStore {
 	return &BlobStore{
-		URL: url.URL{
+		URL: &url.URL{
 			Scheme: "http",
 			Host:   fmt.Sprintf("%s:%s", config.Host, config.Port),
 			User:   url.UserPassword(config.Username, config.Password),
 		},
+		Client: &http.Client{Timeout: 5 * time.Second},
 	}
 }
 
-type xmlTime struct {
-	time.Time
-}
+type xmlTime time.Time
 
 func (t *xmlTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var v string
@@ -41,19 +41,19 @@ func (t *xmlTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	if err != nil {
 		return err
 	}
-	*t = xmlTime{parse}
+	*t = xmlTime(parse)
 	return nil
 }
 
 type listResponse struct {
 	Responses []struct {
-		Href          string  `xml:"href"`
+		HREF          string  `xml:"href"`
 		LastModified  xmlTime `xml:"propstat>prop>getlastmodified"`
 		ContentLength int64   `xml:"propstat>prop>getcontentlength"`
 	} `xml:"response"`
 }
 
-func doListRequest(baseURL *url.URL) (listResponse, error) {
+func (b *BlobStore) doListRequest(baseURL *url.URL) (listResponse, error) {
 	req, err := http.NewRequest("PROPFIND", baseURL.String(), nil)
 	if err != nil {
 		return listResponse{}, err
@@ -61,7 +61,7 @@ func doListRequest(baseURL *url.URL) (listResponse, error) {
 
 	req.Header.Add("Depth", "1")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := b.Client.Do(req)
 	if err != nil {
 		return listResponse{}, err
 	}
@@ -82,16 +82,15 @@ func doListRequest(baseURL *url.URL) (listResponse, error) {
 	return listResp, nil
 }
 
-func listBlobFiles(baseURL *url.URL) ([]blob.Blob, error) {
-	listResp, err := doListRequest(baseURL)
+func (b *BlobStore) listBlobFiles(baseURL *url.URL) ([]blob.Blob, error) {
+	listResp, err := b.doListRequest(baseURL)
 	if err != nil {
 		return nil, err
 	}
 
 	var blobFiles []blob.Blob
-
 	for _, resp := range listResp.Responses {
-		u, err := url.Parse(resp.Href)
+		u, err := url.Parse(resp.HREF)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +101,7 @@ func listBlobFiles(baseURL *url.URL) ([]blob.Blob, error) {
 
 		blobFiles = append(blobFiles, blob.Blob{
 			Path:    strings.Replace(path.Clean(u.Path), "/blobs/", "", 1),
-			Created: resp.LastModified.Time,
+			Created: time.Time(resp.LastModified),
 			Size:    resp.ContentLength,
 		})
 	}
@@ -118,7 +117,7 @@ func (b *BlobStore) List() ([]blob.Blob, error) {
 		Path:   "/blobs",
 	}
 
-	listResp, err := doListRequest(baseURL)
+	listResp, err := b.doListRequest(baseURL)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +125,7 @@ func (b *BlobStore) List() ([]blob.Blob, error) {
 	var blobs []blob.Blob
 
 	for _, resp := range listResp.Responses {
-		u, err := url.Parse(resp.Href)
+		u, err := url.Parse(resp.HREF)
 		if err != nil {
 			return nil, err
 		}
@@ -137,7 +136,7 @@ func (b *BlobStore) List() ([]blob.Blob, error) {
 			continue
 		}
 
-		blobFiles, err := listBlobFiles(u)
+		blobFiles, err := b.listBlobFiles(u)
 		if err != nil {
 			return nil, err
 		}
@@ -148,14 +147,14 @@ func (b *BlobStore) List() ([]blob.Blob, error) {
 	return blobs, nil
 }
 
-func ensureParentCollectionExists(baseURL *url.URL) error {
+func (b *BlobStore) ensureParentCollectionExists(baseURL *url.URL) error {
 	parentURL := &url.URL{
 		Scheme: baseURL.Scheme,
 		Host:   baseURL.Host,
 		User:   baseURL.User,
 		Path:   path.Dir(baseURL.Path),
 	}
-	_, err := listBlobFiles(parentURL)
+	_, err := b.listBlobFiles(parentURL)
 	if err == nil {
 		return nil
 	}
@@ -168,7 +167,7 @@ func ensureParentCollectionExists(baseURL *url.URL) error {
 		return err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := b.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -188,7 +187,7 @@ func (b *BlobStore) Upload(path string, contents io.ReadSeeker) error {
 		Path:   "/blobs/" + path,
 	}
 
-	if err := ensureParentCollectionExists(baseURL); err != nil {
+	if err := b.ensureParentCollectionExists(baseURL); err != nil {
 		return err
 	}
 
@@ -205,7 +204,7 @@ func (b *BlobStore) Upload(path string, contents io.ReadSeeker) error {
 
 	req.ContentLength = length
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := b.Client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -230,7 +229,7 @@ func (b *BlobStore) Download(path string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := b.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +254,7 @@ func (b *BlobStore) Delete(path string) error {
 		return err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := b.Client.Do(req)
 	if err != nil {
 		return err
 	}
