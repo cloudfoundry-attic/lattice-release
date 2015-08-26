@@ -38,15 +38,9 @@ The VM should download and start.
 
 > Learn more about deploying Lattice at the GitHub [README](https://github.com/cloudfoundry-incubator/lattice/tree/v0.3.3)
 
-## Fetching `ltc` - the Lattice CLI
+## `ltc` - the Lattice CLI
 
-Visit the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page to fetch the latest version of the CLI.  There is a `Download Links` section at the end of each set of release notes.  Make sure the binary is saved to a directory in your `PATH`.
-
-Alternatively you can use these installation steps.  They assume `$HOME/bin` is in your `PATH`.
-
-    unzip lattice-bundle-VERSION-PLATFORM.zip
-    cd lattice-bundle-VERSION-PLATFORM
-    ./ltc -v
+The downloaded bundle also includes the command-line tool `ltc`.  This can be copied to a folder in your `PATH` or executed in-place (e.g., `./ltc`).
 
 Further instructions can be found [here](https://github.com/cloudfoundry-incubator/lattice/tree/v0.3.3/ltc).
 
