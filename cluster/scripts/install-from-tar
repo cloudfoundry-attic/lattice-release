@@ -24,16 +24,21 @@ install_condenser() {
 
 stage_cflinuxfs2_rootfs() {
     declare -r rootfs_download_path=/vagrant/build/downloads
-    if [ ! -f "$rootfs_download_path/cflinuxfs2.tar.gz" ]; then
-        rm -f $rootfs_download_path/cflinuxfs2.tar.gz
+    declare -r rootfs_filename=cflinuxfs2.tar.gz
+    rootfs_file_path=$rootfs_download_path/$rootfs_filename
+
+    if [ ! -f "$rootfs_file_path" ]; then
+        rm -f $rootfs_file_path
         mkdir -p $rootfs_download_path
-        wget https://github.com/cloudfoundry/stacks/releases/download/1.4.0/cflinuxfs2-1.4.0.tar.gz --quiet -O $rootfs_download_path/cflinuxfs2.tar.gz
+        wget https://github.com/cloudfoundry/stacks/releases/download/1.4.0/cflinuxfs2-1.4.0.tar.gz --quiet -O $rootfs_file_path
         echo "Downloaded RootFS!"
+    else
+        echo "Using existing RootFS from $rootfs_file_path"
     fi
 
     ## unpack to some fixed folder
     mkdir -p /var/lattice/rootfs/cflinuxfs2
-    tar -xzf $rootfs_download_path/cflinuxfs2.tar.gz -C /var/lattice/rootfs/cflinuxfs2
+    tar -xzf $rootfs_file_path -C /var/lattice/rootfs/cflinuxfs2
 
     echo "Preloaded CFLinuxFS2 RootFS enabled."
 }
