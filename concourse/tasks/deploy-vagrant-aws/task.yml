@@ -3,9 +3,9 @@ platform: linux
 image: docker:///cloudfoundry/lattice-pipeline
 inputs:
 - name: lattice
-- name: cluster-test-vagrant-aws
+- name: lattice-tar-build
 run:
-  path: lattice/concourse/tasks/cleanup-cluster-test-vagrant-aws/run.sh
+  path: lattice/concourse/tasks/deploy-vagrant-aws/run.sh
 params:
   AWS_ACCESS_KEY_ID: some-access-key-id
   AWS_SECRET_ACCESS_KEY: some-secret-access-key

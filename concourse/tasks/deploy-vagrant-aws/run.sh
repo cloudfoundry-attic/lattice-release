@@ -29,6 +29,4 @@ popd
 
 sleep 60
 
-tar zxf ltc-tar-build/ltc-*.tgz ltc-linux-amd64
-$PWD/ltc-linux-amd64 target "$SYSTEM_DOMAIN"
-$PWD/ltc-linux-amd64 test -v -t 10m
+echo $SYSTEM_DOMAIN > system_domain

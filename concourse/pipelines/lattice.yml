@@ -135,16 +135,28 @@ jobs:
           passed: [compile]
         - get: ltc-tar-build
           passed: [compile]
-      - task: cluster-test-vagrant-aws
-        file: lattice/concourse/tasks/cluster-test-vagrant-aws/task.yml
-        config:
-          params:
-            AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
-            AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
-            AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+      - do:
+        - task: deploy-vagrant-aws
+          file: lattice/concourse/tasks/deploy-vagrant-aws/task.yml
+          config:
+            params:
+              AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+              AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+              AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+        - aggregate:
+          - task: cluster-test-vagrant-aws-dav
+            file: lattice/concourse/tasks/cluster-test-vagrant-aws-dav/task.yml
+          - task: cluster-test-vagrant-aws-s3
+            file: lattice/concourse/tasks/cluster-test-vagrant-aws-s3/task.yml
+            config:
+              params:
+                AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+                AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+                AWS_REGION: {{cluster-test-aws-region}}
+                S3_BUCKET_NAME: {{cluster-test-s3-bucket-name}}
         ensure:
-          task: cleanup-cluster-test-vagrant-aws
-          file: lattice/concourse/tasks/cleanup-cluster-test-vagrant-aws/task.yml
+          task: cleanup-deploy-vagrant-aws
+          file: lattice/concourse/tasks/cleanup-deploy-vagrant-aws/task.yml
           config:
             params:
               AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
