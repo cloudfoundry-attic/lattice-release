@@ -17,7 +17,7 @@ pushd $TERRAFORM_TMP_DIR
     "target": "${LATTICE_TARGET}",
     "username": "${LATTICE_USERNAME}",
     "password": "${LATTICE_PASSWORD}",
-    "active_blob_store": 2,
+    "active_blob_store": 1,
     "s3_blob_store": {
         "region": "${AWS_REGION}",
         "access_key": "${AWS_ACCESS_KEY_ID}",
