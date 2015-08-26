@@ -111,6 +111,10 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Value: time.Second,
 		},
 		cli.StringFlag{
+			Name:  "monitor-command",
+			Usage: "Uses the command (with arguments) to healthcheck the app",
+		},
+		cli.StringFlag{
 			Name:  "http-routes, R",
 			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port. Container ports must be among those specified with --ports or with the EXPOSE Docker image directive. Usage: --http-routes HOST:CONTAINER_PORT[,...].",
 		},
@@ -196,6 +200,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	portMonitorFlag := context.Int("monitor-port")
 	urlMonitorFlag := context.String("monitor-url")
 	monitorTimeoutFlag := context.Duration("monitor-timeout")
+	monitorCommandFlag := context.String("monitor-command")
 	httpRoutesFlag := context.String("http-routes")
 	tcpRoutesFlag := context.String("tcp-routes")
 	noRoutesFlag := context.Bool("no-routes")
@@ -237,7 +242,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		return
 	}
 
-	monitorConfig, err := factory.GetMonitorConfig(exposedPorts, portMonitorFlag, noMonitorFlag, urlMonitorFlag, monitorTimeoutFlag)
+	monitorConfig, err := factory.GetMonitorConfig(exposedPorts, portMonitorFlag, noMonitorFlag, urlMonitorFlag, monitorCommandFlag, monitorTimeoutFlag)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
 		if err.Error() == command_factory.MonitorPortNotExposed {

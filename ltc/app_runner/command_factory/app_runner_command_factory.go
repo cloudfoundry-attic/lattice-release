@@ -534,9 +534,27 @@ func parseEnvVarPair(envVarPair string) (name, value string) {
 	return s[0], ""
 }
 
-func (factory *AppRunnerCommandFactory) GetMonitorConfig(exposedPorts []uint16, portMonitorFlag int, noMonitorFlag bool, urlMonitorFlag string, monitorTimeoutFlag time.Duration) (app_runner.MonitorConfig, error) {
+func (factory *AppRunnerCommandFactory) GetMonitorConfig(exposedPorts []uint16, portMonitorFlag int, noMonitorFlag bool, urlMonitorFlag, monitorCommandFlag string, monitorTimeoutFlag time.Duration) (app_runner.MonitorConfig, error) {
 	if noMonitorFlag {
 		return app_runner.MonitorConfig{Method: app_runner.NoMonitor}, nil
+	}
+
+	if monitorCommandFlag != "" {
+		if strings.HasPrefix(monitorCommandFlag, `"`) && strings.HasSuffix(monitorCommandFlag, `"`) {
+			monitorCommandFlag = strings.TrimPrefix(monitorCommandFlag, `"`)
+			monitorCommandFlag = strings.TrimSuffix(monitorCommandFlag, `"`)
+		} else if strings.HasPrefix(monitorCommandFlag, `'`) && strings.HasSuffix(monitorCommandFlag, `'`) {
+			monitorCommandFlag = strings.TrimPrefix(monitorCommandFlag, `'`)
+			monitorCommandFlag = strings.TrimSuffix(monitorCommandFlag, `'`)
+		}
+
+		monitorCommandArr := strings.Split(monitorCommandFlag, " ")
+
+		return app_runner.MonitorConfig{
+			Method:            app_runner.CustomMonitor,
+			CustomCommand:     monitorCommandArr[0],
+			CustomCommandArgs: monitorCommandArr[1:],
+		}, nil
 	}
 
 	if urlMonitorFlag != "" {

@@ -503,6 +503,61 @@ var _ = Describe("CommandFactory", func() {
 				})
 			})
 
+			Context("when --monitor-command is passed", func() {
+				It("healthchecks using a custom command", func() {
+					args := []string{
+						"--monitor-command=/custom/monitor",
+						"cool-web-app",
+						"superfun/app",
+						"--",
+						"/start-me-please",
+					}
+					test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
+					Expect(monitorConfig.Method).To(Equal(app_runner.CustomMonitor))
+					Expect(monitorConfig.CustomCommand).To(Equal("/custom/monitor"))
+					Expect(monitorConfig.CustomCommandArgs).To(BeEmpty())
+				})
+
+				Context("when custom command arguments are quoted and space-delimited", func() {
+					It("parses the double-quoted parameter into a command and arguments", func() {
+						args := []string{
+							`--monitor-command="/custom/monitor 'arg1' "arg2""`,
+							"cool-web-app",
+							"superfun/app",
+							"--",
+							"/start-me-please",
+						}
+						test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+						Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+						monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
+						Expect(monitorConfig.Method).To(Equal(app_runner.CustomMonitor))
+						Expect(monitorConfig.CustomCommand).To(Equal("/custom/monitor"))
+						Expect(monitorConfig.CustomCommandArgs).To(Equal([]string{`'arg1'`, `"arg2"`}))
+					})
+
+					It("parses the single-quoted parameter into a command and arguments", func() {
+						args := []string{
+							`--monitor-command='/custom/monitor 'arg1' "arg2"'`,
+							"cool-web-app",
+							"superfun/app",
+							"--",
+							"/start-me-please",
+						}
+						test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+						Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+						monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
+						Expect(monitorConfig.Method).To(Equal(app_runner.CustomMonitor))
+						Expect(monitorConfig.CustomCommand).To(Equal("/custom/monitor"))
+						Expect(monitorConfig.CustomCommandArgs).To(Equal([]string{`'arg1'`, `"arg2"`}))
+					})
+				})
+			})
+
 			Context("when no monitoring options are passed", func() {
 				It("port-monitors the first exposed port", func() {
 					args := []string{
@@ -552,6 +607,25 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 					monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
 					Expect(monitorConfig.Method).To(Equal(app_runner.NoMonitor))
+				})
+
+				It("monitor-command takes precedence over monitor-url", func() {
+					args := []string{
+						"--ports=1200",
+						"--monitor-url=1200:/sup/yeah",
+						"--monitor-command=/custom/monitor",
+						"--monitor-port=1200",
+						"cool-web-app",
+						"superfun/app",
+						"--",
+						"/start-me-please",
+					}
+					test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
+					Expect(monitorConfig.Method).To(Equal(app_runner.CustomMonitor))
+					Expect(monitorConfig.CustomCommand).To(Equal("/custom/monitor"))
 				})
 
 				It("monitor-url takes precedence over monitor-port", func() {

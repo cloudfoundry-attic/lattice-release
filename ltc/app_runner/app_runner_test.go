@@ -283,6 +283,7 @@ var _ = Describe("AppRunner", func() {
 				fakeReceptorClient.DesiredLRPsReturns([]receptor.DesiredLRPResponse{}, nil)
 				createAppParams = app_runner.CreateAppParams{
 					AppEnvironmentParams: app_runner.AppEnvironmentParams{
+						User: "monitor-runner",
 						Monitor: app_runner.MonitorConfig{
 							Method:  app_runner.PortMonitor,
 							Port:    2345,
@@ -304,6 +305,36 @@ var _ = Describe("AppRunner", func() {
 				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-timeout", "15s", "-port", "2345"}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
+				Expect(reqMonitor.User).To(Equal("monitor-runner"))
+			})
+		})
+
+		Context("when using a custom monitor command", func() {
+			It("passes a monitor action", func() {
+				createAppParams = app_runner.CreateAppParams{
+					AppEnvironmentParams: app_runner.AppEnvironmentParams{
+						User: "monitor-runner",
+						Monitor: app_runner.MonitorConfig{
+							Method:            app_runner.CustomMonitor,
+							CustomCommand:     "/custom/monitor",
+							CustomCommandArgs: []string{"arg1", "arg2"},
+						},
+					},
+				}
+
+				err := appRunner.CreateApp(createAppParams)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+
+				Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
+				reqMonitor, ok := req.Monitor.(*models.RunAction)
+				Expect(ok).To(BeTrue())
+				Expect(reqMonitor.Path).To(Equal("/custom/monitor"))
+				Expect(reqMonitor.Args).To(Equal([]string{"arg1", "arg2"}))
+				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
+				Expect(reqMonitor.User).To(Equal("monitor-runner"))
 			})
 		})
 
@@ -311,6 +342,7 @@ var _ = Describe("AppRunner", func() {
 			It("passes a monitor action", func() {
 				createAppParams = app_runner.CreateAppParams{
 					AppEnvironmentParams: app_runner.AppEnvironmentParams{
+						User: "monitor-runner",
 						Monitor: app_runner.MonitorConfig{
 							Method: app_runner.URLMonitor,
 							Port:   1234,
@@ -332,6 +364,7 @@ var _ = Describe("AppRunner", func() {
 				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-port", "1234", "-uri", "/healthy/endpoint"}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
+				Expect(reqMonitor.User).To(Equal("monitor-runner"))
 			})
 
 			It("sets the timeout for the monitor", func() {

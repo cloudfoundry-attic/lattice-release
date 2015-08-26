@@ -25,10 +25,12 @@ type AppRunner interface {
 }
 
 type MonitorConfig struct {
-	Method  MonitorMethod
-	URI     string
-	Port    uint16
-	Timeout time.Duration
+	Method            MonitorMethod
+	URI               string
+	Port              uint16
+	Timeout           time.Duration
+	CustomCommand     string
+	CustomCommandArgs []string
 }
 
 type RouteOverrides []RouteOverride
@@ -84,6 +86,7 @@ const (
 	NoMonitor MonitorMethod = iota
 	PortMonitor
 	URLMonitor
+	CustomMonitor
 
 	AttemptedToCreateLatticeDebugErrorMessage = reserved_app_ids.LatticeDebugLogStreamAppId + " is a reserved app name. It is used internally to stream debug logs for lattice components."
 )
@@ -328,6 +331,13 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		req.Monitor = &models.RunAction{
 			Path:      "/tmp/healthcheck",
 			Args:      append(healthCheckArgs, "-port", fmt.Sprint(params.Monitor.Port), "-uri", params.Monitor.URI),
+			LogSource: "HEALTH",
+			User:      params.User,
+		}
+	case CustomMonitor:
+		req.Monitor = &models.RunAction{
+			Path:      params.Monitor.CustomCommand,
+			Args:      params.Monitor.CustomCommandArgs,
 			LogSource: "HEALTH",
 			User:      params.User,
 		}
