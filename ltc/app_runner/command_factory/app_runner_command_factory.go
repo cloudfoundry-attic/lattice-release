@@ -540,20 +540,9 @@ func (factory *AppRunnerCommandFactory) GetMonitorConfig(exposedPorts []uint16, 
 	}
 
 	if monitorCommandFlag != "" {
-		if strings.HasPrefix(monitorCommandFlag, `"`) && strings.HasSuffix(monitorCommandFlag, `"`) {
-			monitorCommandFlag = strings.TrimPrefix(monitorCommandFlag, `"`)
-			monitorCommandFlag = strings.TrimSuffix(monitorCommandFlag, `"`)
-		} else if strings.HasPrefix(monitorCommandFlag, `'`) && strings.HasSuffix(monitorCommandFlag, `'`) {
-			monitorCommandFlag = strings.TrimPrefix(monitorCommandFlag, `'`)
-			monitorCommandFlag = strings.TrimSuffix(monitorCommandFlag, `'`)
-		}
-
-		monitorCommandArr := strings.Split(monitorCommandFlag, " ")
-
 		return app_runner.MonitorConfig{
-			Method:            app_runner.CustomMonitor,
-			CustomCommand:     monitorCommandArr[0],
-			CustomCommandArgs: monitorCommandArr[1:],
+			Method:        app_runner.CustomMonitor,
+			CustomCommand: monitorCommandFlag,
 		}, nil
 	}
 

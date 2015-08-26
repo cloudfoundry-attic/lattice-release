@@ -336,8 +336,8 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		}
 	case CustomMonitor:
 		req.Monitor = &models.RunAction{
-			Path:      params.Monitor.CustomCommand,
-			Args:      params.Monitor.CustomCommandArgs,
+			Path:      "/bin/sh",
+			Args:      []string{"-c", params.Monitor.CustomCommand},
 			LogSource: "HEALTH",
 			User:      params.User,
 		}

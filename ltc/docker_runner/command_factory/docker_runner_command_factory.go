@@ -264,9 +264,12 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		}
 	}
 
-	if !noMonitorFlag {
+	switch {
+	case monitorCommandFlag != "":
+		factory.UI.SayLine(fmt.Sprintf("Monitoring the app with command %s", monitorConfig.CustomCommand))
+	case !noMonitorFlag:
 		factory.UI.SayLine(fmt.Sprintf("Monitoring the app on port %d...", monitorConfig.Port))
-	} else {
+	default:
 		factory.UI.SayLine("No ports will be monitored.")
 	}
 

@@ -506,7 +506,7 @@ var _ = Describe("CommandFactory", func() {
 			Context("when --monitor-command is passed", func() {
 				It("healthchecks using a custom command", func() {
 					args := []string{
-						"--monitor-command=/custom/monitor",
+						`--monitor-command="/custom/monitor 'arg1' 'arg2'"`,
 						"cool-web-app",
 						"superfun/app",
 						"--",
@@ -514,47 +514,12 @@ var _ = Describe("CommandFactory", func() {
 					}
 					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
+					Expect(outputBuffer).To(test_helpers.SayLine(`Monitoring the app with command "/custom/monitor 'arg1' 'arg2'"`))
+
 					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 					monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
 					Expect(monitorConfig.Method).To(Equal(app_runner.CustomMonitor))
-					Expect(monitorConfig.CustomCommand).To(Equal("/custom/monitor"))
-					Expect(monitorConfig.CustomCommandArgs).To(BeEmpty())
-				})
-
-				Context("when custom command arguments are quoted and space-delimited", func() {
-					It("parses the double-quoted parameter into a command and arguments", func() {
-						args := []string{
-							`--monitor-command="/custom/monitor 'arg1' "arg2""`,
-							"cool-web-app",
-							"superfun/app",
-							"--",
-							"/start-me-please",
-						}
-						test_helpers.ExecuteCommandWithArgs(createCommand, args)
-
-						Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
-						monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
-						Expect(monitorConfig.Method).To(Equal(app_runner.CustomMonitor))
-						Expect(monitorConfig.CustomCommand).To(Equal("/custom/monitor"))
-						Expect(monitorConfig.CustomCommandArgs).To(Equal([]string{`'arg1'`, `"arg2"`}))
-					})
-
-					It("parses the single-quoted parameter into a command and arguments", func() {
-						args := []string{
-							`--monitor-command='/custom/monitor 'arg1' "arg2"'`,
-							"cool-web-app",
-							"superfun/app",
-							"--",
-							"/start-me-please",
-						}
-						test_helpers.ExecuteCommandWithArgs(createCommand, args)
-
-						Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
-						monitorConfig := fakeAppRunner.CreateAppArgsForCall(0).Monitor
-						Expect(monitorConfig.Method).To(Equal(app_runner.CustomMonitor))
-						Expect(monitorConfig.CustomCommand).To(Equal("/custom/monitor"))
-						Expect(monitorConfig.CustomCommandArgs).To(Equal([]string{`'arg1'`, `"arg2"`}))
-					})
+					Expect(monitorConfig.CustomCommand).To(Equal(`"/custom/monitor 'arg1' 'arg2'"`))
 				})
 			})
 

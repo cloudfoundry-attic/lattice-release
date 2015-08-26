@@ -315,9 +315,8 @@ var _ = Describe("AppRunner", func() {
 					AppEnvironmentParams: app_runner.AppEnvironmentParams{
 						User: "monitor-runner",
 						Monitor: app_runner.MonitorConfig{
-							Method:            app_runner.CustomMonitor,
-							CustomCommand:     "/custom/monitor",
-							CustomCommandArgs: []string{"arg1", "arg2"},
+							Method:        app_runner.CustomMonitor,
+							CustomCommand: `"/custom/monitor 'arg1a arg1b' arg2"`,
 						},
 					},
 				}
@@ -331,8 +330,8 @@ var _ = Describe("AppRunner", func() {
 				Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
 				reqMonitor, ok := req.Monitor.(*models.RunAction)
 				Expect(ok).To(BeTrue())
-				Expect(reqMonitor.Path).To(Equal("/custom/monitor"))
-				Expect(reqMonitor.Args).To(Equal([]string{"arg1", "arg2"}))
+				Expect(reqMonitor.Path).To(Equal("/bin/sh"))
+				Expect(reqMonitor.Args).To(Equal([]string{"-c", `"/custom/monitor 'arg1a arg1b' arg2"`}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
 				Expect(reqMonitor.User).To(Equal("monitor-runner"))
 			})
