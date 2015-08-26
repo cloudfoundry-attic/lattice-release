@@ -4,6 +4,8 @@ set -x -e
 
 SYSTEM_DOMAIN=`cat deploy-vagrant-aws/system_domain`
 
+mkdir -p ~/.lattice
+
 cat > ~/.lattice/config.json <<EOF
 {
   "target": "${SYSTEM_DOMAIN}",
