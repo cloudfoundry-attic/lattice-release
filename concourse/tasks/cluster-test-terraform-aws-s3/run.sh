@@ -14,14 +14,16 @@ pushd $TERRAFORM_TMP_DIR
     LATTICE_PASSWORD=$(terraform output lattice_password)
     cat > $DOT_LATTICE_DIR/config.json <<EOF
 {
-  "target": "${SYSTEM_DOMAIN}",
-  "active_blob_store": 1,
-  "s3_blob_store": {
-    "region": "${AWS_REGION}",
-    "access_key": "${AWS_ACCESS_KEY_ID}",
-    "secret_key": "${AWS_SECRET_ACCESS_KEY}",
-    "bucket_name": "${S3_BUCKET_NAME}"
-  }
+    "target": "${LATTICE_TARGET}",
+    "username": "${LATTICE_USERNAME}",
+    "password": "${LATTICE_PASSWORD}",
+    "active_blob_store": 1,
+    "s3_blob_store": {
+        "region": "${AWS_REGION}",
+        "access_key": "${AWS_ACCESS_KEY_ID}",
+        "secret_key": "${AWS_SECRET_ACCESS_KEY}",
+        "bucket_name": "${S3_BUCKET_NAME}"
+    }
 }
 EOF
 popd
