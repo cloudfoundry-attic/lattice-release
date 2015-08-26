@@ -26,31 +26,16 @@ With `ltc` you can:
 - `list` all running applications and `visualize` their distributions across the Lattice cluster
 - fetch detail `status` information for a running application
 
-##Setup:
+## Setup:
 
 Download the appropriate binary for your architecture.  These link to the *latest* release of `ltc`.  For a specific release version visit the [releases](https://github.com/cloudfoundry-incubator/lattice/releases) page.  The latest unstable build is available below.
 
-Platform | Architecture | Type | Link
----------|--------------|------|--------
-MacOS | amd64 | Release | [https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc](https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc)
-Linux | amd64 | Release | [https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc](https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc)
-MacOS | amd64 | Unstable | [https://lattice.s3.amazonaws.com/unstable/latest/darwin-amd64/ltc](https://lattice.s3.amazonaws.com/unstable/latest/darwin-amd64/ltc)
-Linux | amd64 | Unstable | [https://lattice.s3.amazonaws.com/unstable/latest/linux-amd64/ltc](https://lattice.s3.amazonaws.com/unstable/latest/linux-amd64/ltc)
+Here's how to access the `ltc` binary inside the Lattice bundle.  You can copy this file to some folder in your `$PATH`.
 
-Here's a simple installation script.  It assumes `$HOME/bin` is on your $PATH
-
-**Mac**:
 ```bash
-  mkdir -p $HOME/bin
-  curl https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc -o $HOME/bin/ltc
-  chmod +x $HOME/bin/ltc
-```
-
-**Linux**:
-```bash
-  mkdir -p $HOME/bin
-  wget https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc -O $HOME/bin/ltc
-  chmod +x $HOME/bin/ltc
+unzip lattice-bundle-VERSION-PLATFORM.zip
+cd lattice-bundle-VERSION-PLATFORM
+./ltc -v
 ```
 
 #### Installing From Source

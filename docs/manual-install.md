@@ -22,8 +22,8 @@ Instructions to deploy a cluster will come in a future release.
 1) 
 Download the tarball using appropriate link.
 
-- Release - [https://lattice.s3.amazonaws.com/releases/latest/lattice.tgz](https://lattice.s3.amazonaws.com/releases/latest/lattice.tgz)
-- Unstable - [https://lattice.s3.amazonaws.com/unstable/latest/lattice.tgz](https://lattice.s3.amazonaws.com/unstable/latest/lattice.tgz)
+- Release - [http://lattice.s3.amazonaws.com/releases/backend/lattice-latest.tgz](http://lattice.s3.amazonaws.com/releases/backend/lattice-latest.tgz)
+- Unstable - [http://lattice.s3.amazonaws.com/nightly/backend/lattice-latest.tgz](http://lattice.s3.amazonaws.com/nightly/backend/lattice-latest.tgz)
 
 
 ```bash

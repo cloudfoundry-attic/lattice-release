@@ -14,11 +14,11 @@ This tutorial walks you through the Vagrant VM flow and using Lattice to start a
 
 Consult the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page, and decide on which version of Lattice you plan to use. We recommend using a specific released version of Lattice and the `ltc` binary, rather than tracking master.
 
-First, clone the Lattice repository, then checkout the appropriate release tag:
+First, download one of the bundles listed on the above pages.  Then, unzip it and change into the `vagrant` folder of the unpacked bundle.
 
-    git clone https://github.com/cloudfoundry-incubator/lattice.git
-    cd lattice
-    git checkout v0.3.3
+    unzip lattice-bundle-VERSION-PLATFORM.zip
+    cd lattice-bundle-VERSION-PLATFORM/vagrant
+    vagrant up
 
 Then bring up the Vagrant box:
 
@@ -44,17 +44,9 @@ Visit the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/re
 
 Alternatively you can use these installation steps.  They assume `$HOME/bin` is in your `PATH`.
 
-For Mac:
-
-    mkdir -p $HOME/bin
-    wget https://lattice.s3.amazonaws.com/releases/latest/darwin-amd64/ltc -O $HOME/bin/ltc
-    chmod +x $HOME/bin/ltc
-
-For Linux:
-
-    mkdir -p $HOME/bin
-    wget https://lattice.s3.amazonaws.com/releases/latest/linux-amd64/ltc -O $HOME/bin/ltc
-    chmod +x $HOME/bin/ltc
+    unzip lattice-bundle-VERSION-PLATFORM.zip
+    cd lattice-bundle-VERSION-PLATFORM
+    ./ltc -v
 
 Further instructions can be found [here](https://github.com/cloudfoundry-incubator/lattice/tree/v0.3.3/ltc).
 
