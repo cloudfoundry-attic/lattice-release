@@ -143,9 +143,8 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 					Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
 				})
 
-				Context("when the docker app requires escalated privileges to run", func() {
-					It("should start the nginx app successfully", func() {
-						By("passing the `--run-as-root` flag to `ltc create`")
+				Context("when `--run-as-root` is passed as an argument to `ltc create`", func() {
+					It("should run the app as the root user", func() {
 						runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app", "--run-as-root", fmt.Sprintf("--timeout=%s", timeout.String()))
 
 						Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
@@ -230,7 +229,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 
 			It("builds, lists and launches a droplet", func() {
 				By("checking out lattice-app from github")
-				gitDir := runner.cloneRepo(timeout, "https://github.com/pivotal-cf-experimental/lattice-app.git")
+				gitDir := runner.cloneRepo(timeout, "https://github.com/cloudfoundry-samples/lattice-app.git")
 				defer os.RemoveAll(gitDir)
 
 				By("launching a build task")
