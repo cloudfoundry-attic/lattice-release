@@ -4,9 +4,8 @@ image: docker:///cloudfoundry/lattice-pipeline
 inputs:
 - name: lattice
 - name: lattice-tar-build
-- name: ltc-tar-build
 run:
-  path: lattice/concourse/tasks/cluster-test-terraform-gce/run.sh
+  path: lattice/concourse/tasks/deploy-terraform-gce/run.sh
 params:
   GCE_SSH_PRIVATE_KEY: some-ssh-private-key
   GCE_PROJECT_NAME: some-project-name

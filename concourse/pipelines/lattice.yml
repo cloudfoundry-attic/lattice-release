@@ -201,22 +201,34 @@ jobs:
     plan:
       - aggregate:
         - get: lattice
-          passed: [compile]
           trigger: true
+          passed: [compile]
         - get: lattice-tar-build
           passed: [compile]
         - get: ltc-tar-build
           passed: [compile]
-      - task: cluster-test-terraform-gce
-        file: lattice/concourse/tasks/cluster-test-terraform-gce/task.yml
-        config:
-          params:
-            GCE_SSH_PRIVATE_KEY: {{gce-ssh-private-key}}
-            GCE_PROJECT_NAME: {{gce-project-name}}
-            GCE_ACCOUNT_FILE_JSON: {{gce-account-file-json}}
+      - do:
+        - task: deploy-terraform-gce
+          file: lattice/concourse/tasks/deploy-terraform-gce/task.yml
+          config:
+            params:
+              GCE_SSH_PRIVATE_KEY: {{gce-ssh-private-key}}
+              GCE_PROJECT_NAME: {{gce-project-name}}
+              GCE_ACCOUNT_FILE_JSON: {{gce-account-file-json}}
+        - aggregate:
+          - task: cluster-test-terraform-gce-dav
+            file: lattice/concourse/tasks/cluster-test-terraform-gce-dav/task.yml
+          - task: cluster-test-terraform-gce-s3
+            file: lattice/concourse/tasks/cluster-test-terraform-gce-s3/task.yml
+            config:
+              params:
+                AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+                AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+                AWS_REGION: {{cluster-test-aws-region}}
+                S3_BUCKET_NAME: {{cluster-test-s3-bucket-name}}
         ensure:
-          task: cleanup-cluster-test-terraform-gce
-          file: lattice/concourse/tasks/cleanup-cluster-test-terraform-gce/task.yml
+          task: cleanup-deploy-terraform-gce
+          file: lattice/concourse/tasks/cleanup-deploy-terraform-gce/task.yml
 
   - name: publish-nightly
     plan:

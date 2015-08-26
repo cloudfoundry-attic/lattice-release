@@ -1,0 +1,9 @@
+---
+platform: linux
+image: docker:///cloudfoundry/lattice-pipeline
+inputs:
+- name: lattice
+- name: ltc-tar-build
+- name: deploy-terraform-gce
+run:
+  path: lattice/concourse/tasks/cluster-test-terraform-gce-dav/run.sh

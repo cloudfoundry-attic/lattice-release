@@ -2,7 +2,7 @@
 
 set -x -e
 
-export TERRAFORM_TMP_DIR=$PWD/cluster-test-terraform-gce/terraform-tmp
+export TERRAFORM_TMP_DIR=$PWD/deploy-terraform-gce/terraform-tmp
 
 pushd $TERRAFORM_TMP_DIR
     terraform get -update

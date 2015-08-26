@@ -1,0 +1,14 @@
+---
+platform: linux
+image: docker:///cloudfoundry/lattice-pipeline
+inputs:
+- name: lattice
+- name: ltc-tar-build
+- name: deploy-terraform-gce
+run:
+  path: lattice/concourse/tasks/cluster-test-terraform-gce-s3/run.sh
+params:
+  AWS_ACCESS_KEY_ID: some-access-key-id
+  AWS_SECRET_ACCESS_KEY: some-secret-access-key
+  AWS_REGION: some-region
+  S3_BUCKET_NAME: some-s3-bucket
