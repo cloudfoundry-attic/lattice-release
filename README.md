@@ -157,7 +157,7 @@ ltc target lattice.dev
 
 The below errors can come from having multiple vagrant instances using the same IP address (e.g., 192.168.11.11).  
 
-```
+```bash
 $ ltc target 192.168.11.11.xip.io
 Error connecting to the receptor. Make sure your lattice target is set, and that lattice is up and running.
   Underlying error: Get http://receptor.192.168.11.11.xip.io/v1/desired_lrps: read tcp 192.168.11.11:80: connection reset by peer

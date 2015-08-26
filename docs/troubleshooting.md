@@ -56,6 +56,42 @@ ltc target lattice.dev
 
 > `dnsmasq` is currently only supported for **vagrant** deployments.
 
+
+## Vagrant IP conflict errors
+
+The below errors can come from having multiple vagrant instances using the same IP address (e.g., 192.168.11.11).  
+
+```bash
+$ ltc target 192.168.11.11.xip.io
+Error connecting to the receptor. Make sure your lattice target is set, and that lattice is up and running.
+  Underlying error: Get http://receptor.192.168.11.11.xip.io/v1/desired_lrps: read tcp 192.168.11.11:80: connection reset by peer
+
+$ ltc target 192.168.11.11.xip.io
+Error connecting to the receptor. Make sure your lattice target is set, and that lattice is up and running.
+  Underlying error: Get http://receptor.192.168.11.11.xip.io/v1/desired_lrps: use of closed network connection  
+
+$ ltc target 192.168.11.11.xip.io
+Error verifying target: Get http://receptor.192.168.11.11.xip.io/v1/desired_lrps: net/http: transport closed before response was received
+``` 
+
+To check whether multiple VMs might have an IP conflict, run the following:
+
+```bash
+$ vagrant global-status
+id       name    provider   state   directory
+----------------------------------------------------------------------------------------------------------------
+fb69d90  default virtualbox running /Users/user/workspace/lattice
+4debe83  default virtualbox running /Users/user/workspace/lattice-bundle-v0.3.3-62-g2a78cf6-osx/vagrant
+```
+
+You can then destroy the appropriate instance with:
+
+```bash
+$ cd </path/to/vagrant-directory>
+$ vagrant destroy
+```
+
+
 ## I can't run my Docker image.  Help!
 
 Here are a few pointers to help you debug and fix some common issues:
