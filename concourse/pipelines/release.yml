@@ -69,6 +69,26 @@ jobs:
       - get: lattice
         trigger: true
       - aggregate:
+        - task: go-fmt-ltc
+          file: lattice/concourse/tasks/go-fmt/task.yml
+          config:
+            params:
+              GO_FMT_PATH: ltc
+        - task: go-fmt-davtool
+          file: lattice/concourse/tasks/go-fmt/task.yml
+          config:
+            params:
+              GO_FMT_PATH: cell-helpers/davtool
+        - task: go-fmt-s3tool
+          file: lattice/concourse/tasks/go-fmt/task.yml
+          config:
+            params:
+              GO_FMT_PATH: cell-helpers/s3tool
+        - task: go-fmt-tee2metron
+          file: lattice/concourse/tasks/go-fmt/task.yml
+          config:
+            params:
+              GO_FMT_PATH: cell-helpers/tee2metron
         - task: unit-test-ltc
           file: lattice/concourse/tasks/unit-test-ltc/task.yml
         - task: unit-test-cell-helper-davtool

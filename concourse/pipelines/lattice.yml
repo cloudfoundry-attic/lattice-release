@@ -96,6 +96,31 @@ jobs:
         config:
           params:
             CELL_HELPER: tee2metron
+  - name: go-fmt
+    plan: 
+      - get: lattice
+        trigger: true
+      - aggregate:
+        - task: go-fmt-ltc
+          file: lattice/concourse/tasks/go-fmt/task.yml
+          config:
+            params:
+              GO_FMT_PATH: ltc
+        - task: go-fmt-davtool
+          file: lattice/concourse/tasks/go-fmt/task.yml
+          config:
+            params:
+              GO_FMT_PATH: cell-helpers/davtool
+        - task: go-fmt-s3tool
+          file: lattice/concourse/tasks/go-fmt/task.yml
+          config:
+            params:
+              GO_FMT_PATH: cell-helpers/s3tool
+        - task: go-fmt-tee2metron
+          file: lattice/concourse/tasks/go-fmt/task.yml
+          config:
+            params:
+              GO_FMT_PATH: cell-helpers/tee2metron
 
   - name: compile
     plan:
@@ -103,6 +128,7 @@ jobs:
         - get: lattice
           trigger: true
           passed:
+            - go-fmt
             - unit-test-ltc
             - unit-test-davtool
             - unit-test-s3tool
