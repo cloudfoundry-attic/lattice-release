@@ -28,7 +28,7 @@ With `ltc` you can:
 
 ## Setup:
 
-Download the appropriate binary for your architecture.  These link to the *latest* release of `ltc`.  For a specific release version visit the [releases](https://github.com/cloudfoundry-incubator/lattice/releases) page.  The latest unstable build is available below.
+Download the appropriate bundle for your architecture.  Stable versions can be found on the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page.  Nightly builds can be found [here](https://lattice.s3.amazonaws.com/nightly/index.html).
 
 Here's how to access the `ltc` binary inside the Lattice bundle.  You can copy this file to some folder in your `$PATH`.
 

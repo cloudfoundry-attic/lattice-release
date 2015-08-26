@@ -21,6 +21,10 @@ Lattice is based on a number of open source [Cloud Foundry](http://cloudfoundry.
 - [Loggregator](https://github.com/cloudfoundry/loggregator) aggregates and streams application logs
 - [Gorouter](https://github.com/cloudfoundry/gorouter) provides http load-balancing
 
+## Get Lattice
+
+Visit [Lattice Releases](https://github.com/cloudfoundry-incubator/lattice/releases) or our [Nightly Bundles](https://lattice.s3.amazonaws.com/nightly/index.html) page to download one of our bundles.  These include both the `ltc` CLI for the appropriate architecture, as well as the Vagrantfile and Terraform examples for a given release or nightly build.
+
 ## Deploy Lattice
 
 A [local deployment](#local-deployment) of Lattice can be launched with Vagrant.

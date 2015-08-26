@@ -12,7 +12,7 @@ This tutorial walks you through the Vagrant VM flow and using Lattice to start a
 
 ## Starting the Lattice Vagrant VM
 
-Consult the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page, and decide on which version of Lattice you plan to use. We recommend using a specific released version of Lattice and the `ltc` binary, rather than tracking master.
+Consult the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page, and decide on which version of Lattice you plan to use. We also offer [nightly builds](https://lattice.s3.amazonaws.com/nightly/index.html) for cutting-edge functionality, but recommend the releases for stability. 
 
 First, download one of the bundles listed on the above pages.  Then, unzip it and change into the `vagrant` folder of the unpacked bundle.
 
