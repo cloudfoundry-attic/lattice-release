@@ -1,8 +1,0 @@
----
-platform: linux
-image: docker:///cloudfoundry/lattice-pipeline
-inputs:
-- name: lattice
-- name: cluster-test-terraform-aws
-run:
-  path: lattice/concourse/tasks/cleanup-cluster-test-terraform-aws/run.sh

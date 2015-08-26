@@ -3,12 +3,12 @@ platform: linux
 image: docker:///cloudfoundry/lattice-pipeline
 inputs:
 - name: lattice
-- name: lattice-tar-build
 - name: ltc-tar-build
+- name: deploy-terraform-aws
 run:
-  path: lattice/concourse/tasks/cluster-test-terraform-aws/run.sh
+  path: lattice/concourse/tasks/cluster-test-terraform-aws-s3/run.sh
 params:
   AWS_ACCESS_KEY_ID: some-access-key-id
   AWS_SECRET_ACCESS_KEY: some-secret-access-key
-  AWS_SSH_PRIVATE_KEY: some-ssh-private-key
-  AWS_SSH_PRIVATE_KEY_NAME: some-ssh-private-key-name
+  AWS_REGION: some-region
+  S3_BUCKET_NAME: some-s3-bucket

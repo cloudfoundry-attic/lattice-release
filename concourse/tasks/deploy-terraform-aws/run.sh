@@ -2,16 +2,14 @@
 
 set -x -e
 
-export DOT_LATTICE_DIR=$HOME/.lattice
 export LATTICE_VERSION=v$(cat lattice-tar-build/version)
-export LTC_VERSION=v$(cat ltc-tar-build/version)
 export TERRAFORM_TMP_DIR=$PWD/terraform-tmp
 
-mkdir -p $TERRAFORM_TMP_DIR $DOT_LATTICE_DIR
+mkdir -p $TERRAFORM_TMP_DIR
 
 cat <<< "$AWS_SSH_PRIVATE_KEY" > $TERRAFORM_TMP_DIR/key.pem
 
-cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
+cat > $TERRAFORM_TMP_DIR/lattice.tf <<EOF
 {
     "module": {
         "lattice-aws": {
@@ -47,26 +45,3 @@ pushd $TERRAFORM_TMP_DIR
 popd
 
 sleep 60
-
-tar xzf ltc-tar-build/ltc-${LTC_VERSION}.tgz
-
-pushd $TERRAFORM_TMP_DIR
-    LATTICE_TARGET=$(terraform output lattice_target)
-    LATTICE_USERNAME=$(terraform output lattice_username)
-    LATTICE_PASSWORD=$(terraform output lattice_password)
-    cat << EOF > $DOT_LATTICE_DIR/config.json
-{
-    "target": "${LATTICE_TARGET}",
-    "username": "${LATTICE_USERNAME}",
-    "password": "${LATTICE_PASSWORD}",
-    "dav_blob_store": {
-        "host": "${LATTICE_TARGET}",
-        "port": "8444",
-        "username": "${LATTICE_USERNAME}",
-        "password": "${LATTICE_PASSWORD}"
-    }
-}
-EOF
-popd
-
-$PWD/ltc-linux-amd64 test -v --timeout=5m
