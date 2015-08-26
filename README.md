@@ -41,7 +41,7 @@ More complex workloads can be constructed and submitted directly to Lattice's Re
 
 ## Launching with Vagrant
 
-Make sure you have [Vagrant](https://vagrantup.com/) 1.6+ installed, download the Lattice bundle from the [latest release](https://github.com/cloudfoundry-incubator/lattice/releases/latest), and run `vagrant up`:
+Make sure you have [Vagrant](https://vagrantup.com/) 1.6+ installed, download the Lattice bundle from the [latest release](https://github.com/cloudfoundry-incubator/lattice/releases/latest) or the [nightly builds](https://lattice.s3.amazonaws.com/nightly/index.html) page, and run `vagrant up`:
 
 ```bash
 unzip lattice-bundle-VERSION-PLATFORM.zip
@@ -220,7 +220,7 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 
 Here are some step-by-step instructions for deploying a Lattice cluster via Terraform:
 
-1. Download a lattice bundle from the [latest release](https://github.com/cloudfoundry-incubator/lattice/releases/latest).
+1. Download a lattice bundle from the [latest release](https://github.com/cloudfoundry-incubator/lattice/releases/latest) or the [nightly builds](https://lattice.s3.amazonaws.com/nightly/index.html) page.
 2. Unzip the bundle, and switch to the directory for your intended provider:
 
   ```bash
