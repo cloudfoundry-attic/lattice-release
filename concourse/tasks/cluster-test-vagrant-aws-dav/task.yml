@@ -4,5 +4,6 @@ image: docker:///cloudfoundry/lattice-pipeline
 inputs:
 - name: lattice
 - name: ltc-tar-build
+- name: deploy-vagrant-aws
 run:
   path: lattice/concourse/tasks/cluster-test-vagrant-aws-dav/run.sh
