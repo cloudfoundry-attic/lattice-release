@@ -366,7 +366,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	}
 
 	if cpuWeightFlag < 1 || cpuWeightFlag > 100 {
-		factory.UI.SayIncorrectUsage("Invalid CPU Weight")
+		factory.UI.SayIncorrectUsage("invalid CPU Weight")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
@@ -382,11 +382,15 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 		return
 	}
 
+	factory.UI.SayLine("Uploading application bits...")
+
 	if err = factory.dropletRunner.UploadBits(dropletName, archivePath); err != nil {
-		factory.UI.SayLine(fmt.Sprintf("Error uploading to %s: %s", dropletName, err))
+		factory.UI.SayLine(fmt.Sprintf("Error uploading %s: %s", dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
+
+	factory.UI.SayLine("Uploaded.")
 
 	environment := factory.AppRunnerCommandFactory.BuildEnvironment(envFlag)
 
@@ -483,7 +487,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 	case len(context.Args()) > 4:
 		startArgs = context.Args()[4:]
 	case cpuWeightFlag < 1 || cpuWeightFlag > 100:
-		factory.UI.SayIncorrectUsage("Invalid CPU Weight")
+		factory.UI.SayIncorrectUsage("invalid CPU Weight")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}

@@ -123,6 +123,9 @@ var _ = Describe("CommandFactory", func() {
 			It("zips up current working folder and uploads as the droplet name", func() {
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
 
+				Expect(outputBuffer).To(test_helpers.SayLine("Uploading application bits..."))
+				Expect(outputBuffer).To(test_helpers.SayLine("Uploaded."))
+
 				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
 				Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(config))
 
@@ -492,7 +495,7 @@ var _ = Describe("CommandFactory", func() {
 
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
 
-				Expect(outputBuffer).To(test_helpers.SayLine("Error uploading to droplet-name: uploading bits failed"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Error uploading droplet-name: uploading bits failed"))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
 				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
@@ -647,7 +650,7 @@ var _ = Describe("CommandFactory", func() {
 			It("validates cpuWeight is between 1 and 100", func() {
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"-c", "9999", "droplet-name", "java"})
 
-				Expect(outputBuffer).To(test_helpers.SayLine("Invalid CPU Weight"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: invalid CPU Weight"))
 				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
 				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
@@ -938,7 +941,7 @@ var _ = Describe("CommandFactory", func() {
 				}
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 
-				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Invalid CPU Weight"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: invalid CPU Weight"))
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
 			})
 		})
