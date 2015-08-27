@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM ubuntu:14.04.3
 
 # install package dependencies
 RUN apt-get update -qqy \
@@ -68,14 +68,6 @@ RUN gem install bosh_cli --no-rdoc --no-ri
 RUN curl -L "https://s3.amazonaws.com/bosh-init-artifacts/bosh-init-0.0.43-linux-amd64" > /usr/local/bin/bosh-init \
    && chmod +x /usr/local/bin/bosh-init
 
-# install PhantomJS 2.0
-RUN curl -L -O "http://mirrors.kernel.org/ubuntu/pool/main/i/icu/libicu48_4.8.1.1-3ubuntu0.5_amd64.deb" \
-  && dpkg -i libicu48_4.8.1.1-3ubuntu0.5_amd64.deb \
-  && rm libicu48_4.8.1.1-3ubuntu0.5_amd64.deb \
-  && curl -L "https://s3.amazonaws.com/travis-phantomjs/phantomjs-2.0.0-ubuntu-12.04.tar.bz2" | tar -xj \
-  && mv phantomjs /usr/local/bin/phantomjs
-ENV PHANTOMJS_BIN /usr/local/bin/phantomjs
-
 # install aws-cli
 RUN curl -L -O "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" \
   && unzip awscli-bundle.zip \
@@ -86,20 +78,6 @@ RUN curl -L -O "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" \
 RUN cd /usr/local/ \
   && curl -L "https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz" | tar -xz
 ENV PATH $PATH:/usr/local/go/bin
-
-# install fixed version of node
-RUN cd /usr/local/ \
-  && curl -L "https://nodejs.org/dist/v0.12.7/node-v0.12.7-linux-x64.tar.gz" | tar --strip-components 1 -xz \
-  && rm -f /usr/local/bin/npm \
-  && ln -s /usr/local/bin/node /usr/local/bin/nodejs
-
-# install npm 2.13.0
-RUN curl -L "https://npmjs.org/install.sh" > /tmp/install-npm.sh \
-  && chmod +x /tmp/install-npm.sh \
-  && npm_install=2.13.0 /tmp/install-npm.sh
-
-# install global npm packages
-RUN npm install -g jshint grunt-cli
 
 # install cf cli
 RUN cd /usr/local/bin \
