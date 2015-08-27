@@ -11,5 +11,20 @@ fi
 
 source $LATTICE_DIR/development/env
 
-DOCKER_MOUNT_DIR=$LATTICE_DIR $LATTICE_DIR/pipeline/helpers/run_with_docker $LATTICE_SRC_PATH/pipeline/01_compilation/compile_lattice_tar
+export DIEGO_RELEASE_DIR=$LATTICE_DIR/build/diego-release
+
+LATTICE_SRC_PATH=/lattice DOCKER_MOUNT_DIR=$LATTICE_DIR $LATTICE_DIR/pipeline/helpers/run_with_docker /lattice/cluster/scripts/compile \
+    /lattice/build/lattice-build \
+    /lattice/build/diego-release \
+    /lattice/build/cf-release \
+    /lattice/build/cf-routing-release \
+    /lattice
+
+git -C $LATTICE_DIR describe > $LATTICE_DIR/build/lattice-build/common/LATTICE_VERSION
+cat $LATTICE_DIR/DIEGO_VERSION > $LATTICE_DIR/build/lattice-build/common/DIEGO_VERSION
+cat $LATTICE_DIR/CF_VERSION > $LATTICE_DIR/build/lattice-build/common/CF_VERSION
+cat $LATTICE_DIR/ROUTING_VERSION > $LATTICE_DIR/build/lattice-build/common/ROUTING_VERSION
+cat $LATTICE_DIR/STACK_VERSION > $LATTICE_DIR/build/lattice-build/common/STACK_VERSION
+
+tar czf $LATTICE_DIR/build/lattice.tgz -C $LATTICE_DIR/build lattice-build
 mv -v $LATTICE_DIR/build/lattice.tgz $LATTICE_DIR/

@@ -12,6 +12,7 @@ cp $lattice_common_build_path/LATTICE_VERSION /var/lattice
 cp $lattice_common_build_path/DIEGO_VERSION /var/lattice
 cp $lattice_common_build_path/CF_VERSION /var/lattice
 cp $lattice_common_build_path/ROUTING_VERSION /var/lattice
+cp $lattice_common_build_path/STACK_VERSION /var/lattice
 
 ## log rotation ##
 cp $lattice_common_build_path/system-config/lattice.logrotate.txt /etc/logrotate.d/lattice

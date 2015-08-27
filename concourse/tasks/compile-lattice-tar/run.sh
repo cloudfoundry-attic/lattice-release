@@ -12,6 +12,7 @@ export LATTICE_VERSION=$(git -C $LATTICE_DIR describe)
 export DIEGO_VERSION=$(cat $LATTICE_DIR/DIEGO_VERSION)
 export CF_VERSION=$(cat $LATTICE_DIR/CF_VERSION)
 export ROUTING_VERSION=$(cat $LATTICE_DIR/ROUTING_VERSION)
+export STACK_VERSION=$(cat $LATTICE_DIR/STACK_VERSION)
 
 if [ "$RELEASE" = true ]; then
   export LATTICE_VERSION=$(cat $LATTICE_DIR/Version)
@@ -46,6 +47,7 @@ echo $LATTICE_VERSION > $LATTICE_DIR/build/lattice-build/common/LATTICE_VERSION
 echo $DIEGO_VERSION > $LATTICE_DIR/build/lattice-build/common/DIEGO_VERSION
 echo $CF_VERSION > $LATTICE_DIR/build/lattice-build/common/CF_VERSION
 echo $ROUTING_VERSION > $LATTICE_DIR/build/lattice-build/common/ROUTING_VERSION
+echo $STACK_VERSION > $LATTICE_DIR/build/lattice-build/common/STACK_VERSION
 
 tar czf $LATTICE_DIR/build/lattice.tgz -C $LATTICE_DIR/build lattice-build
 
