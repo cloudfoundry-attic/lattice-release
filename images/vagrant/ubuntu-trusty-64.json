@@ -168,8 +168,8 @@
             "execute_command": "sudo {{.Path}}",
             "inline": [
                 "wget https://github.com/cloudfoundry/stacks/releases/download/{{user `stack_version`}}/cflinuxfs2-{{user `stack_version`}}.tar.gz --quiet -O /tmp/cflinuxfs2-{{user `stack_version`}}.tar.gz",
-                "mkdir -p /var/lattice/rootfs/cflinuxfs2",
-                "tar -xzf /tmp/cflinuxfs2-{{user `stack_version`}}.tar.gz -C /var/lattice/rootfs/cflinuxfs2",
+                "mkdir -p /var/lattice-image/rootfs/cflinuxfs2",
+                "tar -xzf /tmp/cflinuxfs2-{{user `stack_version`}}.tar.gz -C /var/lattice-image/rootfs/cflinuxfs2",
                 "rm -f /tmp/cflinuxfs2-{{user `stack_version`}}.tar.gz"
             ]
         },
