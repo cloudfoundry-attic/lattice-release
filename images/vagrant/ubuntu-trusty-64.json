@@ -12,7 +12,7 @@
             "region": "us-east-1",
             "source_ami": "ami-2dcf7b46",
             "instance_type": "m3.large",
-            "ami_name": "ubuntu-trusty-64-v{{isotime \"20060102-0304\"}}-vagrant",
+            "ami_name": "ubuntu-trusty-64-v{{isotime \"20060102-1504\"}}-vagrant",
             "ami_groups": ["all"],
             "ami_regions": [
                 "us-west-1",
