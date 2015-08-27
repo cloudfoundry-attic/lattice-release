@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -161,13 +162,9 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 			})
 
 			Context("when desiring a docker-based LRP with tcp routes", func() {
-				var (
-					externalPort uint16
-					appName      string
-				)
+				var appName string
 
 				BeforeEach(func() {
-					externalPort = 50000
 					appGUID, err := uuid.NewV4()
 					Expect(err).NotTo(HaveOccurred())
 
@@ -179,10 +176,11 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				})
 
 				It("should run a docker app exposing tcp routes", func() {
+					externalPort := uint16(rand.Intn(9999) + 50000)
 					runner.createDockerApp(timeout, appName, "cloudfoundry/tcp-sample-receiver", fmt.Sprintf("--tcp-routes=%d:5222", externalPort), fmt.Sprintf("--timeout=%s", timeout.String()))
 					Eventually(errorCheckForConnection(runner.config.Target(), externalPort, "docker-server1"), timeout, 1).ShouldNot(HaveOccurred())
 
-					externalPort = 53000
+					externalPort++
 					By("Updating the routes")
 					runner.updateApp(timeout, appName, fmt.Sprintf("--tcp-routes=%d:5222", externalPort))
 					Eventually(errorCheckForConnection(runner.config.Target(), externalPort, "docker-server1"), timeout, 1).ShouldNot(HaveOccurred())
@@ -248,7 +246,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 
 			Context("droplet with tcp routes", func() {
 				It("should build, lists and launches a droplet with tcp routes", func() {
-					externalPort := uint16(51000)
+					externalPort := uint16(rand.Intn(10000) + 50000)
 					By("checking out droplet-receiver from github")
 					gitDir := runner.cloneRepo(timeout, "https://github.com/cloudfoundry-incubator/cf-tcp-router-acceptance-tests.git")
 					dropletDir := gitDir + "/assets/tcp-droplet-receiver"
