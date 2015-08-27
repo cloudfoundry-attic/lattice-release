@@ -3,7 +3,7 @@
 		{
 			"type": "amazon-ebs",
 			"region": "us-east-1",
-			"source_ami": "ami-4dfb5d26",
+			"source_ami": "ami-2dcf7b46",
 			"instance_type": "m3.medium",
 			"ssh_username": "ubuntu",
 			"ami_name": "ubuntu-trusty-64-v{{isotime \"20060102\"}}",
