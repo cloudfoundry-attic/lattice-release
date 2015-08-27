@@ -73,6 +73,16 @@ resource "google_compute_instance" "lattice-brain" {
 
     provisioner "remote-exec" {
         inline = [
+            "echo downloading stack version ${file("${path.module}/../../STACK_VERSION")}",
+            "sudo wget https://github.com/cloudfoundry/stacks/releases/download/${file("${path.module}/../../STACK_VERSION")}/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz --quiet -O /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz",
+            "sudo mkdir -p /var/lattice/rootfs/cflinuxfs2",
+            "sudo tar -xzf /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz -C /var/lattice/rootfs/cflinuxfs2",
+            "sudo rm -f /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz"
+        ]
+    }
+
+    provisioner "remote-exec" {
+        inline = [
             "sudo mkdir -p /var/lattice/setup/",
             "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
@@ -137,6 +147,16 @@ resource "google_compute_instance" "cell" {
             "sudo apt-get -y install quota",
             "sudo apt-get -y install linux-image-extra-$(uname -r)",
             "sudo apt-get -y install btrfs-tools",
+        ]
+    }
+
+    provisioner "remote-exec" {
+        inline = [
+            "echo downloading stack version ${file("${path.module}/../../STACK_VERSION")}",
+            "sudo wget https://github.com/cloudfoundry/stacks/releases/download/${file("${path.module}/../../STACK_VERSION")}/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz --quiet -O /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz",
+            "sudo mkdir -p /var/lattice/rootfs/cflinuxfs2",
+            "sudo tar -xzf /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz -C /var/lattice/rootfs/cflinuxfs2",
+            "sudo rm -f /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz"
         ]
     }
 
