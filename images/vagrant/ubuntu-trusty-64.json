@@ -3,7 +3,8 @@
         "ssh_name": "vagrant",
         "ssh_pass": "vagrant",
         "hostname": "ubuntu-trusty-64",
-        "Version": "4.3.8"
+        "Version": "4.3.8",
+        "stack_version": "{{env `stack_version`}}"
     },
     "builders": [
         {
@@ -160,6 +161,16 @@
             "execute_command": "sudo {{.Path}}",
             "inline": [
                 "ln -s /mnt /var/lattice"
+            ]
+        },
+        {
+            "type": "shell",
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "wget https://github.com/cloudfoundry/stacks/releases/download/{{user `stack_version`}}/cflinuxfs2-{{user `stack_version`}}.tar.gz --quiet -O /tmp/cflinuxfs2-{{user `stack_version`}}.tar.gz",
+                "mkdir -p /var/lattice/rootfs/cflinuxfs2",
+                "tar -xzf /tmp/cflinuxfs2-{{user `stack_version`}}.tar.gz -C /var/lattice/rootfs/cflinuxfs2",
+                "rm -f /tmp/cflinuxfs2-{{user `stack_version`}}.tar.gz"
             ]
         },
         {

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+packer build $@ -var "stack_version=$(cat ../../STACK_VERSION)" ubuntu-trusty-64.json
+
