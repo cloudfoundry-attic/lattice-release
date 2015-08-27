@@ -31,7 +31,7 @@ variable "gce_ipv4_range" {
 
 variable "gce_image" {
     description = "The name of the image to base the launched instances."
-    default = "ubuntu-1404-trusty-v20150316"
+    default = "ubuntu-1404-trusty-v20150805"
 }
 
 variable "gce_machine_type_brain" {
