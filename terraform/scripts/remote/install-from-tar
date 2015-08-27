@@ -20,22 +20,6 @@ install_condenser() {
     sleep 1
 }
 
-stage_cflinuxfs2_rootfs() {
-    declare -r rootfs_download_path=~/download
-    mkdir -p $rootfs_download_path
-    wget https://github.com/cloudfoundry/stacks/releases/download/1.4.0/cflinuxfs2-1.4.0.tar.gz --quiet -O $rootfs_download_path/cflinuxfs2.tar.gz
-    echo "Downloaded RootFS!"
-
-    ## unpack to some fixed folder
-    mkdir -p /var/lattice/rootfs/cflinuxfs2
-    tar -xzf $rootfs_download_path/cflinuxfs2.tar.gz -C /var/lattice/rootfs/cflinuxfs2
-
-    rm -f $rootfs_download_path/cflinuxfs2.tar.tgz
-    echo "Preloaded CFLinuxFS2 RootFS enabled."
-
-    sleep 1
-}
-
 COMPONENT_TO_INSTALL=$1
 
 if [ $COMPONENT_TO_INSTALL != "cell" ] && [ $COMPONENT_TO_INSTALL != "brain" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
@@ -57,7 +41,6 @@ if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
     /tmp/lattice-build/scripts/install-brain
 
     install_condenser
-    stage_cflinuxfs2_rootfs
 
     /tmp/lattice-build/scripts/install-cell
 elif [ $COMPONENT_TO_INSTALL == "brain" ]; then
@@ -65,8 +48,6 @@ elif [ $COMPONENT_TO_INSTALL == "brain" ]; then
 
     /tmp/lattice-build/scripts/install-brain
 elif [ $COMPONENT_TO_INSTALL == "cell" ]; then
-    stage_cflinuxfs2_rootfs
-
     /tmp/lattice-build/scripts/install-cell
 else
     exit 2

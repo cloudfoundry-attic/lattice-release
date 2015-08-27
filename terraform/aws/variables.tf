@@ -43,9 +43,9 @@ variable "aws_image" {
         eu-central-1 = "ami-08f5f115"
         eu-west-1 = "ami-16d08161"
         sa-east-1 = "ami-a1840dbc"
-        us-east-1 = "ami-9fd674f4"
-        us-west-1 = "ami-edee11a9"
-        us-west-2 = "ami-8f252dbf"
+	us-east-1 = "ami-19dd6672"
+	us-west-1 = "ami-1108f055"
+	us-west-2 = "ami-d5ddcce5"
     }
 }
 
