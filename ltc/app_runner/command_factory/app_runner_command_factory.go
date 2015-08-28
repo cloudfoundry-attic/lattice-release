@@ -116,7 +116,7 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 		Name:        "update-routes",
 		Aliases:     []string{"ur"},
 		Usage:       "Updates the routes for a running app",
-		Description: "ltc update-routes APP_NAME ROUTE,OTHER_ROUTE...", // TODO: route format?
+		Description: "ltc update-routes APP_NAME ROUTE,OTHER_ROUTE...",
 		Action:      factory.updateAppRoutes,
 		Flags:       updateRoutesFlags,
 	}
@@ -140,13 +140,12 @@ func (factory *AppRunnerCommandFactory) MakeUpdateCommand() cli.Command {
 		},
 	}
 	var updateCommand = cli.Command{
-		Name:    "update",
-		Aliases: []string{"u"},
-		Usage:   "Updates attributes of an existing application",
-		Description: `ltc update APP_NAME [--http-routes HOST:CONTAINER_PORT[,...]] [--tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]]
-		`,
-		Action: factory.updateApp,
-		Flags:  updateFlags,
+		Name:        "update",
+		Aliases:     []string{"up"},
+		Usage:       "Updates attributes of an existing application",
+		Description: "ltc update APP_NAME [--http-routes HOST:CONTAINER_PORT[,...]] [--tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]]\n",
+		Action:      factory.updateApp,
+		Flags:       updateFlags,
 	}
 
 	return updateCommand
