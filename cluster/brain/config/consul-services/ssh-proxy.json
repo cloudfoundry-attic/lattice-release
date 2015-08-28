@@ -1,6 +1,0 @@
-{
-    "service": {
-        "name": "ssh-proxy",
-        "port": 2222
-    }
-}

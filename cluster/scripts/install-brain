@@ -18,7 +18,6 @@ mkdir -p /var/lattice/static-files
 pushd $lattice_brain_path/bin > /dev/null
     tar czf /var/lattice/static-files/healthcheck.tgz healthcheck
     tar czf /var/lattice/static-files/lattice-cell-helpers.tgz builder launcher s3tool davtool
-	tar czf /var/lattice/static-files/diego-sshd.tgz diego-sshd
 popd > /dev/null
 
 mkdir -p /var/lattice/config
