@@ -17,7 +17,7 @@ jobs:
             AWS_DEFAULT_REGION: us-east-1
             AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
             AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
-            CLOUDFORMATION_STACK_NAME: concourse
+            CLOUDFORMATION_STACK_NAME: ci
             HOSTED_ZONE_NAME: {{lattice-domain-name}}
             SSL_CERT_ARN: {{lattice-ssl-certificate-arn}}
             NAT_AMI: {{concourse-nat-ami}}
@@ -34,7 +34,7 @@ jobs:
             AWS_DEFAULT_REGION: us-east-1
             AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
             AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
-            CLOUDFORMATION_STACK_NAME: concourse
+            CLOUDFORMATION_STACK_NAME: ci
             KEY_NAME: {{aws-ssh-private-key-name}}
             PRIVATE_KEY: {{aws-ssh-private-key}}
             BOSH_USER: {{concourse-bosh-user}}
@@ -53,6 +53,6 @@ jobs:
             BOSH_PASSWORD: {{concourse-bosh-password}}
             CONCOURSE_USER: {{concourse-user}}
             CONCOURSE_PASSWORD: {{concourse-password}}
-            CONCOURSE_VERSION: 0.59.1
-            GARDEN_LINUX_VERSION: 0.284.0
-            CLOUDFORMATION_STACK_NAME: concourse
+            CONCOURSE_VERSION: 0.61.0
+            GARDEN_LINUX_VERSION: 0.303.0
+            CLOUDFORMATION_STACK_NAME: ci
