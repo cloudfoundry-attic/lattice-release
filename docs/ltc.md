@@ -14,7 +14,16 @@ If the Lattice API is password protected, `ltc` will prompt you for a username a
 
 Run `ltc target` with no arguments to get the current target.  It will also indicate whether a droplet store is available.
 
-- Starting with v0.3.0, `ltc target` looks for a droplet store bundled with Lattice to enable Buildpacks functionality.
+- **`--s3`** enables using an AWS S3 bucket to store droplets.  It prompts for the following:
+
+```
+S3 Access Key: AKIABCDEFHIJKLMNOPQR
+S3 Secret Key: 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
+S3 Bucket: my-droplet-bucket
+S3 Region: us-east-1
+```
+
+> Starting with v0.3.3, `ltc target` requires a droplet store in order to target successfully.
 
 ## Launching Docker Applications
 
