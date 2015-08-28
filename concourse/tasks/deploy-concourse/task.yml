@@ -4,7 +4,7 @@ image: docker:///cloudfoundry/lattice-bosh
 inputs:
 - name: lattice
 run:
-  path: lattice/concourse/tasks/concourse-deploy/run.sh
+  path: lattice/concourse/tasks/deploy-concourse/run.sh
 params:
   BOSH_TARGET: some-target
   BOSH_USER: some-bosh-user

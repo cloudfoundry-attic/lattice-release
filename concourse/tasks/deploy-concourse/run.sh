@@ -8,7 +8,7 @@ bosh -n target $BOSH_TARGET
 bosh login $BOSH_USER $BOSH_PASSWORD
 
 export BOSH_DIRECTOR_UUID=`bosh status --uuid`
-export MANIFEST_FILE=$PWD/lattice/concourse/tasks/concourse-deploy/manifest.yml
+export MANIFEST_FILE=$PWD/lattice/concourse/tasks/deploy-concourse/manifest.yml
 export STACK_INFO=`aws cloudformation describe-stacks --stack-name "$CLOUDFORMATION_STACK_NAME"`
 
 export SECURITY_GROUP_ID=$(get_stack_output "SecurityGroupID")
