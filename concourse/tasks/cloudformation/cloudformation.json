@@ -219,15 +219,15 @@
           "UnhealthyThreshold": "10"
         },
         "Listeners": [
-          {"InstancePort": "80", "LoadBalancerPort": "80", "Protocol": "HTTP"},
+          {"InstancePort": "8080", "LoadBalancerPort": "80", "Protocol": "HTTP"},
           {
-            "InstancePort": "80",
+            "InstancePort": "8080",
             "LoadBalancerPort": "443",
             "Protocol": "HTTPS",
             "SSLCertificateId": {"Ref": "SSLCertARN"}
           },
           {
-            "InstancePort": "80",
+            "InstancePort": "8080",
             "LoadBalancerPort": "4443",
             "Protocol": "SSL",
             "SSLCertificateId": {"Ref": "SSLCertARN"}
