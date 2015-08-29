@@ -25,7 +25,7 @@ function build_manifest() {
   export VPC_ID=$(get_stack_output "VPCID")
   export SECURITY_GROUP_ID=$(get_stack_output "SecurityGroupID")
   export SECURITY_GROUP_NAME=$(aws ec2 describe-security-groups --group-ids=$SECURITY_GROUP_ID | jq -r .SecurityGroups[0].GroupName)
-  export PRIVATE_SUBNET_ID=$(get_stack_output "PrivateSubnetID")
+  export PRIVATE_SUBNET_ID=$(get_stack_output "PublicSubnetID")
   export ELASTIC_IP=$(get_stack_output "ElasticIP")
   export AVAILABILITY_ZONE=$(get_stack_output "AvailabilityZone")
 
