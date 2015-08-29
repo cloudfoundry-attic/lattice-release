@@ -288,10 +288,10 @@
             "DeleteOnTermination": "true",
             "DeviceIndex": "0",
             "GroupSet": [{"Ref": "EC2SecurityGroup"}],
+            "PrivateIpAddress": "10.0.0.6",
             "SubnetId": {"Ref": "PublicSubnet"}
           }
         ],
-        "PrivateIpAddress": "10.0.0.6",
         "SourceDestCheck": false,
         "Tags": [
           {
