@@ -3,8 +3,6 @@
   "Description": "AWS CloudFormation Template for MicroBOSH",
   "Mappings": {
     "SubnetConfig": {
-      "Notifications": {"CIDR": "10.0.1.0/24"},
-      "NotificationsUI": {"CIDR": "10.0.2.0/24"},
       "Private": {"CIDR": "10.0.16.0/24"},
       "Public": {"CIDR": "10.0.0.0/24"},
       "VPC": {"CIDR": "10.0.0.0/16"}
@@ -28,14 +26,6 @@
       "Description": "Name of the Elastic Load Balancer",
       "Value": {"Ref": "ElasticLoadBalancer"}
     },
-    "NotificationsSubnetID": {
-      "Description": "Subnet ID of the notifcations subnet",
-      "Value": {"Ref": "NotificationsSubnet"}
-    },
-    "NotificationsUISubnetID": {
-      "Description": "Subnet ID of the notifcations-ui subnet",
-      "Value": {"Ref": "NotificationsUISubnet"}
-    },
     "PrivateSubnetID": {
       "Description": "Subnet ID of the private subnet",
       "Value": {"Ref": "PrivateSubnet"}
@@ -43,10 +33,6 @@
     "PublicSubnetID": {
       "Description": "Subnet ID of the public subnet",
       "Value": {"Ref": "PublicSubnet"}
-    },
-    "SNSTopicARN": {
-      "Description": "ARN for SNS Topic for Detached ELB",
-      "Value": {"Ref": "SNSELBDetachedCloudwatchTopic"}
     },
     "SecurityGroupID": {
       "Description": "ID of the security group",
@@ -260,28 +246,6 @@
       },
       "Type": "AWS::EC2::VPCGatewayAttachment"
     },
-    "InboundNotificationsNetworkAclEntry": {
-      "Properties": {
-        "CidrBlock": "0.0.0.0/0",
-        "Egress": "false",
-        "NetworkAclId": {"Ref": "NotificationsNetworkAcl"},
-        "Protocol": "-1",
-        "RuleAction": "allow",
-        "RuleNumber": "100"
-      },
-      "Type": "AWS::EC2::NetworkAclEntry"
-    },
-    "InboundNotificationsUINetworkAclEntry": {
-      "Properties": {
-        "CidrBlock": "0.0.0.0/0",
-        "Egress": "false",
-        "NetworkAclId": {"Ref": "NotificationsUINetworkAcl"},
-        "Protocol": "-1",
-        "RuleAction": "allow",
-        "RuleNumber": "100"
-      },
-      "Type": "AWS::EC2::NetworkAclEntry"
-    },
     "InboundPrivateNetworkAclEntry": {
       "Properties": {
         "CidrBlock": "0.0.0.0/0",
@@ -327,6 +291,7 @@
             "SubnetId": {"Ref": "PublicSubnet"}
           }
         ],
+        "PrivateIpAddress": "10.0.0.6",
         "SourceDestCheck": false,
         "Tags": [
           {
@@ -337,150 +302,6 @@
         ]
       },
       "Type": "AWS::EC2::Instance"
-    },
-    "NotificationsNetworkAcl": {
-      "Properties": {
-        "Tags": [
-          {"Key": "Name", "Value": {"Ref": "AWS::StackName"}},
-          {"Key": "Network", "Value": "Notifications"}
-        ],
-        "VpcId": {"Ref": "VPC"}
-      },
-      "Type": "AWS::EC2::NetworkAcl"
-    },
-    "NotificationsRoute": {
-      "DependsOn": "GatewayToInternet",
-      "Properties": {
-        "DestinationCidrBlock": "0.0.0.0/0",
-        "InstanceId": {"Ref": "NatBox"},
-        "RouteTableId": {"Ref": "NotificationsRouteTable"}
-      },
-      "Type": "AWS::EC2::Route"
-    },
-    "NotificationsRouteTable": {
-      "Properties": {
-        "Tags": [
-          {"Key": "Name", "Value": {"Ref": "AWS::StackName"}},
-          {"Key": "Network", "Value": "Notifications"}
-        ],
-        "VpcId": {"Ref": "VPC"}
-      },
-      "Type": "AWS::EC2::RouteTable"
-    },
-    "NotificationsSubnet": {
-      "Properties": {
-        "CidrBlock": {
-          "Fn::FindInMap": ["SubnetConfig", "Notifications", "CIDR"]
-        },
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": {
-              "Fn::Join": ["-", [{"Ref": "AWS::StackName"}, "notifications"]]
-            }
-          },
-          {"Key": "Network", "Value": "Notifications"}
-        ],
-        "VpcId": {"Ref": "VPC"}
-      },
-      "Type": "AWS::EC2::Subnet"
-    },
-    "NotificationsSubnetNetworkAclAssociation": {
-      "Properties": {
-        "NetworkAclId": {"Ref": "NotificationsNetworkAcl"},
-        "SubnetId": {"Ref": "NotificationsSubnet"}
-      },
-      "Type": "AWS::EC2::SubnetNetworkAclAssociation"
-    },
-    "NotificationsSubnetRouteTableAssociation": {
-      "Properties": {
-        "RouteTableId": {"Ref": "NotificationsRouteTable"},
-        "SubnetId": {"Ref": "NotificationsSubnet"}
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation"
-    },
-    "NotificationsUINetworkAcl": {
-      "Properties": {
-        "Tags": [
-          {"Key": "Name", "Value": {"Ref": "AWS::StackName"}},
-          {"Key": "Network", "Value": "NotificationsUI"}
-        ],
-        "VpcId": {"Ref": "VPC"}
-      },
-      "Type": "AWS::EC2::NetworkAcl"
-    },
-    "NotificationsUIRoute": {
-      "DependsOn": "GatewayToInternet",
-      "Properties": {
-        "DestinationCidrBlock": "0.0.0.0/0",
-        "InstanceId": {"Ref": "NatBox"},
-        "RouteTableId": {"Ref": "NotificationsUIRouteTable"}
-      },
-      "Type": "AWS::EC2::Route"
-    },
-    "NotificationsUIRouteTable": {
-      "Properties": {
-        "Tags": [
-          {"Key": "Name", "Value": {"Ref": "AWS::StackName"}},
-          {"Key": "Network", "Value": "NotificationsUI"}
-        ],
-        "VpcId": {"Ref": "VPC"}
-      },
-      "Type": "AWS::EC2::RouteTable"
-    },
-    "NotificationsUISubnet": {
-      "Properties": {
-        "CidrBlock": {
-          "Fn::FindInMap": ["SubnetConfig", "NotificationsUI", "CIDR"]
-        },
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": {
-              "Fn::Join": ["-", [{"Ref": "AWS::StackName"}, "notifications-ui"]]
-            }
-          },
-          {"Key": "Network", "Value": "NotificationsUI"}
-        ],
-        "VpcId": {"Ref": "VPC"}
-      },
-      "Type": "AWS::EC2::Subnet"
-    },
-    "NotificationsUISubnetNetworkAclAssociation": {
-      "Properties": {
-        "NetworkAclId": {"Ref": "NotificationsUINetworkAcl"},
-        "SubnetId": {"Ref": "NotificationsUISubnet"}
-      },
-      "Type": "AWS::EC2::SubnetNetworkAclAssociation"
-    },
-    "NotificationsUISubnetRouteTableAssociation": {
-      "Properties": {
-        "RouteTableId": {"Ref": "NotificationsUIRouteTable"},
-        "SubnetId": {"Ref": "NotificationsUISubnet"}
-      },
-      "Type": "AWS::EC2::SubnetRouteTableAssociation"
-    },
-    "OutputNotificationsNetworkAclEntry": {
-      "Properties": {
-        "CidrBlock": "0.0.0.0/0",
-        "Egress": "true",
-        "NetworkAclId": {"Ref": "NotificationsNetworkAcl"},
-        "Protocol": "-1",
-        "RuleAction": "allow",
-        "RuleNumber": "101"
-      },
-      "Type": "AWS::EC2::NetworkAclEntry"
-    },
-    "OutputNotificationsUINetworkAclEntry": {
-      "Properties": {
-        "CidrBlock": "0.0.0.0/0",
-        "Egress": "true",
-        "NetworkAclId": {"Ref": "NotificationsUINetworkAcl"},
-        "Protocol": "-1",
-        "RuleAction": "allow",
-        "RuleNumber": "101"
-      },
-      "Type": "AWS::EC2::NetworkAclEntry"
     },
     "OutputPrivateNetworkAclEntry": {
       "Properties": {
@@ -617,15 +438,6 @@
         "SubnetId": {"Ref": "PublicSubnet"}
       },
       "Type": "AWS::EC2::SubnetRouteTableAssociation"
-    },
-    "SNSELBDetachedCloudwatchTopic": {
-      "Properties": {
-        "DisplayName": "ELB Detached From All Routers",
-        "TopicName": {
-          "Fn::Join": ["-", ["elb-detached", {"Ref": "AWS::StackName"}]]
-        }
-      },
-      "Type": "AWS::SNS::Topic"
     },
     "VPC": {
       "Properties": {

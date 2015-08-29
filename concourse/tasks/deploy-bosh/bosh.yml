@@ -59,7 +59,7 @@ jobs:
 
   networks:
   - name: private
-    static_ips: [10.0.0.6]
+    static_ips: [10.0.0.7]
     default: [dns, gateway]
   - name: public
     static_ips: [$ELASTIC_IP]
@@ -83,8 +83,8 @@ jobs:
       adapter: postgres
 
     registry:
-      address: 10.0.0.6
-      host: 10.0.0.6
+      address: 10.0.0.7
+      host: 10.0.0.7
       db: *db
       http: {user: admin, password: $BOSH_PASSWORD, port: 25777}
       username: admin
@@ -92,7 +92,7 @@ jobs:
       port: 25777
 
     blobstore:
-      address: 10.0.0.6
+      address: 10.0.0.7
       port: 25250
       provider: dav
       director: {user: director, password: $BOSH_PASSWORD}
@@ -117,7 +117,7 @@ jobs:
       default_security_groups: [$SECURITY_GROUP_NAME]
       region: us-east-1
 
-    agent: {mbus: "nats://nats:$BOSH_PASSWORD@10.0.0.6:4222"}
+    agent: {mbus: "nats://nats:$BOSH_PASSWORD@10.0.0.7:4222"}
 
     ntp: &ntp [0.pool.ntp.org, 1.pool.ntp.org]
 
