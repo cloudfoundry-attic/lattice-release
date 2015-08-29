@@ -46,6 +46,13 @@ function deploy() {
   cat /tmp/bosh-state.json
 }
 
+function update_password() {
+  bosh -n target "$ELASTIC_IP"
+  bosh -n login admin admin
+  bosh create user admin "$BOSH_PASSWORD"
+}
+
 setup
 build_manifest
 deploy
+update_password

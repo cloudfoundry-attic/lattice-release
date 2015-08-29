@@ -54,3 +54,6 @@ jobs:
             CONCOURSE_VERSION: 0.61.0
             GARDEN_LINUX_VERSION: 0.303.0
             CLOUDFORMATION_STACK_NAME: ci
+            AWS_DEFAULT_REGION: us-east-1
+            AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+            AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}

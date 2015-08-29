@@ -13,3 +13,6 @@ params:
   CONCOURSE_VERSION: some-concourse-version
   GARDEN_LINUX_VERSION: some-garden-version
   CLOUDFORMATION_STACK_NAME: some-stack-name
+  AWS_DEFAULT_REGION: some-region
+  AWS_ACCESS_KEY_ID: some-access-key-id
+  AWS_SECRET_ACCESS_KEY: some-secret-access-key

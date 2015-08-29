@@ -8,7 +8,7 @@ atc_db_role: &atc-db-role
   name: atc
   password: $BOSH_PASSWORD
 
-availability_zone: &az us-east-1c
+availability_zone: &az us-east-1a
 
 networks:
   - name: concourse
