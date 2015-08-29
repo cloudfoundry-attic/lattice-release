@@ -212,11 +212,11 @@
     "ElasticLoadBalancer": {
       "Properties": {
         "HealthCheck": {
-          "HealthyThreshold": "3",
-          "Interval": "10",
-          "Target": "TCP:80",
+          "HealthyThreshold": "2",
+          "Interval": "30",
+          "Target": "TCP:8080",
           "Timeout": "5",
-          "UnhealthyThreshold": "5"
+          "UnhealthyThreshold": "10"
         },
         "Listeners": [
           {"InstancePort": "80", "LoadBalancerPort": "80", "Protocol": "HTTP"},
