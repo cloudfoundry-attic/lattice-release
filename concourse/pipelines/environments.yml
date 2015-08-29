@@ -37,7 +37,6 @@ jobs:
             CLOUDFORMATION_STACK_NAME: ci
             KEY_NAME: {{aws-ssh-private-key-name}}
             PRIVATE_KEY: {{aws-ssh-private-key}}
-            BOSH_USER: {{concourse-bosh-user}}
             BOSH_PASSWORD: {{concourse-bosh-password}}
 
   - name: deploy-concourse
@@ -49,7 +48,6 @@ jobs:
         config:
           params:
             BOSH_TARGET: {{concourse-bosh-target}}
-            BOSH_USER: {{concourse-bosh-user}}
             BOSH_PASSWORD: {{concourse-bosh-password}}
             CONCOURSE_USER: {{concourse-user}}
             CONCOURSE_PASSWORD: {{concourse-password}}

@@ -12,5 +12,4 @@ params:
   CLOUDFORMATION_STACK_NAME: some-stack-name
   KEY_NAME: some-name
   PRIVATE_KEY: some-key
-  BOSH_USER: some-user
   BOSH_PASSWORD: some-password

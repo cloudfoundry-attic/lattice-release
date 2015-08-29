@@ -7,7 +7,6 @@ run:
   path: lattice/concourse/tasks/deploy-concourse/run.sh
 params:
   BOSH_TARGET: some-target
-  BOSH_USER: some-bosh-user
   BOSH_PASSWORD: some-bosh-password
   CONCOURSE_USER: some-concourse-user
   CONCOURSE_PASSWORD: some-concourse-password

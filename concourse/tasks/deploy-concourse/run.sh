@@ -5,7 +5,7 @@ function get_stack_output() {
 }
 
 bosh -n target $BOSH_TARGET
-bosh login $BOSH_USER $BOSH_PASSWORD
+bosh login admin $BOSH_PASSWORD
 
 export BOSH_DIRECTOR_UUID=`bosh status --uuid`
 export MANIFEST_FILE=$PWD/lattice/concourse/tasks/deploy-concourse/manifest.yml
