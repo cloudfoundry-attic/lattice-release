@@ -89,7 +89,6 @@ func (e *taskRunner) DeleteTask(taskGuid string) error {
 	if err != nil {
 		return err
 	}
-
 	if taskInfo.State != receptor.TaskStateCompleted {
 		return errors.New(taskGuid + " is not in COMPLETED state")
 	}
@@ -101,7 +100,6 @@ func (e *taskRunner) CancelTask(taskGuid string) error {
 	if err != nil {
 		return err
 	}
-
 	if taskInfo.State != receptor.TaskStatePending && taskInfo.State != receptor.TaskStateRunning {
 		return fmt.Errorf("Unable to cancel %s task", taskInfo.State)
 	}

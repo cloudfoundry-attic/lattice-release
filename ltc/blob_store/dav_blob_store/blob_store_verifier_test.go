@@ -12,22 +12,34 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/dav_blob_store"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 )
 
 var _ = Describe("BlobStore", func() {
+	const responseBody401 = `<?xml version="1.0" encoding="iso-8859-1"?>
+		<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+		         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+		<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+		 <head>
+		  <title>401 - Unauthorized</title>
+		 </head>
+		 <body>
+		  <h1>401 - Unauthorized</h1>
+		 </body>
+		</html>`
+
 	var (
 		verifier               dav_blob_store.Verifier
+		config                 *config_package.Config
 		fakeServer             *ghttp.Server
 		serverHost, serverPort string
 	)
 
 	BeforeEach(func() {
-		fakeServer = ghttp.NewServer()
+		config = config_package.New(nil)
 
+		fakeServer = ghttp.NewServer()
 		fakeServerURL, err := url.Parse(fakeServer.URL())
 		Expect(err).NotTo(HaveOccurred())
-
 		serverHost, serverPort, err = net.SplitHostPort(fakeServerURL.Host)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -64,48 +76,53 @@ var _ = Describe("BlobStore", func() {
 				  </D:response>
 				</D:multistatus>
 			`
-
 			responseBodyRoot = strings.Replace(responseBodyRoot, "http://192.168.11.11:8444", fakeServer.URL(), -1)
 		})
 
-		It("verifies a blob store with valid credentials", func() {
-			config := config_package.New(persister.NewMemPersister())
-			config.SetBlobStore(serverHost, serverPort, "", "")
-
-			fakeServer.RouteToHandler("PROPFIND", "/blobs/", ghttp.CombineHandlers(
-				ghttp.VerifyHeaderKV("Depth", "1"),
-				ghttp.RespondWith(207, responseBodyRoot, http.Header{"Content-Type": []string{"application/xml"}}),
-			))
-
-			authorized, err := verifier.Verify(config)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(authorized).To(BeTrue())
-
-			Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
-		})
-
-		Context("when the blob store credentials are incorrect", func() {
-			It("rejects a blob store with invalid credentials", func() {
-				config := config_package.New(persister.NewMemPersister())
-				config.SetBlobStore(serverHost, serverPort, "", "")
-
-				responseBody := `<?xml version="1.0" encoding="iso-8859-1"?>
-				<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-				         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-				<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-				 <head>
-				  <title>401 - Unauthorized</title>
-				 </head>
-				 <body>
-				  <h1>401 - Unauthorized</h1>
-				 </body>
-				</html>`
-
+		Context("when the DAV blob store does not require auth", func() {
+			It("should return authorized", func() {
 				fakeServer.RouteToHandler("PROPFIND", "/blobs/", ghttp.CombineHandlers(
 					ghttp.VerifyHeaderKV("Depth", "1"),
-					ghttp.RespondWith(401, responseBody, http.Header{"Content-Type": []string{"application/xml"}}),
+					ghttp.RespondWith(207, responseBodyRoot, http.Header{"Content-Type": []string{"text/xml"}}),
 				))
 
+				config.SetBlobStore(serverHost, serverPort, "", "")
+				authorized, err := verifier.Verify(config)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(authorized).To(BeTrue())
+
+				Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
+			})
+		})
+
+		Context("when the DAV blob store requires auth", func() {
+			It("should return authorized for proper credentials", func() {
+				fakeServer.RouteToHandler("PROPFIND", "/blobs/", ghttp.CombineHandlers(
+					ghttp.VerifyBasicAuth("good-user", "good-pass"),
+					ghttp.VerifyHeaderKV("Depth", "1"),
+					ghttp.RespondWith(207, responseBodyRoot, http.Header{"Content-Type": []string{"text/xml"}}),
+				))
+
+				config.SetBlobStore(serverHost, serverPort, "good-user", "good-pass")
+				authorized, err := verifier.Verify(config)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(authorized).To(BeTrue())
+
+				Expect(fakeServer.ReceivedRequests()).To(HaveLen(1))
+			})
+			It("should return unauthorized for invalid credentials", func() {
+				fakeServer.RouteToHandler("PROPFIND", "/blobs/",
+					ghttp.CombineHandlers(
+						ghttp.VerifyBasicAuth("bad-user", "bad-pass"),
+						ghttp.VerifyHeaderKV("Depth", "1"),
+						ghttp.RespondWith(http.StatusForbidden, responseBody401, http.Header{
+							"Content-Type":     []string{"text/xml"},
+							"WWW-Authenticate": []string{`Basic realm="blob"`},
+						}),
+					),
+				)
+
+				config.SetBlobStore(serverHost, serverPort, "bad-user", "bad-pass")
 				authorized, err := verifier.Verify(config)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(authorized).To(BeFalse())
@@ -116,7 +133,6 @@ var _ = Describe("BlobStore", func() {
 
 		Context("when the blob store is inaccessible", func() {
 			It("returns an error", func() {
-				config := config_package.New(persister.NewMemPersister())
 				config.SetBlobStore(serverHost, serverPort, "", "")
 
 				fakeServer.Close()

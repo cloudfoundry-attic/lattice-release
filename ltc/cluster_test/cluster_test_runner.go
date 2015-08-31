@@ -465,7 +465,7 @@ func errorCheckForRoute(appRoute string) func() error {
 		io.Copy(ioutil.Discard, response.Body)
 		defer response.Body.Close()
 
-		if response.StatusCode != 200 {
+		if response.StatusCode != http.StatusOK {
 			return fmt.Errorf("Status code %d should be 200", response.StatusCode)
 		}
 

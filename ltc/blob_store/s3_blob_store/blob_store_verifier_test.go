@@ -41,11 +41,10 @@ var _ = Describe("S3BlobStore", func() {
 
 				fakeServer.AppendHandlers(ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/bucket"),
-					ghttp.RespondWith(200, responseBody, http.Header{"Content-Type": []string{"application/xml"}}),
+					ghttp.RespondWith(http.StatusOK, responseBody, http.Header{"Content-Type": []string{"application/xml"}}),
 				))
 
 				authorized, err := verifier.Verify(config)
-
 				Expect(err).NotTo(HaveOccurred())
 				Expect(authorized).To(BeTrue())
 
@@ -57,7 +56,7 @@ var _ = Describe("S3BlobStore", func() {
 			It("returns authorized as false", func() {
 				fakeServer.AppendHandlers(ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/bucket"),
-					ghttp.RespondWith(403, nil),
+					ghttp.RespondWith(http.StatusForbidden, nil),
 				))
 
 				authorized, err := verifier.Verify(config)
@@ -72,7 +71,7 @@ var _ = Describe("S3BlobStore", func() {
 			It("returns an error", func() {
 				fakeServer.AppendHandlers(ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/bucket"),
-					ghttp.RespondWith(400, nil),
+					ghttp.RespondWith(http.StatusBadRequest, nil),
 				))
 				_, err := verifier.Verify(config)
 				Expect(err).To(HaveOccurred())

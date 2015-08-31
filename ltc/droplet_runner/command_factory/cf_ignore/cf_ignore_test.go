@@ -4,9 +4,10 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/cf_ignore"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/cf_ignore"
 )
 
 var _ = Describe("CF Ignore", func() {

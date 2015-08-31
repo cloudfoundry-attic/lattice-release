@@ -384,7 +384,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 
 	factory.UI.SayLine("Uploading application bits...")
 
-	if err = factory.dropletRunner.UploadBits(dropletName, archivePath); err != nil {
+	if err := factory.dropletRunner.UploadBits(dropletName, archivePath); err != nil {
 		factory.UI.SayLine(fmt.Sprintf("Error uploading %s: %s", dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
@@ -395,7 +395,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	environment := factory.AppRunnerCommandFactory.BuildEnvironment(envFlag)
 
 	taskName := "build-droplet-" + dropletName
-	if err = factory.dropletRunner.BuildDroplet(taskName, dropletName, buildpackUrl, environment, memoryMBFlag, cpuWeightFlag, diskMBFlag); err != nil {
+	if err := factory.dropletRunner.BuildDroplet(taskName, dropletName, buildpackUrl, environment, memoryMBFlag, cpuWeightFlag, diskMBFlag); err != nil {
 		factory.UI.SayLine(fmt.Sprintf("Error submitting build of %s: %s", dropletName, err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
@@ -430,7 +430,7 @@ func (factory *DropletRunnerCommandFactory) waitForBuildTask(pollTimeout time.Du
 		var err error
 		taskInfo, err = factory.taskExaminer.TaskStatus(taskName)
 		if err != nil {
-			factory.UI.SayLine(colors.Red("Error requesting task status: " + err.Error()))
+			factory.UI.SayLine(colors.Red("Error requesting task status: %s"), err)
 			return true
 		}
 

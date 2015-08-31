@@ -918,6 +918,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: APP_NAME and DROPLET_NAME are required"))
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
 			It("validates that the terminator -- is passed in when a start command is specified", func() {
@@ -931,6 +932,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: '--' Required before start command"))
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 
 			It("validates the CPU weight is in 1-100", func() {
@@ -943,6 +945,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: invalid CPU Weight"))
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
 

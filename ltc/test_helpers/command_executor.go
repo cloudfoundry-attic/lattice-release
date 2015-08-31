@@ -8,21 +8,19 @@ import (
 )
 
 func ExecuteCommandWithArgs(command cli.Command, commandArgs []string) {
-	commandFinishChan := AsyncExecuteCommandWithArgs(command, commandArgs)
-
-	Eventually(commandFinishChan).Should(BeClosed())
+	executeCommandWithArgs(command, commandArgs)
 }
 
 func AsyncExecuteCommandWithArgs(command cli.Command, commandArgs []string) chan struct{} {
-	commandDone := make(chan struct{})
+	doneChan := make(chan struct{})
 
 	go func() {
 		defer GinkgoRecover()
 		executeCommandWithArgs(command, commandArgs)
-		close(commandDone)
+		close(doneChan)
 	}()
 
-	return commandDone
+	return doneChan
 }
 
 func executeCommandWithArgs(command cli.Command, commandArgs []string) {

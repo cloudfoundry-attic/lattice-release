@@ -563,7 +563,7 @@ var _ = Describe("BlobStore", func() {
 		BeforeEach(func() {
 			fakeServer.RouteToHandler("PROPFIND", "/blobs/some-path", ghttp.CombineHandlers(
 				ghttp.VerifyBasicAuth("user", "pass"),
-				ghttp.RespondWith(404, "", http.Header{}),
+				ghttp.RespondWith(http.StatusNotFound, "", http.Header{}),
 			))
 			fakeServer.RouteToHandler("MKCOL", "/blobs/some-path", ghttp.CombineHandlers(
 				ghttp.VerifyBasicAuth("user", "pass"),

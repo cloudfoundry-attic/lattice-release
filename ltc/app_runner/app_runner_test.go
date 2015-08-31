@@ -141,18 +141,18 @@ var _ = Describe("AppRunner", func() {
 		Context("when tcp routes are not empty", func() {
 			BeforeEach(func() {
 				createAppParams.AppEnvironmentParams.TcpRoutes = app_runner.TcpRoutes{
-					app_runner.TcpRoute{ExternalPort: 60000, Port: 2000},
-					app_runner.TcpRoute{ExternalPort: 60010, Port: 2000},
-					app_runner.TcpRoute{ExternalPort: 60020, Port: 3000},
+					{ExternalPort: 60000, Port: 2000},
+					{ExternalPort: 60010, Port: 2000},
+					{ExternalPort: 60020, Port: 3000},
 				}
 			})
 
 			Context("and when route overrides are not empty", func() {
 				BeforeEach(func() {
 					createAppParams.AppEnvironmentParams.RouteOverrides = app_runner.RouteOverrides{
-						app_runner.RouteOverride{HostnamePrefix: "wiggle", Port: 2000},
-						app_runner.RouteOverride{HostnamePrefix: "swang", Port: 2000},
-						app_runner.RouteOverride{HostnamePrefix: "shuffle", Port: 4000},
+						{HostnamePrefix: "wiggle", Port: 2000},
+						{HostnamePrefix: "swang", Port: 2000},
+						{HostnamePrefix: "shuffle", Port: 4000},
 					}
 				})
 
