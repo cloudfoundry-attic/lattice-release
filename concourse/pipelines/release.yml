@@ -23,7 +23,7 @@ resources:
   - name: lattice-release
     type: github-release
     source:
-      user: {{github-api-user}}
+      user: cloudfoundry-incubator
       repository: lattice
       access_token: {{github-api-token}}
   - name: lattice-tar-build
