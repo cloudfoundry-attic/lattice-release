@@ -18,7 +18,7 @@ resources:
     type: git
     source:
       uri: https://github.com/cloudfoundry-incubator/cf-routing-release.git
-      branch: master
+      branch: release_candidate
   - name: lattice-tar-build
     type: s3
     source:
