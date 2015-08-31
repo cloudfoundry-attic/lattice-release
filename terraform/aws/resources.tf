@@ -120,11 +120,7 @@ resource "aws_instance" "lattice-brain" {
             "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${aws_instance.lattice-brain.private_ip}\" >> /var/lattice/setup/lattice-environment'",
-        ]
-    }
 
-    provisioner "remote-exec" {
-        inline = [
             "sudo chmod 755 /tmp/install-from-tar",
             "sudo /tmp/install-from-tar brain",
         ]
@@ -164,6 +160,11 @@ resource "aws_instance" "cell" {
         destination = "/tmp/install-from-tar"
     }
 
+    provisioner "file" {
+        source = "${path.module}/../scripts/remote/cell-iptables"
+        destination = "/tmp/cell-iptables"
+    }
+
     provisioner "remote-exec" {
         inline = [
             "sudo mkdir -p /var/lattice/setup",
@@ -171,15 +172,10 @@ resource "aws_instance" "cell" {
             "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_eip.ip.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_CELL_ID=cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
-        ]
-    }
 
-    provisioner "remote-exec" {
-        inline = [
-            "sudo chmod 755 /tmp/install-from-tar",
+            "sudo chmod +x /tmp/install-from-tar /tmp/cell-iptables",
             "sudo /tmp/install-from-tar cell",
+            "sudo /tmp/cell-iptables ${aws_instance.lattice-brain.private_ip}",
         ]
     }
 }
-
-

@@ -122,31 +122,19 @@ resource "openstack_compute_instance_v2" "lattice-coordinator" {
         inline = [
             "sudo apt-get update",
             "sudo apt-get -y install btrfs-tools",
-        ]
-    }
 
-    provisioner "remote-exec" {
-        inline = [
             "echo downloading stack version ${file("${path.module}/../../STACK_VERSION")}",
             "sudo wget https://github.com/cloudfoundry/stacks/releases/download/${file("${path.module}/../../STACK_VERSION")}/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz --quiet -O /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz",
             "sudo mkdir -p /var/lattice/rootfs/cflinuxfs2",
             "sudo tar -xzf /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz -C /var/lattice/rootfs/cflinuxfs2",
-            "sudo rm -f /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz"
-        ]
-    }
-    
-    provisioner "remote-exec" {
-        inline = [
+            "sudo rm -f /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz",
+
             "sudo mkdir -p /var/lattice/setup",
             "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${openstack_compute_instance_v2.lattice-coordinator.access_ip_v4}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"SYSTEM_DOMAIN=${openstack_compute_instance_v2.lattice-coordinator.floating_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
-        ]
-    }
 
-    provisioner "remote-exec" {
-        inline = [
             "sudo apt-get -y install lighttpd lighttpd-mod-webdav",
             "sudo chmod 755 /tmp/install-from-tar",
             "sudo /tmp/install-from-tar brain",
@@ -190,37 +178,31 @@ resource "openstack_compute_instance_v2" "lattice-cell" {
       destination = "/tmp/install-from-tar"
     }
 
+    provisioner "file" {
+        source = "${path.module}/../scripts/remote/cell-iptables"
+        destination = "/tmp/cell-iptables"
+    }
+
     provisioner "remote-exec" {
         inline = [
             "sudo apt-get update",
             "sudo apt-get -y install btrfs-tools",
-        ]
-    }
 
-    provisioner "remote-exec" {
-        inline = [
             "echo downloading stack version ${file("${path.module}/../../STACK_VERSION")}",
             "sudo wget https://github.com/cloudfoundry/stacks/releases/download/${file("${path.module}/../../STACK_VERSION")}/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz --quiet -O /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz",
             "sudo mkdir -p /var/lattice/rootfs/cflinuxfs2",
             "sudo tar -xzf /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz -C /var/lattice/rootfs/cflinuxfs2",
-            "sudo rm -f /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz"
-        ]
-    }
+            "sudo rm -f /tmp/cflinuxfs2-${file("${path.module}/../../STACK_VERSION")}.tar.gz",
 
-    provisioner "remote-exec" {
-        inline = [
             "sudo mkdir -p /var/lattice/setup",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${openstack_compute_instance_v2.lattice-coordinator.access_ip_v4}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"SYSTEM_DOMAIN=${openstack_compute_instance_v2.lattice-coordinator.floating_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"LATTICE_CELL_ID=lattice-cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
-        ]
-    }
 
-    provisioner "remote-exec" {
-        inline = [
-            "sudo chmod 755 /tmp/install-from-tar",
+            "sudo chmod +x /tmp/install-from-tar /tmp/cell-iptables",
             "sudo /tmp/install-from-tar cell",
+            "sudo /tmp/cell-iptables ${openstack_compute_instance_v2.lattice-coordinator.access_ip_v4}",
         ]
     }
 }
