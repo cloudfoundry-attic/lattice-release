@@ -50,23 +50,17 @@ to run `development/teardown` after build.
 
 ## Dependency Management
 
-Our continuous deployment pipeline will automatically bump `ltc` dependencies that come from `diego-release`.
-There is no need to bump them manually (and you probably shouldn't).
-Non-diego-release dependencies should be manually bumped via godep update.
-i.e., codegangsta/cli, docker/docker, etc.
-
-For any given SHA of lattice, ltc should use the same diego-release dependencies that that lattice cluster tar builds against.
-This keeps any overlapping dependencies in lock step.
-That is, if the version of receptor in the lattice cluster gets updated, the receptor client that ltc uses will be updated with it.
-The pipeline ensures this on master. Nesting lattice in the GOPATH constituted by diego-release ensures this locally.
+`ltc` is built using the vendored dependencies under `Godeps`.  These need to match the versions used in your Lattice cluster, which are tracked as submodules of the diego-release project.  Non-Diego dependencies (i.e., `codegangsta/cli`, `docker/docker`) should be manually bumped via `godep update`.  
 
 ## Pull Requests
 
-Please make pull requests against the develop branch.
+Please make pull requests against the master branch.
 We will not accept untested changes. Please test-drive your code.
 
 ## Branches/Stability
 
-We strive to keep master stable.
-Tagged releases are vetted releases based on master.
-We make no guarantees about the stability of the develop branch on a per-commit basis.
+[GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) have passed our CI pipeline and should be stable.  Bug reports / pull requests are always welcome.
+
+We make no guarantees about the stability of the master branch on a per-commit basis.  
+
+

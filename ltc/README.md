@@ -13,8 +13,8 @@
   </tr>
 </table>
 
-[![Build Status](https://travis-ci.org/cloudfoundry-incubator/lattice.svg?branch=develop)](https://travis-ci.org/cloudfoundry-incubator/lattice)
-[![Coverage Status](https://coveralls.io/repos/cloudfoundry-incubator/lattice/badge.svg?branch=develop)](https://coveralls.io/r/cloudfoundry-incubator/lattice?branch=develop)
+[![Build Status](https://travis-ci.org/cloudfoundry-incubator/lattice.svg?branch=master)](https://travis-ci.org/cloudfoundry-incubator/lattice)
+[![Coverage Status](https://coveralls.io/repos/cloudfoundry-incubator/lattice/badge.svg?branch=master)](https://coveralls.io/r/cloudfoundry-incubator/lattice?branch=master)
 
 `ltc` provides an easy-to-use command line interface for [Lattice](https://github.com/cloudfoundry-incubator/lattice)
 

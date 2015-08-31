@@ -273,7 +273,7 @@ To update the cluster, you must destroy your existing cluster and begin the depl
 
 Everyone is encouraged to help improve this project.
 
-Please submit pull requests against the **develop branch**. Only the continuous integration system commits to master.
+Please submit pull requests against the **master branch**. 
 
 Here are some ways *you* can contribute:
 
