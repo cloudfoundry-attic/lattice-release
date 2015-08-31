@@ -177,7 +177,7 @@ $ vagrant global-status
 id       name    provider   state   directory
 ----------------------------------------------------------------------------------------------------------------
 fb69d90  default virtualbox running /Users/user/workspace/lattice
-4debe83  default virtualbox running /Users/user/workspace/lattice-bundle-v0.3.3-62-g2a78cf6-osx/vagrant
+4debe83  default virtualbox running /Users/user/workspace/lattice-bundle-v0.4.0-osx/vagrant
 ```
 
 You can then destroy the appropriate instance with:
@@ -208,6 +208,7 @@ This repository contains several [Terraform](https://www.terraform.io/) template
 
   Lattice | Compatible Versions
   --------|-----------------------
+  v0.4.0  | Terraform 0.6.2+
   v0.3.3  | Terraform 0.6.2+
   v0.3.0  | Terraform 0.6.1
   v0.2.7  | Terraform 0.6.1

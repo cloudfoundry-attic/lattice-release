@@ -36,13 +36,13 @@ The VM should download and start.
 
 > If you are trying to run both the VirtualBox and VMWare providers on the same machine, you'll need to run them on different private networks (subnets) that do not conflict.
 
-> Learn more about deploying Lattice at the GitHub [README](https://github.com/cloudfoundry-incubator/lattice/tree/v0.3.3)
+> Learn more about deploying Lattice at the GitHub [README](https://github.com/cloudfoundry-incubator/lattice/tree/v0.4.0)
 
 ## `ltc` - the Lattice CLI
 
 The downloaded bundle also includes the command-line tool `ltc`.  This can be copied to a folder in your `PATH` or executed in-place (e.g., `./ltc`).
 
-Further instructions can be found [here](https://github.com/cloudfoundry-incubator/lattice/tree/v0.3.3/ltc).
+Further instructions can be found [here](https://github.com/cloudfoundry-incubator/lattice/tree/v0.4.0/ltc).
 
 ## Targeting Lattice
 

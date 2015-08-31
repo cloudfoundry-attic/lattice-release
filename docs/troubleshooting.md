@@ -81,7 +81,7 @@ $ vagrant global-status
 id       name    provider   state   directory
 ----------------------------------------------------------------------------------------------------------------
 fb69d90  default virtualbox running /Users/user/workspace/lattice
-4debe83  default virtualbox running /Users/user/workspace/lattice-bundle-v0.3.3-62-g2a78cf6-osx/vagrant
+4debe83  default virtualbox running /Users/user/workspace/lattice-bundle-v0.4.0-osx/vagrant
 ```
 
 You can then destroy the appropriate instance with:
