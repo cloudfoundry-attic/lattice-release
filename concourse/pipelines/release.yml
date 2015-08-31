@@ -3,7 +3,7 @@ resources:
     type: git
     source:
       uri: https://github.com/cloudfoundry-incubator/lattice.git
-      branch: concourse
+      branch: master
       paths: [Version]
   - name: diego-release
     type: git
@@ -23,7 +23,7 @@ resources:
   - name: lattice-release
     type: github-release
     source:
-      user: sclevine # {{github-api-user}}
+      user: {{github-api-user}}
       repository: lattice
       access_token: {{github-api-token}}
   - name: lattice-tar-build
