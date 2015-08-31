@@ -9,11 +9,11 @@ import (
 )
 
 func Say(expected string, args ...interface{}) types.GomegaMatcher {
-	return gbytes.Say(regexSafe(expected))
+	return gbytes.Say(regexSafe(expected), args...)
 }
 
 func SayLine(expected string, args ...interface{}) types.GomegaMatcher {
-	return gbytes.Say(regexSafe(expected) + "\n")
+	return gbytes.Say(regexSafe(expected)+"\n", args...)
 }
 
 func SayNewLine() types.GomegaMatcher {

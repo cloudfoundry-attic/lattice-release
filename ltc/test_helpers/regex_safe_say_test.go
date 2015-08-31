@@ -9,66 +9,65 @@ import (
 )
 
 var _ = Describe("RegexSafeSay", func() {
-
-	var gbytesBuffer *gbytes.Buffer
+	var outputBuffer *gbytes.Buffer
 
 	BeforeEach(func() {
-		gbytesBuffer = gbytes.NewBuffer()
+		outputBuffer = gbytes.NewBuffer()
 	})
 
 	Describe("Say", func() {
-		It("matches with regex-escaped characters", func() {
-			gbytesBuffer.Write([]byte(`match this \|?-^$.(){}`))
-
-			Expect(gbytesBuffer).To(test_helpers.Say(`match this \|?-^$.(){}`))
+		BeforeEach(func() {
+			outputBuffer.Write([]byte(`match this \|?-^$.(){}`))
 		})
-
+		It("matches with regex-escaped characters", func() {
+			Expect(outputBuffer).To(test_helpers.Say(`match this \|?-^$.(){}`))
+		})
 		It("negated match", func() {
-			gbytesBuffer.Write([]byte("say that"))
-
-			Expect(gbytesBuffer).ToNot(test_helpers.Say("different"))
+			Expect(outputBuffer).NotTo(test_helpers.Say("match that"))
+		})
+		Context("when format string is passed with arguments", func() {
+			It("matches with regex-escaped characters", func() {
+				Expect(outputBuffer).To(test_helpers.Say(`match %s \|?-^$.(){}`, "this"))
+			})
 		})
 	})
 
 	Describe("SayLine", func() {
-		It("matches with regex-escaped characters", func() {
-			gbytesBuffer.Write([]byte("sample\n"))
-
-			Expect(gbytesBuffer).To(test_helpers.SayLine("sample"))
+		BeforeEach(func() {
+			outputBuffer.Write([]byte(`match this \|?-^$.(){}` + "\n"))
 		})
-
+		It("matches with regex-escaped characters", func() {
+			Expect(outputBuffer).To(test_helpers.SayLine(`match this \|?-^$.(){}`))
+		})
 		It("negated match", func() {
-			gbytesBuffer.Write([]byte("no match"))
-
-			Expect(gbytesBuffer).ToNot(test_helpers.SayLine("no match"))
+			Expect(outputBuffer).NotTo(test_helpers.SayLine("match that"))
+		})
+		Context("when format string is passed with arguments", func() {
+			It("matches with regex-escaped characters", func() {
+				Expect(outputBuffer).To(test_helpers.SayLine(`match %s \|?-^$.(){}`, "this"))
+			})
 		})
 	})
 
 	Describe("SayIncorrectUsage", func() {
 		It("matches", func() {
-			gbytesBuffer.Write([]byte("Incorrect Usage"))
-
-			Expect(gbytesBuffer).To(test_helpers.SayIncorrectUsage())
+			outputBuffer.Write([]byte("Incorrect Usage"))
+			Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
 		})
-
 		It("negated match", func() {
-			gbytesBuffer.Write([]byte("say that"))
-
-			Expect(gbytesBuffer).ToNot(test_helpers.SayIncorrectUsage())
+			outputBuffer.Write([]byte("say that"))
+			Expect(outputBuffer).NotTo(test_helpers.SayIncorrectUsage())
 		})
 	})
 
 	Describe("SayNewLine", func() {
-		It("match", func() {
-			gbytesBuffer.Write([]byte("\n"))
-
-			Expect(gbytesBuffer).To(test_helpers.SayNewLine())
+		It("matches a newline character", func() {
+			outputBuffer.Write([]byte("\n"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
 		})
-
 		It("negated match", func() {
-			gbytesBuffer.Write([]byte("say that"))
-
-			Expect(gbytesBuffer).ToNot(test_helpers.SayNewLine())
+			outputBuffer.Write([]byte("say that"))
+			Expect(outputBuffer).NotTo(test_helpers.SayNewLine())
 		})
 	})
 })

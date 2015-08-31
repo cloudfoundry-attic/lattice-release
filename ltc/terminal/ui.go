@@ -15,9 +15,9 @@ type UI interface {
 
 	Prompt(promptText string, args ...interface{}) string
 	PromptWithDefault(promptText, defaultValue string, args ...interface{}) string
-	Say(message string)
+	Say(format string, args ...interface{})
 	SayIncorrectUsage(message string)
-	SayLine(message string)
+	SayLine(format string, args ...interface{})
 	SayNewLine()
 }
 
@@ -35,7 +35,7 @@ func NewUI(input io.Reader, output io.Writer, passwordReader password_reader.Pas
 	}
 }
 
-func (t *terminalUI) Prompt(promptText string, args ...interface{}) (answer string) {
+func (t *terminalUI) Prompt(promptText string, args ...interface{}) string {
 	reader := bufio.NewReader(t)
 	fmt.Fprintf(t.Writer, promptText+": ", args...)
 
@@ -43,7 +43,7 @@ func (t *terminalUI) Prompt(promptText string, args ...interface{}) (answer stri
 	return strings.TrimSuffix(result, "\n")
 }
 
-func (t *terminalUI) PromptWithDefault(promptText, defaultValue string, args ...interface{}) (answer string) {
+func (t *terminalUI) PromptWithDefault(promptText, defaultValue string, args ...interface{}) string {
 	reader := bufio.NewReader(t)
 	fmt.Fprintf(t.Writer, promptText+fmt.Sprintf(" [%s]: ", defaultValue), args...)
 
@@ -57,22 +57,30 @@ func (t *terminalUI) PromptWithDefault(promptText, defaultValue string, args ...
 	return result
 }
 
-func (t *terminalUI) Say(message string) {
-	t.Write([]byte(message))
+func (t *terminalUI) Say(format string, args ...interface{}) {
+	t.say(format, args...)
 }
 
 func (t *terminalUI) SayIncorrectUsage(message string) {
 	if len(message) > 0 {
-		t.SayLine("Incorrect Usage: " + message)
+		t.say("Incorrect Usage: %s\n", message)
 	} else {
-		t.SayLine("Incorrect Usage")
+		t.say("Incorrect Usage\n")
 	}
 }
 
-func (t *terminalUI) SayLine(message string) {
-	t.Write([]byte(message + "\n"))
+func (t *terminalUI) SayLine(format string, args ...interface{}) {
+	t.say(format+"\n", args...)
 }
 
 func (t *terminalUI) SayNewLine() {
-	t.Say("\n")
+	t.say("\n")
+}
+
+func (t *terminalUI) say(format string, args ...interface{}) {
+	if len(args) > 0 {
+		t.Write([]byte(fmt.Sprintf(format, args...)))
+		return
+	}
+	t.Write([]byte(format))
 }

@@ -31,7 +31,7 @@ var _ = Describe("UI", func() {
 
 	Describe("Instantiation", func() {
 		It("instantiates a terminal", func() {
-			Expect(terminalUI).ToNot(BeNil())
+			Expect(terminalUI).NotTo(BeNil())
 
 			_, readWriterOk := terminalUI.(io.ReadWriter)
 			Expect(readWriterOk).To(BeTrue())
@@ -47,12 +47,26 @@ var _ = Describe("UI", func() {
 				terminalUI.Say("Cloudy with a chance of meatballs")
 				Expect(outputBuffer).To(test_helpers.Say("Cloudy with a chance of meatballs"))
 			})
+
+			Context("when printf-style syntax is used", func() {
+				It("says the formatted message to the terminal", func() {
+					terminalUI.Say("delim %s what %d", "put-this-in", 44)
+					Expect(outputBuffer).To(test_helpers.Say("delim put-this-in what 44"))
+				})
+			})
 		})
 
 		Describe("SayLine", func() {
 			It("says the message to the terminal with a newline", func() {
 				terminalUI.SayLine("Strange Clouds")
 				Expect(outputBuffer).To(test_helpers.Say("Strange Clouds\n"))
+			})
+
+			Context("when printf-style syntax is used", func() {
+				It("says the formatted message to the terminal", func() {
+					terminalUI.SayLine("delim %s what %d", "put-this-in", 44)
+					Expect(outputBuffer).To(test_helpers.Say("delim put-this-in what 44\n"))
+				})
 			})
 		})
 
