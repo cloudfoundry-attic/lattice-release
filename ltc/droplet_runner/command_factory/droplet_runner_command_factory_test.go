@@ -1,12 +1,9 @@
 package command_factory_test
 
 import (
-	"archive/zip"
 	"errors"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"path"
 	"path/filepath"
 	"time"
 
@@ -21,6 +18,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/cf_ignore/fake_cf_ignore"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/fake_blob_store_verifier"
+	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/zipper/fake_zipper"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
@@ -48,6 +46,7 @@ var _ = Describe("CommandFactory", func() {
 		fakeAppExaminer         *fake_app_examiner.FakeAppExaminer
 		fakeTaskExaminer        *fake_task_examiner.FakeTaskExaminer
 		fakeCFIgnore            *fake_cf_ignore.FakeCFIgnore
+		fakeZipper              *fake_zipper.FakeZipper
 		fakeBlobStoreVerifier   *fake_blob_store_verifier.FakeBlobStoreVerifier
 		config                  *config_package.Config
 
@@ -62,6 +61,7 @@ var _ = Describe("CommandFactory", func() {
 		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
 		fakeTaskExaminer = &fake_task_examiner.FakeTaskExaminer{}
 		fakeCFIgnore = &fake_cf_ignore.FakeCFIgnore{}
+		fakeZipper = &fake_zipper.FakeZipper{}
 		fakeBlobStoreVerifier = &fake_blob_store_verifier.FakeBlobStoreVerifier{}
 		config = config_package.New(nil)
 
@@ -82,45 +82,22 @@ var _ = Describe("CommandFactory", func() {
 		var buildDropletCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, fakeCFIgnore, config)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, fakeCFIgnore, fakeZipper, config)
 			buildDropletCommand = commandFactory.MakeBuildDropletCommand()
 			fakeBlobStoreVerifier.VerifyReturns(true, nil)
 		})
 
 		Context("when the archive path is a folder and exists", func() {
-			var (
-				prevDir, tmpDir string
-				err             error
-			)
-
 			BeforeEach(func() {
-				tmpDir, err = ioutil.TempDir(os.TempDir(), "zip_contents")
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "aaa"), []byte("aaa contents"), 0700)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "bbb"), []byte("bbb contents"), 0750)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "ccc"), []byte("ccc contents"), 0644)).To(Succeed())
-				Expect(os.Symlink("ccc", filepath.Join(tmpDir, "ddd"))).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "some-ignored-file"), []byte("ignored contents"), 0644)).To(Succeed())
-
-				Expect(os.Mkdir(filepath.Join(tmpDir, "subfolder"), 0755)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(tmpDir, "subfolder", "sub"), []byte("sub contents"), 0644)).To(Succeed())
-
-				prevDir, err = os.Getwd()
-				Expect(err).NotTo(HaveOccurred())
-				Expect(os.Chdir(tmpDir)).To(Succeed())
-
 				fakeCFIgnore.ShouldIgnoreStub = func(path string) bool {
 					return path == "some-ignored-file"
 				}
 			})
 
-			AfterEach(func() {
-				Expect(os.Chdir(prevDir)).To(Succeed())
-				Expect(os.RemoveAll(tmpDir)).To(Succeed())
-			})
-
 			It("zips up current working folder and uploads as the droplet name", func() {
+				fakeZipper.IsZipFileReturns(false)
+				fakeZipper.ZipReturns("xyz.zip", nil)
+
 				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
 
 				Expect(outputBuffer).To(test_helpers.SayLine("Uploading application bits..."))
@@ -135,195 +112,43 @@ var _ = Describe("CommandFactory", func() {
 				Expect(dropletName).To(Equal("droplet-name"))
 
 				Expect(uploadPath).NotTo(BeNil())
-				Expect(uploadPath).To(HaveSuffix(".zip"))
+				Expect(uploadPath).To(Equal("xyz.zip"))
 
-				zipReader, err := zip.OpenReader(uploadPath)
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(zipReader.File).To(HaveLen(6))
-
-				buffer := make([]byte, 12)
-				h := zipReader.File[0].FileHeader
-				f, err := zipReader.File[0].Open()
-				Expect(err).NotTo(HaveOccurred())
-				defer f.Close()
-				Expect(h.Name).To(Equal("aaa"))
-				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0700)))
-				Expect(f.Read(buffer)).To(Equal(12))
-				Expect(string(buffer)).To(Equal("aaa contents"))
-
-				buffer = make([]byte, 12)
-				h = zipReader.File[1].FileHeader
-				f, err = zipReader.File[1].Open()
-				Expect(err).NotTo(HaveOccurred())
-				defer f.Close()
-				Expect(h.Name).To(Equal("bbb"))
-				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0750)))
-				Expect(f.Read(buffer)).To(Equal(12))
-				Expect(string(buffer)).To(Equal("bbb contents"))
-
-				buffer = make([]byte, 12)
-				h = zipReader.File[2].FileHeader
-				f, err = zipReader.File[2].Open()
-				Expect(err).NotTo(HaveOccurred())
-				defer f.Close()
-				Expect(h.Name).To(Equal("ccc"))
-				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
-				Expect(f.Read(buffer)).To(Equal(12))
-				Expect(string(buffer)).To(Equal("ccc contents"))
-
-				buffer = make([]byte, 3)
-				h = zipReader.File[3].FileHeader
-				f, err = zipReader.File[3].Open()
-				Expect(err).NotTo(HaveOccurred())
-				defer f.Close()
-				Expect(h.Name).To(Equal("ddd"))
-				Expect(h.FileInfo().Mode() & os.ModeSymlink).To(Equal(os.ModeSymlink))
-				Expect(f.Read(buffer)).To(Equal(3))
-				Expect(string(buffer)).To(Equal("ccc"))
-
-				buffer = make([]byte, 1)
-				h = zipReader.File[4].FileHeader
-				f, err = zipReader.File[4].Open()
-				Expect(err).NotTo(HaveOccurred())
-				defer f.Close()
-				Expect(h.Name).To(Equal("subfolder/"))
-				Expect(h.FileInfo().IsDir()).To(BeTrue())
-				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(os.ModeDir | 0755)))
-				_, err = f.Read(buffer)
-				Expect(err).To(MatchError("EOF"))
-
-				buffer = make([]byte, 12)
-				h = zipReader.File[5].FileHeader
-				f, err = zipReader.File[5].Open()
-				Expect(err).NotTo(HaveOccurred())
-				defer f.Close()
-				Expect(h.Name).To(Equal("subfolder/sub"))
-				Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
-				Expect(f.Read(buffer)).To(Equal(12))
-				Expect(string(buffer)).To(Equal("sub contents"))
+				Expect(fakeZipper.ZipCallCount()).To(Equal(1))
+				_, cfIgnore := fakeZipper.ZipArgsForCall(0)
+				Expect(cfIgnore).To(Equal(fakeCFIgnore))
 			})
 
-			Context("when a single file is passed to -p", func() {
-				It("uses it as the app bits if it's already a zip archive", func() {
-					tmpFile, err := ioutil.TempFile(os.TempDir(), "singlezip")
-					Expect(err).NotTo(HaveOccurred())
+			It("re-zips an existing .zip passed to -p and uploads as the droplet name", func() {
+				fakeZipper.IsZipFileReturns(true)
+				fakeZipper.UnzipReturns(nil)
+				fakeZipper.ZipReturns("xyz.zip", nil)
 
-					zipFilePath := tmpFile.Name() + ".zip"
-					zipCommand := exec.Command("/usr/bin/zip", "--symlinks", "-yr", zipFilePath, "aaa", "bbb", "ccc", "ddd", "some-ignored-file", "subfolder")
-					zipCommand.Dir = tmpDir
-					Expect(zipCommand.Run()).To(Succeed())
-					defer os.Remove(zipFilePath)
-					defer tmpFile.Close()
-					defer os.Remove(tmpFile.Name())
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack", "-p", "abc.zip"})
 
-					args := []string{
-						"droplet-name",
-						"http://some.url/for/buildpack",
-						"-p",
-						zipFilePath,
-					}
-					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
+				Expect(fakeZipper.IsZipFileCallCount()).To(Equal(1))
+				Expect(fakeZipper.IsZipFileArgsForCall(0)).To(Equal("abc.zip"))
+				Expect(fakeZipper.UnzipCallCount()).To(Equal(1))
+				src, dest := fakeZipper.UnzipArgsForCall(0)
+				Expect(src).To(Equal("abc.zip"))
+				Expect(fakeZipper.ZipCallCount()).To(Equal(1))
+				zip, cfIgnore := fakeZipper.ZipArgsForCall(0)
+				Expect(zip).To(Equal(dest))
+				Expect(cfIgnore).To(Equal(fakeCFIgnore))
 
-					Expect(outputBuffer).To(test_helpers.Say("Submitted build of droplet-name"))
-					Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
-					dropletName, uploadPath := fakeDropletRunner.UploadBitsArgsForCall(0)
-					Expect(dropletName).To(Equal("droplet-name"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Uploading application bits..."))
+				Expect(outputBuffer).To(test_helpers.SayLine("Uploaded."))
 
-					Expect(uploadPath).NotTo(BeNil())
-					Expect(uploadPath).To(HaveSuffix(".zip"))
+				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
+				Expect(fakeBlobStoreVerifier.VerifyArgsForCall(0)).To(Equal(config))
 
-					zipReader, err := zip.OpenReader(uploadPath)
-					Expect(err).NotTo(HaveOccurred())
+				Expect(outputBuffer).To(test_helpers.SayLine("Submitted build of droplet-name"))
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(1))
+				dropletName, uploadPath := fakeDropletRunner.UploadBitsArgsForCall(0)
+				Expect(dropletName).To(Equal("droplet-name"))
 
-					Expect(zipReader.File).To(HaveLen(7))
-
-					buffer := make([]byte, 12)
-					h := zipReader.File[0].FileHeader
-					f, err := zipReader.File[0].Open()
-					Expect(err).NotTo(HaveOccurred())
-					defer f.Close()
-					Expect(h.Name).To(Equal("aaa"))
-					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0700)))
-					Expect(f.Read(buffer)).To(Equal(12))
-					Expect(string(buffer)).To(Equal("aaa contents"))
-
-					buffer = make([]byte, 12)
-					h = zipReader.File[1].FileHeader
-					f, err = zipReader.File[1].Open()
-					Expect(err).NotTo(HaveOccurred())
-					defer f.Close()
-					Expect(h.Name).To(Equal("bbb"))
-					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0750)))
-					Expect(f.Read(buffer)).To(Equal(12))
-					Expect(string(buffer)).To(Equal("bbb contents"))
-
-					buffer = make([]byte, 12)
-					h = zipReader.File[2].FileHeader
-					f, err = zipReader.File[2].Open()
-					Expect(err).NotTo(HaveOccurred())
-					defer f.Close()
-					Expect(h.Name).To(Equal("ccc"))
-					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
-					Expect(f.Read(buffer)).To(Equal(12))
-					Expect(string(buffer)).To(Equal("ccc contents"))
-
-					buffer = make([]byte, 3)
-					h = zipReader.File[3].FileHeader
-					f, err = zipReader.File[3].Open()
-					Expect(err).NotTo(HaveOccurred())
-					defer f.Close()
-					Expect(h.Name).To(Equal("ddd"))
-					Expect(h.FileInfo().Mode() & os.ModeSymlink).To(Equal(os.ModeSymlink))
-					Expect(f.Read(buffer)).To(Equal(3))
-					Expect(string(buffer)).To(Equal("ccc"))
-
-					buffer = make([]byte, 12)
-					h = zipReader.File[4].FileHeader
-					f, err = zipReader.File[4].Open()
-					Expect(err).NotTo(HaveOccurred())
-					defer f.Close()
-					Expect(h.Name).To(Equal("some-ignored-file"))
-					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
-					Expect(f.Read(buffer)).To(Equal(12))
-					Expect(string(buffer)).To(Equal("ignored cont"))
-
-					buffer = make([]byte, 1)
-					h = zipReader.File[5].FileHeader
-					f, err = zipReader.File[5].Open()
-					Expect(err).NotTo(HaveOccurred())
-					defer f.Close()
-					Expect(h.Name).To(Equal("subfolder/"))
-					Expect(h.FileInfo().IsDir()).To(BeTrue())
-					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(os.ModeDir | 0755)))
-					_, err = f.Read(buffer)
-					Expect(err).To(MatchError("EOF"))
-
-					buffer = make([]byte, 12)
-					h = zipReader.File[6].FileHeader
-					f, err = zipReader.File[6].Open()
-					Expect(err).NotTo(HaveOccurred())
-					defer f.Close()
-					Expect(h.Name).To(Equal("subfolder/sub"))
-					Expect(h.FileInfo().Mode()).To(Equal(os.FileMode(0644)))
-					Expect(f.Read(buffer)).To(Equal(12))
-					Expect(string(buffer)).To(Equal("sub contents"))
-				})
-
-				It("prints an error if the file isn't a zip archive", func() {
-					args := []string{
-						"droplet-name",
-						"http://some.url/for/buildpack",
-						"-p",
-						path.Join(tmpDir, "ccc"),
-					}
-					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, args)
-
-					Expect(outputBuffer).To(gbytes.Say("Error archiving .*: ccc must be a zip archive"))
-					Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
-					Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
-					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
-				})
+				Expect(uploadPath).NotTo(BeNil())
+				Expect(uploadPath).To(Equal("xyz.zip"))
 			})
 
 			It("passes through environment variables from the command-line", func() {
@@ -368,39 +193,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(cpu).To(Equal(75))
 				Expect(mem).To(Equal(512))
 				Expect(disk).To(Equal(800))
-			})
-
-			Describe(".cfignore", func() {
-				Context("when a .cfignore file is present", func() {
-					BeforeEach(func() {
-						Expect(ioutil.WriteFile(filepath.Join(tmpDir, ".cfignore"), []byte("cfignore contents"), 0644)).To(Succeed())
-					})
-
-					It("parses a .cfignore file if present", func() {
-						test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
-
-						Expect(fakeCFIgnore.ParseCallCount()).To(Equal(1))
-						Expect(ioutil.ReadAll(fakeCFIgnore.ParseArgsForCall(0))).To(Equal([]byte("cfignore contents")))
-					})
-
-					Context("when parsing the .cfignore file fails", func() {
-						It("returns an error without uploading any bits", func() {
-							fakeCFIgnore.ParseReturns(errors.New("some cfignore parse error"))
-
-							test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
-
-							Expect(outputBuffer).To(test_helpers.Say("some cfignore parse error"))
-							Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
-							Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
-						})
-					})
-				})
-
-				It("does not parse a .cfignore file when missing", func() {
-					test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack"})
-
-					Expect(fakeCFIgnore.ParseCallCount()).To(Equal(0))
-				})
 			})
 
 			Describe("buildpack aliases", func() {
@@ -484,6 +276,46 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.SayLine("Error verifying droplet store: unauthorized"))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
+				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
+			})
+		})
+
+		Context("when the zipper returns an error", func() {
+			It("prints the error from Unzip", func() {
+				fakeZipper.IsZipFileReturns(true)
+				fakeZipper.UnzipReturns(errors.New("oop"))
+				fakeZipper.ZipReturns("xyz.zip", nil)
+
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack", "-p", "abc.zip"})
+
+				Expect(fakeZipper.IsZipFileCallCount()).To(Equal(1))
+				Expect(fakeZipper.IsZipFileArgsForCall(0)).To(Equal("abc.zip"))
+				Expect(fakeZipper.UnzipCallCount()).To(Equal(1))
+				Expect(fakeZipper.ZipCallCount()).To(Equal(0))
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Error unarchiving abc.zip: oop"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
+
+				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
+				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
+			})
+
+			It("prints the error from re-Zip", func() {
+				fakeZipper.IsZipFileReturns(true)
+				fakeZipper.UnzipReturns(nil)
+				fakeZipper.ZipReturns("", errors.New("oop"))
+
+				test_helpers.ExecuteCommandWithArgs(buildDropletCommand, []string{"droplet-name", "http://some.url/for/buildpack", "-p", "abc.zip"})
+
+				Expect(fakeZipper.IsZipFileCallCount()).To(Equal(1))
+				Expect(fakeZipper.IsZipFileArgsForCall(0)).To(Equal("abc.zip"))
+				Expect(fakeZipper.UnzipCallCount()).To(Equal(1))
+				Expect(fakeZipper.ZipCallCount()).To(Equal(1))
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Error re-archiving abc.zip: oop"))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.FileSystemError}))
+
 				Expect(fakeDropletRunner.UploadBitsCallCount()).To(Equal(0))
 				Expect(fakeDropletRunner.BuildDropletCallCount()).To(Equal(0))
 			})
@@ -662,7 +494,7 @@ var _ = Describe("CommandFactory", func() {
 		var listDropletsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, config)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, fakeZipper, config)
 			listDropletsCommand = commandFactory.MakeListDropletsCommand()
 			fakeBlobStoreVerifier.VerifyReturns(true, nil)
 		})
@@ -744,7 +576,7 @@ var _ = Describe("CommandFactory", func() {
 		var launchDropletCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, config)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, fakeZipper, config)
 			launchDropletCommand = commandFactory.MakeLaunchDropletCommand()
 		})
 
@@ -1066,7 +898,7 @@ var _ = Describe("CommandFactory", func() {
 		var removeDropletCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, config)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, fakeZipper, config)
 			removeDropletCommand = commandFactory.MakeRemoveDropletCommand()
 		})
 
@@ -1098,7 +930,7 @@ var _ = Describe("CommandFactory", func() {
 		)
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, config)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, fakeTaskExaminer, fakeDropletRunner, nil, fakeZipper, config)
 			exportDropletCommand = commandFactory.MakeExportDropletCommand()
 
 		})
@@ -1174,7 +1006,7 @@ var _ = Describe("CommandFactory", func() {
 		var importDropletCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, nil, fakeDropletRunner, nil, config)
+			commandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(appRunnerCommandFactory, fakeBlobStoreVerifier, nil, fakeDropletRunner, nil, fakeZipper, config)
 			importDropletCommand = commandFactory.MakeImportDropletCommand()
 		})
 

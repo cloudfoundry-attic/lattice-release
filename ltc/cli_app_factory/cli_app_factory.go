@@ -16,6 +16,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/docker_metadata_fetcher"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/cf_ignore"
+	zipper_package "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/zipper"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
@@ -192,7 +193,8 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, appExaminer)
 	cfIgnore := cf_ignore.New()
-	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, blobStoreVerifier, taskExaminer, dropletRunner, cfIgnore, config)
+	zipper := &zipper_package.DropletArtifactZipper{}
+	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, blobStoreVerifier, taskExaminer, dropletRunner, cfIgnore, zipper, config)
 
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, blobStoreVerifier, exitHandler)
 

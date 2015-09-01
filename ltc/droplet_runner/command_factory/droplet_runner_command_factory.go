@@ -1,15 +1,12 @@
 package command_factory
 
 import (
-	"archive/zip"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/url"
 	"os"
-	"path"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -20,6 +17,7 @@ import (
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/cf_ignore"
+	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory/zipper"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
@@ -51,6 +49,7 @@ type DropletRunnerCommandFactory struct {
 	taskExaminer      task_examiner.TaskExaminer
 	dropletRunner     droplet_runner.DropletRunner
 	cfIgnore          cf_ignore.CFIgnore
+	zipper            zipper.Zipper
 	config            *config_package.Config
 }
 
@@ -73,13 +72,14 @@ func (ds dropletSliceSortedByCreated) Less(i, j int) bool {
 }
 func (ds dropletSliceSortedByCreated) Swap(i, j int) { ds[i], ds[j] = ds[j], ds[i] }
 
-func NewDropletRunnerCommandFactory(appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory, blobStoreVerifier BlobStoreVerifier, taskExaminer task_examiner.TaskExaminer, dropletRunner droplet_runner.DropletRunner, cfIgnore cf_ignore.CFIgnore, config *config_package.Config) *DropletRunnerCommandFactory {
+func NewDropletRunnerCommandFactory(appRunnerCommandFactory app_runner_command_factory.AppRunnerCommandFactory, blobStoreVerifier BlobStoreVerifier, taskExaminer task_examiner.TaskExaminer, dropletRunner droplet_runner.DropletRunner, cfIgnore cf_ignore.CFIgnore, zipper zipper.Zipper, config *config_package.Config) *DropletRunnerCommandFactory {
 	return &DropletRunnerCommandFactory{
 		AppRunnerCommandFactory: appRunnerCommandFactory,
 		blobStoreVerifier:       blobStoreVerifier,
 		taskExaminer:            taskExaminer,
 		dropletRunner:           dropletRunner,
 		cfIgnore:                cfIgnore,
+		zipper:                  zipper,
 		config:                  config,
 	}
 }
@@ -375,11 +375,39 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 		return
 	}
 
-	archivePath, err := factory.makeZip(pathFlag)
-	if err != nil {
-		factory.UI.SayLine(fmt.Sprintf("Error archiving %s: %s", pathFlag, err))
-		factory.ExitHandler.Exit(exit_codes.FileSystemError)
-		return
+	var archivePath string
+	var err error
+
+	if factory.zipper.IsZipFile(pathFlag) {
+		tmpDir, err := ioutil.TempDir("", "rezip")
+		if err != nil {
+			factory.UI.SayLine(fmt.Sprintf("Error re-archiving %s: %s", pathFlag, err))
+			factory.ExitHandler.Exit(exit_codes.FileSystemError)
+			return
+		}
+		defer os.RemoveAll(tmpDir)
+
+		if err := factory.zipper.Unzip(pathFlag, tmpDir); err != nil {
+			factory.UI.SayLine(fmt.Sprintf("Error unarchiving %s: %s", pathFlag, err))
+			factory.ExitHandler.Exit(exit_codes.FileSystemError)
+			return
+		}
+
+		archivePath, err = factory.zipper.Zip(tmpDir, factory.cfIgnore)
+		if err != nil {
+			factory.UI.SayLine(fmt.Sprintf("Error re-archiving %s: %s", pathFlag, err))
+			factory.ExitHandler.Exit(exit_codes.FileSystemError)
+			return
+		}
+		defer os.Remove(archivePath)
+	} else {
+		archivePath, err = factory.zipper.Zip(pathFlag, factory.cfIgnore)
+		if err != nil {
+			factory.UI.SayLine(fmt.Sprintf("Error archiving %s: %s", pathFlag, err))
+			factory.ExitHandler.Exit(exit_codes.FileSystemError)
+			return
+		}
+		defer os.Remove(archivePath)
 	}
 
 	factory.UI.SayLine("Uploading application bits...")
@@ -609,117 +637,6 @@ func (factory *DropletRunnerCommandFactory) exportDroplet(context *cli.Context) 
 	}
 
 	factory.UI.SayLine(fmt.Sprintf("Droplet '%s' exported to %s and %s.", dropletName, dropletPath, metadataPath))
-}
-
-func (factory *DropletRunnerCommandFactory) makeZip(contentsPath string) (string, error) {
-	tmpPath, err := ioutil.TempDir(os.TempDir(), "build-bits")
-	if err != nil {
-		return "", err
-	}
-
-	fileWriter, err := os.OpenFile(filepath.Join(tmpPath, "build-bits.zip"), os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		return "", err
-	}
-
-	zipWriter := zip.NewWriter(fileWriter)
-	defer zipWriter.Close()
-
-	contentsFileInfo, err := os.Stat(contentsPath)
-	if err != nil {
-		return "", err
-	}
-
-	if contentsFileInfo.IsDir() {
-		if ignoreFile, err := os.Open(filepath.Join(contentsPath, ".cfignore")); err == nil {
-			if err := factory.cfIgnore.Parse(ignoreFile); err != nil {
-				return "", err
-			}
-		}
-
-		err = filepath.Walk(contentsPath, func(fullPath string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			relativePath, err := filepath.Rel(contentsPath, fullPath)
-			if err != nil {
-				return err
-			}
-
-			if factory.cfIgnore.ShouldIgnore(relativePath) {
-				return nil
-			}
-
-			if relativePath == fileWriter.Name() || relativePath == "." || relativePath == ".." {
-				return nil
-			}
-
-			if h, err := zip.FileInfoHeader(info); err == nil {
-				h.Name = relativePath
-
-				if info.IsDir() {
-					h.Name = h.Name + "/"
-				}
-
-				h.SetMode(info.Mode())
-
-				writer, err := zipWriter.CreateHeader(h)
-				if err != nil {
-					return err
-				}
-
-				if info.IsDir() {
-					return nil
-				}
-
-				li, err := os.Lstat(fullPath)
-				if err != nil {
-					return err
-				}
-
-				if li.Mode()&os.ModeSymlink == os.ModeSymlink {
-					dest, err := os.Readlink(fullPath)
-					if err != nil {
-						return err
-					}
-					if _, err := io.Copy(writer, strings.NewReader(dest)); err != nil {
-						return err
-					}
-				} else {
-					fr, err := os.Open(fullPath)
-					if err != nil {
-						return err
-					}
-					defer fr.Close()
-					if _, err := io.Copy(writer, fr); err != nil {
-						return err
-					}
-				}
-
-			}
-
-			return nil
-		})
-	} else {
-		if validZip(contentsPath) {
-			return contentsPath, nil
-		} else {
-			return "", fmt.Errorf("%s must be a zip archive", path.Base(contentsPath))
-		}
-	}
-
-	return fileWriter.Name(), err
-}
-
-func validZip(path string) bool {
-	reader, err := zip.OpenReader(path)
-	if err != nil {
-		return false
-	} else {
-		reader.Close()
-		return true
-	}
 }
 
 func (factory *DropletRunnerCommandFactory) parsePortsFromArgs(portsFlag string) ([]uint16, error) {
