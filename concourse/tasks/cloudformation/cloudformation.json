@@ -219,18 +219,24 @@
           "UnhealthyThreshold": "10"
         },
         "Listeners": [
-          {"InstancePort": "8080", "LoadBalancerPort": "80", "Protocol": "HTTP"},
           {
             "InstancePort": "8080",
-            "LoadBalancerPort": "443",
-            "Protocol": "HTTPS",
-            "SSLCertificateId": {"Ref": "SSLCertARN"}
+            "LoadBalancerPort": "80",
+            "InstanceProtocol": "tcp",
+            "Protocol": "tcp"
           },
           {
             "InstancePort": "8080",
-            "LoadBalancerPort": "4443",
-            "Protocol": "SSL",
+            "LoadBalancerPort": "443",
+            "InstanceProtocol": "tcp",
+            "Protocol": "ssl",
             "SSLCertificateId": {"Ref": "SSLCertARN"}
+          },
+          {
+            "InstancePort": "2222",
+            "LoadBalancerPort": "2222",
+            "InstanceProtocol": "tcp",
+            "Protocol": "tcp"
           }
         ],
         "SecurityGroups": [{"Ref": "EC2SecurityGroup"}],
