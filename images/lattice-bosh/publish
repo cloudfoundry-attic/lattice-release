@@ -5,5 +5,5 @@ set -e
 LATTICE_DIR=$(cd `dirname $0` && cd ../.. && pwd)
 
 docker login --email="$DOCKER_HUB_EMAIL"  --username="$DOCKER_HUB_USERNAME" --password="$DOCKER_HUB_PASSWORD"
-docker build --force-rm --no-cache -t cloudfoundry/lattice-pipeline $LATTICE_DIR/images/lattice-pipeline/image/
-docker push cloudfoundry/lattice-pipeline
+docker build --force-rm --no-cache -t cloudfoundry/lattice-bosh $LATTICE_DIR/images/lattice-bosh/image/
+docker push cloudfoundry/lattice-bosh

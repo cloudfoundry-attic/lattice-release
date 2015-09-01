@@ -35,7 +35,6 @@ pushd $LATTICE_DIR/build >/dev/null
   fi
   ( cd cf-routing-release/scripts && ./update )
 
-
   rm -rf $GOPATH/src/github.com/docker/docker
 popd >/dev/null
 
@@ -59,5 +58,5 @@ pushd $GOPATH/src/github.com/cloudfoundry-incubator >/dev/null
   popd >/dev/null
 popd >/dev/null
 
-docker pull $DOCKER_IMAGE
+docker pull cloudfoundry/lattice-pipeline
 docker pull cloudfoundry/lattice-app
