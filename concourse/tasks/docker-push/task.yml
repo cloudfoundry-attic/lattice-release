@@ -1,0 +1,12 @@
+---
+platform: linux
+image: docker:///cloudfoundry/lattice-pipeline
+inputs:
+- name: lattice
+run:
+  path: lattice/concourse/tasks/docker-push/run.sh
+params:
+  DOCKER_IMAGE: some-docker-image-name
+  DOCKER_HUB_EMAIL: some-docker-hub-email
+  DOCKER_HUB_USERNAME: some-docker-hub-username
+  DOCKER_HUB_PASSWORD: some-docker-hub-password

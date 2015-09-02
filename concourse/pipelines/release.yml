@@ -1,5 +1,5 @@
 resources:
-  - name: lattice
+  - name: lattice-version-changes
     type: git
     source:
       uri: https://github.com/cloudfoundry-incubator/lattice.git
@@ -67,6 +67,7 @@ jobs:
   - name: unit-tests
     plan:
       - get: lattice
+        resource: lattice-version-changes
         trigger: true
       - aggregate:
         - task: go-fmt-ltc
@@ -111,6 +112,7 @@ jobs:
     plan:
       - aggregate:
         - get: lattice
+          resource: lattice-version-changes
           trigger: true
           passed: [unit-tests]
         - get: diego-release
@@ -141,6 +143,7 @@ jobs:
     plan:
       - aggregate:
         - get: lattice
+          resource: lattice-version-changes
           trigger: true
           passed: [compile]
         - get: lattice-tar-build
@@ -231,6 +234,7 @@ jobs:
     plan:
       - aggregate:
         - get: lattice
+          resource: lattice-version-changes
           trigger: true
           passed: [cluster-test]
         - get: lattice-tar-build

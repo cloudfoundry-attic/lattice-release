@@ -4,6 +4,18 @@ resources:
     source:
       uri: https://github.com/cloudfoundry-incubator/lattice.git
       branch: master
+  - name: lattice-pipeline-image-changes
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry-incubator/lattice.git
+      branch: master
+      paths: [images/lattice-pipeline]
+  - name: lattice-bosh-image-changes
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry-incubator/lattice.git
+      branch: master
+      paths: [images/lattice-bosh]
   - name: diego-release
     type: git
     source:
@@ -69,6 +81,7 @@ jobs:
         trigger: true
       - task: unit-test-ltc
         file: lattice/concourse/tasks/unit-test-ltc/task.yml
+
   - name: unit-test-davtool
     plan:
       - get: lattice
@@ -78,6 +91,7 @@ jobs:
         config:
           params:
             CELL_HELPER: davtool
+
   - name: unit-test-s3tool
     plan:
       - get: lattice
@@ -87,6 +101,7 @@ jobs:
         config:
           params:
             CELL_HELPER: s3tool
+
   - name: unit-test-tee2metron
     plan:
       - get: lattice
@@ -96,8 +111,9 @@ jobs:
         config:
           params:
             CELL_HELPER: tee2metron
+
   - name: go-fmt
-    plan: 
+    plan:
       - get: lattice
         trigger: true
       - aggregate:
@@ -320,3 +336,32 @@ jobs:
           params:
             AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
             AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+
+  - name: docker-push-lattice-pipeline
+    plan:
+      - get: lattice
+        resource: lattice-pipeline-image-changes
+        trigger: true
+      - task: docker-push-lattice-pipeline
+        file: lattice/concourse/tasks/docker-push/task.yml
+        config:
+          params:
+            DOCKER_IMAGE: lattice-pipeline
+            DOCKER_HUB_EMAIL: {{docker-hub-email}}
+            DOCKER_HUB_USERNAME: {{docker-hub-username}}
+            DOCKER_HUB_PASSWORD: {{docker-hub-password}}
+
+  - name: docker-push-lattice-bosh
+    plan:
+      - get: lattice
+        resource: lattice-bosh-image-changes
+        trigger: true
+      - task: docker-push-lattice-bosh
+        file: lattice/concourse/tasks/docker-push/task.yml
+        config:
+          params:
+            DOCKER_IMAGE: lattice-bosh
+            DOCKER_HUB_EMAIL: {{docker-hub-email}}
+            DOCKER_HUB_USERNAME: {{docker-hub-username}}
+            DOCKER_HUB_PASSWORD: {{docker-hub-password}}
+
