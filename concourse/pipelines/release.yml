@@ -140,6 +140,7 @@ jobs:
             to: /build/
 
   - name: cluster-test
+    serial: true
     plan:
       - aggregate:
         - get: lattice

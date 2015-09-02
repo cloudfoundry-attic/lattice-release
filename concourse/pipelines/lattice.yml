@@ -254,6 +254,7 @@ jobs:
           file: lattice/concourse/tasks/cleanup-deploy-terraform-aws/task.yml
 
   - name: cluster-test-terraform-gce
+    serial: true
     plan:
       - aggregate:
         - get: lattice
