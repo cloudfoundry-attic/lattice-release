@@ -90,7 +90,7 @@ By default, `ltc` selects the *lowest* exposed port to healthcheck against;  if 
 - **`--monitor-port=8080`** sets the port that `ltc` performs a port healthcheck against.
 - **`--monitor-url=PORT:/path/to/endpoint`** performs an HTTP roundtrip to check whether a given endpoint returns a **200 OK** result.
 - **`--monitor-timeout=1s`** sets the wait time for the application to respond to the healthcheck.
-- **`--monitor-command="/custom/monitor [args...]"`** uses a custom command from the Docker image to healthcheck.
+- **`--monitor-command="/custom/monitor [args...]"`** uses a custom command from the Docker image to healthcheck. The healthcheck must not rely on the route (e.g. http://my-app.192.168.11.11.xip.io/), because a successful health check is required before Lattice will register an app route.
 - **`--no-monitor`** disables health monitoring.  Lattice will consider the application crashed only if it exits.
 
 ## Managing Applications
