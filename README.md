@@ -273,6 +273,8 @@ Everyone is encouraged to help improve this project.
 
 Please submit pull requests against the **master branch**. 
 
+Our [Concourse](http://concourse.ci) CI system is available at [ci.lattice.cf](https://ci.lattice.cf).
+
 Here are some ways *you* can contribute:
 
 * by using alpha, beta, and prerelease versions

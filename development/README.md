@@ -1,4 +1,8 @@
-# Lattice Development Readme
+# Lattice Development Read-Me
+
+## Continuous Integration
+
+Our [Concourse](http://concourse.ci) CI system is available at [ci.lattice.cf](https://ci.lattice.cf).
 
 ## Cluster Development
 
