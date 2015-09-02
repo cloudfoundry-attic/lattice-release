@@ -136,6 +136,10 @@ The Lattice router only supports HTTP communication at this time.  If you would 
 
 Lattice does not apply any firewall rules between containers.  Any container can freely communicate with any other container.  All you need is to identfiy the IP and Port - information available via `ltc status` or the [Receptor API](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/README.md).
 
+## Can I communicate directly with Lattice cells?
+
+As of v0.4.1, access to Lattice cells will be restricted to VMs within the Lattice cluster.
+
 ## How do I do service discovery?
 
 Outside of the HTTP router, Lattice does not ship with a service discovery solution.  It is relatively straightforward, however, to build a solution on top of the Receptor API.  We have plans to explore this space soon after release.
