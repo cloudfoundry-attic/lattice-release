@@ -288,6 +288,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 
 	envVars := buildEnvironmentVariables(params.EnvironmentVariables)
 	envVars = append(envVars, receptor.EnvironmentVariable{Name: "VCAP_APPLICATION", Value: string(vcapAppBytes)})
+	envVars = append(envVars, receptor.EnvironmentVariable{Name: "VCAP_SERVICES", Value: "{}"})
 	envVars = append(envVars, receptor.EnvironmentVariable{Name: "PORT", Value: fmt.Sprintf("%d", primaryPort)})
 
 	req := receptor.DesiredLRPCreateRequest{

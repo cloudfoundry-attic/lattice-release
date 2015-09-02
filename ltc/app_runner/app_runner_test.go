@@ -87,6 +87,7 @@ var _ = Describe("AppRunner", func() {
 					Name:  "VCAP_APPLICATION",
 					Value: `{"application_name":"americano-app","application_uris":["americano-app.myDiegoInstall.com","americano-app-2000.myDiegoInstall.com","americano-app-4000.myDiegoInstall.com"],"name":"americano-app","uris":["americano-app.myDiegoInstall.com","americano-app-2000.myDiegoInstall.com","americano-app-4000.myDiegoInstall.com"],"limits":{"disk":1024,"mem":128}}`,
 				},
+				receptor.EnvironmentVariable{Name: "VCAP_SERVICES", Value: "{}"},
 				receptor.EnvironmentVariable{Name: "PORT", Value: "2000"},
 			))
 			Expect(req.Routes).To(Equal(route_helpers.AppRoutes{
