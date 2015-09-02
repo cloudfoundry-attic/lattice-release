@@ -67,6 +67,18 @@ resources:
       private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
+  - name: lattice-pipeline
+    type: docker-image
+    source:
+      email: {{docker-hub-email}}
+      username: {{docker-hub-username}}
+      password: {{docker-hub-password}}
+  - name: lattice-bosh
+    type: docker-image
+    source:
+      email: {{docker-hub-email}}
+      username: {{docker-hub-username}}
+      password: {{docker-hub-password}}
   - name: publish-nightly-timer
     type: time
     source:
@@ -342,26 +354,17 @@ jobs:
       - get: lattice
         resource: lattice-pipeline-image-changes
         trigger: true
-      - task: docker-push-lattice-pipeline
-        file: lattice/concourse/tasks/docker-push/task.yml
-        config:
-          params:
-            DOCKER_IMAGE: lattice-pipeline
-            DOCKER_HUB_EMAIL: {{docker-hub-email}}
-            DOCKER_HUB_USERNAME: {{docker-hub-username}}
-            DOCKER_HUB_PASSWORD: {{docker-hub-password}}
+      - put: lattice-pipeline
+        params:
+          build: lattice/images/lattice-pipeline
+          push: true
 
   - name: docker-push-lattice-bosh
     plan:
       - get: lattice
         resource: lattice-bosh-image-changes
         trigger: true
-      - task: docker-push-lattice-bosh
-        file: lattice/concourse/tasks/docker-push/task.yml
-        config:
-          params:
-            DOCKER_IMAGE: lattice-bosh
-            DOCKER_HUB_EMAIL: {{docker-hub-email}}
-            DOCKER_HUB_USERNAME: {{docker-hub-username}}
-            DOCKER_HUB_PASSWORD: {{docker-hub-password}}
-
+      - put: lattice-bosh
+        params:
+          build: lattice/images/lattice-bosh
+          push: true
