@@ -33,11 +33,9 @@ var _ = Describe("AppRunner", func() {
 		var createAppParams app_runner.CreateAppParams
 
 		BeforeEach(func() {
-			appArgs := []string{"app", "arg1", "--app", "arg 2"}
-			appEnv := map[string]string{"APPROOT": "/root/env/path"}
 			createAppParams = app_runner.CreateAppParams{
 				AppEnvironmentParams: app_runner.AppEnvironmentParams{
-					EnvironmentVariables: appEnv,
+					EnvironmentVariables: map[string]string{"APPROOT": "/root/env/path"},
 					Monitor: app_runner.MonitorConfig{
 						Method: app_runner.PortMonitor,
 						Port:   2000,
@@ -55,7 +53,7 @@ var _ = Describe("AppRunner", func() {
 				Name:         "americano-app",
 				StartCommand: "/app-run-statement",
 				RootFS:       "/runtest/runner",
-				AppArgs:      appArgs,
+				AppArgs:      []string{"app", "arg1", "--app", "arg 2"},
 				Annotation:   "some annotation",
 
 				Setup: &models.DownloadAction{
@@ -81,14 +79,16 @@ var _ = Describe("AppRunner", func() {
 			Expect(req.Domain).To(Equal("lattice"))
 			Expect(req.RootFS).To(Equal("/runtest/runner"))
 			Expect(req.Instances).To(Equal(22))
-			Expect(req.EnvironmentVariables).To(ConsistOf(
-				receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"},
-				receptor.EnvironmentVariable{
-					Name:  "VCAP_APPLICATION",
-					Value: `{"application_name":"americano-app","application_uris":["americano-app.myDiegoInstall.com","americano-app-2000.myDiegoInstall.com","americano-app-4000.myDiegoInstall.com"],"name":"americano-app","uris":["americano-app.myDiegoInstall.com","americano-app-2000.myDiegoInstall.com","americano-app-4000.myDiegoInstall.com"],"limits":{"disk":1024,"mem":128}}`,
+			Expect(req.EnvironmentVariables).To(ContainExactly(
+				[]receptor.EnvironmentVariable{
+					receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"},
+					receptor.EnvironmentVariable{
+						Name:  "VCAP_APPLICATION",
+						Value: `{"application_name":"americano-app","application_uris":["americano-app.myDiegoInstall.com","americano-app-2000.myDiegoInstall.com","americano-app-4000.myDiegoInstall.com"],"name":"americano-app","uris":["americano-app.myDiegoInstall.com","americano-app-2000.myDiegoInstall.com","americano-app-4000.myDiegoInstall.com"],"limits":{"disk":1024,"mem":128}}`,
+					},
+					receptor.EnvironmentVariable{Name: "VCAP_SERVICES", Value: "{}"},
+					receptor.EnvironmentVariable{Name: "PORT", Value: "2000"},
 				},
-				receptor.EnvironmentVariable{Name: "VCAP_SERVICES", Value: "{}"},
-				receptor.EnvironmentVariable{Name: "PORT", Value: "2000"},
 			))
 			Expect(req.Routes).To(Equal(route_helpers.AppRoutes{
 				route_helpers.AppRoute{Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"}, Port: 2000},
@@ -126,6 +126,38 @@ var _ = Describe("AppRunner", func() {
 			Expect(reqMonitor.Args).To(Equal([]string{"-port", "2000"}))
 			Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
 			Expect(reqMonitor.User).To(Equal("start-user"))
+		})
+
+		Context("when VCAP_SERVICES is passed in by the user", func() {
+			It("doesn't overwrite it with a default", func() {
+				createAppParams.AppEnvironmentParams.EnvironmentVariables["VCAP_SERVICES"] = "{totally valid json}"
+
+				err := appRunner.CreateApp(createAppParams)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(fakeReceptorClient.UpsertDomainCallCount()).To(Equal(1))
+				domain, ttl := fakeReceptorClient.UpsertDomainArgsForCall(0)
+				Expect(domain).To(Equal("lattice"))
+				Expect(ttl).To(Equal(time.Duration(0)))
+
+				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+				Expect(req.ProcessGuid).To(Equal("americano-app"))
+				Expect(req.Domain).To(Equal("lattice"))
+				Expect(req.RootFS).To(Equal("/runtest/runner"))
+				Expect(req.Instances).To(Equal(22))
+				Expect(req.EnvironmentVariables).To(ContainExactly(
+					[]receptor.EnvironmentVariable{
+						receptor.EnvironmentVariable{Name: "APPROOT", Value: "/root/env/path"},
+						receptor.EnvironmentVariable{
+							Name:  "VCAP_APPLICATION",
+							Value: `{"application_name":"americano-app","application_uris":["americano-app.myDiegoInstall.com","americano-app-2000.myDiegoInstall.com","americano-app-4000.myDiegoInstall.com"],"name":"americano-app","uris":["americano-app.myDiegoInstall.com","americano-app-2000.myDiegoInstall.com","americano-app-4000.myDiegoInstall.com"],"limits":{"disk":1024,"mem":128}}`,
+						},
+						receptor.EnvironmentVariable{Name: "VCAP_SERVICES", Value: "{totally valid json}"},
+						receptor.EnvironmentVariable{Name: "PORT", Value: "2000"},
+					},
+				))
+			})
 		})
 
 		Context("when 'lattice-debug' is passed as the appId", func() {
