@@ -67,15 +67,17 @@ resources:
       private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
-  - name: lattice-pipeline
+  - name: lattice-pipeline-image
     type: docker-image
     source:
+      repository: cloudfoundry/lattice-pipeline
       email: {{docker-hub-email}}
       username: {{docker-hub-username}}
       password: {{docker-hub-password}}
-  - name: lattice-bosh
+  - name: lattice-bosh-image
     type: docker-image
     source:
+      repository: cloudfoundry/lattice-bosh
       email: {{docker-hub-email}}
       username: {{docker-hub-username}}
       password: {{docker-hub-password}}
@@ -354,7 +356,7 @@ jobs:
       - get: lattice
         resource: lattice-pipeline-image-changes
         trigger: true
-      - put: lattice-pipeline
+      - put: lattice-pipeline-image
         params:
           build: lattice/images/lattice-pipeline
           push: true
@@ -364,7 +366,7 @@ jobs:
       - get: lattice
         resource: lattice-bosh-image-changes
         trigger: true
-      - put: lattice-bosh
+      - put: lattice-bosh-image
         params:
           build: lattice/images/lattice-bosh
           push: true
