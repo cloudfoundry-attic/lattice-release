@@ -12,6 +12,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
+	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/keygen/fake_keygen"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
@@ -21,12 +22,17 @@ var _ = Describe("AppRunner", func() {
 
 	var (
 		fakeReceptorClient *fake_receptor.FakeClient
+		fakeKeyGenerator   *fake_keygen.FakeKeyGenerator
 		appRunner          app_runner.AppRunner
 	)
 
 	BeforeEach(func() {
 		fakeReceptorClient = &fake_receptor.FakeClient{}
-		appRunner = app_runner.New(fakeReceptorClient, "myDiegoInstall.com")
+		fakeKeyGenerator = &fake_keygen.FakeKeyGenerator{}
+		appRunner = app_runner.New(fakeReceptorClient, "myDiegoInstall.com", fakeKeyGenerator)
+
+		fakeKeyGenerator.GenerateRSAPrivateKeyReturns("THIS IS A PRIVATE HOST KEY", nil)
+		fakeKeyGenerator.GenerateRSAKeyPairReturns("THIS IS A PRIVATE KEY", "THIS IS A PUBLIC KEY", nil)
 	})
 
 	Describe("CreateApp", func() {
@@ -90,34 +96,62 @@ var _ = Describe("AppRunner", func() {
 					receptor.EnvironmentVariable{Name: "PORT", Value: "2000"},
 				},
 			))
-			Expect(req.Routes).To(Equal(route_helpers.AppRoutes{
+
+			Expect(req.Routes).To(HaveKey("cf-router"))
+			appRoutes := req.Routes["cf-router"]
+			Expect(appRoutes).To(Equal(route_helpers.AppRoutes{
 				route_helpers.AppRoute{Hostnames: []string{"americano-app.myDiegoInstall.com", "americano-app-2000.myDiegoInstall.com"}, Port: 2000},
 				route_helpers.AppRoute{Hostnames: []string{"americano-app-4000.myDiegoInstall.com"}, Port: 4000},
-			}.RoutingInfo()))
+			}.RoutingInfo()["cf-router"]))
+
+			Expect(req.Routes).To(HaveKey("diego-ssh"))
+			Expect(req.Routes["diego-ssh"].MarshalJSON()).To(MatchJSON(`{"container_port": 2222, "private_key": "THIS IS A PRIVATE KEY"}`))
+
 			Expect(req.CPUWeight).To(Equal(uint(67)))
 			Expect(req.MemoryMB).To(Equal(128))
 			Expect(req.DiskMB).To(Equal(1024))
 			Expect(req.Privileged).To(BeTrue())
-			Expect(req.Ports).To(ConsistOf(uint16(2000), uint16(4000)))
+			Expect(req.Ports).To(ConsistOf(uint16(2000), uint16(4000), uint16(2222)))
 			Expect(req.LogGuid).To(Equal("americano-app"))
 			Expect(req.LogSource).To(Equal("APP"))
 			Expect(req.MetricsGuid).To(Equal("americano-app"))
 			Expect(req.Annotation).To(Equal("some annotation"))
 
-			Expect(req.Setup).To(BeAssignableToTypeOf(&models.DownloadAction{}))
-			reqSetup, ok := req.Setup.(*models.DownloadAction)
-			Expect(ok).To(BeTrue())
-			Expect(reqSetup.From).To(Equal("http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"))
-			Expect(reqSetup.To).To(Equal("/tmp"))
-			Expect(reqSetup.User).To(Equal("download-user"))
+			Expect(req.Setup).To(Equal(&models.SerialAction{
+				Actions: []models.Action{
+					&models.DownloadAction{
+						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						To:   "/tmp",
+						User: "download-user",
+					},
+					&models.DownloadAction{
+						From: "http://file_server.service.dc1.consul:8080/v1/static/diego-sshd.tgz",
+						To:   "/tmp",
+						User: "vcap",
+					},
+				},
+			}))
 
-			Expect(req.Action).To(BeAssignableToTypeOf(&models.RunAction{}))
-			reqAction, ok := req.Action.(*models.RunAction)
-			Expect(ok).To(BeTrue())
-			Expect(reqAction.Path).To(Equal("/app-run-statement"))
-			Expect(reqAction.Args).To(Equal([]string{"app", "arg1", "--app", "arg 2"}))
-			Expect(reqAction.Dir).To(Equal("/user/web/myappdir"))
-			Expect(reqAction.User).To(Equal("start-user"))
+			Expect(req.Action).To(Equal(&models.ParallelAction{
+				Actions: []models.Action{
+					&models.RunAction{
+						Path: "/tmp/diego-sshd",
+						Args: []string{
+							"-address=0.0.0.0:2222",
+							"-authorizedKey=THIS IS A PUBLIC KEY",
+							"-hostKey=THIS IS A PRIVATE HOST KEY",
+						},
+						Dir:  "/tmp",
+						User: "vcap",
+					},
+					&models.RunAction{
+						Path: "/app-run-statement",
+						Args: []string{"app", "arg1", "--app", "arg 2"},
+						Dir:  "/user/web/myappdir",
+						User: "start-user",
+					},
+				},
+			}))
 
 			Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
 			reqMonitor, ok := req.Monitor.(*models.RunAction)
@@ -242,9 +276,15 @@ var _ = Describe("AppRunner", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes).To(Equal(route_helpers.Routes{
-					AppRoutes: route_helpers.AppRoutes{},
-				}.RoutingInfo()))
+
+				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+
+				Expect(req.Routes).To(HaveKey("cf-router"))
+				appRoutes := req.Routes["cf-router"]
+				Expect(appRoutes).To(Equal(route_helpers.AppRoutes{}.RoutingInfo()["cf-router"]))
+
+				Expect(req.Routes).To(HaveKey("diego-ssh"))
+				Expect(req.Routes["diego-ssh"].MarshalJSON()).To(MatchJSON(`{"container_port": 2222, "private_key": "THIS IS A PRIVATE KEY"}`))
 			})
 		})
 
@@ -288,7 +328,15 @@ var _ = Describe("AppRunner", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Routes).To(Equal(route_helpers.AppRoutes{}.RoutingInfo()))
+
+				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+
+				Expect(req.Routes).To(HaveKey("cf-router"))
+				appRoutes := req.Routes["cf-router"]
+				Expect(appRoutes).To(Equal(route_helpers.AppRoutes{}.RoutingInfo()["cf-router"]))
+
+				Expect(req.Routes).To(HaveKey("diego-ssh"))
+				Expect(req.Routes["diego-ssh"].MarshalJSON()).To(MatchJSON(`{"container_port": 2222, "private_key": "THIS IS A PRIVATE KEY"}`))
 			})
 		})
 
@@ -438,6 +486,24 @@ var _ = Describe("AppRunner", func() {
 
 			err := appRunner.CreateApp(createAppParams)
 			Expect(err).To(MatchError("app-already-desired is already running"))
+
+			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
+		})
+
+		It("returns errors if ssh host key generation fails", func() {
+			fakeKeyGenerator.GenerateRSAPrivateKeyReturns("", errors.New("heat death of the universe"))
+
+			err := appRunner.CreateApp(createAppParams)
+			Expect(err).To(MatchError("heat death of the universe"))
+
+			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
+		})
+
+		It("returns errors if ssh key pair generation fails", func() {
+			fakeKeyGenerator.GenerateRSAKeyPairReturns("", "", errors.New("heat death of the universe"))
+
+			err := appRunner.CreateApp(createAppParams)
+			Expect(err).To(MatchError("heat death of the universe"))
 
 			Expect(fakeReceptorClient.DesiredLRPsCallCount()).To(Equal(1))
 		})

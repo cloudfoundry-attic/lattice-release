@@ -35,7 +35,6 @@ var _ = Describe("RoutingInfoHelpers", func() {
 		}
 
 		appRoutes = route_helpers.AppRoutes{appRoute1, appRoute2, appRoute3}
-
 	})
 
 	Describe("AppRoutes", func() {
@@ -46,14 +45,9 @@ var _ = Describe("RoutingInfoHelpers", func() {
 				routingInfo = appRoutes.RoutingInfo()
 			})
 
-			It("wraps the serialized routes with the correct key", func() {
-				expectedBytes, err := json.Marshal(appRoutes)
-				Expect(err).NotTo(HaveOccurred())
-
-				payload, err := routingInfo[route_helpers.AppRouter].MarshalJSON()
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(payload).To(MatchJSON(expectedBytes))
+			It("maps the serialized routes to the correct key", func() {
+				expectedBytes := []byte(`[{"hostnames":["foo1.example.com","bar1.examaple.com"],"port":11111},{"hostnames":["foo2.example.com","bar2.examaple.com"],"port":22222},{"hostnames":["foo3.example.com","bar3.examaple.com"],"port":33333}]`)
+				Expect(appRoutes.RoutingInfo()["cf-router"].MarshalJSON()).To(MatchJSON(expectedBytes))
 			})
 
 			Context("when AppRoutes is empty", func() {
@@ -62,7 +56,7 @@ var _ = Describe("RoutingInfoHelpers", func() {
 				})
 
 				It("marshals an empty list", func() {
-					payload, err := routingInfo[route_helpers.AppRouter].MarshalJSON()
+					payload, err := routingInfo["cf-router"].MarshalJSON()
 					Expect(err).NotTo(HaveOccurred())
 
 					Expect(payload).To(MatchJSON(`[]`))
@@ -158,6 +152,7 @@ var _ = Describe("RoutingInfoHelpers", func() {
 		var (
 			routes               route_helpers.Routes
 			tcpRoute1, tcpRoute2 route_helpers.TcpRoute
+			diegoSSHRoute        *route_helpers.DiegoSSHRoute
 		)
 
 		BeforeEach(func() {
@@ -169,6 +164,10 @@ var _ = Describe("RoutingInfoHelpers", func() {
 				ExternalPort: 51000,
 				Port:         5223,
 			}
+			diegoSSHRoute = &route_helpers.DiegoSSHRoute{
+				Port:       2222,
+				PrivateKey: "ssshhhhh",
+			}
 			routes = route_helpers.Routes{
 				AppRoutes: route_helpers.AppRoutes{
 					appRoute1, appRoute2,
@@ -176,6 +175,7 @@ var _ = Describe("RoutingInfoHelpers", func() {
 				TcpRoutes: route_helpers.TcpRoutes{
 					tcpRoute1, tcpRoute2,
 				},
+				DiegoSSHRoute: diegoSSHRoute,
 			}
 		})
 
@@ -202,6 +202,9 @@ var _ = Describe("RoutingInfoHelpers", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(tcpRoutesPayload).To(MatchJSON(expectedTcpRoutes))
+
+				expectedBytes := []byte(`{"container_port":2222,"private_key":"ssshhhhh"}`)
+				Expect(routingInfo["diego-ssh"].MarshalJSON()).To(MatchJSON(expectedBytes))
 			})
 
 			Context("when Routes is empty", func() {

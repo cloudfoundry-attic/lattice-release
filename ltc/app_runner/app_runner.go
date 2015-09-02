@@ -8,6 +8,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
+	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/ssh/keygen"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
@@ -99,10 +100,11 @@ const (
 type appRunner struct {
 	receptorClient receptor.Client
 	systemDomain   string
+	keygen         keygen_package.KeyGenerator
 }
 
-func New(receptorClient receptor.Client, systemDomain string) AppRunner {
-	return &appRunner{receptorClient, systemDomain}
+func New(receptorClient receptor.Client, systemDomain string, keygen keygen_package.KeyGenerator) AppRunner {
+	return &appRunner{receptorClient, systemDomain, keygen}
 }
 
 func (appRunner *appRunner) CreateApp(params CreateAppParams) error {
@@ -253,10 +255,18 @@ func (appRunner *appRunner) buildRoutesWithDefaults(params CreateAppParams, prim
 }
 
 func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
-
 	primaryPort := route_helpers.GetPrimaryPort(params.Monitor.Port, params.ExposedPorts)
 
+	private, public, err := appRunner.keygen.GenerateRSAKeyPair(2048)
+	if err != nil {
+		return err
+	}
+
 	routes := appRunner.buildRoutesWithDefaults(params, primaryPort)
+	routes.DiegoSSHRoute = &route_helpers.DiegoSSHRoute{
+		Port:       2222,
+		PrivateKey: private,
+	}
 
 	vcapAppURIs := []string{}
 	for _, route := range routes.AppRoutes {
@@ -294,6 +304,22 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		envVars = append(envVars, receptor.EnvironmentVariable{Name: "VCAP_SERVICES", Value: "{}"})
 	}
 
+	setupAction := &models.SerialAction{
+		Actions: []models.Action{
+			params.Setup,
+			&models.DownloadAction{
+				From: "http://file_server.service.dc1.consul:8080/v1/static/diego-sshd.tgz",
+				To:   "/tmp",
+				User: "vcap",
+			},
+		},
+	}
+
+	hostKey, err := appRunner.keygen.GenerateRSAPrivateKey(2048)
+	if err != nil {
+		return err
+	}
+
 	req := receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
 		Domain:               lrpDomain,
@@ -304,18 +330,32 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		MemoryMB:             params.MemoryMB,
 		DiskMB:               params.DiskMB,
 		Privileged:           params.Privileged,
-		Ports:                params.ExposedPorts,
+		Ports:                append(params.ExposedPorts, 2222),
 		LogGuid:              params.Name,
 		LogSource:            "APP",
 		MetricsGuid:          params.Name,
 		EnvironmentVariables: envVars,
 		Annotation:           params.Annotation,
-		Setup:                params.Setup,
-		Action: &models.RunAction{
-			Path: params.StartCommand,
-			Args: params.AppArgs,
-			Dir:  params.WorkingDir,
-			User: params.User,
+		Setup:                setupAction,
+		Action: &models.ParallelAction{
+			Actions: []models.Action{
+				&models.RunAction{
+					Path: "/tmp/diego-sshd",
+					Args: []string{
+						"-address=0.0.0.0:2222",
+						fmt.Sprintf("-authorizedKey=%s", public),
+						fmt.Sprintf("-hostKey=%s", hostKey),
+					},
+					Dir:  "/tmp",
+					User: "vcap",
+				},
+				&models.RunAction{
+					Path: params.StartCommand,
+					Args: params.AppArgs,
+					Dir:  params.WorkingDir,
+					User: params.User,
+				},
+			},
 		},
 	}
 

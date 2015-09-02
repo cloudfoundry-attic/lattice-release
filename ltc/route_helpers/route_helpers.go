@@ -9,8 +9,9 @@ import (
 )
 
 type Routes struct {
-	AppRoutes AppRoutes
-	TcpRoutes TcpRoutes
+	AppRoutes     AppRoutes
+	TcpRoutes     TcpRoutes
+	DiegoSSHRoute *DiegoSSHRoute
 }
 
 const AppRouter = "cf-router"
@@ -31,6 +32,13 @@ type TcpRoute struct {
 	Port         uint16 `json:"container_port"`
 }
 
+const DiegoSSHRouter = "diego-ssh"
+
+type DiegoSSHRoute struct {
+	Port       uint16 `json:"container_port"`
+	PrivateKey string `json:"private_key"`
+}
+
 func (r Routes) RoutingInfo() receptor.RoutingInfo {
 	routingInfo := receptor.RoutingInfo{}
 
@@ -44,6 +52,12 @@ func (r Routes) RoutingInfo() receptor.RoutingInfo {
 		data, _ := json.Marshal(r.TcpRoutes)
 		tcpRoutingInfo := json.RawMessage(data)
 		routingInfo[TcpRouter] = &tcpRoutingInfo
+	}
+
+	if r.DiegoSSHRoute != nil {
+		data, _ := json.Marshal(r.DiegoSSHRoute)
+		diegoSSHRoutingInfo := json.RawMessage(data)
+		routingInfo[DiegoSSHRouter] = &diegoSSHRoutingInfo
 	}
 
 	return routingInfo
@@ -68,9 +82,6 @@ func (l AppRoutes) HostnamesByPort() map[uint16][]string {
 }
 
 func RoutesFromRoutingInfo(routingInfo receptor.RoutingInfo) Routes {
-	var appRoutes AppRoutes
-	var tcpRoutes TcpRoutes
-
 	routes := Routes{}
 
 	if routingInfo == nil {
@@ -79,7 +90,7 @@ func RoutesFromRoutingInfo(routingInfo receptor.RoutingInfo) Routes {
 
 	data, found := routingInfo[TcpRouter]
 	if found && data != nil {
-		tcpRoutes = TcpRoutes{}
+		tcpRoutes := TcpRoutes{}
 		err := json.Unmarshal(*data, &tcpRoutes)
 		if err != nil {
 			panic(err)
@@ -89,12 +100,22 @@ func RoutesFromRoutingInfo(routingInfo receptor.RoutingInfo) Routes {
 
 	data, found = routingInfo[AppRouter]
 	if found && data != nil {
-		appRoutes = AppRoutes{}
+		appRoutes := AppRoutes{}
 		err := json.Unmarshal(*data, &appRoutes)
 		if err != nil {
 			panic(err)
 		}
 		routes.AppRoutes = appRoutes
+	}
+
+	data, found = routingInfo[DiegoSSHRouter]
+	if found && data != nil {
+		diegoSSHRoute := &DiegoSSHRoute{}
+		err := json.Unmarshal(*data, diegoSSHRoute)
+		if err != nil {
+			panic(err)
+		}
+		routes.DiegoSSHRoute = diegoSSHRoute
 	}
 
 	return routes

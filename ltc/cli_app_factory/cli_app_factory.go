@@ -1,6 +1,7 @@
 package cli_app_factory
 
 import (
+	"crypto/rand"
 	"errors"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
+	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/ssh/keygen"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
@@ -138,7 +140,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	receptorClient := receptor.NewClient(config.Receptor())
 	noaaConsumer := noaa.NewConsumer(LoggregatorUrl(config.Loggregator()), nil, nil)
-	appRunner := app_runner.New(receptorClient, config.Target())
+	appRunner := app_runner.New(receptorClient, config.Target(), keygen_package.NewKeyGenerator(rand.Reader))
 
 	clock := clock.NewClock()
 
