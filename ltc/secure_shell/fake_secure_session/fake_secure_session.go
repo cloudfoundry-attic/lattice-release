@@ -13,21 +13,21 @@ type FakeSecureSession struct {
 	StdinPipeStub        func() (io.WriteCloser, error)
 	stdinPipeMutex       sync.RWMutex
 	stdinPipeArgsForCall []struct{}
-	stdinPipeReturns     struct {
+	stdinPipeReturns struct {
 		result1 io.WriteCloser
 		result2 error
 	}
 	StdoutPipeStub        func() (io.Reader, error)
 	stdoutPipeMutex       sync.RWMutex
 	stdoutPipeArgsForCall []struct{}
-	stdoutPipeReturns     struct {
+	stdoutPipeReturns struct {
 		result1 io.Reader
 		result2 error
 	}
 	StderrPipeStub        func() (io.Reader, error)
 	stderrPipeMutex       sync.RWMutex
 	stderrPipeArgsForCall []struct{}
-	stderrPipeReturns     struct {
+	stderrPipeReturns struct {
 		result1 io.Reader
 		result2 error
 	}
@@ -56,19 +56,27 @@ type FakeSecureSession struct {
 	ShellStub        func() error
 	shellMutex       sync.RWMutex
 	shellArgsForCall []struct{}
-	shellReturns     struct {
+	shellReturns struct {
+		result1 error
+	}
+	RunStub        func(string) error
+	runMutex       sync.RWMutex
+	runArgsForCall []struct {
+		arg1 string
+	}
+	runReturns struct {
 		result1 error
 	}
 	WaitStub        func() error
 	waitMutex       sync.RWMutex
 	waitArgsForCall []struct{}
-	waitReturns     struct {
+	waitReturns struct {
 		result1 error
 	}
 	CloseStub        func() error
 	closeMutex       sync.RWMutex
 	closeArgsForCall []struct{}
-	closeReturns     struct {
+	closeReturns struct {
 		result1 error
 	}
 }
@@ -238,6 +246,38 @@ func (fake *FakeSecureSession) ShellCallCount() int {
 func (fake *FakeSecureSession) ShellReturns(result1 error) {
 	fake.ShellStub = nil
 	fake.shellReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeSecureSession) Run(arg1 string) error {
+	fake.runMutex.Lock()
+	fake.runArgsForCall = append(fake.runArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.runMutex.Unlock()
+	if fake.RunStub != nil {
+		return fake.RunStub(arg1)
+	} else {
+		return fake.runReturns.result1
+	}
+}
+
+func (fake *FakeSecureSession) RunCallCount() int {
+	fake.runMutex.RLock()
+	defer fake.runMutex.RUnlock()
+	return len(fake.runArgsForCall)
+}
+
+func (fake *FakeSecureSession) RunArgsForCall(i int) string {
+	fake.runMutex.RLock()
+	defer fake.runMutex.RUnlock()
+	return fake.runArgsForCall[i].arg1
+}
+
+func (fake *FakeSecureSession) RunReturns(result1 error) {
+	fake.RunStub = nil
+	fake.runReturns = struct {
 		result1 error
 	}{result1}
 }

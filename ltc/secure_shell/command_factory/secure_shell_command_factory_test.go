@@ -48,9 +48,10 @@ var _ = Describe("SSH CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.SayLine("Connecting to app-name/0 at %s", config.Target()))
 
 			Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
-			appName, instanceIndex, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
+			appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
 			Expect(appName).To(Equal("app-name"))
 			Expect(instanceIndex).To(Equal(0))
+			Expect(command).To(BeEmpty())
 			Expect(actualConfig).To(Equal(config))
 		})
 
@@ -60,9 +61,38 @@ var _ = Describe("SSH CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.SayLine("Connecting to app-name/2 at %s", config.Target()))
 
 			Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
-			appName, instanceIndex, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
+			appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
 			Expect(appName).To(Equal("app-name"))
 			Expect(instanceIndex).To(Equal(2))
+			Expect(command).To(BeEmpty())
+			Expect(actualConfig).To(Equal(config))
+		})
+
+		It("should run a command remotely instead of the login shell", func() {
+			doneChan := test_helpers.AsyncExecuteCommandWithArgs(sshCommand, []string{"app-name", "echo", "1", "2", "3"})
+
+			Eventually(doneChan).Should(BeClosed())
+			Expect(outputBuffer).NotTo(test_helpers.Say("Connecting to app-name"))
+
+			Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
+			appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
+			Expect(appName).To(Equal("app-name"))
+			Expect(instanceIndex).To(Equal(0))
+			Expect(command).To(Equal("echo 1 2 3"))
+			Expect(actualConfig).To(Equal(config))
+		})
+
+		It("should support -- delimiter for args", func() {
+			doneChan := test_helpers.AsyncExecuteCommandWithArgs(sshCommand, []string{"app-name", "--", "/bin/ls", "-l"})
+
+			Eventually(doneChan).Should(BeClosed())
+			Expect(outputBuffer).NotTo(test_helpers.Say("Connecting to app-name"))
+
+			Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
+			appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
+			Expect(appName).To(Equal("app-name"))
+			Expect(instanceIndex).To(Equal(0))
+			Expect(command).To(Equal("/bin/ls -l"))
 			Expect(actualConfig).To(Equal(config))
 		})
 

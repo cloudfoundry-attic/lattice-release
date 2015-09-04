@@ -9,11 +9,12 @@ import (
 )
 
 type FakeSecureShell struct {
-	ConnectToShellStub        func(appName string, instanceIndex int, config *config_package.Config) error
+	ConnectToShellStub        func(appName string, instanceIndex int, command string, config *config_package.Config) error
 	connectToShellMutex       sync.RWMutex
 	connectToShellArgsForCall []struct {
 		appName       string
 		instanceIndex int
+		command       string
 		config        *config_package.Config
 	}
 	connectToShellReturns struct {
@@ -21,16 +22,17 @@ type FakeSecureShell struct {
 	}
 }
 
-func (fake *FakeSecureShell) ConnectToShell(appName string, instanceIndex int, config *config_package.Config) error {
+func (fake *FakeSecureShell) ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error {
 	fake.connectToShellMutex.Lock()
 	fake.connectToShellArgsForCall = append(fake.connectToShellArgsForCall, struct {
 		appName       string
 		instanceIndex int
+		command       string
 		config        *config_package.Config
-	}{appName, instanceIndex, config})
+	}{appName, instanceIndex, command, config})
 	fake.connectToShellMutex.Unlock()
 	if fake.ConnectToShellStub != nil {
-		return fake.ConnectToShellStub(appName, instanceIndex, config)
+		return fake.ConnectToShellStub(appName, instanceIndex, command, config)
 	} else {
 		return fake.connectToShellReturns.result1
 	}
@@ -42,10 +44,10 @@ func (fake *FakeSecureShell) ConnectToShellCallCount() int {
 	return len(fake.connectToShellArgsForCall)
 }
 
-func (fake *FakeSecureShell) ConnectToShellArgsForCall(i int) (string, int, *config_package.Config) {
+func (fake *FakeSecureShell) ConnectToShellArgsForCall(i int) (string, int, string, *config_package.Config) {
 	fake.connectToShellMutex.RLock()
 	defer fake.connectToShellMutex.RUnlock()
-	return fake.connectToShellArgsForCall[i].appName, fake.connectToShellArgsForCall[i].instanceIndex, fake.connectToShellArgsForCall[i].config
+	return fake.connectToShellArgsForCall[i].appName, fake.connectToShellArgsForCall[i].instanceIndex, fake.connectToShellArgsForCall[i].command, fake.connectToShellArgsForCall[i].config
 }
 
 func (fake *FakeSecureShell) ConnectToShellReturns(result1 error) {

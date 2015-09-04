@@ -66,7 +66,7 @@ var _ = Describe("SecureShell", func() {
 			termState := &term.State{}
 			fakeTerm.SetRawTerminalReturns(termState, nil)
 
-			err := secureShell.ConnectToShell("app-name", 2, config)
+			err := secureShell.ConnectToShell("app-name", 2, "", config)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeDialer.DialCallCount()).To(Equal(1))
@@ -97,6 +97,22 @@ var _ = Describe("SecureShell", func() {
 			Expect(fakeSession.WaitCallCount()).To(Equal(1))
 		})
 
+		It("runs a remote command", func() {
+			fakeDialer.DialReturns(fakeSession, nil)
+			fakeSession.StdinPipeReturns(fakeStdin, nil)
+			fakeSession.StdoutPipeReturns(fakeStdout, nil)
+			fakeSession.StderrPipeReturns(fakeStderr, nil)
+
+			err := secureShell.ConnectToShell("app-name", 2, "/bin/ls", config)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeSession.ShellCallCount()).To(Equal(0))
+			Expect(fakeSession.WaitCallCount()).To(Equal(0))
+
+			Expect(fakeSession.RunCallCount()).To(Equal(1))
+			Expect(fakeSession.RunArgsForCall(0)).To(Equal("/bin/ls"))
+		})
+
 		It("respects the user's TERM environment variable", func() {
 			fakeDialer.DialReturns(fakeSession, nil)
 			fakeSession.StdinPipeReturns(fakeStdin, nil)
@@ -105,7 +121,7 @@ var _ = Describe("SecureShell", func() {
 
 			os.Setenv("TERM", "term2000")
 
-			err := secureShell.ConnectToShell("app-name", 2, config)
+			err := secureShell.ConnectToShell("app-name", 2, "", config)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeSession.RequestPtyCallCount()).To(Equal(1))
@@ -121,7 +137,7 @@ var _ = Describe("SecureShell", func() {
 
 			os.Setenv("TERM", "")
 
-			err := secureShell.ConnectToShell("app-name", 2, config)
+			err := secureShell.ConnectToShell("app-name", 2, "", config)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeSession.RequestPtyCallCount()).To(Equal(1))
@@ -150,7 +166,7 @@ var _ = Describe("SecureShell", func() {
 				defer GinkgoRecover()
 
 				Eventually(waitChan).Should(Receive())
-				err := secureShell.ConnectToShell("app-name", 2, config)
+				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).NotTo(HaveOccurred())
 			}()
 
@@ -189,7 +205,7 @@ var _ = Describe("SecureShell", func() {
 				defer GinkgoRecover()
 
 				Eventually(waitChan).Should(Receive())
-				err := secureShell.ConnectToShell("app-name", 2, config)
+				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).NotTo(HaveOccurred())
 			}()
 
@@ -207,7 +223,7 @@ var _ = Describe("SecureShell", func() {
 			It("returns an error", func() {
 				fakeDialer.DialReturns(nil, errors.New("cannot dial error"))
 
-				err := secureShell.ConnectToShell("app-name", 2, config)
+				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).To(MatchError("cannot dial error"))
 			})
 		})
@@ -217,7 +233,7 @@ var _ = Describe("SecureShell", func() {
 				fakeDialer.DialReturns(fakeSession, nil)
 				fakeSession.StdinPipeReturns(nil, errors.New("put this in your pipe"))
 
-				err := secureShell.ConnectToShell("app-name", 2, config)
+				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).To(MatchError("put this in your pipe"))
 			})
 		})
@@ -228,7 +244,7 @@ var _ = Describe("SecureShell", func() {
 				fakeSession.StdinPipeReturns(fakeStdin, nil)
 				fakeSession.StdoutPipeReturns(nil, errors.New("put this in your pipe"))
 
-				err := secureShell.ConnectToShell("app-name", 2, config)
+				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).To(MatchError("put this in your pipe"))
 			})
 		})
@@ -240,7 +256,7 @@ var _ = Describe("SecureShell", func() {
 				fakeSession.StdoutPipeReturns(fakeStdout, nil)
 				fakeSession.StderrPipeReturns(nil, errors.New("put this in your pipe"))
 
-				err := secureShell.ConnectToShell("app-name", 2, config)
+				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).To(MatchError("put this in your pipe"))
 			})
 		})
@@ -253,7 +269,7 @@ var _ = Describe("SecureShell", func() {
 				fakeSession.StderrPipeReturns(fakeStderr, nil)
 				fakeSession.RequestPtyReturns(errors.New("no pty"))
 
-				err := secureShell.ConnectToShell("app-name", 2, config)
+				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).To(MatchError("no pty"))
 			})
 		})
@@ -266,7 +282,7 @@ var _ = Describe("SecureShell", func() {
 				fakeSession.StderrPipeReturns(fakeStderr, nil)
 				fakeTerm.SetRawTerminalReturns(nil, errors.New("can't set raw"))
 
-				err := secureShell.ConnectToShell("app-name", 2, config)
+				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeTerm.RestoreTerminalCallCount()).To(Equal(0))

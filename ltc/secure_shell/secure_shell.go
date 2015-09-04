@@ -26,6 +26,7 @@ type SecureSession interface {
 	SendRequest(name string, wantReply bool, payload []byte) (bool, error)
 	RequestPty(term string, h, w int, termmodes ssh.TerminalModes) error
 	Shell() error
+	Run(string) error
 	Wait() error
 	Close() error
 }
@@ -42,7 +43,7 @@ type SecureShell struct {
 	Term   Term
 }
 
-func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, config *config_package.Config) error {
+func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error {
 	diegoSSHUser := fmt.Sprintf("diego:%s/%d", appName, instanceIndex)
 	address := fmt.Sprintf("%s:2222", config.Target())
 
@@ -97,8 +98,12 @@ func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, config 
 	defer func() { signal.Stop(resized); close(resized) }()
 	go ss.resize(resized, session, os.Stdout.Fd(), width, height)
 
-	session.Shell()
-	session.Wait()
+	if command == "" {
+		session.Shell()
+		session.Wait()
+	} else {
+		session.Run(command)
+	}
 
 	return nil
 }
