@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"syscall"
 
-	"github.com/cloudfoundry-incubator/diego-ssh/cf-plugin/sigwinch"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	term_package "github.com/docker/docker/pkg/term"
 	"golang.org/x/crypto/ssh"
@@ -93,7 +93,7 @@ func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, config 
 	go io.Copy(os.Stderr, sessionErr)
 
 	resized := make(chan os.Signal, 16)
-	signal.Notify(resized, sigwinch.SIGWINCH())
+	signal.Notify(resized, syscall.SIGWINCH)
 	defer func() { signal.Stop(resized); close(resized) }()
 	go ss.resize(resized, session, os.Stdout.Fd(), width, height)
 
