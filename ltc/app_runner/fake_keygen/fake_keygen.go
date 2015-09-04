@@ -4,7 +4,7 @@ package fake_keygen
 import (
 	"sync"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/keygen"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 )
 
 type FakeKeyGenerator struct {
@@ -96,4 +96,4 @@ func (fake *FakeKeyGenerator) GenerateRSAKeyPairReturns(result1 string, result2 
 	}{result1, result2, result3}
 }
 
-var _ keygen.KeyGenerator = new(FakeKeyGenerator)
+var _ app_runner.KeyGenerator = new(FakeKeyGenerator)

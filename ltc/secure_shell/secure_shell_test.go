@@ -3,7 +3,6 @@ package secure_shell_test
 import (
 	"errors"
 	"os"
-	"reflect"
 
 	"github.com/docker/docker/pkg/term"
 	. "github.com/onsi/ginkgo"
@@ -12,16 +11,14 @@ import (
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_secure_client"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_secure_dialer"
+	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_dialer"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_secure_session"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_secure_term"
 )
 
 var _ = Describe("SecureShell", func() {
 	var (
-		fakeDialer  *fake_secure_dialer.FakeSecureDialer
-		fakeClient  *fake_secure_client.FakeSecureClient
+		fakeDialer  *fake_dialer.FakeDialer
 		fakeSession *fake_secure_session.FakeSecureSession
 		fakeTerm    *fake_secure_term.FakeSecureTerm
 		fakeStdin   *gbytes.Buffer
@@ -29,12 +26,11 @@ var _ = Describe("SecureShell", func() {
 		fakeStderr  *gbytes.Buffer
 
 		config      *config_package.Config
-		secureShell secure_shell.SecureShell
+		secureShell *secure_shell.SecureShell
 	)
 
 	BeforeEach(func() {
-		fakeDialer = &fake_secure_dialer.FakeSecureDialer{}
-		fakeClient = &fake_secure_client.FakeSecureClient{}
+		fakeDialer = &fake_dialer.FakeDialer{}
 		fakeSession = &fake_secure_session.FakeSecureSession{}
 		fakeTerm = &fake_secure_term.FakeSecureTerm{}
 		fakeStdin = gbytes.NewBuffer()
@@ -45,13 +41,13 @@ var _ = Describe("SecureShell", func() {
 		config.SetTarget("10.0.12.34")
 		config.SetLogin("user", "past")
 
-		secureShell = secure_shell.NewSecureShell(config, fakeDialer, fakeTerm)
+		secureShell = &secure_shell.SecureShell{Dialer: fakeDialer, Term: fakeTerm}
+		fakeDialer.DialReturns(fakeSession, nil)
 	})
 
 	Describe("#ConnectToShell", func() {
 		It("connects to the correct server given app name, instance and config", func() {
-			fakeDialer.DialReturns(fakeClient, nil)
-			fakeClient.NewSessionReturns(fakeSession, nil)
+			fakeDialer.DialReturns(fakeSession, nil)
 			fakeSession.StdinPipeReturns(fakeStdin, nil)
 			fakeSession.StdoutPipeReturns(fakeStdout, nil)
 			fakeSession.StderrPipeReturns(fakeStderr, nil)
@@ -63,16 +59,11 @@ var _ = Describe("SecureShell", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(fakeDialer.DialCallCount()).To(Equal(1))
-			network, addr, secureConfig := fakeDialer.DialArgsForCall(0)
-			Expect(network).To(Equal("tcp"))
-			Expect(addr).To(Equal("10.0.12.34:2222"))
-			Expect(secureConfig.User).To(Equal("diego:app-name/2"))
-
-			Expect(secureConfig.Auth).To(HaveLen(1))
-
-			// (╯°□°）╯︵ ┻━┻
-			actualSecret := reflect.ValueOf(secureConfig.Auth[0]).Call([]reflect.Value{})[0].Interface()
-			Expect(actualSecret).To(Equal("user:past"))
+			user, authUser, authPass, address := fakeDialer.DialArgsForCall(0)
+			Expect(user).To(Equal("diego:app-name/2"))
+			Expect(authUser).To(Equal("user"))
+			Expect(authPass).To(Equal("past"))
+			Expect(address).To(Equal("10.0.12.34:2222"))
 
 			Expect(fakeTerm.SetRawTerminalCallCount()).To(Equal(1))
 			Expect(fakeTerm.SetRawTerminalArgsForCall(0)).To(Equal(os.Stdin.Fd()))
@@ -95,20 +86,9 @@ var _ = Describe("SecureShell", func() {
 			})
 		})
 
-		Context("when the SecureClient#NewSession fails", func() {
-			It("returns an error", func() {
-				fakeDialer.DialReturns(fakeClient, nil)
-				fakeClient.NewSessionReturns(nil, errors.New("cannot even session"))
-
-				err := secureShell.ConnectToShell("app-name", 2, config)
-				Expect(err).To(MatchError("cannot even session"))
-			})
-		})
-
 		Context("when the SecureSession#StdinPipe fails", func() {
 			It("returns an error", func() {
-				fakeDialer.DialReturns(fakeClient, nil)
-				fakeClient.NewSessionReturns(fakeSession, nil)
+				fakeDialer.DialReturns(fakeSession, nil)
 				fakeSession.StdinPipeReturns(nil, errors.New("put this in your pipe"))
 
 				err := secureShell.ConnectToShell("app-name", 2, config)
@@ -118,8 +98,7 @@ var _ = Describe("SecureShell", func() {
 
 		Context("when the SecureSession#StdoutPipe fails", func() {
 			It("returns an error", func() {
-				fakeDialer.DialReturns(fakeClient, nil)
-				fakeClient.NewSessionReturns(fakeSession, nil)
+				fakeDialer.DialReturns(fakeSession, nil)
 				fakeSession.StdinPipeReturns(fakeStdin, nil)
 				fakeSession.StdoutPipeReturns(nil, errors.New("put this in your pipe"))
 
@@ -130,8 +109,7 @@ var _ = Describe("SecureShell", func() {
 
 		Context("when the SecureSession#StderrPipe fails", func() {
 			It("returns an error", func() {
-				fakeDialer.DialReturns(fakeClient, nil)
-				fakeClient.NewSessionReturns(fakeSession, nil)
+				fakeDialer.DialReturns(fakeSession, nil)
 				fakeSession.StdinPipeReturns(fakeStdin, nil)
 				fakeSession.StdoutPipeReturns(fakeStdout, nil)
 				fakeSession.StderrPipeReturns(nil, errors.New("put this in your pipe"))
@@ -143,8 +121,7 @@ var _ = Describe("SecureShell", func() {
 
 		Context("when the SecureSession#RequestPty fails", func() {
 			It("returns an error", func() {
-				fakeDialer.DialReturns(fakeClient, nil)
-				fakeClient.NewSessionReturns(fakeSession, nil)
+				fakeDialer.DialReturns(fakeSession, nil)
 				fakeSession.StdinPipeReturns(fakeStdin, nil)
 				fakeSession.StdoutPipeReturns(fakeStdout, nil)
 				fakeSession.StderrPipeReturns(fakeStderr, nil)
@@ -157,8 +134,7 @@ var _ = Describe("SecureShell", func() {
 
 		Context("when the SecureTerm#SetRawTerminal fails", func() {
 			It("does not call RestoreTerminal", func() {
-				fakeDialer.DialReturns(fakeClient, nil)
-				fakeClient.NewSessionReturns(fakeSession, nil)
+				fakeDialer.DialReturns(fakeSession, nil)
 				fakeSession.StdinPipeReturns(fakeStdin, nil)
 				fakeSession.StdoutPipeReturns(fakeStdout, nil)
 				fakeSession.StderrPipeReturns(fakeStderr, nil)

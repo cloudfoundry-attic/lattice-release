@@ -4,7 +4,6 @@ import (
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/codegangsta/cli"
 )
@@ -14,10 +13,15 @@ type SSHCommandFactory struct {
 	ui          terminal.UI
 	exitHandler exit_handler.ExitHandler
 
-	secureShell secure_shell.SecureShell
+	secureShell SecureShell
 }
 
-func NewSSHCommandFactory(config *config_package.Config, ui terminal.UI, exitHandler exit_handler.ExitHandler, secureShell secure_shell.SecureShell) *SSHCommandFactory {
+//go:generate counterfeiter -o fake_secure_shell/fake_secure_shell.go . SecureShell
+type SecureShell interface {
+	ConnectToShell(appName string, instanceIndex int, config *config_package.Config) error
+}
+
+func NewSSHCommandFactory(config *config_package.Config, ui terminal.UI, exitHandler exit_handler.ExitHandler, secureShell SecureShell) *SSHCommandFactory {
 	return &SSHCommandFactory{config, ui, exitHandler, secureShell}
 }
 

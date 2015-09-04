@@ -11,25 +11,9 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-//go:generate counterfeiter -o fake_secure_shell/fake_secure_shell.go . SecureShell
-type SecureShell interface {
-	ConnectToShell(appName string, instanceIndex int, config *config_package.Config) error
-}
-
-//go:generate counterfeiter -o fake_secure_dialer/fake_secure_dialer.go . SecureDialer
-type SecureDialer interface {
-	Dial(network, addr string, config *ssh.ClientConfig) (SecureClient, error)
-}
-
-//go:generate counterfeiter -o fake_secure_term/fake_secure_term.go . SecureTerm
-type SecureTerm interface {
-	SetRawTerminal(fd uintptr) (*term_package.State, error)
-	RestoreTerminal(fd uintptr, state *term_package.State) error
-}
-
-//go:generate counterfeiter -o fake_secure_client/fake_secure_client.go . SecureClient
-type SecureClient interface {
-	NewSession() (SecureSession, error)
+//go:generate counterfeiter -o fake_dialer/fake_dialer.go . Dialer
+type Dialer interface {
+	Dial(user, authUser, authPassword, address string) (SecureSession, error)
 }
 
 //go:generate counterfeiter -o fake_secure_session/fake_secure_session.go . SecureSession
@@ -43,39 +27,25 @@ type SecureSession interface {
 	Close() error
 }
 
-type secureShell struct {
-	config *config_package.Config
-	dialer SecureDialer
-	term   SecureTerm
+//go:generate counterfeiter -o fake_secure_term/fake_secure_term.go . SecureTerm
+type SecureTerm interface {
+	SetRawTerminal(fd uintptr) (*term_package.State, error)
+	RestoreTerminal(fd uintptr, state *term_package.State) error
 }
 
-type secureSession struct {
-	session *ssh.Session
+type SecureShell struct {
+	Dialer Dialer
+	Term   SecureTerm
 }
 
-func NewSecureShell(config *config_package.Config, dialer SecureDialer, term SecureTerm) SecureShell {
-	return &secureShell{
-		config: config,
-		dialer: dialer,
-		term:   term,
-	}
-}
-
-func (ss *secureShell) ConnectToShell(appName string, instanceIndex int, config *config_package.Config) error {
-	secureConfig := &ssh.ClientConfig{
-		User: fmt.Sprintf("diego:%s/%d", appName, instanceIndex),
-		Auth: []ssh.AuthMethod{ssh.Password(fmt.Sprintf("%s:%s", config.Username(), config.Password()))},
-	}
-
-	client, err := ss.dialer.Dial("tcp", fmt.Sprintf("%s:2222", config.Target()), secureConfig)
+func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, config *config_package.Config) error {
+	diegoSSHUser := fmt.Sprintf("diego:%s/%d", appName, instanceIndex)
+	address := fmt.Sprintf("%s:2222", config.Target())
+	session, err := ss.Dialer.Dial(diegoSSHUser, config.Username(), config.Password(), address)
 	if err != nil {
 		return err
 	}
 
-	session, err := client.NewSession()
-	if err != nil {
-		return err
-	}
 	defer session.Close()
 
 	sessionIn, err := session.StdinPipe()
@@ -104,8 +74,8 @@ func (ss *secureShell) ConnectToShell(appName string, instanceIndex int, config 
 		return err
 	}
 
-	if state, err := ss.term.SetRawTerminal(os.Stdin.Fd()); err == nil {
-		defer ss.term.RestoreTerminal(os.Stdin.Fd(), state)
+	if state, err := ss.Term.SetRawTerminal(os.Stdin.Fd()); err == nil {
+		defer ss.Term.RestoreTerminal(os.Stdin.Fd(), state)
 	}
 
 	go copyAndClose(nil, sessionIn, os.Stdin)

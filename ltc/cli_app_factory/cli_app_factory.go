@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 
+	"golang.org/x/crypto/ssh"
+
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
@@ -139,10 +141,9 @@ func MakeCliApp(
 }
 
 func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, ui terminal.UI) []cli.Command {
-
 	receptorClient := receptor.NewClient(config.Receptor())
 	noaaConsumer := noaa.NewConsumer(LoggregatorUrl(config.Loggregator()), nil, nil)
-	appRunner := app_runner.New(receptorClient, config.Target(), keygen_package.NewKeyGenerator(rand.Reader))
+	appRunner := app_runner.New(receptorClient, config.Target(), &keygen_package.KeyGenerator{RandReader: rand.Reader})
 
 	clock := clock.NewClock()
 
@@ -202,9 +203,8 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, blobStoreVerifier, exitHandler)
 
-	var secureDialer secure_shell.SecureDialer
-	secureDialer = secure_shell.NewSecureDialer()
-	secureShell := secure_shell.NewSecureShell(config, secureDialer, secure_shell.NewSecureTerm())
+	secureDialer := &secure_shell.SecureDialer{DialFunc: ssh.Dial}
+	secureShell := &secure_shell.SecureShell{Dialer: secureDialer, Term: secure_shell.NewSecureTerm()}
 	sshCommandFactory := ssh_command_factory.NewSSHCommandFactory(config, ui, exitHandler, secureShell)
 
 	helpCommand := cli.Command{

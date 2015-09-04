@@ -9,24 +9,12 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-//go:generate counterfeiter -o fake_keygen/fake_keygen.go . KeyGenerator
-type KeyGenerator interface {
-	GenerateRSAPrivateKey(bits int) (pemEncodedPrivateKey string, err error)
-	GenerateRSAKeyPair(bits int) (pemEncodedPrivateKey string, authorizedKey string, err error)
+type KeyGenerator struct {
+	RandReader io.Reader
 }
 
-type keyGenerator struct {
-	randReader io.Reader
-}
-
-func NewKeyGenerator(randReader io.Reader) KeyGenerator {
-	return &keyGenerator{
-		randReader: randReader,
-	}
-}
-
-func (k *keyGenerator) GenerateRSAPrivateKey(bits int) (string, error) {
-	pk, err := rsa.GenerateKey(k.randReader, bits)
+func (k *KeyGenerator) GenerateRSAPrivateKey(bits int) (string, error) {
+	pk, err := rsa.GenerateKey(k.RandReader, bits)
 	if err != nil {
 		return "", err
 	}
@@ -37,8 +25,8 @@ func (k *keyGenerator) GenerateRSAPrivateKey(bits int) (string, error) {
 	})), nil
 }
 
-func (k *keyGenerator) GenerateRSAKeyPair(bits int) (pemEncodedPrivateKey string, authorizedKey string, err error) {
-	privateKey, err := rsa.GenerateKey(k.randReader, bits)
+func (k *KeyGenerator) GenerateRSAKeyPair(bits int) (pemEncodedPrivateKey string, authorizedKey string, err error) {
+	privateKey, err := rsa.GenerateKey(k.RandReader, bits)
 	if err != nil {
 		return "", "", err
 	}

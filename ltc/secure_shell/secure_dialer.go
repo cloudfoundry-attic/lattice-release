@@ -1,25 +1,25 @@
 package secure_shell
 
-import "golang.org/x/crypto/ssh"
+import (
+	"fmt"
 
-type sshDialer struct{}
+	"golang.org/x/crypto/ssh"
+)
 
-func NewSecureDialer() *sshDialer {
-	return &sshDialer{}
+type SecureDialer struct {
+	DialFunc func(network, addr string, config *ssh.ClientConfig) (*ssh.Client, error)
 }
 
-type secureClient struct {
-	client *ssh.Client
-}
+func (s *SecureDialer) Dial(user, authUser, authPassword, address string) (SecureSession, error) {
+	config := &ssh.ClientConfig{
+		User: user,
+		Auth: []ssh.AuthMethod{ssh.Password(fmt.Sprintf("%s:%s", authUser, authPassword))},
+	}
 
-func (t *sshDialer) Dial(network, addr string, config *ssh.ClientConfig) (SecureClient, error) {
-	client, err := ssh.Dial(network, addr, config)
+	client, err := s.DialFunc("tcp", address, config)
 	if err != nil {
 		return nil, err
 	}
-	return &secureClient{client}, err
-}
 
-func (c *secureClient) NewSession() (SecureSession, error) {
-	return c.client.NewSession()
+	return client.NewSession()
 }

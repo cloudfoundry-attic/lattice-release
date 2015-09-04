@@ -9,7 +9,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/command_factory"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_secure_shell"
+	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/command_factory/fake_secure_shell"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"

@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell"
+	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/command_factory"
 )
 
 type FakeSecureShell struct {
@@ -55,4 +55,4 @@ func (fake *FakeSecureShell) ConnectToShellReturns(result1 error) {
 	}{result1}
 }
 
-var _ secure_shell.SecureShell = new(FakeSecureShell)
+var _ command_factory.SecureShell = new(FakeSecureShell)

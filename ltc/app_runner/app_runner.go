@@ -8,7 +8,6 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
-	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/keygen"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
@@ -23,6 +22,12 @@ type AppRunner interface {
 	UpdateAppRoutes(name string, routes RouteOverrides) error
 	UpdateApp(updateAppParams UpdateAppParams) error
 	RemoveApp(name string) error
+}
+
+//go:generate counterfeiter -o fake_keygen/fake_keygen.go . KeyGenerator
+type KeyGenerator interface {
+	GenerateRSAPrivateKey(bits int) (pemEncodedPrivateKey string, err error)
+	GenerateRSAKeyPair(bits int) (pemEncodedPrivateKey string, authorizedKey string, err error)
 }
 
 type MonitorConfig struct {
@@ -100,10 +105,10 @@ const (
 type appRunner struct {
 	receptorClient receptor.Client
 	systemDomain   string
-	keygen         keygen_package.KeyGenerator
+	keygen         KeyGenerator
 }
 
-func New(receptorClient receptor.Client, systemDomain string, keygen keygen_package.KeyGenerator) AppRunner {
+func New(receptorClient receptor.Client, systemDomain string, keygen KeyGenerator) AppRunner {
 	return &appRunner{receptorClient, systemDomain, keygen}
 }
 
