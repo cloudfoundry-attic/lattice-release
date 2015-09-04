@@ -352,7 +352,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 						fmt.Sprintf("-hostKey=%s", hostKey),
 					},
 					Dir:  "/tmp",
-					User: "vcap",
+					User: params.User,
 				},
 				&models.RunAction{
 					Path: params.StartCommand,

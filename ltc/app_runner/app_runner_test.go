@@ -142,7 +142,7 @@ var _ = Describe("AppRunner", func() {
 							"-hostKey=THIS IS A PRIVATE HOST KEY",
 						},
 						Dir:  "/tmp",
-						User: "vcap",
+						User: "start-user",
 					},
 					&models.RunAction{
 						Path: "/app-run-statement",
