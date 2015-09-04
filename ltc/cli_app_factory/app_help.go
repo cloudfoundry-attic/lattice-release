@@ -125,6 +125,13 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 				},
 			},
 		}, {
+			Name: "SSH INTO AN APP CONTAINER",
+			CommandSubGroups: [][]cmdPresenter{
+				{
+					presentCommand("ssh"),
+				},
+			},
+		}, {
 			Name: "ADVANCED",
 			CommandSubGroups: [][]cmdPresenter{
 				{

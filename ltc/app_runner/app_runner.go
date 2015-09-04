@@ -8,7 +8,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
-	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/ssh/keygen"
+	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/keygen"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )

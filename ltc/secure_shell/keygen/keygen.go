@@ -15,17 +15,17 @@ type KeyGenerator interface {
 	GenerateRSAKeyPair(bits int) (pemEncodedPrivateKey string, authorizedKey string, err error)
 }
 
-type keygen struct {
+type keyGenerator struct {
 	randReader io.Reader
 }
 
 func NewKeyGenerator(randReader io.Reader) KeyGenerator {
-	return &keygen{
+	return &keyGenerator{
 		randReader: randReader,
 	}
 }
 
-func (k *keygen) GenerateRSAPrivateKey(bits int) (string, error) {
+func (k *keyGenerator) GenerateRSAPrivateKey(bits int) (string, error) {
 	pk, err := rsa.GenerateKey(k.randReader, bits)
 	if err != nil {
 		return "", err
@@ -37,7 +37,7 @@ func (k *keygen) GenerateRSAPrivateKey(bits int) (string, error) {
 	})), nil
 }
 
-func (k *keygen) GenerateRSAKeyPair(bits int) (pemEncodedPrivateKey string, authorizedKey string, err error) {
+func (k *keyGenerator) GenerateRSAKeyPair(bits int) (pemEncodedPrivateKey string, authorizedKey string, err error) {
 	privateKey, err := rsa.GenerateKey(k.randReader, bits)
 	if err != nil {
 		return "", "", err

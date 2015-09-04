@@ -21,7 +21,8 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
-	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/ssh/keygen"
+	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell"
+	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/keygen"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
@@ -39,6 +40,7 @@ import (
 	docker_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/command_factory"
 	droplet_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
 	logs_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
+	ssh_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/command_factory"
 	task_examiner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/command_factory"
 	task_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/task_runner/command_factory"
 )
@@ -200,6 +202,11 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, blobStoreVerifier, exitHandler)
 
+	var secureDialer secure_shell.SecureDialer
+	secureDialer = secure_shell.NewSecureDialer()
+	secureShell := secure_shell.NewSecureShell(config, secureDialer, secure_shell.NewSecureTerm())
+	sshCommandFactory := ssh_command_factory.NewSSHCommandFactory(config, ui, exitHandler, secureShell)
+
 	helpCommand := cli.Command{
 		Name:        "help",
 		Aliases:     []string{"h"},
@@ -233,6 +240,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		dropletRunnerCommandFactory.MakeRemoveDropletCommand(),
 		dropletRunnerCommandFactory.MakeImportDropletCommand(),
 		dropletRunnerCommandFactory.MakeExportDropletCommand(),
+		sshCommandFactory.MakeSSHCommand(),
 		helpCommand,
 	}
 }

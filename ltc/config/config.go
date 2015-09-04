@@ -72,6 +72,10 @@ func (c *Config) Username() string {
 	return c.data.Username
 }
 
+func (c *Config) Password() string {
+	return c.data.Password
+}
+
 func (c *Config) Loggregator() string {
 	return "doppler." + c.data.Target
 }

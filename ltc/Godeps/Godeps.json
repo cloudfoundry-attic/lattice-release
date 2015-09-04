@@ -286,6 +286,10 @@
 		{
 			"ImportPath": "github.com/vito/go-sse/sse",
 			"Rev": "bfb56c5590376a59535cd0edb3f5aa3447dbbe65"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/ssh",
+			"Rev": "c57d4a71915a248dbad846d60825145062b4c18e"
 		}
 	]
 }

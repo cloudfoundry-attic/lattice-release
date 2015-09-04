@@ -4,7 +4,7 @@ package fake_keygen
 import (
 	"sync"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/keygen"
+	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/keygen"
 )
 
 type FakeKeyGenerator struct {
