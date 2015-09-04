@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"sync"
 
+	"github.com/cloudfoundry-incubator/diego-ssh/cf-plugin/sigwinch"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	term_package "github.com/docker/docker/pkg/term"
 	"golang.org/x/crypto/ssh"
@@ -21,6 +23,7 @@ type SecureSession interface {
 	StdinPipe() (io.WriteCloser, error)
 	StdoutPipe() (io.Reader, error)
 	StderrPipe() (io.Reader, error)
+	SendRequest(name string, wantReply bool, payload []byte) (bool, error)
 	RequestPty(term string, h, w int, termmodes ssh.TerminalModes) error
 	Shell() error
 	Wait() error
@@ -77,8 +80,7 @@ func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, config 
 		terminalType = "xterm"
 	}
 
-	err = session.RequestPty(terminalType, height, width, modes)
-	if err != nil {
+	if err := session.RequestPty(terminalType, height, width, modes); err != nil {
 		return err
 	}
 
@@ -89,6 +91,11 @@ func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, config 
 	go copyAndClose(nil, sessionIn, os.Stdin)
 	go io.Copy(os.Stdout, sessionOut)
 	go io.Copy(os.Stderr, sessionErr)
+
+	resized := make(chan os.Signal, 16)
+	signal.Notify(resized, sigwinch.SIGWINCH())
+	defer func() { signal.Stop(resized); close(resized) }()
+	go ss.resize(resized, session, os.Stdout.Fd(), width, height)
 
 	session.Shell()
 	session.Wait()
@@ -101,5 +108,36 @@ func copyAndClose(wg *sync.WaitGroup, dest io.WriteCloser, src io.Reader) {
 	dest.Close()
 	if wg != nil {
 		wg.Done()
+	}
+}
+
+func (ss *SecureShell) resize(resized <-chan os.Signal, session SecureSession, terminalFd uintptr, initialWidth, initialHeight int) {
+	type resizeMessage struct {
+		Width       uint32
+		Height      uint32
+		PixelWidth  uint32
+		PixelHeight uint32
+	}
+
+	var previousWidth, previousHeight int
+	previousWidth = initialWidth
+	previousHeight = initialHeight
+
+	for _ = range resized {
+		width, height := ss.Term.GetWinsize(terminalFd)
+
+		if width == previousWidth && height == previousHeight {
+			continue
+		}
+
+		message := resizeMessage{
+			Width:  uint32(width),
+			Height: uint32(height),
+		}
+
+		session.SendRequest("window-change", false, ssh.Marshal(message))
+
+		previousWidth = width
+		previousHeight = height
 	}
 }

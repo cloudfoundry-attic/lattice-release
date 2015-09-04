@@ -3,6 +3,7 @@ package secure_shell_test
 import (
 	"errors"
 	"os"
+	"syscall"
 
 	"github.com/docker/docker/pkg/term"
 	. "github.com/onsi/ginkgo"
@@ -126,6 +127,80 @@ var _ = Describe("SecureShell", func() {
 			Expect(fakeSession.RequestPtyCallCount()).To(Equal(1))
 			termType, _, _, _ := fakeSession.RequestPtyArgsForCall(0)
 			Expect(termType).To(Equal("xterm"))
+		})
+
+		It("resizes the remote terminal if the local terminal is resized", func() {
+			fakeDialer.DialReturns(fakeSession, nil)
+			fakeSession.StdinPipeReturns(fakeStdin, nil)
+			fakeSession.StdoutPipeReturns(fakeStdout, nil)
+			fakeSession.StderrPipeReturns(fakeStderr, nil)
+
+			fakeTerm.GetWinsizeReturns(10, 20)
+
+			waitChan := make(chan struct{})
+			fakeSession.ShellStub = func() error {
+				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
+				Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
+				fakeTerm.GetWinsizeReturns(30, 40)
+				Eventually(waitChan).Should(Receive())
+				return nil
+			}
+
+			go func() {
+				defer GinkgoRecover()
+
+				Eventually(waitChan).Should(Receive())
+				err := secureShell.ConnectToShell("app-name", 2, config)
+				Expect(err).NotTo(HaveOccurred())
+			}()
+
+			waitChan <- struct{}{}
+
+			err := syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(fakeTerm.GetWinsizeCallCount).Should(Equal(2))
+			Expect(fakeSession.SendRequestCallCount()).To(Equal(1))
+			name, wantReply, payload := fakeSession.SendRequestArgsForCall(0)
+			Expect(name).To(Equal("window-change"))
+			Expect(wantReply).To(BeFalse())
+			Expect(payload).To(Equal([]byte{0, 0, 0, 30, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 0}))
+
+			waitChan <- struct{}{}
+		})
+
+		It("does not resize the remote terminal if SIGWINCH is received but the window is the same size", func() {
+			fakeDialer.DialReturns(fakeSession, nil)
+			fakeSession.StdinPipeReturns(fakeStdin, nil)
+			fakeSession.StdoutPipeReturns(fakeStdout, nil)
+			fakeSession.StderrPipeReturns(fakeStderr, nil)
+
+			fakeTerm.GetWinsizeReturns(10, 20)
+
+			waitChan := make(chan struct{})
+			fakeSession.ShellStub = func() error {
+				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
+				Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
+				Eventually(waitChan).Should(Receive())
+				return nil
+			}
+
+			go func() {
+				defer GinkgoRecover()
+
+				Eventually(waitChan).Should(Receive())
+				err := secureShell.ConnectToShell("app-name", 2, config)
+				Expect(err).NotTo(HaveOccurred())
+			}()
+
+			waitChan <- struct{}{}
+
+			Expect(syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)).To(Succeed())
+
+			Eventually(fakeTerm.GetWinsizeCallCount).Should(Equal(2))
+			Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
+
+			waitChan <- struct{}{}
 		})
 
 		Context("when the SecureDialer#Dial fails", func() {

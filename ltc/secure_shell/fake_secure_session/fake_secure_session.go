@@ -31,6 +31,17 @@ type FakeSecureSession struct {
 		result1 io.Reader
 		result2 error
 	}
+	SendRequestStub        func(name string, wantReply bool, payload []byte) (bool, error)
+	sendRequestMutex       sync.RWMutex
+	sendRequestArgsForCall []struct {
+		name      string
+		wantReply bool
+		payload   []byte
+	}
+	sendRequestReturns struct {
+		result1 bool
+		result2 error
+	}
 	RequestPtyStub        func(term string, h, w int, termmodes ssh.TerminalModes) error
 	requestPtyMutex       sync.RWMutex
 	requestPtyArgsForCall []struct {
@@ -133,6 +144,41 @@ func (fake *FakeSecureSession) StderrPipeReturns(result1 io.Reader, result2 erro
 	fake.StderrPipeStub = nil
 	fake.stderrPipeReturns = struct {
 		result1 io.Reader
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeSecureSession) SendRequest(name string, wantReply bool, payload []byte) (bool, error) {
+	fake.sendRequestMutex.Lock()
+	fake.sendRequestArgsForCall = append(fake.sendRequestArgsForCall, struct {
+		name      string
+		wantReply bool
+		payload   []byte
+	}{name, wantReply, payload})
+	fake.sendRequestMutex.Unlock()
+	if fake.SendRequestStub != nil {
+		return fake.SendRequestStub(name, wantReply, payload)
+	} else {
+		return fake.sendRequestReturns.result1, fake.sendRequestReturns.result2
+	}
+}
+
+func (fake *FakeSecureSession) SendRequestCallCount() int {
+	fake.sendRequestMutex.RLock()
+	defer fake.sendRequestMutex.RUnlock()
+	return len(fake.sendRequestArgsForCall)
+}
+
+func (fake *FakeSecureSession) SendRequestArgsForCall(i int) (string, bool, []byte) {
+	fake.sendRequestMutex.RLock()
+	defer fake.sendRequestMutex.RUnlock()
+	return fake.sendRequestArgsForCall[i].name, fake.sendRequestArgsForCall[i].wantReply, fake.sendRequestArgsForCall[i].payload
+}
+
+func (fake *FakeSecureSession) SendRequestReturns(result1 bool, result2 error) {
+	fake.SendRequestStub = nil
+	fake.sendRequestReturns = struct {
+		result1 bool
 		result2 error
 	}{result1, result2}
 }
