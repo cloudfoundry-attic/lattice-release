@@ -27,25 +27,26 @@ type SecureSession interface {
 	Close() error
 }
 
-//go:generate counterfeiter -o fake_secure_term/fake_secure_term.go . SecureTerm
-type SecureTerm interface {
+//go:generate counterfeiter -o fake_term/fake_term.go . Term
+type Term interface {
 	SetRawTerminal(fd uintptr) (*term_package.State, error)
 	RestoreTerminal(fd uintptr, state *term_package.State) error
+	GetWinsize(fd uintptr) (width int, height int)
 }
 
 type SecureShell struct {
 	Dialer Dialer
-	Term   SecureTerm
+	Term   Term
 }
 
 func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, config *config_package.Config) error {
 	diegoSSHUser := fmt.Sprintf("diego:%s/%d", appName, instanceIndex)
 	address := fmt.Sprintf("%s:2222", config.Target())
+
 	session, err := ss.Dialer.Dial(diegoSSHUser, config.Username(), config.Password(), address)
 	if err != nil {
 		return err
 	}
-
 	defer session.Close()
 
 	sessionIn, err := session.StdinPipe()
@@ -69,7 +70,14 @@ func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, config 
 		ssh.TTY_OP_OSPEED: 115200,
 	}
 
-	err = session.RequestPty("xterm", 80, 60, modes)
+	width, height := ss.Term.GetWinsize(os.Stdout.Fd())
+
+	terminalType := os.Getenv("TERM")
+	if terminalType == "" {
+		terminalType = "xterm"
+	}
+
+	err = session.RequestPty(terminalType, height, width, modes)
 	if err != nil {
 		return err
 	}

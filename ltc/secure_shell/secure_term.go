@@ -4,16 +4,21 @@ import (
 	"github.com/docker/docker/pkg/term"
 )
 
-type dockerTerm struct{}
+type SecureTerm struct{}
 
-func NewSecureTerm() *dockerTerm {
-	return &dockerTerm{}
-}
-
-func (t *dockerTerm) SetRawTerminal(fd uintptr) (*term.State, error) {
+func (t *SecureTerm) SetRawTerminal(fd uintptr) (*term.State, error) {
 	return term.SetRawTerminal(fd)
 }
 
-func (t *dockerTerm) RestoreTerminal(fd uintptr, state *term.State) error {
+func (t *SecureTerm) RestoreTerminal(fd uintptr, state *term.State) error {
 	return term.RestoreTerminal(fd, state)
+}
+
+func (t *SecureTerm) GetWinsize(fd uintptr) (width int, height int) {
+	winSize, err := term.GetWinsize(fd)
+	if err != nil {
+		return 80, 43
+	}
+
+	return int(winSize.Width), int(winSize.Height)
 }

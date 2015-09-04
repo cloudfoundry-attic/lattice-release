@@ -13,26 +13,28 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_dialer"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_secure_session"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_secure_term"
+	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_term"
 )
 
 var _ = Describe("SecureShell", func() {
 	var (
 		fakeDialer  *fake_dialer.FakeDialer
 		fakeSession *fake_secure_session.FakeSecureSession
-		fakeTerm    *fake_secure_term.FakeSecureTerm
+		fakeTerm    *fake_term.FakeTerm
 		fakeStdin   *gbytes.Buffer
 		fakeStdout  *gbytes.Buffer
 		fakeStderr  *gbytes.Buffer
 
 		config      *config_package.Config
 		secureShell *secure_shell.SecureShell
+
+		oldTerm string
 	)
 
 	BeforeEach(func() {
 		fakeDialer = &fake_dialer.FakeDialer{}
 		fakeSession = &fake_secure_session.FakeSecureSession{}
-		fakeTerm = &fake_secure_term.FakeSecureTerm{}
+		fakeTerm = &fake_term.FakeTerm{}
 		fakeStdin = gbytes.NewBuffer()
 		fakeStdout = gbytes.NewBuffer()
 		fakeStderr = gbytes.NewBuffer()
@@ -43,6 +45,13 @@ var _ = Describe("SecureShell", func() {
 
 		secureShell = &secure_shell.SecureShell{Dialer: fakeDialer, Term: fakeTerm}
 		fakeDialer.DialReturns(fakeSession, nil)
+
+		oldTerm = os.Getenv("TERM")
+		os.Setenv("TERM", "defaultterm")
+	})
+
+	AfterEach(func() {
+		os.Setenv("TERM", oldTerm)
 	})
 
 	Describe("#ConnectToShell", func() {
@@ -51,6 +60,7 @@ var _ = Describe("SecureShell", func() {
 			fakeSession.StdinPipeReturns(fakeStdin, nil)
 			fakeSession.StdoutPipeReturns(fakeStdout, nil)
 			fakeSession.StderrPipeReturns(fakeStderr, nil)
+			fakeTerm.GetWinsizeReturns(1000, 2000)
 
 			termState := &term.State{}
 			fakeTerm.SetRawTerminalReturns(termState, nil)
@@ -68,6 +78,15 @@ var _ = Describe("SecureShell", func() {
 			Expect(fakeTerm.SetRawTerminalCallCount()).To(Equal(1))
 			Expect(fakeTerm.SetRawTerminalArgsForCall(0)).To(Equal(os.Stdin.Fd()))
 
+			Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
+			Expect(fakeTerm.GetWinsizeArgsForCall(0)).To(Equal(os.Stdout.Fd()))
+
+			Expect(fakeSession.RequestPtyCallCount()).To(Equal(1))
+			termType, height, width, _ := fakeSession.RequestPtyArgsForCall(0)
+			Expect(termType).To(Equal("defaultterm"))
+			Expect(width).To(Equal(1000))
+			Expect(height).To(Equal(2000))
+
 			Expect(fakeTerm.RestoreTerminalCallCount()).To(Equal(1))
 			fd, state := fakeTerm.RestoreTerminalArgsForCall(0)
 			Expect(fd).To(Equal(os.Stdin.Fd()))
@@ -75,6 +94,38 @@ var _ = Describe("SecureShell", func() {
 
 			Expect(fakeSession.ShellCallCount()).To(Equal(1))
 			Expect(fakeSession.WaitCallCount()).To(Equal(1))
+		})
+
+		It("respects the user's TERM environment variable", func() {
+			fakeDialer.DialReturns(fakeSession, nil)
+			fakeSession.StdinPipeReturns(fakeStdin, nil)
+			fakeSession.StdoutPipeReturns(fakeStdout, nil)
+			fakeSession.StderrPipeReturns(fakeStderr, nil)
+
+			os.Setenv("TERM", "term2000")
+
+			err := secureShell.ConnectToShell("app-name", 2, config)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeSession.RequestPtyCallCount()).To(Equal(1))
+			termType, _, _, _ := fakeSession.RequestPtyArgsForCall(0)
+			Expect(termType).To(Equal("term2000"))
+		})
+
+		It("defaults to xterm ifno TERM environment variable is set", func() {
+			fakeDialer.DialReturns(fakeSession, nil)
+			fakeSession.StdinPipeReturns(fakeStdin, nil)
+			fakeSession.StdoutPipeReturns(fakeStdout, nil)
+			fakeSession.StderrPipeReturns(fakeStderr, nil)
+
+			os.Setenv("TERM", "")
+
+			err := secureShell.ConnectToShell("app-name", 2, config)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeSession.RequestPtyCallCount()).To(Equal(1))
+			termType, _, _, _ := fakeSession.RequestPtyArgsForCall(0)
+			Expect(termType).To(Equal("xterm"))
 		})
 
 		Context("when the SecureDialer#Dial fails", func() {

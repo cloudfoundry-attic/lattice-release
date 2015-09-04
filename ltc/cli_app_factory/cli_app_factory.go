@@ -204,7 +204,8 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, blobStoreVerifier, exitHandler)
 
 	secureDialer := &secure_shell.SecureDialer{DialFunc: ssh.Dial}
-	secureShell := &secure_shell.SecureShell{Dialer: secureDialer, Term: secure_shell.NewSecureTerm()}
+	secureTerm := &secure_shell.SecureTerm{}
+	secureShell := &secure_shell.SecureShell{Dialer: secureDialer, Term: secureTerm}
 	sshCommandFactory := ssh_command_factory.NewSSHCommandFactory(config, ui, exitHandler, secureShell)
 
 	helpCommand := cli.Command{
