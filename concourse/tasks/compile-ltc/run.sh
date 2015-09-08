@@ -7,7 +7,7 @@ export LATTICE_DIR=$PWD/lattice
 mkdir -p $PWD/go/src/github.com/cloudfoundry-incubator $LATTICE_DIR/build
 ln -sf $LATTICE_DIR $PWD/go/src/github.com/cloudfoundry-incubator/lattice
 
-export LATTICE_VERSION=$(git -C $LATTICE_DIR describe)
+export LATTICE_VERSION=$(git -C $LATTICE_DIR describe --tags --always)
 export DIEGO_VERSION=$(cat $LATTICE_DIR/DIEGO_VERSION)
 
 if [ "$RELEASE" = true ]; then

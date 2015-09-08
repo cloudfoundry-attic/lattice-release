@@ -8,7 +8,7 @@ export GOPATH=$DIEGO_RELEASE_DIR
 export PATH=$GOPATH/bin:$PATH
 
 
-export LATTICE_VERSION=$(git -C $LATTICE_DIR describe)
+export LATTICE_VERSION=$(git -C $LATTICE_DIR describe --tags --always)
 export DIEGO_VERSION=$(cat $LATTICE_DIR/DIEGO_VERSION)
 export CF_VERSION=$(cat $LATTICE_DIR/CF_VERSION)
 export ROUTING_VERSION=$(cat $LATTICE_DIR/ROUTING_VERSION)

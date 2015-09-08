@@ -19,7 +19,7 @@ docker run --rm -a stdout -a stderr -w /lattice -v $LATTICE_DIR:/lattice cloudfo
       /lattice/build/cf-routing-release \
       /lattice
 
-git -C $LATTICE_DIR describe > $LATTICE_DIR/build/lattice-build/common/LATTICE_VERSION
+git -C $LATTICE_DIR describe --tags --always > $LATTICE_DIR/build/lattice-build/common/LATTICE_VERSION
 cat $LATTICE_DIR/DIEGO_VERSION > $LATTICE_DIR/build/lattice-build/common/DIEGO_VERSION
 cat $LATTICE_DIR/CF_VERSION > $LATTICE_DIR/build/lattice-build/common/CF_VERSION
 cat $LATTICE_DIR/ROUTING_VERSION > $LATTICE_DIR/build/lattice-build/common/ROUTING_VERSION

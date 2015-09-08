@@ -3,7 +3,7 @@
 set -x -e
 
 export LATTICE_DIR=$PWD/lattice
-export LATTICE_VERSION=$(git -C $LATTICE_DIR describe)
+export LATTICE_VERSION=$(git -C $LATTICE_DIR describe --tags --always)
 if [ "$RELEASE" = true ]; then
   export LATTICE_VERSION=$(cat $LATTICE_DIR/Version)
 fi
