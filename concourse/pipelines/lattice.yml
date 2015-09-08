@@ -49,13 +49,28 @@ resources:
       private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
+  - name: lattice-tar-acceptance
+    type: s3
+    source:
+      bucket: lattice
+      region_name: us-west-2
+      regexp: acceptance/backend/lattice-v(.*).tgz
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
+  - name: lattice-bundle-acceptance
+    type: s3
+    source:
+      bucket: lattice
+      region_name: us-west-2
+      regexp: acceptance/lattice-bundle-v(.*).zip
+      access_key_id: {{aws-access-key-id}}
+      secret_access_key: {{aws-secret-access-key}}
   - name: lattice-tar-nightly
     type: s3
     source:
       bucket: lattice
       region_name: us-west-2
       regexp: nightly/backend/lattice-v(.*).tgz
-      private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
   - name: lattice-bundle-nightly
@@ -64,9 +79,19 @@ resources:
       bucket: lattice
       region_name: us-west-2
       regexp: nightly/lattice-bundle-v(.*).zip
-      private: true
       access_key_id: {{aws-access-key-id}}
       secret_access_key: {{aws-secret-access-key}}
+  - name: lattice-tracker
+    type: tracker
+    source:
+      token: {{tracker-api-token}}
+      project_id: "1183596"
+  - name: publish-nightly-timer
+    type: time
+    source:
+      start: 18:00 -0500
+      stop: 19:00 -0500
+      interval: 1h
   - name: lattice-pipeline-image
     type: docker-image
     source:
@@ -81,12 +106,6 @@ resources:
       email: {{docker-hub-email}}
       username: {{docker-hub-username}}
       password: {{docker-hub-password}}
-  - name: publish-nightly-timer
-    type: time
-    source:
-      start: 18:00 -0500
-      stop: 19:00 -0500
-      interval: 1h
 
 jobs:
   - name: unit-test-ltc
@@ -286,6 +305,56 @@ jobs:
         ensure:
           task: cleanup-deploy-terraform-gce
           file: lattice/concourse/tasks/cleanup-deploy-terraform-gce/task.yml
+
+  - name: publish-acceptance
+    plan:
+      - aggregate:
+        - get: lattice
+          trigger: true
+          passed:
+          - cluster-test-vagrant-aws
+          - cluster-test-terraform-aws
+          - cluster-test-terraform-gce
+        - get: lattice-tar-build
+          passed:
+          - cluster-test-vagrant-aws
+          - cluster-test-terraform-aws
+          - cluster-test-terraform-gce
+        - get: ltc-tar-build
+          passed:
+          - cluster-test-vagrant-aws
+          - cluster-test-terraform-aws
+          - cluster-test-terraform-gce
+      - aggregate:
+        - task: generate-terraform-templates
+          file: lattice/concourse/tasks/generate-terraform-templates/task.yml
+          config:
+            params:
+              LATTICE_URL_BASE: http://lattice.s3.amazonaws.com/acceptance/backend
+        - task: generate-vagrantfile
+          file: lattice/concourse/tasks/generate-vagrantfile/task.yml
+          config:
+            params:
+              LATTICE_URL_BASE: http://lattice.s3.amazonaws.com/acceptance/backend
+      - task: compile-lattice-bundles
+        file: lattice/concourse/tasks/compile-lattice-bundles/task.yml
+      - aggregate:
+        - put: lattice-tar-acceptance
+          params:
+            from: lattice-tar-build/lattice-v(.*).tgz
+            to: /acceptance/backend/
+        - put: lattice-bundle-acceptance
+          params:
+            from: compile-lattice-bundles/lattice-bundle-v(.*)-linux.zip
+            to: /acceptance/
+        - put: lattice-bundle-acceptance
+          params:
+            from: compile-lattice-bundles/lattice-bundle-v(.*)-osx.zip
+            to: /acceptance/
+      - put: lattice-tracker
+        params:
+          comment: lattice-bundle-acceptance/url
+          repos: [lattice]
 
   - name: publish-nightly
     plan:
