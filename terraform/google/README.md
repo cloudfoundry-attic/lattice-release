@@ -95,5 +95,5 @@ If you want to update to a specific version of Lattice:
 
 ## Copyright
 
-See [LICENSE](../../docs/LICENSE) for details.
+See [LICENSE](../../LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).

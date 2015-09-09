@@ -3,7 +3,7 @@
 <table>
   <tr>
     <td>
-      <a href="http://lattice.cf"><img src="https://raw.githubusercontent.com/cloudfoundry-incubator/lattice/master/docs/logos/lattice.png" align="left" width="200" ></a>
+      <a href="http://lattice.cf"><img src="https://raw.githubusercontent.com/cloudfoundry-incubator/lattice/master/lattice.png" align="left" width="200" ></a>
     </td>
     <td>
       Website: <a href="http://lattice.cf">http://lattice.cf</a><br>
@@ -114,7 +114,7 @@ If you have copied a new `Vagrantfile` into an existing directory, make sure to 
 
 ### Manual install of Lattice
 
-Follow these [instructions](docs/manual-install.md) to install a co-located Lattice cluster to a server that's already deployed. (e.g., vSphere)  
+Follow these [instructions](http://lattice.cf/docs/manual-install) to install a co-located Lattice cluster to a server that's already deployed. (e.g., vSphere)
 
 ### Proxy configuration
 
@@ -144,7 +144,7 @@ _Resolution Steps_
 
 1. Check your networking DNS settings. Local "forwarding DNS" servers provided by some home routers can have trouble resolving `xip.io` addresses. Try setting your DNS to point to your real upstream DNS servers, or alternatively try using [Google DNS](https://developers.google.com/speed/public-dns/) by using `8.8.8.8` and/or `8.8.4.4`.
 
-1. If the above steps don't work (or if you must use a DNS server that doesn't work with `xip.io`), our recommended alternative is to follow the [dnsmasq instructions](docs/dnsmasq-readme.md), pass the `LATTICE_SYSTEM_DOMAIN` environment variable to the vagrant up command, and target using `lattice.dev` instead of `192.168.11.11.xip.io` to point to the cluster, as follows:
+1. If the above steps don't work (or if you must use a DNS server that doesn't work with `xip.io`), our recommended alternative is to follow the [dnsmasq instructions](http://lattice.cf/docs/dnsmasq-readme), pass the `LATTICE_SYSTEM_DOMAIN` environment variable to the vagrant up command, and target using `lattice.dev` instead of `192.168.11.11.xip.io` to point to the cluster, as follows:
 
 ```
 LATTICE_SYSTEM_DOMAIN=lattice.dev vagrant up
@@ -315,5 +315,5 @@ Periodically, the Lattice team goes through through both the Backlog and the Ice
 
 # Copyright
 
-See [LICENSE](docs/LICENSE) for details.
+See [LICENSE](LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).

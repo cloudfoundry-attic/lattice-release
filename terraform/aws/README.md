@@ -101,5 +101,5 @@ Please Note: There are hourly charges on having an Elastic IP provisioned but no
 
 ## Copyright
 
-See [LICENSE](../../docs/LICENSE) for details.
+See [LICENSE](../../LICENSE) for details.
 Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).
