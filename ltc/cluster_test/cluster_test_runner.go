@@ -3,7 +3,6 @@ package cluster_test
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -177,13 +176,13 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 
 				It("should run a docker app exposing tcp routes", func() {
 					externalPort := uint16(rand.Intn(9999) + 50000)
-					runner.createDockerApp(timeout, appName, "cloudfoundry/tcp-sample-receiver", fmt.Sprintf("--tcp-routes=%d:5222", externalPort), fmt.Sprintf("--timeout=%s", timeout.String()))
-					Eventually(errorCheckForConnection(runner.config.Target(), externalPort, "docker-server1"), timeout, 1).ShouldNot(HaveOccurred())
+					runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-tcp-test", fmt.Sprintf("--tcp-routes=%d:5222", externalPort), fmt.Sprintf("--timeout=%s", timeout.String()))
+					Eventually(readLineFromConnection(runner.config.Target(), externalPort), timeout, 1).Should(Equal("y"))
 
 					externalPort++
 					By("Updating the routes")
 					runner.updateApp(timeout, appName, fmt.Sprintf("--tcp-routes=%d:5222", externalPort))
-					Eventually(errorCheckForConnection(runner.config.Target(), externalPort, "docker-server1"), timeout, 1).ShouldNot(HaveOccurred())
+					Eventually(readLineFromConnection(runner.config.Target(), externalPort), timeout, 1).Should(Equal("y"))
 				})
 			})
 		})
@@ -242,29 +241,6 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				runner.launchDroplet(timeout, appName, dropletName)
 
 				Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
-			})
-
-			Context("droplet with tcp routes", func() {
-				It("should build, lists and launches a droplet with tcp routes", func() {
-					externalPort := uint16(rand.Intn(10000) + 50000)
-					By("checking out droplet-receiver from github")
-					gitDir := runner.cloneRepo(timeout, "https://github.com/cloudfoundry-incubator/cf-tcp-router-acceptance-tests.git")
-					dropletDir := gitDir + "/assets/tcp-droplet-receiver"
-					defer os.RemoveAll(gitDir)
-
-					By("launching a build task")
-					runner.buildDroplet(timeout, dropletName, "https://github.com/cloudfoundry/go-buildpack.git", dropletDir)
-
-					Eventually(runner.checkIfTaskCompleted("build-droplet-"+dropletName), timeout, 1).Should(BeTrue())
-
-					By("listing droplets")
-					runner.listDroplets(timeout, dropletName)
-
-					By("launching the droplet")
-					runner.launchDroplet(timeout, appName, dropletName, fmt.Sprintf("--tcp-routes=%d:3333", externalPort), "--ports=3333")
-
-					Eventually(errorCheckForConnection(runner.config.Target(), externalPort, "droplet_server"), timeout, 1).ShouldNot(HaveOccurred())
-				})
 			})
 		})
 	})
@@ -437,20 +413,23 @@ func getStyledWriter(prefix string) io.Writer {
 	return gexec.NewPrefixedWriter(fmt.Sprintf("[%s] ", colors.Yellow(prefix)), GinkgoWriter)
 }
 
-func errorCheckForConnection(ip string, port uint16, serverId string) func() error {
+func readLineFromConnection(ip string, port uint16) func() (string, error) {
 	fmt.Fprintln(getStyledWriter("test"), "Connection to ", ip, ":", port)
-	return func() error {
-		response, err := makeTcpConnRequest(ip, port, "test")
+	return func() (string, error) {
+		conn, err := net.Dial("tcp", ip+fmt.Sprintf(":%d", port))
 		if err != nil {
-			return err
+			return "", err
 		}
-		fmt.Fprintln(getStyledWriter("test"), "Received response '", response, "'")
+		defer conn.Close()
 
-		if !strings.Contains(response, serverId+":test") {
-			return errors.New("Did not get correct response from connection")
+		conn.SetDeadline(time.Now().Add(time.Second))
+
+		line, err := bufio.NewReader(conn).ReadString('\n')
+		if err != nil {
+			return "", err
 		}
 
-		return nil
+		return strings.TrimSpace(line), nil
 	}
 }
 
@@ -507,21 +486,6 @@ func pollForInstanceIndices(appRoute string, instanceIndexChan chan<- int) {
 		}
 		instanceIndexChan <- instanceIndex
 	}
-}
-
-func makeTcpConnRequest(ip string, port uint16, req string) (string, error) {
-	conn, err := net.Dial("tcp", ip+fmt.Sprintf(":%d", port))
-	if err != nil {
-		return "", err
-	}
-
-	fmt.Fprintf(conn, req+"\n")
-	line, err := bufio.NewReader(conn).ReadString('\n')
-	if err != nil {
-		return "", err
-	}
-
-	return line, nil
 }
 
 func makeGetRequestToURL(url string) (*http.Response, error) {
