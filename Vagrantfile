@@ -92,8 +92,12 @@ Vagrant.configure("2") do |config|
     lattice_url = defined?(LATTICE_URL) && LATTICE_URL
 
     if !lattice_url
-      puts 'Could not determine Lattice version, and no local lattice.tgz present.'
-      puts 'Please use a versioned Vagrantfile from a Lattice GitHub release.'
+      puts "Could not determine Lattice version, and no local lattice.tgz present.\n"
+      puts '*******************************************************************************'
+      puts 'As of v0.4.0, the process for deploying Lattice via Vagrant has changed.'
+      puts 'Please use the process documented here: http://github.com/cloudfoundry-incubator/lattice#launching-with-vagrant'
+      puts '*******************************************************************************'
+      puts "\n"*3
       exit(1)
     end
 
