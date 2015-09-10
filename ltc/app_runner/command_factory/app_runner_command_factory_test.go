@@ -305,7 +305,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(22, false, nil)
 			fakeClock.IncrementBySeconds(1)
 
-			Eventually(doneChan).Should(BeClosed())
+			Eventually(doneChan, 3).Should(BeClosed())
 
 			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("App Scaled Successfully")))
 		})
@@ -324,7 +324,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				fakeClock.IncrementBySeconds(120)
 
-				Eventually(doneChan).Should(BeClosed())
+				Eventually(doneChan, 3).Should(BeClosed())
 
 				Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Timed out waiting for the container to scale.")))
 				Expect(outputBuffer).To(test_helpers.SayLine("Lattice is still scaling your application in the background."))

@@ -86,7 +86,7 @@ var _ = Describe("SSH CommandFactory", func() {
 
 			doneChan := test_helpers.AsyncExecuteCommandWithArgs(sshCommand, []string{"app-name", "echo", "1", "2", "3"})
 
-			Eventually(doneChan).Should(BeClosed())
+			Eventually(doneChan, 3).Should(BeClosed())
 			Expect(outputBuffer).NotTo(test_helpers.Say("Connecting to app-name"))
 
 			Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
@@ -102,7 +102,7 @@ var _ = Describe("SSH CommandFactory", func() {
 
 			doneChan := test_helpers.AsyncExecuteCommandWithArgs(sshCommand, []string{"app-name", "--", "/bin/ls", "-l"})
 
-			Eventually(doneChan).Should(BeClosed())
+			Eventually(doneChan, 3).Should(BeClosed())
 			Expect(outputBuffer).NotTo(test_helpers.Say("Connecting to app-name"))
 
 			Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))

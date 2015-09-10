@@ -38,7 +38,7 @@ var _ = Describe("CommandExecutor", func() {
 		It("executes the command", func() {
 			doneChan := test_helpers.AsyncExecuteCommandWithArgs(cliCommand, []string{})
 
-			Eventually(doneChan).Should(BeClosed())
+			Eventually(doneChan, 3).Should(BeClosed())
 			Expect(commandRan).To(BeTrue())
 		})
 	})

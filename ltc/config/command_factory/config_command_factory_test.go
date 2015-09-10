@@ -245,7 +245,7 @@ var _ = Describe("CommandFactory", func() {
 				fakeTargetVerifier.VerifyTargetReturns(true, true, nil)
 				stdinWriter.Write([]byte("testusername\n"))
 
-				Eventually(doneChan).Should(BeClosed())
+				Eventually(doneChan, 3).Should(BeClosed())
 
 				Expect(config.Target()).To(Equal("myapi.com"))
 				Expect(config.Receptor()).To(Equal("http://testusername:testpassword@receptor.myapi.com"))
@@ -267,7 +267,7 @@ var _ = Describe("CommandFactory", func() {
 					Eventually(outputBuffer).Should(test_helpers.Say("Username: "))
 					stdinWriter.Write([]byte("some-invalid-user\n"))
 
-					Eventually(doneChan).Should(BeClosed())
+					Eventually(doneChan, 3).Should(BeClosed())
 
 					Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
 					Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password"))
@@ -289,7 +289,7 @@ var _ = Describe("CommandFactory", func() {
 					fakeTargetVerifier.VerifyTargetReturns(true, false, errors.New("Unknown Error"))
 					stdinWriter.Write([]byte("some-invalid-user\n"))
 
-					Eventually(doneChan).Should(BeClosed())
+					Eventually(doneChan, 3).Should(BeClosed())
 
 					Expect(fakePasswordReader.PromptForPasswordCallCount()).To(Equal(1))
 					Expect(fakePasswordReader.PromptForPasswordArgsForCall(0)).To(Equal("Password"))
@@ -311,7 +311,7 @@ var _ = Describe("CommandFactory", func() {
 					fakeTargetVerifier.VerifyTargetReturns(true, true, nil)
 					stdinWriter.Write([]byte("testusername\n"))
 
-					Eventually(doneChan).Should(BeClosed())
+					Eventually(doneChan, 3).Should(BeClosed())
 
 					Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
 
@@ -346,7 +346,7 @@ var _ = Describe("CommandFactory", func() {
 					fakeTargetVerifier.VerifyTargetReturns(true, true, nil)
 					stdinWriter.Write([]byte("testusername\n"))
 
-					Eventually(doneChan).Should(BeClosed())
+					Eventually(doneChan, 3).Should(BeClosed())
 
 					Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
 
@@ -375,7 +375,7 @@ var _ = Describe("CommandFactory", func() {
 					fakeTargetVerifier.VerifyTargetReturns(true, true, nil)
 					stdinWriter.Write([]byte("testusername\n"))
 
-					Eventually(doneChan).Should(BeClosed())
+					Eventually(doneChan, 3).Should(BeClosed())
 
 					Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
 
@@ -411,7 +411,7 @@ var _ = Describe("CommandFactory", func() {
 				Eventually(outputBuffer).Should(test_helpers.Say("S3 Region: "))
 				stdinWriter.Write([]byte("some-region\n"))
 
-				Eventually(doneChan).Should(BeClosed())
+				Eventually(doneChan, 3).Should(BeClosed())
 
 				Expect(fakeBlobStoreVerifier.VerifyCallCount()).To(Equal(1))
 				config := fakeBlobStoreVerifier.VerifyArgsForCall(0)

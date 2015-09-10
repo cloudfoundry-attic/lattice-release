@@ -376,7 +376,7 @@ var _ = Describe("CommandFactory", func() {
 				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{State: "COMPLETED"}, nil)
 
 				fakeClock.IncrementBySeconds(1)
-				Eventually(doneChan).Should(BeClosed())
+				Eventually(doneChan, 3).Should(BeClosed())
 
 				Expect(outputBuffer).To(test_helpers.SayLine("Build completed"))
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(1))
@@ -424,7 +424,7 @@ var _ = Describe("CommandFactory", func() {
 
 					fakeClock.IncrementBySeconds(1)
 
-					Eventually(doneChan).Should(BeClosed())
+					Eventually(doneChan, 3).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.SayLine("Build failed: oops"))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
@@ -450,7 +450,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakeExitHandler.ExitCalledWith).To(BeEmpty())
 
 					fakeClock.IncrementBySeconds(1)
-					Eventually(doneChan).Should(BeClosed())
+					Eventually(doneChan, 3).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Error requesting task status: dropped the ball")))
 					Expect(outputBuffer).NotTo(test_helpers.SayLine("Timed out waiting for the build to complete."))
