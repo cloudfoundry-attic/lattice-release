@@ -175,7 +175,7 @@ var _ = Describe("SecureShell", func() {
 			err := syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(fakeTerm.GetWinsizeCallCount, 3).Should(Equal(2))
+			Eventually(fakeTerm.GetWinsizeCallCount, 5).Should(Equal(2))
 			Expect(fakeSession.SendRequestCallCount()).To(Equal(1))
 			name, wantReply, payload := fakeSession.SendRequestArgsForCall(0)
 			Expect(name).To(Equal("window-change"))
@@ -213,7 +213,7 @@ var _ = Describe("SecureShell", func() {
 
 			Expect(syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)).To(Succeed())
 
-			Eventually(fakeTerm.GetWinsizeCallCount, 3).Should(Equal(2))
+			Eventually(fakeTerm.GetWinsizeCallCount, 5).Should(Equal(2))
 			Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 
 			waitChan <- struct{}{}
