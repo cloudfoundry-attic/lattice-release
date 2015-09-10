@@ -262,7 +262,6 @@ func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 }
 
 func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
-
 	summaryFlag := context.Bool("summary")
 	rateFlag := context.Duration("rate")
 
@@ -274,6 +273,8 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 
 	appName := context.Args()[0]
 
+	writer := new(bytes.Buffer)
+
 	appInfo, err := factory.appExaminer.AppStatus(appName)
 	if err != nil {
 		factory.ui.SayLine(err.Error())
@@ -281,19 +282,22 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 		return
 	}
 
-	factory.printAppInfo(appInfo)
+	factory.printAppInfo(writer, appInfo)
 
 	if summaryFlag || rateFlag != 0 {
-		factory.printInstanceSummary(appInfo.ActualInstances)
+		factory.printInstanceSummary(writer, appInfo.ActualInstances)
 	} else {
-		factory.printInstanceInfo(appInfo.ActualInstances)
+		factory.printInstanceInfo(writer, appInfo.ActualInstances)
 	}
+
+	factory.ui.Write(writer.Bytes())
 
 	if rateFlag == 0 {
 		return
 	}
 
-	linesWritten := appStatusLinesWritten(appInfo)
+	linesWritten := bytes.Count(writer.Bytes(), []byte("\n"))
+
 	closeChan := make(chan struct{})
 	defer factory.ui.Say(cursor.Show())
 	factory.ui.Say(cursor.Hide())
@@ -314,17 +318,19 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 				return
 			}
 			factory.ui.Say(cursor.Up(linesWritten))
-			factory.printAppInfo(appInfo)
-			factory.printInstanceSummary(appInfo.ActualInstances)
-			linesWritten = appStatusLinesWritten(appInfo)
+			writer = new(bytes.Buffer)
+			factory.printAppInfo(writer, appInfo)
+			factory.printInstanceSummary(writer, appInfo.ActualInstances)
+			factory.ui.Write(writer.Bytes())
+			linesWritten = bytes.Count(writer.Bytes(), []byte("\n"))
 		}
 	}
 }
 
-func (factory *AppExaminerCommandFactory) printAppInfo(appInfo app_examiner.AppInfo) {
+func (factory *AppExaminerCommandFactory) printAppInfo(writer io.Writer, appInfo app_examiner.AppInfo) {
 	factory.ui.Say(cursor.ClearToEndOfDisplay())
 
-	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)
+	w := tabwriter.NewWriter(writer, minColumnWidth, 8, 1, '\t', 0)
 
 	titleBar := func(title string) {
 		printHorizontalRule(w, "=")
@@ -365,23 +371,8 @@ func (factory *AppExaminerCommandFactory) printAppInfo(appInfo app_examiner.AppI
 	w.Flush()
 }
 
-func appStatusLinesWritten(appInfo app_examiner.AppInfo) int {
-	linesWritten := 9
-	for _, appRoute := range appInfo.Routes.AppRoutes {
-		linesWritten += len(appRoute.Hostnames)
-	}
-	if appInfo.Annotation != "" {
-		linesWritten += 1
-	}
-	linesWritten += 3
-	linesWritten += len(appInfo.EnvironmentVariables)
-	linesWritten += 4
-	linesWritten += len(appInfo.ActualInstances)
-	return linesWritten
-}
-
-func (factory *AppExaminerCommandFactory) printInstanceSummary(actualInstances []app_examiner.InstanceInfo) {
-	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)
+func (factory *AppExaminerCommandFactory) printInstanceSummary(writer io.Writer, actualInstances []app_examiner.InstanceInfo) {
+	w := tabwriter.NewWriter(writer, minColumnWidth, 8, 1, '\t', 0)
 
 	printHorizontalRule(w, "=")
 	fmt.Fprintf(w, fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n",
@@ -426,8 +417,8 @@ func (factory *AppExaminerCommandFactory) printInstanceSummary(actualInstances [
 	w.Flush()
 }
 
-func (factory *AppExaminerCommandFactory) printInstanceInfo(actualInstances []app_examiner.InstanceInfo) {
-	w := tabwriter.NewWriter(factory.ui, minColumnWidth, 8, 1, '\t', 0)
+func (factory *AppExaminerCommandFactory) printInstanceInfo(writer io.Writer, actualInstances []app_examiner.InstanceInfo) {
+	w := tabwriter.NewWriter(writer, minColumnWidth, 8, 1, '\t', 0)
 
 	instanceBar := func(index, state string) {
 		fmt.Fprintf(w, "%sInstance %s  [%s]\n", indentHeading, index, state)
