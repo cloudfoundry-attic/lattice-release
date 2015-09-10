@@ -754,13 +754,13 @@ var _ = Describe("CommandFactory", func() {
 
 				fakeAppExaminer.RunningAppInstancesInfoReturns(9, false, nil)
 				fakeClock.IncrementBySeconds(1)
-				Expect(doneChan).ShouldNot(BeClosed())
+				Expect(doneChan).NotTo(BeClosed())
 				Expect(fakeTailedLogsOutputter.StopOutputtingCallCount()).To(Equal(0))
 
 				fakeAppExaminer.RunningAppInstancesInfoReturns(10, false, nil)
 				fakeClock.IncrementBySeconds(1)
 
-				Eventually(doneChan).Should(BeClosed())
+				Eventually(doneChan, 3).Should(BeClosed())
 
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
 				Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))
@@ -787,7 +787,7 @@ var _ = Describe("CommandFactory", func() {
 
 					fakeClock.IncrementBySeconds(120)
 
-					Eventually(doneChan).Should(BeClosed())
+					Eventually(doneChan, 3).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Timed out waiting for the container to come up.")))
 					Expect(outputBuffer).To(test_helpers.SayLine("This typically happens because docker layers can take time to download."))
@@ -829,7 +829,7 @@ var _ = Describe("CommandFactory", func() {
 
 					fakeAppExaminer.RunningAppInstancesInfoReturns(9, true, nil)
 					fakeClock.IncrementBySeconds(1)
-					Eventually(doneChan).Should(BeClosed())
+					Eventually(doneChan, 3).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
 					Expect(outputBuffer).NotTo(test_helpers.Say("Timed out waiting for the container"))
