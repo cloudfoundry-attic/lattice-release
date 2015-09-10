@@ -403,7 +403,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				fakeAppExaminer.RunningAppInstancesInfoReturns(2, true, nil)
 				fakeClock.IncrementBySeconds(1)
-				Eventually(doneChan).Should(BeClosed())
+				Eventually(doneChan, 3).Should(BeClosed())
 
 				Expect(outputBuffer).To(test_helpers.SayLine(colors.Red("Error, could not place all instances: insufficient resources. Try requesting fewer instances or reducing the requested memory or disk capacity.")))
 				Expect(outputBuffer).NotTo(test_helpers.Say("Timed out waiting for the container"))
