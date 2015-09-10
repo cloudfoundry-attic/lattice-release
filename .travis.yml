@@ -12,12 +12,15 @@ before_install:
 - go get -v golang.org/x/tools/cmd/cover
 - go get -v github.com/onsi/ginkgo/ginkgo
 - go get -v github.com/mattn/goveralls
+- export GOPATH=$PWD/ltc/Godeps/_workspace:$GOPATH
+- export PATH=$HOME/gopath/bin:$PATH
+
+script:
+- ginkgo -r --race --randomizeAllSpecs --failOnPending --skipMeasurements --cover ltc cell-helpers
+- test -z "$(go fmt ./ltc/... ./cell-helpers/...)"
 
 after_success:
 - 'echo "mode: set" > coverage.out'
 - 'find ltc cell-helpers -name "*.coverprofile" -exec grep -v mode: {} >> coverage.out \;'
-- PATH=$HOME/gopath/bin:$PATH goveralls -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
+- goveralls -coverprofile=coverage.out -repotoken=$COVERALLS_TOKEN
 
-script:
-- GOPATH=$PWD/ltc/Godeps/_workspace:$GOPATH PATH=$HOME/gopath/bin:$PATH ginkgo -r --race --randomizeAllSpecs --failOnPending --skipMeasurements --cover ltc cell-helpers
-- test -z "$(go fmt ./ltc/... ./cell-helpers/...)"
