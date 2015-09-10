@@ -158,14 +158,14 @@ var _ = Describe("SecureShell", func() {
 				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 				Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
 				fakeTerm.GetWinsizeReturns(30, 40)
-				Eventually(waitChan, 3).Should(Receive())
+				Eventually(waitChan, 5).Should(Receive())
 				return nil
 			}
 
 			go func() {
 				defer GinkgoRecover()
 
-				Eventually(waitChan, 3).Should(Receive())
+				Eventually(waitChan, 5).Should(Receive())
 				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).NotTo(HaveOccurred())
 			}()
@@ -197,14 +197,14 @@ var _ = Describe("SecureShell", func() {
 			fakeSession.ShellStub = func() error {
 				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 				Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
-				Eventually(waitChan, 3).Should(Receive())
+				Eventually(waitChan, 5).Should(Receive())
 				return nil
 			}
 
 			go func() {
 				defer GinkgoRecover()
 
-				Eventually(waitChan, 3).Should(Receive())
+				Eventually(waitChan, 5).Should(Receive())
 				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).NotTo(HaveOccurred())
 			}()
@@ -213,7 +213,7 @@ var _ = Describe("SecureShell", func() {
 
 			Expect(syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)).To(Succeed())
 
-			Eventually(fakeTerm.GetWinsizeCallCount).Should(Equal(2))
+			Eventually(fakeTerm.GetWinsizeCallCount, 3).Should(Equal(2))
 			Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 
 			waitChan <- struct{}{}
