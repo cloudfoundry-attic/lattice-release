@@ -165,7 +165,7 @@ var _ = Describe("SecureShell", func() {
 			go func() {
 				defer GinkgoRecover()
 
-				Eventually(waitChan).Should(Receive())
+				Eventually(waitChan, 3).Should(Receive())
 				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).NotTo(HaveOccurred())
 			}()
@@ -204,7 +204,7 @@ var _ = Describe("SecureShell", func() {
 			go func() {
 				defer GinkgoRecover()
 
-				Eventually(waitChan).Should(Receive())
+				Eventually(waitChan, 3).Should(Receive())
 				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).NotTo(HaveOccurred())
 			}()
