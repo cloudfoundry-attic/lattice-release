@@ -1,8 +1,10 @@
 package command_factory
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
@@ -14,6 +16,7 @@ type SSHCommandFactory struct {
 	config      *config_package.Config
 	ui          terminal.UI
 	exitHandler exit_handler.ExitHandler
+	appExaminer app_examiner.AppExaminer
 
 	secureShell SecureShell
 }
@@ -23,8 +26,8 @@ type SecureShell interface {
 	ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error
 }
 
-func NewSSHCommandFactory(config *config_package.Config, ui terminal.UI, exitHandler exit_handler.ExitHandler, secureShell SecureShell) *SSHCommandFactory {
-	return &SSHCommandFactory{config, ui, exitHandler, secureShell}
+func NewSSHCommandFactory(config *config_package.Config, ui terminal.UI, exitHandler exit_handler.ExitHandler, appExaminer app_examiner.AppExaminer, secureShell SecureShell) *SSHCommandFactory {
+	return &SSHCommandFactory{config, ui, exitHandler, appExaminer, secureShell}
 }
 
 func (factory *SSHCommandFactory) MakeSSHCommand() cli.Command {
@@ -53,6 +56,18 @@ func (factory *SSHCommandFactory) ssh(context *cli.Context) {
 		return
 	}
 
+	appInfo, err := factory.appExaminer.AppStatus(appName)
+	if err != nil {
+		factory.ui.SayLine("App " + appName + " not found.")
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+	if instanceIndex < 0 || instanceIndex >= appInfo.ActualRunningInstances {
+		factory.ui.SayLine(fmt.Sprintf("Instance %s/%d does not exist.", appName, instanceIndex))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
 	command := ""
 	if len(context.Args()) > 1 {
 		start := 1
@@ -66,5 +81,9 @@ func (factory *SSHCommandFactory) ssh(context *cli.Context) {
 		factory.ui.SayLine("Connecting to %s/%d at %s", appName, instanceIndex, factory.config.Target())
 	}
 
-	factory.secureShell.ConnectToShell(appName, instanceIndex, command, factory.config)
+	if err := factory.secureShell.ConnectToShell(appName, instanceIndex, command, factory.config); err != nil {
+		factory.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
 }
