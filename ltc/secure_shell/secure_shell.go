@@ -95,7 +95,10 @@ func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, command
 
 	resized := make(chan os.Signal, 16)
 	signal.Notify(resized, syscall.SIGWINCH)
-	defer func() { signal.Stop(resized); close(resized) }()
+	defer func() {
+		signal.Stop(resized)
+		close(resized)
+	}()
 	go ss.resize(resized, session, os.Stdout.Fd(), width, height)
 
 	if command == "" {

@@ -154,27 +154,25 @@ var _ = Describe("SecureShell", func() {
 			fakeTerm.GetWinsizeReturns(10, 20)
 
 			waitChan := make(chan struct{})
+			doneChan := make(chan struct{})
 			fakeSession.ShellStub = func() error {
 				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 				Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
 				fakeTerm.GetWinsizeReturns(30, 40)
-				Eventually(waitChan, 5).Should(Receive())
+				<-waitChan
+				<-doneChan
 				return nil
 			}
 
 			go func() {
 				defer GinkgoRecover()
-
-				Eventually(waitChan, 5).Should(Receive())
 				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).NotTo(HaveOccurred())
 			}()
 
 			waitChan <- struct{}{}
 
-			err := syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)
-			Expect(err).NotTo(HaveOccurred())
-
+			Expect(syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)).To(Succeed())
 			Eventually(fakeTerm.GetWinsizeCallCount, 5).Should(Equal(2))
 			Expect(fakeSession.SendRequestCallCount()).To(Equal(1))
 			name, wantReply, payload := fakeSession.SendRequestArgsForCall(0)
@@ -182,7 +180,7 @@ var _ = Describe("SecureShell", func() {
 			Expect(wantReply).To(BeFalse())
 			Expect(payload).To(Equal([]byte{0, 0, 0, 30, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 0}))
 
-			waitChan <- struct{}{}
+			doneChan <- struct{}{}
 		})
 
 		It("does not resize the remote terminal if SIGWINCH is received but the window is the same size", func() {
@@ -194,17 +192,17 @@ var _ = Describe("SecureShell", func() {
 			fakeTerm.GetWinsizeReturns(10, 20)
 
 			waitChan := make(chan struct{})
+			doneChan := make(chan struct{})
 			fakeSession.ShellStub = func() error {
 				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 				Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
-				Eventually(waitChan, 5).Should(Receive())
+				<-waitChan
+				<-doneChan
 				return nil
 			}
 
 			go func() {
 				defer GinkgoRecover()
-
-				Eventually(waitChan, 5).Should(Receive())
 				err := secureShell.ConnectToShell("app-name", 2, "", config)
 				Expect(err).NotTo(HaveOccurred())
 			}()
@@ -212,11 +210,10 @@ var _ = Describe("SecureShell", func() {
 			waitChan <- struct{}{}
 
 			Expect(syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)).To(Succeed())
-
 			Eventually(fakeTerm.GetWinsizeCallCount, 5).Should(Equal(2))
 			Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 
-			waitChan <- struct{}{}
+			doneChan <- struct{}{}
 		})
 
 		Context("when the SecureDialer#Dial fails", func() {
