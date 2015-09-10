@@ -158,7 +158,7 @@ var _ = Describe("SecureShell", func() {
 				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 				Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
 				fakeTerm.GetWinsizeReturns(30, 40)
-				Eventually(waitChan).Should(Receive())
+				Eventually(waitChan, 3).Should(Receive())
 				return nil
 			}
 
@@ -175,7 +175,7 @@ var _ = Describe("SecureShell", func() {
 			err := syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(fakeTerm.GetWinsizeCallCount).Should(Equal(2))
+			Eventually(fakeTerm.GetWinsizeCallCount, 3).Should(Equal(2))
 			Expect(fakeSession.SendRequestCallCount()).To(Equal(1))
 			name, wantReply, payload := fakeSession.SendRequestArgsForCall(0)
 			Expect(name).To(Equal("window-change"))
@@ -197,7 +197,7 @@ var _ = Describe("SecureShell", func() {
 			fakeSession.ShellStub = func() error {
 				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 				Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
-				Eventually(waitChan).Should(Receive())
+				Eventually(waitChan, 3).Should(Receive())
 				return nil
 			}
 

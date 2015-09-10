@@ -693,7 +693,7 @@ var _ = Describe("BlobStore", func() {
 			fakeServer.AppendHandlers(ghttp.CombineHandlers(
 				ghttp.VerifyRequest("GET", "/blobs/some-path/some-object"),
 				ghttp.VerifyBasicAuth("user", "pass"),
-				ghttp.RespondWith(http.StatusOK, "some data", http.Header{"Content-length": []string{"9"}}),
+				ghttp.RespondWith(http.StatusOK, "some data", http.Header{"Content-Length": []string{"9"}}),
 			))
 
 			pathReader, err := blobStore.Download("some-path/some-object")

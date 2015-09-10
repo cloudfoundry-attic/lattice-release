@@ -99,7 +99,6 @@ var _ = Describe("Logs", func() {
 	})
 
 	Describe("TailLogs", func() {
-
 		It("provides the logCallback with logs until StopTailing is called", func() {
 			messageReceiver := &messageReceiver{}
 
@@ -124,6 +123,7 @@ var _ = Describe("Logs", func() {
 			logMessageThree := &events.LogMessage{Message: []byte("Message 3")}
 			go consumer.sendToInboundLogStream(logMessageThree)
 
+			Eventually(messageReceiver.GetMessages).ShouldNot(ContainElement(logMessageThree))
 			Consistently(messageReceiver.GetMessages).ShouldNot(ContainElement(logMessageThree))
 		})
 
@@ -147,6 +147,8 @@ var _ = Describe("Logs", func() {
 
 			errorThree := errors.New("error 3")
 			go consumer.sendToInboundErrorStream(errorThree)
+
+			Eventually(errorReceiver.GetErrors).ShouldNot(ContainElement(errorThree))
 			Consistently(errorReceiver.GetErrors).ShouldNot(ContainElement(errorThree))
 		})
 	})
@@ -166,5 +168,4 @@ var _ = Describe("Logs", func() {
 			Eventually(doneChan).Should(BeClosed())
 		})
 	})
-
 })

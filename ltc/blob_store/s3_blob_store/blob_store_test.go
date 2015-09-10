@@ -148,7 +148,7 @@ var _ = Describe("BlobStore", func() {
 		It("dowloads the requested path", func() {
 			fakeServer.AppendHandlers(ghttp.CombineHandlers(
 				ghttp.VerifyRequest("GET", "/bucket/some-path/some-object"),
-				ghttp.RespondWith(http.StatusOK, "some data", http.Header{"Content-length": []string{"9"}}),
+				ghttp.RespondWith(http.StatusOK, "some data", http.Header{"Content-Length": []string{"9"}}),
 			))
 
 			pathReader, err := blobStore.Download("some-path/some-object")
