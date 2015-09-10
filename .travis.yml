@@ -6,7 +6,6 @@ language: go
 go:
 - 1.4
 - 1.5
-- tip
 
 before_install:
 - go get -v golang.org/x/tools/cmd/cover
@@ -16,7 +15,7 @@ before_install:
 - export PATH=$HOME/gopath/bin:$PATH
 
 script:
-- ginkgo -r --race --randomizeAllSpecs --failOnPending --skipMeasurements --cover ltc cell-helpers
+- ginkgo -r --randomizeAllSpecs --failOnPending --skipMeasurements --cover ltc cell-helpers
 - test -z "$(go fmt ./ltc/... ./cell-helpers/...)"
 
 after_success:
