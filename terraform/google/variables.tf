@@ -60,3 +60,8 @@ variable "lattice_password" {
 variable "lattice_tar_source" {
     description = "URL or local path of the lattice tar used to deploy your cluster."
 }
+
+variable "lattice_namespace" {
+    description = "Unique prefix for lattice infrastructure components, for deploying multiple clusters with different prefixes."
+    default = "lattice"
+}
