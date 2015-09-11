@@ -28,7 +28,7 @@ func New(config config_package.BlobStoreConfig) *BlobStore {
 			Host:   fmt.Sprintf("%s:%s", config.Host, config.Port),
 			User:   url.UserPassword(config.Username, config.Password),
 		},
-		Client: &http.Client{Timeout: 5 * time.Second},
+		Client: &http.Client{Timeout: 5 * time.Minute},
 	}
 }
 
