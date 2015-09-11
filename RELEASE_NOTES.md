@@ -1,4 +1,2 @@
-# v0.4.1
-
-## SSH to Containers (beta)
+# v0.4.2
 
