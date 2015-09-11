@@ -48,7 +48,7 @@ resource "digitalocean_droplet" "lattice-brain" {
             "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${digitalocean_droplet.lattice-brain.ipv4_address}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"SYSTEM_DOMAIN=${digitalocean_droplet.lattice-brain.ipv4_address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
-  
+
             "sudo apt-get -y install lighttpd lighttpd-mod-webdav",
             "sudo chmod 755 /tmp/install-from-tar",
             "sudo /tmp/install-from-tar brain",
@@ -85,11 +85,6 @@ resource "digitalocean_droplet" "cell" {
         destination = "/tmp/install-from-tar"
     }
 
-    provisioner "file" {
-        source = "${path.module}/../scripts/remote/cell-iptables"
-        destination = "/tmp/cell-iptables"
-    }
-
     provisioner "remote-exec" {
         inline = [
             "sudo apt-get update",
@@ -113,9 +108,8 @@ resource "digitalocean_droplet" "cell" {
             "sudo sh -c 'echo \"LATTICE_CELL_ID=cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
 
-            "sudo chmod +x /tmp/install-from-tar /tmp/cell-iptables",
-            "sudo /tmp/install-from-tar cell",
-            "sudo /tmp/cell-iptables ${digitalocean_droplet.lattice-brain.ipv4_address}",
+            "sudo chmod +x /tmp/install-from-tar",
+            "sudo /tmp/install-from-tar cell"
         ]
     }
 }

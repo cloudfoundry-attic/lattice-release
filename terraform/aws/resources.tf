@@ -160,11 +160,6 @@ resource "aws_instance" "cell" {
         destination = "/tmp/install-from-tar"
     }
 
-    provisioner "file" {
-        source = "${path.module}/../scripts/remote/cell-iptables"
-        destination = "/tmp/cell-iptables"
-    }
-
     provisioner "remote-exec" {
         inline = [
             "sudo mkdir -p /var/lattice/setup",
@@ -173,9 +168,8 @@ resource "aws_instance" "cell" {
             "sudo sh -c 'echo \"LATTICE_CELL_ID=cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
 
-            "sudo chmod +x /tmp/install-from-tar /tmp/cell-iptables",
-            "sudo /tmp/install-from-tar cell",
-            "sudo /tmp/cell-iptables ${aws_instance.lattice-brain.private_ip}",
+            "sudo chmod +x /tmp/install-from-tar",
+            "sudo /tmp/install-from-tar cell"
         ]
     }
 }

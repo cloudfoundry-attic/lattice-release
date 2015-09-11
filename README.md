@@ -212,8 +212,6 @@ This repository contains several [Terraform](https://www.terraform.io/) template
   v0.3.0  | Terraform 0.6.1
   v0.2.7  | Terraform 0.6.1
 
-> As of v0.4.1, direct access to Lattice cells will be restricted to private addresses within the cluster.
-
 ## Deploying
 
 Here are some step-by-step instructions for deploying a Lattice cluster via Terraform:
