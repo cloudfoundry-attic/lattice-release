@@ -10,25 +10,22 @@ module "lattice-google" {
     # lattice_password = "<CHANGE-ME>"
 
     # Path to the JSON file used to describe your account credentials, downloaded from Google Cloud Console
-    # gce_account_file = "<CHANGE-ME>"
+    gce_account_file = "<CHANGE-ME>"
 
     # The name of the project to apply any resources to
-    # gce_project = "<CHANGE-ME>"
+    gce_project = "<CHANGE-ME>"
 
     # SSH user
-    # gce_ssh_user = "<CHANGE-ME>"
+    gce_ssh_user = "<CHANGE-ME>"
 
     # Path to the SSH private key file
-    # gce_ssh_private_key_file = "<CHANGE-ME>"
+    gce_ssh_private_key_file = "<CHANGE-ME>"
 
-    # The number of Lattice Cells to launch (optional, default: 1)
-    # num_cells = "1"
+    # The number of Lattice Cells to launch
+    num_cells = "1"
 
-    # Google Compute Engine zone (optional, default: "us-central1-a")
-    # gce_zone = "us-central1-a"
-
-    # Namespace (optional, default: "lattice")
-    # lattice_namespace = "lattice"
+    # Google Compute Engine zone (optional)
+    # gce_zone = "<CHANGE-ME>"
 }
 
 output "lattice_target" {
