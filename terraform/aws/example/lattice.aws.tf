@@ -10,22 +10,22 @@ module "lattice-aws" {
     # lattice_password = "<CHANGE-ME>"
 
     # AWS access key
-    # aws_access_key = "<CHANGE-ME>"
+    aws_access_key = "<CHANGE-ME>"
 
     # AWS secret key
-    # aws_secret_key = "<CHANGE-ME>"
+    aws_secret_key = "<CHANGE-ME>"
 
     # The SSH key name to use for the instances
-    # aws_key_name = "<CHANGE-ME>"
+    aws_key_name = "<CHANGE-ME>"
 
     # Path to the SSH private key file
-    # aws_ssh_private_key_file = "<CHANGE-ME>"
+    aws_ssh_private_key_file = "<CHANGE-ME>"
 
-    # The number of Lattice Cells to launch (optional, default: "3")
-    # num_cells = "3"
+    # The number of Lattice Cells to launch
+    num_cells = "3"
 
-    # AWS region (optional, default: "us-east-1")
-    # aws_region = "us-east-1"
+    # AWS region (optional)
+    # aws_region = "<CHANGE-ME>"
 }
 
 output "lattice_target" {

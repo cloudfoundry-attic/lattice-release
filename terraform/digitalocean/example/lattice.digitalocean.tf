@@ -10,19 +10,19 @@ module "lattice-digitalocean" {
     # lattice_password = "<CHANGE-ME>"
 
     # Digital Ocean API token
-    # do_token = "<CHANGE-ME>"
+    do_token = "<CHANGE-ME>"
 
-    # SSH public key ID. Get the key ID from https://developers.digitalocean.com/documentation/v1/ssh-keys/
-    # do_ssh_public_key_id = "<CHANGE-ME>"
+    # SSH public key id. Get the key ID from https://developers.digitalocean.com/documentation/v1/ssh-keys/
+    do_ssh_public_key_id = "<CHANGE-ME>"
 
     # Path to the SSH private key file. This needs to match the public key id defined above
-    # do_ssh_private_key_file = "<CHANGE-ME>"
+    do_ssh_private_key_file = "<CHANGE-ME>"
 
-    # The number of Lattice Cells to launch (optional, default: "3")
-    # num_cells = "3"
+    # The number of Lattice Cells to launch
+    num_cells = "3"
 
-    # Digital Ocean region (optional, default: "nyc2")
-    # do_region = "nyc2"
+    # Digital Ocean region (optional)
+    # do_region = "<CHANGE-ME>"
 }
 
 output "lattice_target" {
