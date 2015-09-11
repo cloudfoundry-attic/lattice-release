@@ -29,8 +29,8 @@ func (consumer *fakeConsumer) TailingLogs(appGuid string, authToken string, outp
 	for {
 		select {
 		case <-consumer.stopChan:
-			defer close(errorChan)
-			defer close(outputChan)
+			close(errorChan)
+			close(outputChan)
 			return
 		case err := <-consumer.inboundErrorStream:
 			errorChan <- err
@@ -41,7 +41,7 @@ func (consumer *fakeConsumer) TailingLogs(appGuid string, authToken string, outp
 }
 
 func (consumer *fakeConsumer) Close() error {
-	defer close(consumer.stopChan)
+	consumer.stopChan <- struct{}{}
 	return nil
 }
 
@@ -123,7 +123,6 @@ var _ = Describe("Logs", func() {
 			logMessageThree := &events.LogMessage{Message: []byte("Message 3")}
 			go consumer.sendToInboundLogStream(logMessageThree)
 
-			Eventually(messageReceiver.GetMessages).ShouldNot(ContainElement(logMessageThree))
 			Consistently(messageReceiver.GetMessages).ShouldNot(ContainElement(logMessageThree))
 		})
 
@@ -148,7 +147,6 @@ var _ = Describe("Logs", func() {
 			errorThree := errors.New("error 3")
 			go consumer.sendToInboundErrorStream(errorThree)
 
-			Eventually(errorReceiver.GetErrors).ShouldNot(ContainElement(errorThree))
 			Consistently(errorReceiver.GetErrors).ShouldNot(ContainElement(errorThree))
 		})
 	})
