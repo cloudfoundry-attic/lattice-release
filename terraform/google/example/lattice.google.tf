@@ -21,7 +21,7 @@ module "lattice-google" {
     # Path to the SSH private key file
     # gce_ssh_private_key_file = "<CHANGE-ME>"
 
-    # The number of Lattice Cells to launch (optional, default: 1)
+    # The number of Lattice Cells to launch (optional, default: "1")
     # num_cells = "1"
 
     # Google Compute Engine zone (optional, default: "us-central1-a")
