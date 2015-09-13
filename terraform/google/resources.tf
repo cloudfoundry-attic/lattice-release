@@ -1,10 +1,10 @@
 resource "google_compute_network" "lattice-network" {
-    name = "lattice"
+    name = "${var.lattice_namespace}-network"
     ipv4_range = "${var.gce_ipv4_range}"
 }
 
 resource "google_compute_firewall" "lattice-network" {
-    name = "lattice"
+    name = "${var.lattice_namespace}-firewall"
     network = "${google_compute_network.lattice-network.name}"
     source_ranges = ["0.0.0.0/0"]
     allow {
@@ -19,12 +19,12 @@ resource "google_compute_firewall" "lattice-network" {
 }
 
 resource "google_compute_address" "lattice-brain" {
-    name = "lattice-brain"
+    name = "${var.lattice_namespace}-brain"
 }
 
 resource "google_compute_instance" "lattice-brain" {
     zone = "${var.gce_zone}"
-    name = "lattice-brain"
+    name = "${var.lattice_namespace}-brain"
     tags = ["lattice"]
     description = "Lattice Brain"
     machine_type = "${var.gce_machine_type_brain}"
@@ -91,7 +91,7 @@ resource "google_compute_instance" "lattice-brain" {
 resource "google_compute_instance" "cell" {
     count = "${var.num_cells}"
     zone  = "${var.gce_zone}"
-    name  = "cell-${count.index}"
+    name = "${var.lattice_namespace}-cell-${count.index}"
     tags  = ["lattice"]
     description = "Lattice Cell ${count.index}"
     machine_type = "${var.gce_machine_type_cell}"
@@ -145,7 +145,7 @@ resource "google_compute_instance" "cell" {
             "sudo mkdir -p /var/lattice/setup/",
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${google_compute_address.lattice-brain.address}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"SYSTEM_DOMAIN=${google_compute_address.lattice-brain.address}.xip.io\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"LATTICE_CELL_ID=cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
+            "sudo sh -c 'echo \"LATTICE_CELL_ID=${var.lattice_namespace}-cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
 
             "sudo chmod +x /tmp/install-from-tar",
