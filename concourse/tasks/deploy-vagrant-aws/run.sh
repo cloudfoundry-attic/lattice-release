@@ -4,9 +4,6 @@ set -x -e
 
 export LATTICE_DIR=$PWD/lattice
 export AWS_SSH_PRIVATE_KEY_PATH=$PWD/vagrant.pem
-export VAGRANT_TMP_DIR=$PWD/vagrant-tmp
-
-mkdir -p $VAGRANT_TMP_DIR
 
 cat <<< "$AWS_SSH_PRIVATE_KEY" > "$AWS_SSH_PRIVATE_KEY_PATH"
 
@@ -19,10 +16,8 @@ done
 
 vagrant box add lattice/ubuntu-trusty-64 --provider=aws
 
-cp lattice-tar-build/lattice-*.tgz $VAGRANT_TMP_DIR/lattice.tgz
-cp lattice/Vagrantfile $VAGRANT_TMP_DIR/
-
-pushd $VAGRANT_TMP_DIR
+cp lattice-tar-build/lattice-*.tgz $LATTICE_DIR/lattice.tgz
+pushd $LATTICE_DIR
   vagrant up --provider=aws
   export $(vagrant ssh -c "grep SYSTEM_DOMAIN /var/lattice/setup/lattice-environment" | egrep -o '(SYSTEM_DOMAIN=.+\.io)')
 popd
