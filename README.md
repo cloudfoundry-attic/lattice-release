@@ -21,6 +21,8 @@ Lattice is based on a number of open source [Cloud Foundry](http://cloudfoundry.
 - [Loggregator](https://github.com/cloudfoundry/loggregator) aggregates and streams application logs
 - [Gorouter](https://github.com/cloudfoundry/gorouter) provides http load-balancing
 
+### Demoing Lattice with Redis at Spring One? Please see [Troubleshooting](#troubleshooting).
+
 ## Get Lattice
 
 Visit [Lattice Releases](https://github.com/cloudfoundry-incubator/lattice/releases) or our [Nightly Bundles](https://lattice.s3.amazonaws.com/nightly/index.html) page to download one of our bundles.  These include both the `ltc` CLI for the appropriate architecture, as well as the Vagrantfile and Terraform examples for a given release or nightly build.
@@ -127,6 +129,18 @@ vagrant plugin install vagrant-proxyconf
 Then proceed with `http_proxy=http://PROXY_IP:PROXY_PORT vagrant up`.
 
 ## Troubleshooting
+
+### Redis Docker hub image incompatibility
+
+As of September 2015, Lattice is incompatible with most tags listed on the [redis](https://hub.docker.com/_/redis/) DockerHub registry. We are actively investigating the issue. In the meantime, please use the `3.0.1` tag:
+
+```
+ltc create redis redis:3.0.1 --run-as-root --memory-mb=256 --tcp-routes=6379:6379 --monitor-command="redis-cli --scan"
+```
+
+```
+redis-cli -h 192.168.11.11
+```
 
 ### No such host errors
 
