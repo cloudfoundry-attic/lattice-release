@@ -274,6 +274,7 @@ func (runner *clusterTestRunner) buildDroplet(timeout time.Duration, dropletName
 
 	expectExit(timeout, session)
 	Expect(session.Out).To(gbytes.Say("Submitted build of " + dropletName))
+	Expect(session.Out).NotTo(gbytes.Say("use of closed network connection"))
 }
 
 func (runner *clusterTestRunner) launchDroplet(timeout time.Duration, appName, dropletName string, args ...string) {
