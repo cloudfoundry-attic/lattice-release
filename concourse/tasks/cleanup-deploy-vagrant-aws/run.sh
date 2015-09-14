@@ -3,7 +3,7 @@
 set -x -e
 
 export AWS_SSH_PRIVATE_KEY_PATH=$PWD/deploy-vagrant-aws/vagrant.pem
-export VAGRANT_TMP_DIR=$PWD/deploy-vagrant-aws/vagrant-tmp
+export LATTICE_DIR=$PWD/deploy-vagrant-aws/lattice
 cat <<< "$AWS_SSH_PRIVATE_KEY" > "$AWS_SSH_PRIVATE_KEY_PATH"
 
 curl -LO https://dl.bintray.com/mitchellh/vagrant/vagrant_1.7.4_x86_64.deb
@@ -15,4 +15,4 @@ done
 
 vagrant box add lattice/ubuntu-trusty-64 --provider=aws
 
-( cd $VAGRANT_TMP_DIR && vagrant destroy -f )
+( cd $LATTICE_DIR && vagrant destroy -f )
