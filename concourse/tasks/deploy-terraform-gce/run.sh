@@ -10,6 +10,9 @@ mkdir -p $TERRAFORM_TMP_DIR
 cat <<< "$GCE_SSH_PRIVATE_KEY" > $TERRAFORM_TMP_DIR/key.pem
 cat <<< "$GCE_ACCOUNT_FILE_JSON" > $TERRAFORM_TMP_DIR/gce-account.json
 
+apt-get install -y uuid
+UUID=$(uuid)
+
 cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
 {
     "module": {
@@ -21,7 +24,8 @@ cat << EOF > $TERRAFORM_TMP_DIR/lattice.tf
             "gce_ssh_user": "pivotal",
             "gce_ssh_private_key_file": "./key.pem",
             "gce_project": "${GCE_PROJECT_NAME}",
-            "gce_account_file": "./gce-account.json"
+            "gce_account_file": "./gce-account.json",
+            "lattice_namespace": "concourse-${UUID}"
         }
     },
     "output": {
