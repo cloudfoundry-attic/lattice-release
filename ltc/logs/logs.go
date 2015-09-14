@@ -13,36 +13,39 @@ type logConsumer interface {
 }
 
 type logReader struct {
-	consumer   logConsumer
-	outputChan chan *events.LogMessage
+	consumer logConsumer
+	stopChan chan struct{}
 }
 
 func NewLogReader(consumer logConsumer) LogReader {
 	return &logReader{
 		consumer: consumer,
+		stopChan: make(chan struct{}),
 	}
 }
 
 func (l *logReader) TailLogs(appGuid string, logCallback func(*events.LogMessage), errorCallback func(error)) {
-	l.outputChan = make(chan *events.LogMessage, 10)
+	outputChan := make(chan *events.LogMessage, 10)
 	errorChan := make(chan error, 10)
 
-	go l.consumer.TailingLogs(appGuid, "", l.outputChan, errorChan)
+	go l.consumer.TailingLogs(appGuid, "", outputChan, errorChan)
 
-	l.readChannels(errorChan, logCallback, errorCallback)
+	l.readChannels(outputChan, errorChan, logCallback, errorCallback)
 }
 
 func (l *logReader) StopTailing() {
-	close(l.outputChan)
+	l.stopChan <- struct{}{}
 	l.consumer.Close()
 }
 
-func (l *logReader) readChannels(errorChan <-chan error, logCallback func(*events.LogMessage), errorCallback func(error)) {
+func (l *logReader) readChannels(outputChan <-chan *events.LogMessage, errorChan <-chan error, logCallback func(*events.LogMessage), errorCallback func(error)) {
 	for {
 		select {
+		case <-l.stopChan:
+			return
 		case err := <-errorChan:
 			errorCallback(err)
-		case logMessage, ok := (<-l.outputChan):
+		case logMessage, ok := (<-outputChan):
 			if !ok {
 				return
 			}
