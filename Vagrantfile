@@ -1,13 +1,11 @@
 Vagrant.configure("2") do |config|
-
   if Vagrant.has_plugin?("vagrant-proxyconf")
     config.proxy.http     = ENV["http_proxy"]
     config.proxy.https    = ENV["https_proxy"]
     config.proxy.no_proxy = [
-      "localhost", 
-      "127.0.0.1", 
-      (ENV["LATTICE_SYSTEM_IP"] || "192.168.11.11"), 
-      (ENV["LATTICE_SYSTEM_DOMAIN"] || "192.168.11.11.xip.io"), 
+      "localhost", "127.0.0.1",
+      (ENV["LATTICE_SYSTEM_IP"] || "192.168.11.11"),
+      (ENV["LATTICE_SYSTEM_DOMAIN"] || "192.168.11.11.xip.io"),
       ".consul"
     ].join(',')
   end
@@ -87,27 +85,6 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  provision_required = (!ARGV.nil? && ['up', 'provision', 'reload'].include?(ARGV[0]))
-  if provision_required && !File.exists?(File.join(File.dirname(__FILE__), "lattice.tgz"))
-    lattice_url = defined?(LATTICE_URL) && LATTICE_URL
-
-    if !lattice_url
-      puts "Could not determine Lattice version, and no local lattice.tgz present.\n"
-      puts '*******************************************************************************'
-      puts 'As of v0.4.0, the process for deploying Lattice via Vagrant has changed.'
-      puts 'Please use the process documented here: http://github.com/cloudfoundry-incubator/lattice#launching-with-vagrant'
-      puts '*******************************************************************************'
-      puts "\n"*3
-      exit(1)
-    end
-
-    puts 'Local lattice.tgz not found, downloading...'
-    unless system('curl', '-sfo', 'lattice.tgz', lattice_url)
-      puts "Failed to download #{lattice_url}."
-      exit(1)
-    end
-  end
-
   config.vm.provision "shell" do |s|
     s.inline = <<-SCRIPT
       tar xzf /vagrant/lattice.tgz --strip-components=2 -C /tmp lattice-build/scripts/install-from-tar
@@ -116,5 +93,53 @@ Vagrant.configure("2") do |config|
       echo "Lattice is now installed and running."
       echo "You may target it using: ltc target ${SYSTEM_DOMAIN}\n"
     SCRIPT
+  end
+end
+
+provision_required = (!ARGV.nil? && ['up', 'provision', 'reload'].include?(ARGV[0]))
+lattice_tgz = File.join(File.dirname(__FILE__), "lattice.tgz")
+lattice_url = defined?(LATTICE_URL) && LATTICE_URL
+
+def download_lattice_tgz(url)
+  unless system('curl', '-sfo', 'lattice.tgz', url)
+    puts "Failed to download #{url}."
+    exit(1)
+  end
+end
+
+if provision_required && File.exists?(lattice_tgz)
+  tgz_version = `tar Oxzf #{lattice_tgz} lattice-build/common/LATTICE_VERSION`.chomp
+  if lattice_url
+    url_version = lattice_url.match(/backend\/lattice-(v.+)\.tgz$/)[1]
+    if tgz_version != url_version
+      puts "Warning: lattice.tgz file version (#{tgz_version}) does not match Vagrantfile version (#{url_version})."
+      puts 'Re-downloading and replacing local lattice.tgz...'
+      download_lattice_tgz(lattice_url)
+    end
+  else
+    repo_version = `git describe --tags --always`.chomp
+    if tgz_version != repo_version && !ENV['IGNORE_VERSION_MISMATCH']
+      puts '*******************************************************************************'
+      puts "Error: lattice.tgz #{tgz_version} != current commit #{repo_version}\n"
+      puts 'The lattice.tgz file was built using a different commit than the current one.'
+      puts 'To ignore this error, set IGNORE_VERSION_MISMATCH=true in your environment.'
+      puts "*******************************************************************************\n"
+      exit(1)
+    end
+  end
+end
+
+if provision_required && !File.exists?(lattice_tgz)
+  if lattice_url
+    puts 'Local lattice.tgz not found, downloading...'
+    download_lattice_tgz(lattice_url)
+  else
+    puts '*******************************************************************************'
+    puts "Could not determine Lattice version, and no local lattice.tgz present.\n"
+    puts 'As of v0.4.0, the process for deploying Lattice via Vagrant has changed.'
+    puts 'Please use the process documented here:'
+    puts "\thttp://github.com/cloudfoundry-incubator/lattice#launching-with-vagrant"
+    puts "*******************************************************************************\n"
+    exit(1)
   end
 end
