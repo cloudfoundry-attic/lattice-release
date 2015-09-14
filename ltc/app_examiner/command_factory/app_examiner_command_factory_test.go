@@ -12,6 +12,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory"
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/fake_terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical/fake_graphical_visualizer"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
@@ -35,6 +36,7 @@ var _ = Describe("CommandFactory", func() {
 		fakeAppExaminer         *fake_app_examiner.FakeAppExaminer
 		outputBuffer            *gbytes.Buffer
 		terminalUI              terminal.UI
+		fakeTerm                *fake_terminal.FakeTerminal
 		fakeClock               *fakeclock.FakeClock
 		osSignalChan            chan os.Signal
 		fakeExitHandler         *fake_exit_handler.FakeExitHandler
@@ -48,6 +50,7 @@ var _ = Describe("CommandFactory", func() {
 		fakeTaskExaminer = &fake_task_examiner.FakeTaskExaminer{}
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
+		fakeTerm = &fake_terminal.FakeTerminal{}
 		osSignalChan = make(chan os.Signal, 1)
 		location, err := time.LoadLocation("Africa/Djibouti")
 		Expect(err).NotTo(HaveOccurred())
@@ -61,7 +64,7 @@ var _ = Describe("CommandFactory", func() {
 		var listAppsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer, systemDomain)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeTerm, fakeClock, fakeExitHandler, nil, fakeTaskExaminer, systemDomain)
 			listAppsCommand = commandFactory.MakeListAppCommand()
 		})
 
@@ -424,7 +427,7 @@ var _ = Describe("CommandFactory", func() {
 		var visualizeCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, fakeGraphicalVisualizer, fakeTaskExaminer, systemDomain)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeTerm, fakeClock, fakeExitHandler, fakeGraphicalVisualizer, fakeTaskExaminer, systemDomain)
 			visualizeCommand = commandFactory.MakeVisualizeCommand()
 		})
 
@@ -573,7 +576,7 @@ var _ = Describe("CommandFactory", func() {
 		}
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer, systemDomain)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeTerm, fakeClock, fakeExitHandler, nil, fakeTaskExaminer, systemDomain)
 			statusCommand = commandFactory.MakeStatusCommand()
 
 			sampleAppInfo = app_examiner.AppInfo{
@@ -630,6 +633,8 @@ var _ = Describe("CommandFactory", func() {
 					},
 				},
 			}
+
+			fakeTerm.GetWindowWidthReturns(9999, nil)
 		})
 
 		It("emits a pretty representation of the DesiredLRP", func() {
@@ -921,18 +926,61 @@ var _ = Describe("CommandFactory", func() {
 							Since:        refreshTime * 1e9,
 						},
 					},
+					EnvironmentVariables: []app_examiner.EnvironmentVariable{
+						{
+							Name:  "VCAP_APPLICATION",
+							Value: `{"application_name":"latty","application_uris":["latty.192.168.11.11.xip.io","latty-8080.192.168.11.11.xip.io"],"name":"latty","uris":["latty.192.168.11.11.xip.io","latty-8080.192.168.11.11.xip.io"],"limits":{"mem":128}}`,
+						},
+					},
 				}
 
 				fakeAppExaminer.AppStatusReturns(refreshAppInfo, nil)
 
+				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
+
 				fakeClock.IncrementBySeconds(1)
 
-				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(25)))
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
 				Eventually(outputBuffer).Should(test_helpers.SayNewLine())
 				roundedTimeSince = roundTime(fakeClock.Now(), time.Unix(0, refreshTime*1e9))
 				Eventually(outputBuffer).Should(test_helpers.Say(roundedTimeSince))
+
+				Consistently(closeChan).ShouldNot(BeClosed())
+			})
+
+			It("calculates the correct height based on terminal width", func() {
+				fakeTerm.GetWindowWidthReturns(200, nil)
+
+				refreshTime := int64(405234567)
+				wrappedAppInfo := app_examiner.AppInfo{
+					DesiredInstances:       1,
+					ActualRunningInstances: 1,
+					ActualInstances: []app_examiner.InstanceInfo{
+						{
+							InstanceGuid: "a0s9f-u9a8sf-aasdioasdjoi",
+							Index:        1,
+							State:        "RUNNING",
+							Since:        refreshTime * 1e9,
+						},
+					},
+					EnvironmentVariables: []app_examiner.EnvironmentVariable{
+						{
+							Name:  "VCAP_APPLICATION",
+							Value: `{"application_name":"latty","application_uris":["latty.192.168.11.11.xip.io","latty-8080.192.168.11.11.xip.io"],"name":"latty","uris":["latty.192.168.11.11.xip.io","latty-8080.192.168.11.11.xip.io"],"limits":{"mem":128}}`,
+						},
+					},
+				}
+
+				fakeAppExaminer.AppStatusReturns(wrappedAppInfo, nil)
+
+				closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate", "2s"})
+
+				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
+
+				fakeClock.IncrementBySeconds(3)
+
+				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(19)))
 
 				Consistently(closeChan).ShouldNot(BeClosed())
 			})
@@ -1001,7 +1049,7 @@ var _ = Describe("CommandFactory", func() {
 		var cellsCommand cli.Command
 
 		BeforeEach(func() {
-			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeClock, fakeExitHandler, nil, fakeTaskExaminer, systemDomain)
+			commandFactory := command_factory.NewAppExaminerCommandFactory(fakeAppExaminer, terminalUI, fakeTerm, fakeClock, fakeExitHandler, nil, fakeTaskExaminer, systemDomain)
 			cellsCommand = commandFactory.MakeCellsCommand()
 		})
 

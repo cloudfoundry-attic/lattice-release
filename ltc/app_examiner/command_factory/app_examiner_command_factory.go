@@ -39,9 +39,15 @@ func (p UInt16Slice) Len() int           { return len(p) }
 func (p UInt16Slice) Less(i, j int) bool { return p[i] < p[j] }
 func (p UInt16Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
+//go:generate counterfeiter -o fake_terminal/fake_terminal.go . Terminal
+type Terminal interface {
+	GetWindowWidth() (uint16, error)
+}
+
 type AppExaminerCommandFactory struct {
 	appExaminer         app_examiner.AppExaminer
 	ui                  terminal.UI
+	term                Terminal
 	clock               clock.Clock
 	exitHandler         exit_handler.ExitHandler
 	graphicalVisualizer graphical.GraphicalVisualizer
@@ -49,8 +55,8 @@ type AppExaminerCommandFactory struct {
 	systemDomain        string
 }
 
-func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, ui terminal.UI, clock clock.Clock, exitHandler exit_handler.ExitHandler, graphicalVisualizer graphical.GraphicalVisualizer, taskExaminer task_examiner.TaskExaminer, systemDomain string) *AppExaminerCommandFactory {
-	return &AppExaminerCommandFactory{appExaminer, ui, clock, exitHandler, graphicalVisualizer, taskExaminer, systemDomain}
+func NewAppExaminerCommandFactory(appExaminer app_examiner.AppExaminer, ui terminal.UI, term Terminal, clock clock.Clock, exitHandler exit_handler.ExitHandler, graphicalVisualizer graphical.GraphicalVisualizer, taskExaminer task_examiner.TaskExaminer, systemDomain string) *AppExaminerCommandFactory {
+	return &AppExaminerCommandFactory{appExaminer, ui, term, clock, exitHandler, graphicalVisualizer, taskExaminer, systemDomain}
 }
 
 func (factory *AppExaminerCommandFactory) MakeListAppCommand() cli.Command {
@@ -296,7 +302,7 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 		return
 	}
 
-	linesWritten := bytes.Count(writer.Bytes(), []byte("\n"))
+	linesWritten := factory.lineCount(writer.Bytes())
 
 	closeChan := make(chan struct{})
 	defer factory.ui.Say(cursor.Show())
@@ -322,9 +328,19 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 			factory.printAppInfo(writer, appInfo)
 			factory.printInstanceSummary(writer, appInfo.ActualInstances)
 			factory.ui.Write(writer.Bytes())
-			linesWritten = bytes.Count(writer.Bytes(), []byte("\n"))
+			linesWritten = factory.lineCount(writer.Bytes())
 		}
 	}
+}
+
+func (factory *AppExaminerCommandFactory) lineCount(buf []byte) int {
+	width, _ := factory.term.GetWindowWidth()
+	lineCount := 0
+	lines := bytes.Split(buf, []byte{'\n'})
+	for _, line := range lines[0 : len(lines)-1] {
+		lineCount += (len(line) / int(width)) + 1
+	}
+	return lineCount
 }
 
 func (factory *AppExaminerCommandFactory) printAppInfo(writer io.Writer, appInfo app_examiner.AppInfo) {

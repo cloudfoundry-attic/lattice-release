@@ -158,7 +158,8 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	appExaminer := app_examiner.New(receptorClient, app_examiner.NewNoaaConsumer(noaaConsumer))
 	graphicalVisualizer := graphical.NewGraphicalVisualizer(appExaminer)
-	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, ui, clock, exitHandler, graphicalVisualizer, taskExaminer, config.Target())
+	dockerTerminal := &app_examiner_command_factory.DockerTerminal{}
+	appExaminerCommandFactory := app_examiner_command_factory.NewAppExaminerCommandFactory(appExaminer, ui, dockerTerminal, clock, exitHandler, graphicalVisualizer, taskExaminer, config.Target())
 
 	appRunnerCommandFactoryConfig := app_runner_command_factory.AppRunnerCommandFactoryConfig{
 		AppRunner:           appRunner,
