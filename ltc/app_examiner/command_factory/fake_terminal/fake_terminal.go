@@ -11,7 +11,7 @@ type FakeTerminal struct {
 	GetWindowWidthStub        func() (uint16, error)
 	getWindowWidthMutex       sync.RWMutex
 	getWindowWidthArgsForCall []struct{}
-	getWindowWidthReturns struct {
+	getWindowWidthReturns     struct {
 		result1 uint16
 		result2 error
 	}
