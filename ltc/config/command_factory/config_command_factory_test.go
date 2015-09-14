@@ -104,7 +104,7 @@ var _ = Describe("CommandFactory", func() {
 				})
 			})
 
-			Context("when a blob store is targeted", func() {
+			Context("when a DAV blob store is targeted", func() {
 				BeforeEach(func() {
 					config.SetBlobStore("blobtarget.com", "8444", "blobUser", "password")
 					Expect(config.Save()).To(Succeed())
@@ -123,6 +123,17 @@ var _ = Describe("CommandFactory", func() {
 					It("only prints the blob store host", func() {
 						Expect(outputBuffer).To(test_helpers.SayLine("Droplet store:\tblobtarget.com:8444"))
 					})
+				})
+			})
+
+			Context("when a S3 blob store is targeted", func() {
+				BeforeEach(func() {
+					config.SetS3BlobStore("access", "secret", "bucket", "region")
+					Expect(config.Save()).To(Succeed())
+				})
+
+				It("outputs the s3 bucket and region", func() {
+					Expect(outputBuffer).To(test_helpers.SayLine("Droplet store:\ts3://bucket (region)"))
 				})
 			})
 		})

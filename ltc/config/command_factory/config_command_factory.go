@@ -151,15 +151,21 @@ func (factory *ConfigCommandFactory) printTarget() {
 }
 
 func (factory *ConfigCommandFactory) printBlobTarget() {
-	blobStore := factory.config.BlobStore()
-	if blobStore.Host == "" {
-		factory.ui.SayLine("\tNo droplet store specified.")
-		return
+	var endpoint string
+	if factory.config.ActiveBlobStore() == config.S3BlobStore {
+		endpoint = fmt.Sprintf("s3://%s (%s)", factory.config.S3BlobStore().BucketName, factory.config.S3BlobStore().Region)
+	} else {
+		blobStore := factory.config.BlobStore()
+		if blobStore.Host == "" {
+			factory.ui.SayLine("\tNo droplet store specified.")
+			return
+		}
+
+		endpoint = fmt.Sprintf("%s:%s", blobStore.Host, blobStore.Port)
+		if username := blobStore.Username; username != "" {
+			endpoint = fmt.Sprintf("%s@%s", username, endpoint)
+		}
 	}
 
-	endpoint := fmt.Sprintf("%s:%s", blobStore.Host, blobStore.Port)
-	if username := blobStore.Username; username != "" {
-		endpoint = fmt.Sprintf("%s@%s", username, endpoint)
-	}
 	factory.ui.SayLine(fmt.Sprintf("Droplet store:\t%s", endpoint))
 }
