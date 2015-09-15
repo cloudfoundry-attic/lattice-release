@@ -51,12 +51,6 @@ var _ = Describe("BlobStore", func() {
 		}
 	})
 
-	Describe(".New", func() {
-		It("creates a BlobStore with a timeout of 5 seconds", func() {
-			Expect(dav_blob_store.New(blobTargetInfo).Client.Timeout).To(Equal(5 * time.Minute))
-		})
-	})
-
 	Describe("#List", func() {
 		var responseBodyRoot string
 		BeforeEach(func() {
@@ -546,6 +540,9 @@ var _ = Describe("BlobStore", func() {
 		})
 
 		It("uses the correct HTTP client with a specified timeout", func() {
+			defaultTransport := blobStore.Client.Transport
+			defer func() { blobStore.Client.Transport = defaultTransport }()
+
 			usedClient := false
 			blobStore.Client.Transport = &http.Transport{
 				Proxy: func(request *http.Request) (*url.URL, error) {
