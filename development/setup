@@ -53,7 +53,7 @@ pushd $GOPATH/src/github.com/cloudfoundry-incubator >/dev/null
   popd >/dev/null
 
   pushd lattice/ltc >/dev/null
-    godep restore
+    godep restore 2>/dev/null || godep restore  # for docker...
     go install
   popd >/dev/null
 popd >/dev/null
