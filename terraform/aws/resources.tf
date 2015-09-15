@@ -75,11 +75,11 @@ resource "aws_eip" "ip" {
         key_file = "${var.aws_ssh_private_key_file}"
     }
     provisioner "remote-exec" {
-        inline = [       
+        inline = [
           "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_eip.ip.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
           "sudo restart receptor",
           "sudo restart trafficcontroller"
-        ]   
+        ]
     }
 }
 

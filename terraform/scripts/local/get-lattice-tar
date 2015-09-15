@@ -1,10 +1,26 @@
 #!/bin/bash
 
-[ -f ".terraform/lattice.tgz" ] && exit 0
-
 if [ -f "$1" ]; then
-    LATTICE_TAR_PATH=$(cd $(dirname "$1") && pwd )/$(basename "$1")
-    ln -sf "$LATTICE_TAR_PATH" .terraform/lattice.tgz
-else
-    curl -sL -o .terraform/lattice.tgz "$1"
+  LATTICE_TAR_PATH=$(cd $(dirname "$1") && pwd )/$(basename "$1")
+  ln -sf "$LATTICE_TAR_PATH" .terraform/lattice.tgz
+  exit 0
 fi
+
+if [ `echo "$1" | grep -E '^.+://.+'` ]; then
+  if [ -f ".terraform/lattice.tgz" ]; then
+    URL_VERSION=`echo "$1" | sed -E 's/https?:\/\/.+\/backend\/lattice-(v.+)\.tgz/\1/'`
+    LATTICE_TAR_VERSION=`tar Oxzf .terraform/lattice.tgz lattice-build/common/LATTICE_VERSION`
+    if [[ $URL_VERSION == $LATTICE_TAR_VERSION ]]; then
+      exit 0
+    else
+      echo "WARNING: url version ($URL_VERSION) does not match cached lattice.tgz version ($LATTICE_TAR_VERSION)."
+      echo "Overwriting cached file..."
+    fi
+  fi
+
+  curl -sL -o .terraform/lattice.tgz "$1"
+  exit 0
+fi
+
+echo "ERROR: get-lattice-tar requires a local file or valid URL as an argument"
+exit 1
