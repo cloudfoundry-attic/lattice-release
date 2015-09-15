@@ -88,10 +88,10 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		Describe("ParseTcpRoutes", func() {
 			It("parses delimited tcp routes into the TcpRoutes struct", func() {
-				tcpRoutes, err := factory.ParseTcpRoutes("50000:6379,50001:5222")
+				tcpRoutes, err := factory.ParseTcpRoutes("50000:7777,50001:5222")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(tcpRoutes).To(ContainExactly(app_runner.TcpRoutes{
-					{ExternalPort: 50000, Port: 6379},
+					{ExternalPort: 50000, Port: 7777},
 					{ExternalPort: 50001, Port: 5222},
 				}))
 			})
@@ -130,6 +130,12 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				})
 			})
 
+			Context("when a reserved external port is passed", func() {
+				It("errors out", func() {
+					_, err := factory.ParseTcpRoutes("7777:1234")
+					Expect(err).To(MatchError("Port 7777 is reserved by Lattice.\nSee: http://lattice.cf/docs/troubleshooting#what-external-ports-are-unavailable-to-bind-as-tcp-routes"))
+				})
+			})
 		})
 
 		Describe("ParseRouteOverrides", func() {

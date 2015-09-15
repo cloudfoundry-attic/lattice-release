@@ -580,8 +580,8 @@ var _ = Describe("CommandFactory", func() {
 			launchDropletCommand = commandFactory.MakeLaunchDropletCommand()
 		})
 
-		Context("when a malformed tcp routes flag is passed", func() {
-			It("errors out when the container port is not an int", func() {
+		Context("when a malformed tcp route passed", func() {
+			It("errors out", func() {
 				args := []string{
 					"cool-web-app",
 					"superfun/app",
@@ -595,23 +595,8 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.InvalidPortErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
-
-			It("errors out when the tcp route is incomplete", func() {
-				args := []string{
-					"cool-web-app",
-					"superfun/app",
-					"--tcp-routes=5222,50000",
-					"--",
-					"/start-me-please",
-				}
-				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
-
-				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.MalformedTcpRouteErrorMessage))
-				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-			})
-
 		})
+
 		It("launches the specified droplet with tcp routes", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 

@@ -22,10 +22,9 @@ import (
 	"github.com/pivotal-golang/lager"
 )
 
-type pollingAction string
-
 const (
 	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a positive integer less than 65536."
+	ReservedPortErrorMessage         = "Port %d is reserved by Lattice.\nSee: http://lattice.cf/docs/troubleshooting#what-external-ports-are-unavailable-to-bind-as-tcp-routes"
 	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format port:route"
 	MalformedTcpRouteErrorMessage    = "Malformed TCP route. A TCP Route must be of the format container_Port:external_port"
 	MustSetMonitoredPortErrorMessage = "Must set monitor-port when specifying multiple exposed ports unless --no-monitor is set."
@@ -36,6 +35,14 @@ const (
 	pollingStart pollingAction = "start"
 	pollingScale pollingAction = "scale"
 )
+
+var reservedPorts []uint16 = []uint16{
+	22, 53, 80, 1169, 1234, 1700, 2222, 2380, 4001, 4222, 4223, 7001, 7777,
+	8070, 8080, 8081, 8082, 8090, 8300, 8301, 8302, 8400, 8444, 8500, 8888,
+	8889, 9016, 9999, 17009, 17014, 17110, 17111, 17222, 44445,
+}
+
+type pollingAction string
 
 type AppRunnerCommandFactory struct {
 	AppRunner           app_runner.AppRunner
@@ -475,6 +482,12 @@ func (factory *AppRunnerCommandFactory) ParseTcpRoutes(tcpRoutesFlag string) (ap
 		containerPort, err := getPort(portsArr[1])
 		if err != nil {
 			return nil, err
+		}
+
+		for _, reservedPort := range reservedPorts {
+			if externalPort == reservedPort {
+				return nil, errors.New(fmt.Sprintf(ReservedPortErrorMessage, externalPort))
+			}
 		}
 
 		tcpRoutes = append(tcpRoutes, app_runner.TcpRoute{ExternalPort: externalPort, Port: containerPort})
