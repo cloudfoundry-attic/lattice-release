@@ -268,7 +268,7 @@ func (factory *DropletRunnerCommandFactory) importDroplet(context *cli.Context) 
 	dropletPath := context.Args().Get(1)
 	metadataPath := context.Args().Get(2)
 	if dropletName == "" || dropletPath == "" || metadataPath == "" {
-		factory.UI.SayIncorrectUsage("")
+		factory.UI.SayIncorrectUsage("DROPLET_NAME,DROPLET_PATH and METADATA_PATH are required")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
@@ -349,7 +349,7 @@ func (factory *DropletRunnerCommandFactory) buildDroplet(context *cli.Context) {
 	buildpack := context.Args().Get(1)
 
 	if dropletName == "" || buildpack == "" {
-		factory.UI.SayIncorrectUsage("")
+		factory.UI.SayIncorrectUsage("DROPLET_NAME and BUILDPACK_URL are required")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
@@ -577,6 +577,11 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 
 func (factory *DropletRunnerCommandFactory) removeDroplet(context *cli.Context) {
 	dropletName := context.Args().First()
+	if dropletName == "" {
+		factory.UI.SayIncorrectUsage("DROPLET_NAME is required")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
 
 	err := factory.dropletRunner.RemoveDroplet(dropletName)
 	if err != nil {
@@ -591,7 +596,7 @@ func (factory *DropletRunnerCommandFactory) removeDroplet(context *cli.Context) 
 func (factory *DropletRunnerCommandFactory) exportDroplet(context *cli.Context) {
 	dropletName := context.Args().First()
 	if dropletName == "" {
-		factory.UI.SayIncorrectUsage("")
+		factory.UI.SayIncorrectUsage("DROPLET_NAME is required")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
