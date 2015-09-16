@@ -52,7 +52,7 @@ RUN \
   GOOS=linux GOARCH=amd64 CGO_ENABLED=1 ./make.bash --no-clean && \
   GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 ./make.bash --no-clean; \
   mkdir -p ~/go/src; \
-  GOBIN=/usr/local/bin GOPATH=~/go go get -v github.com/dajulia3/godep; \
+  GOBIN=/usr/local/bin GOPATH=~/go go get -v github.com/tools/godep; \
   rm -rf ~/go
 
 RUN \

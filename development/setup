@@ -38,7 +38,7 @@ pushd $LATTICE_DIR/build >/dev/null
   rm -rf $GOPATH/src/github.com/docker/docker
 popd >/dev/null
 
-go get github.com/dajulia3/godep
+go get github.com/tools/godep
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/maxbrunsfeld/counterfeiter
 
