@@ -160,8 +160,8 @@ func (e *appExaminer) ListApps() ([]AppInfo, error) {
 func (e *appExaminer) AppStatus(appName string) (AppInfo, error) {
 	desiredLRP, err := e.receptorClient.GetDesiredLRP(appName)
 	if err != nil {
-		receptorError := err.(receptor.Error)
-		if receptorError.Type == receptor.DesiredLRPNotFound {
+		receptorError, ok := err.(receptor.Error)
+		if ok && receptorError.Type == receptor.DesiredLRPNotFound {
 			desiredLRP = receptor.DesiredLRPResponse{}
 		} else {
 			return AppInfo{}, err
