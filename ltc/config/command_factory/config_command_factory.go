@@ -34,6 +34,10 @@ func (factory *ConfigCommandFactory) MakeTargetCommand() cli.Command {
 			Name:  "s3",
 			Usage: "Target an S3 bucket as the droplet store",
 		},
+		cli.BoolFlag{
+			Name:  "domain, d",
+			Usage: "Print the currently targeted lattice deployment's domain name",
+		},
 	}
 
 	var targetCommand = cli.Command{
@@ -51,10 +55,17 @@ func (factory *ConfigCommandFactory) MakeTargetCommand() cli.Command {
 func (factory *ConfigCommandFactory) target(context *cli.Context) {
 	target := context.Args().First()
 	s3Enabled := context.Bool("s3")
+	domainOnlyFlag := context.Bool("domain")
 
 	if target == "" {
-		factory.printTarget()
-		factory.printBlobTarget()
+		if domainOnlyFlag {
+			if factory.config.Target() != "" {
+				factory.ui.SayLine(factory.config.Target())
+			}
+		} else {
+			factory.printTarget()
+			factory.printBlobTarget()
+		}
 		return
 	}
 

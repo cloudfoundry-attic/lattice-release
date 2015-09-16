@@ -138,6 +138,27 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
+		Context("when --domain is pased", func() {
+			JustBeforeEach(func() {
+				test_helpers.ExecuteCommandWithArgs(targetCommand, []string{"--domain"})
+			})
+
+			It("outputs just the target host", func() {
+				Expect(string(outputBuffer.Contents())).To(Equal("oldtarget.com\n"))
+			})
+
+			Context("when no target is set", func() {
+				BeforeEach(func() {
+					config.SetTarget("")
+					Expect(config.Save()).To(Succeed())
+				})
+
+				It("informs the user the target is not set", func() {
+					Expect(string(outputBuffer.Contents())).To(BeEmpty())
+				})
+			})
+		})
+
 		Context("when initially connecting to the receptor without authentication", func() {
 			BeforeEach(func() {
 				fakeTargetVerifier.VerifyTargetReturns(true, true, nil)
