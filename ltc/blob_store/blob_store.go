@@ -31,6 +31,11 @@ type Verifier interface {
 	Verify(config *config_package.Config) (authorized bool, err error)
 }
 
+type BlobStoreVerifier struct {
+	DAVBlobStoreVerifier Verifier
+	S3BlobStoreVerifier  Verifier
+}
+
 func New(config *config_package.Config) BlobStore {
 	switch config.ActiveBlobStore() {
 	case config_package.DAVBlobStore:
@@ -42,13 +47,13 @@ func New(config *config_package.Config) BlobStore {
 	return dav_blob_store.New(config.BlobStore())
 }
 
-func NewVerifier(config *config_package.Config) Verifier {
+func (v BlobStoreVerifier) Verify(config *config_package.Config) (authorized bool, err error) {
 	switch config.ActiveBlobStore() {
 	case config_package.DAVBlobStore:
-		return dav_blob_store.Verifier{}
+		return v.DAVBlobStoreVerifier.Verify(config)
 	case config_package.S3BlobStore:
-		return &s3_blob_store.Verifier{}
+		return v.S3BlobStoreVerifier.Verify(config)
 	}
 
-	return dav_blob_store.Verifier{}
+	panic("unknown blob store type")
 }

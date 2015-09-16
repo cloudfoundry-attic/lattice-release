@@ -13,6 +13,8 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/dav_blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/s3_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/cluster_test"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
@@ -195,7 +197,10 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 	clusterTestCommandFactory := cluster_test_command_factory.NewClusterTestCommandFactory(clusterTestRunner)
 
 	blobStore := blob_store.New(config)
-	blobStoreVerifier := blob_store.NewVerifier(config)
+	blobStoreVerifier := blob_store.BlobStoreVerifier{
+		DAVBlobStoreVerifier: dav_blob_store.Verifier{},
+		S3BlobStoreVerifier:  s3_blob_store.Verifier{},
+	}
 
 	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, appExaminer)
 	cfIgnore := cf_ignore.New()

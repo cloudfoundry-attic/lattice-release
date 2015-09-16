@@ -6,9 +6,15 @@ import (
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/dav_blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/fake_blob_store_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/s3_blob_store"
-	"github.com/cloudfoundry-incubator/lattice/ltc/config"
+	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
+
+//go:generate counterfeiter -o fake_blob_store_verifier/fake_blob_store_verifier.go . Verifier
+type Verifier interface {
+	Verify(config *config_package.Config) (authorized bool, err error)
+}
 
 var _ = Describe("BlobStoreManager", func() {
 	Describe(".New", func() {
@@ -16,7 +22,7 @@ var _ = Describe("BlobStoreManager", func() {
 
 		Context("when a dav blob store is targeted", func() {
 			BeforeEach(func() {
-				config := config.New(nil)
+				config := config_package.New(nil)
 				config.SetBlobStore("some-host", "some-port", "some-user", "some-password")
 				blobStore = blob_store.New(config)
 			})
@@ -30,7 +36,7 @@ var _ = Describe("BlobStoreManager", func() {
 
 		Context("when an s3 blob store is targeted", func() {
 			BeforeEach(func() {
-				config := config.New(nil)
+				config := config_package.New(nil)
 				config.SetS3BlobStore("", "", "some-bucket-name", "")
 				blobStore = blob_store.New(config)
 			})
@@ -43,32 +49,49 @@ var _ = Describe("BlobStoreManager", func() {
 		})
 	})
 
-	Describe(".NewVerifier", func() {
-		var verifier blob_store.Verifier
+	Describe("#Verify", func() {
+		var (
+			verifier        blob_store.BlobStoreVerifier
+			fakeDAVVerifier *fake_blob_store_verifier.FakeVerifier
+			fakeS3Verifier  *fake_blob_store_verifier.FakeVerifier
+		)
+
+		BeforeEach(func() {
+			fakeDAVVerifier = &fake_blob_store_verifier.FakeVerifier{}
+			fakeS3Verifier = &fake_blob_store_verifier.FakeVerifier{}
+			verifier = blob_store.BlobStoreVerifier{
+				DAVBlobStoreVerifier: fakeDAVVerifier,
+				S3BlobStoreVerifier:  fakeS3Verifier,
+			}
+		})
 
 		Context("when a dav blob store is targeted", func() {
+			var config *config_package.Config
+
 			BeforeEach(func() {
-				config := config.New(nil)
+				config = config_package.New(nil)
 				config.SetBlobStore("some-host", "some-port", "some-user", "some-password")
-				verifier = blob_store.NewVerifier(config)
 			})
 
 			It("returns a new DavBlobStore Verifier", func() {
-				_, ok := verifier.(dav_blob_store.Verifier)
-				Expect(ok).To(BeTrue())
+				verifier.Verify(config)
+				Expect(fakeDAVVerifier.VerifyCallCount()).To(Equal(1))
+				Expect(fakeS3Verifier.VerifyCallCount()).To(Equal(0))
 			})
 		})
 
 		Context("when an s3 blob store is targeted", func() {
+			var config *config_package.Config
+
 			BeforeEach(func() {
-				config := config.New(nil)
+				config = config_package.New(nil)
 				config.SetS3BlobStore("", "", "some-bucket-name", "")
-				verifier = blob_store.NewVerifier(config)
 			})
 
 			It("returns a new S3BlobStore Verifier", func() {
-				_, ok := verifier.(*s3_blob_store.Verifier)
-				Expect(ok).To(BeTrue())
+				verifier.Verify(config)
+				Expect(fakeS3Verifier.VerifyCallCount()).To(Equal(1))
+				Expect(fakeDAVVerifier.VerifyCallCount()).To(Equal(0))
 			})
 		})
 	})

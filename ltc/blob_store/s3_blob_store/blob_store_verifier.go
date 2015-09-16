@@ -13,7 +13,7 @@ type Verifier struct {
 	Endpoint string
 }
 
-func (v *Verifier) Verify(config *config_package.Config) (authorized bool, err error) {
+func (v Verifier) Verify(config *config_package.Config) (authorized bool, err error) {
 	blobStoreConfig := config.S3BlobStore()
 	client := s3.New(&aws.Config{
 		Credentials:      credentials.NewStaticCredentials(blobStoreConfig.AccessKey, blobStoreConfig.SecretKey, ""),
