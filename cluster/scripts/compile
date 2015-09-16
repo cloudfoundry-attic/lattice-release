@@ -171,15 +171,17 @@ compile_brain() {
         go install github.com/apcera/gnatsd
         go install github.com/cloudfoundry-incubator/receptor/cmd/receptor
         go install github.com/cloudfoundry-incubator/file-server/cmd/file-server
-        go install github.com/cloudfoundry-incubator/healthcheck/cmd/healthcheck
-        go install github.com/cloudfoundry-incubator/buildpack_app_lifecycle/builder
-        go install github.com/cloudfoundry-incubator/buildpack_app_lifecycle/launcher
         go install github.com/cloudfoundry-incubator/diego-ssh/cmd/ssh-proxy
 
         pushd ${GOBIN}
+            CGO_ENABLED=0 go build -a -installsuffix static github.com/cloudfoundry-incubator/healthcheck/cmd/healthcheck
+            CGO_ENABLED=0 go build -a -installsuffix static github.com/cloudfoundry-incubator/buildpack_app_lifecycle/launcher
+            CGO_ENABLED=0 go build -a -installsuffix static github.com/cloudfoundry-incubator/buildpack_app_lifecycle/builder
             CGO_ENABLED=0 go build -a -installsuffix static github.com/cloudfoundry-incubator/diego-ssh/cmd/sshd
             mv sshd diego-sshd
-            ldd diego-sshd && echo 'diego-sshd must be statically linked' && false
+            for binary in launcher builder diego-sshd healthcheck; do
+                ldd $binary && echo "$binary must be statically linked" && false
+            done
         popd
 
         ## FIXME
