@@ -101,10 +101,10 @@ The latest unsupported nightly build is available [for Linux](http://lattice.s3.
 To build Lattice from source and deploy using Vagrant:
 
 ```bash
-    $ git clone git@github.com:cloudfoundry-incubator/lattice.git
-    $ cd lattice
-    $ development/setup && development/build && development/run
-    $ source development/env
+$ git clone git@github.com:cloudfoundry-incubator/lattice.git
+$ cd lattice
+$ development/setup && development/build && development/run
+$ source development/env
 ```
 
 > More information on developing for Lattice can be found on the [development readme](development/README.md).
@@ -123,10 +123,24 @@ Follow these [instructions](http://lattice.cf/docs/manual-install) to install a 
 Install the `vagrant-proxyconf` plugin as follows:
 
 ```bash
-vagrant plugin install vagrant-proxyconf
+$ vagrant plugin install vagrant-proxyconf
 ```
 
-Then proceed with `http_proxy=http://PROXY_IP:PROXY_PORT vagrant up`.
+Setup your environment in the terminal:
+
+```bash
+$ export http_proxy=http://PROXY_IP:PROXY_PORT
+$ export https_proxy=http://PROXY_IP:PROXY_PORT
+$ export no_proxy=$(ltc target|head -1|awk '{print $2}')
+```
+
+Then proceed with `vagrant up`. For `ltc create`, `ltc build-droplet` or `ltc launch-droplet`, you'll need to pass these environment variables into the container. For example:
+
+```bash
+$ ltc create -e http_proxy -e https_proxy -e no_proxy lattice-docker-app cloudfoundry/lattice-app
+$ ltc build-droplet -e http_proxy -e https_proxy -e no_proxy lattice-droplet go
+$ ltc launch-droplet -e http_proxy -e https_proxy -e no_proxy lattice-app lattice-droplet
+```
 
 ## Troubleshooting
 
