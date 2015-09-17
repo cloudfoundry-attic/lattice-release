@@ -33,7 +33,8 @@ Vagrant.configure("2") do |config|
     aws.access_key_id = ENV["AWS_ACCESS_KEY_ID"]
     aws.secret_access_key = ENV["AWS_SECRET_ACCESS_KEY"]
     aws.keypair_name = "concourse-test"
-    aws.instance_type = "m3.large"
+    aws.instance_type = "m4.large"
+    aws.ebs_optimized = true
 
     override.ssh.username = "ubuntu"
     override.ssh.private_key_path = ENV["AWS_SSH_PRIVATE_KEY_PATH"]
@@ -64,7 +65,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.box = "lattice/ubuntu-trusty-64"
-  config.vm.box_version = '0.4.0'
+  config.vm.box_version = '0.4.1'
 
   config.vm.provision "shell" do |s|
     s.inline = <<-SCRIPT

@@ -37,26 +37,26 @@ variable "aws_subnet_cidr_block" {
 variable "aws_image" {
     description = "The name of the image to base the launched instances."
     default = {
-        ap-northeast-1 = "ami-20ec6e20"
-        ap-southeast-1 = "ami-80323ad2"
-        ap-southeast-2 = "ami-9dafe2a7"
-        eu-central-1 = "ami-ce989ed3"
-        eu-west-1 = "ami-c92f75be"
-        sa-east-1 = "ami-a375febe"
-        us-east-1 = "ami-19dd6672"
-        us-west-1 = "ami-1108f055"
-        us-west-2 = "ami-d5ddcce5"
+        ap-northeast-1 = "ami-720b9d72"
+        ap-southeast-1 = "ami-d4adb886"
+        ap-southeast-2 = "ami-43317f79"
+        eu-central-1 = "ami-864e4d9b"
+        eu-west-1 = "ami-430f2334"
+        sa-east-1 = "ami-312fba2c"
+        us-east-1 = "ami-935a2bf6"
+        us-west-1 = "ami-7775b033"
+        us-west-2 = "ami-f7514fc7"
     }
 }
 
 variable "aws_instance_type_brain" {
     description = "The machine type to use for the Lattice Brain instance."
-    default = "m3.medium"
+    default = "m4.large"
 }
 
 variable "aws_instance_type_cell" {
     description = "The machine type to use for the Lattice Cells instances."
-    default = "m3.medium"
+    default = "m4.large"
 }
 
 variable "num_cells" {

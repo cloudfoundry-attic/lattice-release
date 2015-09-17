@@ -86,6 +86,7 @@ resource "aws_eip" "ip" {
 resource "aws_instance" "lattice-brain" {
     ami = "${lookup(var.aws_image, var.aws_region)}"
     instance_type = "${var.aws_instance_type_brain}"
+    ebs_optimized = true
     key_name = "${var.aws_key_name}"
     subnet_id = "${aws_subnet.lattice-network.id}"
     security_groups = [
@@ -132,6 +133,7 @@ resource "aws_instance" "cell" {
     count = "${var.num_cells}"
     ami = "${lookup(var.aws_image, var.aws_region)}"
     instance_type = "${var.aws_instance_type_cell}"
+    ebs_optimized = true
     key_name = "${var.aws_key_name}"
     subnet_id = "${aws_subnet.lattice-network.id}"
     security_groups = [
