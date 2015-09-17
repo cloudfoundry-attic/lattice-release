@@ -686,6 +686,14 @@ var _ = Describe("AppExaminer", func() {
 				_, err := appExaminer.AppStatus("kiss-my-bumper")
 				Expect(err).To(MatchError("ABANDON SHIP!!!!"))
 			})
+
+			It("should not panic", func() {
+				fakeReceptorClient.GetDesiredLRPReturns(receptor.DesiredLRPResponse{}, errors.New("non-receptor error"))
+
+				var err error
+				Expect(func() { _, err = appExaminer.AppStatus("kiss-my-bumper") }).ShouldNot(Panic())
+				Expect(err).To(MatchError("non-receptor error"))
+			})
 		})
 
 		Context("when the noaa consumer returns errors", func() {
