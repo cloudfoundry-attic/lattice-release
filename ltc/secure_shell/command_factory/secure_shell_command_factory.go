@@ -34,7 +34,7 @@ func (factory *SSHCommandFactory) MakeSSHCommand() cli.Command {
 	return cli.Command{
 		Name:        "ssh",
 		Usage:       "Connects to a running app",
-		Description: "ltc ssh APP_NAME [[--] optional command with args]\n\tIf a command is specified, no interactive shell will be provided.\n\tA \"--\" token should be provided to avoid parsing of command flags.",
+		Description: "ltc ssh APP_NAME [[--] optional command with args]\n\n   If a command is specified, no interactive shell will be provided.\n   A \"--\" token should be provided to avoid parsing of command flags.\n",
 		Action:      factory.ssh,
 		Flags: []cli.Flag{
 			cli.IntFlag{
