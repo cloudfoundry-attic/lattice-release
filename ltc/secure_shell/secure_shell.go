@@ -10,6 +10,7 @@ import (
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	term_package "github.com/docker/docker/pkg/term"
+	"github.com/pivotal-golang/clock"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -41,6 +42,8 @@ type Term interface {
 type SecureShell struct {
 	Dialer Dialer
 	Term   Term
+	Clock  clock.Clock
+	Ticker clock.Ticker
 }
 
 func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error {
@@ -101,6 +104,11 @@ func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, command
 	}()
 	go ss.resize(resized, session, os.Stdout.Fd(), width, height)
 
+	keepaliveStopCh := make(chan struct{})
+	defer close(keepaliveStopCh)
+
+	go ss.keepalive(session, keepaliveStopCh)
+
 	if command == "" {
 		session.Shell()
 		session.Wait()
@@ -147,5 +155,17 @@ func (ss *SecureShell) resize(resized <-chan os.Signal, session SecureSession, t
 
 		previousWidth = width
 		previousHeight = height
+	}
+}
+
+func (ss *SecureShell) keepalive(session SecureSession, stopCh chan struct{}) {
+	for {
+		select {
+		case <-ss.Ticker.C():
+			session.SendRequest("keepalive@cloudfoundry.org", true, nil)
+		case <-stopCh:
+			ss.Ticker.Stop()
+			return
+		}
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"golang.org/x/crypto/ssh"
 
@@ -211,7 +212,14 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	secureDialer := &secure_shell.SecureDialer{DialFunc: ssh.Dial}
 	secureTerm := &secure_shell.SecureTerm{}
-	secureShell := &secure_shell.SecureShell{Dialer: secureDialer, Term: secureTerm}
+	keepaliveInterval := 30 * time.Second
+	secureShell := &secure_shell.SecureShell{
+		Dialer: secureDialer,
+		Term:   secureTerm,
+		Clock:  clock,
+		Ticker: clock.NewTicker(keepaliveInterval),
+	}
+
 	sshCommandFactory := ssh_command_factory.NewSSHCommandFactory(config, ui, exitHandler, appExaminer, secureShell)
 
 	helpCommand := cli.Command{

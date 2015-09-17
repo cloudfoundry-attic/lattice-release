@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/docker/docker/pkg/term"
 	. "github.com/onsi/ginkgo"
@@ -15,6 +16,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_dialer"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_secure_session"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_term"
+	"github.com/pivotal-golang/clock/fakeclock"
 )
 
 var _ = Describe("SecureShell", func() {
@@ -25,6 +27,7 @@ var _ = Describe("SecureShell", func() {
 		fakeStdin   *gbytes.Buffer
 		fakeStdout  *gbytes.Buffer
 		fakeStderr  *gbytes.Buffer
+		fakeClock   *fakeclock.FakeClock
 
 		config      *config_package.Config
 		secureShell *secure_shell.SecureShell
@@ -39,12 +42,18 @@ var _ = Describe("SecureShell", func() {
 		fakeStdin = gbytes.NewBuffer()
 		fakeStdout = gbytes.NewBuffer()
 		fakeStderr = gbytes.NewBuffer()
+		fakeClock = fakeclock.NewFakeClock(time.Now())
 
 		config = config_package.New(nil)
 		config.SetTarget("10.0.12.34")
 		config.SetLogin("user", "past")
 
-		secureShell = &secure_shell.SecureShell{Dialer: fakeDialer, Term: fakeTerm}
+		secureShell = &secure_shell.SecureShell{
+			Dialer: fakeDialer,
+			Term:   fakeTerm,
+			Clock:  fakeClock,
+			Ticker: fakeclock.NewFakeTicker(fakeClock, 1*time.Second),
+		}
 		fakeDialer.DialReturns(fakeSession, nil)
 
 		oldTerm = os.Getenv("TERM")
@@ -214,6 +223,46 @@ var _ = Describe("SecureShell", func() {
 			Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 
 			doneChan <- struct{}{}
+		})
+
+		It("periodically sends keepalive requests to the ssh session", func() {
+			fakeDialer.DialReturns(fakeSession, nil)
+			fakeSession.StdinPipeReturns(fakeStdin, nil)
+			fakeSession.StdoutPipeReturns(fakeStdout, nil)
+			fakeSession.StderrPipeReturns(fakeStderr, nil)
+
+			waitChan := make(chan struct{})
+			doneChan := make(chan struct{})
+			fakeSession.ShellStub = func() error {
+				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
+				<-waitChan
+				<-doneChan
+				return nil
+			}
+
+			go func() {
+				defer GinkgoRecover()
+				err := secureShell.ConnectToShell("app-name", 2, "", config)
+				Expect(err).NotTo(HaveOccurred())
+			}()
+
+			waitChan <- struct{}{}
+
+			Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
+			fakeClock.IncrementBySeconds(1)
+			Eventually(fakeSession.SendRequestCallCount).Should(Equal(1))
+			fakeClock.IncrementBySeconds(1)
+			Eventually(fakeSession.SendRequestCallCount).Should(Equal(2))
+
+			name, wantReply, payload := fakeSession.SendRequestArgsForCall(0)
+			Expect(name).To(Equal("keepalive@cloudfoundry.org"))
+			Expect(wantReply).To(BeTrue())
+			Expect(payload).To(BeNil())
+
+			doneChan <- struct{}{}
+
+			fakeClock.IncrementBySeconds(10)
+			Expect(fakeSession.SendRequestCallCount()).To(Equal(2))
 		})
 
 		Context("when the SecureDialer#Dial fails", func() {
