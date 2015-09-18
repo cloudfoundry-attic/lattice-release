@@ -2,54 +2,35 @@
 
 set -e
 
-install_condenser() {
-    mkdir -p /var/lattice/lighttpd/blobs /var/lattice/etc
-    chown -R www-data:www-data /var/lattice/lighttpd
-
-    /etc/init.d/lighttpd stop
-
-    if [ -n "$LATTICE_USERNAME" ]; then
-        cp /tmp/lattice-build/common/webdav/lighttpd.conf-auth-enabled /etc/lighttpd/lighttpd.conf
-        echo $LATTICE_USERNAME:$(openssl passwd -crypt $LATTICE_PASSWORD) > /var/lattice/etc/lighttpd.user
-    else
-        cp /tmp/lattice-build/common/webdav/lighttpd.conf-auth-disabled /etc/lighttpd/lighttpd.conf
-    fi
-
-    echo "Installing cflinuxfs2 rootfs..."
-    mkdir -p /var/lattice/rootfs
-    mv /var/lattice-image/rootfs/cflinuxfs2 /var/lattice/rootfs
-    echo "done"
-
-    /etc/init.d/lighttpd start
-
-    sleep 1
-}
-
-COMPONENT_TO_INSTALL=$1
-PATH_TO_LATTICE_TAR=$2
-
-if [ $COMPONENT_TO_INSTALL != "cell" ] && [ $COMPONENT_TO_INSTALL != "brain" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
-    echo "Incorrect Usage. Must install either cell or brain or both.
-    Usage: install-from-tar cell [LATTICE_TAR_PATH] OR
-           install-from-tar brain [LATTICE_TAR_PATH]
-           install-from-tar collocated [LATTICE_TAR_PATH]
-    "
-    exit 2
-fi
+PATH_TO_LATTICE_TAR=$1
 
 tar -xf $PATH_TO_LATTICE_TAR -C /tmp
 
 /tmp/lattice-build/scripts/install-common
-
 export $(cat /var/lattice/setup/lattice-environment)
 
-install_condenser
+mkdir -p /var/lattice/lighttpd/blobs /var/lattice/etc
+chown -R www-data:www-data /var/lattice/lighttpd
 
-if [ $COMPONENT_TO_INSTALL == "collocated" ]; then
-    /tmp/lattice-build/scripts/install-brain
-    /tmp/lattice-build/scripts/install-cell
+/etc/init.d/lighttpd stop
+
+if [ -n "$LATTICE_USERNAME" ]; then
+    cp /tmp/lattice-build/common/webdav/lighttpd.conf-auth-enabled /etc/lighttpd/lighttpd.conf
+    echo $LATTICE_USERNAME:$(openssl passwd -crypt $LATTICE_PASSWORD) > /var/lattice/etc/lighttpd.user
 else
-    /tmp/lattice-build/scripts/install-$COMPONENT_TO_INSTALL
+    cp /tmp/lattice-build/common/webdav/lighttpd.conf-auth-disabled /etc/lighttpd/lighttpd.conf
 fi
+
+echo "Installing cflinuxfs2 rootfs..."
+mkdir -p /var/lattice/rootfs
+mv /var/lattice-image/rootfs/cflinuxfs2 /var/lattice/rootfs
+echo "done"
+
+/etc/init.d/lighttpd start
+
+sleep 1
+
+/tmp/lattice-build/scripts/install-brain
+/tmp/lattice-build/scripts/install-cell
 
 start bootstrap

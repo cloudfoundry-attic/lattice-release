@@ -171,7 +171,10 @@ resource "aws_instance" "cell" {
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
 
             "sudo chmod +x /tmp/install-from-tar",
-            "sudo /tmp/install-from-tar cell"
+            "sudo /tmp/install-from-tar cell",
+
+            "sudo tar cf /var/lattice/garden/graph/warmrootfs.tar /var/lattice/rootfs",
+            "sudo rm -f /var/lattice/garden/graph/warmrootfs.tar"
         ]
     }
 }

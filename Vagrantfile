@@ -89,11 +89,18 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell" do |s|
     s.inline = <<-SCRIPT
       tar xzf /vagrant/lattice.tgz --strip-components=2 -C /tmp lattice-build/scripts/install-from-tar
-      /tmp/install-from-tar collocated /vagrant/lattice.tgz
+      /tmp/install-from-tar /vagrant/lattice.tgz
       . /var/lattice/setup/lattice-environment
       echo "Lattice is now installed and running."
       echo "You may target it using: ltc target ${SYSTEM_DOMAIN}\n"
     SCRIPT
+
+    if provider_is_aws
+      s.inline += <<-SCRIPT
+        tar cf /var/lattice/garden/graph/warmrootfs.tar /var/lattice/rootfs
+        rm -f /var/lattice/garden/graph/warmrootfs.tar
+      SCRIPT
+    end
   end
 end
 
