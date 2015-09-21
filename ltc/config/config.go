@@ -40,7 +40,7 @@ type Data struct {
 	Target          string        `json:"target"`
 	Username        string        `json:"username,omitempty"`
 	Password        string        `json:"password,omitempty"`
-	ActiveBlobStore BlobStoreType `json:"active_blob_store,omitempty"`
+	ActiveBlobStore BlobStoreType `json:"active_blob_store"`
 
 	BlobStore   BlobStoreConfig   `json:"dav_blob_store,omitempty"`
 	S3BlobStore S3BlobStoreConfig `json:"s3_blob_store,omitempty"`
