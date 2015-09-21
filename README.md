@@ -144,18 +144,6 @@ $ ltc launch-droplet -e http_proxy -e https_proxy -e no_proxy lattice-app lattic
 
 ## Troubleshooting
 
-### Redis Docker hub image incompatibility
-
-As of September 2015, Lattice is incompatible with most tags listed on the [redis](https://hub.docker.com/_/redis/) DockerHub registry. We are actively investigating the issue. In the meantime, please use the `3.0.1` tag:
-
-```
-ltc create redis redis:3.0.1 --run-as-root --memory-mb=256 --tcp-routes=6379:6379 --monitor-command="redis-cli --scan"
-```
-
-```
-redis-cli -h 192.168.11.11
-```
-
 ### No such host errors
 
 DNS resolution for `xip.io` addresses can sometimes be flaky, resulting in errors such as the following:
