@@ -10,6 +10,15 @@ tar -xf $PATH_TO_LATTICE_TAR -C /tmp
 export $(cat /var/lattice/setup/lattice-environment)
 
 mkdir -p /var/lattice/lighttpd/blobs /var/lattice/etc
+
+cat > /var/lattice/lighttpd/proxyconf.json <<EOJSON
+{
+    "http_proxy": $(echo $http_proxy | jq -R .),
+    "https_proxy": $(echo $https_proxy | jq -R .),
+    "no_proxy": $(echo $no_proxy | jq -R .)
+}
+EOJSON
+
 chown -R www-data:www-data /var/lattice/lighttpd
 
 /etc/init.d/lighttpd stop
