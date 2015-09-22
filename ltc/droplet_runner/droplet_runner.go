@@ -43,11 +43,12 @@ type Droplet struct {
 }
 
 type dropletRunner struct {
-	appRunner   app_runner.AppRunner
-	taskRunner  task_runner.TaskRunner
-	config      *config.Config
-	blobStore   BlobStore
-	appExaminer app_examiner.AppExaminer
+	appRunner       app_runner.AppRunner
+	taskRunner      task_runner.TaskRunner
+	config          *config.Config
+	blobStore       BlobStore
+	appExaminer     app_examiner.AppExaminer
+	proxyConfReader ProxyConfReader
 }
 
 //go:generate counterfeiter -o fake_blob_store/fake_blob_store.go . BlobStore
@@ -66,13 +67,25 @@ type annotation struct {
 	} `json:"droplet_source"`
 }
 
-func New(appRunner app_runner.AppRunner, taskRunner task_runner.TaskRunner, config *config.Config, blobStore BlobStore, appExaminer app_examiner.AppExaminer) DropletRunner {
+//go:generate counterfeiter -o fake_proxyconf_reader/fake_proxyconf_reader.go . ProxyConfReader
+type ProxyConfReader interface {
+	ProxyConf() (ProxyConf, error)
+}
+
+type ProxyConf struct {
+	HTTPProxy  string `json:"http_proxy"`
+	HTTPSProxy string `json:"https_proxy"`
+	NoProxy    string `json:"no_proxy"`
+}
+
+func New(appRunner app_runner.AppRunner, taskRunner task_runner.TaskRunner, config *config.Config, blobStore BlobStore, appExaminer app_examiner.AppExaminer, proxyConfReader ProxyConfReader) DropletRunner {
 	return &dropletRunner{
-		appRunner:   appRunner,
-		taskRunner:  taskRunner,
-		config:      config,
-		blobStore:   blobStore,
-		appExaminer: appExaminer,
+		appRunner:       appRunner,
+		taskRunner:      taskRunner,
+		config:          config,
+		blobStore:       blobStore,
+		appExaminer:     appExaminer,
+		proxyConfReader: proxyConfReader,
 	}
 }
 
@@ -134,6 +147,14 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 	environment["CF_STACK"] = DropletStack
 	environment["MEMORY_LIMIT"] = fmt.Sprintf("%dM", memoryMB)
 
+	proxyConf, err := dr.proxyConfReader.ProxyConf()
+	if err != nil {
+		return err
+	}
+	environment["http_proxy"] = proxyConf.HTTPProxy
+	environment["https_proxy"] = proxyConf.HTTPSProxy
+	environment["no_proxy"] = proxyConf.NoProxy
+
 	createTaskParams := task_runner.NewCreateTaskParams(
 		action,
 		taskName,
@@ -170,6 +191,14 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 
 	appEnvironmentParams.EnvironmentVariables["PWD"] = "/home/vcap"
 	appEnvironmentParams.EnvironmentVariables["TMPDIR"] = "/home/vcap/tmp"
+
+	proxyConf, err := dr.proxyConfReader.ProxyConf()
+	if err != nil {
+		return err
+	}
+	appEnvironmentParams.EnvironmentVariables["http_proxy"] = proxyConf.HTTPProxy
+	appEnvironmentParams.EnvironmentVariables["https_proxy"] = proxyConf.HTTPSProxy
+	appEnvironmentParams.EnvironmentVariables["no_proxy"] = proxyConf.NoProxy
 
 	appParams := app_runner.CreateAppParams{
 		AppEnvironmentParams: appEnvironmentParams,

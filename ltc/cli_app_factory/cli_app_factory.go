@@ -203,7 +203,10 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		S3BlobStoreVerifier:  s3_blob_store.Verifier{},
 	}
 
-	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, appExaminer)
+	httpProxyConfReader := &droplet_runner.HTTPProxyConfReader{
+		URL: fmt.Sprintf("http://%s:8444/proxyconf.json", config.Target()),
+	}
+	dropletRunner := droplet_runner.New(appRunner, taskRunner, config, blobStore, appExaminer, httpProxyConfReader)
 	cfIgnore := cf_ignore.New()
 	zipper := &zipper_package.DropletArtifactZipper{}
 	dropletRunnerCommandFactory := droplet_runner_command_factory.NewDropletRunnerCommandFactory(*appRunnerCommandFactory, blobStoreVerifier, taskExaminer, dropletRunner, cfIgnore, zipper, config)

@@ -21,6 +21,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_blob_store"
+	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_proxyconf_reader"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner/fake_task_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
 	"github.com/cloudfoundry-incubator/receptor"
@@ -31,12 +32,13 @@ import (
 
 var _ = Describe("DropletRunner", func() {
 	var (
-		fakeAppRunner   *fake_app_runner.FakeAppRunner
-		fakeTaskRunner  *fake_task_runner.FakeTaskRunner
-		config          *config_package.Config
-		fakeBlobStore   *fake_blob_store.FakeBlobStore
-		fakeAppExaminer *fake_app_examiner.FakeAppExaminer
-		dropletRunner   droplet_runner.DropletRunner
+		fakeAppRunner       *fake_app_runner.FakeAppRunner
+		fakeTaskRunner      *fake_task_runner.FakeTaskRunner
+		config              *config_package.Config
+		fakeBlobStore       *fake_blob_store.FakeBlobStore
+		fakeAppExaminer     *fake_app_examiner.FakeAppExaminer
+		fakeProxyConfReader *fake_proxyconf_reader.FakeProxyConfReader
+		dropletRunner       droplet_runner.DropletRunner
 	)
 
 	BeforeEach(func() {
@@ -45,7 +47,8 @@ var _ = Describe("DropletRunner", func() {
 		config = config_package.New(persister.NewMemPersister())
 		fakeBlobStore = &fake_blob_store.FakeBlobStore{}
 		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
-		dropletRunner = droplet_runner.New(fakeAppRunner, fakeTaskRunner, config, fakeBlobStore, fakeAppExaminer)
+		fakeProxyConfReader = &fake_proxyconf_reader.FakeProxyConfReader{}
+		dropletRunner = droplet_runner.New(fakeAppRunner, fakeTaskRunner, config, fakeBlobStore, fakeAppExaminer, fakeProxyConfReader)
 	})
 
 	Describe("ListDroplets", func() {
@@ -221,6 +224,9 @@ var _ = Describe("DropletRunner", func() {
 			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
 				{Name: "CF_STACK", Value: "cflinuxfs2"},
 				{Name: "MEMORY_LIMIT", Value: "128M"},
+				{Name: "http_proxy", Value: ""},
+				{Name: "https_proxy", Value: ""},
+				{Name: "no_proxy", Value: ""},
 			}))
 			Expect(receptorRequest.LogSource).To(Equal("BUILD"))
 			Expect(receptorRequest.Domain).To(Equal("lattice"))
@@ -252,6 +258,38 @@ var _ = Describe("DropletRunner", func() {
 				{Name: "MEMORY_LIMIT", Value: "128M"},
 				{Name: "ENV_VAR", Value: "stuff"},
 				{Name: "OTHER_VAR", Value: "same"},
+				{Name: "http_proxy", Value: ""},
+				{Name: "https_proxy", Value: ""},
+				{Name: "no_proxy", Value: ""},
+			}))
+		})
+
+		It("sets proxy environment variables if a proxyconf exists", func() {
+			config.SetBlobStore("blob-host", "7474", "dav-user", "dav-pass")
+			Expect(config.Save()).To(Succeed())
+
+			env := map[string]string{}
+
+			fakeProxyConfReader.ProxyConfReturns(droplet_runner.ProxyConf{
+				HTTPProxy:  "http://proxy",
+				HTTPSProxy: "https://proxy",
+				NoProxy:    "no-proxy",
+			}, nil)
+
+			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", env, 128, 100, 800)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(1))
+			createTaskParams := fakeTaskRunner.CreateTaskArgsForCall(0)
+			Expect(createTaskParams).ToNot(BeNil())
+			receptorRequest := createTaskParams.GetReceptorRequest()
+
+			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
+				{Name: "CF_STACK", Value: "cflinuxfs2"},
+				{Name: "MEMORY_LIMIT", Value: "128M"},
+				{Name: "http_proxy", Value: "http://proxy"},
+				{Name: "https_proxy", Value: "https://proxy"},
+				{Name: "no_proxy", Value: "no-proxy"},
 			}))
 		})
 
@@ -268,6 +306,15 @@ var _ = Describe("DropletRunner", func() {
 			Expect(receptorRequest.MemoryMB).To(Equal(1))
 			Expect(receptorRequest.CPUWeight).To(Equal(uint(2)))
 			Expect(receptorRequest.DiskMB).To(Equal(3))
+		})
+
+		It("returns an error when ProxyConfReader fails", func() {
+			fakeProxyConfReader.ProxyConfReturns(droplet_runner.ProxyConf{}, errors.New("can't proxy"))
+
+			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{}, 0, 0, 0)
+			Expect(err).To(MatchError("can't proxy"))
+
+			Expect(fakeTaskRunner.CreateTaskCallCount()).To(Equal(0))
 		})
 
 		It("returns an error when create task fails", func() {
@@ -305,6 +352,13 @@ var _ = Describe("DropletRunner", func() {
 			Expect(createAppParams.RootFS).To(Equal(droplet_runner.DropletRootFS))
 			Expect(createAppParams.StartCommand).To(Equal("/tmp/launcher"))
 			Expect(createAppParams.AppArgs).To(Equal([]string{"/home/vcap/app", "", `{"start_command": "start"}`}))
+			Expect(createAppParams.AppEnvironmentParams.EnvironmentVariables).To(matchers.ContainExactly(map[string]string{
+				"PWD":         "/home/vcap",
+				"TMPDIR":      "/home/vcap/tmp",
+				"http_proxy":  "",
+				"https_proxy": "",
+				"no_proxy":    "",
+			}))
 			Expect(createAppParams.Annotation).To(MatchJSON(`{
 				"droplet_source": {
 					"droplet_name": "droplet-name"
@@ -330,6 +384,30 @@ var _ = Describe("DropletRunner", func() {
 						User: "vcap",
 					},
 				},
+			}))
+		})
+
+		It("launches the droplet lrp task with proxy environment variables", func() {
+			fakeBlobStore.DownloadReturns(ioutil.NopCloser(strings.NewReader("{}")), nil)
+			fakeBlobStore.DownloadDropletActionReturns(&models.DownloadAction{})
+
+			fakeProxyConfReader.ProxyConfReturns(droplet_runner.ProxyConf{
+				HTTPProxy:  "http://proxy",
+				HTTPSProxy: "https://proxy",
+				NoProxy:    "no-proxy",
+			}, nil)
+
+			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+			createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+			Expect(createAppParams.AppEnvironmentParams.EnvironmentVariables).To(matchers.ContainExactly(map[string]string{
+				"PWD":         "/home/vcap",
+				"TMPDIR":      "/home/vcap/tmp",
+				"http_proxy":  "http://proxy",
+				"https_proxy": "https://proxy",
+				"no_proxy":    "no-proxy",
 			}))
 		})
 
@@ -359,6 +437,15 @@ var _ = Describe("DropletRunner", func() {
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
 			Expect(err).To(MatchError("invalid character 'i' looking for beginning of value"))
+		})
+
+		It("returns an error when proxyConf reader fails", func() {
+			fakeBlobStore.DownloadReturns(ioutil.NopCloser(strings.NewReader("{}")), nil)
+			fakeBlobStore.DownloadDropletActionReturns(&models.DownloadAction{})
+			fakeProxyConfReader.ProxyConfReturns(droplet_runner.ProxyConf{}, errors.New("proxyConf has failed"))
+
+			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
+			Expect(err).To(MatchError("proxyConf has failed"))
 		})
 
 		It("returns an error when create app fails", func() {
