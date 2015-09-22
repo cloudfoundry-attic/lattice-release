@@ -26,13 +26,13 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/receptor_client"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell"
 	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/keygen"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/password_reader"
-	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry/noaa"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock"
@@ -98,7 +98,7 @@ func MakeCliApp(
 	exitHandler exit_handler.ExitHandler,
 	config *config.Config,
 	logger lager.Logger,
-	targetVerifier target_verifier.TargetVerifier,
+	receptorClientCreator receptor_client.Creator,
 	cliStdout io.Writer,
 ) *cli.App {
 	config.Load()
@@ -111,6 +111,8 @@ func MakeCliApp(
 
 	ui := terminal.NewUI(os.Stdin, cliStdout, password_reader.NewPasswordReader(exitHandler))
 	app.Writer = ui
+
+	targetVerifier := target_verifier.New(receptorClientCreator)
 
 	app.Before = func(context *cli.Context) error {
 		args := context.Args()
@@ -139,12 +141,12 @@ func MakeCliApp(
 		ui.SayLine(fmt.Sprintf(unknownCommand, command))
 		exitHandler.Exit(1)
 	}
-	app.Commands = cliCommands(ltcConfigRoot, exitHandler, config, logger, targetVerifier, ui)
+	app.Commands = cliCommands(ltcConfigRoot, exitHandler, config, logger, receptorClientCreator, targetVerifier, ui)
 	return app
 }
 
-func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, targetVerifier target_verifier.TargetVerifier, ui terminal.UI) []cli.Command {
-	receptorClient := receptor.NewClient(config.Receptor())
+func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, config *config.Config, logger lager.Logger, receptorClientCreator receptor_client.Creator, targetVerifier target_verifier.TargetVerifier, ui terminal.UI) []cli.Command {
+	receptorClient := receptorClientCreator.CreateReceptorClient(config.Receptor())
 	noaaConsumer := noaa.NewConsumer(LoggregatorUrl(config.Loggregator()), nil, nil)
 	appRunner := app_runner.New(receptorClient, config.Target(), &keygen_package.KeyGenerator{RandReader: rand.Reader})
 

@@ -1,22 +1,25 @@
 package target_verifier
 
-import "github.com/cloudfoundry-incubator/receptor"
+import (
+	"github.com/cloudfoundry-incubator/lattice/ltc/receptor_client"
+	"github.com/cloudfoundry-incubator/receptor"
+)
 
 //go:generate counterfeiter -o fake_target_verifier/fake_target_verifier.go . TargetVerifier
 type TargetVerifier interface {
 	VerifyTarget(name string) (up bool, auth bool, err error)
 }
 
-func New(receptorClientFactory func(target string) receptor.Client) TargetVerifier {
-	return &targetVerifier{receptorClientFactory}
+func New(receptorClientCreator receptor_client.Creator) TargetVerifier {
+	return &targetVerifier{receptorClientCreator}
 }
 
 type targetVerifier struct {
-	receptorClientFactory func(target string) receptor.Client
+	receptorClientCreator receptor_client.Creator
 }
 
 func (t *targetVerifier) VerifyTarget(target string) (up, auth bool, err error) {
-	receptorClient := t.receptorClientFactory(target)
+	receptorClient := t.receptorClientCreator.CreateReceptorClient(target)
 	_, err = receptorClient.DesiredLRPs()
 
 	if err != nil {
