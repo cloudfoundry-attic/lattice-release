@@ -160,6 +160,7 @@ jobs:
                 AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
                 AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
                 AWS_SSH_PRIVATE_KEY: {{aws-ssh-private-key}}
+                IGNORE_VERSION_MISMATCH: true
           - aggregate:
             - task: cluster-test-vagrant-aws-dav
               file: lattice/concourse/tasks/cluster-test-vagrant-aws-dav/task.yml

@@ -126,7 +126,7 @@ if provision_required && File.exists?(lattice_tgz)
     end
   else
     repo_version = `git describe --tags --always`.chomp
-    if tgz_version != repo_version && !ENV['IGNORE_VERSION_MISMATCH']
+    if tgz_version != repo_version && ENV['IGNORE_VERSION_MISMATCH'] != "true"
       puts '*******************************************************************************'
       puts "Error: lattice.tgz #{tgz_version} != current commit #{repo_version}\n"
       puts 'The lattice.tgz file was built using a different commit than the current one.'
