@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
+	"github.com/cloudfoundry-incubator/lattice/ltc/receptor_client/fake_receptor_client_creator"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 )
@@ -14,20 +15,16 @@ import (
 var _ = Describe("TargetVerifier", func() {
 	Describe("VerifyTarget", func() {
 		var (
-			fakeReceptorClient *fake_receptor.FakeClient
-			targetVerifier     target_verifier.TargetVerifier
-			targets            []string
+			fakeReceptorClient        *fake_receptor.FakeClient
+			fakeReceptorClientCreator *fake_receptor_client_creator.FakeCreator
+			targetVerifier            target_verifier.TargetVerifier
 		)
-
-		fakeReceptorClientFactory := func(target string) receptor.Client {
-			targets = append(targets, target)
-			return fakeReceptorClient
-		}
 
 		BeforeEach(func() {
 			fakeReceptorClient = &fake_receptor.FakeClient{}
-			targetVerifier = target_verifier.New(fakeReceptorClientFactory)
-			targets = []string{}
+			fakeReceptorClientCreator = &fake_receptor_client_creator.FakeCreator{}
+			fakeReceptorClientCreator.CreateReceptorClientReturns(fakeReceptorClient)
+			targetVerifier = target_verifier.New(fakeReceptorClientCreator)
 		})
 
 		It("returns up=true, auth=true if the receptor does not return an error", func() {
@@ -35,7 +32,8 @@ var _ = Describe("TargetVerifier", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(up).To(BeTrue())
 			Expect(auth).To(BeTrue())
-			Expect(targets).To(ConsistOf("http://receptor.mylattice.com"))
+			Expect(fakeReceptorClientCreator.CreateReceptorClientCallCount()).To(Equal(1))
+			Expect(fakeReceptorClientCreator.CreateReceptorClientArgsForCall(0)).To(Equal("http://receptor.mylattice.com"))
 		})
 
 		It("returns up=true, auth=false if the receptor returns an authorization error", func() {

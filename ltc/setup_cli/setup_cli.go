@@ -8,6 +8,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/config_helpers"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
+	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/receptor_client"
 	"github.com/codegangsta/cli"
@@ -26,6 +27,8 @@ func NewCliApp() *cli.App {
 	exitHandler := exit_handler.New(signalChan, os.Exit)
 	go exitHandler.Run()
 
+	receptorClientCreator := receptor_client.ProxyAwareCreator{}
+
 	return cli_app_factory.MakeCliApp(
 		diegoVersion,
 		latticeVersion,
@@ -33,7 +36,8 @@ func NewCliApp() *cli.App {
 		exitHandler,
 		config,
 		logger(),
-		receptor_client.ProxyAwareCreator{},
+		receptorClientCreator,
+		target_verifier.New(receptorClientCreator),
 		os.Stdout,
 	)
 }

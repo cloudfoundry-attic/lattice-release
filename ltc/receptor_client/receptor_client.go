@@ -6,6 +6,7 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 )
 
+//go:generate counterfeiter -o fake_receptor_client_creator/fake_receptor_client_creator.go . Creator
 type Creator interface {
 	CreateReceptorClient(target string) receptor.Client
 }

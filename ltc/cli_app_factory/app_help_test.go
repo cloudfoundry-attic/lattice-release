@@ -12,14 +12,16 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/cli_app_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
+	"github.com/cloudfoundry-incubator/lattice/ltc/receptor_client/fake_receptor_client_creator"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/codegangsta/cli"
 )
 
 var _ = Describe("AppHelp", func() {
 	var (
-		cliApp       *cli.App
-		outputBuffer *gbytes.Buffer
+		cliApp                    *cli.App
+		outputBuffer              *gbytes.Buffer
+		fakeReceptorClientCreator *fake_receptor_client_creator.FakeCreator
 	)
 
 	dummyTemplate := `
@@ -35,6 +37,8 @@ USAGE:
 	BeforeEach(func() {
 		outputBuffer = gbytes.NewBuffer()
 
+		fakeReceptorClientCreator = &fake_receptor_client_creator.FakeCreator{}
+
 		cliApp = cli_app_factory.MakeCliApp(
 			"",
 			"",
@@ -42,6 +46,7 @@ USAGE:
 			nil,
 			config.New(persister.NewMemPersister()),
 			nil,
+			fakeReceptorClientCreator,
 			nil,
 			terminal.NewUI(nil, outputBuffer, nil),
 		)

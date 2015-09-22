@@ -99,6 +99,7 @@ func MakeCliApp(
 	config *config.Config,
 	logger lager.Logger,
 	receptorClientCreator receptor_client.Creator,
+	targetVerifier target_verifier.TargetVerifier,
 	cliStdout io.Writer,
 ) *cli.App {
 	config.Load()
@@ -111,8 +112,6 @@ func MakeCliApp(
 
 	ui := terminal.NewUI(os.Stdin, cliStdout, password_reader.NewPasswordReader(exitHandler))
 	app.Writer = ui
-
-	targetVerifier := target_verifier.New(receptorClientCreator)
 
 	app.Before = func(context *cli.Context) error {
 		args := context.Args()

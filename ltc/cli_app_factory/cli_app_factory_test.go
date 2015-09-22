@@ -13,8 +13,10 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/persister"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config/target_verifier/fake_target_verifier"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/receptor_client/fake_receptor_client_creator"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
+	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/lager"
 )
@@ -23,6 +25,7 @@ var _ = Describe("CliAppFactory", func() {
 
 	var (
 		fakeTargetVerifier           *fake_target_verifier.FakeTargetVerifier
+		fakeReceptorClientCreator    *fake_receptor_client_creator.FakeCreator
 		fakeExitHandler              *fake_exit_handler.FakeExitHandler
 		outputBuffer                 *gbytes.Buffer
 		terminalUI                   terminal.UI
@@ -33,12 +36,15 @@ var _ = Describe("CliAppFactory", func() {
 
 	BeforeEach(func() {
 		fakeTargetVerifier = &fake_target_verifier.FakeTargetVerifier{}
+		fakeReceptorClientCreator = &fake_receptor_client_creator.FakeCreator{}
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 		memPersister := persister.NewMemPersister()
 		outputBuffer = gbytes.NewBuffer()
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		cliConfig = config.New(memPersister)
 		latticeVersion, diegoVersion = "v0.2.Test", "0.12345.0"
+
+		fakeReceptorClientCreator.CreateReceptorClientReturns(&fake_receptor.FakeClient{})
 	})
 
 	JustBeforeEach(func() {
@@ -49,6 +55,7 @@ var _ = Describe("CliAppFactory", func() {
 			fakeExitHandler,
 			cliConfig,
 			lager.NewLogger("test"),
+			fakeReceptorClientCreator,
 			fakeTargetVerifier,
 			terminalUI,
 		)
