@@ -3,6 +3,7 @@ package secure_shell
 import (
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/signal"
 	"sync"
@@ -16,7 +17,12 @@ import (
 
 //go:generate counterfeiter -o fake_dialer/fake_dialer.go . Dialer
 type Dialer interface {
-	Dial(user, authUser, authPassword, address string) (SecureSession, error)
+	Dial(user, authUser, authPassword, address string) (Client, error)
+}
+
+//go:generate counterfeiter -o fake_channel_listener/fake_channel_listener.go . ChannelListener
+type ChannelListener interface {
+	Listen(net, laddr string) (<-chan net.Conn, <-chan error)
 }
 
 //go:generate counterfeiter -o fake_secure_session/fake_secure_session.go . SecureSession
@@ -32,6 +38,12 @@ type SecureSession interface {
 	Close() error
 }
 
+//go:generate counterfeiter -o fake_client/fake_client.go . Client
+type Client interface {
+	Dial(n, addr string) (net.Conn, error)
+	NewSession() (SecureSession, error)
+}
+
 //go:generate counterfeiter -o fake_term/fake_term.go . Term
 type Term interface {
 	SetRawTerminal(fd uintptr) (*term_package.State, error)
@@ -40,19 +52,96 @@ type Term interface {
 }
 
 type SecureShell struct {
-	Dialer Dialer
-	Term   Term
-	Clock  clock.Clock
-	Ticker clock.Ticker
+	Dialer   Dialer
+	Term     Term
+	Clock    clock.Clock
+	Ticker   clock.Ticker
+	Listener ChannelListener
 }
 
-func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error {
+// type chanListener struct{}
+// func (chanListener) Listen(listener net.Listener) (<-chan net.Conn, <-chan error) {
+// 	connChan := make(chan net.Conn)
+// 	errChan := make(chan error)
+// 	go func() {
+// 		for {
+// 			conn, err := listener.Accept()
+// 			if err != nil {
+// 				errChan <- err
+// 				return
+// 			}
+// 			connChan <- conn
+// 		}
+// 	}()
+// 	return connChan, errChan
+// }
+
+func (ss *SecureShell) dialAppInstance(appName string, instanceIndex int, config *config_package.Config) (Client, error) {
 	diegoSSHUser := fmt.Sprintf("diego:%s/%d", appName, instanceIndex)
 	address := fmt.Sprintf("%s:2222", config.Target())
 
-	session, err := ss.Dialer.Dial(diegoSSHUser, config.Username(), config.Password(), address)
+	client, err := ss.Dialer.Dial(diegoSSHUser, config.Username(), config.Password(), address)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+func (ss *SecureShell) ConnectAndForward(appName string, instanceIndex int, localAddress, remoteAddress string, config *config_package.Config) error {
+	client, err := ss.dialAppInstance(appName, instanceIndex, config)
 	if err != nil {
 		return err
+	}
+
+	session, err := client.NewSession()
+	if err != nil {
+		panic(err)
+	}
+	defer session.Close()
+
+	acceptChan, errorChan := ss.Listener.Listen("tcp", localAddress)
+
+	for {
+		select {
+		case conn, ok := <-acceptChan:
+			fmt.Printf("acceptChan---\nconn: %v\nok: %v", conn, ok)
+			if !ok {
+				return nil
+			}
+			defer conn.Close()
+
+			target, err := client.Dial("tcp", remoteAddress)
+			if err != nil {
+				panic(err)
+			}
+
+			wg := &sync.WaitGroup{}
+			wg.Add(2)
+
+			copyAndClose(wg, conn, target)
+			copyAndClose(wg, target, conn)
+			wg.Wait()
+		case err, ok := <-errorChan:
+			fmt.Printf("errorChan---\nerr: %s\nok: %v", err.Error(), ok)
+			if !ok {
+				return nil
+			}
+
+			panic(err)
+		}
+	}
+}
+
+func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error {
+	client, err := ss.dialAppInstance(appName, instanceIndex, config)
+	if err != nil {
+		return err
+	}
+
+	session, err := client.NewSession()
+	if err != nil {
+		panic(err)
 	}
 	defer session.Close()
 

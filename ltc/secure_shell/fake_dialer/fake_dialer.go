@@ -8,7 +8,7 @@ import (
 )
 
 type FakeDialer struct {
-	DialStub        func(user, authUser, authPassword, address string) (secure_shell.SecureSession, error)
+	DialStub        func(user, authUser, authPassword, address string) (secure_shell.Client, error)
 	dialMutex       sync.RWMutex
 	dialArgsForCall []struct {
 		user         string
@@ -17,12 +17,12 @@ type FakeDialer struct {
 		address      string
 	}
 	dialReturns struct {
-		result1 secure_shell.SecureSession
+		result1 secure_shell.Client
 		result2 error
 	}
 }
 
-func (fake *FakeDialer) Dial(user string, authUser string, authPassword string, address string) (secure_shell.SecureSession, error) {
+func (fake *FakeDialer) Dial(user string, authUser string, authPassword string, address string) (secure_shell.Client, error) {
 	fake.dialMutex.Lock()
 	fake.dialArgsForCall = append(fake.dialArgsForCall, struct {
 		user         string
@@ -50,10 +50,10 @@ func (fake *FakeDialer) DialArgsForCall(i int) (string, string, string, string) 
 	return fake.dialArgsForCall[i].user, fake.dialArgsForCall[i].authUser, fake.dialArgsForCall[i].authPassword, fake.dialArgsForCall[i].address
 }
 
-func (fake *FakeDialer) DialReturns(result1 secure_shell.SecureSession, result2 error) {
+func (fake *FakeDialer) DialReturns(result1 secure_shell.Client, result2 error) {
 	fake.DialStub = nil
 	fake.dialReturns = struct {
-		result1 secure_shell.SecureSession
+		result1 secure_shell.Client
 		result2 error
 	}{result1, result2}
 }

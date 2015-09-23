@@ -23,6 +23,7 @@ type SSHCommandFactory struct {
 
 //go:generate counterfeiter -o fake_secure_shell/fake_secure_shell.go . SecureShell
 type SecureShell interface {
+	ConnectAndForward(appName string, instanceIndex int, localAddress, remoteAddress string, config *config_package.Config) error
 	ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error
 }
 
@@ -42,12 +43,18 @@ func (factory *SSHCommandFactory) MakeSSHCommand() cli.Command {
 				Usage: "Connects to specified instance index",
 				Value: 0,
 			},
+			cli.StringFlag{
+				Name:  "L",
+				Usage: "Listens on specified local address/port and forwards connections to specified remote address/port\n     \te.g. ltc ssh APP_NAME -L [localhost:]1234:remotehost:5678",
+			},
 		},
 	}
 }
 
 func (factory *SSHCommandFactory) ssh(context *cli.Context) {
 	instanceIndex := context.Int("instance")
+	localForward := context.String("L")
+
 	appName := context.Args().First()
 
 	if appName == "" {
@@ -68,22 +75,50 @@ func (factory *SSHCommandFactory) ssh(context *cli.Context) {
 		return
 	}
 
-	command := ""
-	if len(context.Args()) > 1 {
-		start := 1
-		if context.Args().Get(1) == "--" {
-			start = 2
+	if localForward != "" {
+		var localHost, localPort, remoteHost, remotePort string
+
+		parts := strings.Split(localForward, ":")
+
+		switch len(parts) {
+		case 3:
+			localHost, localPort, remoteHost, remotePort = "localhost", parts[0], parts[1], parts[2]
+		case 4:
+			localHost, localPort, remoteHost, remotePort = parts[0], parts[1], parts[2], parts[3]
+		default:
+			factory.ui.SayIncorrectUsage("-L expects [localhost:]localport:remotehost:remoteport")
+			factory.exitHandler.Exit(exit_codes.InvalidSyntax)
+			return
 		}
-		command = strings.Join(context.Args()[start:len(context.Args())], " ")
-	}
 
-	if command == "" {
-		factory.ui.SayLine("Connecting to %s/%d at %s", appName, instanceIndex, factory.config.Target())
-	}
+		localAddr := fmt.Sprintf("%s:%s", localHost, localPort)
+		remoteAddr := fmt.Sprintf("%s:%s", remoteHost, remotePort)
 
-	if err := factory.secureShell.ConnectToShell(appName, instanceIndex, command, factory.config); err != nil {
-		factory.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
-		factory.exitHandler.Exit(exit_codes.CommandFailed)
-		return
+		factory.ui.SayLine("Forwarding %s to %s via %s/%d at %s", localAddr, remoteAddr, appName, instanceIndex, factory.config.Target())
+
+		if err := factory.secureShell.ConnectAndForward(appName, instanceIndex, localAddr, remoteAddr, factory.config); err != nil {
+			factory.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
+			factory.exitHandler.Exit(exit_codes.CommandFailed)
+			return
+		}
+	} else {
+		command := ""
+		if len(context.Args()) > 1 {
+			start := 1
+			if context.Args().Get(1) == "--" {
+				start = 2
+			}
+			command = strings.Join(context.Args()[start:len(context.Args())], " ")
+		}
+
+		if command == "" {
+			factory.ui.SayLine("Connecting to %s/%d at %s", appName, instanceIndex, factory.config.Target())
+		}
+
+		if err := factory.secureShell.ConnectToShell(appName, instanceIndex, command, factory.config); err != nil {
+			factory.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
+			factory.exitHandler.Exit(exit_codes.CommandFailed)
+			return
+		}
 	}
 }

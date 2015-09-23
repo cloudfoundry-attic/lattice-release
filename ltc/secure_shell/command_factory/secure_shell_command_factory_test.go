@@ -48,69 +48,157 @@ var _ = Describe("SSH CommandFactory", func() {
 			sshCommand = commandFactory.MakeSSHCommand()
 		})
 
-		It("should ssh to instance 0 given an app name", func() {
-			fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
+		Describe("port forwarding", func() {
+			It("should forward a local port assuming localhost", func() {
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
 
-			test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name"})
+				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-L", "1234:remotehost:5678"})
 
-			Expect(outputBuffer).To(test_helpers.SayLine("Connecting to app-name/0 at %s", config.Target()))
+				Expect(outputBuffer).To(test_helpers.SayLine("Forwarding localhost:1234 to remotehost:5678 via app-name/0 at %s", config.Target()))
 
-			Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
-			appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
-			Expect(appName).To(Equal("app-name"))
-			Expect(instanceIndex).To(Equal(0))
-			Expect(command).To(BeEmpty())
-			Expect(actualConfig).To(Equal(config))
+				Expect(fakeSecureShell.ConnectAndForwardCallCount()).To(Equal(1))
+				appName, instanceIndex, localAddr, remoteAddr, actualConfig := fakeSecureShell.ConnectAndForwardArgsForCall(0)
+				Expect(appName).To(Equal("app-name"))
+				Expect(instanceIndex).To(Equal(0))
+				Expect(localAddr).To(Equal("localhost:1234"))
+				Expect(remoteAddr).To(Equal("remotehost:5678"))
+				Expect(actualConfig).To(Equal(config))
 
-			Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
-			Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("app-name"))
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("app-name"))
+			})
+
+			It("should forward a local host and port", func() {
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-L", "mrlocalhost:1234:remotehost:5678"})
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Forwarding mrlocalhost:1234 to remotehost:5678 via app-name/0 at %s", config.Target()))
+
+				Expect(fakeSecureShell.ConnectAndForwardCallCount()).To(Equal(1))
+				appName, instanceIndex, localAddr, remoteAddr, actualConfig := fakeSecureShell.ConnectAndForwardArgsForCall(0)
+				Expect(appName).To(Equal("app-name"))
+				Expect(instanceIndex).To(Equal(0))
+				Expect(localAddr).To(Equal("mrlocalhost:1234"))
+				Expect(remoteAddr).To(Equal("remotehost:5678"))
+				Expect(actualConfig).To(Equal(config))
+
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("app-name"))
+			})
+
+			Context("when ConnectAndForward fails", func() {
+				It("prints an error", func() {
+					fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
+					fakeSecureShell.ConnectAndForwardReturns(errors.New("connection failed"))
+
+					test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"good-name", "-L", "mrlocalhost:1234:remotehost:5678"})
+
+					Expect(outputBuffer).To(test_helpers.SayLine("Forwarding mrlocalhost:1234 to remotehost:5678 via good-name/0 at %s", config.Target()))
+					Expect(outputBuffer).To(test_helpers.SayLine("Error connecting to good-name/0: connection failed"))
+
+					Expect(fakeSecureShell.ConnectAndForwardCallCount()).To(Equal(1))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+				})
+			})
+
+			It("should reject malformed local forward specs", func() {
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-L", "9999:localhost:1234:remotehost:5678"})
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: -L expects [localhost:]localport:remotehost:remoteport"))
+
+				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-L", "remotehost:5678"})
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: -L expects [localhost:]localport:remotehost:remoteport"))
+
+				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-L", "5678"})
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: -L expects [localhost:]localport:remotehost:remoteport"))
+
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax, exit_codes.InvalidSyntax, exit_codes.InvalidSyntax}))
+
+				Expect(fakeSecureShell.ConnectAndForwardCallCount()).To(Equal(0))
+			})
 		})
 
-		It("should ssh to instance index specified", func() {
-			fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 3}, nil)
+		Describe("interactive shell", func() {
+			It("should ssh to instance 0 given an app name", func() {
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
 
-			test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"--instance", "2", "app-name"})
+				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name"})
 
-			Expect(outputBuffer).To(test_helpers.SayLine("Connecting to app-name/2 at %s", config.Target()))
+				Expect(outputBuffer).To(test_helpers.SayLine("Connecting to app-name/0 at %s", config.Target()))
 
-			Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
-			appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
-			Expect(appName).To(Equal("app-name"))
-			Expect(instanceIndex).To(Equal(2))
-			Expect(command).To(BeEmpty())
-			Expect(actualConfig).To(Equal(config))
-		})
+				Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
+				appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
+				Expect(appName).To(Equal("app-name"))
+				Expect(instanceIndex).To(Equal(0))
+				Expect(command).To(BeEmpty())
+				Expect(actualConfig).To(Equal(config))
 
-		It("should run a command remotely instead of the login shell", func() {
-			fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("app-name"))
+			})
 
-			doneChan := test_helpers.AsyncExecuteCommandWithArgs(sshCommand, []string{"app-name", "echo", "1", "2", "3"})
+			It("should ssh to instance index specified", func() {
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 3}, nil)
 
-			Eventually(doneChan, 3).Should(BeClosed())
-			Expect(outputBuffer).NotTo(test_helpers.Say("Connecting to app-name"))
+				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"--instance", "2", "app-name"})
 
-			Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
-			appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
-			Expect(appName).To(Equal("app-name"))
-			Expect(instanceIndex).To(Equal(0))
-			Expect(command).To(Equal("echo 1 2 3"))
-			Expect(actualConfig).To(Equal(config))
-		})
+				Expect(outputBuffer).To(test_helpers.SayLine("Connecting to app-name/2 at %s", config.Target()))
 
-		It("should support -- delimiter for args", func() {
-			fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
+				Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
+				appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
+				Expect(appName).To(Equal("app-name"))
+				Expect(instanceIndex).To(Equal(2))
+				Expect(command).To(BeEmpty())
+				Expect(actualConfig).To(Equal(config))
+			})
 
-			doneChan := test_helpers.AsyncExecuteCommandWithArgs(sshCommand, []string{"app-name", "--", "/bin/ls", "-l"})
+			It("should run a command remotely instead of the login shell", func() {
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
 
-			Eventually(doneChan, 3).Should(BeClosed())
-			Expect(outputBuffer).NotTo(test_helpers.Say("Connecting to app-name"))
+				doneChan := test_helpers.AsyncExecuteCommandWithArgs(sshCommand, []string{"app-name", "echo", "1", "2", "3"})
 
-			Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
-			appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
-			Expect(appName).To(Equal("app-name"))
-			Expect(instanceIndex).To(Equal(0))
-			Expect(command).To(Equal("/bin/ls -l"))
-			Expect(actualConfig).To(Equal(config))
+				Eventually(doneChan, 3).Should(BeClosed())
+				Expect(outputBuffer).NotTo(test_helpers.Say("Connecting to app-name"))
+
+				Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
+				appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
+				Expect(appName).To(Equal("app-name"))
+				Expect(instanceIndex).To(Equal(0))
+				Expect(command).To(Equal("echo 1 2 3"))
+				Expect(actualConfig).To(Equal(config))
+			})
+
+			It("should support -- delimiter for args", func() {
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
+
+				doneChan := test_helpers.AsyncExecuteCommandWithArgs(sshCommand, []string{"app-name", "--", "/bin/ls", "-l"})
+
+				Eventually(doneChan, 3).Should(BeClosed())
+				Expect(outputBuffer).NotTo(test_helpers.Say("Connecting to app-name"))
+
+				Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
+				appName, instanceIndex, command, actualConfig := fakeSecureShell.ConnectToShellArgsForCall(0)
+				Expect(appName).To(Equal("app-name"))
+				Expect(instanceIndex).To(Equal(0))
+				Expect(command).To(Equal("/bin/ls -l"))
+				Expect(actualConfig).To(Equal(config))
+			})
+
+			Context("when ConnectToShell fails", func() {
+				It("prints an error", func() {
+					fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
+					fakeSecureShell.ConnectToShellReturns(errors.New("connection failed"))
+
+					test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"good-app"})
+
+					Expect(outputBuffer).To(test_helpers.SayLine("Error connecting to good-app/0: connection failed"))
+
+					Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
+				})
+			})
 		})
 
 		Context("when not given an app name", func() {
@@ -146,20 +234,6 @@ var _ = Describe("SSH CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.SayLine("Instance good-app/1 does not exist."))
 
 				Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(0))
-				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
-			})
-		})
-
-		Context("when ConnectToShell fails", func() {
-			It("prints an error", func() {
-				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
-				fakeSecureShell.ConnectToShellReturns(errors.New("connection failed"))
-
-				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"good-app"})
-
-				Expect(outputBuffer).To(test_helpers.SayLine("Error connecting to good-app/0: connection failed"))
-
-				Expect(fakeSecureShell.ConnectToShellCallCount()).To(Equal(1))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
