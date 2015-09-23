@@ -22,6 +22,6 @@ pushd $LATTICE_DIR
   export $(vagrant ssh -c "grep SYSTEM_DOMAIN /var/lattice/setup/lattice-environment" | egrep -o '(SYSTEM_DOMAIN=.+\.io)')
 popd
 
-sleep 60
+sleep 120
 
 echo $SYSTEM_DOMAIN > system_domain
