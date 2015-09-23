@@ -27,22 +27,30 @@ func (s *SecureDialer) Dial(user, authUser, authPassword, address string) (Clien
 	return &SecureClient{client}, nil
 }
 
-//go:generate counterfeiter -o fake_ssh_client/fake_ssh_client.go . SSHClient
-type SSHClient interface {
-	NewSession() (*ssh.Session, error)
-	Dial(n, addr string) (net.Conn, error)
+type SSHSessionFactory struct {
+	Client *ssh.Client
 }
 
-type SecureClient struct {
-	Client SSHClient
-}
-
-func (s *SecureClient) NewSession() (SecureSession, error) {
+func (s *SSHSessionFactory) New() (Session, error) {
 	return s.Client.NewSession()
 }
 
-func (s *SecureClient) Dial(n, addr string) (io.ReadWriteCloser, error) {
-	return s.Client.Dial(n, addr)
+//go:generate counterfeiter -o fake_ssh_dialer/fake_ssh_dialer.go . SSHDialer
+type SSHDialer interface {
+	Dial(n, addr string) (net.Conn, error)
+}
+
+//go:generate counterfeiter -o fake_session_factory/fake_session_factory.go . SessionFactory
+type SessionFactory interface {
+	New() (Session, error)
+}
+
+type SecureClient struct {
+	Client   SSHDialer
+	Sessions SessionFactory
+	Stdin    io.Reader
+	Stdout   io.Writer
+	Stderr   io.Writer
 }
 
 func (s *SecureClient) Accept(localConn io.ReadWriteCloser, remoteAddress string) error {
@@ -67,4 +75,8 @@ func copyAndClose(wg *sync.WaitGroup, dest io.WriteCloser, src io.Reader) {
 	if wg != nil {
 		wg.Done()
 	}
+}
+
+func (s *SecureClient) Open(height, width uint32) error {
+	return nil
 }

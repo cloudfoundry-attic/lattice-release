@@ -107,7 +107,6 @@ var _ = Describe("SecureShell", func() {
 			listenNetwork, localAddr := fakeListener.ListenArgsForCall(0)
 			Expect(listenNetwork).To(Equal("tcp"))
 			Expect(localAddr).To(Equal("some local address"))
-
 		})
 	})
 

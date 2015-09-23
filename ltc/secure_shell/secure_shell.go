@@ -24,7 +24,7 @@ type Listener interface {
 }
 
 //go:generate counterfeiter -o fake_secure_session/fake_secure_session.go . SecureSession
-type SecureSession interface {
+type Session interface {
 	StdinPipe() (io.WriteCloser, error)
 	StdoutPipe() (io.Reader, error)
 	StderrPipe() (io.Reader, error)

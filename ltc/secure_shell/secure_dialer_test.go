@@ -111,4 +111,36 @@ var _ = Describe("SecureClient", func() {
 			})
 		})
 	})
+
+	Describe("#Open", func() {
+		It("should ", func() {
+			mockSessionStdin = &bytes.Buffer{}
+			mockSessionStdout = bytes.NewBufferString("some session out data")
+			mockSessionStderr = bytes.NewBufferString("some session err data")
+			mockSession := &fake_session.FakeSession{}
+			mockSessionFactory.NewReturns(mockSession, nil)
+			mockSession.StdinPipeReturns(mockSessionStdin, nil)
+			mockSession.StdoutPipeReturns(mockSessionStdout, nil)
+			mockSession.StderrPipeReturns(mockSessionStderr, nil)
+
+			Expect(secureClient.Open(100, 200)).To(Succeed())
+
+			Expect(mockSession.RequestPtyCallCount()).To(Equal(1))
+			termType, height, width, modes := fakeSession.RequestPtyArgsForCall(0)
+			Expect(termType).To(Equal("defaultterm"))
+			Expect(height).To(Equal(200))
+			Expect(width).To(Equal(100))
+			Expect(modes[ssh.ECHO]).To(Equal(1))
+			Expect(modes[ssh.TTY_OP_ISPEED]).To(Equal(115200))
+			Expect(modes[ssh.TTY_OP_OSPEED]).To(Equal(115200))
+		})
+	})
+
+	Describe("#Resize", func() {
+
+	})
+
+	Describe("#KeepAlive", func() {
+
+	})
 })
