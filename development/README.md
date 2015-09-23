@@ -36,21 +36,12 @@ If you have not developed a golang project before, please see the [Golang docs](
 ### Build a local lattice cluster and run smoke tests
 
 ```bash
-    $ development/run
+    $ vagrant up
     $ ltc target 192.168.11.11.xip.io
     $ ltc test -v
 ```
 
-### Destroy everything
-
-```bash
-    $ development/teardown
-```
-
 Running `development/setup` subsequent times will clean and re-sync your build directory.
-
-Running `development/teardown` will delete the `build` directory and destroy the running vagrant box. It is destructive and unnecessary
-to run `development/teardown` after build.
 
 ## Dependency Management
 

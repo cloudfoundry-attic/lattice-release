@@ -101,8 +101,9 @@ To build Lattice from source and deploy using Vagrant:
 ```bash
 $ git clone git@github.com:cloudfoundry-incubator/lattice.git
 $ cd lattice
-$ development/setup && development/build && development/run
 $ source development/env
+$ development/setup && development/build
+$ vagrant up
 ```
 
 > More information on developing for Lattice can be found on the [development readme](development/README.md).
