@@ -11,7 +11,7 @@ type FakeSSHSessionFactory struct {
 	NewStub        func() (sshapi.SSHSession, error)
 	newMutex       sync.RWMutex
 	newArgsForCall []struct{}
-	newReturns struct {
+	newReturns     struct {
 		result1 sshapi.SSHSession
 		result2 error
 	}

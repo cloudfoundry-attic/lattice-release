@@ -51,15 +51,46 @@ var _ = Describe("SSH", func() {
 		fakeSessionFactory.NewReturns(fakeSession, nil)
 	})
 
-	Describe("#ConnectAndForward", func() {
+	Describe("#Connect", func() {
+		It("should dial an ssh client", func() {
+			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+
+			Expect(fakeClientDialer.DialCallCount()).To(Equal(1))
+			appName, instanceIndex, configArg := fakeClientDialer.DialArgsForCall(0)
+			Expect(appName).To(Equal("some-app-name"))
+			Expect(instanceIndex).To(Equal(100))
+			Expect(configArg == config).To(BeTrue())
+		})
+
+		Context("when we fail to dial the SSH server", func() {
+			It("returns an error", func() {
+				fakeClientDialer.DialReturns(nil, errors.New("some error"))
+
+				err := appSSH.Connect("", 0, config)
+				Expect(err).To(MatchError("some error"))
+			})
+		})
+
+		Context("when connect is called more than once", func() {
+			It("returns an error", func() {
+				Expect(appSSH.Connect("", 0, config)).To(Succeed())
+				err := appSSH.Connect("", 0, config)
+				Expect(err).To(MatchError("already connected"))
+			})
+		})
+	})
+
+	Describe("#Forward", func() {
 		It("should should forward connection data between the local and remote servers", func() {
 			acceptChan := make(chan io.ReadWriteCloser)
 
 			fakeListener.ListenReturns(acceptChan, nil)
 
+			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+
 			shellChan := make(chan error)
 			go func() {
-				shellChan <- appSSH.ConnectAndForward("some-app-name", 100, "some local address", "some remote address", config)
+				shellChan <- appSSH.Forward("some local address", "some remote address")
 			}()
 
 			localConn := &dummyConn{}
@@ -74,12 +105,6 @@ var _ = Describe("SSH", func() {
 
 			Expect(<-shellChan).To(Succeed())
 
-			Expect(fakeClientDialer.DialCallCount()).To(Equal(1))
-			appName, instanceIndex, configArg := fakeClientDialer.DialArgsForCall(0)
-			Expect(appName).To(Equal("some-app-name"))
-			Expect(instanceIndex).To(Equal(100))
-			Expect(configArg == config).To(BeTrue())
-
 			Expect(fakeListener.ListenCallCount()).To(Equal(1))
 			listenNetwork, localAddr := fakeListener.ListenArgsForCall(0)
 			Expect(listenNetwork).To(Equal("tcp"))
@@ -87,7 +112,7 @@ var _ = Describe("SSH", func() {
 		})
 	})
 
-	Describe("#ConnectToShell", func() {
+	Describe("#Shell", func() {
 		var stopKeepAliveChan chan struct{}
 
 		BeforeEach(func() {
@@ -100,13 +125,9 @@ var _ = Describe("SSH", func() {
 			termState := &term.State{}
 			fakeTerm.SetRawTerminalReturns(termState, nil)
 
-			Expect(appSSH.ConnectToShell("some-app-name", 100, "", config)).To(Succeed())
+			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
-			Expect(fakeClientDialer.DialCallCount()).To(Equal(1))
-			appName, instanceIndex, configArg := fakeClientDialer.DialArgsForCall(0)
-			Expect(appName).To(Equal("some-app-name"))
-			Expect(instanceIndex).To(Equal(100))
-			Expect(configArg == config).To(BeTrue())
+			Expect(appSSH.Shell("")).To(Succeed())
 
 			Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
 			Expect(fakeTerm.GetWinsizeArgsForCall(0)).To(Equal(os.Stdout.Fd()))
@@ -134,7 +155,8 @@ var _ = Describe("SSH", func() {
 		})
 
 		It("should run a remote command if provided", func() {
-			Expect(appSSH.ConnectToShell("some-app-name", 100, "some-command", config)).To(Succeed())
+			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+			Expect(appSSH.Shell("some-command")).To(Succeed())
 
 			Expect(fakeSession.ShellCallCount()).To(Equal(0))
 			Expect(fakeSession.WaitCallCount()).To(Equal(0))
@@ -157,8 +179,10 @@ var _ = Describe("SSH", func() {
 				return nil
 			}
 
+			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+
 			go func() {
-				shellChan <- appSSH.ConnectToShell("some-app-name", 100, "", config)
+				shellChan <- appSSH.Shell("")
 			}()
 
 			<-waitChan
@@ -188,8 +212,10 @@ var _ = Describe("SSH", func() {
 				return nil
 			}
 
+			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+
 			go func() {
-				shellChan <- appSSH.ConnectToShell("some-app-name", 100, "", config)
+				shellChan <- appSSH.Shell("")
 			}()
 
 			<-waitChan
@@ -203,20 +229,12 @@ var _ = Describe("SSH", func() {
 			Expect(<-shellChan).To(Succeed())
 		})
 
-		Context("when we fail to dail the SSH server", func() {
-			It("returns an error", func() {
-				fakeClientDialer.DialReturns(nil, errors.New("some error"))
-
-				err := appSSH.ConnectToShell("", 0, "", config)
-				Expect(err).To(MatchError("some error"))
-			})
-		})
-
 		Context("when we fail to set the raw terminal", func() {
 			It("does not restore the terminal at the end", func() {
 				fakeTerm.SetRawTerminalReturns(nil, errors.New("some error"))
 
-				Expect(appSSH.ConnectToShell("", 0, "", config)).To(Succeed())
+				Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+				Expect(appSSH.Shell("")).To(Succeed())
 				Expect(fakeTerm.RestoreTerminalCallCount()).To(Equal(0))
 			})
 		})

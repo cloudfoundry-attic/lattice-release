@@ -9,98 +9,130 @@ import (
 )
 
 type FakeSSH struct {
-	ConnectAndForwardStub        func(appName string, instanceIndex int, localAddress, remoteAddress string, config *config_package.Config) error
-	connectAndForwardMutex       sync.RWMutex
-	connectAndForwardArgsForCall []struct {
+	ConnectStub        func(appName string, instanceIndex int, config *config_package.Config) error
+	connectMutex       sync.RWMutex
+	connectArgsForCall []struct {
 		appName       string
 		instanceIndex int
-		localAddress  string
-		remoteAddress string
 		config        *config_package.Config
 	}
-	connectAndForwardReturns struct {
+	connectReturns struct {
 		result1 error
 	}
-	ConnectToShellStub        func(appName string, instanceIndex int, command string, config *config_package.Config) error
-	connectToShellMutex       sync.RWMutex
-	connectToShellArgsForCall []struct {
-		appName       string
-		instanceIndex int
-		command       string
-		config        *config_package.Config
+	ForwardStub        func(localAddress, remoteAddress string) error
+	forwardMutex       sync.RWMutex
+	forwardArgsForCall []struct {
+		localAddress  string
+		remoteAddress string
 	}
-	connectToShellReturns struct {
+	forwardReturns struct {
+		result1 error
+	}
+	ShellStub        func(command string) error
+	shellMutex       sync.RWMutex
+	shellArgsForCall []struct {
+		command string
+	}
+	shellReturns struct {
 		result1 error
 	}
 }
 
-func (fake *FakeSSH) ConnectAndForward(appName string, instanceIndex int, localAddress string, remoteAddress string, config *config_package.Config) error {
-	fake.connectAndForwardMutex.Lock()
-	fake.connectAndForwardArgsForCall = append(fake.connectAndForwardArgsForCall, struct {
+func (fake *FakeSSH) Connect(appName string, instanceIndex int, config *config_package.Config) error {
+	fake.connectMutex.Lock()
+	fake.connectArgsForCall = append(fake.connectArgsForCall, struct {
 		appName       string
 		instanceIndex int
-		localAddress  string
-		remoteAddress string
 		config        *config_package.Config
-	}{appName, instanceIndex, localAddress, remoteAddress, config})
-	fake.connectAndForwardMutex.Unlock()
-	if fake.ConnectAndForwardStub != nil {
-		return fake.ConnectAndForwardStub(appName, instanceIndex, localAddress, remoteAddress, config)
+	}{appName, instanceIndex, config})
+	fake.connectMutex.Unlock()
+	if fake.ConnectStub != nil {
+		return fake.ConnectStub(appName, instanceIndex, config)
 	} else {
-		return fake.connectAndForwardReturns.result1
+		return fake.connectReturns.result1
 	}
 }
 
-func (fake *FakeSSH) ConnectAndForwardCallCount() int {
-	fake.connectAndForwardMutex.RLock()
-	defer fake.connectAndForwardMutex.RUnlock()
-	return len(fake.connectAndForwardArgsForCall)
+func (fake *FakeSSH) ConnectCallCount() int {
+	fake.connectMutex.RLock()
+	defer fake.connectMutex.RUnlock()
+	return len(fake.connectArgsForCall)
 }
 
-func (fake *FakeSSH) ConnectAndForwardArgsForCall(i int) (string, int, string, string, *config_package.Config) {
-	fake.connectAndForwardMutex.RLock()
-	defer fake.connectAndForwardMutex.RUnlock()
-	return fake.connectAndForwardArgsForCall[i].appName, fake.connectAndForwardArgsForCall[i].instanceIndex, fake.connectAndForwardArgsForCall[i].localAddress, fake.connectAndForwardArgsForCall[i].remoteAddress, fake.connectAndForwardArgsForCall[i].config
+func (fake *FakeSSH) ConnectArgsForCall(i int) (string, int, *config_package.Config) {
+	fake.connectMutex.RLock()
+	defer fake.connectMutex.RUnlock()
+	return fake.connectArgsForCall[i].appName, fake.connectArgsForCall[i].instanceIndex, fake.connectArgsForCall[i].config
 }
 
-func (fake *FakeSSH) ConnectAndForwardReturns(result1 error) {
-	fake.ConnectAndForwardStub = nil
-	fake.connectAndForwardReturns = struct {
+func (fake *FakeSSH) ConnectReturns(result1 error) {
+	fake.ConnectStub = nil
+	fake.connectReturns = struct {
 		result1 error
 	}{result1}
 }
 
-func (fake *FakeSSH) ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error {
-	fake.connectToShellMutex.Lock()
-	fake.connectToShellArgsForCall = append(fake.connectToShellArgsForCall, struct {
-		appName       string
-		instanceIndex int
-		command       string
-		config        *config_package.Config
-	}{appName, instanceIndex, command, config})
-	fake.connectToShellMutex.Unlock()
-	if fake.ConnectToShellStub != nil {
-		return fake.ConnectToShellStub(appName, instanceIndex, command, config)
+func (fake *FakeSSH) Forward(localAddress string, remoteAddress string) error {
+	fake.forwardMutex.Lock()
+	fake.forwardArgsForCall = append(fake.forwardArgsForCall, struct {
+		localAddress  string
+		remoteAddress string
+	}{localAddress, remoteAddress})
+	fake.forwardMutex.Unlock()
+	if fake.ForwardStub != nil {
+		return fake.ForwardStub(localAddress, remoteAddress)
 	} else {
-		return fake.connectToShellReturns.result1
+		return fake.forwardReturns.result1
 	}
 }
 
-func (fake *FakeSSH) ConnectToShellCallCount() int {
-	fake.connectToShellMutex.RLock()
-	defer fake.connectToShellMutex.RUnlock()
-	return len(fake.connectToShellArgsForCall)
+func (fake *FakeSSH) ForwardCallCount() int {
+	fake.forwardMutex.RLock()
+	defer fake.forwardMutex.RUnlock()
+	return len(fake.forwardArgsForCall)
 }
 
-func (fake *FakeSSH) ConnectToShellArgsForCall(i int) (string, int, string, *config_package.Config) {
-	fake.connectToShellMutex.RLock()
-	defer fake.connectToShellMutex.RUnlock()
-	return fake.connectToShellArgsForCall[i].appName, fake.connectToShellArgsForCall[i].instanceIndex, fake.connectToShellArgsForCall[i].command, fake.connectToShellArgsForCall[i].config
+func (fake *FakeSSH) ForwardArgsForCall(i int) (string, string) {
+	fake.forwardMutex.RLock()
+	defer fake.forwardMutex.RUnlock()
+	return fake.forwardArgsForCall[i].localAddress, fake.forwardArgsForCall[i].remoteAddress
 }
 
-func (fake *FakeSSH) ConnectToShellReturns(result1 error) {
-	fake.ConnectToShellStub = nil
-	fake.connectToShellReturns = struct {
+func (fake *FakeSSH) ForwardReturns(result1 error) {
+	fake.ForwardStub = nil
+	fake.forwardReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeSSH) Shell(command string) error {
+	fake.shellMutex.Lock()
+	fake.shellArgsForCall = append(fake.shellArgsForCall, struct {
+		command string
+	}{command})
+	fake.shellMutex.Unlock()
+	if fake.ShellStub != nil {
+		return fake.ShellStub(command)
+	} else {
+		return fake.shellReturns.result1
+	}
+}
+
+func (fake *FakeSSH) ShellCallCount() int {
+	fake.shellMutex.RLock()
+	defer fake.shellMutex.RUnlock()
+	return len(fake.shellArgsForCall)
+}
+
+func (fake *FakeSSH) ShellArgsForCall(i int) string {
+	fake.shellMutex.RLock()
+	defer fake.shellMutex.RUnlock()
+	return fake.shellArgsForCall[i].command
+}
+
+func (fake *FakeSSH) ShellReturns(result1 error) {
+	fake.ShellStub = nil
+	fake.shellReturns = struct {
 		result1 error
 	}{result1}
 }

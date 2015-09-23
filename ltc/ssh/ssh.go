@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"errors"
 	"io"
 	"os"
 	"os/signal"
@@ -37,6 +38,7 @@ type SSH struct {
 	ClientDialer   ClientDialer
 	Term           Term
 	SessionFactory SessionFactory
+	client         Client
 }
 
 func New() *SSH {
@@ -48,12 +50,19 @@ func New() *SSH {
 	}
 }
 
-func (s *SSH) ConnectAndForward(appName string, instanceIndex int, localAddress, remoteAddress string, config *config_package.Config) error {
-	client, err := s.ClientDialer.Dial(appName, instanceIndex, config)
+func (s *SSH) Connect(appName string, instanceIndex int, config *config_package.Config) error {
+	if s.client != nil {
+		return errors.New("already connected")
+	}
+	var err error
+	s.client, err = s.ClientDialer.Dial(appName, instanceIndex, config)
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
+func (s *SSH) Forward(localAddress, remoteAddress string) error {
 	acceptChan, errorChan := s.Listener.Listen("tcp", localAddress)
 
 	for {
@@ -63,7 +72,7 @@ func (s *SSH) ConnectAndForward(appName string, instanceIndex int, localAddress,
 				return nil
 			}
 
-			if err := client.Forward(conn, remoteAddress); err != nil {
+			if err := s.client.Forward(conn, remoteAddress); err != nil {
 				panic(err)
 			}
 		case err, ok := <-errorChan:
@@ -76,13 +85,9 @@ func (s *SSH) ConnectAndForward(appName string, instanceIndex int, localAddress,
 	}
 }
 
-func (s *SSH) ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error {
-	client, err := s.ClientDialer.Dial(appName, instanceIndex, config)
-	if err != nil {
-		return err
-	}
+func (s *SSH) Shell(command string) error {
 	width, height := s.Term.GetWinsize(os.Stdout.Fd())
-	session, err := s.SessionFactory.New(client, width, height)
+	session, err := s.SessionFactory.New(s.client, width, height)
 	if err != nil {
 		return err
 	}

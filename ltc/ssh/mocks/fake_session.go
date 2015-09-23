@@ -11,7 +11,7 @@ type FakeSession struct {
 	KeepAliveStub        func() (stopChan chan<- struct{})
 	keepAliveMutex       sync.RWMutex
 	keepAliveArgsForCall []struct{}
-	keepAliveReturns struct {
+	keepAliveReturns     struct {
 		result1 chan<- struct{}
 	}
 	ResizeStub        func(width, height int) error
@@ -26,7 +26,7 @@ type FakeSession struct {
 	ShellStub        func() error
 	shellMutex       sync.RWMutex
 	shellArgsForCall []struct{}
-	shellReturns struct {
+	shellReturns     struct {
 		result1 error
 	}
 	RunStub        func(string) error
@@ -40,13 +40,13 @@ type FakeSession struct {
 	WaitStub        func() error
 	waitMutex       sync.RWMutex
 	waitArgsForCall []struct{}
-	waitReturns struct {
+	waitReturns     struct {
 		result1 error
 	}
 	CloseStub        func() error
 	closeMutex       sync.RWMutex
 	closeArgsForCall []struct{}
-	closeReturns struct {
+	closeReturns     struct {
 		result1 error
 	}
 }

@@ -9,5 +9,5 @@ import (
 
 func TestSshapi(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Sshapi Suite")
+	RunSpecs(t, "SSHAPI Suite")
 }

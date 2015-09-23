@@ -23,8 +23,9 @@ type SSHCommandFactory struct {
 
 //go:generate counterfeiter -o mocks/fake_ssh.go . SSH
 type SSH interface {
-	ConnectAndForward(appName string, instanceIndex int, localAddress, remoteAddress string, config *config_package.Config) error
-	ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error
+	Connect(appName string, instanceIndex int, config *config_package.Config) error
+	Forward(localAddress, remoteAddress string) error
+	Shell(command string) error
 }
 
 func NewSSHCommandFactory(config *config_package.Config, ui terminal.UI, exitHandler exit_handler.ExitHandler, appExaminer app_examiner.AppExaminer, secureShell SSH) *SSHCommandFactory {
@@ -75,6 +76,12 @@ func (factory *SSHCommandFactory) ssh(context *cli.Context) {
 		return
 	}
 
+	if err := factory.secureShell.Connect(appName, instanceIndex, factory.config); err != nil {
+		factory.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
+		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
 	if localForward != "" {
 		var localHost, localPort, remoteHost, remotePort string
 
@@ -96,7 +103,7 @@ func (factory *SSHCommandFactory) ssh(context *cli.Context) {
 
 		factory.ui.SayLine("Forwarding %s to %s via %s/%d at %s", localAddr, remoteAddr, appName, instanceIndex, factory.config.Target())
 
-		if err := factory.secureShell.ConnectAndForward(appName, instanceIndex, localAddr, remoteAddr, factory.config); err != nil {
+		if err := factory.secureShell.Forward(localAddr, remoteAddr); err != nil {
 			factory.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
 			factory.exitHandler.Exit(exit_codes.CommandFailed)
 			return
@@ -115,7 +122,7 @@ func (factory *SSHCommandFactory) ssh(context *cli.Context) {
 			factory.ui.SayLine("Connecting to %s/%d at %s", appName, instanceIndex, factory.config.Target())
 		}
 
-		if err := factory.secureShell.ConnectToShell(appName, instanceIndex, command, factory.config); err != nil {
+		if err := factory.secureShell.Shell(command); err != nil {
 			factory.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
 			factory.exitHandler.Exit(exit_codes.CommandFailed)
 			return

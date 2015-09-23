@@ -13,21 +13,21 @@ type FakeSSHSession struct {
 	StdinPipeStub        func() (io.WriteCloser, error)
 	stdinPipeMutex       sync.RWMutex
 	stdinPipeArgsForCall []struct{}
-	stdinPipeReturns struct {
+	stdinPipeReturns     struct {
 		result1 io.WriteCloser
 		result2 error
 	}
 	StdoutPipeStub        func() (io.Reader, error)
 	stdoutPipeMutex       sync.RWMutex
 	stdoutPipeArgsForCall []struct{}
-	stdoutPipeReturns struct {
+	stdoutPipeReturns     struct {
 		result1 io.Reader
 		result2 error
 	}
 	StderrPipeStub        func() (io.Reader, error)
 	stderrPipeMutex       sync.RWMutex
 	stderrPipeArgsForCall []struct{}
-	stderrPipeReturns struct {
+	stderrPipeReturns     struct {
 		result1 io.Reader
 		result2 error
 	}
@@ -56,7 +56,7 @@ type FakeSSHSession struct {
 	ShellStub        func() error
 	shellMutex       sync.RWMutex
 	shellArgsForCall []struct{}
-	shellReturns struct {
+	shellReturns     struct {
 		result1 error
 	}
 	RunStub        func(string) error
@@ -70,13 +70,13 @@ type FakeSSHSession struct {
 	WaitStub        func() error
 	waitMutex       sync.RWMutex
 	waitArgsForCall []struct{}
-	waitReturns struct {
+	waitReturns     struct {
 		result1 error
 	}
 	CloseStub        func() error
 	closeMutex       sync.RWMutex
 	closeArgsForCall []struct{}
-	closeReturns struct {
+	closeReturns     struct {
 		result1 error
 	}
 }
