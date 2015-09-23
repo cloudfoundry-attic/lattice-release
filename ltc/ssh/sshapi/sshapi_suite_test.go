@@ -1,4 +1,4 @@
-package secure_shell_test
+package sshapi_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestSecureShell(t *testing.T) {
+func TestSshapi(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "SecureShell Suite")
+	RunSpecs(t, "Sshapi Suite")
 }

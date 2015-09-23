@@ -1,4 +1,4 @@
-package secure_shell
+package ssh
 
 import (
 	"io"

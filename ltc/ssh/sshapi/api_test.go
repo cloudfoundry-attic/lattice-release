@@ -1,4 +1,4 @@
-package secure_shell_test
+package sshapi_test
 
 import (
 	"bytes"
@@ -10,16 +10,16 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_ssh_client"
+	"github.com/cloudfoundry-incubator/lattice/ltc/sshapi"
+	"github.com/cloudfoundry-incubator/lattice/ltc/sshapi/fake_ssh_client"
 	"golang.org/x/crypto/ssh"
 )
 
 var _ = Describe("SecureDialer", func() {
-	var secureDialer *secure_shell.SecureDialer
+	var secureDialer *ssh.SecureDialer
 
 	BeforeEach(func() {
-		secureDialer = &secure_shell.SecureDialer{}
+		secureDialer = &ssh.SecureDialer{}
 	})
 
 	Describe("#Dial", func() {
@@ -65,13 +65,13 @@ func (m *mockConn) Close() error {
 
 var _ = Describe("SecureClient", func() {
 	var (
-		secureClient  *secure_shell.SecureClient
+		secureClient  *ssh.SecureClient
 		mockSSHClient *fake_ssh_client.FakeSSHClient
 	)
 
 	BeforeEach(func() {
 		mockSSHClient = &fake_ssh_client.FakeSSHClient{}
-		secureClient = &secure_shell.SecureClient{mockSSHClient}
+		secureClient = &ssh.SecureClient{mockSSHClient}
 	})
 
 	Describe("#Accept", func() {

@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/keygen"
+	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/ssh/keygen"
 )
 
 var _ = Describe("KeyGenerator", func() {

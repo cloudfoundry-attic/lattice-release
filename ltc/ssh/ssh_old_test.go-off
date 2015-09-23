@@ -1,4 +1,4 @@
-package secure_shell_test
+package ssh_test
 
 import (
 	"errors"
@@ -13,16 +13,16 @@ import (
 	"github.com/onsi/gomega/gbytes"
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_client"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_dialer"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_listener"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_secure_session"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_term"
+	"github.com/cloudfoundry-incubator/lattice/ltc/ssh"
+	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/fake_client"
+	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/fake_dialer"
+	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/fake_listener"
+	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/fake_secure_session"
+	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/fake_term"
 	"github.com/pivotal-golang/clock/fakeclock"
 )
 
-var _ = Describe("SecureShell", func() {
+var _ = Describe("SSH", func() {
 	var (
 		fakeDialer   *fake_dialer.FakeDialer
 		fakeClient   *fake_client.FakeClient
@@ -35,7 +35,7 @@ var _ = Describe("SecureShell", func() {
 		fakeListener *fake_listener.FakeListener
 
 		config      *config_package.Config
-		secureShell *secure_shell.SecureShell
+		secureShell *ssh.SSH
 
 		oldTerm string
 	)
@@ -55,7 +55,7 @@ var _ = Describe("SecureShell", func() {
 		config.SetTarget("10.0.12.34")
 		config.SetLogin("user", "past")
 
-		secureShell = &secure_shell.SecureShell{
+		secureShell = &ssh.SSH{
 			Dialer:    fakeDialer,
 			Term:      fakeTerm,
 			Clock:     fakeClock,

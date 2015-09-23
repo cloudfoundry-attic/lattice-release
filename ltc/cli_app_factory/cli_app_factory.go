@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
-
-	"golang.org/x/crypto/ssh"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
@@ -27,8 +24,8 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/receptor_client"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell"
-	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/keygen"
+	"github.com/cloudfoundry-incubator/lattice/ltc/ssh"
+	keygen_package "github.com/cloudfoundry-incubator/lattice/ltc/ssh/keygen"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
@@ -45,7 +42,7 @@ import (
 	docker_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/command_factory"
 	droplet_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/command_factory"
 	logs_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/logs/command_factory"
-	ssh_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/command_factory"
+	ssh_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/ssh/command_factory"
 	task_examiner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/command_factory"
 	task_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/task_runner/command_factory"
 )
@@ -214,15 +211,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, blobStoreVerifier, exitHandler)
 
-	secureShell := &secure_shell.SecureShell{
-		Dialer:    &secure_shell.SecureDialer{DialFunc: ssh.Dial},
-		Term:      &secure_shell.SecureTerm{},
-		Clock:     clock,
-		KeepAlive: clock.NewTicker(30 * time.Second),
-		Listener:  &secure_shell.ChannelListener{},
-	}
-
-	sshCommandFactory := ssh_command_factory.NewSSHCommandFactory(config, ui, exitHandler, appExaminer, secureShell)
+	sshCommandFactory := ssh_command_factory.NewSSHCommandFactory(config, ui, exitHandler, appExaminer, ssh.New())
 
 	helpCommand := cli.Command{
 		Name:        "help",

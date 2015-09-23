@@ -18,16 +18,16 @@ type SSHCommandFactory struct {
 	exitHandler exit_handler.ExitHandler
 	appExaminer app_examiner.AppExaminer
 
-	secureShell SecureShell
+	secureShell SSH
 }
 
-//go:generate counterfeiter -o fake_secure_shell/fake_secure_shell.go . SecureShell
-type SecureShell interface {
+//go:generate counterfeiter -o fake_ssh/fake_ssh.go . SSH
+type SSH interface {
 	ConnectAndForward(appName string, instanceIndex int, localAddress, remoteAddress string, config *config_package.Config) error
 	ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error
 }
 
-func NewSSHCommandFactory(config *config_package.Config, ui terminal.UI, exitHandler exit_handler.ExitHandler, appExaminer app_examiner.AppExaminer, secureShell SecureShell) *SSHCommandFactory {
+func NewSSHCommandFactory(config *config_package.Config, ui terminal.UI, exitHandler exit_handler.ExitHandler, appExaminer app_examiner.AppExaminer, secureShell SSH) *SSHCommandFactory {
 	return &SSHCommandFactory{config, ui, exitHandler, appExaminer, secureShell}
 }
 
