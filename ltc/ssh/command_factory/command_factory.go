@@ -21,7 +21,7 @@ type SSHCommandFactory struct {
 	secureShell SSH
 }
 
-//go:generate counterfeiter -o fake_ssh/fake_ssh.go . SSH
+//go:generate counterfeiter -o mocks/fake_ssh.go . SSH
 type SSH interface {
 	ConnectAndForward(appName string, instanceIndex int, localAddress, remoteAddress string, config *config_package.Config) error
 	ConnectToShell(appName string, instanceIndex int, command string, config *config_package.Config) error

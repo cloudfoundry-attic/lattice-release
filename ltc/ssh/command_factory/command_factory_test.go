@@ -13,7 +13,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/command_factory"
-	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/command_factory/fake_ssh"
+	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/command_factory/mocks"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	"github.com/codegangsta/cli"
@@ -26,7 +26,7 @@ var _ = Describe("SSH CommandFactory", func() {
 		terminalUI      terminal.UI
 		fakeExitHandler *fake_exit_handler.FakeExitHandler
 		fakeAppExaminer *fake_app_examiner.FakeAppExaminer
-		fakeSSH *fake_ssh.FakeSSH
+		fakeSSH         *mocks.FakeSSH
 	)
 
 	BeforeEach(func() {
@@ -37,7 +37,7 @@ var _ = Describe("SSH CommandFactory", func() {
 		terminalUI = terminal.NewUI(nil, outputBuffer, nil)
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 		fakeAppExaminer = &fake_app_examiner.FakeAppExaminer{}
-		fakeSSH = &fake_ssh.FakeSSH{}
+		fakeSSH = &mocks.FakeSSH{}
 	})
 
 	Describe("SSHCommand", func() {
