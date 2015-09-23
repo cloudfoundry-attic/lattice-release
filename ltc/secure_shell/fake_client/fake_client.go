@@ -2,33 +2,33 @@
 package fake_client
 
 import (
-	"net"
+	"io"
 	"sync"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell"
 )
 
 type FakeClient struct {
-	DialStub        func(n, addr string) (net.Conn, error)
+	DialStub        func(n, addr string) (io.ReadWriteCloser, error)
 	dialMutex       sync.RWMutex
 	dialArgsForCall []struct {
 		n    string
 		addr string
 	}
 	dialReturns struct {
-		result1 net.Conn
+		result1 io.ReadWriteCloser
 		result2 error
 	}
 	NewSessionStub        func() (secure_shell.SecureSession, error)
 	newSessionMutex       sync.RWMutex
 	newSessionArgsForCall []struct{}
-	newSessionReturns     struct {
+	newSessionReturns struct {
 		result1 secure_shell.SecureSession
 		result2 error
 	}
 }
 
-func (fake *FakeClient) Dial(n string, addr string) (net.Conn, error) {
+func (fake *FakeClient) Dial(n string, addr string) (io.ReadWriteCloser, error) {
 	fake.dialMutex.Lock()
 	fake.dialArgsForCall = append(fake.dialArgsForCall, struct {
 		n    string
@@ -54,10 +54,10 @@ func (fake *FakeClient) DialArgsForCall(i int) (string, string) {
 	return fake.dialArgsForCall[i].n, fake.dialArgsForCall[i].addr
 }
 
-func (fake *FakeClient) DialReturns(result1 net.Conn, result2 error) {
+func (fake *FakeClient) DialReturns(result1 io.ReadWriteCloser, result2 error) {
 	fake.DialStub = nil
 	fake.dialReturns = struct {
-		result1 net.Conn
+		result1 io.ReadWriteCloser
 		result2 error
 	}{result1, result2}
 }

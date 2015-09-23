@@ -1,8 +1,9 @@
 package secure_shell_test
 
 import (
+	"bytes"
 	"errors"
-	"net"
+	"io"
 	"os"
 	"syscall"
 	"time"
@@ -14,25 +15,36 @@ import (
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell"
-	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_channel_listener"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_client"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_dialer"
+	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_listener"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_secure_session"
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_term"
 	"github.com/pivotal-golang/clock/fakeclock"
 )
 
+type mockConn struct {
+	io.Reader
+	io.Writer
+	closed bool
+}
+
+func (m *mockConn) Close() error {
+	m.closed = true
+	return nil
+}
+
 var _ = Describe("SecureShell", func() {
 	var (
-		fakeDialer          *fake_dialer.FakeDialer
-		fakeClient          *fake_client.FakeClient
-		fakeSession         *fake_secure_session.FakeSecureSession
-		fakeTerm            *fake_term.FakeTerm
-		fakeStdin           *gbytes.Buffer
-		fakeStdout          *gbytes.Buffer
-		fakeStderr          *gbytes.Buffer
-		fakeClock           *fakeclock.FakeClock
-		fakeChannelListener *fake_channel_listener.FakeChannelListener
+		fakeDialer   *fake_dialer.FakeDialer
+		fakeClient   *fake_client.FakeClient
+		fakeSession  *fake_secure_session.FakeSecureSession
+		fakeTerm     *fake_term.FakeTerm
+		fakeStdin    *gbytes.Buffer
+		fakeStdout   *gbytes.Buffer
+		fakeStderr   *gbytes.Buffer
+		fakeClock    *fakeclock.FakeClock
+		fakeListener *fake_listener.FakeListener
 
 		config      *config_package.Config
 		secureShell *secure_shell.SecureShell
@@ -49,18 +61,18 @@ var _ = Describe("SecureShell", func() {
 		fakeStdout = gbytes.NewBuffer()
 		fakeStderr = gbytes.NewBuffer()
 		fakeClock = fakeclock.NewFakeClock(time.Now())
-		fakeChannelListener = &fake_channel_listener.FakeChannelListener{}
+		fakeListener = &fake_listener.FakeListener{}
 
 		config = config_package.New(nil)
 		config.SetTarget("10.0.12.34")
 		config.SetLogin("user", "past")
 
 		secureShell = &secure_shell.SecureShell{
-			Dialer:   fakeDialer,
-			Term:     fakeTerm,
-			Clock:    fakeClock,
-			Ticker:   fakeclock.NewFakeTicker(fakeClock, 1*time.Second),
-			Listener: fakeChannelListener,
+			Dialer:    fakeDialer,
+			Term:      fakeTerm,
+			Clock:     fakeClock,
+			KeepAlive: fakeclock.NewFakeTicker(fakeClock, 1*time.Second),
+			Listener:  fakeListener,
 		}
 		fakeDialer.DialReturns(fakeClient, nil)
 		fakeClient.NewSessionReturns(fakeSession, nil)
@@ -75,20 +87,30 @@ var _ = Describe("SecureShell", func() {
 
 	Describe("#ConnectAndForward", func() {
 		It("connects to the correct server given app name, instance and config", func() {
-			acceptChan := make(chan net.Conn)
+			acceptChan := make(chan io.ReadWriteCloser)
 			errorChan := make(chan error)
 
-			fakeChannelListener.ListenReturns(acceptChan, errorChan)
+			localConnBuffer := &bytes.Buffer{}
+			remoteConnBuffer := &bytes.Buffer{}
+			localConn := &mockConn{Reader: bytes.NewBufferString("some local data"), Writer: localConnBuffer}
+			remoteConn := &mockConn{Reader: bytes.NewBufferString("some remote data"), Writer: remoteConnBuffer}
 
-			waitChan := make(chan struct{})
+			fakeListener.ListenReturns(acceptChan, errorChan)
+			fakeClient.DialReturns(remoteConn, nil)
+
 			shellChan := make(chan error)
 			go func() {
-				defer GinkgoRecover()
-				<-waitChan
 				shellChan <- secureShell.ConnectAndForward("app-name", 2, "local:1", "remote:2", config)
 			}()
 
-			waitChan <- struct{}{}
+			acceptChan <- localConn
+			Eventually(func() bool {
+				return localConn.closed && remoteConn.closed
+			}).Should(BeTrue())
+
+			close(acceptChan)
+			close(errorChan)
+			Expect(<-shellChan).To(Succeed())
 
 			Expect(fakeDialer.DialCallCount()).To(Equal(1))
 			user, authUser, authPass, address := fakeDialer.DialArgsForCall(0)
@@ -97,22 +119,18 @@ var _ = Describe("SecureShell", func() {
 			Expect(authPass).To(Equal("past"))
 			Expect(address).To(Equal("10.0.12.34:2222"))
 
-			Expect(fakeChannelListener.ListenCallCount()).To(Equal(1))
-			listenNetwork, localAddr := fakeChannelListener.ListenArgsForCall(0)
+			Expect(fakeListener.ListenCallCount()).To(Equal(1))
+			listenNetwork, localAddr := fakeListener.ListenArgsForCall(0)
 			Expect(listenNetwork).To(Equal("tcp"))
 			Expect(localAddr).To(Equal("local:1"))
 
-			var c net.Conn
-			acceptChan <- c
-
-			Eventually(fakeClient.DialCallCount).Should(Equal(1))
+			Expect(fakeClient.DialCallCount()).To(Equal(1))
 			dialNetwork, remoteAddr := fakeClient.DialArgsForCall(0)
 			Expect(dialNetwork).To(Equal("tcp"))
 			Expect(remoteAddr).To(Equal("remote:2"))
 
-			close(acceptChan)
-			close(errorChan)
-			Expect(<-shellChan).To(MatchError("EOF"))
+			Expect(localConnBuffer.String()).To(Equal("some remote data"))
+			Expect(remoteConnBuffer.String()).To(Equal("some local data"))
 		})
 	})
 
@@ -220,23 +238,22 @@ var _ = Describe("SecureShell", func() {
 			fakeTerm.GetWinsizeReturns(10, 20)
 
 			waitChan := make(chan struct{})
-			doneChan := make(chan struct{})
+			shellChan := make(chan error)
 			fakeSession.ShellStub = func() error {
+				defer GinkgoRecover()
 				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 				Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
 				fakeTerm.GetWinsizeReturns(30, 40)
-				<-waitChan
-				<-doneChan
+				waitChan <- struct{}{}
+				waitChan <- struct{}{}
 				return nil
 			}
 
 			go func() {
-				defer GinkgoRecover()
-				err := secureShell.ConnectToShell("app-name", 2, "", config)
-				Expect(err).NotTo(HaveOccurred())
+				shellChan <- secureShell.ConnectToShell("app-name", 2, "", config)
 			}()
 
-			waitChan <- struct{}{}
+			<-waitChan
 
 			Expect(syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)).To(Succeed())
 			Eventually(fakeTerm.GetWinsizeCallCount, 5).Should(Equal(2))
@@ -246,7 +263,9 @@ var _ = Describe("SecureShell", func() {
 			Expect(wantReply).To(BeFalse())
 			Expect(payload).To(Equal([]byte{0, 0, 0, 30, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 0}))
 
-			doneChan <- struct{}{}
+			<-waitChan
+
+			Expect(<-shellChan).To(Succeed())
 		})
 
 		It("does not resize the remote terminal if SIGWINCH is received but the window is the same size", func() {
@@ -259,28 +278,29 @@ var _ = Describe("SecureShell", func() {
 			fakeTerm.GetWinsizeReturns(10, 20)
 
 			waitChan := make(chan struct{})
-			doneChan := make(chan struct{})
+			shellChan := make(chan error)
 			fakeSession.ShellStub = func() error {
+				defer GinkgoRecover()
 				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 				Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
-				<-waitChan
-				<-doneChan
+				waitChan <- struct{}{}
+				waitChan <- struct{}{}
 				return nil
 			}
 
 			go func() {
-				defer GinkgoRecover()
-				err := secureShell.ConnectToShell("app-name", 2, "", config)
-				Expect(err).NotTo(HaveOccurred())
+				shellChan <- secureShell.ConnectToShell("app-name", 2, "", config)
 			}()
 
-			waitChan <- struct{}{}
+			<-waitChan
 
 			Expect(syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)).To(Succeed())
 			Eventually(fakeTerm.GetWinsizeCallCount, 5).Should(Equal(2))
 			Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 
-			doneChan <- struct{}{}
+			<-waitChan
+
+			Expect(<-shellChan).To(Succeed())
 		})
 
 		It("periodically sends keepalive requests to the ssh session", func() {
@@ -291,21 +311,20 @@ var _ = Describe("SecureShell", func() {
 			fakeSession.StderrPipeReturns(fakeStderr, nil)
 
 			waitChan := make(chan struct{})
-			doneChan := make(chan struct{})
+			shellChan := make(chan error)
 			fakeSession.ShellStub = func() error {
+				defer GinkgoRecover()
 				Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
-				<-waitChan
-				<-doneChan
+				waitChan <- struct{}{}
+				waitChan <- struct{}{}
 				return nil
 			}
 
 			go func() {
-				defer GinkgoRecover()
-				err := secureShell.ConnectToShell("app-name", 2, "", config)
-				Expect(err).NotTo(HaveOccurred())
+				shellChan <- secureShell.ConnectToShell("app-name", 2, "", config)
 			}()
 
-			waitChan <- struct{}{}
+			<-waitChan
 
 			Expect(fakeSession.SendRequestCallCount()).To(Equal(0))
 			fakeClock.IncrementBySeconds(1)
@@ -318,9 +337,11 @@ var _ = Describe("SecureShell", func() {
 			Expect(wantReply).To(BeTrue())
 			Expect(payload).To(BeNil())
 
-			doneChan <- struct{}{}
+			<-waitChan
 
 			fakeClock.IncrementBySeconds(10)
+
+			Expect(<-shellChan).To(Succeed())
 			Expect(fakeSession.SendRequestCallCount()).To(Equal(2))
 		})
 

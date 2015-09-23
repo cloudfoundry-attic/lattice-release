@@ -3,7 +3,6 @@ package secure_shell
 import (
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"os/signal"
 	"sync"
@@ -20,9 +19,9 @@ type Dialer interface {
 	Dial(user, authUser, authPassword, address string) (Client, error)
 }
 
-//go:generate counterfeiter -o fake_channel_listener/fake_channel_listener.go . ChannelListener
-type ChannelListener interface {
-	Listen(net, laddr string) (<-chan net.Conn, <-chan error)
+//go:generate counterfeiter -o fake_listener/fake_listener.go . Listener
+type Listener interface {
+	Listen(network, laddr string) (<-chan io.ReadWriteCloser, <-chan error)
 }
 
 //go:generate counterfeiter -o fake_secure_session/fake_secure_session.go . SecureSession
@@ -40,7 +39,7 @@ type SecureSession interface {
 
 //go:generate counterfeiter -o fake_client/fake_client.go . Client
 type Client interface {
-	Dial(n, addr string) (net.Conn, error)
+	Dial(n, addr string) (io.ReadWriteCloser, error)
 	NewSession() (SecureSession, error)
 }
 
@@ -52,29 +51,12 @@ type Term interface {
 }
 
 type SecureShell struct {
-	Dialer   Dialer
-	Term     Term
-	Clock    clock.Clock
-	Ticker   clock.Ticker
-	Listener ChannelListener
+	Dialer    Dialer
+	Term      Term
+	Clock     clock.Clock
+	KeepAlive clock.Ticker
+	Listener  Listener
 }
-
-// type chanListener struct{}
-// func (chanListener) Listen(listener net.Listener) (<-chan net.Conn, <-chan error) {
-// 	connChan := make(chan net.Conn)
-// 	errChan := make(chan error)
-// 	go func() {
-// 		for {
-// 			conn, err := listener.Accept()
-// 			if err != nil {
-// 				errChan <- err
-// 				return
-// 			}
-// 			connChan <- conn
-// 		}
-// 	}()
-// 	return connChan, errChan
-// }
 
 func (ss *SecureShell) dialAppInstance(appName string, instanceIndex int, config *config_package.Config) (Client, error) {
 	diegoSSHUser := fmt.Sprintf("diego:%s/%d", appName, instanceIndex)
@@ -105,12 +87,9 @@ func (ss *SecureShell) ConnectAndForward(appName string, instanceIndex int, loca
 	for {
 		select {
 		case conn, ok := <-acceptChan:
-			fmt.Printf("acceptChan---\nconn: %v\nok: %v", conn, ok)
 			if !ok {
 				return nil
 			}
-			defer conn.Close()
-
 			target, err := client.Dial("tcp", remoteAddress)
 			if err != nil {
 				panic(err)
@@ -119,11 +98,10 @@ func (ss *SecureShell) ConnectAndForward(appName string, instanceIndex int, loca
 			wg := &sync.WaitGroup{}
 			wg.Add(2)
 
-			copyAndClose(wg, conn, target)
-			copyAndClose(wg, target, conn)
+			go copyAndClose(wg, conn, target)
+			go copyAndClose(wg, target, conn)
 			wg.Wait()
 		case err, ok := <-errorChan:
-			fmt.Printf("errorChan---\nerr: %s\nok: %v", err.Error(), ok)
 			if !ok {
 				return nil
 			}
@@ -250,10 +228,10 @@ func (ss *SecureShell) resize(resized <-chan os.Signal, session SecureSession, t
 func (ss *SecureShell) keepalive(session SecureSession, stopCh chan struct{}) {
 	for {
 		select {
-		case <-ss.Ticker.C():
+		case <-ss.KeepAlive.C():
 			session.SendRequest("keepalive@cloudfoundry.org", true, nil)
 		case <-stopCh:
-			ss.Ticker.Stop()
+			ss.KeepAlive.Stop()
 			return
 		}
 	}

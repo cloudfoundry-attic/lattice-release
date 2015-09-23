@@ -2,7 +2,7 @@ package secure_shell
 
 import (
 	"fmt"
-	"net"
+	"io"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -30,11 +30,11 @@ type SecureClient struct {
 }
 
 func (s *SecureClient) NewSession() (SecureSession, error) {
-	session, err := s.NewSession()
+	session, err := s.Client.NewSession()
 	return session, err
 }
 
-func (s *SecureClient) Dial(n, addr string) (net.Conn, error) {
-	conn, err := s.Dial(n, addr)
+func (s *SecureClient) Dial(n, addr string) (io.ReadWriteCloser, error) {
+	conn, err := s.Client.Dial(n, addr)
 	return conn, err
 }

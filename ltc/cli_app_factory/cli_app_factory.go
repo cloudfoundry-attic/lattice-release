@@ -214,14 +214,12 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, blobStoreVerifier, exitHandler)
 
-	secureDialer := &secure_shell.SecureDialer{DialFunc: ssh.Dial}
-	secureTerm := &secure_shell.SecureTerm{}
-	keepaliveInterval := 30 * time.Second
 	secureShell := &secure_shell.SecureShell{
-		Dialer: secureDialer,
-		Term:   secureTerm,
-		Clock:  clock,
-		Ticker: clock.NewTicker(keepaliveInterval),
+		Dialer:    &secure_shell.SecureDialer{DialFunc: ssh.Dial},
+		Term:      &secure_shell.SecureTerm{},
+		Clock:     clock,
+		KeepAlive: clock.NewTicker(30 * time.Second),
+		Listener:  &secure_shell.ChannelListener{},
 	}
 
 	sshCommandFactory := ssh_command_factory.NewSSHCommandFactory(config, ui, exitHandler, appExaminer, secureShell)
