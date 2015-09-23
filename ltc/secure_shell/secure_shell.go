@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
@@ -41,6 +40,7 @@ type SecureSession interface {
 type Client interface {
 	Dial(n, addr string) (io.ReadWriteCloser, error)
 	NewSession() (SecureSession, error)
+	Accept(localConn io.ReadWriteCloser, remoteAddress string) error
 }
 
 //go:generate counterfeiter -o fake_term/fake_term.go . Term
@@ -76,12 +76,6 @@ func (ss *SecureShell) ConnectAndForward(appName string, instanceIndex int, loca
 		return err
 	}
 
-	session, err := client.NewSession()
-	if err != nil {
-		panic(err)
-	}
-	defer session.Close()
-
 	acceptChan, errorChan := ss.Listener.Listen("tcp", localAddress)
 
 	for {
@@ -90,17 +84,10 @@ func (ss *SecureShell) ConnectAndForward(appName string, instanceIndex int, loca
 			if !ok {
 				return nil
 			}
-			target, err := client.Dial("tcp", remoteAddress)
-			if err != nil {
+
+			if err := client.Accept(conn, remoteAddress); err != nil {
 				panic(err)
 			}
-
-			wg := &sync.WaitGroup{}
-			wg.Add(2)
-
-			go copyAndClose(wg, conn, target)
-			go copyAndClose(wg, target, conn)
-			wg.Wait()
 		case err, ok := <-errorChan:
 			if !ok {
 				return nil
@@ -184,14 +171,6 @@ func (ss *SecureShell) ConnectToShell(appName string, instanceIndex int, command
 	}
 
 	return nil
-}
-
-func copyAndClose(wg *sync.WaitGroup, dest io.WriteCloser, src io.Reader) {
-	io.Copy(dest, src)
-	dest.Close()
-	if wg != nil {
-		wg.Done()
-	}
 }
 
 func (ss *SecureShell) resize(resized <-chan os.Signal, session SecureSession, terminalFd uintptr, initialWidth, initialHeight int) {

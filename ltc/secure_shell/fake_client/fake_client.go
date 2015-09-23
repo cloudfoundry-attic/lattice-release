@@ -26,6 +26,15 @@ type FakeClient struct {
 		result1 secure_shell.SecureSession
 		result2 error
 	}
+	AcceptStub        func(localConn io.ReadWriteCloser, remoteAddress string) error
+	acceptMutex       sync.RWMutex
+	acceptArgsForCall []struct {
+		localConn     io.ReadWriteCloser
+		remoteAddress string
+	}
+	acceptReturns struct {
+		result1 error
+	}
 }
 
 func (fake *FakeClient) Dial(n string, addr string) (io.ReadWriteCloser, error) {
@@ -85,6 +94,39 @@ func (fake *FakeClient) NewSessionReturns(result1 secure_shell.SecureSession, re
 		result1 secure_shell.SecureSession
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakeClient) Accept(localConn io.ReadWriteCloser, remoteAddress string) error {
+	fake.acceptMutex.Lock()
+	fake.acceptArgsForCall = append(fake.acceptArgsForCall, struct {
+		localConn     io.ReadWriteCloser
+		remoteAddress string
+	}{localConn, remoteAddress})
+	fake.acceptMutex.Unlock()
+	if fake.AcceptStub != nil {
+		return fake.AcceptStub(localConn, remoteAddress)
+	} else {
+		return fake.acceptReturns.result1
+	}
+}
+
+func (fake *FakeClient) AcceptCallCount() int {
+	fake.acceptMutex.RLock()
+	defer fake.acceptMutex.RUnlock()
+	return len(fake.acceptArgsForCall)
+}
+
+func (fake *FakeClient) AcceptArgsForCall(i int) (io.ReadWriteCloser, string) {
+	fake.acceptMutex.RLock()
+	defer fake.acceptMutex.RUnlock()
+	return fake.acceptArgsForCall[i].localConn, fake.acceptArgsForCall[i].remoteAddress
+}
+
+func (fake *FakeClient) AcceptReturns(result1 error) {
+	fake.AcceptStub = nil
+	fake.acceptReturns = struct {
+		result1 error
+	}{result1}
 }
 
 var _ secure_shell.Client = new(FakeClient)

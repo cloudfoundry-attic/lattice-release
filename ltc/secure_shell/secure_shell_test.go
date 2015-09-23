@@ -1,7 +1,6 @@
 package secure_shell_test
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"os"
@@ -22,17 +21,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/secure_shell/fake_term"
 	"github.com/pivotal-golang/clock/fakeclock"
 )
-
-type mockConn struct {
-	io.Reader
-	io.Writer
-	closed bool
-}
-
-func (m *mockConn) Close() error {
-	m.closed = true
-	return nil
-}
 
 var _ = Describe("SecureShell", func() {
 	var (
@@ -88,33 +76,29 @@ var _ = Describe("SecureShell", func() {
 	Describe("#ConnectAndForward", func() {
 		It("connects to the correct server given app name, instance and config", func() {
 			acceptChan := make(chan io.ReadWriteCloser)
-			errorChan := make(chan error)
 
-			localConnBuffer := &bytes.Buffer{}
-			remoteConnBuffer := &bytes.Buffer{}
-			localConn := &mockConn{Reader: bytes.NewBufferString("some local data"), Writer: localConnBuffer}
-			remoteConn := &mockConn{Reader: bytes.NewBufferString("some remote data"), Writer: remoteConnBuffer}
-
-			fakeListener.ListenReturns(acceptChan, errorChan)
-			fakeClient.DialReturns(remoteConn, nil)
+			fakeListener.ListenReturns(acceptChan, nil)
 
 			shellChan := make(chan error)
 			go func() {
-				shellChan <- secureShell.ConnectAndForward("app-name", 2, "local:1", "remote:2", config)
+				shellChan <- secureShell.ConnectAndForward("some-app-name", 2, "some local address", "some remote address", config)
 			}()
 
+			localConn := &mockConn{}
 			acceptChan <- localConn
-			Eventually(func() bool {
-				return localConn.closed && remoteConn.closed
-			}).Should(BeTrue())
+
+			Eventually(fakeClient.AcceptCallCount).Should(Equal(1))
+			expectedLocalConn, remoteAddress := fakeClient.AcceptArgsForCall(0)
+			Expect(localConn == expectedLocalConn).To(BeTrue())
+			Expect(remoteAddress).To(Equal("some remote address"))
 
 			close(acceptChan)
-			close(errorChan)
+
 			Expect(<-shellChan).To(Succeed())
 
 			Expect(fakeDialer.DialCallCount()).To(Equal(1))
 			user, authUser, authPass, address := fakeDialer.DialArgsForCall(0)
-			Expect(user).To(Equal("diego:app-name/2"))
+			Expect(user).To(Equal("diego:some-app-name/2"))
 			Expect(authUser).To(Equal("user"))
 			Expect(authPass).To(Equal("past"))
 			Expect(address).To(Equal("10.0.12.34:2222"))
@@ -122,15 +106,8 @@ var _ = Describe("SecureShell", func() {
 			Expect(fakeListener.ListenCallCount()).To(Equal(1))
 			listenNetwork, localAddr := fakeListener.ListenArgsForCall(0)
 			Expect(listenNetwork).To(Equal("tcp"))
-			Expect(localAddr).To(Equal("local:1"))
+			Expect(localAddr).To(Equal("some local address"))
 
-			Expect(fakeClient.DialCallCount()).To(Equal(1))
-			dialNetwork, remoteAddr := fakeClient.DialArgsForCall(0)
-			Expect(dialNetwork).To(Equal("tcp"))
-			Expect(remoteAddr).To(Equal("remote:2"))
-
-			Expect(localConnBuffer.String()).To(Equal("some remote data"))
-			Expect(remoteConnBuffer.String()).To(Equal("some local data"))
 		})
 	})
 
@@ -339,9 +316,8 @@ var _ = Describe("SecureShell", func() {
 
 			<-waitChan
 
-			fakeClock.IncrementBySeconds(10)
-
 			Expect(<-shellChan).To(Succeed())
+			fakeClock.IncrementBySeconds(10)
 			Expect(fakeSession.SendRequestCallCount()).To(Equal(2))
 		})
 
