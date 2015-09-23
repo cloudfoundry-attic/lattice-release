@@ -32,12 +32,12 @@ func NewSSHCommandFactory(config *config_package.Config, ui terminal.UI, exitHan
 	return &SSHCommandFactory{config, ui, exitHandler, appExaminer, secureShell}
 }
 
-func (factory *SSHCommandFactory) MakeSSHCommand() cli.Command {
+func (f *SSHCommandFactory) MakeSSHCommand() cli.Command {
 	return cli.Command{
 		Name:        "ssh",
 		Usage:       "Connects to a running app",
 		Description: "ltc ssh APP_NAME [[--] optional command with args]\n\n   If a command is specified, no interactive shell will be provided.\n   A \"--\" token should be provided to avoid parsing of command flags.\n",
-		Action:      factory.ssh,
+		Action:      f.ssh,
 		Flags: []cli.Flag{
 			cli.IntFlag{
 				Name:  "instance, i",
@@ -48,84 +48,100 @@ func (factory *SSHCommandFactory) MakeSSHCommand() cli.Command {
 				Name:  "L",
 				Usage: "Listens on specified local address/port and forwards connections to specified remote address/port\n     \te.g. ltc ssh APP_NAME -L [localhost:]1234:remotehost:5678",
 			},
+			cli.BoolFlag{
+				Name:  "N",
+				Usage: "Disables the interactive shell when forwarding connections with -L",
+			},
 		},
 	}
 }
 
-func (factory *SSHCommandFactory) ssh(context *cli.Context) {
+func (f *SSHCommandFactory) ssh(context *cli.Context) {
 	instanceIndex := context.Int("instance")
 	localForward := context.String("L")
+	noShell := context.Bool("N")
 
 	appName := context.Args().First()
 
 	if appName == "" {
-		factory.ui.SayIncorrectUsage("")
-		factory.exitHandler.Exit(exit_codes.InvalidSyntax)
+		f.ui.SayIncorrectUsage("")
+		f.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
-	appInfo, err := factory.appExaminer.AppStatus(appName)
+	appInfo, err := f.appExaminer.AppStatus(appName)
 	if err != nil {
-		factory.ui.SayLine("App " + appName + " not found.")
-		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		f.ui.SayLine("App " + appName + " not found.")
+		f.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 	if instanceIndex < 0 || instanceIndex >= appInfo.ActualRunningInstances {
-		factory.ui.SayLine(fmt.Sprintf("Instance %s/%d does not exist.", appName, instanceIndex))
-		factory.exitHandler.Exit(exit_codes.CommandFailed)
+		f.ui.SayLine(fmt.Sprintf("Instance %s/%d does not exist.", appName, instanceIndex))
+		f.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
-	if err := factory.secureShell.Connect(appName, instanceIndex, factory.config); err != nil {
-		factory.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
-		factory.exitHandler.Exit(exit_codes.CommandFailed)
+	if err := f.secureShell.Connect(appName, instanceIndex, f.config); err != nil {
+		f.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
+		f.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
-	if localForward != "" {
-		var localHost, localPort, remoteHost, remotePort string
-
-		parts := strings.Split(localForward, ":")
-
-		switch len(parts) {
-		case 3:
-			localHost, localPort, remoteHost, remotePort = "localhost", parts[0], parts[1], parts[2]
-		case 4:
-			localHost, localPort, remoteHost, remotePort = parts[0], parts[1], parts[2], parts[3]
-		default:
-			factory.ui.SayIncorrectUsage("-L expects [localhost:]localport:remotehost:remoteport")
-			factory.exitHandler.Exit(exit_codes.InvalidSyntax)
-			return
+	command := ""
+	if len(context.Args()) > 1 {
+		start := 1
+		if context.Args().Get(1) == "--" {
+			start = 2
 		}
+		command = strings.Join(context.Args()[start:len(context.Args())], " ")
+	}
 
-		localAddr := fmt.Sprintf("%s:%s", localHost, localPort)
-		remoteAddr := fmt.Sprintf("%s:%s", remoteHost, remotePort)
-
-		factory.ui.SayLine("Forwarding %s to %s via %s/%d at %s", localAddr, remoteAddr, appName, instanceIndex, factory.config.Target())
-
-		if err := factory.secureShell.Forward(localAddr, remoteAddr); err != nil {
-			factory.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
-			factory.exitHandler.Exit(exit_codes.CommandFailed)
-			return
-		}
+	if localForward != "" && noShell {
+		f.forward(localForward, appName, instanceIndex)
+	} else if localForward != "" {
+		go f.forward(localForward, appName, instanceIndex)
+		f.shell(command, appName, instanceIndex)
 	} else {
-		command := ""
-		if len(context.Args()) > 1 {
-			start := 1
-			if context.Args().Get(1) == "--" {
-				start = 2
-			}
-			command = strings.Join(context.Args()[start:len(context.Args())], " ")
-		}
+		f.shell(command, appName, instanceIndex)
+	}
+}
 
-		if command == "" {
-			factory.ui.SayLine("Connecting to %s/%d at %s", appName, instanceIndex, factory.config.Target())
-		}
+func (f *SSHCommandFactory) forward(localForward, appName string, instanceIndex int) {
+	var localHost, localPort, remoteHost, remotePort string
 
-		if err := factory.secureShell.Shell(command); err != nil {
-			factory.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
-			factory.exitHandler.Exit(exit_codes.CommandFailed)
-			return
-		}
+	parts := strings.Split(localForward, ":")
+
+	switch len(parts) {
+	case 3:
+		localHost, localPort, remoteHost, remotePort = "localhost", parts[0], parts[1], parts[2]
+	case 4:
+		localHost, localPort, remoteHost, remotePort = parts[0], parts[1], parts[2], parts[3]
+	default:
+		f.ui.SayIncorrectUsage("-L expects [localhost:]localport:remotehost:remoteport")
+		f.exitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	localAddr := fmt.Sprintf("%s:%s", localHost, localPort)
+	remoteAddr := fmt.Sprintf("%s:%s", remoteHost, remotePort)
+
+	f.ui.SayLine("Forwarding %s to %s via %s/%d at %s", localAddr, remoteAddr, appName, instanceIndex, f.config.Target())
+
+	if err := f.secureShell.Forward(localAddr, remoteAddr); err != nil {
+		f.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
+		f.exitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+}
+
+func (f *SSHCommandFactory) shell(command string, appName string, instanceIndex int) {
+	if command == "" {
+		f.ui.SayLine("Connecting to %s/%d at %s", appName, instanceIndex, f.config.Target())
+	}
+
+	if err := f.secureShell.Shell(command); err != nil {
+		f.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
+		f.exitHandler.Exit(exit_codes.CommandFailed)
+		return
 	}
 }
