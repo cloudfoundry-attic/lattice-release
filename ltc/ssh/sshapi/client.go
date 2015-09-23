@@ -103,9 +103,9 @@ func (c *Client) Open(width, height int) (*Session, error) {
 		return nil, err
 	}
 
-	go copyAndClose(nil, sessionIn, os.Stdin)
-	go io.Copy(os.Stdout, sessionOut)
-	go io.Copy(os.Stderr, sessionErr)
+	go copyAndClose(nil, sessionIn, c.Stdin)
+	go io.Copy(c.Stdout, sessionOut)
+	go io.Copy(c.Stderr, sessionErr)
 
 	return &Session{time.NewTicker(30 * time.Second), session, session}, nil
 }
