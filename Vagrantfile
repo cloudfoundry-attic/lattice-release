@@ -127,11 +127,18 @@ if provision_required && File.exists?(lattice_tgz)
   else
     repo_version = `git describe --tags --always`.chomp
     if tgz_version != repo_version && ENV['IGNORE_VERSION_MISMATCH'] != "true"
-      puts '*******************************************************************************'
-      puts "Error: lattice.tgz #{tgz_version} != current commit #{repo_version}\n"
-      puts 'The lattice.tgz file was built using a different commit than the current one.'
-      puts 'To ignore this error, set IGNORE_VERSION_MISMATCH=true in your environment.'
-      puts "*******************************************************************************\n"
+      puts <<-EOM.gsub(/^ +/, '')
+      *******************************************************************************
+      Error: lattice.tgz #{tgz_version} != current commit #{repo_version}
+
+      The lattice.tgz file was built using a different commit than the current one.
+      To ignore this error, set IGNORE_VERSION_MISMATCH=true in your environment.
+      
+      NOTE: As of v0.4.0, the process for deploying Lattice via Vagrant has changed.
+      Please use the process documented here:
+      \thttp://github.com/cloudfoundry-incubator/lattice#launching-with-vagrant
+      *******************************************************************************
+      EOM
       exit(1)
     end
   end
@@ -142,12 +149,15 @@ if provision_required && !File.exists?(lattice_tgz)
     puts 'Local lattice.tgz not found, downloading...'
     download_lattice_tgz(lattice_url)
   else
-    puts '*******************************************************************************'
-    puts "Could not determine Lattice version, and no local lattice.tgz present.\n"
-    puts 'As of v0.4.0, the process for deploying Lattice via Vagrant has changed.'
-    puts 'Please use the process documented here:'
-    puts "\thttp://github.com/cloudfoundry-incubator/lattice#launching-with-vagrant"
-    puts "*******************************************************************************\n"
+    puts <<-EOM.gsub(/^ +/, '')
+    *******************************************************************************
+    Could not determine Lattice version, and no local lattice.tgz present.
+    
+    NOTE: As of v0.4.0, the process for deploying Lattice via Vagrant has changed.
+    Please use the process documented here:
+    \thttp://github.com/cloudfoundry-incubator/lattice#launching-with-vagrant
+    *******************************************************************************
+    EOM
     exit(1)
   end
 end
