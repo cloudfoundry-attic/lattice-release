@@ -9,13 +9,13 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_keygen"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 var _ = Describe("AppRunner", func() {
@@ -62,11 +62,11 @@ var _ = Describe("AppRunner", func() {
 				AppArgs:      []string{"app", "arg1", "--app", "arg 2"},
 				Annotation:   "some annotation",
 
-				Setup: &models.DownloadAction{
+				Setup: models.WrapAction(&models.DownloadAction{
 					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
 					To:   "/tmp",
 					User: "download-user",
-				},
+				}),
 			}
 		})
 
@@ -118,23 +118,23 @@ var _ = Describe("AppRunner", func() {
 			Expect(req.Annotation).To(Equal("some annotation"))
 
 			Expect(req.Setup).To(Equal(&models.SerialAction{
-				Actions: []models.Action{
-					&models.DownloadAction{
+				Actions: []*models.Action{
+					models.WrapAction(&models.DownloadAction{
 						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
 						To:   "/tmp",
 						User: "download-user",
-					},
-					&models.DownloadAction{
+					}),
+					models.WrapAction(&models.DownloadAction{
 						From: "http://file_server.service.dc1.consul:8080/v1/static/diego-sshd.tgz",
 						To:   "/tmp",
 						User: "vcap",
-					},
+					}),
 				},
 			}))
 
 			Expect(req.Action).To(Equal(&models.ParallelAction{
-				Actions: []models.Action{
-					&models.RunAction{
+				Actions: []*models.Action{
+					models.WrapAction(&models.RunAction{
 						Path: "/tmp/diego-sshd",
 						Args: []string{
 							"-address=0.0.0.0:2222",
@@ -143,13 +143,13 @@ var _ = Describe("AppRunner", func() {
 						},
 						Dir:  "/tmp",
 						User: "start-user",
-					},
-					&models.RunAction{
+					}),
+					models.WrapAction(&models.RunAction{
 						Path: "/app-run-statement",
 						Args: []string{"app", "arg1", "--app", "arg 2"},
 						Dir:  "/user/web/myappdir",
 						User: "start-user",
-					},
+					}),
 				},
 			}))
 
@@ -567,16 +567,18 @@ var _ = Describe("AppRunner", func() {
 					User: "zcap",
 				},
 				Action: &models.RunAction{
-					Path: "/app-run-statement",
-					Args: []string{"app", "arg1", "--app", "arg 2"},
-					Dir:  "/user/web/myappdir",
-					User: "zcap",
+					Path:           "/app-run-statement",
+					Args:           []string{"app", "arg1", "--app", "arg 2"},
+					Dir:            "/user/web/myappdir",
+					User:           "zcap",
+					ResourceLimits: &models.ResourceLimits{Nofile: nil},
 				},
 				Monitor: &models.RunAction{
-					Path:      "/tmp/healthcheck",
-					Args:      []string{"-port", "2000"},
-					LogSource: "HEALTH",
-					User:      "zcap",
+					Path:           "/tmp/healthcheck",
+					Args:           []string{"-port", "2000"},
+					LogSource:      "HEALTH",
+					User:           "zcap",
+					ResourceLimits: &models.ResourceLimits{Nofile: nil},
 				},
 			}
 
@@ -593,7 +595,10 @@ var _ = Describe("AppRunner", func() {
 			Expect(ttl).To(BeZero())
 
 			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-			Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0)).To(Equal(desiredLRP))
+
+			actualLRPJSON, err := json.Marshal(fakeReceptorClient.CreateDesiredLRPArgsForCall(0))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(actualLRPJSON).To(MatchJSON(lrpJson))
 		})
 
 		It("returns errors if the app is already desired", func() {

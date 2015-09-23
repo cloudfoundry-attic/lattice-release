@@ -3,14 +3,13 @@ package task_handler_test
 import (
 	"errors"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/cf_http"
 	"github.com/cloudfoundry-incubator/receptor/task_handler"
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-golang/lager"
 	"github.com/tedsuo/ifrit"
 	"github.com/tedsuo/ifrit/ginkgomon"
@@ -23,7 +22,7 @@ import (
 var _ = Describe("TaskWorker", func() {
 	var (
 		fakeBBS *fake_bbs.FakeReceptorBBS
-		enqueue chan<- models.Task
+		enqueue chan<- *models.Task
 
 		process ifrit.Process
 
@@ -78,7 +77,7 @@ var _ = Describe("TaskWorker", func() {
 
 	Describe("when a task is enqueued", func() {
 		var (
-			callbackURL *url.URL
+			callbackURL string
 			statusCodes chan int
 			reqCount    chan struct{}
 		)
@@ -91,9 +90,7 @@ var _ = Describe("TaskWorker", func() {
 				w.WriteHeader(<-statusCodes)
 			})
 
-			var err error
-			callbackURL, err = url.Parse(fakeServer.URL() + "/the-callback/url")
-			Expect(err).NotTo(HaveOccurred())
+			callbackURL = fakeServer.URL() + "/the-callback/url"
 		})
 
 		AfterEach(func() {
@@ -101,13 +98,13 @@ var _ = Describe("TaskWorker", func() {
 		})
 
 		simulateTaskCompleting := func() {
-			enqueue <- models.Task{
+			enqueue <- &models.Task{
 				TaskGuid:              "the-task-guid",
-				CompletionCallbackURL: callbackURL,
-				Action: &models.RunAction{
+				CompletionCallbackUrl: callbackURL,
+				Action: models.WrapAction(&models.RunAction{
 					User: "me",
 					Path: "lol",
-				},
+				}),
 			}
 		}
 
@@ -281,7 +278,7 @@ var _ = Describe("TaskWorker", func() {
 
 		Context("when the task doesn't have a completion callback URL", func() {
 			BeforeEach(func() {
-				callbackURL = nil
+				callbackURL = ""
 				simulateTaskCompleting()
 			})
 

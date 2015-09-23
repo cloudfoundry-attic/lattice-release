@@ -3,14 +3,14 @@ package task_handler
 import (
 	"net/http"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor/handlers"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/cloudfoundry-incubator/runtime-schema/routes"
 	"github.com/pivotal-golang/lager"
 	"github.com/tedsuo/rata"
 )
 
-func New(enqueue chan<- models.Task, logger lager.Logger) http.Handler {
+func New(enqueue chan<- *models.Task, logger lager.Logger) http.Handler {
 	taskHandler := NewHandler(enqueue, logger)
 
 	actions := rata.Handlers{

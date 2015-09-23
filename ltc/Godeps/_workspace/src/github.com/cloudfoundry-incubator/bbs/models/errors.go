@@ -24,8 +24,10 @@ const (
 
 	ActualLRPCannotBeClaimed = "ActualLRPCannotBeClaimed"
 	ActualLRPCannotBeStarted = "ActualLRPCannotBeStarted"
+	ActualLRPCannotBeCrashed = "ActualLRPCannotBeCrashed"
 	ActualLRPCannotBeFailed  = "ActualLRPCannotBeFailed"
 	ActualLRPCannotBeRemoved = "ActualLRPCannotBeRemoved"
+	ActualLRPCannotBeStopped = "ActualLRPCannotBeStopped"
 )
 
 var (
@@ -64,6 +66,11 @@ var (
 		Message: "cannot start actual LRP",
 	}
 
+	ErrActualLRPCannotBeCrashed = &Error{
+		Type:    ActualLRPCannotBeCrashed,
+		Message: "cannot crash actual LRP",
+	}
+
 	ErrActualLRPCannotBeFailed = &Error{
 		Type:    ActualLRPCannotBeFailed,
 		Message: "cannot fail actual LRP",
@@ -73,10 +80,18 @@ var (
 		Type:    ActualLRPCannotBeRemoved,
 		Message: "cannot remove actual LRP",
 	}
+
+	ErrActualLRPCannotBeStopped = &Error{
+		Type:    ActualLRPCannotBeStopped,
+		Message: "cannot stop actual LRP",
+	}
 )
 
-func (err *Error) Equal(other *Error) bool {
-	return err.GetType() == other.GetType()
+func (err *Error) Equal(other error) bool {
+	if e, ok := other.(*Error); ok {
+		return e.GetType() == err.GetType()
+	}
+	return false
 }
 
 type ErrInvalidField struct {

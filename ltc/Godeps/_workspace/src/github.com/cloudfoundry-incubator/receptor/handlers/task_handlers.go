@@ -5,24 +5,29 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 
+	"github.com/cloudfoundry-incubator/bbs"
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
-	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
+	legacybbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/bbserrors"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-golang/lager"
 )
 
 type TaskHandler struct {
-	bbs    Bbs.ReceptorBBS
-	logger lager.Logger
+	bbs       bbs.Client
+	legacyBBS legacybbs.ReceptorBBS
+	logger    lager.Logger
 }
 
-func NewTaskHandler(bbs Bbs.ReceptorBBS, logger lager.Logger) *TaskHandler {
+func NewTaskHandler(bbs bbs.Client, legacyBBS legacybbs.ReceptorBBS, logger lager.Logger) *TaskHandler {
 	return &TaskHandler{
-		bbs:    bbs,
-		logger: logger.Session("task-handler"),
+		bbs:       bbs,
+		legacyBBS: legacyBBS,
+		logger:    logger.Session("task-handler"),
 	}
 }
 
@@ -41,6 +46,11 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	task, err := serialization.TaskFromRequest(taskRequest)
+	if err == nil {
+		if task.GetCompletionCallbackUrl() != "" {
+			_, err = url.ParseRequestURI(task.GetCompletionCallbackUrl())
+		}
+	}
 	if err != nil {
 		log.Error("task-request-invalid", err)
 		writeJSONResponse(w, http.StatusBadRequest, receptor.Error{
@@ -51,12 +61,23 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Debug("creating-task", lager.Data{"task-guid": task.TaskGuid})
+	b, err := task.MarshalJSON()
+	var oldTask oldmodels.Task
+	err = json.Unmarshal(b, &oldTask)
+	if err != nil {
+		log.Error("failed-to-unmarshal-task", err)
+		writeUnknownErrorResponse(w, err)
+		return
+	}
+	if task.CompletionCallbackUrl == "" {
+		oldTask.CompletionCallbackURL = nil
+	}
 
-	err = h.bbs.DesireTask(log, task)
+	err = h.legacyBBS.DesireTask(log, oldTask)
 	if err != nil {
 		log.Error("failed-to-desire-task", err)
 
-		if _, ok := err.(models.ValidationError); ok {
+		if _, ok := err.(oldmodels.ValidationError); ok {
 			writeJSONResponse(w, http.StatusBadRequest, receptor.Error{
 				Type:    receptor.InvalidTask,
 				Message: err.Error(),
@@ -85,13 +106,13 @@ func (h *TaskHandler) GetAll(w http.ResponseWriter, req *http.Request) {
 		"domain": domain,
 	})
 
-	var tasks []models.Task
+	var tasks []*models.Task
 	var err error
 
 	if domain == "" {
-		tasks, err = h.bbs.Tasks(logger)
+		tasks, err = h.bbs.Tasks()
 	} else {
-		tasks, err = h.bbs.TasksByDomain(logger, domain)
+		tasks, err = h.bbs.TasksByDomain(domain)
 	}
 
 	writeTaskResponse(w, logger, tasks, err)
@@ -110,20 +131,13 @@ func (h *TaskHandler) GetByGuid(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	task, err := h.bbs.TaskByGuid(logger, guid)
-	if err == bbserrors.ErrStoreResourceNotFound {
-		h.logger.Error("failed-to-fetch-task", err)
+	task, err := h.bbs.TaskByGuid(guid)
+	if models.ErrResourceNotFound.Equal(err) {
 		writeTaskNotFoundResponse(w, guid)
 		return
 	}
 
 	if err != nil {
-		if err == bbserrors.ErrStoreResourceNotFound {
-			h.logger.Error("failed-to-fetch-task", err)
-			writeTaskNotFoundResponse(w, guid)
-			return
-		}
-
 		h.logger.Error("failed-to-fetch-task", err)
 		writeUnknownErrorResponse(w, err)
 		return
@@ -135,7 +149,7 @@ func (h *TaskHandler) GetByGuid(w http.ResponseWriter, req *http.Request) {
 func (h *TaskHandler) Delete(w http.ResponseWriter, req *http.Request) {
 	guid := req.FormValue(":task_guid")
 
-	err := h.bbs.ResolvingTask(h.logger, guid)
+	err := h.legacyBBS.ResolvingTask(h.logger, guid)
 	if err != nil {
 		switch err.(type) {
 		case bbserrors.TaskStateTransitionError:
@@ -157,7 +171,7 @@ func (h *TaskHandler) Delete(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	err = h.bbs.ResolveTask(h.logger, guid)
+	err = h.legacyBBS.ResolveTask(h.logger, guid)
 	if err != nil {
 		h.logger.Error("failed-to-resolve-task", err)
 		writeUnknownErrorResponse(w, err)
@@ -167,7 +181,7 @@ func (h *TaskHandler) Delete(w http.ResponseWriter, req *http.Request) {
 func (h *TaskHandler) Cancel(w http.ResponseWriter, req *http.Request) {
 	guid := req.FormValue(":task_guid")
 
-	err := h.bbs.CancelTask(h.logger, guid)
+	err := h.legacyBBS.CancelTask(h.logger, guid)
 
 	switch err {
 	case nil:
@@ -180,7 +194,7 @@ func (h *TaskHandler) Cancel(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func writeTaskResponse(w http.ResponseWriter, logger lager.Logger, tasks []models.Task, err error) {
+func writeTaskResponse(w http.ResponseWriter, logger lager.Logger, tasks []*models.Task, err error) {
 	if err != nil {
 		logger.Error("failed-to-fetch-tasks", err)
 		writeUnknownErrorResponse(w, err)

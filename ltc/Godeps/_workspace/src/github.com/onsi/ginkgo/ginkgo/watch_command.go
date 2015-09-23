@@ -57,7 +57,7 @@ func (w *SpecWatcher) runnersForSuites(suites []testsuite.TestSuite, additionalA
 	runners := []*testrunner.TestRunner{}
 
 	for _, suite := range suites {
-		runners = append(runners, testrunner.New(suite, w.commandFlags.NumCPU, w.commandFlags.ParallelStream, w.commandFlags.Race, w.commandFlags.Cover, w.commandFlags.Tags, additionalArgs))
+		runners = append(runners, testrunner.New(suite, w.commandFlags.NumCPU, w.commandFlags.ParallelStream, w.commandFlags.Race, w.commandFlags.Cover, w.commandFlags.CoverPkg, w.commandFlags.Tags, additionalArgs))
 	}
 
 	return runners
@@ -80,7 +80,7 @@ func (w *SpecWatcher) WatchSuites(args []string, additionalArgs []string) {
 	}
 
 	for suite, err := range errors {
-		fmt.Printf("Failed to watch %s: %s\n"+suite.PackageName, err)
+		fmt.Printf("Failed to watch %s: %s\n", suite.PackageName, err)
 	}
 
 	if len(suites) == 1 {

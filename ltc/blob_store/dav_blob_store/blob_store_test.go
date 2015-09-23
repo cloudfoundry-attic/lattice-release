@@ -14,10 +14,10 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/blob"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/dav_blob_store"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 var _ = Describe("BlobStore", func() {
@@ -761,54 +761,54 @@ var _ = Describe("BlobStore", func() {
 
 		Describe("#DownloadAppBitsAction", func() {
 			It("constructs the correct Action to download app bits", func() {
-				Expect(blobStore.DownloadAppBitsAction("droplet-name")).To(Equal(&models.DownloadAction{
+				Expect(blobStore.DownloadAppBitsAction("droplet-name")).To(Equal(models.WrapAction(&models.DownloadAction{
 					From: dropletURL + "/bits.zip",
 					To:   "/tmp/app",
 					User: "vcap",
-				}))
+				})))
 			})
 		})
 
 		Describe("#DeleteAppBitsAction", func() {
 			It("constructs the correct Action to delete app bits", func() {
-				Expect(blobStore.DeleteAppBitsAction("droplet-name")).To(Equal(&models.RunAction{
+				Expect(blobStore.DeleteAppBitsAction("droplet-name")).To(Equal(models.WrapAction(&models.RunAction{
 					Path: "/tmp/davtool",
 					Dir:  "/",
 					Args: []string{"delete", dropletURL + "/bits.zip"},
 					User: "vcap",
-				}))
+				})))
 			})
 		})
 
 		Describe("#UploadDropletAction", func() {
 			It("constructs the correct Action to upload the droplet", func() {
-				Expect(blobStore.UploadDropletAction("droplet-name")).To(Equal(&models.RunAction{
+				Expect(blobStore.UploadDropletAction("droplet-name")).To(Equal(models.WrapAction(&models.RunAction{
 					Path: "/tmp/davtool",
 					Dir:  "/",
 					Args: []string{"put", dropletURL + "/droplet.tgz", "/tmp/droplet"},
 					User: "vcap",
-				}))
+				})))
 			})
 		})
 
 		Describe("#UploadDropletMetadataAction", func() {
 			It("constructs the correct Action to upload the droplet metadata", func() {
-				Expect(blobStore.UploadDropletMetadataAction("droplet-name")).To(Equal(&models.RunAction{
+				Expect(blobStore.UploadDropletMetadataAction("droplet-name")).To(Equal(models.WrapAction(&models.RunAction{
 					Path: "/tmp/davtool",
 					Dir:  "/",
 					Args: []string{"put", dropletURL + "/result.json", "/tmp/result.json"},
 					User: "vcap",
-				}))
+				})))
 			})
 		})
 
 		Describe("#DownloadDropletAction", func() {
 			It("constructs the correct Action to download the droplet", func() {
-				Expect(blobStore.DownloadDropletAction("droplet-name")).To(Equal(&models.DownloadAction{
+				Expect(blobStore.DownloadDropletAction("droplet-name")).To(Equal(models.WrapAction(&models.DownloadAction{
 					From: dropletURL + "/droplet.tgz",
 					To:   "/home/vcap",
 					User: "vcap",
-				}))
+				})))
 			})
 		})
 	})

@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
@@ -24,8 +25,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/droplet_runner/fake_proxyconf_reader"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner/fake_task_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
-	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
@@ -127,32 +126,32 @@ var _ = Describe("DropletRunner", func() {
 				config.BlobStore().Port,
 				"/blobs/droplet-name")
 
-			fakeBlobStore.DownloadAppBitsActionReturns(&models.DownloadAction{
+			fakeBlobStore.DownloadAppBitsActionReturns(models.WrapAction(&models.DownloadAction{
 				From: blobURL + "/bits.zip",
 				To:   "/tmp/app",
 				User: "vcap",
-			})
+			}))
 
-			fakeBlobStore.DeleteAppBitsActionReturns(&models.RunAction{
+			fakeBlobStore.DeleteAppBitsActionReturns(models.WrapAction(&models.RunAction{
 				Path: "/tmp/davtool",
 				Dir:  "/",
 				Args: []string{"delete", blobURL + "/bits.zip"},
 				User: "vcap",
-			})
+			}))
 
-			fakeBlobStore.UploadDropletActionReturns(&models.RunAction{
+			fakeBlobStore.UploadDropletActionReturns(models.WrapAction(&models.RunAction{
 				Path: "/tmp/davtool",
 				Dir:  "/",
 				Args: []string{"put", blobURL + "/droplet.tgz", "/tmp/droplet"},
 				User: "vcap",
-			})
+			}))
 
-			fakeBlobStore.UploadDropletMetadataActionReturns(&models.RunAction{
+			fakeBlobStore.UploadDropletMetadataActionReturns(models.WrapAction(&models.RunAction{
 				Path: "/tmp/davtool",
 				Dir:  "/",
 				Args: []string{"put", blobURL + "/result.json", "/tmp/result.json"},
 				User: "vcap",
-			})
+			}))
 
 			err := dropletRunner.BuildDroplet("task-name", "droplet-name", "buildpack", map[string]string{}, 128, 100, 800)
 			Expect(err).NotTo(HaveOccurred())
@@ -162,31 +161,31 @@ var _ = Describe("DropletRunner", func() {
 			Expect(createTaskParams).ToNot(BeNil())
 			receptorRequest := createTaskParams.GetReceptorRequest()
 
-			expectedActions := &models.SerialAction{
-				Actions: []models.Action{
-					&models.DownloadAction{
+			expectedActions := models.WrapAction(&models.SerialAction{
+				Actions: []*models.Action{
+					models.WrapAction(&models.DownloadAction{
 						From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
 						To:   "/tmp",
 						User: "vcap",
-					},
-					&models.DownloadAction{
+					}),
+					models.WrapAction(&models.DownloadAction{
 						From: blobURL + "/bits.zip",
 						To:   "/tmp/app",
 						User: "vcap",
-					},
-					&models.RunAction{
+					}),
+					models.WrapAction(&models.RunAction{
 						Path: "/tmp/davtool",
 						Dir:  "/",
 						Args: []string{"delete", blobURL + "/bits.zip"},
 						User: "vcap",
-					},
-					&models.RunAction{
+					}),
+					models.WrapAction(&models.RunAction{
 						Path: "/bin/chmod",
 						Dir:  "/tmp/app",
 						Args: []string{"-R", "a+X", "."},
 						User: "vcap",
-					},
-					&models.RunAction{
+					}),
+					models.WrapAction(&models.RunAction{
 						Path: "/tmp/builder",
 						Dir:  "/",
 						Args: []string{
@@ -201,27 +200,27 @@ var _ = Describe("DropletRunner", func() {
 							"-skipDetect=true",
 						},
 						User: "vcap",
-					},
-					&models.RunAction{
+					}),
+					models.WrapAction(&models.RunAction{
 						Path: "/tmp/davtool",
 						Dir:  "/",
 						Args: []string{"put", blobURL + "/droplet.tgz", "/tmp/droplet"},
 						User: "vcap",
-					},
-					&models.RunAction{
+					}),
+					models.WrapAction(&models.RunAction{
 						Path: "/tmp/davtool",
 						Dir:  "/",
 						Args: []string{"put", blobURL + "/result.json", "/tmp/result.json"},
 						User: "vcap",
-					},
+					}),
 				},
-			}
+			})
 			Expect(receptorRequest.Action).To(Equal(expectedActions))
 			Expect(receptorRequest.TaskGuid).To(Equal("task-name"))
 			Expect(receptorRequest.LogGuid).To(Equal("task-name"))
 			Expect(receptorRequest.MetricsGuid).To(Equal("task-name"))
 			Expect(receptorRequest.RootFS).To(Equal("preloaded:cflinuxfs2"))
-			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
+			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]*models.EnvironmentVariable{
 				{Name: "CF_STACK", Value: "cflinuxfs2"},
 				{Name: "MEMORY_LIMIT", Value: "128M"},
 				{Name: "http_proxy", Value: ""},
@@ -253,7 +252,7 @@ var _ = Describe("DropletRunner", func() {
 			Expect(createTaskParams).ToNot(BeNil())
 			receptorRequest := createTaskParams.GetReceptorRequest()
 
-			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
+			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]*models.EnvironmentVariable{
 				{Name: "CF_STACK", Value: "cflinuxfs2"},
 				{Name: "MEMORY_LIMIT", Value: "128M"},
 				{Name: "ENV_VAR", Value: "stuff"},
@@ -284,7 +283,7 @@ var _ = Describe("DropletRunner", func() {
 			Expect(createTaskParams).ToNot(BeNil())
 			receptorRequest := createTaskParams.GetReceptorRequest()
 
-			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]receptor.EnvironmentVariable{
+			Expect(receptorRequest.EnvironmentVariables).To(matchers.ContainExactly([]*models.EnvironmentVariable{
 				{Name: "CF_STACK", Value: "cflinuxfs2"},
 				{Name: "MEMORY_LIMIT", Value: "128M"},
 				{Name: "http_proxy", Value: "http://proxy"},
@@ -337,11 +336,11 @@ var _ = Describe("DropletRunner", func() {
 			executionMetadata := `{"execution_metadata": "{\"start_command\": \"start\"}"}`
 			fakeBlobStore.DownloadReturns(ioutil.NopCloser(strings.NewReader(executionMetadata)), nil)
 
-			fakeBlobStore.DownloadDropletActionReturns(&models.DownloadAction{
+			fakeBlobStore.DownloadDropletActionReturns(models.WrapAction(&models.DownloadAction{
 				From: "http://dav-user:dav-pass@blob-host:7474/blobs/droplet-name/droplet.tgz",
 				To:   "/home/vcap",
 				User: "vcap",
-			})
+			}))
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})
 			Expect(err).NotTo(HaveOccurred())
@@ -365,31 +364,31 @@ var _ = Describe("DropletRunner", func() {
 				}
 			}`))
 
-			Expect(createAppParams.Setup).To(Equal(&models.SerialAction{
+			Expect(createAppParams.Setup).To(Equal(models.WrapAction(&models.SerialAction{
 				LogSource: "app-name",
-				Actions: []models.Action{
-					&models.DownloadAction{
+				Actions: []*models.Action{
+					models.WrapAction(&models.DownloadAction{
 						From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
 						To:   "/tmp",
 						User: "vcap",
-					},
-					&models.DownloadAction{
+					}),
+					models.WrapAction(&models.DownloadAction{
 						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
 						To:   "/tmp",
 						User: "vcap",
-					},
-					&models.DownloadAction{
+					}),
+					models.WrapAction(&models.DownloadAction{
 						From: "http://dav-user:dav-pass@blob-host:7474/blobs/droplet-name/droplet.tgz",
 						To:   "/home/vcap",
 						User: "vcap",
-					},
+					}),
 				},
-			}))
+			})))
 		})
 
 		It("launches the droplet lrp task with proxy environment variables", func() {
 			fakeBlobStore.DownloadReturns(ioutil.NopCloser(strings.NewReader("{}")), nil)
-			fakeBlobStore.DownloadDropletActionReturns(&models.DownloadAction{})
+			fakeBlobStore.DownloadDropletActionReturns(models.WrapAction(&models.DownloadAction{}))
 
 			fakeProxyConfReader.ProxyConfReturns(droplet_runner.ProxyConf{
 				HTTPProxy:  "http://proxy",
@@ -441,7 +440,7 @@ var _ = Describe("DropletRunner", func() {
 
 		It("returns an error when proxyConf reader fails", func() {
 			fakeBlobStore.DownloadReturns(ioutil.NopCloser(strings.NewReader("{}")), nil)
-			fakeBlobStore.DownloadDropletActionReturns(&models.DownloadAction{})
+			fakeBlobStore.DownloadDropletActionReturns(models.WrapAction(&models.DownloadAction{}))
 			fakeProxyConfReader.ProxyConfReturns(droplet_runner.ProxyConf{}, errors.New("proxyConf has failed"))
 
 			err := dropletRunner.LaunchDroplet("app-name", "droplet-name", "", []string{}, app_runner.AppEnvironmentParams{})

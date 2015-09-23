@@ -1,9 +1,6 @@
 {
 	"ImportPath": "github.com/cloudfoundry-incubator/lattice/ltc",
 	"GoVersion": "go1.4.2",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -56,7 +53,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/bbs/models",
-			"Rev": "bccbb84c4ebcbb286779f784fa3ccd4aecc1bcf6"
+			"Rev": "03a4f1df623545ad66d9607f8cec218e0eb19b8e"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/buildpack_app_lifecycle",
@@ -68,11 +65,11 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/receptor",
-			"Rev": "6319b1055e179cc1e257166174ea842356c72da4"
+			"Rev": "522f6eecbc1845278756c3535060e16c494c798c"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "46bef00e8081e7773a57f106da787d8804a18563"
+			"Rev": "683a1e366804fe233050147ab89b8149c2062313"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",
@@ -255,13 +252,13 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.2.0-beta",
-			"Rev": "0efbdc3a60137c0757b84e994a56037378170913"
+			"Comment": "v1.2.0-8-g25380c6",
+			"Rev": "25380c62e61d3f90436be125b8127dbae578fdef"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Comment": "v1.0-48-g766f404",
-			"Rev": "766f4042b942146e90594d145c5071fa92c0aa9a"
+			"Comment": "v1.0-52-ga2ab864",
+			"Rev": "a2ab8644e0b6a33df2cbe44673bd0f6ebba9abc3"
 		},
 		{
 			"ImportPath": "github.com/pivotal-golang/bytefmt",

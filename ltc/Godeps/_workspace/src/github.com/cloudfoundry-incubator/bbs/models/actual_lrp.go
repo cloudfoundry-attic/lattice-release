@@ -11,6 +11,9 @@ const (
 	ActualLRPStateClaimed   = "CLAIMED"
 	ActualLRPStateRunning   = "RUNNING"
 	ActualLRPStateCrashed   = "CRASHED"
+
+	CrashResetTimeout            = 5 * time.Minute
+	RetireActualLRPRetryAttempts = 5
 )
 
 var ActualLRPStates = []string{
@@ -64,6 +67,14 @@ func (key ActualLRPInstanceKey) Empty() bool {
 	return key.InstanceGuid == "" && key.CellId == ""
 }
 
+func (actual ActualLRP) ShouldRestartImmediately(calc RestartCalculator) bool {
+	if actual.State != ActualLRPStateCrashed {
+		return false
+	}
+
+	return calc.ShouldRestart(0, 0, actual.CrashCount)
+}
+
 func (actual ActualLRP) ShouldRestartCrash(now time.Time, calc RestartCalculator) bool {
 	if actual.State != ActualLRPStateCrashed {
 		return false
@@ -72,8 +83,8 @@ func (actual ActualLRP) ShouldRestartCrash(now time.Time, calc RestartCalculator
 	return calc.ShouldRestart(now.UnixNano(), actual.Since, actual.CrashCount)
 }
 
-func (before ActualLRP) AllowsTransitionTo(lrpKey ActualLRPKey, instanceKey ActualLRPInstanceKey, newState string) bool {
-	if !before.ActualLRPKey.Equal(&lrpKey) {
+func (before ActualLRP) AllowsTransitionTo(lrpKey *ActualLRPKey, instanceKey *ActualLRPInstanceKey, newState string) bool {
+	if !before.ActualLRPKey.Equal(lrpKey) {
 		return false
 	}
 
@@ -83,7 +94,7 @@ func (before ActualLRP) AllowsTransitionTo(lrpKey ActualLRPKey, instanceKey Actu
 
 	if (before.State == ActualLRPStateClaimed || before.State == ActualLRPStateRunning) &&
 		(newState == ActualLRPStateClaimed || newState == ActualLRPStateRunning) &&
-		(!before.ActualLRPInstanceKey.Equal(&instanceKey)) {
+		(!before.ActualLRPInstanceKey.Equal(instanceKey)) {
 		return false
 	}
 
@@ -141,54 +152,6 @@ func NewRunningActualLRP(lrpKey ActualLRPKey, instanceKey ActualLRPInstanceKey, 
 		State:                ActualLRPStateRunning,
 		Since:                since,
 	}
-}
-
-func (request StartActualLRPRequest) Validate() error {
-	var validationError ValidationError
-
-	if request.ActualLrpKey == nil {
-		validationError = validationError.Append(ErrInvalidField{"actual_lrp_key"})
-	} else if err := request.ActualLrpKey.Validate(); err != nil {
-		validationError = validationError.Append(err)
-	}
-
-	if request.ActualLrpInstanceKey == nil {
-		validationError = validationError.Append(ErrInvalidField{"actual_lrp_instance_key"})
-	} else if err := request.ActualLrpInstanceKey.Validate(); err != nil {
-		validationError = validationError.Append(err)
-	}
-
-	if request.ActualLrpNetInfo == nil {
-		validationError = validationError.Append(ErrInvalidField{"actual_lrp_net_info"})
-	} else if err := request.ActualLrpNetInfo.Validate(); err != nil {
-		validationError = validationError.Append(err)
-	}
-
-	if !validationError.Empty() {
-		return validationError
-	}
-
-	return nil
-}
-
-func (request FailActualLRPRequest) Validate() error {
-	var validationError ValidationError
-
-	if request.ActualLrpKey == nil {
-		validationError = validationError.Append(ErrInvalidField{"actual_lrp_key"})
-	} else if err := request.ActualLrpKey.Validate(); err != nil {
-		validationError = validationError.Append(err)
-	}
-
-	if request.ErrorMessage == "" {
-		validationError = validationError.Append(ErrInvalidField{"error_message"})
-	}
-
-	if !validationError.Empty() {
-		return validationError
-	}
-
-	return nil
 }
 
 func (actual ActualLRP) Validate() error {

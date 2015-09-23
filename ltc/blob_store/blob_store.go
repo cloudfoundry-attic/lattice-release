@@ -3,11 +3,11 @@ package blob_store
 import (
 	"io"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/blob"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/s3_blob_store"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 type BlobStore interface {
@@ -20,11 +20,11 @@ type BlobStore interface {
 }
 
 type DropletStore interface {
-	DownloadAppBitsAction(dropletName string) models.Action
-	DeleteAppBitsAction(dropletName string) models.Action
-	UploadDropletAction(dropletName string) models.Action
-	UploadDropletMetadataAction(dropletName string) models.Action
-	DownloadDropletAction(dropletName string) models.Action
+	DownloadAppBitsAction(dropletName string) *models.Action
+	DeleteAppBitsAction(dropletName string) *models.Action
+	UploadDropletAction(dropletName string) *models.Action
+	UploadDropletMetadataAction(dropletName string) *models.Action
+	DownloadDropletAction(dropletName string) *models.Action
 }
 
 type Verifier interface {

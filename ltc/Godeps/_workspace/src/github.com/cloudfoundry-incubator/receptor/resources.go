@@ -28,7 +28,7 @@ const (
 )
 
 type TaskCreateRequest struct {
-	Action                oldmodels.Action              `json:"-"`
+	Action                *models.Action                `json:"action"`
 	Annotation            string                        `json:"annotation,omitempty"`
 	CompletionCallbackURL string                        `json:"completion_callback_url"`
 	CPUWeight             uint                          `json:"cpu_weight"`
@@ -42,55 +42,12 @@ type TaskCreateRequest struct {
 	TaskGuid              string                        `json:"task_guid"`
 	RootFS                string                        `json:"rootfs"`
 	Privileged            bool                          `json:"privileged"`
-	EnvironmentVariables  []EnvironmentVariable         `json:"env,omitempty"`
-	EgressRules           []oldmodels.SecurityGroupRule `json:"egress_rules,omitempty"`
-}
-
-type InnerTaskCreateRequest TaskCreateRequest
-
-type mTaskCreateRequest struct {
-	ActionRaw json.RawMessage `json:"action"`
-	*InnerTaskCreateRequest
-}
-
-func (request TaskCreateRequest) MarshalJSON() ([]byte, error) {
-	actionRaw, err := oldmodels.MarshalAction(request.Action)
-	if err != nil {
-		return nil, err
-	}
-
-	innerRequest := InnerTaskCreateRequest(request)
-	mRequest := &mTaskCreateRequest{
-		ActionRaw:              actionRaw,
-		InnerTaskCreateRequest: &innerRequest,
-	}
-
-	return json.Marshal(mRequest)
-}
-
-func (request *TaskCreateRequest) UnmarshalJSON(payload []byte) error {
-	mRequest := &mTaskCreateRequest{InnerTaskCreateRequest: (*InnerTaskCreateRequest)(request)}
-	err := json.Unmarshal(payload, mRequest)
-	if err != nil {
-		return err
-	}
-
-	var a oldmodels.Action
-	if mRequest.ActionRaw == nil {
-		a = nil
-	} else {
-		a, err = oldmodels.UnmarshalAction(mRequest.ActionRaw)
-		if err != nil {
-			return err
-		}
-	}
-	request.Action = a
-
-	return nil
+	EnvironmentVariables  []*models.EnvironmentVariable `json:"env,omitempty"`
+	EgressRules           []*models.SecurityGroupRule   `json:"egress_rules,omitempty"`
 }
 
 type TaskResponse struct {
-	Action                oldmodels.Action              `json:"-"`
+	Action                *models.Action                `json:"action"`
 	Annotation            string                        `json:"annotation,omitempty"`
 	CompletionCallbackURL string                        `json:"completion_callback_url"`
 	CPUWeight             uint                          `json:"cpu_weight"`
@@ -104,57 +61,14 @@ type TaskResponse struct {
 	TaskGuid              string                        `json:"task_guid"`
 	RootFS                string                        `json:"rootfs"`
 	Privileged            bool                          `json:"privileged"`
-	EnvironmentVariables  []EnvironmentVariable         `json:"env,omitempty"`
+	EnvironmentVariables  []*models.EnvironmentVariable `json:"env,omitempty"`
 	CellID                string                        `json:"cell_id"`
 	CreatedAt             int64                         `json:"created_at"`
 	Failed                bool                          `json:"failed"`
 	FailureReason         string                        `json:"failure_reason"`
 	Result                string                        `json:"result"`
 	State                 string                        `json:"state"`
-	EgressRules           []oldmodels.SecurityGroupRule `json:"egress_rules,omitempty"`
-}
-
-type InnerTaskResponse TaskResponse
-
-type mTaskResponse struct {
-	ActionRaw json.RawMessage `json:"action"`
-	*InnerTaskResponse
-}
-
-func (response TaskResponse) MarshalJSON() ([]byte, error) {
-	actionRaw, err := oldmodels.MarshalAction(response.Action)
-	if err != nil {
-		return nil, err
-	}
-
-	innerResponse := InnerTaskResponse(response)
-	mResponse := &mTaskResponse{
-		ActionRaw:         actionRaw,
-		InnerTaskResponse: &innerResponse,
-	}
-
-	return json.Marshal(mResponse)
-}
-
-func (response *TaskResponse) UnmarshalJSON(payload []byte) error {
-	mResponse := &mTaskResponse{InnerTaskResponse: (*InnerTaskResponse)(response)}
-	err := json.Unmarshal(payload, mResponse)
-	if err != nil {
-		return err
-	}
-
-	var a oldmodels.Action
-	if mResponse.ActionRaw == nil {
-		a = nil
-	} else {
-		a, err = oldmodels.UnmarshalAction(mResponse.ActionRaw)
-		if err != nil {
-			return err
-		}
-	}
-	response.Action = a
-
-	return nil
+	EgressRules           []*models.SecurityGroupRule   `json:"egress_rules,omitempty"`
 }
 
 type RoutingInfo map[string]*json.RawMessage

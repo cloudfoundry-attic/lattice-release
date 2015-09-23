@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 type MonitorMethod int
@@ -78,7 +78,7 @@ type CreateAppParams struct {
 	AppArgs      []string
 	Timeout      time.Duration
 	Annotation   string
-	Setup        models.Action
+	Setup        *models.Action
 }
 
 type UpdateAppParams struct {
@@ -309,16 +309,16 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		envVars = append(envVars, receptor.EnvironmentVariable{Name: "VCAP_SERVICES", Value: "{}"})
 	}
 
-	setupAction := &models.SerialAction{
-		Actions: []models.Action{
+	setupAction := models.WrapAction(&models.SerialAction{
+		Actions: []*models.Action{
 			params.Setup,
-			&models.DownloadAction{
+			models.WrapAction(&models.DownloadAction{
 				From: "http://file_server.service.dc1.consul:8080/v1/static/diego-sshd.tgz",
 				To:   "/tmp",
 				User: "vcap",
-			},
+			}),
 		},
-	}
+	})
 
 	hostKey, err := appRunner.keygen.GenerateRSAPrivateKey(2048)
 	if err != nil {
@@ -341,10 +341,10 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		MetricsGuid:          params.Name,
 		EnvironmentVariables: envVars,
 		Annotation:           params.Annotation,
-		Setup:                setupAction,
+		Setup:                models.UnwrapAction(setupAction),
 		Action: &models.ParallelAction{
-			Actions: []models.Action{
-				&models.RunAction{
+			Actions: []*models.Action{
+				models.WrapAction(&models.RunAction{
 					Path: "/tmp/diego-sshd",
 					Args: []string{
 						"-address=0.0.0.0:2222",
@@ -353,13 +353,13 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 					},
 					Dir:  "/tmp",
 					User: params.User,
-				},
-				&models.RunAction{
+				}),
+				models.WrapAction(&models.RunAction{
 					Path: params.StartCommand,
 					Args: params.AppArgs,
 					Dir:  params.WorkingDir,
 					User: params.User,
-				},
+				}),
 			},
 		},
 	}

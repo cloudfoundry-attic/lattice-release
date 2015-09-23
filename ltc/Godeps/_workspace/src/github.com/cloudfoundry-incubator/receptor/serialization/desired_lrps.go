@@ -64,7 +64,7 @@ func DesiredLRPFromRequest(req receptor.DesiredLRPCreateRequest) oldmodels.Desir
 		Domain:               req.Domain,
 		RootFS:               req.RootFS,
 		Instances:            req.Instances,
-		EnvironmentVariables: EnvironmentVariablesToModel(req.EnvironmentVariables),
+		EnvironmentVariables: EnvironmentVariablesToOldModel(req.EnvironmentVariables),
 		Setup:                req.Setup,
 		Action:               req.Action,
 		Monitor:              req.Monitor,

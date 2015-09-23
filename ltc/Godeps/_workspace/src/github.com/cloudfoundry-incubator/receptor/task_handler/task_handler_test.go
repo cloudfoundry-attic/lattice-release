@@ -2,11 +2,12 @@ package task_handler_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor/task_handler"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-golang/lager"
 
 	. "github.com/onsi/ginkgo"
@@ -15,7 +16,7 @@ import (
 
 var _ = Describe("TaskHandler", func() {
 	var (
-		enqueue chan models.Task
+		enqueue chan *models.Task
 
 		server *httptest.Server
 
@@ -27,7 +28,7 @@ var _ = Describe("TaskHandler", func() {
 		logger := lager.NewLogger("task-watcher-test")
 		logger.RegisterSink(lager.NewWriterSink(GinkgoWriter, lager.INFO))
 
-		enqueue = make(chan models.Task, 100)
+		enqueue = make(chan *models.Task, 100)
 
 		server = httptest.NewServer(task_handler.NewHandler(enqueue, logger))
 	})
@@ -44,19 +45,19 @@ var _ = Describe("TaskHandler", func() {
 	})
 
 	Describe("when the handler receives a task", func() {
-		task := models.Task{
+		task := &models.Task{
 			TaskGuid:      "some-guid",
 			Failed:        true,
 			FailureReason: "'cause",
 			Result:        "some result",
-			RootFS:        "some:rootfs",
+			RootFs:        "some:rootfs",
 			Domain:        "some-domain",
-			Action:        &models.RunAction{Path: "true", User: "me"},
+			Action:        models.WrapAction(&models.RunAction{Path: "true", User: "me", ResourceLimits: &models.ResourceLimits{}}),
 		}
 
 		BeforeEach(func() {
 			var err error
-			payload, err = models.ToJSONArray(task)
+			payload, err = json.Marshal([]*models.Task{task})
 			Expect(err).NotTo(HaveOccurred())
 		})
 

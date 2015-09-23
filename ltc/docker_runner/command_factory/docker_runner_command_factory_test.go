@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
@@ -21,7 +22,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
 	. "github.com/cloudfoundry-incubator/lattice/ltc/test_helpers/matchers"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock/fakeclock"
 	"github.com/pivotal-golang/lager"
@@ -141,9 +141,8 @@ var _ = Describe("CommandFactory", func() {
 			Expect(createAppParams.NoRoutes).To(BeFalse())
 			Expect(createAppParams.WorkingDir).To(Equal("/applications"))
 
-			Expect(createAppParams.Setup).To(BeAssignableToTypeOf(&models.DownloadAction{}))
-			reqSetup, ok := createAppParams.Setup.(*models.DownloadAction)
-			Expect(ok).To(BeTrue())
+			Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
+			reqSetup := createAppParams.Setup.GetDownloadAction()
 			Expect(reqSetup.From).To(Equal("http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"))
 			Expect(reqSetup.To).To(Equal("/tmp"))
 			Expect(reqSetup.User).To(Equal("vcap"))
@@ -973,9 +972,8 @@ var _ = Describe("CommandFactory", func() {
 			}))
 			Expect(createAppParams.NoRoutes).To(BeFalse())
 
-			Expect(createAppParams.Setup).To(BeAssignableToTypeOf(&models.DownloadAction{}))
-			reqSetup, ok := createAppParams.Setup.(*models.DownloadAction)
-			Expect(ok).To(BeTrue())
+			Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
+			reqSetup := createAppParams.Setup.GetDownloadAction()
 			Expect(reqSetup.From).To(Equal("http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"))
 			Expect(reqSetup.To).To(Equal("/tmp"))
 			Expect(reqSetup.User).To(Equal("vcap"))

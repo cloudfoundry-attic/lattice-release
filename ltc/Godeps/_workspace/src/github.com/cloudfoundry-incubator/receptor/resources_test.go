@@ -68,11 +68,11 @@ var _ = Describe("Resources", func() {
 		        ]
 					}`
 					expectedRequest = receptor.TaskCreateRequest{
-						EgressRules: []oldmodels.SecurityGroupRule{
-							{
+						EgressRules: []*models.SecurityGroupRule{
+							&models.SecurityGroupRule{
 								Protocol:     "tcp",
 								Destinations: []string{"0.0.0.0/0"},
-								PortRange: &oldmodels.PortRange{
+								PortRange: &models.PortRange{
 									Start: 1,
 									End:   1024,
 								},
@@ -146,11 +146,11 @@ var _ = Describe("Resources", func() {
 		        ]
 					}`
 					expectedResponse = receptor.TaskResponse{
-						EgressRules: []oldmodels.SecurityGroupRule{
-							{
+						EgressRules: []*models.SecurityGroupRule{
+							&models.SecurityGroupRule{
 								Protocol:     "tcp",
 								Destinations: []string{"0.0.0.0/0"},
-								PortRange: &oldmodels.PortRange{
+								PortRange: &models.PortRange{
 									Start: 1,
 									End:   1024,
 								},

@@ -1,0 +1,54 @@
+syntax = "proto2";
+
+package models;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "actions.proto";
+import "environment_variables.proto";
+import "security_group.proto";
+
+option (gogoproto.goproto_enum_prefix_all) = true;
+
+message Tasks {
+  repeated Task tasks = 1;
+}
+
+message Task {
+  enum State {
+    Invalid = 0;
+    Pending = 1;
+    Running = 2;
+    Completed = 3;
+    Resolving = 4;
+  }
+
+  optional string task_guid = 1;
+  optional string domain = 2;
+  optional string root_fs = 3 [(gogoproto.jsontag) = "rootfs"];
+  repeated EnvironmentVariable environment_variables = 4 [(gogoproto.jsontag) = "env,omitempty"];
+  optional Action action = 5;
+  optional int32 disk_mb = 6;
+  optional int32 memory_mb = 7;
+  optional uint32 cpu_weight = 8;
+  optional bool privileged = 9;
+  optional string log_source = 10;
+  optional string log_guid = 11;
+  optional string metrics_guid = 12;
+  optional int64 created_at = 13;
+  optional int64 updated_at = 14;
+  optional int64 first_completed_at = 15;
+  optional string result_file = 16;
+
+  optional State state = 17;
+
+  optional string cell_id = 18;
+
+  optional string result = 19;
+  optional bool failed = 20;
+  optional string failure_reason = 21;
+
+  optional string completion_callback_url = 22 [(gogoproto.jsontag) = "completion_callback_url,omitempty"];
+  optional string annotation = 23 [(gogoproto.jsontag) = "annotation,omitempty"];
+
+  repeated SecurityGroupRule egress_rules = 24 [(gogoproto.jsontag) = "egress_rules,omitempty"];
+}

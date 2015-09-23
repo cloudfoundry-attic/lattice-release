@@ -12,10 +12,10 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/blob"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/s3_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 var _ = Describe("BlobStore", func() {
@@ -194,9 +194,9 @@ var _ = Describe("BlobStore", func() {
 	Context("Droplet Actions", func() {
 		Describe("#DownloadAppBitsAction", func() {
 			It("constructs the correct Action to download app bits", func() {
-				Expect(blobStore.DownloadAppBitsAction("droplet-name")).To(Equal(&models.SerialAction{
-					Actions: []models.Action{
-						&models.RunAction{
+				Expect(blobStore.DownloadAppBitsAction("droplet-name")).To(Equal(models.WrapAction(&models.SerialAction{
+					Actions: []*models.Action{
+						models.WrapAction(&models.RunAction{
 							Path: "/tmp/s3tool",
 							Dir:  "/",
 							Args: []string{
@@ -209,26 +209,26 @@ var _ = Describe("BlobStore", func() {
 								"/tmp/bits.zip",
 							},
 							User: "vcap",
-						},
-						&models.RunAction{
+						}),
+						models.WrapAction(&models.RunAction{
 							Path: "/bin/mkdir",
 							Args: []string{"/tmp/app"},
 							User: "vcap",
-						},
-						&models.RunAction{
+						}),
+						models.WrapAction(&models.RunAction{
 							Path: "/usr/bin/unzip",
 							Dir:  "/tmp/app",
 							Args: []string{"-q", "/tmp/bits.zip"},
 							User: "vcap",
-						},
+						}),
 					},
-				}))
+				})))
 			})
 		})
 
 		Describe("#DeleteAppBitsAction", func() {
 			It("constructs the correct Action to delete app bits", func() {
-				Expect(blobStore.DeleteAppBitsAction("droplet-name")).To(Equal(&models.RunAction{
+				Expect(blobStore.DeleteAppBitsAction("droplet-name")).To(Equal(models.WrapAction(&models.RunAction{
 					Path: "/tmp/s3tool",
 					Dir:  "/",
 					Args: []string{
@@ -240,13 +240,13 @@ var _ = Describe("BlobStore", func() {
 						"/droplet-name/bits.zip",
 					},
 					User: "vcap",
-				}))
+				})))
 			})
 		})
 
 		Describe("#UploadDropletAction", func() {
 			It("constructs the correct Action to upload the droplet", func() {
-				Expect(blobStore.UploadDropletAction("droplet-name")).To(Equal(&models.RunAction{
+				Expect(blobStore.UploadDropletAction("droplet-name")).To(Equal(models.WrapAction(&models.RunAction{
 					Path: "/tmp/s3tool",
 					Dir:  "/",
 					Args: []string{
@@ -259,13 +259,13 @@ var _ = Describe("BlobStore", func() {
 						"/tmp/droplet",
 					},
 					User: "vcap",
-				}))
+				})))
 			})
 		})
 
 		Describe("#UploadDropletMetadataAction", func() {
 			It("constructs the correct Action to upload the droplet metadata", func() {
-				Expect(blobStore.UploadDropletMetadataAction("droplet-name")).To(Equal(&models.RunAction{
+				Expect(blobStore.UploadDropletMetadataAction("droplet-name")).To(Equal(models.WrapAction(&models.RunAction{
 					Path: "/tmp/s3tool",
 					Dir:  "/",
 					Args: []string{
@@ -278,15 +278,15 @@ var _ = Describe("BlobStore", func() {
 						"/tmp/result.json",
 					},
 					User: "vcap",
-				}))
+				})))
 			})
 		})
 
 		Describe("#DownloadDropletAction", func() {
 			It("constructs the correct Action to download the droplet", func() {
-				Expect(blobStore.DownloadDropletAction("droplet-name")).To(Equal(&models.SerialAction{
-					Actions: []models.Action{
-						&models.RunAction{
+				Expect(blobStore.DownloadDropletAction("droplet-name")).To(Equal(models.WrapAction(&models.SerialAction{
+					Actions: []*models.Action{
+						models.WrapAction(&models.RunAction{
 							Path: "/tmp/s3tool",
 							Dir:  "/",
 							Args: []string{
@@ -299,15 +299,15 @@ var _ = Describe("BlobStore", func() {
 								"/tmp/droplet.tgz",
 							},
 							User: "vcap",
-						},
-						&models.RunAction{
+						}),
+						models.WrapAction(&models.RunAction{
 							Path: "/bin/tar",
 							Args: []string{"zxf", "/tmp/droplet.tgz"},
 							Dir:  "/home/vcap",
 							User: "vcap",
-						},
+						}),
 					},
-				}))
+				})))
 			})
 		})
 	})

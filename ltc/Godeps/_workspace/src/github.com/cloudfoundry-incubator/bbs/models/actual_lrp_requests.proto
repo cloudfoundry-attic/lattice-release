@@ -1,0 +1,33 @@
+syntax = "proto2";
+
+package models;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "actual_lrp.proto";
+
+message ClaimActualLRPRequest {
+  optional string process_guid = 1;
+  optional int32 index = 2;
+  optional ActualLRPInstanceKey actual_lrp_instance_key = 3;
+}
+
+message StartActualLRPRequest {
+  optional ActualLRPKey actual_lrp_key = 1;
+  optional ActualLRPInstanceKey actual_lrp_instance_key = 2;
+  optional ActualLRPNetInfo actual_lrp_net_info = 3;
+}
+
+message CrashActualLRPRequest {
+  optional ActualLRPKey actual_lrp_key = 1;
+  optional ActualLRPInstanceKey actual_lrp_instance_key = 2;
+  optional string error_message = 3;
+}
+
+message FailActualLRPRequest {
+  optional ActualLRPKey actual_lrp_key = 1;
+  optional string error_message = 2;
+}
+
+message RetireActualLRPRequest {
+  optional ActualLRPKey actual_lrp_key = 1;
+}

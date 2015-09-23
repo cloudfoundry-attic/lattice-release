@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/buildpack_app_lifecycle"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
@@ -17,7 +18,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/blob"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 const (
@@ -118,31 +118,31 @@ func (dr *dropletRunner) UploadBits(dropletName, uploadPath string) error {
 func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string, environment map[string]string, memoryMB, cpuWeight, diskMB int) error {
 	builderConfig := buildpack_app_lifecycle.NewLifecycleBuilderConfig([]string{buildpackUrl}, true, false)
 
-	action := &models.SerialAction{
-		Actions: []models.Action{
-			&models.DownloadAction{
+	action := models.WrapAction(&models.SerialAction{
+		Actions: []*models.Action{
+			models.WrapAction(&models.DownloadAction{
 				From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
 				To:   "/tmp",
 				User: "vcap",
-			},
+			}),
 			dr.blobStore.DownloadAppBitsAction(dropletName),
 			dr.blobStore.DeleteAppBitsAction(dropletName),
-			&models.RunAction{
+			models.WrapAction(&models.RunAction{
 				Path: "/bin/chmod",
 				Dir:  "/tmp/app",
 				Args: []string{"-R", "a+X", "."},
 				User: "vcap",
-			},
-			&models.RunAction{
+			}),
+			models.WrapAction(&models.RunAction{
 				Path: "/tmp/builder",
 				Dir:  "/",
 				Args: builderConfig.Args(),
 				User: "vcap",
-			},
+			}),
 			dr.blobStore.UploadDropletAction(dropletName),
 			dr.blobStore.UploadDropletMetadataAction(dropletName),
 		},
-	}
+	})
 
 	environment["CF_STACK"] = DropletStack
 	environment["MEMORY_LIMIT"] = fmt.Sprintf("%dM", memoryMB)
@@ -162,7 +162,7 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 		"lattice",
 		"BUILD",
 		environment,
-		[]models.SecurityGroupRule{},
+		[]*models.SecurityGroupRule{},
 		memoryMB,
 		cpuWeight,
 		diskMB,
@@ -214,22 +214,22 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 
 		Annotation: string(annotationBytes),
 
-		Setup: &models.SerialAction{
+		Setup: models.WrapAction(&models.SerialAction{
 			LogSource: appName,
-			Actions: []models.Action{
-				&models.DownloadAction{
+			Actions: []*models.Action{
+				models.WrapAction(&models.DownloadAction{
 					From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
 					To:   "/tmp",
 					User: "vcap",
-				},
-				&models.DownloadAction{
+				}),
+				models.WrapAction(&models.DownloadAction{
 					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
 					To:   "/tmp",
 					User: "vcap",
-				},
+				}),
 				dr.blobStore.DownloadDropletAction(dropletName),
 			},
-		},
+		}),
 	}
 
 	return dr.appRunner.CreateApp(appParams)

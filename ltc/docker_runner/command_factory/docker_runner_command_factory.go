@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
@@ -17,7 +18,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/codegangsta/cli"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
@@ -352,11 +352,11 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		AppArgs:      appArgs,
 		Timeout:      timeoutFlag,
 
-		Setup: &models.DownloadAction{
+		Setup: models.WrapAction(&models.DownloadAction{
 			From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
 			To:   "/tmp",
 			User: "vcap",
-		},
+		}),
 	})
 	if err != nil {
 		factory.UI.SayLine(fmt.Sprintf("Error creating app: %s", err))

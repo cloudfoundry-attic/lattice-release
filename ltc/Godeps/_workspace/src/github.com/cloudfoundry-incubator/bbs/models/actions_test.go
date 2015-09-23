@@ -12,12 +12,11 @@ import (
 )
 
 var _ = Describe("Actions", func() {
-	itSerializes := func(actionPayload string, a interface{}) {
+	itSerializes := func(actionPayload string, a *models.Action) {
 		action := models.UnwrapAction(a)
 		It("Action -> JSON for "+string(action.ActionType()), func() {
 			By("marshalling to JSON", func() {
 				marshalledAction := action
-
 				json, err := json.Marshal(&marshalledAction)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(json).To(MatchJSON(actionPayload))
@@ -179,6 +178,7 @@ var _ = Describe("Actions", func() {
 	})
 
 	Describe("Run", func() {
+		var nofile uint64 = 10
 		itSerializesAndDeserializes(
 			`{	
 					"user": "me",
@@ -200,7 +200,7 @@ var _ = Describe("Actions", func() {
 					{"FOO", "1"},
 					{"BAR", "2"},
 				},
-				ResourceLimits: &models.ResourceLimits{Nofile: 10},
+				ResourceLimits: &models.ResourceLimits{Nofile: &nofile},
 			}),
 		)
 
@@ -239,6 +239,7 @@ var _ = Describe("Actions", func() {
 	})
 
 	Describe("Timeout", func() {
+		var nofile uint64 = 10
 		itSerializesAndDeserializes(
 			`{
 				"action": {
@@ -252,24 +253,15 @@ var _ = Describe("Actions", func() {
 				},
 				"timeout": 10000000
 			}`,
-			models.Timeout(
-				&models.RunAction{
-					Path:           "echo",
-					User:           "someone",
-					ResourceLimits: &models.ResourceLimits{Nofile: 10},
-				},
-				10*time.Millisecond,
-			),
-		)
-
-		itSerializesAndDeserializes(
-			`{
-				"timeout": 10000000
-			}`,
-			models.Timeout(
-				nil,
-				10*time.Millisecond,
-			),
+			models.WrapAction(
+				models.Timeout(
+					&models.RunAction{
+						Path:           "echo",
+						User:           "someone",
+						ResourceLimits: &models.ResourceLimits{Nofile: &nofile},
+					},
+					10*time.Millisecond,
+				)),
 		)
 
 		Describe("Validate", func() {
@@ -341,16 +333,11 @@ var _ = Describe("Actions", func() {
 						}
 					}
 			}`,
-			models.Try(&models.Action{RunAction: &models.RunAction{
+			models.WrapAction(models.Try(&models.RunAction{
 				Path:           "echo",
 				User:           "me",
 				ResourceLimits: &models.ResourceLimits{},
-			}}),
-		)
-
-		itSerializesAndDeserializes(
-			`{}`,
-			models.Try(nil),
+			})),
 		)
 
 		Describe("Validate", func() {
@@ -415,7 +402,7 @@ var _ = Describe("Actions", func() {
 						}
 					]
 			}`,
-			models.Parallel(
+			models.WrapAction(models.Parallel(
 				&models.DownloadAction{
 					From:     "web_location",
 					To:       "local_location",
@@ -425,21 +412,9 @@ var _ = Describe("Actions", func() {
 				&models.RunAction{
 					Path:           "echo",
 					User:           "me",
-					ResourceLimits: &models.ResourceLimits{Nofile: 0},
+					ResourceLimits: &models.ResourceLimits{},
 				},
-			),
-		)
-
-		itSerializesAndDeserializes(
-			`{}`,
-			models.WrapAction(&models.ParallelAction{}),
-		)
-
-		itSerializesAndDeserializes(
-			`{
-				"actions": [null]
-			}`,
-			models.Parallel(nil),
+			)),
 		)
 
 		Describe("Validate", func() {
@@ -468,6 +443,12 @@ var _ = Describe("Actions", func() {
 				{
 					"actions",
 					models.ParallelAction{},
+				},
+				{
+					"actions",
+					models.ParallelAction{
+						Actions: []*models.Action{},
+					},
 				},
 				{
 					"action at index 0",
@@ -514,49 +495,33 @@ var _ = Describe("Actions", func() {
 						}
 					]
 			}`,
-			models.Serial(
-				&models.Action{
-					DownloadAction: &models.DownloadAction{
-						From:     "web_location",
-						To:       "local_location",
-						CacheKey: "elephant",
-						User:     "someone",
-					},
+			models.WrapAction(models.Serial(
+				&models.DownloadAction{
+					From:     "web_location",
+					To:       "local_location",
+					CacheKey: "elephant",
+					User:     "someone",
 				},
-				&models.Action{
-					RunAction: &models.RunAction{
-						Path:           "echo",
-						User:           "me",
-						ResourceLimits: &models.ResourceLimits{},
-					},
+				&models.RunAction{
+					Path:           "echo",
+					User:           "me",
+					ResourceLimits: &models.ResourceLimits{},
 				},
-			),
-		)
-
-		itSerializesAndDeserializes(
-			`{}`,
-			models.WrapAction(&models.SerialAction{}),
-		)
-
-		itSerializesAndDeserializes(
-			`{
-				"actions": [null]
-			}`,
-			models.Serial(nil),
+			)),
 		)
 
 		Describe("Validate", func() {
-			var serialAction models.SerialAction
+			var serialAction *models.SerialAction
 
 			Context("when the action has 'actions' as a slice of valid actions", func() {
 				It("is valid", func() {
-					serialAction = *models.Serial(
+					serialAction = models.Serial(
 						&models.UploadAction{
 							From: "local_location",
 							To:   "web_location",
 							User: "someone",
 						},
-					).SerialAction
+					)
 					err := serialAction.Validate()
 					Expect(err).NotTo(HaveOccurred())
 				})
@@ -568,6 +533,12 @@ var _ = Describe("Actions", func() {
 					models.SerialAction{},
 				},
 				{
+					"actions",
+					models.SerialAction{
+						Actions: []*models.Action{},
+					},
+				},
+				{
 					"action at index 0",
 					models.SerialAction{
 						Actions: []*models.Action{nil},
@@ -575,11 +546,11 @@ var _ = Describe("Actions", func() {
 				},
 				{
 					"from",
-					*models.Serial(
+					models.Serial(
 						&models.UploadAction{
 							To: "web_location",
 						},
-					).SerialAction,
+					),
 				},
 			} {
 				testValidatorErrorCase(testCase)
@@ -601,41 +572,29 @@ var _ = Describe("Actions", func() {
 						}
 					}
 			}`,
-			models.EmitProgressFor(
+			models.WrapAction(models.EmitProgressFor(
 				&models.RunAction{
 					Path:           "echo",
 					User:           "me",
 					ResourceLimits: &models.ResourceLimits{},
 				},
 				"reticulating splines", "reticulated splines", "reticulation failed",
-			),
-		)
-
-		itSerializesAndDeserializes(
-			`{
-					"start_message": "reticulating splines",
-					"success_message": "reticulated splines",
-					"failure_message_prefix": "reticulation failed"
-			}`,
-			models.EmitProgressFor(
-				nil,
-				"reticulating splines", "reticulated splines", "reticulation failed",
-			),
+			)),
 		)
 
 		Describe("Validate", func() {
-			var emitProgressAction models.EmitProgressAction
+			var emitProgressAction *models.EmitProgressAction
 
 			Context("when the action has 'action' specified", func() {
 				It("is valid", func() {
-					emitProgressAction = *models.EmitProgressFor(
+					emitProgressAction = models.EmitProgressFor(
 						&models.UploadAction{
 							From: "local_location",
 							To:   "web_location",
 							User: "someone",
 						},
 						"", "", "",
-					).EmitProgressAction
+					)
 
 					err := emitProgressAction.Validate()
 					Expect(err).NotTo(HaveOccurred())
@@ -649,12 +608,12 @@ var _ = Describe("Actions", func() {
 				},
 				{
 					"from",
-					*models.EmitProgressFor(
+					models.EmitProgressFor(
 						&models.UploadAction{
 							To: "web_location",
 						},
 						"", "", "",
-					).EmitProgressAction,
+					),
 				},
 			} {
 				testValidatorErrorCase(testCase)
@@ -683,7 +642,7 @@ var _ = Describe("Actions", func() {
 						}
 					]
 			}`,
-			models.Codependent(
+			models.WrapAction(models.Codependent(
 				&models.DownloadAction{
 					From:     "web_location",
 					To:       "local_location",
@@ -691,33 +650,21 @@ var _ = Describe("Actions", func() {
 					User:     "someone",
 				},
 				&models.RunAction{Path: "echo", User: "me", ResourceLimits: &models.ResourceLimits{}},
-			),
-		)
-
-		itSerializesAndDeserializes(
-			`{}`,
-			models.WrapAction(&models.CodependentAction{}),
-		)
-
-		itSerializesAndDeserializes(
-			`{
-				"actions": [null]
-			}`,
-			models.Codependent(nil),
+			)),
 		)
 
 		Describe("Validate", func() {
-			var codependentAction models.CodependentAction
+			var codependentAction *models.CodependentAction
 
 			Context("when the action has 'actions' as a slice of valid actions", func() {
 				It("is valid", func() {
-					codependentAction = *models.Codependent(
+					codependentAction = models.Codependent(
 						&models.UploadAction{
 							From: "local_location",
 							To:   "web_location",
 							User: "someone",
 						},
-					).CodependentAction
+					)
 
 					err := codependentAction.Validate()
 					Expect(err).NotTo(HaveOccurred())
@@ -730,14 +677,20 @@ var _ = Describe("Actions", func() {
 					models.CodependentAction{},
 				},
 				{
+					"actions",
+					models.CodependentAction{
+						Actions: []*models.Action{}},
+				},
+				{
 					"action at index 0",
-					*models.Codependent(nil).CodependentAction,
+					models.CodependentAction{
+						Actions: []*models.Action{nil}},
 				},
 				{
 					"from",
-					*models.Codependent(&models.UploadAction{
+					models.Codependent(&models.UploadAction{
 						To: "web_location",
-					}).CodependentAction,
+					}),
 				},
 			} {
 				testValidatorErrorCase(testCase)

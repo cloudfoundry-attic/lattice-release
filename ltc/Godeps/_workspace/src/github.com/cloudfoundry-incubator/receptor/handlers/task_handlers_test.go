@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/cloudfoundry-incubator/bbs/fake_bbs"
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/handlers"
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/bbserrors"
-	"github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	fake_legacybbs "github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
+	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-golang/lager"
 
 	. "github.com/onsi/ginkgo"
@@ -21,50 +23,57 @@ import (
 var _ = Describe("TaskHandler", func() {
 	var (
 		logger           lager.Logger
-		fakeBBS          *fake_bbs.FakeReceptorBBS
+		fakeClient       *fake_bbs.FakeClient
+		fakeLegacyBBS    *fake_legacybbs.FakeReceptorBBS
 		responseRecorder *httptest.ResponseRecorder
 		handler          *handlers.TaskHandler
 		request          *http.Request
 	)
 
 	BeforeEach(func() {
-		fakeBBS = new(fake_bbs.FakeReceptorBBS)
+		fakeClient = &fake_bbs.FakeClient{}
+		fakeLegacyBBS = new(fake_legacybbs.FakeReceptorBBS)
 		logger = lager.NewLogger("test")
 		logger.RegisterSink(lager.NewWriterSink(GinkgoWriter, lager.DEBUG))
 		responseRecorder = httptest.NewRecorder()
-		handler = handlers.NewTaskHandler(fakeBBS, logger)
+		handler = handlers.NewTaskHandler(fakeClient, fakeLegacyBBS, logger)
 	})
 
 	Describe("Create", func() {
-		validCreateRequest := receptor.TaskCreateRequest{
-			TaskGuid:   "task-guid-1",
-			Domain:     "test-domain",
-			RootFS:     "docker://docker",
-			Action:     &models.RunAction{User: "me", Path: "/bin/bash", Args: []string{"echo", "hi"}},
-			MemoryMB:   24,
-			DiskMB:     12,
-			CPUWeight:  10,
-			LogGuid:    "guid",
-			LogSource:  "source-name",
-			ResultFile: "result-file",
-			Annotation: "some annotation",
-			Privileged: true,
-		}
+		var validCreateRequest receptor.TaskCreateRequest
+		var expectedTask oldmodels.Task
 
-		expectedTask := models.Task{
-			TaskGuid:   "task-guid-1",
-			Domain:     "test-domain",
-			RootFS:     "docker://docker",
-			Action:     &models.RunAction{User: "me", Path: "/bin/bash", Args: []string{"echo", "hi"}},
-			MemoryMB:   24,
-			DiskMB:     12,
-			CPUWeight:  10,
-			LogGuid:    "guid",
-			LogSource:  "source-name",
-			ResultFile: "result-file",
-			Annotation: "some annotation",
-			Privileged: true,
-		}
+		BeforeEach(func() {
+			validCreateRequest = receptor.TaskCreateRequest{
+				TaskGuid:   "task-guid-1",
+				Domain:     "test-domain",
+				RootFS:     "docker://docker",
+				Action:     models.WrapAction(&models.RunAction{User: "me", Path: "/bin/bash", Args: []string{"echo", "hi"}}),
+				MemoryMB:   24,
+				DiskMB:     12,
+				CPUWeight:  10,
+				LogGuid:    "guid",
+				LogSource:  "source-name",
+				ResultFile: "result-file",
+				Annotation: "some annotation",
+				Privileged: true,
+			}
+
+			expectedTask = oldmodels.Task{
+				TaskGuid:   "task-guid-1",
+				Domain:     "test-domain",
+				RootFS:     "docker://docker",
+				Action:     &oldmodels.RunAction{User: "me", Path: "/bin/bash", Args: []string{"echo", "hi"}, ResourceLimits: oldmodels.ResourceLimits{Nofile: nil}},
+				MemoryMB:   24,
+				DiskMB:     12,
+				CPUWeight:  10,
+				LogGuid:    "guid",
+				LogSource:  "source-name",
+				ResultFile: "result-file",
+				Annotation: "some annotation",
+				Privileged: true,
+			}
+		})
 
 		Context("when everything succeeds", func() {
 			JustBeforeEach(func() {
@@ -72,8 +81,8 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("calls DesireTask on the BBS with the correct task", func() {
-				Expect(fakeBBS.DesireTaskCallCount()).To(Equal(1))
-				_, task := fakeBBS.DesireTaskArgsForCall(0)
+				Expect(fakeLegacyBBS.DesireTaskCallCount()).To(Equal(1))
+				_, task := fakeLegacyBBS.DesireTaskArgsForCall(0)
 				Expect(task).To(Equal(expectedTask))
 			})
 
@@ -87,20 +96,20 @@ var _ = Describe("TaskHandler", func() {
 
 			Context("when env vars are specified", func() {
 				BeforeEach(func() {
-					validCreateRequest.EnvironmentVariables = []receptor.EnvironmentVariable{
+					validCreateRequest.EnvironmentVariables = []*models.EnvironmentVariable{
 						{Name: "var1", Value: "val1"},
 						{Name: "var2", Value: "val2"},
 					}
 				})
 
 				AfterEach(func() {
-					validCreateRequest.EnvironmentVariables = []receptor.EnvironmentVariable{}
+					validCreateRequest.EnvironmentVariables = []*models.EnvironmentVariable{}
 				})
 
 				It("passes them to the BBS", func() {
-					Expect(fakeBBS.DesireTaskCallCount()).To(Equal(1))
-					_, task := fakeBBS.DesireTaskArgsForCall(0)
-					Expect(task.EnvironmentVariables).To(Equal([]models.EnvironmentVariable{
+					Expect(fakeLegacyBBS.DesireTaskCallCount()).To(Equal(1))
+					_, task := fakeLegacyBBS.DesireTaskArgsForCall(0)
+					Expect(task.EnvironmentVariables).To(Equal([]oldmodels.EnvironmentVariable{
 						{Name: "var1", Value: "val1"},
 						{Name: "var2", Value: "val2"},
 					}))
@@ -110,22 +119,32 @@ var _ = Describe("TaskHandler", func() {
 
 			Context("when no env vars are specified", func() {
 				It("passes a nil slice to the BBS", func() {
-					Expect(fakeBBS.DesireTaskCallCount()).To(Equal(1))
-					_, task := fakeBBS.DesireTaskArgsForCall(0)
+					Expect(fakeLegacyBBS.DesireTaskCallCount()).To(Equal(1))
+					_, task := fakeLegacyBBS.DesireTaskArgsForCall(0)
 					Expect(task.EnvironmentVariables).To(BeNil())
+				})
+			})
+
+			Context("when completion_callback_url is invalid", func() {
+				BeforeEach(func() {
+					validCreateRequest.CompletionCallbackURL = "ಠ_ಠ"
+				})
+
+				It("errors", func() {
+					Expect(responseRecorder.Code).To(Equal(http.StatusBadRequest))
 				})
 			})
 		})
 
 		Context("when the BBS responds with an error", func() {
 			BeforeEach(func() {
-				fakeBBS.DesireTaskReturns(errors.New("ka-boom"))
+				fakeLegacyBBS.DesireTaskReturns(errors.New("ka-boom"))
 				handler.Create(responseRecorder, newTestRequest(validCreateRequest))
 			})
 
 			It("calls DesireTask on the BBS with the correct task", func() {
-				Expect(fakeBBS.DesireTaskCallCount()).To(Equal(1))
-				_, task := fakeBBS.DesireTaskArgsForCall(0)
+				Expect(fakeLegacyBBS.DesireTaskCallCount()).To(Equal(1))
+				_, task := fakeLegacyBBS.DesireTaskArgsForCall(0)
 				Expect(task.TaskGuid).To(Equal("task-guid-1"))
 			})
 
@@ -144,10 +163,10 @@ var _ = Describe("TaskHandler", func() {
 		})
 
 		Context("when the requested task is invalid", func() {
-			var validationError = models.ValidationError{}
+			var validationError = oldmodels.ValidationError{}
 
 			BeforeEach(func() {
-				fakeBBS.DesireTaskReturns(validationError)
+				fakeLegacyBBS.DesireTaskReturns(validationError)
 				handler.Create(responseRecorder, newTestRequest(validCreateRequest))
 			})
 
@@ -172,7 +191,7 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("does not call DesireTask on the BBS", func() {
-				Expect(fakeBBS.DesireTaskCallCount()).To(Equal(0))
+				Expect(fakeLegacyBBS.DesireTaskCallCount()).To(Equal(0))
 			})
 
 			It("responds with 400 BAD REQUEST", func() {
@@ -193,7 +212,7 @@ var _ = Describe("TaskHandler", func() {
 	Describe("GetAll", func() {
 		Context("when reading tasks from the BBS fails", func() {
 			BeforeEach(func() {
-				fakeBBS.TasksReturns([]models.Task{}, errors.New("Something went wrong"))
+				fakeClient.TasksReturns(nil, errors.New("Something went wrong"))
 			})
 
 			It("responds with an error", func() {
@@ -203,35 +222,35 @@ var _ = Describe("TaskHandler", func() {
 		})
 
 		Context("when reading tasks from BBS succeeds", func() {
-			var domain1Task, domain2Task models.Task
+			var domain1Task, domain2Task *models.Task
 
 			BeforeEach(func() {
-				domain1Task = models.Task{
+				domain1Task = &models.Task{
 					TaskGuid: "task-guid-1",
 					Domain:   "domain-1",
-					Action: &models.RunAction{
+					Action: models.WrapAction(&models.RunAction{
 						User: "me",
 						Path: "the-path",
-					},
-					State: models.TaskStatePending,
+					}),
+					State: models.Task_Pending,
 				}
 
-				domain2Task = models.Task{
+				domain2Task = &models.Task{
 					TaskGuid: "task-guid-2",
 					Domain:   "domain-2",
-					Action: &models.RunAction{
+					Action: models.WrapAction(&models.RunAction{
 						User: "me",
 						Path: "the-path",
-					},
-					State: models.TaskStatePending,
+					}),
+					State: models.Task_Pending,
 				}
 
-				fakeBBS.TasksReturns([]models.Task{
+				fakeClient.TasksReturns([]*models.Task{
 					domain1Task,
 					domain2Task,
 				}, nil)
 
-				fakeBBS.TasksByDomainReturns([]models.Task{
+				fakeClient.TasksByDomainReturns([]*models.Task{
 					domain1Task,
 				}, nil)
 			})
@@ -248,7 +267,7 @@ var _ = Describe("TaskHandler", func() {
 					err = json.Unmarshal(responseRecorder.Body.Bytes(), &tasks)
 					Expect(err).NotTo(HaveOccurred())
 
-					_, actualDomain := fakeBBS.TasksByDomainArgsForCall(0)
+					actualDomain := fakeClient.TasksByDomainArgsForCall(0)
 					Expect(actualDomain).To(Equal("domain-1"))
 					expectedTasks := []receptor.TaskResponse{
 						{
@@ -310,7 +329,7 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("does not call TaskByGuid", func() {
-				Expect(fakeBBS.TaskByGuidCallCount()).To(Equal(0))
+				Expect(fakeClient.TaskByGuidCallCount()).To(Equal(0))
 			})
 
 			It("responds with a 400 Bad Request", func() {
@@ -333,7 +352,7 @@ var _ = Describe("TaskHandler", func() {
 
 		Context("when the task is not found", func() {
 			BeforeEach(func() {
-				fakeBBS.TaskByGuidReturns(models.Task{}, bbserrors.ErrStoreResourceNotFound)
+				fakeClient.TaskByGuidReturns(nil, models.ErrResourceNotFound)
 			})
 
 			It("responds with a 404 NOT FOUND", func() {
@@ -355,7 +374,7 @@ var _ = Describe("TaskHandler", func() {
 
 		Context("when reading the task from the BBS fails", func() {
 			BeforeEach(func() {
-				fakeBBS.TaskByGuidReturns(models.Task{}, errors.New("Something went wrong"))
+				fakeClient.TaskByGuidReturns(nil, errors.New("Something went wrong"))
 			})
 
 			It("responds with an error", func() {
@@ -367,17 +386,17 @@ var _ = Describe("TaskHandler", func() {
 			var expectedTask receptor.TaskResponse
 
 			BeforeEach(func() {
-				task := models.Task{
+				task := &models.Task{
 					TaskGuid: "task-guid-1",
 					Domain:   "domain-1",
-					Action: &models.RunAction{
+					Action: models.WrapAction(&models.RunAction{
 						User: "me",
 						Path: "the-path",
-					},
-					State: models.TaskStateRunning,
+					}),
+					State: models.Task_Running,
 				}
 
-				fakeBBS.TaskByGuidReturns(task, nil)
+				fakeClient.TaskByGuidReturns(task, nil)
 
 				expectedTask = receptor.TaskResponse{
 					TaskGuid: task.TaskGuid,
@@ -388,7 +407,7 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("retrieves the task by the given guid", func() {
-				_, guid := fakeBBS.TaskByGuidArgsForCall(0)
+				guid := fakeClient.TaskByGuidArgsForCall(0)
 				Expect(guid).To(Equal("the-task-guid"))
 			})
 
@@ -409,7 +428,7 @@ var _ = Describe("TaskHandler", func() {
 				var err error
 				request, err = http.NewRequest("", "http://example.com?:task_guid=the-task-guid", nil)
 				Expect(err).NotTo(HaveOccurred())
-				fakeBBS.ResolvingTaskReturns(errors.New("Failed to resolve task"))
+				fakeLegacyBBS.ResolvingTaskReturns(errors.New("Failed to resolve task"))
 			})
 
 			It("responds with an error", func() {
@@ -419,7 +438,7 @@ var _ = Describe("TaskHandler", func() {
 
 			It("does not try to resolve the task", func() {
 				handler.Delete(responseRecorder, request)
-				Expect(fakeBBS.ResolveTaskCallCount()).To(BeZero())
+				Expect(fakeLegacyBBS.ResolveTaskCallCount()).To(BeZero())
 			})
 		})
 
@@ -428,7 +447,7 @@ var _ = Describe("TaskHandler", func() {
 				var err error
 				request, err = http.NewRequest("", "http://example.com?:task_guid=the-task-guid", nil)
 				Expect(err).NotTo(HaveOccurred())
-				fakeBBS.ResolveTaskReturns(errors.New("Failed to resolve task"))
+				fakeLegacyBBS.ResolveTaskReturns(errors.New("Failed to resolve task"))
 			})
 
 			It("responds with an error", func() {
@@ -451,7 +470,7 @@ var _ = Describe("TaskHandler", func() {
 
 		Context("when the task cannot be found in the BBS", func() {
 			BeforeEach(func() {
-				fakeBBS.CancelTaskReturns(bbserrors.ErrStoreResourceNotFound)
+				fakeLegacyBBS.CancelTaskReturns(bbserrors.ErrStoreResourceNotFound)
 			})
 
 			It("responds with a 404 NOT FOUND", func() {
@@ -473,7 +492,7 @@ var _ = Describe("TaskHandler", func() {
 
 		Context("when cancelling fails", func() {
 			BeforeEach(func() {
-				fakeBBS.CancelTaskReturns(errors.New("Something went wrong"))
+				fakeLegacyBBS.CancelTaskReturns(errors.New("Something went wrong"))
 			})
 
 			It("responds with an error", func() {
@@ -483,7 +502,7 @@ var _ = Describe("TaskHandler", func() {
 
 		Context("when cancelling the task is successful", func() {
 			BeforeEach(func() {
-				fakeBBS.CancelTaskReturns(nil)
+				fakeLegacyBBS.CancelTaskReturns(nil)
 			})
 
 			It("responds with a 200", func() {

@@ -7,12 +7,12 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/fake_task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_runner"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/fake_receptor"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 var _ = Describe("TaskRunner", func() {
@@ -30,27 +30,27 @@ var _ = Describe("TaskRunner", func() {
 
 	Describe("CreateTask", func() {
 		var (
-			action             models.Action
-			securityGroupRules []models.SecurityGroupRule
+			action             *models.Action
+			securityGroupRules []*models.SecurityGroupRule
 			createTaskParams   task_runner.CreateTaskParams
 		)
 
 		BeforeEach(func() {
-			action = &models.RunAction{
+			action = models.WrapAction(&models.RunAction{
 				Path: "/my/path",
 				Args: []string{"happy", "sad"},
 				Dir:  "/my",
-				Env: []models.EnvironmentVariable{
-					models.EnvironmentVariable{"env-name", "env-value"},
+				Env: []*models.EnvironmentVariable{
+					&models.EnvironmentVariable{"env-name", "env-value"},
 				},
-				ResourceLimits: models.ResourceLimits{},
+				ResourceLimits: &models.ResourceLimits{},
 				LogSource:      "log-source",
-			}
-			securityGroupRules = []models.SecurityGroupRule{
-				models.SecurityGroupRule{
+			})
+			securityGroupRules = []*models.SecurityGroupRule{
+				&models.SecurityGroupRule{
 					Protocol:     models.TCPProtocol,
 					Destinations: []string{"bermuda", "bahamas"},
-					Ports:        []uint16{4242, 5353},
+					Ports:        []uint32{4242, 5353},
 					PortRange:    &models.PortRange{6666, 7777},
 					Log:          true,
 				},
@@ -95,8 +95,8 @@ var _ = Describe("TaskRunner", func() {
 			Expect(createTaskRequest.Domain).To(Equal("task-domain"))
 			Expect(createTaskRequest.LogSource).To(Equal("log-source"))
 			Expect(createTaskRequest.EnvironmentVariables).To(ConsistOf(
-				receptor.EnvironmentVariable{"MaRTY", "BiSHoP"},
-				receptor.EnvironmentVariable{"CoSMo", "CRaMeR"},
+				&models.EnvironmentVariable{"MaRTY", "BiSHoP"},
+				&models.EnvironmentVariable{"CoSMo", "CRaMeR"},
 			))
 			Expect(createTaskRequest.EgressRules).To(Equal(securityGroupRules))
 		})
@@ -180,16 +180,16 @@ var _ = Describe("TaskRunner", func() {
 
 	Describe("SubmitTask", func() {
 		It("Submits a task from JSON", func() {
-			environmentVariables := []receptor.EnvironmentVariable{
-				receptor.EnvironmentVariable{
+			environmentVariables := []*models.EnvironmentVariable{
+				&models.EnvironmentVariable{
 					Name:  "beans",
 					Value: "cool",
 				}}
-			egressRules := []models.SecurityGroupRule{
-				models.SecurityGroupRule{
+			egressRules := []*models.SecurityGroupRule{
+				&models.SecurityGroupRule{
 					Protocol:     models.UDPProtocol,
 					Destinations: []string{"dest1", "dest2"},
-					Ports:        []uint16{1717, 2828},
+					Ports:        []uint32{1717, 2828},
 					PortRange: &models.PortRange{
 						Start: 1000,
 						End:   2000,
@@ -203,12 +203,12 @@ var _ = Describe("TaskRunner", func() {
 			}
 
 			task := receptor.TaskCreateRequest{
-				Action: &models.DownloadAction{
+				Action: models.WrapAction(&models.DownloadAction{
 					From:      "/tmp/here",
 					To:        "/tmp/there",
 					LogSource: "MOVING",
 					User:      "downloader-man",
-				},
+				}),
 				Annotation:            "blah blah",
 				CompletionCallbackURL: "http://sup.com",
 				CPUWeight:             1000,
@@ -240,12 +240,12 @@ var _ = Describe("TaskRunner", func() {
 			taskRequest := fakeReceptorClient.CreateTaskArgsForCall(0)
 			Expect(taskRequest).ToNot(BeZero())
 
-			Expect(taskRequest.Action).To(Equal(&models.DownloadAction{
+			Expect(taskRequest.Action).To(Equal(models.WrapAction(&models.DownloadAction{
 				From:      "/tmp/here",
 				To:        "/tmp/there",
 				LogSource: "MOVING",
 				User:      "downloader-man",
-			}))
+			})))
 			Expect(taskRequest.TaskGuid).To(Equal("lattice-task"))
 			Expect(taskRequest.Annotation).To(Equal("blah blah"))
 			Expect(taskRequest.CompletionCallbackURL).To(Equal("http://sup.com"))

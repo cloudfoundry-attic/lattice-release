@@ -7,9 +7,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/s3"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/blob"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 type BlobStore struct {
@@ -78,10 +78,10 @@ func (b *BlobStore) Delete(path string) error {
 	return err
 }
 
-func (b *BlobStore) DownloadAppBitsAction(dropletName string) models.Action {
-	return &models.SerialAction{
-		Actions: []models.Action{
-			&models.RunAction{
+func (b *BlobStore) DownloadAppBitsAction(dropletName string) *models.Action {
+	return models.WrapAction(&models.SerialAction{
+		Actions: []*models.Action{
+			models.WrapAction(&models.RunAction{
 				Path: "/tmp/s3tool",
 				Dir:  "/",
 				Args: []string{
@@ -94,24 +94,24 @@ func (b *BlobStore) DownloadAppBitsAction(dropletName string) models.Action {
 					"/tmp/bits.zip",
 				},
 				User: "vcap",
-			},
-			&models.RunAction{
+			}),
+			models.WrapAction(&models.RunAction{
 				Path: "/bin/mkdir",
 				Args: []string{"/tmp/app"},
 				User: "vcap",
-			},
-			&models.RunAction{
+			}),
+			models.WrapAction(&models.RunAction{
 				Path: "/usr/bin/unzip",
 				Dir:  "/tmp/app",
 				Args: []string{"-q", "/tmp/bits.zip"},
 				User: "vcap",
-			},
+			}),
 		},
-	}
+	})
 }
 
-func (b *BlobStore) DeleteAppBitsAction(dropletName string) models.Action {
-	return &models.RunAction{
+func (b *BlobStore) DeleteAppBitsAction(dropletName string) *models.Action {
+	return models.WrapAction(&models.RunAction{
 		Path: "/tmp/s3tool",
 		Dir:  "/",
 		Args: []string{
@@ -123,11 +123,11 @@ func (b *BlobStore) DeleteAppBitsAction(dropletName string) models.Action {
 			"/" + dropletName + "/bits.zip",
 		},
 		User: "vcap",
-	}
+	})
 }
 
-func (b *BlobStore) UploadDropletAction(dropletName string) models.Action {
-	return &models.RunAction{
+func (b *BlobStore) UploadDropletAction(dropletName string) *models.Action {
+	return models.WrapAction(&models.RunAction{
 		Path: "/tmp/s3tool",
 		Dir:  "/",
 		Args: []string{
@@ -140,11 +140,11 @@ func (b *BlobStore) UploadDropletAction(dropletName string) models.Action {
 			"/tmp/droplet",
 		},
 		User: "vcap",
-	}
+	})
 }
 
-func (b *BlobStore) UploadDropletMetadataAction(dropletName string) models.Action {
-	return &models.RunAction{
+func (b *BlobStore) UploadDropletMetadataAction(dropletName string) *models.Action {
+	return models.WrapAction(&models.RunAction{
 		Path: "/tmp/s3tool",
 		Dir:  "/",
 		Args: []string{
@@ -157,13 +157,13 @@ func (b *BlobStore) UploadDropletMetadataAction(dropletName string) models.Actio
 			"/tmp/result.json",
 		},
 		User: "vcap",
-	}
+	})
 }
 
-func (b *BlobStore) DownloadDropletAction(dropletName string) models.Action {
-	return &models.SerialAction{
-		Actions: []models.Action{
-			&models.RunAction{
+func (b *BlobStore) DownloadDropletAction(dropletName string) *models.Action {
+	return models.WrapAction(&models.SerialAction{
+		Actions: []*models.Action{
+			models.WrapAction(&models.RunAction{
 				Path: "/tmp/s3tool",
 				Dir:  "/",
 				Args: []string{
@@ -176,13 +176,13 @@ func (b *BlobStore) DownloadDropletAction(dropletName string) models.Action {
 					"/tmp/droplet.tgz",
 				},
 				User: "vcap",
-			},
-			&models.RunAction{
+			}),
+			models.WrapAction(&models.RunAction{
 				Path: "/bin/tar",
 				Args: []string{"zxf", "/tmp/droplet.tgz"},
 				Dir:  "/home/vcap",
 				User: "vcap",
-			},
+			}),
 		},
-	}
+	})
 }

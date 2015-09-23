@@ -158,7 +158,7 @@ func (a *ParallelAction) ActionType() string {
 func (a ParallelAction) Validate() error {
 	var validationError ValidationError
 
-	if a.Actions == nil {
+	if a.Actions == nil || len(a.Actions) == 0 {
 		validationError = validationError.Append(ErrInvalidField{"actions"})
 	} else {
 		for index, action := range a.Actions {
@@ -188,7 +188,7 @@ func (a *CodependentAction) ActionType() string {
 func (a CodependentAction) Validate() error {
 	var validationError ValidationError
 
-	if a.Actions == nil {
+	if a.Actions == nil || len(a.Actions) == 0 {
 		validationError = validationError.Append(ErrInvalidField{"actions"})
 	} else {
 		for index, action := range a.Actions {
@@ -218,7 +218,7 @@ func (a *SerialAction) ActionType() string {
 func (a SerialAction) Validate() error {
 	var validationError ValidationError
 
-	if a.Actions == nil {
+	if a.Actions == nil || len(a.Actions) == 0 {
 		validationError = validationError.Append(ErrInvalidField{"actions"})
 	} else {
 		for index, action := range a.Actions {
@@ -264,74 +264,61 @@ func (a EmitProgressAction) Validate() error {
 	return nil
 }
 
-func EmitProgressFor(action interface{}, startMessage string, successMessage string, failureMessagePrefix string) *Action {
-	return WrapAction(&EmitProgressAction{
+func EmitProgressFor(action ActionInterface, startMessage string, successMessage string, failureMessagePrefix string) *EmitProgressAction {
+	return &EmitProgressAction{
 		Action:               WrapAction(action),
 		StartMessage:         startMessage,
 		SuccessMessage:       successMessage,
 		FailureMessagePrefix: failureMessagePrefix,
-	})
+	}
 }
 
-func Timeout(action interface{}, timeout time.Duration) *Action {
-	return WrapAction(&TimeoutAction{
+func Timeout(action ActionInterface, timeout time.Duration) *TimeoutAction {
+	return &TimeoutAction{
 		Action:  WrapAction(action),
 		Timeout: (int64)(timeout),
-	})
+	}
 }
 
-func Try(action interface{}) *Action {
-	return WrapAction(&TryAction{Action: WrapAction(action)})
+func Try(action ActionInterface) *TryAction {
+	return &TryAction{Action: WrapAction(action)}
 }
 
-func Parallel(actions ...interface{}) *Action {
-	return WrapAction(&ParallelAction{Actions: WrapActions(actions)})
+func Parallel(actions ...ActionInterface) *ParallelAction {
+	return &ParallelAction{Actions: WrapActions(actions)}
 }
 
-func Codependent(actions ...interface{}) *Action {
-	return WrapAction(&CodependentAction{Actions: WrapActions(actions)})
+func Codependent(actions ...ActionInterface) *CodependentAction {
+	return &CodependentAction{Actions: WrapActions(actions)}
 }
 
-func Serial(actions ...interface{}) *Action {
-	return WrapAction(&SerialAction{Actions: WrapActions(actions)})
+func Serial(actions ...ActionInterface) *SerialAction {
+	return &SerialAction{Actions: WrapActions(actions)}
 }
 
-func UnwrapAction(action interface{}) ActionInterface {
+func UnwrapAction(action *Action) ActionInterface {
 	if action == nil {
 		return nil
 	}
-
-	if action, ok := action.(*Action); ok {
-		return action.GetValue().(ActionInterface)
+	a := action.GetValue()
+	if a == nil {
+		return nil
 	}
-
-	if action, ok := action.(ActionInterface); ok {
-		return action
-	}
-
-	return nil
+	return a.(ActionInterface)
 }
 
-func WrapActions(actions []interface{}) []*Action {
-	wrappedActions := make([]*Action, len(actions))
-	for i, action := range actions {
-		wrappedActions[i] = WrapAction(action)
+func WrapActions(actions []ActionInterface) []*Action {
+	wrappedActions := make([]*Action, 0, len(actions))
+	for _, action := range actions {
+		wrappedActions = append(wrappedActions, WrapAction(action))
 	}
 	return wrappedActions
 }
 
-func WrapAction(action interface{}) *Action {
-	if action, ok := action.(*Action); ok {
-		return action
-	}
-
-	if action, ok := action.(ActionInterface); ok {
-		a := &Action{}
-		a.SetValue(action)
-		return a
-	}
-
-	return nil
+func WrapAction(action ActionInterface) *Action {
+	a := &Action{}
+	a.SetValue(action)
+	return a
 }
 
 var actionMap = map[string]ActionInterface{

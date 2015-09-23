@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/blob"
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 type BlobStore struct {
@@ -266,47 +266,45 @@ func (b *BlobStore) Delete(path string) error {
 	return nil
 }
 
-func (b *BlobStore) DownloadAppBitsAction(dropletName string) models.Action {
-	return &models.DownloadAction{
+func (b *BlobStore) DownloadAppBitsAction(dropletName string) *models.Action {
+	return models.WrapAction(&models.DownloadAction{
 		From: b.URL.String() + "/blobs/" + dropletName + "/bits.zip",
 		To:   "/tmp/app",
 		User: "vcap",
-	}
+	})
 }
 
-func (b *BlobStore) DeleteAppBitsAction(dropletName string) models.Action {
-	return &models.RunAction{
+func (b *BlobStore) DeleteAppBitsAction(dropletName string) *models.Action {
+	return models.WrapAction(&models.RunAction{
 		Path: "/tmp/davtool",
 		Dir:  "/",
 		Args: []string{"delete", b.URL.String() + "/blobs/" + dropletName + "/bits.zip"},
 		User: "vcap",
-	}
+	})
 }
 
-func (b *BlobStore) UploadDropletAction(dropletName string) models.Action {
-	return &models.RunAction{
+func (b *BlobStore) UploadDropletAction(dropletName string) *models.Action {
+	return models.WrapAction(&models.RunAction{
 		Path: "/tmp/davtool",
 		Dir:  "/",
 		Args: []string{"put", b.URL.String() + "/blobs/" + dropletName + "/droplet.tgz", "/tmp/droplet"},
 		User: "vcap",
-	}
-
+	})
 }
 
-func (b *BlobStore) UploadDropletMetadataAction(dropletName string) models.Action {
-	return &models.RunAction{
+func (b *BlobStore) UploadDropletMetadataAction(dropletName string) *models.Action {
+	return models.WrapAction(&models.RunAction{
 		Path: "/tmp/davtool",
 		Dir:  "/",
 		Args: []string{"put", b.URL.String() + "/blobs/" + dropletName + "/result.json", "/tmp/result.json"},
 		User: "vcap",
-	}
+	})
 }
 
-func (b *BlobStore) DownloadDropletAction(dropletName string) models.Action {
-	return &models.DownloadAction{
+func (b *BlobStore) DownloadDropletAction(dropletName string) *models.Action {
+	return models.WrapAction(&models.DownloadAction{
 		From: b.URL.String() + "/blobs/" + dropletName + "/droplet.tgz",
 		To:   "/home/vcap",
 		User: "vcap",
-	}
-
+	})
 }

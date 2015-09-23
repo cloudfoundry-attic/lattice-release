@@ -478,9 +478,9 @@ var _ = Describe("Actual LRP Handlers", func() {
 				})
 
 				It("calls the BBS to request stop LRP instances", func() {
-					Expect(fakeLegacyBBS.RetireActualLRPsCallCount()).To(Equal(1))
-					_, oldActualLRPKeys := fakeLegacyBBS.RetireActualLRPsArgsForCall(0)
-					Expect(oldActualLRPKeys).To(ConsistOf(oldActualLRP2.ActualLRPKey))
+					Expect(fakeBBS.RetireActualLRPCallCount()).To(Equal(1))
+					actualLRPKey := fakeBBS.RetireActualLRPArgsForCall(0)
+					Expect(*actualLRPKey).To(Equal(actualLRP2.ActualLRPKey))
 				})
 
 				It("responds with 204 Status NO CONTENT", func() {
@@ -496,9 +496,9 @@ var _ = Describe("Actual LRP Handlers", func() {
 					})
 
 					It("calls the BBS to retire teh reconciled instance", func() {
-						Expect(fakeLegacyBBS.RetireActualLRPsCallCount()).To(Equal(1))
-						_, oldActualLRPKeys := fakeLegacyBBS.RetireActualLRPsArgsForCall(0)
-						Expect(oldActualLRPKeys).To(ConsistOf(oldEvacuatingLRP2.ActualLRPKey))
+						Expect(fakeBBS.RetireActualLRPCallCount()).To(Equal(1))
+						actualLRPKey := fakeBBS.RetireActualLRPArgsForCall(0)
+						Expect(*actualLRPKey).To(Equal(evacuatingLRP2.ActualLRPKey))
 					})
 				})
 			})
@@ -528,7 +528,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 				})
 
 				It("does not call the BBS to request stopping instances", func() {
-					Expect(fakeLegacyBBS.RetireActualLRPsCallCount()).To(Equal(0))
+					Expect(fakeBBS.RetireActualLRPCallCount()).To(Equal(0))
 				})
 
 				It("responds with a 500 Internal Error", func() {
@@ -549,7 +549,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 		Context("when the index is not specified", func() {
 			It("does not call the BBS at all", func() {
 				Expect(fakeBBS.ActualLRPGroupByProcessGuidAndIndexCallCount()).To(Equal(0))
-				Expect(fakeLegacyBBS.RetireActualLRPsCallCount()).To(Equal(0))
+				Expect(fakeBBS.RetireActualLRPCallCount()).To(Equal(0))
 			})
 
 			It("responds with 400 Bad Request", func() {
@@ -573,7 +573,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 
 			It("does not call the BBS at all", func() {
 				Expect(fakeBBS.ActualLRPGroupByProcessGuidAndIndexCallCount()).To(Equal(0))
-				Expect(fakeLegacyBBS.RetireActualLRPsCallCount()).To(Equal(0))
+				Expect(fakeBBS.RetireActualLRPCallCount()).To(Equal(0))
 			})
 
 			It("responds with 400 Bad Request", func() {
@@ -597,7 +597,7 @@ var _ = Describe("Actual LRP Handlers", func() {
 
 			It("does not call the BBS at all", func() {
 				Expect(fakeBBS.ActualLRPGroupByProcessGuidAndIndexCallCount()).To(Equal(0))
-				Expect(fakeLegacyBBS.RetireActualLRPsCallCount()).To(Equal(0))
+				Expect(fakeBBS.RetireActualLRPCallCount()).To(Equal(0))
 			})
 
 			It("responds with 400 Bad Request", func() {

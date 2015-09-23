@@ -6,7 +6,7 @@ import (
 	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
-func EnvironmentVariablesToModel(envVars []receptor.EnvironmentVariable) []oldmodels.EnvironmentVariable {
+func EnvironmentVariablesToOldModel(envVars []receptor.EnvironmentVariable) []oldmodels.EnvironmentVariable {
 	if envVars == nil {
 		return nil
 	}
@@ -14,6 +14,20 @@ func EnvironmentVariablesToModel(envVars []receptor.EnvironmentVariable) []oldmo
 	for i, val := range envVars {
 		out[i].Name = val.Name
 		out[i].Value = val.Value
+	}
+	return out
+}
+
+func EnvironmentVariablesToModel(envVars []receptor.EnvironmentVariable) []*models.EnvironmentVariable {
+	if envVars == nil {
+		return nil
+	}
+	out := make([]*models.EnvironmentVariable, len(envVars))
+	for i, val := range envVars {
+		out[i] = &models.EnvironmentVariable{
+			Name:  val.Name,
+			Value: val.Value,
+		}
 	}
 	return out
 }
@@ -30,7 +44,19 @@ func EnvironmentVariablesFromProto(envVars []*models.EnvironmentVariable) []rece
 	return out
 }
 
-func EnvironmentVariablesFromModel(envVars []oldmodels.EnvironmentVariable) []receptor.EnvironmentVariable {
+func EnvironmentVariablesFromModel(envVars []*models.EnvironmentVariable) []receptor.EnvironmentVariable {
+	if envVars == nil {
+		return nil
+	}
+	out := make([]receptor.EnvironmentVariable, len(envVars))
+	for i, val := range envVars {
+		out[i].Name = val.Name
+		out[i].Value = val.Value
+	}
+	return out
+}
+
+func EnvironmentVariablesFromOldModel(envVars []oldmodels.EnvironmentVariable) []receptor.EnvironmentVariable {
 	if envVars == nil {
 		return nil
 	}

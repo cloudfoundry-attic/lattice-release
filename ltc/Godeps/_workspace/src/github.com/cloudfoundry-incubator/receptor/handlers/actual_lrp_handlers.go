@@ -11,7 +11,6 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
-	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-golang/lager"
 )
 
@@ -178,8 +177,7 @@ func (h *ActualLRPHandler) KillByProcessGuidAndIndex(w http.ResponseWriter, req 
 	}
 
 	actualLRP, _ := actualLRPGroup.Resolve()
-	actualLRPKey := oldmodels.NewActualLRPKey(actualLRP.ProcessGuid, int(actualLRP.Index), actualLRP.Domain)
-	h.legacyBBS.RetireActualLRPs(logger, []oldmodels.ActualLRPKey{actualLRPKey})
+	h.bbs.RetireActualLRP(&actualLRP.ActualLRPKey)
 
 	w.WriteHeader(http.StatusNoContent)
 }

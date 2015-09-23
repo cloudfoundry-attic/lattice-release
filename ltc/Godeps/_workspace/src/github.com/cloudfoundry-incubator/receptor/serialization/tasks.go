@@ -1,36 +1,25 @@
 package serialization
 
 import (
-	"net/url"
-
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
-func TaskFromRequest(req receptor.TaskCreateRequest) (models.Task, error) {
-	var u *url.URL
-	if req.CompletionCallbackURL != "" {
-		var err error
-		u, err = url.ParseRequestURI(req.CompletionCallbackURL)
-		if err != nil {
-			return models.Task{}, err
-		}
-	}
-
-	task := models.Task{
+func TaskFromRequest(req receptor.TaskCreateRequest) (*models.Task, error) {
+	task := &models.Task{
 		Action:                req.Action,
 		Annotation:            req.Annotation,
-		CompletionCallbackURL: u,
-		CPUWeight:             req.CPUWeight,
-		DiskMB:                req.DiskMB,
+		CompletionCallbackUrl: req.CompletionCallbackURL,
+		CpuWeight:             uint32(req.CPUWeight),
+		DiskMb:                int32(req.DiskMB),
 		Domain:                req.Domain,
-		EnvironmentVariables:  EnvironmentVariablesToModel(req.EnvironmentVariables),
+		EnvironmentVariables:  req.EnvironmentVariables,
 		LogGuid:               req.LogGuid,
 		LogSource:             req.LogSource,
 		MetricsGuid:           req.MetricsGuid,
-		MemoryMB:              req.MemoryMB,
+		MemoryMb:              int32(req.MemoryMB),
 		ResultFile:            req.ResultFile,
-		RootFS:                req.RootFS,
+		RootFs:                req.RootFS,
 		TaskGuid:              req.TaskGuid,
 		Privileged:            req.Privileged,
 		EgressRules:           req.EgressRules,
@@ -39,27 +28,22 @@ func TaskFromRequest(req receptor.TaskCreateRequest) (models.Task, error) {
 	return task, nil
 }
 
-func TaskToResponse(task models.Task) receptor.TaskResponse {
-	url := ""
-	if task.CompletionCallbackURL != nil {
-		url = task.CompletionCallbackURL.String()
-	}
-
+func TaskToResponse(task *models.Task) receptor.TaskResponse {
 	return receptor.TaskResponse{
 		Action:                task.Action,
 		Annotation:            task.Annotation,
-		CompletionCallbackURL: url,
-		CPUWeight:             task.CPUWeight,
-		DiskMB:                task.DiskMB,
+		CompletionCallbackURL: task.CompletionCallbackUrl,
+		CPUWeight:             uint(task.CpuWeight),
+		DiskMB:                int(task.DiskMb),
 		Domain:                task.Domain,
-		EnvironmentVariables:  EnvironmentVariablesFromModel(task.EnvironmentVariables),
-		CellID:                task.CellID,
+		EnvironmentVariables:  task.EnvironmentVariables,
+		CellID:                task.CellId,
 		LogGuid:               task.LogGuid,
 		LogSource:             task.LogSource,
 		MetricsGuid:           task.MetricsGuid,
-		MemoryMB:              task.MemoryMB,
+		MemoryMB:              int(task.MemoryMb),
 		Privileged:            task.Privileged,
-		RootFS:                task.RootFS,
+		RootFS:                task.RootFs,
 		TaskGuid:              task.TaskGuid,
 
 		CreatedAt:     task.CreatedAt,
@@ -71,17 +55,17 @@ func TaskToResponse(task models.Task) receptor.TaskResponse {
 	}
 }
 
-func taskStateToResponseState(state models.TaskState) string {
+func taskStateToResponseState(state models.Task_State) string {
 	switch state {
-	case models.TaskStateInvalid:
+	case models.Task_Invalid:
 		return receptor.TaskStateInvalid
-	case models.TaskStatePending:
+	case models.Task_Pending:
 		return receptor.TaskStatePending
-	case models.TaskStateRunning:
+	case models.Task_Running:
 		return receptor.TaskStateRunning
-	case models.TaskStateCompleted:
+	case models.Task_Completed:
 		return receptor.TaskStateCompleted
-	case models.TaskStateResolving:
+	case models.Task_Resolving:
 		return receptor.TaskStateResolving
 	}
 
