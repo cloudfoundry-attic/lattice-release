@@ -124,19 +124,23 @@ var _ = Describe("SSH", func() {
 			fakeTerm.GetWinsizeReturns(200, 300)
 			termState := &term.State{}
 			fakeTerm.SetRawTerminalReturns(termState, nil)
+			fakeTerm.IsTTYReturns(true)
 
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
-			Expect(appSSH.Shell("")).To(Succeed())
+			Expect(appSSH.Shell("", ssh.AutoDetectPTY)).To(Succeed())
 
 			Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
 			Expect(fakeTerm.GetWinsizeArgsForCall(0)).To(Equal(os.Stdout.Fd()))
 
+			Expect(fakeTerm.IsTTYCallCount()).To(Equal(1))
+
 			Expect(fakeSessionFactory.NewCallCount()).To(Equal(1))
-			client, width, height := fakeSessionFactory.NewArgsForCall(0)
+			client, width, height, desirePTY := fakeSessionFactory.NewArgsForCall(0)
 			Expect(client).To(Equal(fakeClient))
 			Expect(width).To(Equal(200))
 			Expect(height).To(Equal(300))
+			Expect(desirePTY).To(BeTrue())
 
 			Expect(fakeTerm.SetRawTerminalCallCount()).To(Equal(1))
 			Expect(fakeTerm.SetRawTerminalArgsForCall(0)).To(Equal(os.Stdin.Fd()))
@@ -154,9 +158,57 @@ var _ = Describe("SSH", func() {
 			Expect(fakeSession.CloseCallCount()).To(Equal(1))
 		})
 
+		It("should not request a pty if stdin isn't a tty", func() {
+			fakeTerm.IsTTYReturns(false)
+
+			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+
+			Expect(appSSH.Shell("", ssh.AutoDetectPTY)).To(Succeed())
+
+			Expect(fakeTerm.IsTTYCallCount()).To(Equal(1))
+			Expect(fakeTerm.IsTTYArgsForCall(0)).To(Equal(os.Stdin.Fd()))
+
+			Expect(fakeSessionFactory.NewCallCount()).To(Equal(1))
+			_, _, _, desirePTY := fakeSessionFactory.NewArgsForCall(0)
+			Expect(desirePTY).To(BeFalse())
+
+			Expect(fakeTerm.SetRawTerminalCallCount()).To(Equal(0))
+			Expect(fakeTerm.RestoreTerminalCallCount()).To(Equal(0))
+		})
+
+		It("should not auto-detect tty if ForcePTY is passed", func() {
+			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+
+			Expect(appSSH.Shell("", ssh.ForcePTY)).To(Succeed())
+
+			Expect(fakeTerm.IsTTYCallCount()).To(Equal(0))
+
+			Expect(fakeSessionFactory.NewCallCount()).To(Equal(1))
+			_, _, _, desirePTY := fakeSessionFactory.NewArgsForCall(0)
+			Expect(desirePTY).To(BeTrue())
+
+			Expect(fakeTerm.SetRawTerminalCallCount()).To(Equal(1))
+			Expect(fakeTerm.RestoreTerminalCallCount()).To(Equal(1))
+		})
+
+		It("should not auto-detect tty if ForceNoPTY is passed", func() {
+			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+
+			Expect(appSSH.Shell("", ssh.ForceNoPTY)).To(Succeed())
+
+			Expect(fakeTerm.IsTTYCallCount()).To(Equal(0))
+
+			Expect(fakeSessionFactory.NewCallCount()).To(Equal(1))
+			_, _, _, desirePTY := fakeSessionFactory.NewArgsForCall(0)
+			Expect(desirePTY).To(BeFalse())
+
+			Expect(fakeTerm.SetRawTerminalCallCount()).To(Equal(0))
+			Expect(fakeTerm.RestoreTerminalCallCount()).To(Equal(0))
+		})
+
 		It("should run a remote command if provided", func() {
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
-			Expect(appSSH.Shell("some-command")).To(Succeed())
+			Expect(appSSH.Shell("some-command", ssh.ForcePTY)).To(Succeed())
 
 			Expect(fakeSession.ShellCallCount()).To(Equal(0))
 			Expect(fakeSession.WaitCallCount()).To(Equal(0))
@@ -182,7 +234,7 @@ var _ = Describe("SSH", func() {
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
 			go func() {
-				shellChan <- appSSH.Shell("")
+				shellChan <- appSSH.Shell("", ssh.ForcePTY)
 			}()
 
 			<-waitChan
@@ -215,7 +267,7 @@ var _ = Describe("SSH", func() {
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
 			go func() {
-				shellChan <- appSSH.Shell("")
+				shellChan <- appSSH.Shell("", ssh.ForcePTY)
 			}()
 
 			<-waitChan
@@ -234,7 +286,7 @@ var _ = Describe("SSH", func() {
 				fakeTerm.SetRawTerminalReturns(nil, errors.New("some error"))
 
 				Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
-				Expect(appSSH.Shell("")).To(Succeed())
+				Expect(appSSH.Shell("", ssh.ForcePTY)).To(Succeed())
 				Expect(fakeTerm.RestoreTerminalCallCount()).To(Equal(0))
 			})
 		})

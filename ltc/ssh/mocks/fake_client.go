@@ -10,11 +10,12 @@ import (
 )
 
 type FakeClient struct {
-	OpenStub        func(width, height int) (*sshapi.Session, error)
+	OpenStub        func(width, height int, desirePTY bool) (*sshapi.Session, error)
 	openMutex       sync.RWMutex
 	openArgsForCall []struct {
-		width  int
-		height int
+		width     int
+		height    int
+		desirePTY bool
 	}
 	openReturns struct {
 		result1 *sshapi.Session
@@ -31,15 +32,16 @@ type FakeClient struct {
 	}
 }
 
-func (fake *FakeClient) Open(width int, height int) (*sshapi.Session, error) {
+func (fake *FakeClient) Open(width int, height int, desirePTY bool) (*sshapi.Session, error) {
 	fake.openMutex.Lock()
 	fake.openArgsForCall = append(fake.openArgsForCall, struct {
-		width  int
-		height int
-	}{width, height})
+		width     int
+		height    int
+		desirePTY bool
+	}{width, height, desirePTY})
 	fake.openMutex.Unlock()
 	if fake.OpenStub != nil {
-		return fake.OpenStub(width, height)
+		return fake.OpenStub(width, height, desirePTY)
 	} else {
 		return fake.openReturns.result1, fake.openReturns.result2
 	}
@@ -51,10 +53,10 @@ func (fake *FakeClient) OpenCallCount() int {
 	return len(fake.openArgsForCall)
 }
 
-func (fake *FakeClient) OpenArgsForCall(i int) (int, int) {
+func (fake *FakeClient) OpenArgsForCall(i int) (int, int, bool) {
 	fake.openMutex.RLock()
 	defer fake.openMutex.RUnlock()
-	return fake.openArgsForCall[i].width, fake.openArgsForCall[i].height
+	return fake.openArgsForCall[i].width, fake.openArgsForCall[i].height, fake.openArgsForCall[i].desirePTY
 }
 
 func (fake *FakeClient) OpenReturns(result1 *sshapi.Session, result2 error) {

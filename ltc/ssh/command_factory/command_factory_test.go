@@ -12,6 +12,7 @@ import (
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
+	"github.com/cloudfoundry-incubator/lattice/ltc/ssh"
 	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/command_factory/mocks"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
@@ -149,8 +150,9 @@ var _ = Describe("SSH CommandFactory", func() {
 				Expect(actualConfig).To(Equal(config))
 
 				Expect(fakeSSH.ShellCallCount()).To(Equal(1))
-				command := fakeSSH.ShellArgsForCall(0)
+				command, ptyDesired := fakeSSH.ShellArgsForCall(0)
 				Expect(command).To(BeEmpty())
+				Expect(ptyDesired).To(Equal(ssh.AutoDetectPTY))
 
 				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
 				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("app-name"))
@@ -170,8 +172,28 @@ var _ = Describe("SSH CommandFactory", func() {
 				Expect(actualConfig).To(Equal(config))
 
 				Expect(fakeSSH.ShellCallCount()).To(Equal(1))
-				command := fakeSSH.ShellArgsForCall(0)
+				command, _ := fakeSSH.ShellArgsForCall(0)
 				Expect(command).To(BeEmpty())
+			})
+
+			It("should disable pty when requested", func() {
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 3}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"-T", "app-name", "/bin/ls"})
+
+				Expect(fakeSSH.ShellCallCount()).To(Equal(1))
+				_, ptyDesired := fakeSSH.ShellArgsForCall(0)
+				Expect(ptyDesired).To(Equal(ssh.ForceNoPTY))
+			})
+
+			It("should enable pty when requested", func() {
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 3}, nil)
+
+				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"-t", "app-name", "/bin/ls"})
+
+				Expect(fakeSSH.ShellCallCount()).To(Equal(1))
+				_, ptyDesired := fakeSSH.ShellArgsForCall(0)
+				Expect(ptyDesired).To(Equal(ssh.ForcePTY))
 			})
 
 			Context("when a command is provided", func() {
@@ -184,7 +206,7 @@ var _ = Describe("SSH CommandFactory", func() {
 					Expect(outputBuffer).NotTo(test_helpers.Say("Connecting to app-name"))
 
 					Expect(fakeSSH.ShellCallCount()).To(Equal(1))
-					command := fakeSSH.ShellArgsForCall(0)
+					command, _ := fakeSSH.ShellArgsForCall(0)
 					Expect(command).To(Equal("echo 1 2 3"))
 				})
 
@@ -194,7 +216,7 @@ var _ = Describe("SSH CommandFactory", func() {
 					test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "--", "/bin/ls", "-l"})
 
 					Expect(fakeSSH.ShellCallCount()).To(Equal(1))
-					command := fakeSSH.ShellArgsForCall(0)
+					command, _ := fakeSSH.ShellArgsForCall(0)
 					Expect(command).To(Equal("/bin/ls -l"))
 				})
 			})
@@ -239,7 +261,7 @@ var _ = Describe("SSH CommandFactory", func() {
 				Expect(actualConfig).To(Equal(config))
 
 				Expect(fakeSSH.ShellCallCount()).To(Equal(1))
-				command := fakeSSH.ShellArgsForCall(0)
+				command, _ := fakeSSH.ShellArgsForCall(0)
 				Expect(command).To(BeEmpty())
 			})
 		})

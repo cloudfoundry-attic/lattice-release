@@ -33,7 +33,7 @@ var _ = Describe("Session", func() {
 		mockSession.StderrPipeReturns(&bytes.Buffer{}, nil)
 		mockSessionFactory.NewReturns(mockSession, nil)
 		var err error
-		session, err = client.Open(0, 0)
+		session, err = client.Open(0, 0, false)
 		Expect(err).NotTo(HaveOccurred())
 	})
 

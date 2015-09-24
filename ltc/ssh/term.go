@@ -20,3 +20,7 @@ func (*DockerTerm) GetWinsize(fd uintptr) (width, height int) {
 
 	return int(winSize.Width), int(winSize.Height)
 }
+
+func (*DockerTerm) IsTTY(fd uintptr) bool {
+	return term.IsTerminal(fd)
+}

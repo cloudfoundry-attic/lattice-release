@@ -166,7 +166,7 @@ var _ = Describe("Client", func() {
 			mockSession.StdoutPipeReturns(mockSessionStdout, nil)
 			mockSession.StderrPipeReturns(mockSessionStderr, nil)
 
-			_, err := client.Open(100, 200)
+			_, err := client.Open(100, 200, true)
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(mockSession.RequestPtyCallCount()).To(Equal(1))
@@ -184,10 +184,46 @@ var _ = Describe("Client", func() {
 			Eventually(func() bool { return mockSessionStdin.closed }).Should(BeTrue())
 		})
 
+		It("should not request a pty when desirePTY is false", func() {
+			client.Stdin = bytes.NewBufferString("some client in data")
+			client.Stdout = &bytes.Buffer{}
+			client.Stderr = &bytes.Buffer{}
+			mockSessionStdinBuffer := &bytes.Buffer{}
+			mockSessionStdin := &mockConn{Writer: mockSessionStdinBuffer}
+			mockSessionStdout := bytes.NewBufferString("some session out data")
+			mockSessionStderr := bytes.NewBufferString("some session err data")
+			mockSession.StdinPipeReturns(mockSessionStdin, nil)
+			mockSession.StdoutPipeReturns(mockSessionStdout, nil)
+			mockSession.StderrPipeReturns(mockSessionStderr, nil)
+
+			_, err := client.Open(100, 200, false)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(mockSession.RequestPtyCallCount()).To(Equal(0))
+		})
+
+		It("should request a pty when desirePTY is true", func() {
+			client.Stdin = bytes.NewBufferString("some client in data")
+			client.Stdout = &bytes.Buffer{}
+			client.Stderr = &bytes.Buffer{}
+			mockSessionStdinBuffer := &bytes.Buffer{}
+			mockSessionStdin := &mockConn{Writer: mockSessionStdinBuffer}
+			mockSessionStdout := bytes.NewBufferString("some session out data")
+			mockSessionStderr := bytes.NewBufferString("some session err data")
+			mockSession.StdinPipeReturns(mockSessionStdin, nil)
+			mockSession.StdoutPipeReturns(mockSessionStdout, nil)
+			mockSession.StderrPipeReturns(mockSessionStderr, nil)
+
+			_, err := client.Open(100, 200, true)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(mockSession.RequestPtyCallCount()).To(Equal(1))
+		})
+
 		Context("when we fail to open a new session", func() {
 			It("should return an error", func() {
 				mockSessionFactory.NewReturns(nil, errors.New("some error"))
-				_, err := client.Open(100, 200)
+				_, err := client.Open(100, 200, true)
 				Expect(err).To(MatchError("some error"))
 			})
 		})
@@ -195,15 +231,15 @@ var _ = Describe("Client", func() {
 		Context("when we fail to open any of the session pipes", func() {
 			It("should return an error", func() {
 				mockSession.StderrPipeReturns(nil, errors.New("some stderr error"))
-				_, err := client.Open(100, 200)
+				_, err := client.Open(100, 200, true)
 				Expect(err).To(MatchError("some stderr error"))
 
 				mockSession.StdoutPipeReturns(nil, errors.New("some stdout error"))
-				_, err = client.Open(100, 200)
+				_, err = client.Open(100, 200, true)
 				Expect(err).To(MatchError("some stdout error"))
 
 				mockSession.StdinPipeReturns(nil, errors.New("some stdin error"))
-				_, err = client.Open(100, 200)
+				_, err = client.Open(100, 200, true)
 				Expect(err).To(MatchError("some stdin error"))
 			})
 		})
@@ -211,7 +247,7 @@ var _ = Describe("Client", func() {
 		Context("when requesting a PTY fails", func() {
 			It("should return an error", func() {
 				mockSession.RequestPtyReturns(errors.New("some error"))
-				_, err := client.Open(100, 200)
+				_, err := client.Open(100, 200, true)
 				Expect(err).To(MatchError("some error"))
 
 			})

@@ -24,6 +24,6 @@ func (*AppDialer) Dial(appName string, instanceIndex int, config *config_package
 
 //go:generate counterfeiter -o mocks/fake_client.go . Client
 type Client interface {
-	Open(width, height int) (*sshapi.Session, error)
+	Open(width, height int, desirePTY bool) (*sshapi.Session, error)
 	Forward(localConn io.ReadWriteCloser, remoteAddress string) error
 }

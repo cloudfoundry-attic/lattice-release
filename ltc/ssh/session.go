@@ -12,6 +12,6 @@ type Session interface {
 
 type SSHAPISessionFactory struct{}
 
-func (*SSHAPISessionFactory) New(client Client, width, height int) (Session, error) {
-	return client.Open(width, height)
+func (*SSHAPISessionFactory) New(client Client, width, height int, desirePTY bool) (Session, error) {
+	return client.Open(width, height, desirePTY)
 }

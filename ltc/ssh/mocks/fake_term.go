@@ -36,6 +36,14 @@ type FakeTerm struct {
 		result1 int
 		result2 int
 	}
+	IsTTYStub        func(fd uintptr) bool
+	isTTYMutex       sync.RWMutex
+	isTTYArgsForCall []struct {
+		fd uintptr
+	}
+	isTTYReturns struct {
+		result1 bool
+	}
 }
 
 func (fake *FakeTerm) SetRawTerminal(fd uintptr) (*term.State, error) {
@@ -135,6 +143,38 @@ func (fake *FakeTerm) GetWinsizeReturns(result1 int, result2 int) {
 		result1 int
 		result2 int
 	}{result1, result2}
+}
+
+func (fake *FakeTerm) IsTTY(fd uintptr) bool {
+	fake.isTTYMutex.Lock()
+	fake.isTTYArgsForCall = append(fake.isTTYArgsForCall, struct {
+		fd uintptr
+	}{fd})
+	fake.isTTYMutex.Unlock()
+	if fake.IsTTYStub != nil {
+		return fake.IsTTYStub(fd)
+	} else {
+		return fake.isTTYReturns.result1
+	}
+}
+
+func (fake *FakeTerm) IsTTYCallCount() int {
+	fake.isTTYMutex.RLock()
+	defer fake.isTTYMutex.RUnlock()
+	return len(fake.isTTYArgsForCall)
+}
+
+func (fake *FakeTerm) IsTTYArgsForCall(i int) uintptr {
+	fake.isTTYMutex.RLock()
+	defer fake.isTTYMutex.RUnlock()
+	return fake.isTTYArgsForCall[i].fd
+}
+
+func (fake *FakeTerm) IsTTYReturns(result1 bool) {
+	fake.IsTTYStub = nil
+	fake.isTTYReturns = struct {
+		result1 bool
+	}{result1}
 }
 
 var _ ssh.Term = new(FakeTerm)

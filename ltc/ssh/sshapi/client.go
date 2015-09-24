@@ -67,7 +67,7 @@ func (c *Client) Forward(localConn io.ReadWriteCloser, remoteAddress string) err
 	return nil
 }
 
-func (c *Client) Open(width, height int) (*Session, error) {
+func (c *Client) Open(width, height int, desirePTY bool) (*Session, error) {
 	session, err := c.SSHSessionFactory.New()
 	if err != nil {
 		return nil, err
@@ -88,19 +88,21 @@ func (c *Client) Open(width, height int) (*Session, error) {
 		return nil, err
 	}
 
-	modes := ssh.TerminalModes{
-		ssh.ECHO:          1,
-		ssh.TTY_OP_ISPEED: 115200,
-		ssh.TTY_OP_OSPEED: 115200,
-	}
+	if desirePTY {
+		modes := ssh.TerminalModes{
+			ssh.ECHO:          1,
+			ssh.TTY_OP_ISPEED: 115200,
+			ssh.TTY_OP_OSPEED: 115200,
+		}
 
-	terminalType := os.Getenv("TERM")
-	if terminalType == "" {
-		terminalType = "xterm"
-	}
+		terminalType := os.Getenv("TERM")
+		if terminalType == "" {
+			terminalType = "xterm"
+		}
 
-	if err := session.RequestPty(terminalType, height, width, modes); err != nil {
-		return nil, err
+		if err := session.RequestPty(terminalType, height, width, modes); err != nil {
+			return nil, err
+		}
 	}
 
 	go copyAndClose(nil, sessionIn, c.Stdin)

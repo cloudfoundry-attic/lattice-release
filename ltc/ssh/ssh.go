@@ -11,6 +11,14 @@ import (
 	"github.com/docker/docker/pkg/term"
 )
 
+type PTYDesired int
+
+const (
+	AutoDetectPTY PTYDesired = iota
+	ForcePTY
+	ForceNoPTY
+)
+
 //go:generate counterfeiter -o mocks/fake_listener.go . Listener
 type Listener interface {
 	Listen(network, laddr string) (<-chan io.ReadWriteCloser, <-chan error)
@@ -26,11 +34,12 @@ type Term interface {
 	SetRawTerminal(fd uintptr) (*term.State, error)
 	RestoreTerminal(fd uintptr, state *term.State) error
 	GetWinsize(fd uintptr) (width int, height int)
+	IsTTY(fd uintptr) bool
 }
 
 //go:generate counterfeiter -o mocks/fake_session_factory.go . SessionFactory
 type SessionFactory interface {
-	New(client Client, width, height int) (Session, error)
+	New(client Client, width, height int, desirePTY bool) (Session, error)
 }
 
 type SSH struct {
@@ -85,16 +94,28 @@ func (s *SSH) Forward(localAddress, remoteAddress string) error {
 	}
 }
 
-func (s *SSH) Shell(command string) error {
+func (s *SSH) Shell(command string, desirePTY PTYDesired) error {
+	var detectedDesirePTY bool
+	switch desirePTY {
+	case AutoDetectPTY:
+		detectedDesirePTY = s.Term.IsTTY(os.Stdin.Fd())
+	case ForcePTY:
+		detectedDesirePTY = true
+	case ForceNoPTY:
+		detectedDesirePTY = false
+	}
+
 	width, height := s.Term.GetWinsize(os.Stdout.Fd())
-	session, err := s.SessionFactory.New(s.client, width, height)
+	session, err := s.SessionFactory.New(s.client, width, height, detectedDesirePTY)
 	if err != nil {
 		return err
 	}
 	defer session.Close()
 
-	if state, err := s.Term.SetRawTerminal(os.Stdin.Fd()); err == nil {
-		defer s.Term.RestoreTerminal(os.Stdin.Fd(), state)
+	if detectedDesirePTY {
+		if state, err := s.Term.SetRawTerminal(os.Stdin.Fd()); err == nil {
+			defer s.Term.RestoreTerminal(os.Stdin.Fd(), state)
+		}
 	}
 
 	resized := make(chan os.Signal, 16)

@@ -8,12 +8,13 @@ import (
 )
 
 type FakeSessionFactory struct {
-	NewStub        func(client ssh.Client, width, height int) (ssh.Session, error)
+	NewStub        func(client ssh.Client, width, height int, desirePTY bool) (ssh.Session, error)
 	newMutex       sync.RWMutex
 	newArgsForCall []struct {
-		client ssh.Client
-		width  int
-		height int
+		client    ssh.Client
+		width     int
+		height    int
+		desirePTY bool
 	}
 	newReturns struct {
 		result1 ssh.Session
@@ -21,16 +22,17 @@ type FakeSessionFactory struct {
 	}
 }
 
-func (fake *FakeSessionFactory) New(client ssh.Client, width int, height int) (ssh.Session, error) {
+func (fake *FakeSessionFactory) New(client ssh.Client, width int, height int, desirePTY bool) (ssh.Session, error) {
 	fake.newMutex.Lock()
 	fake.newArgsForCall = append(fake.newArgsForCall, struct {
-		client ssh.Client
-		width  int
-		height int
-	}{client, width, height})
+		client    ssh.Client
+		width     int
+		height    int
+		desirePTY bool
+	}{client, width, height, desirePTY})
 	fake.newMutex.Unlock()
 	if fake.NewStub != nil {
-		return fake.NewStub(client, width, height)
+		return fake.NewStub(client, width, height, desirePTY)
 	} else {
 		return fake.newReturns.result1, fake.newReturns.result2
 	}
@@ -42,10 +44,10 @@ func (fake *FakeSessionFactory) NewCallCount() int {
 	return len(fake.newArgsForCall)
 }
 
-func (fake *FakeSessionFactory) NewArgsForCall(i int) (ssh.Client, int, int) {
+func (fake *FakeSessionFactory) NewArgsForCall(i int) (ssh.Client, int, int, bool) {
 	fake.newMutex.RLock()
 	defer fake.newMutex.RUnlock()
-	return fake.newArgsForCall[i].client, fake.newArgsForCall[i].width, fake.newArgsForCall[i].height
+	return fake.newArgsForCall[i].client, fake.newArgsForCall[i].width, fake.newArgsForCall[i].height, fake.newArgsForCall[i].desirePTY
 }
 
 func (fake *FakeSessionFactory) NewReturns(result1 ssh.Session, result2 error) {
