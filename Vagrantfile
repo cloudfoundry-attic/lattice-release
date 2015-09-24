@@ -35,6 +35,9 @@ Vagrant.configure("2") do |config|
     aws.keypair_name = "concourse-test"
     aws.instance_type = "m4.large"
     aws.ebs_optimized = true
+    aws.tags = {
+      "Name" => (ENV["AWS_INSTANCE_NAME"] || "vagrant")
+    }
 
     override.ssh.username = "ubuntu"
     override.ssh.private_key_path = ENV["AWS_SSH_PRIVATE_KEY_PATH"]
