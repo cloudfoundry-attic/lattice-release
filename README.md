@@ -119,27 +119,26 @@ Follow these [instructions](http://lattice.cf/docs/manual-install) to install a 
 
 ### Proxy configuration
 
+#### Running Lattice in vagrant behind an HTTP proxy
+
+> NOTE: If you're deploying Lattice using Terraform and an HTTP proxy is required for ltc to talk to Lattice, see the [Proxy](http://lattice.cf/docs/proxy) documentation.
+
 Install the `vagrant-proxyconf` plugin as follows:
 
 ```bash
 $ vagrant plugin install vagrant-proxyconf
 ```
 
-Setup your environment in the terminal:
+Specify your HTTP proxy when provisioning your cluster:
 
 ```bash
-$ export http_proxy=http://PROXY_IP:PROXY_PORT
-$ export https_proxy=http://PROXY_IP:PROXY_PORT
-$ export no_proxy=$(ltc target|head -1|awk '{print $2}')
+$ http_proxy=http://PROXY_IP:PROXY_PORT \
+    https_proxy=http://PROXY_IP:PROXY_PORT \
+    no_proxy=192.168.11.11.xip.io \
+    vagrant up
 ```
 
-Then proceed with `vagrant up`. For `ltc create`, `ltc build-droplet` or `ltc launch-droplet`, you'll need to pass these environment variables into the container. For example:
-
-```bash
-$ ltc create -e http_proxy -e https_proxy -e no_proxy lattice-docker-app cloudfoundry/lattice-app
-$ ltc build-droplet -e http_proxy -e https_proxy -e no_proxy lattice-droplet go
-$ ltc launch-droplet -e http_proxy -e https_proxy -e no_proxy lattice-app lattice-droplet
-```
+`ltc build-droplet` and `ltc launch-droplet` will detect the proxy configuration passed to vagrant and automatically pass it down into your apps. Passing `-e http_proxy` etc is no longer necessary.
 
 ## Troubleshooting
 
