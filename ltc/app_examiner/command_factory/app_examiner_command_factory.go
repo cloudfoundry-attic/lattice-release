@@ -371,6 +371,20 @@ func (factory *AppExaminerCommandFactory) printAppInfo(writer io.Writer, appInfo
 
 	factory.printAppRoutes(w, appInfo)
 
+	if appInfo.RootFS != "" {
+		if strings.HasPrefix(appInfo.RootFS, "docker://") {
+			image := strings.Replace(appInfo.RootFS, "docker://", "", 1)
+			if strings.HasPrefix(image, "/") {
+				image = strings.Replace(image, "/", "", 1)
+			}
+			fmt.Fprintf(w, "%s\t%s\n", "Docker Image", image)
+		} else if strings.HasPrefix(appInfo.RootFS, "preloaded:") {
+			fmt.Fprintf(w, "%s\t%s\n", "Stack", strings.Replace(appInfo.RootFS, "preloaded:", "", 1))
+		} else {
+			fmt.Fprintf(w, "%s\t%s\n", "RootFS", appInfo.RootFS)
+		}
+	}
+
 	if appInfo.Annotation != "" {
 		fmt.Fprintf(w, "%s\t%s\n", "Annotation", appInfo.Annotation)
 	}

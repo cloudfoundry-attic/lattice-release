@@ -375,7 +375,7 @@ var _ = Describe("AppExaminer", func() {
 				getDesiredLRPResponse = receptor.DesiredLRPResponse{
 					ProcessGuid: "peekaboo-app",
 					Domain:      "welp.org",
-					RootFS:      "/var/root-fs",
+					RootFS:      "preloaded:rootfs2",
 					Instances:   4,
 					EnvironmentVariables: []receptor.EnvironmentVariable{
 						{Name: "API_TOKEN", Value: "98weufsa"},
@@ -455,6 +455,7 @@ var _ = Describe("AppExaminer", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(appInfo.ProcessGuid).To(Equal("peekaboo-app"))
+				Expect(appInfo.RootFS).To(Equal("preloaded:rootfs2"))
 				Expect(appInfo.DesiredInstances).To(Equal(4))
 				Expect(appInfo.ActualRunningInstances).To(Equal(1))
 				Expect(appInfo.EnvironmentVariables).To(ConsistOf(

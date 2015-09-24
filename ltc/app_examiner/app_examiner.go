@@ -17,6 +17,7 @@ type EnvironmentVariable struct {
 
 type AppInfo struct {
 	ProcessGuid            string
+	RootFS                 string
 	DesiredInstances       int
 	ActualRunningInstances int
 	EnvironmentVariables   []EnvironmentVariable
@@ -248,6 +249,7 @@ func mergeDesiredActualLRPs(desiredLRPs []receptor.DesiredLRPResponse, actualLRP
 	for _, desiredLRP := range desiredLRPs {
 		appMap[desiredLRP.ProcessGuid] = &AppInfo{
 			ProcessGuid:            desiredLRP.ProcessGuid,
+			RootFS:                 desiredLRP.RootFS,
 			DesiredInstances:       desiredLRP.Instances,
 			ActualRunningInstances: 0,
 			EnvironmentVariables:   buildEnvVars(desiredLRP),

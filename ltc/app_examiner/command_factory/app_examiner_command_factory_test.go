@@ -581,6 +581,7 @@ var _ = Describe("CommandFactory", func() {
 
 			sampleAppInfo = app_examiner.AppInfo{
 				ProcessGuid:            "wompy-app",
+				RootFS:                 "preloaded:rootfs2",
 				DesiredInstances:       12,
 				ActualRunningInstances: 1,
 				EnvironmentVariables: []app_examiner.EnvironmentVariable{
@@ -676,6 +677,9 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9000"))
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
 
+			Expect(outputBuffer).To(test_helpers.Say("Stack"))
+			Expect(outputBuffer).To(test_helpers.SayLine("rootfs2"))
+
 			Expect(outputBuffer).To(test_helpers.Say("Annotation"))
 			Expect(outputBuffer).To(test_helpers.SayLine("I love this app. So wompy."))
 
@@ -746,6 +750,56 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(outputBuffer).NotTo(test_helpers.Say("CPU"))
 			Expect(outputBuffer).NotTo(test_helpers.Say("Memory"))
+		})
+
+		It("emits a pretty representation of the docker image", func() {
+			sampleAppInfo.RootFS = "docker:///wompy/app#latest"
+
+			fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+			test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+			Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+			Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Routes"))
+			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com => 8887"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
+			Expect(outputBuffer).To(test_helpers.Say("cranky-app.my-fun-domain.com => 8887"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
+			Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9000"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+			Expect(outputBuffer).To(test_helpers.Say("Docker Image"))
+			Expect(outputBuffer).To(test_helpers.SayLine("wompy/app#latest"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Annotation"))
+			Expect(outputBuffer).To(test_helpers.SayLine("I love this app. So wompy."))
+		})
+
+		It("prints out an unknown rootfs without parsing", func() {
+			sampleAppInfo.RootFS = "wuuuhhhhh"
+
+			fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+			test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+			Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+			Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Routes"))
+			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com => 8887"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
+			Expect(outputBuffer).To(test_helpers.Say("cranky-app.my-fun-domain.com => 8887"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
+			Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9000"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+			Expect(outputBuffer).To(test_helpers.Say("RootFS"))
+			Expect(outputBuffer).To(test_helpers.SayLine("wuuuhhhhh"))
+
+			Expect(outputBuffer).To(test_helpers.Say("Annotation"))
+			Expect(outputBuffer).To(test_helpers.SayLine("I love this app. So wompy."))
 		})
 
 		Context("when there are only tcp routes", func() {
@@ -940,7 +994,7 @@ var _ = Describe("CommandFactory", func() {
 
 				fakeClock.IncrementBySeconds(1)
 
-				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(25)))
+				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(26)))
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
 				Eventually(outputBuffer).Should(test_helpers.SayNewLine())
 				roundedTimeSince = roundTime(fakeClock.Now(), time.Unix(0, refreshTime*1e9))
