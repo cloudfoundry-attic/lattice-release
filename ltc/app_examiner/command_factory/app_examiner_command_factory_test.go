@@ -752,29 +752,55 @@ var _ = Describe("CommandFactory", func() {
 			Expect(outputBuffer).NotTo(test_helpers.Say("Memory"))
 		})
 
-		It("emits a pretty representation of the docker image", func() {
-			sampleAppInfo.RootFS = "docker:///wompy/app#latest"
+		Context("when the app was launched from a docker image", func() {
+			It("emits a pretty representation of the image", func() {
+				sampleAppInfo.RootFS = "docker:///wompy/app#latest"
 
-			fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
 
-			test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
 
-			Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
-			Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
 
-			Expect(outputBuffer).To(test_helpers.Say("Routes"))
-			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com => 8887"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-			Expect(outputBuffer).To(test_helpers.Say("cranky-app.my-fun-domain.com => 8887"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-			Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9000"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.Say("Docker Image"))
+				Expect(outputBuffer).To(test_helpers.SayLine("wompy/app#latest"))
 
-			Expect(outputBuffer).To(test_helpers.Say("Docker Image"))
-			Expect(outputBuffer).To(test_helpers.SayLine("wompy/app#latest"))
+				Expect(outputBuffer).To(test_helpers.Say("Annotation"))
+			})
 
-			Expect(outputBuffer).To(test_helpers.Say("Annotation"))
-			Expect(outputBuffer).To(test_helpers.SayLine("I love this app. So wompy."))
+			It("emits a pretty representation of the image without its library/ prefix", func() {
+				sampleAppInfo.RootFS = "docker:///library/wompy-app#latest"
+
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Docker Image"))
+				Expect(outputBuffer).NotTo(test_helpers.Say("library/"))
+				Expect(outputBuffer).To(test_helpers.SayLine("wompy-app#latest"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Annotation"))
+			})
+
+			It("emits a pretty representation of the image with source", func() {
+				sampleAppInfo.RootFS = "docker://dhub/library/wompy-app#latest"
+
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Docker Image"))
+				Expect(outputBuffer).To(test_helpers.SayLine("dhub/library/wompy-app#latest"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Annotation"))
+			})
 		})
 
 		It("prints out an unknown rootfs without parsing", func() {
