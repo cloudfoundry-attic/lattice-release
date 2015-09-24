@@ -8,7 +8,6 @@ import (
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
-	"github.com/cloudfoundry-incubator/lattice/ltc/ssh"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/codegangsta/cli"
 )
@@ -26,7 +25,7 @@ type SSHCommandFactory struct {
 type SSH interface {
 	Connect(appName string, instanceIndex int, config *config_package.Config) error
 	Forward(localAddress, remoteAddress string) error
-	Shell(command string, ptyDespired ssh.PTYDesired) error
+	Shell(command string, ptyDespired bool) error
 }
 
 func NewSSHCommandFactory(config *config_package.Config, ui terminal.UI, exitHandler exit_handler.ExitHandler, appExaminer app_examiner.AppExaminer, secureShell SSH) *SSHCommandFactory {
@@ -70,7 +69,6 @@ func (f *SSHCommandFactory) ssh(context *cli.Context) {
 	localForward := context.String("L")
 	noShell := context.Bool("N")
 	forceNoPTY := context.Bool("T")
-	forcePTY := context.Bool("t")
 
 	appName := context.Args().First()
 
@@ -107,21 +105,13 @@ func (f *SSHCommandFactory) ssh(context *cli.Context) {
 		command = strings.Join(context.Args()[start:len(context.Args())], " ")
 	}
 
-	var ptyDesired ssh.PTYDesired
-	switch {
-	case forceNoPTY:
-		ptyDesired = ssh.ForceNoPTY
-	case forcePTY:
-		ptyDesired = ssh.ForcePTY
-	}
-
 	if localForward != "" && noShell {
 		f.forward(localForward, appName, instanceIndex)
 	} else if localForward != "" {
 		go f.forward(localForward, appName, instanceIndex)
-		f.shell(command, ptyDesired, appName, instanceIndex)
+		f.shell(command, !forceNoPTY, appName, instanceIndex)
 	} else {
-		f.shell(command, ptyDesired, appName, instanceIndex)
+		f.shell(command, !forceNoPTY, appName, instanceIndex)
 	}
 }
 
@@ -153,7 +143,7 @@ func (f *SSHCommandFactory) forward(localForward, appName string, instanceIndex 
 	}
 }
 
-func (f *SSHCommandFactory) shell(command string, ptyDesired ssh.PTYDesired, appName string, instanceIndex int) {
+func (f *SSHCommandFactory) shell(command string, ptyDesired bool, appName string, instanceIndex int) {
 	if command == "" {
 		f.ui.SayLine("Connecting to %s/%d at %s", appName, instanceIndex, f.config.Target())
 	}

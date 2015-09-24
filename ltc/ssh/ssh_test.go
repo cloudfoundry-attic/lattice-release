@@ -128,7 +128,7 @@ var _ = Describe("SSH", func() {
 
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
-			Expect(appSSH.Shell("", ssh.AutoDetectPTY)).To(Succeed())
+			Expect(appSSH.Shell("", true)).To(Succeed())
 
 			Expect(fakeTerm.GetWinsizeCallCount()).To(Equal(1))
 			Expect(fakeTerm.GetWinsizeArgsForCall(0)).To(Equal(os.Stdout.Fd()))
@@ -163,7 +163,7 @@ var _ = Describe("SSH", func() {
 
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
-			Expect(appSSH.Shell("", ssh.AutoDetectPTY)).To(Succeed())
+			Expect(appSSH.Shell("", true)).To(Succeed())
 
 			Expect(fakeTerm.IsTTYCallCount()).To(Equal(1))
 			Expect(fakeTerm.IsTTYArgsForCall(0)).To(Equal(os.Stdin.Fd()))
@@ -176,25 +176,10 @@ var _ = Describe("SSH", func() {
 			Expect(fakeTerm.RestoreTerminalCallCount()).To(Equal(0))
 		})
 
-		It("should not auto-detect tty if ForcePTY is passed", func() {
+		It("should not auto-detect tty if desirePTY is false", func() {
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
-			Expect(appSSH.Shell("", ssh.ForcePTY)).To(Succeed())
-
-			Expect(fakeTerm.IsTTYCallCount()).To(Equal(0))
-
-			Expect(fakeSessionFactory.NewCallCount()).To(Equal(1))
-			_, _, _, desirePTY := fakeSessionFactory.NewArgsForCall(0)
-			Expect(desirePTY).To(BeTrue())
-
-			Expect(fakeTerm.SetRawTerminalCallCount()).To(Equal(1))
-			Expect(fakeTerm.RestoreTerminalCallCount()).To(Equal(1))
-		})
-
-		It("should not auto-detect tty if ForceNoPTY is passed", func() {
-			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
-
-			Expect(appSSH.Shell("", ssh.ForceNoPTY)).To(Succeed())
+			Expect(appSSH.Shell("", false)).To(Succeed())
 
 			Expect(fakeTerm.IsTTYCallCount()).To(Equal(0))
 
@@ -208,7 +193,7 @@ var _ = Describe("SSH", func() {
 
 		It("should run a remote command if provided", func() {
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
-			Expect(appSSH.Shell("some-command", ssh.ForcePTY)).To(Succeed())
+			Expect(appSSH.Shell("some-command", true)).To(Succeed())
 
 			Expect(fakeSession.ShellCallCount()).To(Equal(0))
 			Expect(fakeSession.WaitCallCount()).To(Equal(0))
@@ -234,7 +219,7 @@ var _ = Describe("SSH", func() {
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
 			go func() {
-				shellChan <- appSSH.Shell("", ssh.ForcePTY)
+				shellChan <- appSSH.Shell("", true)
 			}()
 
 			<-waitChan
@@ -267,7 +252,7 @@ var _ = Describe("SSH", func() {
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
 			go func() {
-				shellChan <- appSSH.Shell("", ssh.ForcePTY)
+				shellChan <- appSSH.Shell("", true)
 			}()
 
 			<-waitChan
@@ -286,7 +271,7 @@ var _ = Describe("SSH", func() {
 				fakeTerm.SetRawTerminalReturns(nil, errors.New("some error"))
 
 				Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
-				Expect(appSSH.Shell("", ssh.ForcePTY)).To(Succeed())
+				Expect(appSSH.Shell("", true)).To(Succeed())
 				Expect(fakeTerm.RestoreTerminalCallCount()).To(Equal(0))
 			})
 		})

@@ -11,14 +11,6 @@ import (
 	"github.com/docker/docker/pkg/term"
 )
 
-type PTYDesired int
-
-const (
-	AutoDetectPTY PTYDesired = iota
-	ForcePTY
-	ForceNoPTY
-)
-
 //go:generate counterfeiter -o mocks/fake_listener.go . Listener
 type Listener interface {
 	Listen(network, laddr string) (<-chan io.ReadWriteCloser, <-chan error)
@@ -94,25 +86,19 @@ func (s *SSH) Forward(localAddress, remoteAddress string) error {
 	}
 }
 
-func (s *SSH) Shell(command string, desirePTY PTYDesired) error {
-	var detectedDesirePTY bool
-	switch desirePTY {
-	case AutoDetectPTY:
-		detectedDesirePTY = s.Term.IsTTY(os.Stdin.Fd())
-	case ForcePTY:
-		detectedDesirePTY = true
-	case ForceNoPTY:
-		detectedDesirePTY = false
+func (s *SSH) Shell(command string, desirePTY bool) error {
+	if desirePTY {
+		desirePTY = s.Term.IsTTY(os.Stdin.Fd())
 	}
 
 	width, height := s.Term.GetWinsize(os.Stdout.Fd())
-	session, err := s.SessionFactory.New(s.client, width, height, detectedDesirePTY)
+	session, err := s.SessionFactory.New(s.client, width, height, desirePTY)
 	if err != nil {
 		return err
 	}
 	defer session.Close()
 
-	if detectedDesirePTY {
+	if desirePTY {
 		if state, err := s.Term.SetRawTerminal(os.Stdin.Fd()); err == nil {
 			defer s.Term.RestoreTerminal(os.Stdin.Fd(), state)
 		}

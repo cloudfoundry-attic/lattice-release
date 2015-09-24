@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
-	"github.com/cloudfoundry-incubator/lattice/ltc/ssh"
 	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/command_factory"
 )
 
@@ -29,11 +28,11 @@ type FakeSSH struct {
 	forwardReturns struct {
 		result1 error
 	}
-	ShellStub        func(command string, ptyDespired ssh.PTYDesired) error
+	ShellStub        func(command string, ptyDespired bool) error
 	shellMutex       sync.RWMutex
 	shellArgsForCall []struct {
 		command     string
-		ptyDespired ssh.PTYDesired
+		ptyDespired bool
 	}
 	shellReturns struct {
 		result1 error
@@ -107,11 +106,11 @@ func (fake *FakeSSH) ForwardReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *FakeSSH) Shell(command string, ptyDespired ssh.PTYDesired) error {
+func (fake *FakeSSH) Shell(command string, ptyDespired bool) error {
 	fake.shellMutex.Lock()
 	fake.shellArgsForCall = append(fake.shellArgsForCall, struct {
 		command     string
-		ptyDespired ssh.PTYDesired
+		ptyDespired bool
 	}{command, ptyDespired})
 	fake.shellMutex.Unlock()
 	if fake.ShellStub != nil {
@@ -127,7 +126,7 @@ func (fake *FakeSSH) ShellCallCount() int {
 	return len(fake.shellArgsForCall)
 }
 
-func (fake *FakeSSH) ShellArgsForCall(i int) (string, ssh.PTYDesired) {
+func (fake *FakeSSH) ShellArgsForCall(i int) (string, bool) {
 	fake.shellMutex.RLock()
 	defer fake.shellMutex.RUnlock()
 	return fake.shellArgsForCall[i].command, fake.shellArgsForCall[i].ptyDespired

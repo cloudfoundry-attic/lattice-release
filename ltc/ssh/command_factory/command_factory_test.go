@@ -12,7 +12,6 @@ import (
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
-	"github.com/cloudfoundry-incubator/lattice/ltc/ssh"
 	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/command_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/command_factory/mocks"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
@@ -152,7 +151,7 @@ var _ = Describe("SSH CommandFactory", func() {
 				Expect(fakeSSH.ShellCallCount()).To(Equal(1))
 				command, ptyDesired := fakeSSH.ShellArgsForCall(0)
 				Expect(command).To(BeEmpty())
-				Expect(ptyDesired).To(Equal(ssh.AutoDetectPTY))
+				Expect(ptyDesired).To(BeTrue())
 
 				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
 				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("app-name"))
@@ -183,7 +182,7 @@ var _ = Describe("SSH CommandFactory", func() {
 
 				Expect(fakeSSH.ShellCallCount()).To(Equal(1))
 				_, ptyDesired := fakeSSH.ShellArgsForCall(0)
-				Expect(ptyDesired).To(Equal(ssh.ForceNoPTY))
+				Expect(ptyDesired).To(BeFalse())
 			})
 
 			It("should enable pty when requested", func() {
@@ -193,7 +192,7 @@ var _ = Describe("SSH CommandFactory", func() {
 
 				Expect(fakeSSH.ShellCallCount()).To(Equal(1))
 				_, ptyDesired := fakeSSH.ShellArgsForCall(0)
-				Expect(ptyDesired).To(Equal(ssh.ForcePTY))
+				Expect(ptyDesired).To(BeTrue())
 			})
 
 			Context("when a command is provided", func() {
