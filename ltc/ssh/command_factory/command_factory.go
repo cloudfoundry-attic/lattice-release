@@ -40,7 +40,7 @@ func (f *SSHCommandFactory) MakeSSHCommand() cli.Command {
 		Action:      f.ssh,
 		Flags: []cli.Flag{
 			cli.IntFlag{
-				Name:  "instance, i",
+				Name:  "index, i",
 				Usage: "Connects to specified instance index",
 				Value: 0,
 			},
@@ -65,7 +65,7 @@ func (f *SSHCommandFactory) MakeSSHCommand() cli.Command {
 }
 
 func (f *SSHCommandFactory) ssh(context *cli.Context) {
-	instanceIndex := context.Int("instance")
+	instanceIndex := context.Int("index")
 	localForward := context.String("L")
 	noShell := context.Bool("N")
 	forceNoPTY := context.Bool("T")

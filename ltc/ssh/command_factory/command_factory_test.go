@@ -160,7 +160,7 @@ var _ = Describe("SSH CommandFactory", func() {
 			It("should ssh to instance index specified", func() {
 				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 3}, nil)
 
-				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"--instance", "2", "app-name"})
+				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"--index", "2", "app-name"})
 
 				Expect(outputBuffer).To(test_helpers.SayLine("Connecting to app-name/2 at %s", config.Target()))
 
