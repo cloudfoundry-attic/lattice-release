@@ -3,27 +3,29 @@
 set -e
 
 if [ -z "$1" ]; then
-    echo "Incorrect Usage. Usage: $0 output-tgz"
+    echo "Incorrect Usage. Usage: $0 /path/to/lattice.tgz [lattice version]"
     exit 1
 fi
 
 LATTICE_DIR=$(cd `dirname $0` && cd ../.. && pwd)
 LATTICE_TGZ=$1
-LATTICE_VERSION=${2:-`git -C $LATTICE_DIR describe --tags --always`} 
+LATTICE_VERSION=${2:-`git -C $LATTICE_DIR describe --tags --always`}
 
 BUILD_DIR=$LATTICE_DIR/build
-TMP_DIR=$(mktemp -d /tmp/lattice.XXXXXX)
-OUTPUT_DIR=$TMP_DIR/lattice-build
 
 DIEGO_RELEASE_DIR=$BUILD_DIR/diego-release
 GARDEN_LINUX_RELEASE_DIR=$BUILD_DIR/garden-linux-release
 CF_RELEASE_DIR=$BUILD_DIR/cf-release
 ROUTING_RELEASE_DIR=$BUILD_DIR/cf-routing-release
 
+TMP_DIR=$(mktemp -d /tmp/lattice.XXXXXX)
+OUTPUT_DIR=$TMP_DIR/lattice-build
+mkdir -p $OUTPUT_DIR
+
 echo "Downloading consul and haproxy..."
-wget --quiet "http://blob.cfblob.com/3e6c1e47-95a5-45ef-aeec-2cb4cc4c529a" -O $TMP_DIR/consul.zip
-wget --quiet "http://blob.cfblob.com/02657a44-3292-4e0b-8b18-bcad061a2381" -O $TMP_DIR/haproxy.tgz
-wget --quiet "http://blob.cfblob.com/22601a5f-4ef4-4621-80aa-0fa1f8067db6" -O $TMP_DIR/haproxy_pcre.tgz
+curl -s "http://blob.cfblob.com/3e6c1e47-95a5-45ef-aeec-2cb4cc4c529a" -o $TMP_DIR/consul.zip
+curl -s "http://blob.cfblob.com/02657a44-3292-4e0b-8b18-bcad061a2381" -o $TMP_DIR/haproxy.tgz
+curl -s "http://blob.cfblob.com/22601a5f-4ef4-4621-80aa-0fa1f8067db6" -o $TMP_DIR/haproxy_pcre.tgz
 
 cp -a $LATTICE_DIR/cluster/common $OUTPUT_DIR/
 cp -a $LATTICE_DIR/cluster/scripts $OUTPUT_DIR/
@@ -96,8 +98,8 @@ pushd $OUTPUT_DIR/brain/bin
     GOPATH=$ROUTING_RELEASE_DIR go build -a github.com/cloudfoundry-incubator/tcp-emitter/cmd/tcp-emitter
     GOPATH=$ROUTING_RELEASE_DIR go build -a github.com/cloudfoundry-incubator/cf-tcp-router/cmd/router-configurer
 
-    GOPATH=$CF_RELEASE_DIR/src/loggregator go build -a trafficcontroller 
-    GOPATH=$CF_RELEASE_DIR/src/loggregator go build -a doppler 
+    GOPATH=$CF_RELEASE_DIR/src/loggregator go build -a trafficcontroller
+    GOPATH=$CF_RELEASE_DIR/src/loggregator go build -a doppler
     GOPATH=$CF_RELEASE_DIR/src/loggregator go build -a metron
 popd
 
