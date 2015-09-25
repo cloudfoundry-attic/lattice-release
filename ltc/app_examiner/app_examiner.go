@@ -3,7 +3,9 @@ package app_examiner
 import (
 	"errors"
 	"sort"
+	"strconv"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 )
@@ -31,6 +33,14 @@ type AppInfo struct {
 	LogSource              string
 	Annotation             string
 	ActualInstances        []InstanceInfo
+	Monitor                Monitor
+}
+
+type Monitor struct {
+	Port        uint16
+	URI         string
+	Command     string
+	CommandArgs []string
 }
 
 type PortMapping struct {
@@ -262,6 +272,7 @@ func mergeDesiredActualLRPs(desiredLRPs []receptor.DesiredLRPResponse, actualLRP
 			LogGuid:                desiredLRP.LogGuid,
 			LogSource:              desiredLRP.LogSource,
 			Annotation:             desiredLRP.Annotation,
+			Monitor:                parseMonitor(desiredLRP.Monitor),
 		}
 	}
 
@@ -302,6 +313,39 @@ func mergeDesiredActualLRPs(desiredLRPs []receptor.DesiredLRPResponse, actualLRP
 	}
 
 	return appMap
+}
+
+func parseMonitor(monitorAction *models.Action) Monitor {
+	monitorRunAction := monitorAction.GetRunAction()
+
+	if monitorRunAction == nil {
+		return Monitor{}
+	}
+
+	var port uint16
+	var uri string
+
+	for i, arg := range monitorRunAction.Args {
+		if arg == "-port" && len(monitorRunAction.Args) > i+1 {
+			if p, err := strconv.ParseUint(monitorRunAction.Args[i+1], 0, 16); err == nil {
+				port = uint16(p)
+			}
+		} else if arg == "-uri" && len(monitorRunAction.Args) > i+1 {
+			uri = monitorRunAction.Args[i+1]
+		}
+	}
+
+	if port != 0 || uri != "" {
+		return Monitor{
+			Port: port,
+			URI:  uri,
+		}
+	} else {
+		return Monitor{
+			Command:     monitorRunAction.Path,
+			CommandArgs: monitorRunAction.Args,
+		}
+	}
 }
 
 func buildEnvVars(desiredLRPResponse receptor.DesiredLRPResponse) []EnvironmentVariable {

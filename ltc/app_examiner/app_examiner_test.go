@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_noaa_consumer"
 	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
@@ -544,6 +545,76 @@ var _ = Describe("AppExaminer", func() {
 				appGuid, token := fakeNoaaConsumer.GetContainerMetricsArgsForCall(0)
 				Expect(appGuid).To(Equal("peekaboo-app"))
 				Expect(token).To(BeEmpty())
+			})
+
+			Describe("Monitors", func() {
+				It("returns AppInfo Monitor for a port monitor", func() {
+					getDesiredLRPResponse.Monitor = models.WrapAction(&models.RunAction{
+						Path: "/tmp/healthcheck",
+						Args: []string{
+							"-port",
+							"8765",
+						},
+					})
+
+					fakeReceptorClient.GetDesiredLRPReturns(getDesiredLRPResponse, nil)
+					fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPsByProcessGuidResponse, nil)
+					fakeNoaaConsumer.GetContainerMetricsReturns(containerMetrics, nil)
+
+					appInfo, err := appExaminer.AppStatus("peekaboo-app")
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(appInfo.Monitor.Port).To(Equal(uint16(8765)))
+					Expect(appInfo.Monitor.URI).To(BeEmpty())
+					Expect(appInfo.Monitor.Command).To(BeEmpty())
+					Expect(appInfo.Monitor.CommandArgs).To(BeEmpty())
+				})
+
+				It("returns AppInfo Monitor for a URL monitor", func() {
+					getDesiredLRPResponse.Monitor = models.WrapAction(&models.RunAction{
+						Path: "/tmp/healthcheck",
+						Args: []string{
+							"-port",
+							"8765",
+							"-uri",
+							"/health",
+						},
+					})
+
+					fakeReceptorClient.GetDesiredLRPReturns(getDesiredLRPResponse, nil)
+					fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPsByProcessGuidResponse, nil)
+					fakeNoaaConsumer.GetContainerMetricsReturns(containerMetrics, nil)
+
+					appInfo, err := appExaminer.AppStatus("peekaboo-app")
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(appInfo.Monitor.Port).To(Equal(uint16(8765)))
+					Expect(appInfo.Monitor.URI).To(Equal("/health"))
+					Expect(appInfo.Monitor.Command).To(BeEmpty())
+					Expect(appInfo.Monitor.CommandArgs).To(BeEmpty())
+				})
+
+				It("returns AppInfo Monitor for a URL monitor", func() {
+					getDesiredLRPResponse.Monitor = models.WrapAction(&models.RunAction{
+						Path: "/bin/sh",
+						Args: []string{
+							"-c",
+							"custom-healthcheck -port 8765 -uri /health",
+						},
+					})
+
+					fakeReceptorClient.GetDesiredLRPReturns(getDesiredLRPResponse, nil)
+					fakeReceptorClient.ActualLRPsByProcessGuidReturns(actualLRPsByProcessGuidResponse, nil)
+					fakeNoaaConsumer.GetContainerMetricsReturns(containerMetrics, nil)
+
+					appInfo, err := appExaminer.AppStatus("peekaboo-app")
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(appInfo.Monitor.Port).To(BeZero())
+					Expect(appInfo.Monitor.URI).To(BeEmpty())
+					Expect(appInfo.Monitor.Command).To(Equal("/bin/sh"))
+					Expect(appInfo.Monitor.CommandArgs).To(Equal([]string{"-c", "custom-healthcheck -port 8765 -uri /health"}))
+				})
 			})
 
 			Context("when desired LRP is not found, but there are actual LRPs for the process GUID (App stopping)", func() {

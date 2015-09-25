@@ -803,6 +803,60 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
+		Describe("Monitors", func() {
+			It("prints out Monitor None when there is no monitor", func() {
+				sampleAppInfo.Monitor = app_examiner.Monitor{}
+
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+				Expect(outputBuffer).To(test_helpers.Say("Monitor"))
+				Expect(outputBuffer).To(test_helpers.SayLine("None"))
+			})
+
+			It("prints out Monitor Port when there is port-only monitor", func() {
+				sampleAppInfo.Monitor = app_examiner.Monitor{
+					Port: 1234,
+				}
+
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+				Expect(outputBuffer).To(test_helpers.Say("Monitor"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Port (1234)"))
+			})
+
+			It("prints out Monitor URL when there is a port- and uri- monitor", func() {
+				sampleAppInfo.Monitor = app_examiner.Monitor{
+					Port: 1234,
+					URI:  "/check",
+				}
+
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+				Expect(outputBuffer).To(test_helpers.Say("Monitor"))
+				Expect(outputBuffer).To(test_helpers.SayLine("URL (1234:/check)"))
+			})
+
+			It("prints out Monitor Custom for other kinds of monitors", func() {
+				sampleAppInfo.Monitor = app_examiner.Monitor{
+					Command:     "/bin/sh",
+					CommandArgs: []string{"-c", "healthcheck", "-p"},
+				}
+
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app"})
+
+				Expect(outputBuffer).To(test_helpers.Say("Monitor"))
+				Expect(outputBuffer).To(test_helpers.SayLine("Command (/bin/sh -c healthcheck -p)"))
+			})
+		})
+
 		It("prints out an unknown rootfs without parsing", func() {
 			sampleAppInfo.RootFS = "wuuuhhhhh"
 
@@ -1020,7 +1074,7 @@ var _ = Describe("CommandFactory", func() {
 
 				fakeClock.IncrementBySeconds(1)
 
-				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(26)))
+				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(27)))
 				Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
 				Eventually(outputBuffer).Should(test_helpers.SayNewLine())
 				roundedTimeSince = roundTime(fakeClock.Now(), time.Unix(0, refreshTime*1e9))
@@ -1060,7 +1114,7 @@ var _ = Describe("CommandFactory", func() {
 
 				fakeClock.IncrementBySeconds(3)
 
-				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(19)))
+				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(20)))
 
 				Consistently(closeChan).ShouldNot(BeClosed())
 			})

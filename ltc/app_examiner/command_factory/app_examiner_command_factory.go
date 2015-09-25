@@ -370,6 +370,7 @@ func (factory *AppExaminerCommandFactory) printAppInfo(writer io.Writer, appInfo
 	fmt.Fprintf(w, "%s\t%s\n", "Ports", strings.Join(portStrings, ","))
 
 	factory.printAppRoutes(w, appInfo)
+	factory.printMonitor(w, appInfo)
 
 	if appInfo.RootFS != "" {
 		if strings.HasPrefix(appInfo.RootFS, "docker://") {
@@ -582,6 +583,21 @@ func colorInstances(appInfo app_examiner.AppInfo) string {
 	}
 
 	return colors.Yellow(instances)
+}
+
+func (factory *AppExaminerCommandFactory) printMonitor(w io.Writer, appInfo app_examiner.AppInfo) {
+
+	switch {
+	case appInfo.Monitor.Port != 0 && appInfo.Monitor.URI != "":
+		fmt.Fprintf(w, "Monitor\tURL (%d:%s)\n", appInfo.Monitor.Port, appInfo.Monitor.URI)
+	case appInfo.Monitor.Port != 0:
+		fmt.Fprintf(w, "Monitor\tPort (%d)\n", appInfo.Monitor.Port)
+	case appInfo.Monitor.Command != "":
+		fmt.Fprintf(w, "Monitor\tCommand (%s %s)\n", appInfo.Monitor.Command, strings.Join(appInfo.Monitor.CommandArgs, " "))
+	default:
+		fmt.Fprintf(w, "Monitor\tNone\n")
+	}
+
 }
 
 func (factory *AppExaminerCommandFactory) printAppRoutes(w io.Writer, appInfo app_examiner.AppInfo) {
