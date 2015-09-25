@@ -1,13 +1,14 @@
 #!/bin/bash
 
-set -x -e
+set -ex
 
-export LATTICE_DIR=$PWD/lattice
-export LATTICE_VERSION=$(git -C $LATTICE_DIR describe --tags --always)
+LATTICE_DIR=$PWD/lattice
+LATTICE_VERSION=$(git -C $LATTICE_DIR describe --tags --always)
+
 if [ "$RELEASE" = true ]; then
-  export LATTICE_VERSION=$(cat $LATTICE_DIR/Version)
+  LATTICE_VERSION=$(cat $LATTICE_DIR/Version)
 fi
 
-export LATTICE_URL="${LATTICE_URL_BASE}/lattice-${LATTICE_VERSION}.tgz"
+LATTICE_URL="${LATTICE_URL_BASE}/lattice-${LATTICE_VERSION}.tgz"
 
 ( echo "LATTICE_URL = '${LATTICE_URL}'"; cat $LATTICE_DIR/Vagrantfile ) > Vagrantfile

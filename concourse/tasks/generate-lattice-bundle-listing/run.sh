@@ -1,14 +1,11 @@
 #!/bin/bash
 
-set -x -e
+set -ex
 
 export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
-
 gem install bundler
 
-OUTPUT=$PWD
-
-cd lattice/concourse/tasks/generate-lattice-bundle-listing
-
-bundler
-bundle exec ./generate-listing.rb 
+pushd lattice/concourse/tasks/generate-lattice-bundle-listing
+  bundle install
+  bundle exec ./generate-listing.rb
+popd

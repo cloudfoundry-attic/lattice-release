@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x -e
+set -ex
 
 LATTICE_DIR=$PWD/lattice
 

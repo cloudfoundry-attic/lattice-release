@@ -1,32 +1,30 @@
 #!/bin/bash
 
-set -x -e
+set -ex
 
-export LATTICE_DIR=$PWD/lattice
+LATTICE_DIR=$PWD/lattice
+LATTICE_VERSION=$(git -C $LATTICE_DIR describe --tags --always)
+DIEGO_VERSION=$(cat $LATTICE_DIR/DIEGO_VERSION)
+
+if [ "$RELEASE" = true ]; then
+  LATTICE_VERSION=$(cat $LATTICE_DIR/Version)
+fi
 
 mkdir -p $PWD/go/src/github.com/cloudfoundry-incubator $LATTICE_DIR/build
 ln -sf $LATTICE_DIR $PWD/go/src/github.com/cloudfoundry-incubator/lattice
 
-export LATTICE_VERSION=$(git -C $LATTICE_DIR describe --tags --always)
-export DIEGO_VERSION=$(cat $LATTICE_DIR/DIEGO_VERSION)
-
-if [ "$RELEASE" = true ]; then
-  export LATTICE_VERSION=$(cat $LATTICE_DIR/Version)
-fi
-
 export GOPATH=$LATTICE_DIR/ltc/Godeps/_workspace:$PWD/go
+export GOARCH=amd64
 
-GOARCH=amd64 GOOS=linux go build \
-    -ldflags \
-        "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $LATTICE_VERSION
-         -X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.diegoVersion $DIEGO_VERSION" \
+GOOS=linux go build \
+    -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $LATTICE_VERSION
+              -X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.diegoVersion $DIEGO_VERSION" \
     -o ltc-linux-amd64 \
     github.com/cloudfoundry-incubator/lattice/ltc
 
-GOARCH=amd64 GOOS=darwin go build \
-    -ldflags \
-        "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $LATTICE_VERSION
-         -X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.diegoVersion $DIEGO_VERSION" \
+GOOS=darwin go build \
+    -ldflags "-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $LATTICE_VERSION
+              -X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.diegoVersion $DIEGO_VERSION" \
     -o ltc-darwin-amd64 \
     github.com/cloudfoundry-incubator/lattice/ltc
 

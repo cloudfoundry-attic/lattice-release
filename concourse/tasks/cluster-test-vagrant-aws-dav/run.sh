@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x -e
+set -ex
 
 SYSTEM_DOMAIN=`cat deploy-vagrant-aws/system_domain`
 

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-set -x -e
+set -ex
 
-export DOT_LATTICE_DIR=$HOME/.lattice
-export LTC_VERSION=v$(cat ltc-tar-build/version)
-export TERRAFORM_TMP_DIR=$PWD/deploy-terraform-gce/terraform-tmp
+DOT_LATTICE_DIR=$HOME/.lattice
+LTC_VERSION=v$(cat ltc-tar-build/version)
+TERRAFORM_TMP_DIR=$PWD/deploy-terraform-gce/terraform-tmp
 
 mkdir -p $DOT_LATTICE_DIR
 

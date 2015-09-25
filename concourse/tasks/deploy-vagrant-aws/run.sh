@@ -1,8 +1,9 @@
 #!/bin/bash
 
-set -x -e
+set -ex
 
-export LATTICE_DIR=$PWD/lattice
+LATTICE_DIR=$PWD/lattice
+
 export AWS_SSH_PRIVATE_KEY_PATH=$PWD/vagrant.pem
 export AWS_INSTANCE_NAME=concourse-vagrant
 

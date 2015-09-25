@@ -1,9 +1,9 @@
 #!/bin/bash
 
-set -x -e
+set -ex
 
-export LATTICE_VERSION=v$(cat lattice-tar-build/version)
-export TERRAFORM_TMP_DIR=$PWD/terraform-tmp
+LATTICE_VERSION=v$(cat lattice-tar-build/version)
+TERRAFORM_TMP_DIR=$PWD/terraform-tmp
 
 mkdir -p $TERRAFORM_TMP_DIR
 

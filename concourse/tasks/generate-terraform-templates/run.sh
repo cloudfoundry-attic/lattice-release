@@ -1,12 +1,12 @@
 #!/bin/bash
 
-set -x -e
+set -ex
 
-export LATTICE_DIR=$PWD/lattice
-export LATTICE_VERSION=$(git -C $LATTICE_DIR describe --tags --always)
+LATTICE_DIR=$PWD/lattice
+LATTICE_VERSION=$(git -C $LATTICE_DIR describe --tags --always)
 
 if [ "$RELEASE" = true ]; then
-  export LATTICE_VERSION=$(cat $LATTICE_DIR/Version)
+  LATTICE_VERSION=$(cat $LATTICE_DIR/Version)
 fi
 
 for PROVIDER in aws digitalocean google openstack; do

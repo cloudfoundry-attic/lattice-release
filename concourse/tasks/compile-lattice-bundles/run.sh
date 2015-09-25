@@ -1,8 +1,8 @@
 #!/bin/bash
 
-set -x -e
+set -ex
 
-export LATTICE_VERSION=v$(cat ltc-tar-build/version)
+LATTICE_VERSION=v$(cat ltc-tar-build/version)
 
 LINUX_DIR=lattice-bundle-${LATTICE_VERSION}-linux
 OSX_DIR=lattice-bundle-${LATTICE_VERSION}-osx
