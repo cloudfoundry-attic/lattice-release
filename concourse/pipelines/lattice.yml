@@ -349,14 +349,15 @@ jobs:
           params:
             from: lattice-tar-build/lattice-v(.*).tgz
             to: /acceptance/backend/
-        - put: lattice-bundle-acceptance
-          params:
-            from: compile-lattice-bundles/lattice-bundle-v(.*)-linux.zip
-            to: /acceptance/
-        - put: lattice-bundle-acceptance
-          params:
-            from: compile-lattice-bundles/lattice-bundle-v(.*)-osx.zip
-            to: /acceptance/
+        - do:
+          - put: lattice-bundle-acceptance
+            params:
+              from: compile-lattice-bundles/lattice-bundle-v(.*)-linux.zip
+              to: /acceptance/
+          - put: lattice-bundle-acceptance
+            params:
+              from: compile-lattice-bundles/lattice-bundle-v(.*)-osx.zip
+              to: /acceptance/
       - put: lattice-tracker
         params:
           comment: lattice-bundle-acceptance/url
