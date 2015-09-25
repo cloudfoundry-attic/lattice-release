@@ -51,7 +51,7 @@ go get github.com/onsi/ginkgo/ginkgo
 go get github.com/maxbrunsfeld/counterfeiter
 
 pushd $GOPATH/src/github.com/cloudfoundry-incubator >/dev/null
-  ln -sfh ../../../../.. lattice
+  ln -sfn ../../../../.. lattice
 
   pushd lattice/cell-helpers >/dev/null
     godep restore

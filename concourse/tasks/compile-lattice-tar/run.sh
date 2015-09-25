@@ -38,7 +38,7 @@ pushd $LATTICE_DIR/build/cf-routing-release
 popd
 
 pushd $LATTICE_DIR/build/diego-release/src/github.com/cloudfoundry-incubator
-  ln -sfh ../../../../.. lattice
+  ln -sfn ../../../../.. lattice
 popd
 
 $LATTICE_DIR/cluster/scripts/compile $LATTICE_DIR/build/lattice-${LATTICE_VERSION}.tgz $LATTICE_VERSION
