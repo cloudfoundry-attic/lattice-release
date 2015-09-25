@@ -12,17 +12,4 @@ fi
 source $LATTICE_DIR/development/env
 
 docker run --rm -a stdout -a stderr -w /lattice -v $LATTICE_DIR:/lattice cloudfoundry/lattice-pipeline \
-  /lattice/cluster/scripts/compile \
-      /lattice/build/lattice-build \
-      /lattice/build/diego-release \
-      /lattice/build/cf-release \
-      /lattice/build/cf-routing-release \
-      /lattice
-
-git -C $LATTICE_DIR describe --tags --always > $LATTICE_DIR/build/lattice-build/common/LATTICE_VERSION
-cat $LATTICE_DIR/DIEGO_VERSION > $LATTICE_DIR/build/lattice-build/common/DIEGO_VERSION
-cat $LATTICE_DIR/CF_VERSION > $LATTICE_DIR/build/lattice-build/common/CF_VERSION
-cat $LATTICE_DIR/ROUTING_VERSION > $LATTICE_DIR/build/lattice-build/common/ROUTING_VERSION
-cat $LATTICE_DIR/STACK_VERSION > $LATTICE_DIR/build/lattice-build/common/STACK_VERSION
-
-tar czf $LATTICE_DIR/lattice.tgz -C $LATTICE_DIR/build lattice-build
+  /lattice/cluster/scripts/compile /lattice/lattice.tgz 
