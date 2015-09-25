@@ -1,11 +1,8 @@
 package serialization
 
 import (
-	"encoding/json"
-
 	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
-	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 func DesiredLRPProtoToResponse(lrp *models.DesiredLRP) receptor.DesiredLRPResponse {
@@ -56,59 +53,71 @@ func desiredLRPModificationTagProtoToResponseModificationTag(modificationTag *mo
 	}
 }
 
-// old code -- delete when BBS server is done
-
-func DesiredLRPFromRequest(req receptor.DesiredLRPCreateRequest) oldmodels.DesiredLRP {
-	return oldmodels.DesiredLRP{
+func DesiredLRPFromRequest(req receptor.DesiredLRPCreateRequest) *models.DesiredLRP {
+	return &models.DesiredLRP{
 		ProcessGuid:          req.ProcessGuid,
 		Domain:               req.Domain,
-		RootFS:               req.RootFS,
-		Instances:            req.Instances,
-		EnvironmentVariables: EnvironmentVariablesToOldModel(req.EnvironmentVariables),
+		RootFs:               req.RootFS,
+		Instances:            int32(req.Instances),
+		EnvironmentVariables: EnvironmentVariablesToModel(req.EnvironmentVariables),
 		Setup:                req.Setup,
 		Action:               req.Action,
 		Monitor:              req.Monitor,
-		StartTimeout:         req.StartTimeout,
-		DiskMB:               req.DiskMB,
-		MemoryMB:             req.MemoryMB,
-		CPUWeight:            req.CPUWeight,
+		StartTimeout:         uint32(req.StartTimeout),
+		DiskMb:               int32(req.DiskMB),
+		MemoryMb:             int32(req.MemoryMB),
+		CpuWeight:            uint32(req.CPUWeight),
 		Privileged:           req.Privileged,
-		Ports:                req.Ports,
+		Ports:                PortsToProto(req.Ports),
 		Routes:               RoutingInfoToRawMessages(req.Routes),
 		LogGuid:              req.LogGuid,
 		LogSource:            req.LogSource,
 		MetricsGuid:          req.MetricsGuid,
 		Annotation:           req.Annotation,
 		EgressRules:          req.EgressRules,
-		ModificationTag:      oldmodels.ModificationTag{},
+		ModificationTag:      &models.ModificationTag{},
 	}
 }
 
-func DesiredLRPUpdateFromRequest(req receptor.DesiredLRPUpdateRequest) oldmodels.DesiredLRPUpdate {
-	return oldmodels.DesiredLRPUpdate{
-		Instances:  req.Instances,
+func DesiredLRPUpdateFromRequest(req receptor.DesiredLRPUpdateRequest) *models.DesiredLRPUpdate {
+	var requestedInstances *int32
+	if req.Instances != nil {
+		requestedInstancesValue := int32(*req.Instances)
+		requestedInstances = &requestedInstancesValue
+	}
+
+	return &models.DesiredLRPUpdate{
+		Instances:  requestedInstances,
 		Routes:     RoutingInfoToRawMessages(req.Routes),
 		Annotation: req.Annotation,
 	}
 }
 
-func RoutingInfoToRawMessages(r receptor.RoutingInfo) map[string]*json.RawMessage {
-	var messages map[string]*json.RawMessage
-
-	if r != nil {
-		messages = map[string]*json.RawMessage{}
-		for key, value := range r {
-			messages[key] = value
-		}
+func RoutingInfoToRawMessages(r receptor.RoutingInfo) *models.Routes {
+	if r == nil {
+		return nil
 	}
 
-	return messages
+	routes := models.Routes{}
+	for key, value := range r {
+		routes[key] = value
+	}
+
+	return &routes
 }
 
 func PortsFromProto(ports []uint32) []uint16 {
 	result := []uint16{}
 	for _, v := range ports {
 		result = append(result, uint16(v))
+	}
+	return result
+}
+
+func PortsToProto(ports []uint16) []uint32 {
+	result := []uint32{}
+	for _, v := range ports {
+		result = append(result, uint32(v))
 	}
 	return result
 }

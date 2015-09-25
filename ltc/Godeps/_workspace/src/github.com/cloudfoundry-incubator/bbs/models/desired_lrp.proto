@@ -8,10 +8,6 @@ import "actions.proto";
 import "security_group.proto";
 import "environment_variables.proto";
 
-message DesiredLRPs {
-  repeated DesiredLRP desired_lrps = 1;
-}
-
 message DesiredLRP {
   optional string process_guid = 1;
   optional string domain = 2;
@@ -39,4 +35,10 @@ message DesiredLRP {
 // helper message for marshalling routes
 message proto_routes {
   map<string, bytes> routes = 1;
+}
+
+message DesiredLRPUpdate {
+  optional int32 instances = 1 [(gogoproto.nullable) = true];
+  optional bytes routes = 2 [(gogoproto.nullable) = true, (gogoproto.customtype) = "Routes"];
+  optional string annotation = 3 [(gogoproto.nullable) = true];
 }

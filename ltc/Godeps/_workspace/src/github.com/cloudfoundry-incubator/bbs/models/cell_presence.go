@@ -1,12 +1,12 @@
 package models
 
-type CellSet map[string]CellPresence
+type CellSet map[string]*CellPresence
 
-func (set CellSet) Add(cell CellPresence) {
+func (set CellSet) Add(cell *CellPresence) {
 	set[cell.CellID] = cell
 }
 
-func (set CellSet) Each(predicate func(cell CellPresence)) {
+func (set CellSet) Each(predicate func(cell *CellPresence)) {
 	for _, cell := range set {
 		predicate(cell)
 	}

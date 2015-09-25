@@ -1,6 +1,8 @@
 package models_test
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -270,6 +272,79 @@ var _ = Describe("DesiredLRP", func() {
 		})
 	})
 
+	Describe("ApplyUpdate", func() {
+		It("updates instances", func() {
+			instances := int32(100)
+			update := &models.DesiredLRPUpdate{Instances: &instances}
+
+			expectedLRP := desiredLRP
+			expectedLRP.Instances = instances
+
+			updatedLRP := desiredLRP.ApplyUpdate(update)
+			Expect(*updatedLRP).To(Equal(expectedLRP))
+			Expect(updatedLRP.Instances).To(Equal(instances))
+		})
+
+		It("allows empty routes to be set", func() {
+			update := &models.DesiredLRPUpdate{
+				Routes: &models.Routes{},
+			}
+
+			expectedLRP := desiredLRP
+			expectedLRP.Routes = &models.Routes{}
+
+			updatedLRP := desiredLRP.ApplyUpdate(update)
+			Expect(*updatedLRP).To(Equal(expectedLRP))
+			Expect(updatedLRP.Routes).To(Equal(&models.Routes{}))
+		})
+
+		It("allows annotation to be set", func() {
+			annotation := "new-annotation"
+			update := &models.DesiredLRPUpdate{
+				Annotation: &annotation,
+			}
+
+			expectedLRP := desiredLRP
+			expectedLRP.Annotation = annotation
+
+			updatedLRP := desiredLRP.ApplyUpdate(update)
+			Expect(*updatedLRP).To(Equal(expectedLRP))
+			Expect(updatedLRP.Annotation).To(Equal(annotation))
+		})
+
+		It("allows empty annotation to be set", func() {
+			emptyAnnotation := ""
+			update := &models.DesiredLRPUpdate{
+				Annotation: &emptyAnnotation,
+			}
+
+			expectedLRP := desiredLRP
+			expectedLRP.Annotation = emptyAnnotation
+
+			updatedLRP := desiredLRP.ApplyUpdate(update)
+			Expect(*updatedLRP).To(Equal(expectedLRP))
+			Expect(updatedLRP.Annotation).To(Equal(emptyAnnotation))
+		})
+
+		It("updates routes", func() {
+			rawMessage := json.RawMessage([]byte(`{"port": 8080,"hosts":["new-route-1","new-route-2"]}`))
+			update := &models.DesiredLRPUpdate{
+				Routes: &models.Routes{
+					"router": &rawMessage,
+				},
+			}
+
+			expectedLRP := desiredLRP
+			expectedLRP.Routes = &models.Routes{
+				"router": &rawMessage,
+			}
+
+			updatedLRP := desiredLRP.ApplyUpdate(update)
+			Expect(*updatedLRP).To(Equal(expectedLRP))
+			Expect(updatedLRP.Routes).To(Equal(&models.Routes{"router": &rawMessage}))
+		})
+	})
+
 	Describe("Validate", func() {
 		var assertDesiredLRPValidationFailsWithMessage = func(lrp models.DesiredLRP, substring string) {
 			validationErr := lrp.Validate()
@@ -338,6 +413,11 @@ var _ = Describe("DesiredLRP", func() {
 			assertDesiredLRPValidationFailsWithMessage(desiredLRP, "action")
 		})
 
+		It("requires an action with an inner action", func() {
+			desiredLRP.Action = &models.Action{}
+			assertDesiredLRPValidationFailsWithMessage(desiredLRP, "action")
+		})
+
 		It("requires a valid action", func() {
 			desiredLRP.Action = &models.Action{
 				UploadAction: &models.UploadAction{
@@ -356,6 +436,11 @@ var _ = Describe("DesiredLRP", func() {
 			assertDesiredLRPValidationFailsWithMessage(desiredLRP, "to")
 		})
 
+		It("requires a setup action with an inner action", func() {
+			desiredLRP.Setup = &models.Action{}
+			assertDesiredLRPValidationFailsWithMessage(desiredLRP, "setup")
+		})
+
 		It("requires a valid monitor action if specified", func() {
 			desiredLRP.Monitor = &models.Action{
 				UploadAction: &models.UploadAction{
@@ -365,9 +450,19 @@ var _ = Describe("DesiredLRP", func() {
 			assertDesiredLRPValidationFailsWithMessage(desiredLRP, "to")
 		})
 
+		It("requires a monitor action with an inner action", func() {
+			desiredLRP.Monitor = &models.Action{}
+			assertDesiredLRPValidationFailsWithMessage(desiredLRP, "monitor")
+		})
+
 		It("requires a valid CPU weight", func() {
 			desiredLRP.CpuWeight = 101
 			assertDesiredLRPValidationFailsWithMessage(desiredLRP, "cpu_weight")
+		})
+
+		It("limits the annotation length", func() {
+			desiredLRP.Annotation = randStringBytes(50000)
+			assertDesiredLRPValidationFailsWithMessage(desiredLRP, "annotation")
 		})
 
 		Context("when security group is present", func() {
@@ -389,3 +484,51 @@ var _ = Describe("DesiredLRP", func() {
 		})
 	})
 })
+
+var _ = Describe("DesiredLRPUpdate", func() {
+	var desiredLRPUpdate models.DesiredLRPUpdate
+
+	BeforeEach(func() {
+		two := int32(2)
+		someText := "some-text"
+		desiredLRPUpdate.Instances = &two
+		desiredLRPUpdate.Annotation = &someText
+	})
+
+	Describe("Validate", func() {
+		var assertDesiredLRPValidationFailsWithMessage = func(lrp models.DesiredLRPUpdate, substring string) {
+			validationErr := lrp.Validate()
+			Expect(validationErr).To(HaveOccurred())
+			Expect(validationErr.Error()).To(ContainSubstring(substring))
+		}
+
+		It("requires a positive nonzero number of instances", func() {
+			minusOne := int32(-1)
+			desiredLRPUpdate.Instances = &minusOne
+			assertDesiredLRPValidationFailsWithMessage(desiredLRPUpdate, "instances")
+
+			zero := int32(0)
+			desiredLRPUpdate.Instances = &zero
+			validationErr := desiredLRPUpdate.Validate()
+			Expect(validationErr).NotTo(HaveOccurred())
+
+			one := int32(1)
+			desiredLRPUpdate.Instances = &one
+			validationErr = desiredLRPUpdate.Validate()
+			Expect(validationErr).NotTo(HaveOccurred())
+		})
+
+		It("limits the annotation length", func() {
+			largeString := randStringBytes(50000)
+			desiredLRPUpdate.Annotation = &largeString
+			assertDesiredLRPValidationFailsWithMessage(desiredLRPUpdate, "annotation")
+		})
+	})
+})
+
+func randStringBytes(n int) string {
+	rb := make([]byte, n)
+	rand.Read(rb)
+	rs := base64.URLEncoding.EncodeToString(rb)
+	return rs
+}

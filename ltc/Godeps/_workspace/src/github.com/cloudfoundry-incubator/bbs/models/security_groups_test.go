@@ -9,16 +9,6 @@ import (
 var _ = Describe("SecurityGroupRule", func() {
 	var rule models.SecurityGroupRule
 
-	rulePayload := `{
-		"protocol": "tcp",
-		"destinations": ["1.2.3.4/16"],
-		"port_range": {
-			"start": 1,
-			"end": 1024
-		},
-		"log": false
-	}`
-
 	BeforeEach(func() {
 		rule = models.SecurityGroupRule{
 			Protocol:     models.TCPProtocol,
@@ -29,30 +19,6 @@ var _ = Describe("SecurityGroupRule", func() {
 			},
 			Log: false,
 		}
-	})
-
-	Describe("To JSON", func() {
-		It("should JSONify a rule", func() {
-			json, err := models.ToJSON(&rule)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(json)).To(MatchJSON(rulePayload))
-		})
-
-		It("should JSONify icmp info", func() {
-			icmpRule := models.SecurityGroupRule{
-				Protocol:     models.ICMPProtocol,
-				Destinations: []string{"1.2.3.4/16"},
-				IcmpInfo: &models.ICMPInfo{
-					Type: 3,
-					Code: 2,
-				},
-				Log: false,
-			}
-
-			json, err := models.ToJSON(&icmpRule)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(json)).To(MatchJSON(`{"protocol": "icmp", "destinations": ["1.2.3.4/16"], "icmp_info": {"type": 3, "code": 2}, "log":false }`))
-		})
 	})
 
 	Describe("Validation", func() {

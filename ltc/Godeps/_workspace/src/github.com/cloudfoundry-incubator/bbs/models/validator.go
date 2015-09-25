@@ -1,10 +1,8 @@
 package models
 
-import "bytes"
-
-type Validator interface {
-	Validate() error
-}
+import (
+	"bytes"
+)
 
 type ValidationError []error
 

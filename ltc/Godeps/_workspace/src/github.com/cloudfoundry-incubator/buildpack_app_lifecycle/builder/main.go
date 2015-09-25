@@ -26,7 +26,7 @@ func main() {
 	err := runner.Run()
 	if err != nil {
 		println(err.Error())
-		os.Exit(1)
+		os.Exit(buildpack_app_lifecycle.ExitCodeFromError(err))
 	}
 
 	os.Exit(0)

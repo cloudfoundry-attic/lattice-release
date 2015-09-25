@@ -3,9 +3,9 @@ package serialization_test
 import (
 	"encoding/json"
 
+	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -25,11 +25,11 @@ var _ = Describe("DesiredLRP Serialization", func() {
 
 	Describe("DesiredLRPFromRequest", func() {
 		var request receptor.DesiredLRPCreateRequest
-		var desiredLRP models.DesiredLRP
-		var securityRule models.SecurityGroupRule
+		var desiredLRP *models.DesiredLRP
+		var securityRule *models.SecurityGroupRule
 
 		BeforeEach(func() {
-			securityRule = models.SecurityGroupRule{
+			securityRule = &models.SecurityGroupRule{
 				Protocol:     "tcp",
 				Destinations: []string{"0.0.0.0/0"},
 				PortRange: &models.PortRange{
@@ -44,16 +44,16 @@ var _ = Describe("DesiredLRP Serialization", func() {
 				Annotation:  "foo",
 				Instances:   1,
 				Ports:       []uint16{2345, 6789},
-				Action: &models.RunAction{
+				Action: models.WrapAction(&models.RunAction{
 					User: "me",
 					Path: "the-path",
-				},
+				}),
 				StartTimeout: 4,
 				Privileged:   true,
 				LogGuid:      "log-guid-0",
 				LogSource:    "log-source-name-0",
 				MetricsGuid:  "metrics-guid-0",
-				EgressRules: []models.SecurityGroupRule{
+				EgressRules: []*models.SecurityGroupRule{
 					securityRule,
 				},
 				Routes: routingInfo,
@@ -66,22 +66,22 @@ var _ = Describe("DesiredLRP Serialization", func() {
 		It("translates the request into a DesiredLRP model, preserving attributes", func() {
 			Expect(desiredLRP.ProcessGuid).To(Equal("the-process-guid"))
 			Expect(desiredLRP.Domain).To(Equal("the-domain"))
-			Expect(desiredLRP.RootFS).To(Equal("the-rootfs"))
+			Expect(desiredLRP.RootFs).To(Equal("the-rootfs"))
 			Expect(desiredLRP.Annotation).To(Equal("foo"))
-			Expect(desiredLRP.StartTimeout).To(Equal(uint(4)))
+			Expect(desiredLRP.StartTimeout).To(Equal(uint32(4)))
 			Expect(desiredLRP.Ports).To(HaveLen(2))
-			Expect(desiredLRP.Ports[0]).To(Equal(uint16(2345)))
-			Expect(desiredLRP.Ports[1]).To(Equal(uint16(6789)))
+			Expect(desiredLRP.Ports[0]).To(Equal(uint32(2345)))
+			Expect(desiredLRP.Ports[1]).To(Equal(uint32(6789)))
 			Expect(desiredLRP.Privileged).To(BeTrue())
 			Expect(desiredLRP.EgressRules).To(HaveLen(1))
 			Expect(desiredLRP.EgressRules[0].Protocol).To(Equal(securityRule.Protocol))
 			Expect(desiredLRP.EgressRules[0].PortRange).To(Equal(securityRule.PortRange))
 			Expect(desiredLRP.EgressRules[0].Destinations).To(Equal(securityRule.Destinations))
-			Expect(desiredLRP.Routes).To(HaveLen(1))
+			Expect(*desiredLRP.Routes).To(HaveLen(1))
 			Expect(desiredLRP.LogGuid).To(Equal("log-guid-0"))
 			Expect(desiredLRP.LogSource).To(Equal("log-source-name-0"))
 			Expect(desiredLRP.MetricsGuid).To(Equal("metrics-guid-0"))
-			Expect([]byte(*desiredLRP.Routes["cf-router"])).To(MatchJSON(`[{"port": 1,"hostnames": ["route-1", "route-2"]}]`))
+			Expect([]byte(*(*desiredLRP.Routes)["cf-router"])).To(MatchJSON(`[{"port": 1,"hostnames": ["route-1", "route-2"]}]`))
 		})
 	})
 

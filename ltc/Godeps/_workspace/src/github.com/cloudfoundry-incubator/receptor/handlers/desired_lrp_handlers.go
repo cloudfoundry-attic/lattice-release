@@ -10,23 +10,18 @@ import (
 	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
-	legacybbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
-	"github.com/cloudfoundry-incubator/runtime-schema/bbs/bbserrors"
-	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-golang/lager"
 )
 
 type DesiredLRPHandler struct {
-	bbs       bbs.Client
-	legacyBBS legacybbs.ReceptorBBS
-	logger    lager.Logger
+	bbs    bbs.Client
+	logger lager.Logger
 }
 
-func NewDesiredLRPHandler(bbs bbs.Client, legacyBBS legacybbs.ReceptorBBS, logger lager.Logger) *DesiredLRPHandler {
+func NewDesiredLRPHandler(bbs bbs.Client, logger lager.Logger) *DesiredLRPHandler {
 	return &DesiredLRPHandler{
-		bbs:       bbs,
-		legacyBBS: legacyBBS,
-		logger:    logger.Session("desired-lrp-handler"),
+		bbs:    bbs,
+		logger: logger.Session("desired-lrp-handler"),
 	}
 }
 
@@ -43,15 +38,16 @@ func (h *DesiredLRPHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	desiredLRP := serialization.DesiredLRPFromRequest(desireLRPRequest)
 
-	err = h.legacyBBS.DesireLRP(log, desiredLRP)
+	err = h.bbs.DesireLRP(desiredLRP)
 	if err != nil {
-		if _, ok := err.(oldmodels.ValidationError); ok {
+		bbsError := models.ConvertError(err)
+		switch bbsError.Type {
+		case models.Error_InvalidRequest:
 			log.Error("lrp-request-invalid", err)
 			writeBadRequestResponse(w, receptor.InvalidLRP, err)
 			return
-		}
-
-		if err == bbserrors.ErrStoreResourceExists {
+		case models.Error_ResourceExists:
+			log.Error("lrp-request-invalid", err)
 			writeDesiredLRPAlreadyExistsResponse(w, desiredLRP.ProcessGuid)
 			return
 		}
@@ -78,12 +74,13 @@ func (h *DesiredLRPHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	desiredLRP, err := h.bbs.DesiredLRPByProcessGuid(processGuid)
-	if e, ok := err.(*models.Error); ok && e.Equal(models.ErrResourceNotFound) {
-		writeDesiredLRPNotFoundResponse(w, processGuid)
-		return
-	}
-
 	if err != nil {
+		bbsError := models.ConvertError(err)
+		if bbsError.Type == models.Error_ResourceNotFound {
+			writeDesiredLRPNotFoundResponse(w, processGuid)
+			return
+		}
+
 		logger.Error("unknown-error", err)
 		writeUnknownErrorResponse(w, err)
 		return
@@ -118,8 +115,9 @@ func (h *DesiredLRPHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	updateAttempts := 0
 	for updateAttempts < 2 {
-		err = h.legacyBBS.UpdateDesiredLRP(logger, processGuid, update)
-		if err != bbserrors.ErrStoreComparisonFailed {
+		err = h.bbs.UpdateDesiredLRP(processGuid, update)
+		bbsError := models.ConvertError(err)
+		if bbsError == nil || bbsError.Type != models.Error_ResourceConflict {
 			// we only want to retry on compare and swap errors
 			break
 		}
@@ -128,22 +126,22 @@ func (h *DesiredLRPHandler) Update(w http.ResponseWriter, r *http.Request) {
 		logger.Error("failed-to-compare-and-swap", err, lager.Data{"Attempt": updateAttempts})
 	}
 
-	if err == bbserrors.ErrStoreResourceNotFound {
-		logger.Error("desired-lrp-not-found", err)
-		writeDesiredLRPNotFoundResponse(w, processGuid)
-		return
-	}
-
-	if err == bbserrors.ErrStoreComparisonFailed {
-		logger.Error("failed-to-compare-and-swap", err)
-		writeCompareAndSwapFailedResponse(w, processGuid)
-		return
-	}
-
 	if err != nil {
-		logger.Error("unknown-error", err)
-		writeUnknownErrorResponse(w, err)
-		return
+		bbsError := models.ConvertError(err)
+		switch bbsError.Type {
+		case models.Error_ResourceNotFound:
+			logger.Error("desired-lrp-not-found", err)
+			writeDesiredLRPNotFoundResponse(w, processGuid)
+			return
+		case models.Error_ResourceConflict:
+			logger.Error("failed-to-compare-and-swap", err)
+			writeCompareAndSwapFailedResponse(w, processGuid)
+			return
+		default:
+			logger.Error("unknown-error", err)
+			writeUnknownErrorResponse(w, err)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusNoContent)
@@ -162,13 +160,14 @@ func (h *DesiredLRPHandler) Delete(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err := h.legacyBBS.RemoveDesiredLRPByProcessGuid(logger, processGuid)
-	if err == bbserrors.ErrStoreResourceNotFound {
-		writeDesiredLRPNotFoundResponse(w, processGuid)
-		return
-	}
-
+	err := h.bbs.RemoveDesiredLRP(processGuid)
 	if err != nil {
+		bbsError := models.ConvertError(err)
+		if bbsError.Type == models.Error_ResourceNotFound {
+			writeDesiredLRPNotFoundResponse(w, processGuid)
+			return
+		}
+
 		logger.Error("unknown-error", err)
 		writeUnknownErrorResponse(w, err)
 		return

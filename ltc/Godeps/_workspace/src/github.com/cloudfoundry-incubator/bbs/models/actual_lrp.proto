@@ -42,7 +42,3 @@ message ActualLRP {
   optional int64 since = 8;
   optional ModificationTag modification_tag = 9 [(gogoproto.nullable) = false];
 }
-
-message ActualLRPGroups {
-  repeated ActualLRPGroup actual_lrp_groups = 1;
-}

@@ -125,32 +125,4 @@ var _ = Describe("CellPresence", func() {
 			})
 		})
 	})
-
-	Describe("ToJSON", func() {
-		It("should JSONify", func() {
-			json, err := models.ToJSON(&cellPresence)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(json)).To(MatchJSON(payload))
-		})
-	})
-
-	Describe("FromJSON", func() {
-		It("returns a CellPresence with correct fields", func() {
-			decodedCellPresence := &models.CellPresence{}
-			err := models.FromJSON([]byte(payload), decodedCellPresence)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(decodedCellPresence).To(Equal(&cellPresence))
-		})
-
-		Context("with an invalid payload", func() {
-			It("returns the error", func() {
-				payload = "aliens lol"
-				decodedCellPresence := &models.CellPresence{}
-				err := models.FromJSON([]byte(payload), decodedCellPresence)
-
-				Expect(err).To(HaveOccurred())
-			})
-		})
-	})
 })

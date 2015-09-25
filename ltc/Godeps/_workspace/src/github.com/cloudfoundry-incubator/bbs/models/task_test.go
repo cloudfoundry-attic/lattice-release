@@ -5,15 +5,12 @@ import (
 	"time"
 
 	"github.com/cloudfoundry-incubator/bbs/models"
-	"github.com/cloudfoundry-incubator/bbs/models/internal/model_helpers"
-	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Task", func() {
 	var taskPayload string
-	var oldTask oldmodels.Task
 	var task models.Task
 
 	BeforeEach(func() {
@@ -50,10 +47,10 @@ var _ = Describe("Task", func() {
 		"created_at": 1393371971000000000,
 		"updated_at": 1393371971000000010,
 		"first_completed_at": 1393371971000000030,
-		"state": 1,
+		"state": "Pending",
 		"annotation": "[{\"anything\": \"you want!\"}]... dude",
 		"egress_rules": [
-		  {
+			{
 				"protocol": "tcp",
 				"destinations": ["0.0.0.0/0"],
 				"port_range": {
@@ -62,17 +59,15 @@ var _ = Describe("Task", func() {
 				},
 				"log": true
 			},
-		  {
+			{
 				"protocol": "udp",
 				"destinations": ["8.8.0.0/16"],
 				"ports": [53],
 				"log": false
 			}
 		],
-		"completion_callback_url":{"Scheme":"http","Opaque":"","User":{},"Host":"a.b.c","Path":"/d/e/f","RawQuery":"","Fragment":""}
+		"completion_callback_url":"http://@a.b.c/d/e/f"
 	}`
-		err := oldmodels.FromJSON([]byte(taskPayload), &oldTask)
-		Expect(err).NotTo(HaveOccurred())
 
 		task = models.Task{
 			TaskDefinition: &models.TaskDefinition{
@@ -312,91 +307,5 @@ var _ = Describe("Task", func() {
 		} {
 			testValidatorErrorCase(testCase)
 		}
-	})
-
-	Describe("Marshal", func() {
-		It("should JSONify", func() {
-			json, err := models.ToJSON(&task)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(json)).To(MatchJSON(taskPayload))
-		})
-	})
-
-	Describe("Unmarshal", func() {
-		It("returns a Task with correct fields", func() {
-			decodedTask := &models.Task{}
-			err := models.FromJSON([]byte(taskPayload), decodedTask)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(decodedTask).To(Equal(&task))
-		})
-
-		Context("with an invalid payload", func() {
-			It("returns the error", func() {
-				decodedTask := &models.Task{}
-				err := models.FromJSON([]byte("aliens lol"), decodedTask)
-				Expect(err).To(HaveOccurred())
-			})
-		})
-	})
-
-	Describe("DesireTaskRequest", func() {
-		Describe("Validate", func() {
-			var request models.DesireTaskRequest
-
-			BeforeEach(func() {
-				request = models.DesireTaskRequest{
-					TaskGuid:       "t-guid",
-					Domain:         "domain",
-					TaskDefinition: model_helpers.NewValidTaskDefinition(),
-				}
-			})
-
-			Context("when valid", func() {
-				It("returns nil", func() {
-					Expect(request.Validate()).To(BeNil())
-				})
-			})
-
-			Context("when the TaskGuid is blank", func() {
-				BeforeEach(func() {
-					request.TaskGuid = ""
-				})
-
-				It("returns a validation error", func() {
-					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"task_guid"}))
-				})
-			})
-
-			Context("when the domain is blank", func() {
-				BeforeEach(func() {
-					request.Domain = ""
-				})
-
-				It("returns a validation error", func() {
-					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"domain"}))
-				})
-			})
-
-			Context("when the TaskDefinition is nil", func() {
-				BeforeEach(func() {
-					request.TaskDefinition = nil
-				})
-
-				It("returns a validation error", func() {
-					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"task_definition"}))
-				})
-			})
-
-			Context("when the TaskDefinition has an invalid field", func() {
-				BeforeEach(func() {
-					request.TaskDefinition.RootFs = ""
-				})
-
-				It("bubbles up the appropriate invalid field error", func() {
-					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"rootfs"}))
-				})
-			})
-		})
 	})
 })

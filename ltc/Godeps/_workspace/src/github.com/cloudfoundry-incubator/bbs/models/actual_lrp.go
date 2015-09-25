@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/cloudfoundry-incubator/bbs/format"
 )
 
 const (
@@ -65,6 +67,29 @@ func NewPortMapping(hostPort, containerPort uint32) *PortMapping {
 
 func (key ActualLRPInstanceKey) Empty() bool {
 	return key.InstanceGuid == "" && key.CellId == ""
+}
+
+const StaleUnclaimedActualLRPDuration = 30 * time.Second
+
+func (actual ActualLRP) ShouldStartUnclaimed(now time.Time) bool {
+	if actual.State != ActualLRPStateUnclaimed {
+		return false
+	}
+
+	if now.Sub(time.Unix(0, actual.Since)) > StaleUnclaimedActualLRPDuration {
+		return true
+	}
+
+	return false
+}
+
+func (actual ActualLRP) CellIsMissing(cellSet CellSet) bool {
+	if actual.State == ActualLRPStateUnclaimed ||
+		actual.State == ActualLRPStateCrashed {
+		return false
+	}
+
+	return !cellSet.HasCellID(actual.CellId)
 }
 
 func (actual ActualLRP) ShouldRestartImmediately(calc RestartCalculator) bool {
@@ -152,6 +177,14 @@ func NewRunningActualLRP(lrpKey ActualLRPKey, instanceKey ActualLRPInstanceKey, 
 		State:                ActualLRPStateRunning,
 		Since:                since,
 	}
+}
+
+func (*ActualLRP) Version() format.Version {
+	return format.V0
+}
+
+func (*ActualLRP) MigrateFromVersion(v format.Version) error {
+	return nil
 }
 
 func (actual ActualLRP) Validate() error {

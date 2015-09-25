@@ -8,6 +8,128 @@ import (
 )
 
 var _ = Describe("ActualLRP Requests", func() {
+	Describe("ActualLRPGroupsRequest", func() {
+		Describe("Validate", func() {
+			var request models.ActualLRPGroupsRequest
+
+			BeforeEach(func() {
+				request = models.ActualLRPGroupsRequest{}
+			})
+
+			Context("when valid", func() {
+				It("returns nil", func() {
+					Expect(request.Validate()).To(BeNil())
+				})
+			})
+		})
+	})
+
+	Describe("ActualLRPGroupsByProcessGuidRequest", func() {
+		Describe("Validate", func() {
+			var request models.ActualLRPGroupsByProcessGuidRequest
+
+			BeforeEach(func() {
+				request = models.ActualLRPGroupsByProcessGuidRequest{
+					ProcessGuid: "something",
+				}
+			})
+
+			Context("when valid", func() {
+				It("returns nil", func() {
+					Expect(request.Validate()).To(BeNil())
+				})
+			})
+
+			Context("when the ProcessGuid is blank", func() {
+				BeforeEach(func() {
+					request.ProcessGuid = ""
+				})
+
+				It("returns a validation error", func() {
+					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"process_guid"}))
+				})
+			})
+		})
+	})
+
+	Describe("ActualLRPGroupByProcessGuidAndIndexRequest", func() {
+		Describe("Validate", func() {
+			var request models.ActualLRPGroupByProcessGuidAndIndexRequest
+
+			BeforeEach(func() {
+				request = models.ActualLRPGroupByProcessGuidAndIndexRequest{
+					ProcessGuid: "something",
+					Index:       5,
+				}
+			})
+
+			Context("when valid", func() {
+				It("returns nil", func() {
+					Expect(request.Validate()).To(BeNil())
+				})
+			})
+
+			Context("when the ProcessGuid is blank", func() {
+				BeforeEach(func() {
+					request.ProcessGuid = ""
+				})
+
+				It("returns a validation error", func() {
+					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"process_guid"}))
+				})
+			})
+
+			Context("when the Index is negative", func() {
+				BeforeEach(func() {
+					request.Index = -1
+				})
+
+				It("returns a validation error", func() {
+					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"index"}))
+				})
+			})
+		})
+	})
+
+	Describe("RemoveActualLRPRequest", func() {
+		Describe("Validate", func() {
+			var request models.RemoveActualLRPRequest
+
+			BeforeEach(func() {
+				request = models.RemoveActualLRPRequest{
+					ProcessGuid: "something",
+					Index:       5,
+				}
+			})
+
+			Context("when valid", func() {
+				It("returns nil", func() {
+					Expect(request.Validate()).To(BeNil())
+				})
+			})
+
+			Context("when the ProcessGuid is blank", func() {
+				BeforeEach(func() {
+					request.ProcessGuid = ""
+				})
+
+				It("returns a validation error", func() {
+					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"process_guid"}))
+				})
+			})
+
+			Context("when the Index is negative", func() {
+				BeforeEach(func() {
+					request.Index = -1
+				})
+
+				It("returns a validation error", func() {
+					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"index"}))
+				})
+			})
+		})
+	})
+
 	Describe("ClaimActualLRPRequest", func() {
 		Describe("Validate", func() {
 			var request models.ClaimActualLRPRequest

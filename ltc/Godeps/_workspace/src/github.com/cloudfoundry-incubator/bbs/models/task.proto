@@ -9,10 +9,6 @@ import "security_group.proto";
 
 option (gogoproto.goproto_enum_prefix_all) = true;
 
-message Tasks {
-  repeated Task tasks = 1;
-}
-
 message TaskDefinition {
   optional string root_fs = 1 [(gogoproto.jsontag) = "rootfs"];
   repeated EnvironmentVariable environment_variables = 2 [(gogoproto.jsontag) = "env,omitempty"];
@@ -56,42 +52,3 @@ message Task {
   optional string failure_reason = 11;
 }
 
-message DesireTaskRequest {
-  optional TaskDefinition task_definition = 1 [(gogoproto.jsontag) = "task_definition"];
-  optional string task_guid = 2;
-  optional string domain = 3;
-}
-
-message StartTaskRequest {
-  optional string task_guid = 1;
-  optional string cell_id = 2;
-}
-
-message StartTaskResponse {
-  optional bool should_start = 1;
-}
-
-message FailTaskRequest {
-  optional string task_guid = 1;
-  optional string failure_reason = 2;
-}
-
-message TaskGuidRequest {
-  optional string task_guid = 1;
-}
-
-message CompleteTaskRequest {
-  optional string task_guid = 1;
-  optional string cell_id = 2;
-  optional bool failed = 3;
-  optional string failure_reason = 4;
-  optional string result = 5;
-}
-
-message TaskCallbackResponse {
-  optional string task_guid = 1;
-  optional bool failed = 2;
-  optional string failure_reason = 3;
-  optional string result = 4;
-  optional string annotation = 5 [(gogoproto.jsontag) = "annotation,omitempty"];
-}

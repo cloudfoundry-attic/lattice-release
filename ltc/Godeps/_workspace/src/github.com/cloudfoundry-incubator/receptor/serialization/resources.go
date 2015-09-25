@@ -6,18 +6,6 @@ import (
 	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
-func EnvironmentVariablesToOldModel(envVars []receptor.EnvironmentVariable) []oldmodels.EnvironmentVariable {
-	if envVars == nil {
-		return nil
-	}
-	out := make([]oldmodels.EnvironmentVariable, len(envVars))
-	for i, val := range envVars {
-		out[i].Name = val.Name
-		out[i].Value = val.Value
-	}
-	return out
-}
-
 func EnvironmentVariablesToModel(envVars []receptor.EnvironmentVariable) []*models.EnvironmentVariable {
 	if envVars == nil {
 		return nil

@@ -9,8 +9,8 @@ import "error.proto";
 option (gogoproto.equal_all) = false;
 
 message EvacuationResponse {
-  optional bool keep_container = 1;
-  optional Error error = 2;
+  optional Error error = 1;
+  optional bool keep_container = 2;
 }
 
 message EvacuateClaimedActualLRPRequest {
@@ -39,4 +39,8 @@ message EvacuateCrashedActualLRPRequest {
 message RemoveEvacuatingActualLRPRequest {
   optional ActualLRPKey actual_lrp_key = 1;
   optional ActualLRPInstanceKey actual_lrp_instance_key = 2;
+}
+
+message RemoveEvacuatingActualLRPResponse {
+  optional Error error = 1;
 }

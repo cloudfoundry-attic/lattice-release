@@ -4,6 +4,9 @@ This reference does not cover the JSON payload supplied to each endpoint.  That 
 
 We recommend using the [Receptor http client](https://github.com/cloudfoundry-incubator/receptor) to communicate with Diego's API.  The methods on the client are self-explanatory.
 
+When making a POST or a PUT request to the Receptor HTTP API with a JSON payload, clients should include a `Content-Type: application/json` header in the request. If a different header is present, it may interfere with the correct processing of the request.
+
+
 ## Creating DesiredLRPs
 
 To create a DesiredLRP submit a valid [`DesiredLRPCreateRequest`](lrps.md#describing-desiredlrps) via:
@@ -12,7 +15,7 @@ To create a DesiredLRP submit a valid [`DesiredLRPCreateRequest`](lrps.md#descri
 POST /v1/desired_lrps
 ```
 
-Diego responds by spinning up ActualLRPs
+Diego responds by creating ActualLRPs for the new DesiredLRP.
 
 ## Modifying DesiredLRPs
 

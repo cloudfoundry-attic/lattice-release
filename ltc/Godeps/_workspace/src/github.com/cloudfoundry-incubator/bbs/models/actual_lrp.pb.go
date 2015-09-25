@@ -9,15 +9,14 @@ import math "math"
 
 // discarding unused import gogoproto "github.com/gogo/protobuf/gogoproto"
 
-import io "io"
 import fmt "fmt"
-
 import strings "strings"
-import reflect "reflect"
-
 import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
 import sort "sort"
 import strconv "strconv"
+import reflect "reflect"
+
+import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -198,1421 +197,6 @@ func (m *ActualLRP) GetModificationTag() ModificationTag {
 	return ModificationTag{}
 }
 
-type ActualLRPGroups struct {
-	ActualLrpGroups []*ActualLRPGroup `protobuf:"bytes,1,rep,name=actual_lrp_groups" json:"actual_lrp_groups,omitempty"`
-}
-
-func (m *ActualLRPGroups) Reset()      { *m = ActualLRPGroups{} }
-func (*ActualLRPGroups) ProtoMessage() {}
-
-func (m *ActualLRPGroups) GetActualLrpGroups() []*ActualLRPGroup {
-	if m != nil {
-		return m.ActualLrpGroups
-	}
-	return nil
-}
-
-func (m *ActualLRPGroup) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Instance", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Instance == nil {
-				m.Instance = &ActualLRP{}
-			}
-			if err := m.Instance.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Evacuating", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Evacuating == nil {
-				m.Evacuating = &ActualLRP{}
-			}
-			if err := m.Evacuating.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
-			skippy, err := skipActualLrp(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	return nil
-}
-func (m *PortMapping) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ContainerPort", wireType)
-			}
-			m.ContainerPort = 0
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				m.ContainerPort |= (uint32(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field HostPort", wireType)
-			}
-			m.HostPort = 0
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				m.HostPort |= (uint32(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
-			skippy, err := skipActualLrp(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	return nil
-}
-func (m *ActualLRPKey) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProcessGuid", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ProcessGuid = string(data[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Index", wireType)
-			}
-			m.Index = 0
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				m.Index |= (int32(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Domain", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Domain = string(data[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
-			skippy, err := skipActualLrp(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	return nil
-}
-func (m *ActualLRPInstanceKey) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field InstanceGuid", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.InstanceGuid = string(data[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CellId", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.CellId = string(data[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
-			skippy, err := skipActualLrp(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	return nil
-}
-func (m *ActualLRPNetInfo) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Address = string(data[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Ports", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Ports = append(m.Ports, &PortMapping{})
-			if err := m.Ports[len(m.Ports)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
-			skippy, err := skipActualLrp(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	return nil
-}
-func (m *ActualLRP) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ActualLRPKey", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.ActualLRPKey.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ActualLRPInstanceKey", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.ActualLRPInstanceKey.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ActualLRPNetInfo", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.ActualLRPNetInfo.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CrashCount", wireType)
-			}
-			m.CrashCount = 0
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				m.CrashCount |= (int32(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CrashReason", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.CrashReason = string(data[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.State = string(data[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field PlacementError", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + int(stringLen)
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.PlacementError = string(data[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 8:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Since", wireType)
-			}
-			m.Since = 0
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				m.Since |= (int64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 9:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ModificationTag", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.ModificationTag.Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
-			skippy, err := skipActualLrp(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	return nil
-}
-func (m *ActualLRPGroups) Unmarshal(data []byte) error {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ActualLrpGroups", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ActualLrpGroups = append(m.ActualLrpGroups, &ActualLRPGroup{})
-			if err := m.ActualLrpGroups[len(m.ActualLrpGroups)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			var sizeOfWire int
-			for {
-				sizeOfWire++
-				wire >>= 7
-				if wire == 0 {
-					break
-				}
-			}
-			iNdEx -= sizeOfWire
-			skippy, err := skipActualLrp(data[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	return nil
-}
-func skipActualLrp(data []byte) (n int, err error) {
-	l := len(data)
-	iNdEx := 0
-	for iNdEx < l {
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if iNdEx >= l {
-				return 0, io.ErrUnexpectedEOF
-			}
-			b := data[iNdEx]
-			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		wireType := int(wire & 0x7)
-		switch wireType {
-		case 0:
-			for {
-				if iNdEx >= l {
-					return 0, io.ErrUnexpectedEOF
-				}
-				iNdEx++
-				if data[iNdEx-1] < 0x80 {
-					break
-				}
-			}
-			return iNdEx, nil
-		case 1:
-			iNdEx += 8
-			return iNdEx, nil
-		case 2:
-			var length int
-			for shift := uint(0); ; shift += 7 {
-				if iNdEx >= l {
-					return 0, io.ErrUnexpectedEOF
-				}
-				b := data[iNdEx]
-				iNdEx++
-				length |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			iNdEx += length
-			return iNdEx, nil
-		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := data[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipActualLrp(data[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-			}
-			return iNdEx, nil
-		case 4:
-			return iNdEx, nil
-		case 5:
-			iNdEx += 4
-			return iNdEx, nil
-		default:
-			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
-		}
-	}
-	panic("unreachable")
-}
-func (this *ActualLRPGroup) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&ActualLRPGroup{`,
-		`Instance:` + strings.Replace(fmt.Sprintf("%v", this.Instance), "ActualLRP", "ActualLRP", 1) + `,`,
-		`Evacuating:` + strings.Replace(fmt.Sprintf("%v", this.Evacuating), "ActualLRP", "ActualLRP", 1) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *PortMapping) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&PortMapping{`,
-		`ContainerPort:` + fmt.Sprintf("%v", this.ContainerPort) + `,`,
-		`HostPort:` + fmt.Sprintf("%v", this.HostPort) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *ActualLRPKey) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&ActualLRPKey{`,
-		`ProcessGuid:` + fmt.Sprintf("%v", this.ProcessGuid) + `,`,
-		`Index:` + fmt.Sprintf("%v", this.Index) + `,`,
-		`Domain:` + fmt.Sprintf("%v", this.Domain) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *ActualLRPInstanceKey) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&ActualLRPInstanceKey{`,
-		`InstanceGuid:` + fmt.Sprintf("%v", this.InstanceGuid) + `,`,
-		`CellId:` + fmt.Sprintf("%v", this.CellId) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *ActualLRPNetInfo) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&ActualLRPNetInfo{`,
-		`Address:` + fmt.Sprintf("%v", this.Address) + `,`,
-		`Ports:` + strings.Replace(fmt.Sprintf("%v", this.Ports), "PortMapping", "PortMapping", 1) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *ActualLRP) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&ActualLRP{`,
-		`ActualLRPKey:` + strings.Replace(strings.Replace(this.ActualLRPKey.String(), "ActualLRPKey", "ActualLRPKey", 1), `&`, ``, 1) + `,`,
-		`ActualLRPInstanceKey:` + strings.Replace(strings.Replace(this.ActualLRPInstanceKey.String(), "ActualLRPInstanceKey", "ActualLRPInstanceKey", 1), `&`, ``, 1) + `,`,
-		`ActualLRPNetInfo:` + strings.Replace(strings.Replace(this.ActualLRPNetInfo.String(), "ActualLRPNetInfo", "ActualLRPNetInfo", 1), `&`, ``, 1) + `,`,
-		`CrashCount:` + fmt.Sprintf("%v", this.CrashCount) + `,`,
-		`CrashReason:` + fmt.Sprintf("%v", this.CrashReason) + `,`,
-		`State:` + fmt.Sprintf("%v", this.State) + `,`,
-		`PlacementError:` + fmt.Sprintf("%v", this.PlacementError) + `,`,
-		`Since:` + fmt.Sprintf("%v", this.Since) + `,`,
-		`ModificationTag:` + strings.Replace(strings.Replace(this.ModificationTag.String(), "ModificationTag", "ModificationTag", 1), `&`, ``, 1) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func (this *ActualLRPGroups) String() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&ActualLRPGroups{`,
-		`ActualLrpGroups:` + strings.Replace(fmt.Sprintf("%v", this.ActualLrpGroups), "ActualLRPGroup", "ActualLRPGroup", 1) + `,`,
-		`}`,
-	}, "")
-	return s
-}
-func valueToStringActualLrp(v interface{}) string {
-	rv := reflect.ValueOf(v)
-	if rv.IsNil() {
-		return "nil"
-	}
-	pv := reflect.Indirect(rv).Interface()
-	return fmt.Sprintf("*%v", pv)
-}
-func (m *ActualLRPGroup) Size() (n int) {
-	var l int
-	_ = l
-	if m.Instance != nil {
-		l = m.Instance.Size()
-		n += 1 + l + sovActualLrp(uint64(l))
-	}
-	if m.Evacuating != nil {
-		l = m.Evacuating.Size()
-		n += 1 + l + sovActualLrp(uint64(l))
-	}
-	return n
-}
-
-func (m *PortMapping) Size() (n int) {
-	var l int
-	_ = l
-	n += 1 + sovActualLrp(uint64(m.ContainerPort))
-	n += 1 + sovActualLrp(uint64(m.HostPort))
-	return n
-}
-
-func (m *ActualLRPKey) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.ProcessGuid)
-	n += 1 + l + sovActualLrp(uint64(l))
-	n += 1 + sovActualLrp(uint64(m.Index))
-	l = len(m.Domain)
-	n += 1 + l + sovActualLrp(uint64(l))
-	return n
-}
-
-func (m *ActualLRPInstanceKey) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.InstanceGuid)
-	n += 1 + l + sovActualLrp(uint64(l))
-	l = len(m.CellId)
-	n += 1 + l + sovActualLrp(uint64(l))
-	return n
-}
-
-func (m *ActualLRPNetInfo) Size() (n int) {
-	var l int
-	_ = l
-	l = len(m.Address)
-	n += 1 + l + sovActualLrp(uint64(l))
-	if len(m.Ports) > 0 {
-		for _, e := range m.Ports {
-			l = e.Size()
-			n += 1 + l + sovActualLrp(uint64(l))
-		}
-	}
-	return n
-}
-
-func (m *ActualLRP) Size() (n int) {
-	var l int
-	_ = l
-	l = m.ActualLRPKey.Size()
-	n += 1 + l + sovActualLrp(uint64(l))
-	l = m.ActualLRPInstanceKey.Size()
-	n += 1 + l + sovActualLrp(uint64(l))
-	l = m.ActualLRPNetInfo.Size()
-	n += 1 + l + sovActualLrp(uint64(l))
-	n += 1 + sovActualLrp(uint64(m.CrashCount))
-	l = len(m.CrashReason)
-	n += 1 + l + sovActualLrp(uint64(l))
-	l = len(m.State)
-	n += 1 + l + sovActualLrp(uint64(l))
-	l = len(m.PlacementError)
-	n += 1 + l + sovActualLrp(uint64(l))
-	n += 1 + sovActualLrp(uint64(m.Since))
-	l = m.ModificationTag.Size()
-	n += 1 + l + sovActualLrp(uint64(l))
-	return n
-}
-
-func (m *ActualLRPGroups) Size() (n int) {
-	var l int
-	_ = l
-	if len(m.ActualLrpGroups) > 0 {
-		for _, e := range m.ActualLrpGroups {
-			l = e.Size()
-			n += 1 + l + sovActualLrp(uint64(l))
-		}
-	}
-	return n
-}
-
-func sovActualLrp(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
-}
-func sozActualLrp(x uint64) (n int) {
-	return sovActualLrp(uint64((x << 1) ^ uint64((int64(x) >> 63))))
-}
-func (m *ActualLRPGroup) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *ActualLRPGroup) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if m.Instance != nil {
-		data[i] = 0xa
-		i++
-		i = encodeVarintActualLrp(data, i, uint64(m.Instance.Size()))
-		n1, err := m.Instance.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n1
-	}
-	if m.Evacuating != nil {
-		data[i] = 0x12
-		i++
-		i = encodeVarintActualLrp(data, i, uint64(m.Evacuating.Size()))
-		n2, err := m.Evacuating.MarshalTo(data[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n2
-	}
-	return i, nil
-}
-
-func (m *PortMapping) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *PortMapping) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0x8
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(m.ContainerPort))
-	data[i] = 0x10
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(m.HostPort))
-	return i, nil
-}
-
-func (m *ActualLRPKey) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *ActualLRPKey) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0xa
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(len(m.ProcessGuid)))
-	i += copy(data[i:], m.ProcessGuid)
-	data[i] = 0x10
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(m.Index))
-	data[i] = 0x1a
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(len(m.Domain)))
-	i += copy(data[i:], m.Domain)
-	return i, nil
-}
-
-func (m *ActualLRPInstanceKey) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *ActualLRPInstanceKey) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0xa
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(len(m.InstanceGuid)))
-	i += copy(data[i:], m.InstanceGuid)
-	data[i] = 0x12
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(len(m.CellId)))
-	i += copy(data[i:], m.CellId)
-	return i, nil
-}
-
-func (m *ActualLRPNetInfo) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *ActualLRPNetInfo) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0xa
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(len(m.Address)))
-	i += copy(data[i:], m.Address)
-	if len(m.Ports) > 0 {
-		for _, msg := range m.Ports {
-			data[i] = 0x12
-			i++
-			i = encodeVarintActualLrp(data, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(data[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	return i, nil
-}
-
-func (m *ActualLRP) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *ActualLRP) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	data[i] = 0xa
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(m.ActualLRPKey.Size()))
-	n3, err := m.ActualLRPKey.MarshalTo(data[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n3
-	data[i] = 0x12
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(m.ActualLRPInstanceKey.Size()))
-	n4, err := m.ActualLRPInstanceKey.MarshalTo(data[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n4
-	data[i] = 0x1a
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(m.ActualLRPNetInfo.Size()))
-	n5, err := m.ActualLRPNetInfo.MarshalTo(data[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n5
-	data[i] = 0x20
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(m.CrashCount))
-	data[i] = 0x2a
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(len(m.CrashReason)))
-	i += copy(data[i:], m.CrashReason)
-	data[i] = 0x32
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(len(m.State)))
-	i += copy(data[i:], m.State)
-	data[i] = 0x3a
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(len(m.PlacementError)))
-	i += copy(data[i:], m.PlacementError)
-	data[i] = 0x40
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(m.Since))
-	data[i] = 0x4a
-	i++
-	i = encodeVarintActualLrp(data, i, uint64(m.ModificationTag.Size()))
-	n6, err := m.ModificationTag.MarshalTo(data[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n6
-	return i, nil
-}
-
-func (m *ActualLRPGroups) Marshal() (data []byte, err error) {
-	size := m.Size()
-	data = make([]byte, size)
-	n, err := m.MarshalTo(data)
-	if err != nil {
-		return nil, err
-	}
-	return data[:n], nil
-}
-
-func (m *ActualLRPGroups) MarshalTo(data []byte) (n int, err error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.ActualLrpGroups) > 0 {
-		for _, msg := range m.ActualLrpGroups {
-			data[i] = 0xa
-			i++
-			i = encodeVarintActualLrp(data, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(data[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	return i, nil
-}
-
-func encodeFixed64ActualLrp(data []byte, offset int, v uint64) int {
-	data[offset] = uint8(v)
-	data[offset+1] = uint8(v >> 8)
-	data[offset+2] = uint8(v >> 16)
-	data[offset+3] = uint8(v >> 24)
-	data[offset+4] = uint8(v >> 32)
-	data[offset+5] = uint8(v >> 40)
-	data[offset+6] = uint8(v >> 48)
-	data[offset+7] = uint8(v >> 56)
-	return offset + 8
-}
-func encodeFixed32ActualLrp(data []byte, offset int, v uint32) int {
-	data[offset] = uint8(v)
-	data[offset+1] = uint8(v >> 8)
-	data[offset+2] = uint8(v >> 16)
-	data[offset+3] = uint8(v >> 24)
-	return offset + 4
-}
-func encodeVarintActualLrp(data []byte, offset int, v uint64) int {
-	for v >= 1<<7 {
-		data[offset] = uint8(v&0x7f | 0x80)
-		v >>= 7
-		offset++
-	}
-	data[offset] = uint8(v)
-	return offset + 1
-}
-func (this *ActualLRPGroup) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&models.ActualLRPGroup{` +
-		`Instance:` + fmt.Sprintf("%#v", this.Instance),
-		`Evacuating:` + fmt.Sprintf("%#v", this.Evacuating) + `}`}, ", ")
-	return s
-}
-func (this *PortMapping) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&models.PortMapping{` +
-		`ContainerPort:` + fmt.Sprintf("%#v", this.ContainerPort),
-		`HostPort:` + fmt.Sprintf("%#v", this.HostPort) + `}`}, ", ")
-	return s
-}
-func (this *ActualLRPKey) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&models.ActualLRPKey{` +
-		`ProcessGuid:` + fmt.Sprintf("%#v", this.ProcessGuid),
-		`Index:` + fmt.Sprintf("%#v", this.Index),
-		`Domain:` + fmt.Sprintf("%#v", this.Domain) + `}`}, ", ")
-	return s
-}
-func (this *ActualLRPInstanceKey) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&models.ActualLRPInstanceKey{` +
-		`InstanceGuid:` + fmt.Sprintf("%#v", this.InstanceGuid),
-		`CellId:` + fmt.Sprintf("%#v", this.CellId) + `}`}, ", ")
-	return s
-}
-func (this *ActualLRPNetInfo) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&models.ActualLRPNetInfo{` +
-		`Address:` + fmt.Sprintf("%#v", this.Address),
-		`Ports:` + fmt.Sprintf("%#v", this.Ports) + `}`}, ", ")
-	return s
-}
-func (this *ActualLRP) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&models.ActualLRP{` +
-		`ActualLRPKey:` + strings.Replace(this.ActualLRPKey.GoString(), `&`, ``, 1),
-		`ActualLRPInstanceKey:` + strings.Replace(this.ActualLRPInstanceKey.GoString(), `&`, ``, 1),
-		`ActualLRPNetInfo:` + strings.Replace(this.ActualLRPNetInfo.GoString(), `&`, ``, 1),
-		`CrashCount:` + fmt.Sprintf("%#v", this.CrashCount),
-		`CrashReason:` + fmt.Sprintf("%#v", this.CrashReason),
-		`State:` + fmt.Sprintf("%#v", this.State),
-		`PlacementError:` + fmt.Sprintf("%#v", this.PlacementError),
-		`Since:` + fmt.Sprintf("%#v", this.Since),
-		`ModificationTag:` + strings.Replace(this.ModificationTag.GoString(), `&`, ``, 1) + `}`}, ", ")
-	return s
-}
-func (this *ActualLRPGroups) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := strings.Join([]string{`&models.ActualLRPGroups{` +
-		`ActualLrpGroups:` + fmt.Sprintf("%#v", this.ActualLrpGroups) + `}`}, ", ")
-	return s
-}
-func valueToGoStringActualLrp(v interface{}, typ string) string {
-	rv := reflect.ValueOf(v)
-	if rv.IsNil() {
-		return "nil"
-	}
-	pv := reflect.Indirect(rv).Interface()
-	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
-}
-func extensionToGoStringActualLrp(e map[int32]github_com_gogo_protobuf_proto.Extension) string {
-	if e == nil {
-		return "nil"
-	}
-	s := "map[int32]proto.Extension{"
-	keys := make([]int, 0, len(e))
-	for k := range e {
-		keys = append(keys, int(k))
-	}
-	sort.Ints(keys)
-	ss := []string{}
-	for _, k := range keys {
-		ss = append(ss, strconv.Itoa(k)+": "+e[int32(k)].GoString())
-	}
-	s += strings.Join(ss, ",") + "}"
-	return s
-}
 func (this *ActualLRPGroup) Equal(that interface{}) bool {
 	if that == nil {
 		if this == nil {
@@ -1810,33 +394,1347 @@ func (this *ActualLRP) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *ActualLRPGroups) Equal(that interface{}) bool {
-	if that == nil {
-		if this == nil {
-			return true
+func (this *ActualLRPGroup) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&models.ActualLRPGroup{` +
+		`Instance:` + fmt.Sprintf("%#v", this.Instance),
+		`Evacuating:` + fmt.Sprintf("%#v", this.Evacuating) + `}`}, ", ")
+	return s
+}
+func (this *PortMapping) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&models.PortMapping{` +
+		`ContainerPort:` + fmt.Sprintf("%#v", this.ContainerPort),
+		`HostPort:` + fmt.Sprintf("%#v", this.HostPort) + `}`}, ", ")
+	return s
+}
+func (this *ActualLRPKey) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&models.ActualLRPKey{` +
+		`ProcessGuid:` + fmt.Sprintf("%#v", this.ProcessGuid),
+		`Index:` + fmt.Sprintf("%#v", this.Index),
+		`Domain:` + fmt.Sprintf("%#v", this.Domain) + `}`}, ", ")
+	return s
+}
+func (this *ActualLRPInstanceKey) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&models.ActualLRPInstanceKey{` +
+		`InstanceGuid:` + fmt.Sprintf("%#v", this.InstanceGuid),
+		`CellId:` + fmt.Sprintf("%#v", this.CellId) + `}`}, ", ")
+	return s
+}
+func (this *ActualLRPNetInfo) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&models.ActualLRPNetInfo{` +
+		`Address:` + fmt.Sprintf("%#v", this.Address),
+		`Ports:` + fmt.Sprintf("%#v", this.Ports) + `}`}, ", ")
+	return s
+}
+func (this *ActualLRP) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&models.ActualLRP{` +
+		`ActualLRPKey:` + strings.Replace(this.ActualLRPKey.GoString(), `&`, ``, 1),
+		`ActualLRPInstanceKey:` + strings.Replace(this.ActualLRPInstanceKey.GoString(), `&`, ``, 1),
+		`ActualLRPNetInfo:` + strings.Replace(this.ActualLRPNetInfo.GoString(), `&`, ``, 1),
+		`CrashCount:` + fmt.Sprintf("%#v", this.CrashCount),
+		`CrashReason:` + fmt.Sprintf("%#v", this.CrashReason),
+		`State:` + fmt.Sprintf("%#v", this.State),
+		`PlacementError:` + fmt.Sprintf("%#v", this.PlacementError),
+		`Since:` + fmt.Sprintf("%#v", this.Since),
+		`ModificationTag:` + strings.Replace(this.ModificationTag.GoString(), `&`, ``, 1) + `}`}, ", ")
+	return s
+}
+func valueToGoStringActualLrp(v interface{}, typ string) string {
+	rv := reflect.ValueOf(v)
+	if rv.IsNil() {
+		return "nil"
+	}
+	pv := reflect.Indirect(rv).Interface()
+	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
+}
+func extensionToGoStringActualLrp(e map[int32]github_com_gogo_protobuf_proto.Extension) string {
+	if e == nil {
+		return "nil"
+	}
+	s := "map[int32]proto.Extension{"
+	keys := make([]int, 0, len(e))
+	for k := range e {
+		keys = append(keys, int(k))
+	}
+	sort.Ints(keys)
+	ss := []string{}
+	for _, k := range keys {
+		ss = append(ss, strconv.Itoa(k)+": "+e[int32(k)].GoString())
+	}
+	s += strings.Join(ss, ",") + "}"
+	return s
+}
+func (m *ActualLRPGroup) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *ActualLRPGroup) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if m.Instance != nil {
+		data[i] = 0xa
+		i++
+		i = encodeVarintActualLrp(data, i, uint64(m.Instance.Size()))
+		n1, err := m.Instance.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
 		}
-		return false
+		i += n1
+	}
+	if m.Evacuating != nil {
+		data[i] = 0x12
+		i++
+		i = encodeVarintActualLrp(data, i, uint64(m.Evacuating.Size()))
+		n2, err := m.Evacuating.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n2
+	}
+	return i, nil
+}
+
+func (m *PortMapping) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *PortMapping) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0x8
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(m.ContainerPort))
+	data[i] = 0x10
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(m.HostPort))
+	return i, nil
+}
+
+func (m *ActualLRPKey) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *ActualLRPKey) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(len(m.ProcessGuid)))
+	i += copy(data[i:], m.ProcessGuid)
+	data[i] = 0x10
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(m.Index))
+	data[i] = 0x1a
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(len(m.Domain)))
+	i += copy(data[i:], m.Domain)
+	return i, nil
+}
+
+func (m *ActualLRPInstanceKey) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *ActualLRPInstanceKey) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(len(m.InstanceGuid)))
+	i += copy(data[i:], m.InstanceGuid)
+	data[i] = 0x12
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(len(m.CellId)))
+	i += copy(data[i:], m.CellId)
+	return i, nil
+}
+
+func (m *ActualLRPNetInfo) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *ActualLRPNetInfo) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(len(m.Address)))
+	i += copy(data[i:], m.Address)
+	if len(m.Ports) > 0 {
+		for _, msg := range m.Ports {
+			data[i] = 0x12
+			i++
+			i = encodeVarintActualLrp(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	return i, nil
+}
+
+func (m *ActualLRP) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *ActualLRP) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	data[i] = 0xa
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(m.ActualLRPKey.Size()))
+	n3, err := m.ActualLRPKey.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n3
+	data[i] = 0x12
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(m.ActualLRPInstanceKey.Size()))
+	n4, err := m.ActualLRPInstanceKey.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n4
+	data[i] = 0x1a
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(m.ActualLRPNetInfo.Size()))
+	n5, err := m.ActualLRPNetInfo.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n5
+	data[i] = 0x20
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(m.CrashCount))
+	data[i] = 0x2a
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(len(m.CrashReason)))
+	i += copy(data[i:], m.CrashReason)
+	data[i] = 0x32
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(len(m.State)))
+	i += copy(data[i:], m.State)
+	data[i] = 0x3a
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(len(m.PlacementError)))
+	i += copy(data[i:], m.PlacementError)
+	data[i] = 0x40
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(m.Since))
+	data[i] = 0x4a
+	i++
+	i = encodeVarintActualLrp(data, i, uint64(m.ModificationTag.Size()))
+	n6, err := m.ModificationTag.MarshalTo(data[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n6
+	return i, nil
+}
+
+func encodeFixed64ActualLrp(data []byte, offset int, v uint64) int {
+	data[offset] = uint8(v)
+	data[offset+1] = uint8(v >> 8)
+	data[offset+2] = uint8(v >> 16)
+	data[offset+3] = uint8(v >> 24)
+	data[offset+4] = uint8(v >> 32)
+	data[offset+5] = uint8(v >> 40)
+	data[offset+6] = uint8(v >> 48)
+	data[offset+7] = uint8(v >> 56)
+	return offset + 8
+}
+func encodeFixed32ActualLrp(data []byte, offset int, v uint32) int {
+	data[offset] = uint8(v)
+	data[offset+1] = uint8(v >> 8)
+	data[offset+2] = uint8(v >> 16)
+	data[offset+3] = uint8(v >> 24)
+	return offset + 4
+}
+func encodeVarintActualLrp(data []byte, offset int, v uint64) int {
+	for v >= 1<<7 {
+		data[offset] = uint8(v&0x7f | 0x80)
+		v >>= 7
+		offset++
+	}
+	data[offset] = uint8(v)
+	return offset + 1
+}
+func (m *ActualLRPGroup) Size() (n int) {
+	var l int
+	_ = l
+	if m.Instance != nil {
+		l = m.Instance.Size()
+		n += 1 + l + sovActualLrp(uint64(l))
+	}
+	if m.Evacuating != nil {
+		l = m.Evacuating.Size()
+		n += 1 + l + sovActualLrp(uint64(l))
+	}
+	return n
+}
+
+func (m *PortMapping) Size() (n int) {
+	var l int
+	_ = l
+	n += 1 + sovActualLrp(uint64(m.ContainerPort))
+	n += 1 + sovActualLrp(uint64(m.HostPort))
+	return n
+}
+
+func (m *ActualLRPKey) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.ProcessGuid)
+	n += 1 + l + sovActualLrp(uint64(l))
+	n += 1 + sovActualLrp(uint64(m.Index))
+	l = len(m.Domain)
+	n += 1 + l + sovActualLrp(uint64(l))
+	return n
+}
+
+func (m *ActualLRPInstanceKey) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.InstanceGuid)
+	n += 1 + l + sovActualLrp(uint64(l))
+	l = len(m.CellId)
+	n += 1 + l + sovActualLrp(uint64(l))
+	return n
+}
+
+func (m *ActualLRPNetInfo) Size() (n int) {
+	var l int
+	_ = l
+	l = len(m.Address)
+	n += 1 + l + sovActualLrp(uint64(l))
+	if len(m.Ports) > 0 {
+		for _, e := range m.Ports {
+			l = e.Size()
+			n += 1 + l + sovActualLrp(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *ActualLRP) Size() (n int) {
+	var l int
+	_ = l
+	l = m.ActualLRPKey.Size()
+	n += 1 + l + sovActualLrp(uint64(l))
+	l = m.ActualLRPInstanceKey.Size()
+	n += 1 + l + sovActualLrp(uint64(l))
+	l = m.ActualLRPNetInfo.Size()
+	n += 1 + l + sovActualLrp(uint64(l))
+	n += 1 + sovActualLrp(uint64(m.CrashCount))
+	l = len(m.CrashReason)
+	n += 1 + l + sovActualLrp(uint64(l))
+	l = len(m.State)
+	n += 1 + l + sovActualLrp(uint64(l))
+	l = len(m.PlacementError)
+	n += 1 + l + sovActualLrp(uint64(l))
+	n += 1 + sovActualLrp(uint64(m.Since))
+	l = m.ModificationTag.Size()
+	n += 1 + l + sovActualLrp(uint64(l))
+	return n
+}
+
+func sovActualLrp(x uint64) (n int) {
+	for {
+		n++
+		x >>= 7
+		if x == 0 {
+			break
+		}
+	}
+	return n
+}
+func sozActualLrp(x uint64) (n int) {
+	return sovActualLrp(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (this *ActualLRPGroup) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ActualLRPGroup{`,
+		`Instance:` + strings.Replace(fmt.Sprintf("%v", this.Instance), "ActualLRP", "ActualLRP", 1) + `,`,
+		`Evacuating:` + strings.Replace(fmt.Sprintf("%v", this.Evacuating), "ActualLRP", "ActualLRP", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *PortMapping) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&PortMapping{`,
+		`ContainerPort:` + fmt.Sprintf("%v", this.ContainerPort) + `,`,
+		`HostPort:` + fmt.Sprintf("%v", this.HostPort) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *ActualLRPKey) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ActualLRPKey{`,
+		`ProcessGuid:` + fmt.Sprintf("%v", this.ProcessGuid) + `,`,
+		`Index:` + fmt.Sprintf("%v", this.Index) + `,`,
+		`Domain:` + fmt.Sprintf("%v", this.Domain) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *ActualLRPInstanceKey) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ActualLRPInstanceKey{`,
+		`InstanceGuid:` + fmt.Sprintf("%v", this.InstanceGuid) + `,`,
+		`CellId:` + fmt.Sprintf("%v", this.CellId) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *ActualLRPNetInfo) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ActualLRPNetInfo{`,
+		`Address:` + fmt.Sprintf("%v", this.Address) + `,`,
+		`Ports:` + strings.Replace(fmt.Sprintf("%v", this.Ports), "PortMapping", "PortMapping", 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *ActualLRP) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&ActualLRP{`,
+		`ActualLRPKey:` + strings.Replace(strings.Replace(this.ActualLRPKey.String(), "ActualLRPKey", "ActualLRPKey", 1), `&`, ``, 1) + `,`,
+		`ActualLRPInstanceKey:` + strings.Replace(strings.Replace(this.ActualLRPInstanceKey.String(), "ActualLRPInstanceKey", "ActualLRPInstanceKey", 1), `&`, ``, 1) + `,`,
+		`ActualLRPNetInfo:` + strings.Replace(strings.Replace(this.ActualLRPNetInfo.String(), "ActualLRPNetInfo", "ActualLRPNetInfo", 1), `&`, ``, 1) + `,`,
+		`CrashCount:` + fmt.Sprintf("%v", this.CrashCount) + `,`,
+		`CrashReason:` + fmt.Sprintf("%v", this.CrashReason) + `,`,
+		`State:` + fmt.Sprintf("%v", this.State) + `,`,
+		`PlacementError:` + fmt.Sprintf("%v", this.PlacementError) + `,`,
+		`Since:` + fmt.Sprintf("%v", this.Since) + `,`,
+		`ModificationTag:` + strings.Replace(strings.Replace(this.ModificationTag.String(), "ModificationTag", "ModificationTag", 1), `&`, ``, 1) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func valueToStringActualLrp(v interface{}) string {
+	rv := reflect.ValueOf(v)
+	if rv.IsNil() {
+		return "nil"
+	}
+	pv := reflect.Indirect(rv).Interface()
+	return fmt.Sprintf("*%v", pv)
+}
+func (m *ActualLRPGroup) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Instance", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + msglen
+			if msglen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Instance == nil {
+				m.Instance = &ActualLRP{}
+			}
+			if err := m.Instance.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Evacuating", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + msglen
+			if msglen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Evacuating == nil {
+				m.Evacuating = &ActualLRP{}
+			}
+			if err := m.Evacuating.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			var sizeOfWire int
+			for {
+				sizeOfWire++
+				wire >>= 7
+				if wire == 0 {
+					break
+				}
+			}
+			iNdEx -= sizeOfWire
+			skippy, err := skipActualLrp(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
 	}
 
-	that1, ok := that.(*ActualLRPGroups)
-	if !ok {
-		return false
-	}
-	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
-	} else if this == nil {
-		return false
-	}
-	if len(this.ActualLrpGroups) != len(that1.ActualLrpGroups) {
-		return false
-	}
-	for i := range this.ActualLrpGroups {
-		if !this.ActualLrpGroups[i].Equal(that1.ActualLrpGroups[i]) {
-			return false
-		}
-	}
-	return true
+	return nil
 }
+func (m *PortMapping) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ContainerPort", wireType)
+			}
+			m.ContainerPort = 0
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				m.ContainerPort |= (uint32(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HostPort", wireType)
+			}
+			m.HostPort = 0
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				m.HostPort |= (uint32(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			var sizeOfWire int
+			for {
+				sizeOfWire++
+				wire >>= 7
+				if wire == 0 {
+					break
+				}
+			}
+			iNdEx -= sizeOfWire
+			skippy, err := skipActualLrp(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	return nil
+}
+func (m *ActualLRPKey) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProcessGuid", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + int(stringLen)
+			if stringLen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ProcessGuid = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Index", wireType)
+			}
+			m.Index = 0
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				m.Index |= (int32(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Domain", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + int(stringLen)
+			if stringLen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Domain = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			var sizeOfWire int
+			for {
+				sizeOfWire++
+				wire >>= 7
+				if wire == 0 {
+					break
+				}
+			}
+			iNdEx -= sizeOfWire
+			skippy, err := skipActualLrp(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	return nil
+}
+func (m *ActualLRPInstanceKey) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field InstanceGuid", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + int(stringLen)
+			if stringLen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.InstanceGuid = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CellId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + int(stringLen)
+			if stringLen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CellId = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			var sizeOfWire int
+			for {
+				sizeOfWire++
+				wire >>= 7
+				if wire == 0 {
+					break
+				}
+			}
+			iNdEx -= sizeOfWire
+			skippy, err := skipActualLrp(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	return nil
+}
+func (m *ActualLRPNetInfo) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + int(stringLen)
+			if stringLen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Address = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ports", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + msglen
+			if msglen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Ports = append(m.Ports, &PortMapping{})
+			if err := m.Ports[len(m.Ports)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			var sizeOfWire int
+			for {
+				sizeOfWire++
+				wire >>= 7
+				if wire == 0 {
+					break
+				}
+			}
+			iNdEx -= sizeOfWire
+			skippy, err := skipActualLrp(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	return nil
+}
+func (m *ActualLRP) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ActualLRPKey", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + msglen
+			if msglen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ActualLRPKey.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ActualLRPInstanceKey", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + msglen
+			if msglen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ActualLRPInstanceKey.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ActualLRPNetInfo", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + msglen
+			if msglen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ActualLRPNetInfo.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CrashCount", wireType)
+			}
+			m.CrashCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				m.CrashCount |= (int32(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CrashReason", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + int(stringLen)
+			if stringLen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CrashReason = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + int(stringLen)
+			if stringLen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.State = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PlacementError", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + int(stringLen)
+			if stringLen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PlacementError = string(data[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Since", wireType)
+			}
+			m.Since = 0
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				m.Since |= (int64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ModificationTag", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + msglen
+			if msglen < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ModificationTag.Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			var sizeOfWire int
+			for {
+				sizeOfWire++
+				wire >>= 7
+				if wire == 0 {
+					break
+				}
+			}
+			iNdEx -= sizeOfWire
+			skippy, err := skipActualLrp(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthActualLrp
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	return nil
+}
+func skipActualLrp(data []byte) (n int, err error) {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if iNdEx >= l {
+				return 0, io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		wireType := int(wire & 0x7)
+		switch wireType {
+		case 0:
+			for {
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				iNdEx++
+				if data[iNdEx-1] < 0x80 {
+					break
+				}
+			}
+			return iNdEx, nil
+		case 1:
+			iNdEx += 8
+			return iNdEx, nil
+		case 2:
+			var length int
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				length |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			iNdEx += length
+			if length < 0 {
+				return 0, ErrInvalidLengthActualLrp
+			}
+			return iNdEx, nil
+		case 3:
+			for {
+				var innerWire uint64
+				var start int = iNdEx
+				for shift := uint(0); ; shift += 7 {
+					if iNdEx >= l {
+						return 0, io.ErrUnexpectedEOF
+					}
+					b := data[iNdEx]
+					iNdEx++
+					innerWire |= (uint64(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				innerWireType := int(innerWire & 0x7)
+				if innerWireType == 4 {
+					break
+				}
+				next, err := skipActualLrp(data[start:])
+				if err != nil {
+					return 0, err
+				}
+				iNdEx = start + next
+			}
+			return iNdEx, nil
+		case 4:
+			return iNdEx, nil
+		case 5:
+			iNdEx += 4
+			return iNdEx, nil
+		default:
+			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
+		}
+	}
+	panic("unreachable")
+}
+
+var (
+	ErrInvalidLengthActualLrp = fmt.Errorf("proto: negative length found during unmarshaling")
+)

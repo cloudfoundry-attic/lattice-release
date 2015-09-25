@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/cloudfoundry-incubator/lattice/cell-helpers",
-	"GoVersion": "go1.4.2",
+	"GoVersion": "go1.5.1",
 	"Packages": [
 		"./..."
 	],
@@ -64,7 +64,8 @@
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
-			"Rev": "5ba1012ef3868db1b9ff374280a558c1bfff39c3"
+			"Comment": "v0.1",
+			"Rev": "6cab0cc9fec8f660c2cee46e1306ffc727261956"
 		},
 		{
 			"ImportPath": "github.com/nu7hatch/gouuid",
@@ -72,13 +73,13 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.2.0-8-g25380c6",
-			"Rev": "25380c62e61d3f90436be125b8127dbae578fdef"
+			"Comment": "v1.2.0-12-gcd0c926",
+			"Rev": "cd0c92610a042acf1e5aa5a280ab69ecf0ab6d9b"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Comment": "v1.0-52-ga2ab864",
-			"Rev": "a2ab8644e0b6a33df2cbe44673bd0f6ebba9abc3"
+			"Comment": "v1.0-55-g6331bf5",
+			"Rev": "6331bf5a5b5e7a832348789eb3cedff7a6917103"
 		},
 		{
 			"ImportPath": "github.com/vaughan0/go-ini",

@@ -12,10 +12,10 @@ import (
 
 func New(bbs bbs.Client, receptorBBS legacybbs.ReceptorBBS, logger lager.Logger, username, password string, corsEnabled bool) http.Handler {
 	taskHandler := NewTaskHandler(bbs, logger)
-	desiredLRPHandler := NewDesiredLRPHandler(bbs, receptorBBS, logger)
-	actualLRPHandler := NewActualLRPHandler(bbs, receptorBBS, logger)
+	desiredLRPHandler := NewDesiredLRPHandler(bbs, logger)
+	actualLRPHandler := NewActualLRPHandler(bbs, logger)
 	cellHandler := NewCellHandler(receptorBBS, logger)
-	domainHandler := NewDomainHandler(bbs, receptorBBS, logger)
+	domainHandler := NewDomainHandler(bbs, logger)
 	eventStreamHandler := NewEventStreamHandler(bbs, logger)
 	authCookieHandler := NewAuthCookieHandler(logger)
 

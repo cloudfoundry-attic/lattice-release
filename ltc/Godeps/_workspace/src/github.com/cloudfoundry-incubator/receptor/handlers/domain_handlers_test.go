@@ -11,29 +11,27 @@ import (
 	"github.com/cloudfoundry-incubator/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/handlers"
-	fake_legacy_bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
+	"github.com/pivotal-golang/lager"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-golang/lager"
 )
 
 var _ = Describe("Domain Handlers", func() {
 	var (
 		logger           lager.Logger
-		fakeLegacyBBS    *fake_legacy_bbs.FakeReceptorBBS
 		fakeBBS          *fake_bbs.FakeClient
 		responseRecorder *httptest.ResponseRecorder
 		handler          *handlers.DomainHandler
 	)
 
 	BeforeEach(func() {
-		fakeLegacyBBS = new(fake_legacy_bbs.FakeReceptorBBS)
 		fakeBBS = new(fake_bbs.FakeClient)
 		logger = lager.NewLogger("test")
 		logger.RegisterSink(lager.NewWriterSink(GinkgoWriter, lager.DEBUG))
 		responseRecorder = httptest.NewRecorder()
-		handler = handlers.NewDomainHandler(fakeBBS, fakeLegacyBBS, logger)
+		handler = handlers.NewDomainHandler(fakeBBS, logger)
 	})
 
 	Describe("Upsert", func() {

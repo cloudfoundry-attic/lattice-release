@@ -1,7 +1,6 @@
 package models_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -404,26 +403,6 @@ var _ = Describe("ActualLRP", func() {
 		var instanceKey models.ActualLRPInstanceKey
 		var netInfo models.ActualLRPNetInfo
 
-		lrpPayload := `{
-    "process_guid":"some-guid",
-    "instance_guid":"some-instance-guid",
-    "address": "1.2.3.4",
-    "ports": [
-		  { "container_port": 8080, "host_port": 5678 },
-      { "container_port": 8081, "host_port": 1234 }
-    ],
-    "index": 2,
-    "state": "RUNNING",
-    "since": 1138,
-    "cell_id":"some-cell-id",
-    "domain":"some-domain",
-		"crash_count": 1,
-		"modification_tag": {
-			"epoch": "some-guid",
-			"index": 50
-		}
-  }`
-
 		BeforeEach(func() {
 			lrpKey = models.NewActualLRPKey("some-guid", 2, "some-domain")
 			instanceKey = models.NewActualLRPInstanceKey("some-instance-guid", "some-cell-id")
@@ -440,50 +419,6 @@ var _ = Describe("ActualLRP", func() {
 					Epoch: "some-guid",
 					Index: 50,
 				},
-			}
-		})
-
-		Describe("To JSON", func() {
-			It("should JSONify", func() {
-				marshalled, err := json.Marshal(&lrp)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(string(marshalled)).To(MatchJSON(lrpPayload))
-			})
-		})
-
-		Describe("FromJSON", func() {
-			It("returns a LRP with correct fields", func() {
-				aLRP := &models.ActualLRP{}
-				err := models.FromJSON([]byte(lrpPayload), aLRP)
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(aLRP).To(Equal(&lrp))
-			})
-
-			Context("with an invalid payload", func() {
-				It("returns the error", func() {
-					aLRP := &models.ActualLRP{}
-					err := models.FromJSON([]byte("something lol"), aLRP)
-					Expect(err).To(HaveOccurred())
-				})
-			})
-
-			for field, payload := range map[string]string{
-				"process_guid":  `{"instance_guid": "instance_guid", "cell_id": "cell_id", "domain": "domain"}`,
-				"instance_guid": `{"process_guid": "process-guid", "cell_id": "cell_id", "domain": "domain","state":"CLAIMED"}`,
-				"cell_id":       `{"process_guid": "process-guid", "instance_guid": "instance_guid", "domain": "domain", "state":"RUNNING"}`,
-				"domain":        `{"process_guid": "process-guid", "cell_id": "cell_id", "instance_guid": "instance_guid"}`,
-			} {
-				missingField := field
-				jsonPayload := payload
-
-				Context("when the json is missing a "+missingField, func() {
-					It("returns an error indicating so", func() {
-						aLRP := &models.ActualLRP{}
-						err := models.FromJSON([]byte(jsonPayload), aLRP)
-						Expect(err.Error()).To(ContainSubstring(missingField))
-					})
-				})
 			}
 		})
 

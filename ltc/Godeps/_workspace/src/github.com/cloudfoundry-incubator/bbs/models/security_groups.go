@@ -4,8 +4,6 @@ import (
 	"errors"
 	"net"
 	"strings"
-
-	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 const (
@@ -159,38 +157,4 @@ func (rule SecurityGroupRule) validateDestinations() error {
 	}
 
 	return nil
-}
-
-func SecurityGroupRulesFromProto(rules []*SecurityGroupRule) []oldmodels.SecurityGroupRule {
-	oldrules := make([]oldmodels.SecurityGroupRule, 0, len(rules))
-	for _, r := range rules {
-		var portRange *oldmodels.PortRange
-		var icmpInfo *oldmodels.ICMPInfo
-
-		if r.PortRange != nil {
-			portRange = &oldmodels.PortRange{Start: uint16(r.PortRange.Start), End: uint16(r.PortRange.End)}
-		}
-
-		if r.IcmpInfo != nil {
-			icmpInfo = &oldmodels.ICMPInfo{Type: r.IcmpInfo.Type, Code: r.IcmpInfo.Code}
-		}
-
-		oldrules = append(oldrules, oldmodels.SecurityGroupRule{
-			Protocol:     oldmodels.ProtocolName(r.Protocol),
-			Destinations: r.Destinations,
-			Ports:        convertPortsFromProto(r.Ports),
-			PortRange:    portRange,
-			IcmpInfo:     icmpInfo,
-			Log:          r.Log,
-		})
-	}
-	return oldrules
-}
-
-func convertPortsFromProto(ports []uint32) []uint16 {
-	u := make([]uint16, len(ports))
-	for i, p := range ports {
-		u[i] = uint16(p)
-	}
-	return u
 }

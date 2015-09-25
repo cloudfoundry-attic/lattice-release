@@ -16,7 +16,6 @@ import (
 	"github.com/cloudfoundry-incubator/consuladapter"
 	"github.com/cloudfoundry-incubator/natbeat"
 	"github.com/cloudfoundry-incubator/receptor/handlers"
-	"github.com/cloudfoundry-incubator/receptor/task_handler"
 	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/bbs/lock_bbs"
 	"github.com/cloudfoundry/dropsonde"
@@ -48,12 +47,6 @@ var serverAddress = flag.String(
 	"address",
 	"",
 	"The host:port that the server is bound to.",
-)
-
-var taskHandlerAddress = flag.String(
-	"taskHandlerAddress",
-	"127.0.0.1:1169", // "taskhandler".each_char.collect(&:ord).inject(:+)
-	"The host:port for the internal task completion callback",
 )
 
 var consulCluster = flag.String(
@@ -156,13 +149,8 @@ func main() {
 
 	handler := handlers.New(bbs, legacyBBS, logger, *username, *password, *corsEnabled)
 
-	worker, enqueue := task_handler.NewTaskWorkerPool(bbs, logger)
-	taskHandler := task_handler.New(enqueue, logger)
-
 	members := grouper.Members{
 		{"server", http_server.New(*serverAddress, handler)},
-		{"worker", worker},
-		{"task-complete-handler", http_server.New(*taskHandlerAddress, taskHandler)},
 	}
 
 	if *registerWithRouter {
@@ -241,7 +229,7 @@ func initializeReceptorBBS(etcdOptions *etcdstoreadapter.ETCDOptions, logger lag
 		logger.Fatal("consul-session-failed", err)
 	}
 
-	return Bbs.NewReceptorBBS(etcdAdapter, consulSession, *taskHandlerAddress, clock.NewClock(), logger)
+	return Bbs.NewReceptorBBS(etcdAdapter, consulSession, clock.NewClock(), logger)
 }
 
 func initializeServerRegistration(logger lager.Logger) (registration natbeat.RegistryMessage) {

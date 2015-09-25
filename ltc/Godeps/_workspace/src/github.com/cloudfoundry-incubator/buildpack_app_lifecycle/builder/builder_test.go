@@ -301,8 +301,8 @@ start_command: the start command
 
 		It("should exit with an error", func() {
 			session := builder()
-			Eventually(session.Err).Should(gbytes.Say("None of the buildpacks detected a compatible application"))
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session).Should(gexec.Exit(222))
+			Expect(session.Err).To(gbytes.Say("None of the buildpacks detected a compatible application"))
 		})
 	})
 
@@ -316,8 +316,8 @@ start_command: the start command
 
 		It("should exit with an error", func() {
 			session := builder()
-			Eventually(session.Err).Should(gbytes.Say("Failed to compile droplet: exit status 1"))
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session).Should(gexec.Exit(223))
+			Expect(session.Err).Should(gbytes.Say("Failed to compile droplet"))
 		})
 	})
 
@@ -331,8 +331,8 @@ start_command: the start command
 
 		It("should exit with an error", func() {
 			session := builder()
-			Eventually(session.Err).Should(gbytes.Say("buildpack's release output invalid"))
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session).Should(gexec.Exit(224))
+			Expect(session.Err).Should(gbytes.Say("buildpack's release output invalid"))
 		})
 	})
 
@@ -346,8 +346,8 @@ start_command: the start command
 
 		It("should exit with an error", func() {
 			session := builder()
-			Eventually(session.Err).Should(gbytes.Say("Failed to build droplet release: exit status 1"))
-			Eventually(session).Should(gexec.Exit(1))
+			Eventually(session).Should(gexec.Exit(224))
+			Expect(session.Err).Should(gbytes.Say("Failed to build droplet release"))
 		})
 	})
 

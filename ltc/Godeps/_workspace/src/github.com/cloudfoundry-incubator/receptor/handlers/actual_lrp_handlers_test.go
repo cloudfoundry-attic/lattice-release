@@ -12,23 +12,18 @@ import (
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/handlers"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
-	fake_legacy_bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
-	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
+	"github.com/pivotal-golang/lager"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/pivotal-golang/lager"
 )
 
 var _ = Describe("Actual LRP Handlers", func() {
 	var (
 		logger           lager.Logger
-		fakeLegacyBBS    *fake_legacy_bbs.FakeReceptorBBS
 		fakeBBS          *fake_bbs.FakeClient
 		responseRecorder *httptest.ResponseRecorder
 		handler          *handlers.ActualLRPHandler
-
-		oldActualLRP2     oldmodels.ActualLRP
-		oldEvacuatingLRP2 oldmodels.ActualLRP
 
 		actualLRP1     *models.ActualLRP
 		actualLRP2     *models.ActualLRP
@@ -36,12 +31,11 @@ var _ = Describe("Actual LRP Handlers", func() {
 	)
 
 	BeforeEach(func() {
-		fakeLegacyBBS = new(fake_legacy_bbs.FakeReceptorBBS)
 		fakeBBS = new(fake_bbs.FakeClient)
 		logger = lager.NewLogger("test")
 		logger.RegisterSink(lager.NewWriterSink(GinkgoWriter, lager.DEBUG))
 		responseRecorder = httptest.NewRecorder()
-		handler = handlers.NewActualLRPHandler(fakeBBS, fakeLegacyBBS, logger)
+		handler = handlers.NewActualLRPHandler(fakeBBS, logger)
 
 		actualLRP1 = models.NewRunningActualLRP(
 			models.NewActualLRPKey(
@@ -83,27 +77,6 @@ var _ = Describe("Actual LRP Handlers", func() {
 			models.NewActualLRPNetInfo(""),
 			3417,
 		)
-	})
-
-	// old before each
-	BeforeEach(func() {
-		oldActualLRP2 = oldmodels.ActualLRP{
-			ActualLRPKey: oldmodels.NewActualLRPKey(
-				"process-guid-1",
-				2,
-				"domain-1",
-			),
-			ActualLRPInstanceKey: oldmodels.NewActualLRPInstanceKey(
-				"instance-guid-1",
-				"cell-id-1",
-			),
-			State: oldmodels.ActualLRPStateClaimed,
-			Since: 4444,
-		}
-
-		oldEvacuatingLRP2 = oldActualLRP2
-		oldEvacuatingLRP2.State = oldmodels.ActualLRPStateRunning
-		oldEvacuatingLRP2.Since = 3417
 	})
 
 	Describe("GetAll", func() {

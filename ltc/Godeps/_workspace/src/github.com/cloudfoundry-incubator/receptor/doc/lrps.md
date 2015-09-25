@@ -8,7 +8,7 @@ The instances that end up running on Diego cells are referred to as `ActualLRP`s
 
 When describing a property common to both `DesiredLRP`s and `ActualLRP`s (e.g. the `process_guid`) we may refer to both notions collectively simply as LRPs.
 
-Diego is constantly monitoring and reconciling desired state and actual state.  As such it is important to ensure that the desired state is up-to-date and accurate.  This is covered in detail in the section below on [Freshness](#freshness).
+Diego is continually monitoring and reconciling desired state and actual state.  As such it is important to ensure that the desired state is up-to-date and accurate.  This is covered in detail in the section below on [Freshness](#freshness).
 
 First, let's discuss DesiredLRPs.
 
@@ -51,7 +51,7 @@ When desiring an LRP you `POST` a valid `DesiredLRPCreateRequest`.  The [API ref
                 "port": 5050
             }
         ],
-        "router-key": "any opaque json payload"
+        "identifier-for-your-own-router-type": "any opaque json payload"
     }
 
     "log_guid": "some-log-guid",
@@ -80,15 +80,16 @@ Let's describe each of these fields in turn.
 
 It is up to the consumer of Diego to provide a *globally unique* `process_guid`.  To subsequently fetch the DesiredLRP and its ActualLRP you refer to it by its `process_guid`.
 
-- The `process_guid` must only include the characters `a-z`, `A-Z`, `0-9`, `_` and `-`.
+- The `process_guid` must include only the characters `a-z`, `A-Z`, `0-9`, `_` and `-`.
 - The `process_guid` must not be empty
 - If you attempt to create a DesiredLRP with a `process_guid` that matches that of an existing DesiredLRP, Diego will attempt to update the existing DesiredLRP.  This is subject to the rules described in [updating DesiredLRPs](#updating-desiredlrps) below.
 
+
 #### `domain` [required]
 
-The consumer of Diego may organize their LRPs into groupings called Domains.  These are purely organizational (e.g. for enabling multiple consumers to use Diego without colliding) and have no implications on the ActualLRP's placement or lifecycle.  It is possible to fetch all LRPs in a given Domain.
+The consumer of Diego may organize LRPs into groupings called 'domains'.  These are purely organizational (for example, for enabling multiple consumers to use Diego without colliding) and have no implications on the ActualLRP's placement or lifecycle.  It is possible to fetch all LRPs in a given domain.
 
-- It is an error to provide an empty `domain`.
+- It is an error to provide an empty `domain` field.
 
 #### LRP Placement
 
@@ -112,11 +113,10 @@ Preloaded root filesystems look like:
 "rootfs": "preloaded:ROOTFS-NAME"
 ```
 
-Diego ships with a root filesystem:
+Diego's [BOSH release](https://github.com/cloudfoundry-incubator/diego-release) ships with the `cflinuxfs2` filesystem root filesystem built to work with the Cloud Foundry buildpacks, which can be specified via
 ```
 "rootfs": "preloaded:cflinuxfs2"
 ```
-these are built to work with the Cloud Foundry buildpacks.
 
 It is possible to provide a custom root filesystem by specifying a Docker image for `rootfs`:
 
@@ -130,24 +130,25 @@ To pull the image from a different registry than the default (Docker Hub), speci
 "rootfs": "docker://index.myregistry.gov/docker-user/docker-image#docker-tag"
 ```
 
-> You *must* specify the dockerimage `rootfs` uri as specified, including the leading `docker://`!
+> You *must* provide the dockerimage `rootfs` uri as above, including the leading `docker://`!
 
-> [Lattice](https://github.com/pivotal-cf-experimental/lattice) does not ship with any preloaded root filesystems. You must specify a Docker image when using Lattice. You can mount the filesystem provided by diego-release by specifying `"rootfs": "docker:///cloudfoundry/cflinuxfs2"`.
+> [Lattice](https://github.com/cloudfoundry-incubator/lattice) does not ship with any preloaded root filesystems. You must specify a Docker image when using Lattice. You can mount the filesystem provided by diego-release by specifying `"rootfs": "docker:///cloudfoundry/cflinuxfs2"`.
+
 
 #### `env` [optional]
 
 Diego supports the notion of container-level environment variables.  All processes that run in the container will inherit these environment variables.
 
-For more details on the environment variables provided to processes in the container, read [Container Runtime Environment](environment.md)
+For more details on the environment variables provided to processes in the container, read [Container Runtime Environment](environment.md).
 
 #### Container Limits
 
 #### `cpu_weight` [optional]
 
-To control the CPU shares provided to a container, set `cpu_weight`.  This must be a positive number in the range `1-100`.  The `cpu_weight` enforces a relative fair share of the CPU among containers.  It's best explained with examples.  Consider the following scenarios (we shall assume that each container is running a busy process that is attempting to consume as many CPU resources as possible):
+To control the CPU shares provided to a container, set `cpu_weight`.  This must be a positive number between `1` and `100`, inclusive.  The `cpu_weight` enforces a relative fair share of the CPU among containers.  It's best explained with examples.  Consider the following scenarios (we shall assume that each container is running a busy process that is attempting to consume as many CPU resources as possible):
 
 - Two containers, with equal values of `cpu_weight`: both containers will receive equal shares of CPU time.
-- Two containers, one with `cpu_weight=50` the other with `cpu_weight=100`: the later will get (roughly) 2/3 of the CPU time, the former 1/3.
+- Two containers, one with `"cpu_weight": 50` and the other with `"cpu_weight": 100`: the later will get (roughly) 2/3 of the CPU time, the former 1/3.
 
 #### `disk_mb` [optional]
 
@@ -181,7 +182,7 @@ After creating a container, Diego will first run the action specified in the `se
 
 #### `action` [required]
 
-After completing any `setup` action, Diego will launch the `action` action.  This `action` is intended to launch any long running processes.  For more details on the available actions see [actions](actions.md).
+After completing any `setup` action, Diego will launch the `action` action.  This `action` is intended to launch any long-running processes.  For more details on the available actions see [actions](actions.md).
 
 #### `monitor` [optional]
 
@@ -197,7 +198,7 @@ Diego can open and expose arbitrary `ports` inside the container.  There are pla
 
 By default network access for any container is limited but some LRPs might need specific network access and that can be setup using `egress_rules` field.  Rules are evaluated in reverse order of their position, i.e., the last one takes precedence.
 
-> Lattice users: Lattice is intended to be a single-tenant cluster environment.  In Lattice there are no network access constraints on the containers so there is no need to specify `egress_rules`.
+> Lattice users: Lattice is intended to be a single-tenant cluster environment.  In Lattice there are no network-access constraints on the containers so there is no need to specify `egress_rules`.
 
 #### `ports` [optional]
 
@@ -334,13 +335,14 @@ It is possible, however, to dynamically modify the number of instances, and the 
                 "port": 5050
             }
         ],
-        "router-key": "any opaque json payload"
+        "some-other-router": "any opaque json payload"
     },
     "annotation": "arbitrary metadata"
 }
 ```
 
-These may be provided simultaneously in one request, or independendantly over several requests.
+These may be provided simultaneously in one request, or independently over several requests.
+
 
 ### Monitoring Health
 
@@ -455,11 +457,12 @@ The last modified time of the ActualLRP represented as the number of nanoseconds
 
 Diego supports killing the `ActualLRP`s for a given `process_guid` at a given `index`.  This is documented [here](api_lrps.md#killing-actuallrps).  Note that this does not change the *desired* state -- Diego will simply shut down the `ActualLRP` at the given `index` and will eventually converge on desired state by restarting the (now-missing) instance.  To permanently scale down a DesiredLRP you must update the `instances` field on the DesiredLRP.
 
-## Freshness
+
+## Domain Freshness
 
 Diego periodically compares desired state (the set of DesiredLRPs) to actual state (the set of ActualLRPs) and takes actions to keep the actual state in sync with the desired state.  This eventual consistency model is at the core of Diego's robustness.
 
-In order to perform this responsibility safely, however, Diego must have some way of knowing that it's knowledge of the desired state is complete and up-to-date.  In particular, consider a scenario where Diego's database has crashed and must be repopulated.  In this context it is possible to enter a state where the actual state (the ActualLRPs) are known to Diego but the desired state (the DesiredLRPs) is not.  It would be catastrophic for Diego to attempt to converge by shutting down all actual state!
+In order to perform this responsibility safely, however, Diego must have some way of knowing that its knowledge of the desired state is complete and up-to-date.  In particular, consider a scenario where Diego's database has crashed and must be repopulated.  In this context it is possible to enter a state where the actual state (the ActualLRPs) are known to Diego but the desired state (the DesiredLRPs) is not.  It would be catastrophic for Diego to attempt to converge by shutting down all actual state!
 
 To circumvent this, it is up to the consumer of Diego to inform Diego that its knowledge of the desired state is up-to-date.  We refer to this as the "freshness" of the desired state.  Consumers explicitly mark desired state as *fresh* on a domain-by-domain basis.  Failing to do so will prevent Diego from taking actions to ensure eventual consistency (in particular, Diego will refuse to stop extra instances with no corresponding desired state).
 

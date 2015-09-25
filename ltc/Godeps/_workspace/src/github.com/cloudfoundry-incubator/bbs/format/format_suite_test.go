@@ -1,4 +1,4 @@
-package task_handler_test
+package format_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestTaskHandler(t *testing.T) {
+func TestFormat(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "TaskHandler Suite")
+	RunSpecs(t, "Format Suite")
 }

@@ -9,10 +9,11 @@ Here's an outline:
 - [Understanding Long Running Processes (LRPs)](lrps.md)
 - [Container Runtime Environment](environment.md)
 - [Available Actions](actions.md)
+- [Example LRPs](examples.md)
 - API Reference
     - [Authorization](auth.md)
     - [Tasks](api_tasks.md)
     - [LRPs](api_lrps.md)
     - [Cells](api_cells.md)
     - [Domains](api_domains.md)
-    - [Events] (events.md)
+    - [Events](events.md)

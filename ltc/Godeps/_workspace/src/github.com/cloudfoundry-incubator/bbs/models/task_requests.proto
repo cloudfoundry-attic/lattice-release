@@ -1,0 +1,82 @@
+syntax = "proto2";
+
+package models;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "task.proto";
+import "error.proto";
+
+message TaskLifecycleResponse {
+  optional Error error = 1;
+}
+
+message DesireTaskRequest {
+  optional TaskDefinition task_definition = 1 [(gogoproto.jsontag) = "task_definition"];
+  optional string task_guid = 2;
+  optional string domain = 3;
+}
+
+message StartTaskRequest {
+  optional string task_guid = 1;
+  optional string cell_id = 2;
+}
+
+message StartTaskResponse {
+  optional Error error = 1;
+  optional bool should_start = 2;
+}
+
+message FailTaskRequest {
+  optional string task_guid = 1;
+  optional string failure_reason = 2;
+}
+
+message TaskGuidRequest {
+  optional string task_guid = 1;
+}
+
+message CompleteTaskRequest {
+  optional string task_guid = 1;
+  optional string cell_id = 2;
+  optional bool failed = 3;
+  optional string failure_reason = 4;
+  optional string result = 5;
+}
+
+message TaskCallbackResponse {
+  optional string task_guid = 1;
+  optional bool failed = 2;
+  optional string failure_reason = 3;
+  optional string result = 4;
+  optional string annotation = 5 [(gogoproto.jsontag) = "annotation,omitempty"];
+  optional int64 created_at = 6;
+}
+
+message ConvergeTasksRequest {
+  optional int64 kick_task_duration = 1;
+  optional int64 expire_pending_task_duration = 2;
+  optional int64 expire_completed_task_duration = 3;
+}
+
+message ConvergeTasksResponse {
+  optional Error error = 1;
+}
+
+message TasksRequest{
+  optional string domain = 1;
+  optional string cell_id = 2;
+}
+
+message TasksResponse{
+  optional Error error = 1;
+  repeated Task tasks = 2;
+}
+
+message TaskByGuidRequest{
+  optional string task_guid = 1;
+}
+
+message TaskResponse{
+  optional Error error = 1;
+  optional Task task = 2;
+}

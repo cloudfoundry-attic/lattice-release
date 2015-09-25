@@ -254,7 +254,7 @@ func writeStruct(w *textWriter, sv reflect.Value) error {
 		}
 		if fv.Kind() == reflect.Map {
 			// Map fields are rendered as a repeated struct with key/value fields.
-			keys := fv.MapKeys() // TODO: should we sort these for deterministic output?
+			keys := fv.MapKeys()
 			sort.Sort(mapKeys(keys))
 			for _, key := range keys {
 				val := fv.MapIndex(key)
@@ -559,7 +559,7 @@ func writeMessageSet(w *textWriter, ms *MessageSet) error {
 	return nil
 }
 
-func writeUnknownStruct(w *textWriter, data []byte) (err error) {
+func writeUnknownStruct(w *textWriter, data []byte) error {
 	if !w.compact {
 		if _, err := fmt.Fprintf(w, "/* %d unknown bytes */\n", len(data)); err != nil {
 			return err
@@ -619,7 +619,7 @@ func writeUnknownStruct(w *textWriter, data []byte) (err error) {
 		if err != nil {
 			return err
 		}
-		if err = w.WriteByte('\n'); err != nil {
+		if err := w.WriteByte('\n'); err != nil {
 			return err
 		}
 	}

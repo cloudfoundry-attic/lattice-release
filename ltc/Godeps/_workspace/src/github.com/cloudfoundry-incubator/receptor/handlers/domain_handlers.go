@@ -10,15 +10,13 @@ import (
 
 	"github.com/cloudfoundry-incubator/bbs"
 	"github.com/cloudfoundry-incubator/receptor"
-	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/pivotal-golang/lager"
 )
 
 type DomainHandler struct {
-	legacyBBS Bbs.ReceptorBBS
-	bbs       bbs.Client
-	logger    lager.Logger
+	bbs    bbs.Client
+	logger lager.Logger
 }
 
 var (
@@ -26,11 +24,10 @@ var (
 	ErrMaxAgeMissing = errors.New("max-age directive missing from request")
 )
 
-func NewDomainHandler(bbs bbs.Client, legacyBBS Bbs.ReceptorBBS, logger lager.Logger) *DomainHandler {
+func NewDomainHandler(bbs bbs.Client, logger lager.Logger) *DomainHandler {
 	return &DomainHandler{
-		bbs:       bbs,
-		legacyBBS: legacyBBS,
-		logger:    logger.Session("domain-handler"),
+		bbs:    bbs,
+		logger: logger.Session("domain-handler"),
 	}
 }
 

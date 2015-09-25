@@ -60,23 +60,24 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	err = h.bbs.DesireTask(task.TaskGuid, task.Domain, task.TaskDefinition)
 	if err != nil {
 		log.Error("failed-to-desire-task", err)
-		if mErr, ok := err.(*models.Error); ok {
-			if mErr.Equal(models.ErrBadRequest) {
-				writeJSONResponse(w, http.StatusBadRequest, receptor.Error{
-					Type:    receptor.InvalidTask,
-					Message: err.Error(),
-				})
-				return
-			} else if mErr.Equal(models.ErrResourceExists) {
-				writeJSONResponse(w, http.StatusConflict, receptor.Error{
-					Type:    receptor.TaskGuidAlreadyExists,
-					Message: "task already exists",
-				})
-				return
-			}
+		bbsError := models.ConvertError(err)
+		switch bbsError.Type {
+		case models.Error_InvalidRequest:
+			writeJSONResponse(w, http.StatusBadRequest, receptor.Error{
+				Type:    receptor.InvalidTask,
+				Message: err.Error(),
+			})
+			return
+		case models.Error_ResourceExists:
+			writeJSONResponse(w, http.StatusConflict, receptor.Error{
+				Type:    receptor.TaskGuidAlreadyExists,
+				Message: "task already exists",
+			})
+			return
+		default:
+			writeUnknownErrorResponse(w, err)
+			return
 		}
-		writeUnknownErrorResponse(w, err)
-		return
 	}
 
 	log.Info("created", lager.Data{"task-guid": task.TaskGuid})
@@ -134,30 +135,29 @@ func (h *TaskHandler) Delete(w http.ResponseWriter, req *http.Request) {
 
 	err := h.bbs.ResolvingTask(guid)
 	if err != nil {
-		if modelErr, ok := err.(*models.Error); ok {
-			switch modelErr.Type {
-			case models.InvalidStateTransition:
-				h.logger.Error("invalid-task-state-transition", modelErr)
-				writeJSONResponse(w, http.StatusConflict, receptor.Error{
-					Type:    receptor.TaskNotDeletable,
-					Message: "This task has not been completed. Please retry when it is completed.",
-				})
-				return
-			case models.ResourceNotFound:
-				h.logger.Error("task-not-found", modelErr)
-				writeTaskNotFoundResponse(w, guid)
-				return
-			}
+		bbsError := models.ConvertError(err)
+		switch bbsError.Type {
+		case models.Error_ResourceNotFound:
+			h.logger.Error("task-not-found", err)
+			writeTaskNotFoundResponse(w, guid)
+			return
+		case models.Error_InvalidStateTransition:
+			h.logger.Error("invalid-task-state-transition", err)
+			writeJSONResponse(w, http.StatusConflict, receptor.Error{
+				Type:    receptor.TaskNotDeletable,
+				Message: "This task has not been completed. Please retry when it is completed.",
+			})
+			return
+		default:
+			h.logger.Error("failed-to-mark-task-resolving", err)
+			writeUnknownErrorResponse(w, err)
+			return
 		}
-
-		h.logger.Error("failed-to-mark-task-resolving", err)
-		writeUnknownErrorResponse(w, err)
-		return
 	}
 
-	err = h.bbs.ResolveTask(guid)
+	err = h.bbs.DeleteTask(guid)
 	if err != nil {
-		h.logger.Error("failed-to-resolve-task", err)
+		h.logger.Error("failed-to-delete-task", err)
 		writeUnknownErrorResponse(w, err)
 	}
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
-	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/tedsuo/ifrit/ginkgomon"
 
 	. "github.com/onsi/ginkgo"
@@ -211,9 +210,9 @@ func newValidDesiredLRPCreateRequest() receptor.DesiredLRPCreateRequest {
 		RootFS:      "some:rootfs",
 		Instances:   1,
 		Ports:       []uint16{1234, 5678},
-		Action: &oldmodels.RunAction{
+		Action: models.WrapAction(&models.RunAction{
 			User: "me",
 			Path: "/bin/bash",
-		},
+		}),
 	}
 }

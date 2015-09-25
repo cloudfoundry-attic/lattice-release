@@ -1,11 +1,6 @@
 package receptor
 
-import (
-	"encoding/json"
-
-	"github.com/cloudfoundry-incubator/bbs/models"
-	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
-)
+import "github.com/cloudfoundry-incubator/bbs/models"
 
 const AuthorizationCookieName = "receptor_authorization"
 
@@ -71,121 +66,29 @@ type TaskResponse struct {
 	EgressRules           []*models.SecurityGroupRule   `json:"egress_rules,omitempty"`
 }
 
-type RoutingInfo map[string]*json.RawMessage
+type RoutingInfo models.Routes
 
 type DesiredLRPCreateRequest struct {
-	ProcessGuid          string                        `json:"process_guid"`
-	Domain               string                        `json:"domain"`
-	RootFS               string                        `json:"rootfs"`
-	Instances            int                           `json:"instances"`
-	EnvironmentVariables []EnvironmentVariable         `json:"env,omitempty"`
-	Setup                oldmodels.Action              `json:"-"`
-	Action               oldmodels.Action              `json:"-"`
-	Monitor              oldmodels.Action              `json:"-"`
-	StartTimeout         uint                          `json:"start_timeout"`
-	DiskMB               int                           `json:"disk_mb"`
-	MemoryMB             int                           `json:"memory_mb"`
-	CPUWeight            uint                          `json:"cpu_weight"`
-	Privileged           bool                          `json:"privileged"`
-	Ports                []uint16                      `json:"ports"`
-	Routes               RoutingInfo                   `json:"routes,omitempty"`
-	LogGuid              string                        `json:"log_guid"`
-	LogSource            string                        `json:"log_source"`
-	MetricsGuid          string                        `json:"metrics_guid"`
-	Annotation           string                        `json:"annotation,omitempty"`
-	EgressRules          []oldmodels.SecurityGroupRule `json:"egress_rules,omitempty"`
-}
-
-type InnerDesiredLRPCreateRequest DesiredLRPCreateRequest
-
-type mDesiredLRPCreateRequest struct {
-	SetupRaw   *json.RawMessage `json:"setup,omitempty"`
-	ActionRaw  *json.RawMessage `json:"action"`
-	MonitorRaw *json.RawMessage `json:"monitor,omitempty"`
-	*InnerDesiredLRPCreateRequest
-}
-
-func (request DesiredLRPCreateRequest) MarshalJSON() ([]byte, error) {
-	var setupRaw, actionRaw, monitorRaw *json.RawMessage
-
-	if request.Action != nil {
-		raw, err := oldmodels.MarshalAction(request.Action)
-		if err != nil {
-			return nil, err
-		}
-		rm := json.RawMessage(raw)
-		actionRaw = &rm
-	}
-
-	if request.Setup != nil {
-		raw, err := oldmodels.MarshalAction(request.Setup)
-		if err != nil {
-			return nil, err
-		}
-		rm := json.RawMessage(raw)
-		setupRaw = &rm
-	}
-
-	if request.Monitor != nil {
-		raw, err := oldmodels.MarshalAction(request.Monitor)
-		if err != nil {
-			return nil, err
-		}
-		rm := json.RawMessage(raw)
-		monitorRaw = &rm
-	}
-
-	innerRequest := InnerDesiredLRPCreateRequest(request)
-	mRequest := &mDesiredLRPCreateRequest{
-		SetupRaw:                     setupRaw,
-		ActionRaw:                    actionRaw,
-		MonitorRaw:                   monitorRaw,
-		InnerDesiredLRPCreateRequest: &innerRequest,
-	}
-
-	return json.Marshal(mRequest)
-}
-
-func (request *DesiredLRPCreateRequest) UnmarshalJSON(payload []byte) error {
-	mRequest := &mDesiredLRPCreateRequest{InnerDesiredLRPCreateRequest: (*InnerDesiredLRPCreateRequest)(request)}
-	err := json.Unmarshal(payload, mRequest)
-	if err != nil {
-		return err
-	}
-
-	var a oldmodels.Action
-
-	if mRequest.ActionRaw == nil {
-		a = nil
-	} else {
-		a, err = oldmodels.UnmarshalAction(*mRequest.ActionRaw)
-		if err != nil {
-			return err
-		}
-	}
-	request.Action = a
-
-	if mRequest.SetupRaw == nil {
-		a = nil
-	} else {
-		a, err = oldmodels.UnmarshalAction(*mRequest.SetupRaw)
-		if err != nil {
-			return err
-		}
-	}
-	request.Setup = a
-
-	if mRequest.MonitorRaw == nil {
-		a = nil
-	} else {
-		a, err = oldmodels.UnmarshalAction(*mRequest.MonitorRaw)
-		if err != nil {
-			return err
-		}
-	}
-	request.Monitor = a
-
-	return nil
+	ProcessGuid          string                      `json:"process_guid"`
+	Domain               string                      `json:"domain"`
+	RootFS               string                      `json:"rootfs"`
+	Instances            int                         `json:"instances"`
+	EnvironmentVariables []EnvironmentVariable       `json:"env,omitempty"`
+	Setup                *models.Action              `json:"setup"`
+	Action               *models.Action              `json:"action"`
+	Monitor              *models.Action              `json:"monitor"`
+	StartTimeout         uint                        `json:"start_timeout"`
+	DiskMB               int                         `json:"disk_mb"`
+	MemoryMB             int                         `json:"memory_mb"`
+	CPUWeight            uint                        `json:"cpu_weight"`
+	Privileged           bool                        `json:"privileged"`
+	Ports                []uint16                    `json:"ports"`
+	Routes               RoutingInfo                 `json:"routes,omitempty"`
+	LogGuid              string                      `json:"log_guid"`
+	LogSource            string                      `json:"log_source"`
+	MetricsGuid          string                      `json:"metrics_guid"`
+	Annotation           string                      `json:"annotation,omitempty"`
+	EgressRules          []*models.SecurityGroupRule `json:"egress_rules,omitempty"`
 }
 
 type DesiredLRPUpdateRequest struct {

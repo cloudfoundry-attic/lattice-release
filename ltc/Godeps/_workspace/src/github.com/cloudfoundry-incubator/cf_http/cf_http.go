@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"sync/atomic"
 	"time"
 )
 
@@ -17,11 +18,11 @@ type Config struct {
 }
 
 func Initialize(timeout time.Duration) {
-	config.Timeout = timeout
+	atomic.StoreInt64((*int64)(&config.Timeout), int64(timeout))
 }
 
 func NewClient() *http.Client {
-	return newClient(5*time.Second, 0*time.Second, config.Timeout)
+	return newClient(5*time.Second, 0*time.Second, time.Duration(atomic.LoadInt64((*int64)(&config.Timeout))))
 }
 
 func NewStreamingClient() *http.Client {

@@ -67,7 +67,6 @@ var logger lager.Logger
 var client receptor.Client
 var receptorBinPath string
 var receptorAddress string
-var receptorTaskHandlerAddress string
 var receptorArgs testrunner.Args
 var receptorRunner *ginkgomon.Runner
 var receptorProcess ifrit.Process
@@ -118,16 +117,14 @@ var _ = SynchronizedBeforeSuite(
 
 		bbsArgs = bbstestrunner.Args{
 			Address:           bbsAddress,
+			AdvertiseURL:      bbsURL.String(),
 			AuctioneerAddress: "some-address",
 			EtcdCluster:       etcdUrl,
 			ConsulCluster:     consulRunner.ConsulCluster(),
 		}
-		bbsRunner = bbstestrunner.New(bbsBinPath, bbsArgs)
-		bbsProcess = ginkgomon.Invoke(bbsRunner)
 	})
 
 var _ = SynchronizedAfterSuite(func() {
-	ginkgomon.Kill(bbsProcess)
 	etcdRunner.Stop()
 	consulRunner.Stop()
 }, func() {
@@ -143,15 +140,17 @@ var _ = BeforeEach(func() {
 	consulSession = consulRunner.NewSession("a-session")
 
 	receptorAddress = fmt.Sprintf("127.0.0.1:%d", 6700+GinkgoParallelNode())
-	receptorTaskHandlerAddress = fmt.Sprintf("127.0.0.1:%d", 1169+GinkgoParallelNode())
 
 	etcdAdapter = etcdRunner.Adapter(nil)
-	legacyBBS = Bbs.NewBBS(etcdAdapter, consulSession, "http://"+receptorTaskHandlerAddress, clock.NewClock(), logger)
+	legacyBBS = Bbs.NewBBS(etcdAdapter, consulSession, clock.NewClock(), logger)
 
 	natsPort = 4051 + GinkgoParallelNode()
 	natsAddress = fmt.Sprintf("127.0.0.1:%d", natsPort)
 	natsClient = diegonats.NewClient()
 	natsGroupProcess = ginkgomon.Invoke(newNatsGroup())
+
+	bbsRunner = bbstestrunner.New(bbsBinPath, bbsArgs)
+	bbsProcess = ginkgomon.Invoke(bbsRunner)
 
 	receptorURL := &url.URL{
 		Scheme: "http",
@@ -165,7 +164,6 @@ var _ = BeforeEach(func() {
 		RegisterWithRouter: true,
 		DomainNames:        "example.com",
 		Address:            receptorAddress,
-		TaskHandlerAddress: receptorTaskHandlerAddress,
 		EtcdCluster:        etcdUrl,
 		Username:           username,
 		Password:           password,
@@ -181,6 +179,7 @@ var _ = BeforeEach(func() {
 var _ = AfterEach(func() {
 	etcdAdapter.Disconnect()
 	ginkgomon.Kill(natsGroupProcess)
+	ginkgomon.Kill(bbsProcess)
 })
 
 func newNatsGroup() ifrit.Runner {

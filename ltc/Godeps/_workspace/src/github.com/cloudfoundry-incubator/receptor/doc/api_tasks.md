@@ -4,6 +4,9 @@ This reference does not cover the JSON payload supplied to each endpoint.  That 
 
 We recommend using the [Receptor http client](https://github.com/cloudfoundry-incubator/receptor) to communicate with Diego's API.  The methods on the client are self-explanatory.
 
+When making a POST or a PUT request to the Receptor HTTP API with a JSON payload, clients should include a `Content-Type: application/json` header in the request. If a different header is present, it may interfere with the correct processing of the request.
+
+
 ## Creating Tasks
 
 To create a Task submit a valid [`TaskCreateRequest`](tasks.md#describing-tasks) via:

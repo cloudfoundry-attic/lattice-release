@@ -71,14 +71,14 @@ func (runner *Runner) Run() error {
 	}
 
 	//detect, compile, release
-	detectedBuildpack, detectedBuildpackDir, detectOutput, err := runner.detect()
-	if err != nil {
-		return err
+	detectedBuildpack, detectedBuildpackDir, detectOutput, ok := runner.detect()
+	if !ok {
+		return newDescriptiveError(nil, buildpack_app_lifecycle.DetectFailMsg)
 	}
 
 	err = runner.compile(detectedBuildpackDir)
 	if err != nil {
-		return newDescriptiveError(err, "Failed to compile droplet")
+		return newDescriptiveError(nil, buildpack_app_lifecycle.CompileFailMsg)
 	}
 
 	startCommand, err := runner.detectStartCommandFromProcfile()
@@ -88,7 +88,7 @@ func (runner *Runner) Run() error {
 
 	releaseInfo, err := runner.release(detectedBuildpackDir, startCommand)
 	if err != nil {
-		return newDescriptiveError(err, "Failed to build droplet release")
+		return newDescriptiveError(err, buildpack_app_lifecycle.ReleaseFailMsg)
 	}
 
 	if len(releaseInfo.DefaultProcessTypes.Web) == 0 {
@@ -223,8 +223,8 @@ func (runner *Runner) pathHasBinDirectory(pathToTest string) bool {
 	return err == nil
 }
 
-// returns buildpack name,  buildpack path, buildpack detect output, error
-func (runner *Runner) detect() (string, string, string, error) {
+// returns buildpack name,  buildpack path, buildpack detect output, ok
+func (runner *Runner) detect() (string, string, string, bool) {
 	for _, buildpack := range runner.config.BuildpackOrder() {
 
 		buildpackPath, err := runner.buildpackPath(buildpack)
@@ -234,18 +234,18 @@ func (runner *Runner) detect() (string, string, string, error) {
 		}
 
 		if runner.config.SkipDetect() {
-			return buildpack, buildpackPath, "", nil
+			return buildpack, buildpackPath, "", true
 		}
 
 		output := new(bytes.Buffer)
 		err = runner.run(exec.Command(path.Join(buildpackPath, "bin", "detect"), runner.config.BuildDir()), output)
 
 		if err == nil {
-			return buildpack, buildpackPath, strings.TrimRight(output.String(), "\n"), nil
+			return buildpack, buildpackPath, strings.TrimRight(output.String(), "\n"), true
 		}
 	}
 
-	return "", "", "", newDescriptiveError(nil, "None of the buildpacks detected a compatible application")
+	return "", "", "", false
 }
 
 func (runner *Runner) detectStartCommandFromProcfile() (string, error) {

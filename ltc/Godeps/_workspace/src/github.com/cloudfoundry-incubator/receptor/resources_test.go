@@ -6,7 +6,6 @@ import (
 	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/route-emitter/cfroutes"
-	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -147,11 +146,11 @@ var _ = Describe("Resources", func() {
 		        ]
 					}`
 					expectedRequest = receptor.DesiredLRPCreateRequest{
-						EgressRules: []oldmodels.SecurityGroupRule{
+						EgressRules: []*models.SecurityGroupRule{
 							{
 								Protocol:     "tcp",
 								Destinations: []string{"0.0.0.0/0"},
-								Ports:        []uint16{80, 443},
+								Ports:        []uint32{80, 443},
 								Log:          true,
 							},
 						},

@@ -1,8 +1,8 @@
 package models
 
 import (
+	"bytes"
 	"encoding/json"
-	"reflect"
 )
 
 type Routes map[string]*json.RawMessage
@@ -19,29 +19,31 @@ func (r *Routes) protoRoutes() *ProtoRoutes {
 	return pr
 }
 
-func (r Routes) Marshal() ([]byte, error) {
+func (r *Routes) Marshal() ([]byte, error) {
 	return r.protoRoutes().Marshal()
 }
 
-func (r Routes) MarshalTo(data []byte) (n int, err error) {
+func (r *Routes) MarshalTo(data []byte) (n int, err error) {
 	return r.protoRoutes().MarshalTo(data)
 }
 
 func (r *Routes) Unmarshal(data []byte) error {
-	pr := ProtoRoutes{}
+	pr := &ProtoRoutes{}
 	err := pr.Unmarshal(data)
 	if err != nil {
 		return err
 	}
 
-	if *r == nil {
-		*r = map[string]*json.RawMessage{}
+	if pr.Routes == nil {
+		return nil
 	}
 
+	routes := map[string]*json.RawMessage{}
 	for k, v := range pr.Routes {
-		value := v
-		(*r)[k] = (*json.RawMessage)(&value)
+		raw := json.RawMessage(v)
+		routes[k] = &raw
 	}
+	*r = routes
 
 	return nil
 }
@@ -54,6 +56,11 @@ func (r *Routes) Size() int {
 	return r.protoRoutes().Size()
 }
 
-func (r Routes) Equal(other Routes) bool {
-	return reflect.DeepEqual(r, other)
+func (r *Routes) Equal(other Routes) bool {
+	for k, v := range *r {
+		if !bytes.Equal(*v, *other[k]) {
+			return false
+		}
+	}
+	return true
 }

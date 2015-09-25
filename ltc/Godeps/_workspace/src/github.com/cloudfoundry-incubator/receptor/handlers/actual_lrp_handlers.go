@@ -10,21 +10,18 @@ import (
 	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
-	Bbs "github.com/cloudfoundry-incubator/runtime-schema/bbs"
 	"github.com/pivotal-golang/lager"
 )
 
 type ActualLRPHandler struct {
-	legacyBBS Bbs.ReceptorBBS
-	bbs       bbs.Client
-	logger    lager.Logger
+	bbs    bbs.Client
+	logger lager.Logger
 }
 
-func NewActualLRPHandler(bbs bbs.Client, legacyBBS Bbs.ReceptorBBS, logger lager.Logger) *ActualLRPHandler {
+func NewActualLRPHandler(bbs bbs.Client, logger lager.Logger) *ActualLRPHandler {
 	return &ActualLRPHandler{
-		bbs:       bbs,
-		legacyBBS: legacyBBS,
-		logger:    logger.Session("actual-lrp-handler"),
+		bbs:    bbs,
+		logger: logger.Session("actual-lrp-handler"),
 	}
 }
 
@@ -116,7 +113,8 @@ func (h *ActualLRPHandler) GetByProcessGuidAndIndex(w http.ResponseWriter, req *
 
 	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(processGuid, index)
 	if err != nil {
-		if e, ok := err.(*models.Error); ok && e.Equal(models.ErrResourceNotFound) {
+		bbsError := models.ConvertError(err)
+		if bbsError.Type == models.Error_ResourceNotFound {
 			writeJSONResponse(w, http.StatusNotFound, nil)
 		} else {
 			logger.Error("failed-to-fetch-actual-lrps-by-process-guid", err)
@@ -162,7 +160,8 @@ func (h *ActualLRPHandler) KillByProcessGuidAndIndex(w http.ResponseWriter, req 
 
 	actualLRPGroup, err := h.bbs.ActualLRPGroupByProcessGuidAndIndex(processGuid, index)
 	if err != nil {
-		if e, ok := err.(*models.Error); ok && e.Equal(models.ErrResourceNotFound) {
+		bbsError := models.ConvertError(err)
+		if bbsError.Type == models.Error_ResourceNotFound {
 			responseErr := fmt.Errorf("process-guid '%s' does not exist or has no instance at index %d", processGuid, index)
 			logger.Error("no-instances-to-delete", responseErr)
 			writeJSONResponse(w, http.StatusNotFound, receptor.Error{

@@ -9,7 +9,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/bbs/models"
-	"github.com/cloudfoundry-incubator/bbs/models/internal/model_helpers"
+	"github.com/cloudfoundry-incubator/bbs/models/test/model_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/handlers"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
@@ -420,8 +420,8 @@ var _ = Describe("TaskHandler", func() {
 		It("succeeds", func() {
 			Expect(fakeClient.ResolvingTaskCallCount()).To(Equal(1))
 			Expect(fakeClient.ResolvingTaskArgsForCall(0)).To(Equal("the-task-guid"))
-			Expect(fakeClient.ResolveTaskCallCount()).To(Equal(1))
-			Expect(fakeClient.ResolveTaskArgsForCall(0)).To(Equal("the-task-guid"))
+			Expect(fakeClient.DeleteTaskCallCount()).To(Equal(1))
+			Expect(fakeClient.DeleteTaskArgsForCall(0)).To(Equal("the-task-guid"))
 
 			Expect(responseRecorder.Code).To(Equal(http.StatusOK))
 		})
@@ -464,7 +464,7 @@ var _ = Describe("TaskHandler", func() {
 
 				It("does not try to resolve the task", func() {
 					handler.Delete(responseRecorder, request)
-					Expect(fakeClient.ResolveTaskCallCount()).To(BeZero())
+					Expect(fakeClient.DeleteTaskCallCount()).To(BeZero())
 				})
 			})
 		})
@@ -474,7 +474,7 @@ var _ = Describe("TaskHandler", func() {
 				var err error
 				request, err = http.NewRequest("", "http://example.com?:task_guid=the-task-guid", nil)
 				Expect(err).NotTo(HaveOccurred())
-				fakeClient.ResolveTaskReturns(errors.New("Failed to resolve task"))
+				fakeClient.DeleteTaskReturns(errors.New("Failed to resolve task"))
 			})
 
 			It("responds with an error", func() {
