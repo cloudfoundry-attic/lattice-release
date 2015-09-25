@@ -67,41 +67,29 @@ func NewValidDesiredLRP(guid string) *models.DesiredLRP {
 	return desiredLRP
 }
 
-func NewValidTask(guid string) *models.Task {
-	task := &models.Task{
-		TaskGuid: guid,
-		Domain:   "some-domain",
-		RootFs:   "docker:///docker.com/docker",
+func NewValidTaskDefinition() *models.TaskDefinition {
+	return &models.TaskDefinition{
+		RootFs: "docker:///docker.com/docker",
 		EnvironmentVariables: []*models.EnvironmentVariable{
 			{
-				Name:  "ENV_VAR_NAME",
-				Value: "an environmment value",
+				Name:  "FOO",
+				Value: "BAR",
 			},
 		},
-		Action: models.WrapAction(&models.DownloadAction{
-			From:     "old_location",
-			To:       "new_location",
-			CacheKey: "the-cache-key",
-			User:     "someone",
+		Action: models.WrapAction(&models.RunAction{
+			User:           "user",
+			Path:           "echo",
+			Args:           []string{"hello world"},
+			ResourceLimits: &models.ResourceLimits{},
 		}),
-		MemoryMb:         256,
-		DiskMb:           1024,
-		CpuWeight:        42,
-		Privileged:       true,
-		LogGuid:          "123",
-		LogSource:        "APP",
-		MetricsGuid:      "456",
-		CreatedAt:        time.Date(2014, time.February, 25, 23, 46, 11, 00, time.UTC).UnixNano(),
-		UpdatedAt:        time.Date(2014, time.February, 25, 23, 46, 11, 10, time.UTC).UnixNano(),
-		FirstCompletedAt: time.Date(2014, time.February, 25, 23, 46, 11, 30, time.UTC).UnixNano(),
-		ResultFile:       "some-file.txt",
-		State:            models.Task_Pending,
-		CellId:           "cell",
-
-		Result:        "turboencabulated",
-		Failed:        true,
-		FailureReason: "because i said so",
-
+		MemoryMb:    256,
+		DiskMb:      1024,
+		CpuWeight:   42,
+		Privileged:  true,
+		LogGuid:     "123",
+		LogSource:   "APP",
+		MetricsGuid: "456",
+		ResultFile:  "some-file.txt",
 		EgressRules: []*models.SecurityGroupRule{
 			{
 				Protocol:     "tcp",
@@ -120,13 +108,29 @@ func NewValidTask(guid string) *models.Task {
 		},
 
 		Annotation: `[{"anything": "you want!"}]... dude`,
-		// TODO: UNCOMMENT ME ONCE YOU SWITCH TO PROTOBUFS
-		//CompletionCallbackUrl: "http://user:password@a.b.c/d/e/f",
-		CompletionCallbackUrl: "http://@a.b.c/d/e/f",
+	}
+}
+
+func NewValidTask(guid string) *models.Task {
+	task := &models.Task{
+		TaskGuid:       guid,
+		Domain:         "some-domain",
+		TaskDefinition: NewValidTaskDefinition(),
+
+		CreatedAt:        time.Date(2014, time.February, 25, 23, 46, 11, 00, time.UTC).UnixNano(),
+		UpdatedAt:        time.Date(2014, time.February, 25, 23, 46, 11, 10, time.UTC).UnixNano(),
+		FirstCompletedAt: time.Date(2014, time.February, 25, 23, 46, 11, 30, time.UTC).UnixNano(),
+
+		CellId:        "cell",
+		State:         models.Task_Pending,
+		Result:        "turboencabulated",
+		Failed:        true,
+		FailureReason: "because i said so",
 	}
 
 	err := task.Validate()
-	Expect(err).NotTo(HaveOccurred())
-
+	if err != nil {
+		panic(err)
+	}
 	return task
 }

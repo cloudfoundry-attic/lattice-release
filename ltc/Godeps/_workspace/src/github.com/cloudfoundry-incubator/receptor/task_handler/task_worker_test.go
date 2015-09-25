@@ -6,10 +6,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/cloudfoundry-incubator/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/bbs/models"
+	"github.com/cloudfoundry-incubator/bbs/models/internal/model_helpers"
 	"github.com/cloudfoundry-incubator/cf_http"
 	"github.com/cloudfoundry-incubator/receptor/task_handler"
-	"github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
 	"github.com/pivotal-golang/lager"
 	"github.com/tedsuo/ifrit"
 	"github.com/tedsuo/ifrit/ginkgomon"
@@ -21,7 +22,7 @@ import (
 
 var _ = Describe("TaskWorker", func() {
 	var (
-		fakeBBS *fake_bbs.FakeReceptorBBS
+		fakeBBS *fake_bbs.FakeClient
 		enqueue chan<- *models.Task
 
 		process ifrit.Process
@@ -39,7 +40,7 @@ var _ = Describe("TaskWorker", func() {
 		logger = lager.NewLogger("task-watcher-test")
 		logger.RegisterSink(lager.NewWriterSink(GinkgoWriter, lager.INFO))
 
-		fakeBBS = new(fake_bbs.FakeReceptorBBS)
+		fakeBBS = new(fake_bbs.FakeClient)
 
 		taskWorker, enqueueTasks := task_handler.NewTaskWorkerPool(fakeBBS, logger)
 
@@ -98,14 +99,9 @@ var _ = Describe("TaskWorker", func() {
 		})
 
 		simulateTaskCompleting := func() {
-			enqueue <- &models.Task{
-				TaskGuid:              "the-task-guid",
-				CompletionCallbackUrl: callbackURL,
-				Action: models.WrapAction(&models.RunAction{
-					User: "me",
-					Path: "lol",
-				}),
-			}
+			task := model_helpers.NewValidTask("the-task-guid")
+			task.CompletionCallbackUrl = callbackURL
+			enqueue <- task
 		}
 
 		Context("when the task has a completion callback URL", func() {
@@ -116,7 +112,7 @@ var _ = Describe("TaskWorker", func() {
 				statusCodes <- 200
 
 				Eventually(fakeBBS.ResolveTaskCallCount).Should(Equal(1))
-				_, actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
+				actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
 				Expect(actualGuid).To(Equal("the-task-guid"))
 			})
 
@@ -155,7 +151,7 @@ var _ = Describe("TaskWorker", func() {
 						statusCodes <- 200
 
 						Eventually(fakeBBS.ResolveTaskCallCount).Should(Equal(1))
-						_, actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
+						actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
 						Expect(actualGuid).To(Equal("the-task-guid"))
 					})
 				})
@@ -167,7 +163,7 @@ var _ = Describe("TaskWorker", func() {
 						statusCodes <- 403
 
 						Eventually(fakeBBS.ResolveTaskCallCount).Should(Equal(1))
-						_, actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
+						actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
 						Expect(actualGuid).To(Equal("the-task-guid"))
 					})
 				})
@@ -179,7 +175,7 @@ var _ = Describe("TaskWorker", func() {
 						statusCodes <- 500
 
 						Eventually(fakeBBS.ResolveTaskCallCount).Should(Equal(1))
-						_, actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
+						actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
 						Expect(actualGuid).To(Equal("the-task-guid"))
 					})
 				})
@@ -202,7 +198,7 @@ var _ = Describe("TaskWorker", func() {
 						statusCodes <- 200
 
 						Eventually(fakeBBS.ResolveTaskCallCount, 0.25).Should(Equal(1))
-						_, actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
+						actualGuid := fakeBBS.ResolveTaskArgsForCall(0)
 						Expect(actualGuid).To(Equal("the-task-guid"))
 					})
 
@@ -268,7 +264,7 @@ var _ = Describe("TaskWorker", func() {
 							Eventually(fakeServer.ReceivedRequests).Should(HaveLen(2))
 							Eventually(fakeBBS.ResolveTaskCallCount, 0.25).Should(Equal(1))
 
-							_, resolvedTaskGuid := fakeBBS.ResolveTaskArgsForCall(0)
+							resolvedTaskGuid := fakeBBS.ResolveTaskArgsForCall(0)
 							Expect(resolvedTaskGuid).To(Equal("the-task-guid"))
 						})
 					})

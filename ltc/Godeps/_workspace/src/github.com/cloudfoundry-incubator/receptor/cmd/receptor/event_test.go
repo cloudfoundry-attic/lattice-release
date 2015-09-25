@@ -7,7 +7,6 @@ import (
 	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
-	"github.com/cloudfoundry-incubator/runtime-schema/bbs/bbserrors"
 	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/tedsuo/ifrit/ginkgomon"
 
@@ -171,13 +170,6 @@ var _ = Describe("Event", func() {
 			netInfo        models.ActualLRPNetInfo
 		)
 
-		var (
-			legacyKey            oldmodels.ActualLRPKey
-			legacyOldInstanceKey oldmodels.ActualLRPInstanceKey
-			legacyNewInstanceKey oldmodels.ActualLRPInstanceKey
-			legacyNetInfo        oldmodels.ActualLRPNetInfo
-		)
-
 		BeforeEach(func() {
 			oldDesiredLRP = oldmodels.DesiredLRP{
 				ProcessGuid: processGuid,
@@ -189,11 +181,6 @@ var _ = Describe("Event", func() {
 					User: "me",
 				},
 			}
-
-			legacyKey = oldmodels.NewActualLRPKey(processGuid, 0, domain)
-			legacyOldInstanceKey = oldmodels.NewActualLRPInstanceKey("instance-guid", "cell-id")
-			legacyNewInstanceKey = oldmodels.NewActualLRPInstanceKey("other-instance-guid", "other-cell-id")
-			legacyNetInfo = oldmodels.NewActualLRPNetInfo("1.1.1.1", []oldmodels.PortMapping{})
 
 			key = models.NewActualLRPKey(processGuid, 0, domain)
 			oldInstanceKey = models.NewActualLRPInstanceKey("instance-guid", "cell-id")
@@ -220,12 +207,12 @@ var _ = Describe("Event", func() {
 			Expect(actualLRPCreatedEvent.ActualLRPResponse).To(Equal(serialization.ActualLRPProtoToResponse(actualLRP, false)))
 
 			By("updating the existing ActualLRP")
-			_, err = bbsClient.ClaimActualLRP(processGuid, 0, &oldInstanceKey)
+			_, bbsErr := bbsClient.ClaimActualLRP(processGuid, 0, &oldInstanceKey)
 			Expect(err).NotTo(HaveOccurred())
 
 			before := actualLRP
-			actualLRPGroup, err = bbsClient.ActualLRPGroupByProcessGuidAndIndex(oldDesiredLRP.ProcessGuid, 0)
-			Expect(err).NotTo(HaveOccurred())
+			actualLRPGroup, bbsErr = bbsClient.ActualLRPGroupByProcessGuidAndIndex(oldDesiredLRP.ProcessGuid, 0)
+			Expect(bbsErr).NotTo(HaveOccurred())
 			actualLRP = actualLRPGroup.Instance
 
 			Eventually(func() receptor.Event {
@@ -238,11 +225,13 @@ var _ = Describe("Event", func() {
 			Expect(actualLRPChangedEvent.After).To(Equal(serialization.ActualLRPProtoToResponse(actualLRP, false)))
 
 			By("evacuating the ActualLRP")
-			_, err = legacyBBS.EvacuateRunningActualLRP(logger, legacyKey, legacyOldInstanceKey, legacyNetInfo, 0)
-			Expect(err).To(Equal(bbserrors.ErrServiceUnavailable))
+			_, bbsErr = bbsClient.EvacuateRunningActualLRP(&key, &oldInstanceKey, &netInfo, 0)
+			// This will cause an auction to be submitted. We expect this to fail
+			// because there is no auctioneer running.
+			Expect(bbsErr).To(Equal(models.ErrUnknownError))
 
-			evacuatingLRPGroup, err := bbsClient.ActualLRPGroupByProcessGuidAndIndex(oldDesiredLRP.ProcessGuid, 0)
-			Expect(err).NotTo(HaveOccurred())
+			evacuatingLRPGroup, bbsErr := bbsClient.ActualLRPGroupByProcessGuidAndIndex(oldDesiredLRP.ProcessGuid, 0)
+			Expect(bbsErr).NotTo(HaveOccurred())
 			evacuatingLRP := evacuatingLRPGroup.Evacuating
 
 			Eventually(func() receptor.Event {
@@ -263,8 +252,8 @@ var _ = Describe("Event", func() {
 			}).Should(BeAssignableToTypeOf(receptor.ActualLRPChangedEvent{}))
 
 			By("starting and then evacuating the ActualLRP on another cell")
-			_, err = bbsClient.StartActualLRP(&key, &newInstanceKey, &netInfo)
-			Expect(err).NotTo(HaveOccurred())
+			_, bbsErr = bbsClient.StartActualLRP(&key, &newInstanceKey, &netInfo)
+			Expect(bbsErr).NotTo(HaveOccurred())
 
 			// discard instance -> RUNNING
 			Eventually(func() receptor.Event {
@@ -273,11 +262,11 @@ var _ = Describe("Event", func() {
 			}).Should(BeAssignableToTypeOf(receptor.ActualLRPChangedEvent{}))
 
 			evacuatingBefore := evacuatingLRP
-			_, err = legacyBBS.EvacuateRunningActualLRP(logger, legacyKey, legacyNewInstanceKey, legacyNetInfo, 0)
-			Expect(err).To(Equal(bbserrors.ErrServiceUnavailable))
+			_, bbsErr = bbsClient.EvacuateRunningActualLRP(&key, &newInstanceKey, &netInfo, 0)
+			Expect(bbsErr).To(Equal(models.ErrUnknownError))
 
-			evacuatingLRPGroup, err = bbsClient.ActualLRPGroupByProcessGuidAndIndex(oldDesiredLRP.ProcessGuid, 0)
-			Expect(err).NotTo(HaveOccurred())
+			evacuatingLRPGroup, bbsErr = bbsClient.ActualLRPGroupByProcessGuidAndIndex(oldDesiredLRP.ProcessGuid, 0)
+			Expect(bbsErr).NotTo(HaveOccurred())
 			evacuatingLRP = evacuatingLRPGroup.Evacuating
 
 			Expect(err).NotTo(HaveOccurred())
@@ -303,12 +292,12 @@ var _ = Describe("Event", func() {
 			}).Should(BeAssignableToTypeOf(receptor.ActualLRPChangedEvent{}))
 
 			By("removing the instance ActualLRP")
-			actualLRPGroup, err = bbsClient.ActualLRPGroupByProcessGuidAndIndex(oldDesiredLRP.ProcessGuid, 0)
-			Expect(err).NotTo(HaveOccurred())
+			actualLRPGroup, bbsErr = bbsClient.ActualLRPGroupByProcessGuidAndIndex(oldDesiredLRP.ProcessGuid, 0)
+			Expect(bbsErr).NotTo(HaveOccurred())
 			actualLRP = actualLRPGroup.Instance
 
-			err = bbsClient.RemoveActualLRP(key.ProcessGuid, legacyKey.Index)
-			Expect(err).NotTo(HaveOccurred())
+			bbsErr = bbsClient.RemoveActualLRP(key.ProcessGuid, int(key.Index))
+			Expect(bbsErr).NotTo(HaveOccurred())
 
 			Eventually(func() receptor.Event {
 				Eventually(events).Should(Receive(&event))
@@ -322,8 +311,8 @@ var _ = Describe("Event", func() {
 			Expect(response).To(Equal(serialization.ActualLRPProtoToResponse(actualLRP, false)))
 
 			By("removing the evacuating ActualLRP")
-			err = legacyBBS.RemoveEvacuatingActualLRP(logger, legacyKey, legacyNewInstanceKey)
-			Expect(err).NotTo(HaveOccurred())
+			bbsErr = bbsClient.RemoveEvacuatingActualLRP(&key, &newInstanceKey)
+			Expect(bbsErr).NotTo(HaveOccurred())
 
 			Eventually(func() receptor.Event {
 				Eventually(events).Should(Receive(&event))

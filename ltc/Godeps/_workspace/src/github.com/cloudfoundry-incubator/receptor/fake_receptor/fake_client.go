@@ -21,7 +21,7 @@ type FakeClient struct {
 	TasksStub        func() ([]receptor.TaskResponse, error)
 	tasksMutex       sync.RWMutex
 	tasksArgsForCall []struct{}
-	tasksReturns struct {
+	tasksReturns     struct {
 		result1 []receptor.TaskResponse
 		result2 error
 	}
@@ -96,7 +96,7 @@ type FakeClient struct {
 	DesiredLRPsStub        func() ([]receptor.DesiredLRPResponse, error)
 	desiredLRPsMutex       sync.RWMutex
 	desiredLRPsArgsForCall []struct{}
-	desiredLRPsReturns struct {
+	desiredLRPsReturns     struct {
 		result1 []receptor.DesiredLRPResponse
 		result2 error
 	}
@@ -112,7 +112,7 @@ type FakeClient struct {
 	ActualLRPsStub        func() ([]receptor.ActualLRPResponse, error)
 	actualLRPsMutex       sync.RWMutex
 	actualLRPsArgsForCall []struct{}
-	actualLRPsReturns struct {
+	actualLRPsReturns     struct {
 		result1 []receptor.ActualLRPResponse
 		result2 error
 	}
@@ -156,14 +156,14 @@ type FakeClient struct {
 	SubscribeToEventsStub        func() (receptor.EventSource, error)
 	subscribeToEventsMutex       sync.RWMutex
 	subscribeToEventsArgsForCall []struct{}
-	subscribeToEventsReturns struct {
+	subscribeToEventsReturns     struct {
 		result1 receptor.EventSource
 		result2 error
 	}
 	CellsStub        func() ([]receptor.CellResponse, error)
 	cellsMutex       sync.RWMutex
 	cellsArgsForCall []struct{}
-	cellsReturns struct {
+	cellsReturns     struct {
 		result1 []receptor.CellResponse
 		result2 error
 	}
@@ -179,20 +179,20 @@ type FakeClient struct {
 	DomainsStub        func() ([]string, error)
 	domainsMutex       sync.RWMutex
 	domainsArgsForCall []struct{}
-	domainsReturns struct {
+	domainsReturns     struct {
 		result1 []string
 		result2 error
 	}
 	GetClientStub        func() *http.Client
 	getClientMutex       sync.RWMutex
 	getClientArgsForCall []struct{}
-	getClientReturns struct {
+	getClientReturns     struct {
 		result1 *http.Client
 	}
 	GetStreamingClientStub        func() *http.Client
 	getStreamingClientMutex       sync.RWMutex
 	getStreamingClientArgsForCall []struct{}
-	getStreamingClientReturns struct {
+	getStreamingClientReturns     struct {
 		result1 *http.Client
 	}
 }

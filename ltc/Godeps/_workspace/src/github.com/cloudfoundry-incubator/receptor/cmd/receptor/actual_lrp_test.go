@@ -7,7 +7,6 @@ import (
 	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/serialization"
-	"github.com/cloudfoundry-incubator/runtime-schema/bbs/bbserrors"
 	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
 	"github.com/tedsuo/ifrit/ginkgomon"
 
@@ -19,8 +18,7 @@ var _ = Describe("Actual LRP API", func() {
 	const lrpCount = 6
 
 	var (
-		evacuatingLRPKey    models.ActualLRPKey
-		oldEvacuatingLRPKey oldmodels.ActualLRPKey
+		evacuatingLRPKey models.ActualLRPKey
 	)
 
 	BeforeEach(func() {
@@ -55,11 +53,10 @@ var _ = Describe("Actual LRP API", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		evacuatingLRPKey = models.NewActualLRPKey("process-guid-0", 0, "domain-0")
-		oldEvacuatingLRPKey = oldmodels.NewActualLRPKey("process-guid-0", 0, "domain-0")
-		instanceKey := oldmodels.NewActualLRPInstanceKey("instance-guid-0", "cell-id")
-		netInfo := oldmodels.NewActualLRPNetInfo("the-host", []oldmodels.PortMapping{{ContainerPort: 80, HostPort: 1000}})
-		_, err = legacyBBS.EvacuateRunningActualLRP(logger, oldEvacuatingLRPKey, instanceKey, netInfo, 0)
-		Expect(err).To(Equal(bbserrors.ErrServiceUnavailable))
+		instanceKey := models.NewActualLRPInstanceKey("instance-guid-0", "cell-id")
+		netInfo := models.NewActualLRPNetInfo("the-host", models.NewPortMapping(1000, 80))
+		_, bbsErr := bbsClient.EvacuateRunningActualLRP(&evacuatingLRPKey, &instanceKey, &netInfo, 0)
+		Expect(bbsErr).To(Equal(models.ErrUnknownError))
 	})
 
 	AfterEach(func() {

@@ -284,4 +284,63 @@ var _ = Describe("ActualLRP Requests", func() {
 			})
 		})
 	})
+
+	Describe("RemoveEvacuatingActualLRPRequest", func() {
+		Describe("Validate", func() {
+			var request models.RemoveEvacuatingActualLRPRequest
+
+			BeforeEach(func() {
+				request = models.RemoveEvacuatingActualLRPRequest{
+					ActualLrpKey:         &models.ActualLRPKey{ProcessGuid: "p-guid", Index: 2, Domain: "domain"},
+					ActualLrpInstanceKey: &models.ActualLRPInstanceKey{InstanceGuid: "i-guid", CellId: "cell-id"},
+				}
+			})
+
+			Context("when valid", func() {
+				It("returns nil", func() {
+					Expect(request.Validate()).To(BeNil())
+				})
+			})
+
+			Context("when the ActualLrpKey is blank", func() {
+				BeforeEach(func() {
+					request.ActualLrpKey = nil
+				})
+
+				It("returns a validation error", func() {
+					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"actual_lrp_key"}))
+				})
+			})
+
+			Context("when the ActualLrpKey is invalid", func() {
+				BeforeEach(func() {
+					request.ActualLrpKey.ProcessGuid = ""
+				})
+
+				It("returns a validation error", func() {
+					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"process_guid"}))
+				})
+			})
+
+			Context("when the ActualLrpInstanceKey is blank", func() {
+				BeforeEach(func() {
+					request.ActualLrpInstanceKey = nil
+				})
+
+				It("returns a validation error", func() {
+					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"actual_lrp_instance_key"}))
+				})
+			})
+
+			Context("when the ActualLrpInstanceKey is invalid", func() {
+				BeforeEach(func() {
+					request.ActualLrpInstanceKey.InstanceGuid = ""
+				})
+
+				It("returns a validation error", func() {
+					Expect(request.Validate()).To(ConsistOf(models.ErrInvalidField{"instance_guid"}))
+				})
+			})
+		})
+	})
 })

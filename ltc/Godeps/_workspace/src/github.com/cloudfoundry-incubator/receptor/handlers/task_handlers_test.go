@@ -9,11 +9,10 @@ import (
 
 	"github.com/cloudfoundry-incubator/bbs/fake_bbs"
 	"github.com/cloudfoundry-incubator/bbs/models"
+	"github.com/cloudfoundry-incubator/bbs/models/internal/model_helpers"
 	"github.com/cloudfoundry-incubator/receptor"
 	"github.com/cloudfoundry-incubator/receptor/handlers"
-	"github.com/cloudfoundry-incubator/runtime-schema/bbs/bbserrors"
-	fake_legacybbs "github.com/cloudfoundry-incubator/runtime-schema/bbs/fake_bbs"
-	oldmodels "github.com/cloudfoundry-incubator/runtime-schema/models"
+	"github.com/cloudfoundry-incubator/receptor/serialization"
 	"github.com/pivotal-golang/lager"
 
 	. "github.com/onsi/ginkgo"
@@ -24,7 +23,6 @@ var _ = Describe("TaskHandler", func() {
 	var (
 		logger           lager.Logger
 		fakeClient       *fake_bbs.FakeClient
-		fakeLegacyBBS    *fake_legacybbs.FakeReceptorBBS
 		responseRecorder *httptest.ResponseRecorder
 		handler          *handlers.TaskHandler
 		request          *http.Request
@@ -32,16 +30,15 @@ var _ = Describe("TaskHandler", func() {
 
 	BeforeEach(func() {
 		fakeClient = &fake_bbs.FakeClient{}
-		fakeLegacyBBS = new(fake_legacybbs.FakeReceptorBBS)
 		logger = lager.NewLogger("test")
 		logger.RegisterSink(lager.NewWriterSink(GinkgoWriter, lager.DEBUG))
 		responseRecorder = httptest.NewRecorder()
-		handler = handlers.NewTaskHandler(fakeClient, fakeLegacyBBS, logger)
+		handler = handlers.NewTaskHandler(fakeClient, logger)
 	})
 
 	Describe("Create", func() {
 		var validCreateRequest receptor.TaskCreateRequest
-		var expectedTask oldmodels.Task
+		var expectedTask *models.Task
 
 		BeforeEach(func() {
 			validCreateRequest = receptor.TaskCreateRequest{
@@ -59,20 +56,22 @@ var _ = Describe("TaskHandler", func() {
 				Privileged: true,
 			}
 
-			expectedTask = oldmodels.Task{
-				TaskGuid:   "task-guid-1",
-				Domain:     "test-domain",
-				RootFS:     "docker://docker",
-				Action:     &oldmodels.RunAction{User: "me", Path: "/bin/bash", Args: []string{"echo", "hi"}, ResourceLimits: oldmodels.ResourceLimits{Nofile: nil}},
-				MemoryMB:   24,
-				DiskMB:     12,
-				CPUWeight:  10,
-				LogGuid:    "guid",
-				LogSource:  "source-name",
-				ResultFile: "result-file",
-				Annotation: "some annotation",
-				Privileged: true,
-			}
+			expectedTask = model_helpers.NewValidTask("task-guid-1")
+			expectedTask.Domain = "test-domain"
+			expectedTask.TaskDefinition.RootFs = "docker://docker"
+			expectedTask.TaskDefinition.Action = models.WrapAction(&models.RunAction{User: "me", Path: "/bin/bash", Args: []string{"echo", "hi"}})
+			expectedTask.TaskDefinition.MemoryMb = 24
+			expectedTask.TaskDefinition.DiskMb = 12
+			expectedTask.TaskDefinition.CpuWeight = 10
+			expectedTask.TaskDefinition.LogGuid = "guid"
+			expectedTask.TaskDefinition.LogSource = "source-name"
+			expectedTask.TaskDefinition.ResultFile = "result-file"
+			expectedTask.TaskDefinition.Annotation = "some annotation"
+			expectedTask.TaskDefinition.Privileged = true
+			expectedTask.TaskDefinition.EgressRules = nil
+			expectedTask.TaskDefinition.MetricsGuid = ""
+			expectedTask.TaskDefinition.EnvironmentVariables = nil
+
 		})
 
 		Context("when everything succeeds", func() {
@@ -81,9 +80,9 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("calls DesireTask on the BBS with the correct task", func() {
-				Expect(fakeLegacyBBS.DesireTaskCallCount()).To(Equal(1))
-				_, task := fakeLegacyBBS.DesireTaskArgsForCall(0)
-				Expect(task).To(Equal(expectedTask))
+				Expect(fakeClient.DesireTaskCallCount()).To(Equal(1))
+				_, _, def := fakeClient.DesireTaskArgsForCall(0)
+				Expect(def).To(Equal(expectedTask.TaskDefinition))
 			})
 
 			It("responds with 201 CREATED", func() {
@@ -94,34 +93,36 @@ var _ = Describe("TaskHandler", func() {
 				Expect(responseRecorder.Body.String()).To(Equal(""))
 			})
 
-			Context("when env vars are specified", func() {
-				BeforeEach(func() {
-					validCreateRequest.EnvironmentVariables = []*models.EnvironmentVariable{
-						{Name: "var1", Value: "val1"},
-						{Name: "var2", Value: "val2"},
-					}
+			Context("when omitempty fields", func() {
+				Context("are specified", func() {
+					BeforeEach(func() {
+						validCreateRequest.EnvironmentVariables = []*models.EnvironmentVariable{
+							{Name: "var1", Value: "val1"},
+							{Name: "var2", Value: "val2"},
+						}
+						validCreateRequest.EgressRules = []*models.SecurityGroupRule{
+							{Protocol: "tcp"},
+						}
+					})
+
+					It("passes them to the BBS", func() {
+						Expect(fakeClient.DesireTaskCallCount()).To(Equal(1))
+						_, _, def := fakeClient.DesireTaskArgsForCall(0)
+						Expect(def.EnvironmentVariables).To(Equal([]*models.EnvironmentVariable{
+							{Name: "var1", Value: "val1"},
+							{Name: "var2", Value: "val2"},
+						}))
+						Expect(def.EgressRules).To(Equal([]*models.SecurityGroupRule{{Protocol: "tcp"}}))
+					})
 				})
 
-				AfterEach(func() {
-					validCreateRequest.EnvironmentVariables = []*models.EnvironmentVariable{}
-				})
-
-				It("passes them to the BBS", func() {
-					Expect(fakeLegacyBBS.DesireTaskCallCount()).To(Equal(1))
-					_, task := fakeLegacyBBS.DesireTaskArgsForCall(0)
-					Expect(task.EnvironmentVariables).To(Equal([]oldmodels.EnvironmentVariable{
-						{Name: "var1", Value: "val1"},
-						{Name: "var2", Value: "val2"},
-					}))
-
-				})
-			})
-
-			Context("when no env vars are specified", func() {
-				It("passes a nil slice to the BBS", func() {
-					Expect(fakeLegacyBBS.DesireTaskCallCount()).To(Equal(1))
-					_, task := fakeLegacyBBS.DesireTaskArgsForCall(0)
-					Expect(task.EnvironmentVariables).To(BeNil())
+				Context("when are not specified", func() {
+					It("passes a nil slice to the BBS", func() {
+						Expect(fakeClient.DesireTaskCallCount()).To(Equal(1))
+						_, _, def := fakeClient.DesireTaskArgsForCall(0)
+						Expect(def.EnvironmentVariables).To(BeNil())
+						Expect(def.EgressRules).To(BeNil())
+					})
 				})
 			})
 
@@ -138,14 +139,14 @@ var _ = Describe("TaskHandler", func() {
 
 		Context("when the BBS responds with an error", func() {
 			BeforeEach(func() {
-				fakeLegacyBBS.DesireTaskReturns(errors.New("ka-boom"))
+				fakeClient.DesireTaskReturns(errors.New("ka-boom"))
 				handler.Create(responseRecorder, newTestRequest(validCreateRequest))
 			})
 
 			It("calls DesireTask on the BBS with the correct task", func() {
-				Expect(fakeLegacyBBS.DesireTaskCallCount()).To(Equal(1))
-				_, task := fakeLegacyBBS.DesireTaskArgsForCall(0)
-				Expect(task.TaskGuid).To(Equal("task-guid-1"))
+				Expect(fakeClient.DesireTaskCallCount()).To(Equal(1))
+				taskGuid, _, _ := fakeClient.DesireTaskArgsForCall(0)
+				Expect(taskGuid).To(Equal("task-guid-1"))
 			})
 
 			It("responds with 500 INTERNAL ERROR", func() {
@@ -163,10 +164,10 @@ var _ = Describe("TaskHandler", func() {
 		})
 
 		Context("when the requested task is invalid", func() {
-			var validationError = oldmodels.ValidationError{}
+			var validationError = models.ErrBadRequest
 
 			BeforeEach(func() {
-				fakeLegacyBBS.DesireTaskReturns(validationError)
+				fakeClient.DesireTaskReturns(validationError)
 				handler.Create(responseRecorder, newTestRequest(validCreateRequest))
 			})
 
@@ -183,6 +184,27 @@ var _ = Describe("TaskHandler", func() {
 			})
 		})
 
+		Context("when the requested task exists", func() {
+			var desireError = models.ErrResourceExists
+
+			BeforeEach(func() {
+				fakeClient.DesireTaskReturns(desireError)
+				handler.Create(responseRecorder, newTestRequest(validCreateRequest))
+			})
+
+			It("responds with 409 CONFLICT", func() {
+				Expect(responseRecorder.Code).To(Equal(http.StatusConflict))
+			})
+
+			It("responds with a relevant error message", func() {
+				expectedBody, _ := json.Marshal(receptor.Error{
+					Type:    receptor.TaskGuidAlreadyExists,
+					Message: "task already exists",
+				})
+				Expect(responseRecorder.Body.String()).To(Equal(string(expectedBody)))
+			})
+		})
+
 		Context("when the request does not contain a TaskCreateRequest", func() {
 			var garbageRequest = []byte(`hello`)
 
@@ -191,7 +213,7 @@ var _ = Describe("TaskHandler", func() {
 			})
 
 			It("does not call DesireTask on the BBS", func() {
-				Expect(fakeLegacyBBS.DesireTaskCallCount()).To(Equal(0))
+				Expect(fakeClient.DesireTaskCallCount()).To(Equal(0))
 			})
 
 			It("responds with 400 BAD REQUEST", func() {
@@ -225,25 +247,10 @@ var _ = Describe("TaskHandler", func() {
 			var domain1Task, domain2Task *models.Task
 
 			BeforeEach(func() {
-				domain1Task = &models.Task{
-					TaskGuid: "task-guid-1",
-					Domain:   "domain-1",
-					Action: models.WrapAction(&models.RunAction{
-						User: "me",
-						Path: "the-path",
-					}),
-					State: models.Task_Pending,
-				}
-
-				domain2Task = &models.Task{
-					TaskGuid: "task-guid-2",
-					Domain:   "domain-2",
-					Action: models.WrapAction(&models.RunAction{
-						User: "me",
-						Path: "the-path",
-					}),
-					State: models.Task_Pending,
-				}
+				domain1Task = model_helpers.NewValidTask("task-guid-1")
+				domain1Task.Domain = "domain-1"
+				domain2Task = model_helpers.NewValidTask("task-guid-2")
+				domain2Task.Domain = "domain-2"
 
 				fakeClient.TasksReturns([]*models.Task{
 					domain1Task,
@@ -257,56 +264,43 @@ var _ = Describe("TaskHandler", func() {
 
 			Context("when a domain query param is provided", func() {
 				It("gets all tasks", func() {
-					var tasks []receptor.TaskResponse
-
 					request, err := http.NewRequest("", "http://example.com?domain=domain-1", nil)
 					Expect(err).NotTo(HaveOccurred())
 
 					handler.GetAll(responseRecorder, request)
 					Expect(responseRecorder.Code).To(Equal(http.StatusOK))
+
+					var tasks []receptor.TaskResponse
 					err = json.Unmarshal(responseRecorder.Body.Bytes(), &tasks)
 					Expect(err).NotTo(HaveOccurred())
 
+					Expect(fakeClient.TasksByDomainCallCount()).To(Equal(1))
 					actualDomain := fakeClient.TasksByDomainArgsForCall(0)
 					Expect(actualDomain).To(Equal("domain-1"))
-					expectedTasks := []receptor.TaskResponse{
-						{
-							TaskGuid: domain1Task.TaskGuid,
-							Domain:   domain1Task.Domain,
-							Action:   domain1Task.Action,
-							State:    receptor.TaskStatePending,
-						},
-					}
-					Expect(tasks).To(Equal(expectedTasks))
-				})
-			})
 
-			Context("when a domain query param is not provided", func() {
-				It("gets all tasks", func() {
-					var tasks []receptor.TaskResponse
-
-					handler.GetAll(responseRecorder, newTestRequest(""))
-					Expect(responseRecorder.Code).To(Equal(http.StatusOK))
-					err := json.Unmarshal(responseRecorder.Body.Bytes(), &tasks)
-					Expect(err).NotTo(HaveOccurred())
 					expectedTasks := []receptor.TaskResponse{
-						{
-							TaskGuid: domain1Task.TaskGuid,
-							Domain:   domain1Task.Domain,
-							Action:   domain1Task.Action,
-							State:    receptor.TaskStatePending,
-						},
-						{
-							TaskGuid: domain2Task.TaskGuid,
-							Domain:   domain2Task.Domain,
-							Action:   domain2Task.Action,
-							State:    receptor.TaskStatePending,
-						},
+						serialization.TaskToResponse(domain1Task),
 					}
 					Expect(tasks).To(ConsistOf(expectedTasks))
 				})
 			})
 
+			Context("when a domain query param is not provided", func() {
+				It("gets all tasks", func() {
+					handler.GetAll(responseRecorder, newTestRequest(""))
+					Expect(responseRecorder.Code).To(Equal(http.StatusOK))
+
+					var tasks []receptor.TaskResponse
+					err := json.Unmarshal(responseRecorder.Body.Bytes(), &tasks)
+					Expect(err).NotTo(HaveOccurred())
+
+					expectedTasks := []receptor.TaskResponse{
+						serialization.TaskToResponse(domain1Task),
+						serialization.TaskToResponse(domain2Task),
+					}
+					Expect(tasks).To(ConsistOf(expectedTasks))
+				})
+			})
 		})
 	})
 
@@ -346,7 +340,6 @@ var _ = Describe("TaskHandler", func() {
 					Type:    receptor.InvalidRequest,
 					Message: "task_guid missing from request",
 				}))
-
 			})
 		})
 
@@ -383,32 +376,17 @@ var _ = Describe("TaskHandler", func() {
 		})
 
 		Context("when the task is successfully found in the BBS", func() {
-			var expectedTask receptor.TaskResponse
+			var task *models.Task
 
 			BeforeEach(func() {
-				task := &models.Task{
-					TaskGuid: "task-guid-1",
-					Domain:   "domain-1",
-					Action: models.WrapAction(&models.RunAction{
-						User: "me",
-						Path: "the-path",
-					}),
-					State: models.Task_Running,
-				}
-
+				task = model_helpers.NewValidTask("the-task-guid")
+				task.State = models.Task_Running
 				fakeClient.TaskByGuidReturns(task, nil)
-
-				expectedTask = receptor.TaskResponse{
-					TaskGuid: task.TaskGuid,
-					Domain:   task.Domain,
-					Action:   task.Action,
-					State:    receptor.TaskStateRunning,
-				}
 			})
 
 			It("retrieves the task by the given guid", func() {
 				guid := fakeClient.TaskByGuidArgsForCall(0)
-				Expect(guid).To(Equal("the-task-guid"))
+				Expect(guid).To(Equal(task.TaskGuid))
 			})
 
 			It("gets the task", func() {
@@ -417,28 +395,77 @@ var _ = Describe("TaskHandler", func() {
 				var actualTask receptor.TaskResponse
 				err := json.Unmarshal(responseRecorder.Body.Bytes(), &actualTask)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(expectedTask).To(Equal(actualTask))
+
+				Expect(actualTask).To(Equal(serialization.TaskToResponse(task)))
 			})
 		})
 	})
 
 	Describe("Delete", func() {
+		var resolvingErr error
+
+		BeforeEach(func() {
+			var err error
+			request, err = http.NewRequest("", "http://example.com?:task_guid=the-task-guid", nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			resolvingErr = nil
+		})
+
+		JustBeforeEach(func() {
+			fakeClient.ResolvingTaskReturns(resolvingErr)
+			handler.Delete(responseRecorder, request)
+		})
+
+		It("succeeds", func() {
+			Expect(fakeClient.ResolvingTaskCallCount()).To(Equal(1))
+			Expect(fakeClient.ResolvingTaskArgsForCall(0)).To(Equal("the-task-guid"))
+			Expect(fakeClient.ResolveTaskCallCount()).To(Equal(1))
+			Expect(fakeClient.ResolveTaskArgsForCall(0)).To(Equal("the-task-guid"))
+
+			Expect(responseRecorder.Code).To(Equal(http.StatusOK))
+		})
+
 		Context("when marking the task as resolving fails", func() {
-			BeforeEach(func() {
-				var err error
-				request, err = http.NewRequest("", "http://example.com?:task_guid=the-task-guid", nil)
-				Expect(err).NotTo(HaveOccurred())
-				fakeLegacyBBS.ResolvingTaskReturns(errors.New("Failed to resolve task"))
+			Context("with invalid transition", func() {
+				BeforeEach(func() {
+					resolvingErr = models.NewTaskTransitionError(models.Task_Running, models.Task_Pending)
+				})
+
+				It("fails with a 409", func() {
+					Expect(fakeClient.ResolvingTaskCallCount()).To(Equal(1))
+					Expect(fakeClient.ResolvingTaskArgsForCall(0)).To(Equal("the-task-guid"))
+
+					Expect(responseRecorder.Code).To(Equal(http.StatusConflict))
+				})
 			})
 
-			It("responds with an error", func() {
-				handler.Delete(responseRecorder, request)
-				Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
+			Context("with resource not found", func() {
+				BeforeEach(func() {
+					resolvingErr = models.ErrResourceNotFound
+				})
+
+				It("fails with a 404", func() {
+					Expect(fakeClient.ResolvingTaskCallCount()).To(Equal(1))
+					Expect(fakeClient.ResolvingTaskArgsForCall(0)).To(Equal("the-task-guid"))
+
+					Expect(responseRecorder.Code).To(Equal(http.StatusNotFound))
+				})
 			})
 
-			It("does not try to resolve the task", func() {
-				handler.Delete(responseRecorder, request)
-				Expect(fakeLegacyBBS.ResolveTaskCallCount()).To(BeZero())
+			Context("any other error", func() {
+				BeforeEach(func() {
+					resolvingErr = errors.New("Failed to resolve task")
+				})
+
+				It("responds with an error", func() {
+					Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
+				})
+
+				It("does not try to resolve the task", func() {
+					handler.Delete(responseRecorder, request)
+					Expect(fakeClient.ResolveTaskCallCount()).To(BeZero())
+				})
 			})
 		})
 
@@ -447,7 +474,7 @@ var _ = Describe("TaskHandler", func() {
 				var err error
 				request, err = http.NewRequest("", "http://example.com?:task_guid=the-task-guid", nil)
 				Expect(err).NotTo(HaveOccurred())
-				fakeLegacyBBS.ResolveTaskReturns(errors.New("Failed to resolve task"))
+				fakeClient.ResolveTaskReturns(errors.New("Failed to resolve task"))
 			})
 
 			It("responds with an error", func() {
@@ -468,9 +495,22 @@ var _ = Describe("TaskHandler", func() {
 			handler.Cancel(responseRecorder, request)
 		})
 
+		Context("when cancelling the task is successful", func() {
+			BeforeEach(func() {
+				fakeClient.CancelTaskReturns(nil)
+			})
+
+			It("responds with a 200", func() {
+				Expect(fakeClient.CancelTaskCallCount()).To(Equal(1))
+				Expect(fakeClient.CancelTaskArgsForCall(0)).To(Equal("the-task-guid"))
+
+				Expect(responseRecorder.Code).To(Equal(http.StatusOK))
+			})
+		})
+
 		Context("when the task cannot be found in the BBS", func() {
 			BeforeEach(func() {
-				fakeLegacyBBS.CancelTaskReturns(bbserrors.ErrStoreResourceNotFound)
+				fakeClient.CancelTaskReturns(models.ErrResourceNotFound)
 			})
 
 			It("responds with a 404 NOT FOUND", func() {
@@ -492,21 +532,11 @@ var _ = Describe("TaskHandler", func() {
 
 		Context("when cancelling fails", func() {
 			BeforeEach(func() {
-				fakeLegacyBBS.CancelTaskReturns(errors.New("Something went wrong"))
+				fakeClient.CancelTaskReturns(errors.New("Something went wrong"))
 			})
 
 			It("responds with an error", func() {
 				Expect(responseRecorder.Code).To(Equal(http.StatusInternalServerError))
-			})
-		})
-
-		Context("when cancelling the task is successful", func() {
-			BeforeEach(func() {
-				fakeLegacyBBS.CancelTaskReturns(nil)
-			})
-
-			It("responds with a 200", func() {
-				Expect(responseRecorder.Code).To(Equal(http.StatusOK))
 			})
 		})
 	})

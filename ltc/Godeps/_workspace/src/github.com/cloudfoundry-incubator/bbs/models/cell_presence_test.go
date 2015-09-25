@@ -1,10 +1,9 @@
 package models_test
 
 import (
+	"github.com/cloudfoundry-incubator/bbs/models"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
 var _ = Describe("CellPresence", func() {

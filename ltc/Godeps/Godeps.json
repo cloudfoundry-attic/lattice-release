@@ -1,6 +1,9 @@
 {
 	"ImportPath": "github.com/cloudfoundry-incubator/lattice/ltc",
 	"GoVersion": "go1.4.2",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -53,7 +56,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/bbs/models",
-			"Rev": "03a4f1df623545ad66d9607f8cec218e0eb19b8e"
+			"Rev": "f7cea1154947e5c329caf188e66716b551cfdf9f"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/buildpack_app_lifecycle",
@@ -65,11 +68,11 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/receptor",
-			"Rev": "522f6eecbc1845278756c3535060e16c494c798c"
+			"Rev": "32ee39b3ebe1be776890b87ab94398a25d12bf70"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/runtime-schema/models",
-			"Rev": "683a1e366804fe233050147ab89b8149c2062313"
+			"Rev": "d0374e63bc583aad35723a4e3d32100d9269bad9"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/noaa",

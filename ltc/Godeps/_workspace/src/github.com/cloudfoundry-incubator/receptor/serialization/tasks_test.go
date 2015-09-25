@@ -15,38 +15,39 @@ var _ = Describe("Task Serialization", func() {
 
 		BeforeEach(func() {
 			task = &models.Task{
-				TaskGuid: "the-task-guid",
-				Domain:   "the-domain",
-				RootFs:   "the-rootfs",
-				CellId:   "the-cell-id",
-				Action: models.WrapAction(&models.UploadAction{
-					From: "from",
-					To:   "to",
-				}),
-				MemoryMb:    100,
-				DiskMb:      100,
-				CpuWeight:   50,
-				Privileged:  true,
-				LogGuid:     "the-log-guid",
-				LogSource:   "the-source-name",
-				MetricsGuid: "the-metrics-guid",
-				Annotation:  "the-annotation",
-
+				TaskGuid:      "the-task-guid",
+				Domain:        "the-domain",
+				CellId:        "the-cell-id",
 				CreatedAt:     1234,
 				FailureReason: "the-failure-reason",
 				Failed:        true,
 				Result:        "the-result",
 				State:         models.Task_Invalid,
-				EnvironmentVariables: []*models.EnvironmentVariable{
-					{Name: "var1", Value: "val1"},
-					{Name: "var2", Value: "val2"},
-				},
-				EgressRules: []*models.SecurityGroupRule{
-					{
-						Protocol:     "tcp",
-						Destinations: []string{"0.0.0.0/0"},
-						Ports:        []uint32{80, 443},
-						Log:          true,
+				TaskDefinition: &models.TaskDefinition{
+					RootFs: "the-rootfs",
+					Action: models.WrapAction(&models.UploadAction{
+						From: "from",
+						To:   "to",
+					}),
+					MemoryMb:    100,
+					DiskMb:      100,
+					CpuWeight:   50,
+					Privileged:  true,
+					LogGuid:     "the-log-guid",
+					LogSource:   "the-source-name",
+					MetricsGuid: "the-metrics-guid",
+					Annotation:  "the-annotation",
+					EnvironmentVariables: []*models.EnvironmentVariable{
+						{Name: "var1", Value: "val1"},
+						{Name: "var2", Value: "val2"},
+					},
+					EgressRules: []*models.SecurityGroupRule{
+						{
+							Protocol:     "tcp",
+							Destinations: []string{"0.0.0.0/0"},
+							Ports:        []uint32{80, 443},
+							Log:          true,
+						},
 					},
 				},
 			}
@@ -71,10 +72,15 @@ var _ = Describe("Task Serialization", func() {
 			actualResponse := serialization.TaskToResponse(task)
 
 			expectedResponse := receptor.TaskResponse{
-				TaskGuid: "the-task-guid",
-				Domain:   "the-domain",
-				RootFS:   "the-rootfs",
-				CellID:   "the-cell-id",
+				TaskGuid:      "the-task-guid",
+				Domain:        "the-domain",
+				CellID:        "the-cell-id",
+				CreatedAt:     1234,
+				FailureReason: "the-failure-reason",
+				Failed:        true,
+				Result:        "the-result",
+				State:         receptor.TaskStateInvalid,
+				RootFS:        "the-rootfs",
 				Action: models.WrapAction(&models.UploadAction{
 					From: "from",
 					To:   "to",
@@ -88,11 +94,6 @@ var _ = Describe("Task Serialization", func() {
 				MetricsGuid: "the-metrics-guid",
 				Annotation:  "the-annotation",
 
-				CreatedAt:     1234,
-				FailureReason: "the-failure-reason",
-				Failed:        true,
-				Result:        "the-result",
-				State:         receptor.TaskStateInvalid,
 				EnvironmentVariables: []*models.EnvironmentVariable{
 					{Name: "var1", Value: "val1"},
 					{Name: "var2", Value: "val2"},
@@ -169,35 +170,37 @@ var _ = Describe("Task Serialization", func() {
 			expectedTask = &models.Task{
 				TaskGuid: "the-task-guid",
 				Domain:   "the-domain",
-				RootFs:   "the-rootfs",
-				Action: models.WrapAction(&models.RunAction{
-					User: "me",
-					Path: "the-path",
-				}),
-				MemoryMb:    100,
-				DiskMb:      100,
-				CpuWeight:   50,
-				Privileged:  true,
-				LogGuid:     "the-log-guid",
-				LogSource:   "the-source-name",
-				MetricsGuid: "the-metrics-guid",
-				ResultFile:  "the/result/file",
-				Annotation:  "the-annotation",
-				EnvironmentVariables: []*models.EnvironmentVariable{
-					{Name: "var1", Value: "val1"},
-					{Name: "var2", Value: "val2"},
-				},
-				EgressRules: []*models.SecurityGroupRule{
-					{
-						Protocol:     "tcp",
-						Destinations: []string{"0.0.0.0/0"},
-						PortRange: &models.PortRange{
-							Start: 1,
-							End:   1024,
+				TaskDefinition: &models.TaskDefinition{
+					RootFs: "the-rootfs",
+					Action: models.WrapAction(&models.RunAction{
+						User: "me",
+						Path: "the-path",
+					}),
+					MemoryMb:    100,
+					DiskMb:      100,
+					CpuWeight:   50,
+					Privileged:  true,
+					LogGuid:     "the-log-guid",
+					LogSource:   "the-source-name",
+					MetricsGuid: "the-metrics-guid",
+					ResultFile:  "the/result/file",
+					Annotation:  "the-annotation",
+					EnvironmentVariables: []*models.EnvironmentVariable{
+						{Name: "var1", Value: "val1"},
+						{Name: "var2", Value: "val2"},
+					},
+					EgressRules: []*models.SecurityGroupRule{
+						{
+							Protocol:     "tcp",
+							Destinations: []string{"0.0.0.0/0"},
+							PortRange: &models.PortRange{
+								Start: 1,
+								End:   1024,
+							},
 						},
 					},
+					CompletionCallbackUrl: "http://stager.service.discovery.thing/endpoint",
 				},
-				CompletionCallbackUrl: "http://stager.service.discovery.thing/endpoint",
 			}
 		})
 

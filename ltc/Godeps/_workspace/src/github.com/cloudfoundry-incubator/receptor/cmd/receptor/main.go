@@ -156,7 +156,7 @@ func main() {
 
 	handler := handlers.New(bbs, legacyBBS, logger, *username, *password, *corsEnabled)
 
-	worker, enqueue := task_handler.NewTaskWorkerPool(legacyBBS, logger)
+	worker, enqueue := task_handler.NewTaskWorkerPool(bbs, logger)
 	taskHandler := task_handler.New(enqueue, logger)
 
 	members := grouper.Members{

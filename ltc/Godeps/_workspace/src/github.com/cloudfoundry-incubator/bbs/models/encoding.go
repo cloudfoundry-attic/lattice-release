@@ -13,16 +13,19 @@ func FromJSON(payload []byte, v Validator) error {
 	return v.Validate()
 }
 
-func ToJSON(v Validator) ([]byte, error) {
-	if isNil(v) {
-		return json.Marshal(v)
+func ToJSON(v Validator) ([]byte, *Error) {
+	if !isNil(v) {
+		if err := v.Validate(); err != nil {
+			return nil, NewError(InvalidRecord, err.Error())
+		}
 	}
 
-	if err := v.Validate(); err != nil {
-		return []byte{}, err
+	bytes, err := json.Marshal(v)
+	if err != nil {
+		return nil, NewError(InvalidJSON, err.Error())
 	}
 
-	return json.Marshal(v)
+	return bytes, nil
 }
 
 func isNil(a interface{}) bool {

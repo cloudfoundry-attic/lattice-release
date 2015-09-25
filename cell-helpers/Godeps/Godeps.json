@@ -7,43 +7,43 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/aws",
-			"Comment": "v0.7.4-2-gf93c0ea",
-			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+			"Comment": "v0.7.4",
+			"Rev": "26610c929a183317d5bfa24af9a4c5484bc50fc8"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
-			"Comment": "v0.7.4-2-gf93c0ea",
-			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+			"Comment": "v0.7.4",
+			"Rev": "26610c929a183317d5bfa24af9a4c5484bc50fc8"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
-			"Comment": "v0.7.4-2-gf93c0ea",
-			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+			"Comment": "v0.7.4",
+			"Rev": "26610c929a183317d5bfa24af9a4c5484bc50fc8"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
-			"Comment": "v0.7.4-2-gf93c0ea",
-			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+			"Comment": "v0.7.4",
+			"Rev": "26610c929a183317d5bfa24af9a4c5484bc50fc8"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/restxml",
-			"Comment": "v0.7.4-2-gf93c0ea",
-			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+			"Comment": "v0.7.4",
+			"Rev": "26610c929a183317d5bfa24af9a4c5484bc50fc8"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
-			"Comment": "v0.7.4-2-gf93c0ea",
-			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+			"Comment": "v0.7.4",
+			"Rev": "26610c929a183317d5bfa24af9a4c5484bc50fc8"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
-			"Comment": "v0.7.4-2-gf93c0ea",
-			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+			"Comment": "v0.7.4",
+			"Rev": "26610c929a183317d5bfa24af9a4c5484bc50fc8"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/s3",
-			"Comment": "v0.7.4-2-gf93c0ea",
-			"Rev": "f93c0ea5968b55c44c6fdaf2cef288f9c5f6324c"
+			"Comment": "v0.7.4",
+			"Rev": "26610c929a183317d5bfa24af9a4c5484bc50fc8"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/dropsonde",
@@ -72,13 +72,13 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.2.0-beta",
-			"Rev": "0efbdc3a60137c0757b84e994a56037378170913"
+			"Comment": "v1.2.0-8-g25380c6",
+			"Rev": "25380c62e61d3f90436be125b8127dbae578fdef"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Comment": "v1.0-48-g766f404",
-			"Rev": "766f4042b942146e90594d145c5071fa92c0aa9a"
+			"Comment": "v1.0-52-ga2ab864",
+			"Rev": "a2ab8644e0b6a33df2cbe44673bd0f6ebba9abc3"
 		},
 		{
 			"ImportPath": "github.com/vaughan0/go-ini",

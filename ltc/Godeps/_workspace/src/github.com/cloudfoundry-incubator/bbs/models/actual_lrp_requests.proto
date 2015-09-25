@@ -31,3 +31,4 @@ message FailActualLRPRequest {
 message RetireActualLRPRequest {
   optional ActualLRPKey actual_lrp_key = 1;
 }
+

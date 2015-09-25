@@ -13,6 +13,7 @@
 		domain.proto
 		environment_variables.proto
 		error.proto
+		evacuation.proto
 		events.proto
 		modification_tag.proto
 		security_group.proto

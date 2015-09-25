@@ -6,13 +6,12 @@ import (
 )
 
 func TaskFromRequest(req receptor.TaskCreateRequest) (*models.Task, error) {
-	task := &models.Task{
+	taskDef := &models.TaskDefinition{
 		Action:                req.Action,
 		Annotation:            req.Annotation,
 		CompletionCallbackUrl: req.CompletionCallbackURL,
 		CpuWeight:             uint32(req.CPUWeight),
 		DiskMb:                int32(req.DiskMB),
-		Domain:                req.Domain,
 		EnvironmentVariables:  req.EnvironmentVariables,
 		LogGuid:               req.LogGuid,
 		LogSource:             req.LogSource,
@@ -20,11 +19,15 @@ func TaskFromRequest(req receptor.TaskCreateRequest) (*models.Task, error) {
 		MemoryMb:              int32(req.MemoryMB),
 		ResultFile:            req.ResultFile,
 		RootFs:                req.RootFS,
-		TaskGuid:              req.TaskGuid,
 		Privileged:            req.Privileged,
 		EgressRules:           req.EgressRules,
 	}
 
+	task := &models.Task{
+		TaskGuid:       req.TaskGuid,
+		Domain:         req.Domain,
+		TaskDefinition: taskDef,
+	}
 	return task, nil
 }
 
