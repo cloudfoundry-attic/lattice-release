@@ -21,6 +21,11 @@ resources:
     source:
       uri: https://github.com/cloudfoundry-incubator/diego-release.git
       branch: master
+  - name: garden-linux-release
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry-incubator/garden-linux-release.git
+      branch: master
   - name: cf-release
     type: git
     source:
@@ -183,6 +188,7 @@ jobs:
             - unit-test-s3tool
             - unit-test-tee2metron
         - get: diego-release
+        - get: garden-linux-release
         - get: cf-release
         - get: cf-routing-release
       - aggregate:

@@ -13,13 +13,13 @@ if [ "$RELEASE" = true ]; then
   LATTICE_VERSION=$(cat $LATTICE_DIR/Version)
 fi
 
-pushd $LATTICE_DIR/build/diego-release 
+pushd $LATTICE_DIR/build/diego-release
 	git checkout $DIEGO_VERSION
 	git clean -xffd
 	./scripts/update
 popd
 
-pushd $LATTICE_DIR/build/garden-linux-release 
+pushd $LATTICE_DIR/build/garden-linux-release
 	git checkout $GARDEN_LINUX_VERSION
 	git clean -xffd
   git submodule update --init --recursive
