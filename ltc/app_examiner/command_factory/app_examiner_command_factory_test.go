@@ -764,7 +764,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
 
 				Expect(outputBuffer).To(test_helpers.Say("Docker Image"))
-				Expect(outputBuffer).To(test_helpers.SayLine("wompy/app#latest"))
+				Expect(outputBuffer).To(test_helpers.SayLine("wompy/app:latest"))
 
 				Expect(outputBuffer).To(test_helpers.Say("Annotation"))
 			})
@@ -781,7 +781,7 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.Say("Docker Image"))
 				Expect(outputBuffer).NotTo(test_helpers.Say("library/"))
-				Expect(outputBuffer).To(test_helpers.SayLine("wompy-app#latest"))
+				Expect(outputBuffer).To(test_helpers.SayLine("wompy-app:latest"))
 
 				Expect(outputBuffer).To(test_helpers.Say("Annotation"))
 			})
@@ -797,7 +797,7 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
 
 				Expect(outputBuffer).To(test_helpers.Say("Docker Image"))
-				Expect(outputBuffer).To(test_helpers.SayLine("dhub/library/wompy-app#latest"))
+				Expect(outputBuffer).To(test_helpers.SayLine("dhub/library/wompy-app:latest"))
 
 				Expect(outputBuffer).To(test_helpers.Say("Annotation"))
 			})

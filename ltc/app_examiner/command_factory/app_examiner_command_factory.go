@@ -384,6 +384,10 @@ func (factory *AppExaminerCommandFactory) printAppInfo(writer io.Writer, appInfo
 				image = strings.Replace(image, "library/", "", 1)
 			}
 
+			if hashIndex := strings.LastIndex(image, "#"); hashIndex != -1 {
+				image = image[:hashIndex] + ":" + image[hashIndex+1:]
+			}
+
 			fmt.Fprintf(w, "%s\t%s\n", "Docker Image", image)
 		} else if strings.HasPrefix(appInfo.RootFS, "preloaded:") {
 			fmt.Fprintf(w, "%s\t%s\n", "Stack", strings.Replace(appInfo.RootFS, "preloaded:", "", 1))
