@@ -131,6 +131,12 @@ func (f *SSHCommandFactory) forward(localForward, appName string, instanceIndex 
 		return
 	}
 
+	if localPort == "0" {
+		f.ui.SayIncorrectUsage("-L expects [localhost:]localport:remotehost:remoteport")
+		f.exitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
 	localAddr := fmt.Sprintf("%s:%s", localHost, localPort)
 	remoteAddr := fmt.Sprintf("%s:%s", remoteHost, remotePort)
 

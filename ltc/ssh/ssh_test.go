@@ -3,6 +3,7 @@ package ssh_test
 import (
 	"errors"
 	"io"
+	"net"
 	"os"
 	"syscall"
 
@@ -13,6 +14,7 @@ import (
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
 	"github.com/cloudfoundry-incubator/lattice/ltc/ssh"
 	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/mocks"
+	crypto_ssh "golang.org/x/crypto/ssh"
 )
 
 type dummyConn struct {
@@ -81,7 +83,7 @@ var _ = Describe("SSH", func() {
 	})
 
 	Describe("#Forward", func() {
-		It("should should forward connection data between the local and remote servers", func() {
+		It("should forward connection data between the local and remote servers", func() {
 			acceptChan := make(chan io.ReadWriteCloser)
 
 			fakeListener.ListenReturns(acceptChan, nil)
@@ -109,6 +111,56 @@ var _ = Describe("SSH", func() {
 			listenNetwork, localAddr := fakeListener.ListenArgsForCall(0)
 			Expect(listenNetwork).To(Equal("tcp"))
 			Expect(localAddr).To(Equal("some local address"))
+		})
+
+		Context("when the errorChan receives a listen error", func() {
+			It("returns the error", func() {
+				errorChan := make(chan error)
+				fakeListener.ListenReturns(nil, errorChan)
+
+				Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+
+				shellChan := make(chan error)
+				go func() {
+					shellChan <- appSSH.Forward("some local address", "some remote address")
+				}()
+
+				listenErr := &net.OpError{Op: "listen", Net: "tcp", Err: &net.AddrError{Err: "unknown port", Addr: "tcp/-1"}}
+
+				errorChan <- listenErr
+				Expect(<-shellChan).To(MatchError(listenErr))
+			})
+		})
+
+		Context("when the Client#Forward returns an error", func() {
+			It("returns the error", func() {
+				acceptChan := make(chan io.ReadWriteCloser)
+				forwardErr := &crypto_ssh.OpenChannelError{
+					Reason:  0x2,
+					Message: "dial tcp 0.0.0.0:8000: connection refused",
+				}
+
+				fakeListener.ListenReturns(acceptChan, nil)
+				fakeClient.ForwardReturns(forwardErr)
+				fakeClientDialer.DialReturns(fakeClient, nil)
+
+				Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+
+				shellChan := make(chan error)
+				go func() {
+					shellChan <- appSSH.Forward("some local address", "some remote address")
+				}()
+
+				localConn := &dummyConn{}
+				acceptChan <- localConn
+
+				Eventually(fakeClient.ForwardCallCount).Should(Equal(1))
+				close(acceptChan)
+
+				Expect(<-shellChan).To(MatchError(forwardErr))
+
+				Expect(fakeListener.ListenCallCount()).To(Equal(1))
+			})
 		})
 	})
 

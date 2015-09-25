@@ -3,6 +3,7 @@ package ssh
 import (
 	"errors"
 	"io"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -74,11 +75,16 @@ func (s *SSH) Forward(localAddress, remoteAddress string) error {
 			}
 
 			if err := s.client.Forward(conn, remoteAddress); err != nil {
-				panic(err)
+				return err
 			}
 		case err, ok := <-errorChan:
 			if !ok {
 				return nil
+			}
+
+			opError, ok := err.(*net.OpError)
+			if ok && opError.Op == "listen" {
+				return err
 			}
 
 			panic(err)

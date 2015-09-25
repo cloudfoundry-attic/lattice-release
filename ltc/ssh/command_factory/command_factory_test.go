@@ -102,8 +102,11 @@ var _ = Describe("SSH CommandFactory", func() {
 			})
 
 			Context("when forwarding fails", func() {
-				It("should print an error", func() {
+				BeforeEach(func() {
 					fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
+				})
+
+				It("should print an error", func() {
 					fakeSSH.ForwardReturns(errors.New("forwarding failed"))
 
 					test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"good-name", "-N", "-L", "mrlocalhost:1234:remotehost:5678"})
@@ -116,21 +119,36 @@ var _ = Describe("SSH CommandFactory", func() {
 				})
 			})
 
-			It("should reject malformed local forward specs", func() {
-				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
+			Context("invalid syntax", func() {
+				BeforeEach(func() {
+					fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{ActualRunningInstances: 1}, nil)
+				})
 
-				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-N", "-L", "9999:localhost:1234:remotehost:5678"})
-				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: -L expects [localhost:]localport:remotehost:remoteport"))
+				It("should reject malformed local forward specs", func() {
+					test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-N", "-L", "9999:localhost:1234:remotehost:5678"})
+					Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: -L expects [localhost:]localport:remotehost:remoteport"))
 
-				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-N", "-L", "remotehost:5678"})
-				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: -L expects [localhost:]localport:remotehost:remoteport"))
+					test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-N", "-L", "remotehost:5678"})
+					Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: -L expects [localhost:]localport:remotehost:remoteport"))
 
-				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-N", "-L", "5678"})
-				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: -L expects [localhost:]localport:remotehost:remoteport"))
+					test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-N", "-L", "5678"})
+					Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: -L expects [localhost:]localport:remotehost:remoteport"))
 
-				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax, exit_codes.InvalidSyntax, exit_codes.InvalidSyntax}))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax, exit_codes.InvalidSyntax, exit_codes.InvalidSyntax}))
 
-				Expect(fakeSSH.ForwardCallCount()).To(Equal(0))
+					Expect(fakeSSH.ForwardCallCount()).To(Equal(0))
+				})
+
+				Context("when the local host port is set to zero", func() {
+					It("should print incorrect usage", func() {
+						test_helpers.ExecuteCommandWithArgs(sshCommand, []string{"app-name", "-N", "-L", "0:localhost:5678"})
+						Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: -L expects [localhost:]localport:remotehost:remoteport"))
+
+						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+
+						Expect(fakeSSH.ForwardCallCount()).To(Equal(0))
+					})
+				})
 			})
 		})
 
