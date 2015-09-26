@@ -1,0 +1,15 @@
+[submodule "diego-release"]
+	path = diego-release
+	url = https://github.com/cloudfoundry-incubator/diego-release
+[submodule "cf-routing-release"]
+	path = cf-routing-release
+	url = https://github.com/cloudfoundry-incubator/cf-routing-release
+[submodule "garden-linux-release"]
+	path = garden-linux-release
+	url = https://github.com/cloudfoundry-incubator/garden-linux-release
+[submodule "loggregator"]
+	path = loggregator
+	url = https://github.com/cloudfoundry/loggregator
+[submodule "src/github.com/cloudfoundry/gorouter"]
+	path = src/github.com/cloudfoundry/gorouter
+	url = https://github.com/cloudfoundry/gorouter
