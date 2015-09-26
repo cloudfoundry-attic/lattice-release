@@ -94,7 +94,7 @@ var _ = Describe("HTTPProxyConfReader", func() {
 			proxyConfReader.URL = badURL
 
 			_, err := proxyConfReader.ProxyConf()
-			Expect(err.Error()).To(MatchRegexp(`dial tcp 127\.0\.0\.1:[0-9]+: connection refused`))
+			Expect(err.Error()).To(MatchRegexp(`dial tcp 127\.0\.0\.1:[0-9]+: getsockopt: connection refused`))
 
 			Expect(fakeServer.ReceivedRequests()).To(HaveLen(0))
 		})

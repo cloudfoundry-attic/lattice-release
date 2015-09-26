@@ -309,7 +309,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		envVars = append(envVars, receptor.EnvironmentVariable{Name: "VCAP_SERVICES", Value: "{}"})
 	}
 
-	setupAction := models.WrapAction(&models.SerialAction{
+	setupAction := &models.SerialAction{
 		Actions: []*models.Action{
 			params.Setup,
 			models.WrapAction(&models.DownloadAction{
@@ -318,7 +318,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 				User: "vcap",
 			}),
 		},
-	})
+	}
 
 	hostKey, err := appRunner.keygen.GenerateRSAPrivateKey(2048)
 	if err != nil {
@@ -341,25 +341,27 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		MetricsGuid:          params.Name,
 		EnvironmentVariables: envVars,
 		Annotation:           params.Annotation,
-		Setup:                models.UnwrapAction(setupAction),
-		Action: &models.ParallelAction{
-			Actions: []*models.Action{
-				models.WrapAction(&models.RunAction{
-					Path: "/tmp/diego-sshd",
-					Args: []string{
-						"-address=0.0.0.0:2222",
-						fmt.Sprintf("-authorizedKey=%s", public),
-						fmt.Sprintf("-hostKey=%s", hostKey),
-					},
-					Dir:  "/tmp",
-					User: params.User,
-				}),
-				models.WrapAction(&models.RunAction{
-					Path: params.StartCommand,
-					Args: params.AppArgs,
-					Dir:  params.WorkingDir,
-					User: params.User,
-				}),
+		Setup:                &models.Action{SerialAction: setupAction},
+		Action: &models.Action{
+			ParallelAction: &models.ParallelAction{
+				Actions: []*models.Action{
+					models.WrapAction(&models.RunAction{
+						Path: "/tmp/diego-sshd",
+						Args: []string{
+							"-address=0.0.0.0:2222",
+							fmt.Sprintf("-authorizedKey=%s", public),
+							fmt.Sprintf("-hostKey=%s", hostKey),
+						},
+						Dir:  "/tmp",
+						User: params.User,
+					}),
+					models.WrapAction(&models.RunAction{
+						Path: params.StartCommand,
+						Args: params.AppArgs,
+						Dir:  params.WorkingDir,
+						User: params.User,
+					}),
+				},
 			},
 		},
 	}
@@ -370,25 +372,31 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 	}
 	switch params.Monitor.Method {
 	case PortMonitor:
-		req.Monitor = &models.RunAction{
-			Path:      "/tmp/healthcheck",
-			Args:      append(healthCheckArgs, "-port", fmt.Sprint(params.Monitor.Port)),
-			LogSource: "HEALTH",
-			User:      params.User,
+		req.Monitor = &models.Action{
+			RunAction: &models.RunAction{
+				Path:      "/tmp/healthcheck",
+				Args:      append(healthCheckArgs, "-port", fmt.Sprint(params.Monitor.Port)),
+				LogSource: "HEALTH",
+				User:      params.User,
+			},
 		}
 	case URLMonitor:
-		req.Monitor = &models.RunAction{
-			Path:      "/tmp/healthcheck",
-			Args:      append(healthCheckArgs, "-port", fmt.Sprint(params.Monitor.Port), "-uri", params.Monitor.URI),
-			LogSource: "HEALTH",
-			User:      params.User,
+		req.Monitor = &models.Action{
+			RunAction: &models.RunAction{
+				Path:      "/tmp/healthcheck",
+				Args:      append(healthCheckArgs, "-port", fmt.Sprint(params.Monitor.Port), "-uri", params.Monitor.URI),
+				LogSource: "HEALTH",
+				User:      params.User,
+			},
 		}
 	case CustomMonitor:
-		req.Monitor = &models.RunAction{
-			Path:      "/bin/sh",
-			Args:      []string{"-c", params.Monitor.CustomCommand},
-			LogSource: "HEALTH",
-			User:      params.User,
+		req.Monitor = &models.Action{
+			RunAction: &models.RunAction{
+				Path:      "/bin/sh",
+				Args:      []string{"-c", params.Monitor.CustomCommand},
+				LogSource: "HEALTH",
+				User:      params.User,
+			},
 		}
 	}
 

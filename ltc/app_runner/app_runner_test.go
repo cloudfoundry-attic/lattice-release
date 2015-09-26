@@ -117,7 +117,7 @@ var _ = Describe("AppRunner", func() {
 			Expect(req.MetricsGuid).To(Equal("americano-app"))
 			Expect(req.Annotation).To(Equal("some annotation"))
 
-			Expect(req.Setup).To(Equal(&models.SerialAction{
+			Expect(req.Setup.SerialAction).To(Equal(&models.SerialAction{
 				Actions: []*models.Action{
 					models.WrapAction(&models.DownloadAction{
 						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
@@ -132,7 +132,7 @@ var _ = Describe("AppRunner", func() {
 				},
 			}))
 
-			Expect(req.Action).To(Equal(&models.ParallelAction{
+			Expect(req.Action.ParallelAction).To(Equal(&models.ParallelAction{
 				Actions: []*models.Action{
 					models.WrapAction(&models.RunAction{
 						Path: "/tmp/diego-sshd",
@@ -153,9 +153,8 @@ var _ = Describe("AppRunner", func() {
 				},
 			}))
 
-			Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
-			reqMonitor, ok := req.Monitor.(*models.RunAction)
-			Expect(ok).To(BeTrue())
+			reqMonitor := req.Monitor.RunAction
+			Expect(reqMonitor).NotTo(BeNil())
 			Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 			Expect(reqMonitor.Args).To(Equal([]string{"-port", "2000"}))
 			Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
@@ -355,7 +354,7 @@ var _ = Describe("AppRunner", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
-				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Monitor).To(BeExactlyNil())
+				Expect(fakeReceptorClient.CreateDesiredLRPArgsForCall(0).Monitor).To(BeNil())
 			})
 		})
 
@@ -380,9 +379,8 @@ var _ = Describe("AppRunner", func() {
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
 				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
 
-				Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
-				reqMonitor, ok := req.Monitor.(*models.RunAction)
-				Expect(ok).To(BeTrue())
+				reqMonitor := req.Monitor.RunAction
+				Expect(reqMonitor).NotTo(BeNil())
 				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-timeout", "15s", "-port", "2345"}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
@@ -408,9 +406,8 @@ var _ = Describe("AppRunner", func() {
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
 				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
 
-				Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
-				reqMonitor, ok := req.Monitor.(*models.RunAction)
-				Expect(ok).To(BeTrue())
+				reqMonitor := req.Monitor.RunAction
+				Expect(reqMonitor).NotTo(BeNil())
 				Expect(reqMonitor.Path).To(Equal("/bin/sh"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-c", `"/custom/monitor 'arg1a arg1b' arg2"`}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
@@ -438,9 +435,8 @@ var _ = Describe("AppRunner", func() {
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
 				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
 
-				Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
-				reqMonitor, ok := req.Monitor.(*models.RunAction)
-				Expect(ok).To(BeTrue())
+				reqMonitor := req.Monitor.RunAction
+				Expect(reqMonitor).NotTo(BeNil())
 				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-port", "1234", "-uri", "/healthy/endpoint"}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
@@ -466,9 +462,8 @@ var _ = Describe("AppRunner", func() {
 				Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
 				req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
 
-				Expect(req.Monitor).To(BeAssignableToTypeOf(&models.RunAction{}))
-				reqMonitor, ok := req.Monitor.(*models.RunAction)
-				Expect(ok).To(BeTrue())
+				reqMonitor := req.Monitor.RunAction
+				Expect(reqMonitor).NotTo(BeNil())
 				Expect(reqMonitor.Path).To(Equal("/tmp/healthcheck"))
 				Expect(reqMonitor.Args).To(Equal([]string{"-timeout", "20s", "-port", "1234", "-uri", "/healthy/endpoint"}))
 				Expect(reqMonitor.LogSource).To(Equal("HEALTH"))
@@ -561,24 +556,30 @@ var _ = Describe("AppRunner", func() {
 				LogGuid:     "americano-app",
 				LogSource:   "APP",
 				MetricsGuid: "americano-app",
-				Setup: &models.DownloadAction{
-					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
-					To:   "/tmp",
-					User: "zcap",
+				Setup: &models.Action{
+					DownloadAction: &models.DownloadAction{
+						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						To:   "/tmp",
+						User: "zcap",
+					},
 				},
-				Action: &models.RunAction{
-					Path:           "/app-run-statement",
-					Args:           []string{"app", "arg1", "--app", "arg 2"},
-					Dir:            "/user/web/myappdir",
-					User:           "zcap",
-					ResourceLimits: &models.ResourceLimits{Nofile: nil},
+				Action: &models.Action{
+					RunAction: &models.RunAction{
+						Path:           "/app-run-statement",
+						Args:           []string{"app", "arg1", "--app", "arg 2"},
+						Dir:            "/user/web/myappdir",
+						User:           "zcap",
+						ResourceLimits: &models.ResourceLimits{Nofile: nil},
+					},
 				},
-				Monitor: &models.RunAction{
-					Path:           "/tmp/healthcheck",
-					Args:           []string{"-port", "2000"},
-					LogSource:      "HEALTH",
-					User:           "zcap",
-					ResourceLimits: &models.ResourceLimits{Nofile: nil},
+				Monitor: &models.Action{
+					RunAction: &models.RunAction{
+						Path:           "/tmp/healthcheck",
+						Args:           []string{"-port", "2000"},
+						LogSource:      "HEALTH",
+						User:           "zcap",
+						ResourceLimits: &models.ResourceLimits{Nofile: nil},
+					},
 				},
 			}
 
