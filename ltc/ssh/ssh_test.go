@@ -85,13 +85,13 @@ var _ = Describe("SSH", func() {
 	Describe("#Forward", func() {
 		It("should forward connection data between the local and remote servers", func() {
 			acceptChan := make(chan io.ReadWriteCloser)
-
 			fakeListener.ListenReturns(acceptChan, nil)
 
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
 			shellChan := make(chan error)
 			go func() {
+				defer GinkgoRecover()
 				shellChan <- appSSH.Forward("some local address", "some remote address")
 			}()
 
@@ -104,8 +104,7 @@ var _ = Describe("SSH", func() {
 			Expect(remoteAddress).To(Equal("some remote address"))
 
 			close(acceptChan)
-
-			Expect(<-shellChan).To(Succeed())
+			Eventually(shellChan).Should(Receive())
 
 			Expect(fakeListener.ListenCallCount()).To(Equal(1))
 			listenNetwork, localAddr := fakeListener.ListenArgsForCall(0)
@@ -113,51 +112,87 @@ var _ = Describe("SSH", func() {
 			Expect(localAddr).To(Equal("some local address"))
 		})
 
-		Context("when the errorChan receives a listen error", func() {
-			It("returns the error", func() {
-				errorChan := make(chan error)
+		Context("when the errorChan receives errors", func() {
+			var errorChan, shellChan chan error
+			var expected error
+			AfterEach(func() {
+				errorChan = make(chan error)
 				fakeListener.ListenReturns(nil, errorChan)
+
+				Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+
+				shellChan = make(chan error)
+				go func() {
+					defer GinkgoRecover()
+					shellChan <- appSSH.Forward("some local address", "some remote address")
+				}()
+
+				errorChan <- expected
+
+				var err error
+				Eventually(shellChan).Should(Receive(&err))
+				Expect(err).To(MatchError(expected))
+			})
+
+			It("returns error from Listener#Listen :: net#Listen", func() {
+				expected = &net.OpError{Op: "listen", Net: "tcp", Err: &net.AddrError{Err: "unknown port", Addr: "tcp/-1"}}
+			})
+			It("returns the error from Listener#Listen :: net.TCPListener#Accept", func() {
+				expected = &net.OpError{Op: "accept", Net: "tcp", Err: errors.New("some error")}
+			})
+		})
+
+		Context("when the errorChan is closed", func() {
+			It("returns without error", func() {
+				acceptChan := make(chan io.ReadWriteCloser)
+				errorChan := make(chan error)
+				fakeListener.ListenReturns(acceptChan, errorChan)
 
 				Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
 				shellChan := make(chan error)
 				go func() {
+					defer GinkgoRecover()
 					shellChan <- appSSH.Forward("some local address", "some remote address")
 				}()
 
-				listenErr := &net.OpError{Op: "listen", Net: "tcp", Err: &net.AddrError{Err: "unknown port", Addr: "tcp/-1"}}
+				acceptChan <- &dummyConn{}
+				Eventually(fakeClient.ForwardCallCount).Should(Equal(1))
 
-				errorChan <- listenErr
-				Expect(<-shellChan).To(MatchError(listenErr))
+				close(errorChan)
+				Eventually(shellChan).Should(Receive())
+
+				Expect(fakeListener.ListenCallCount()).To(Equal(1))
 			})
 		})
 
 		Context("when the Client#Forward returns an error", func() {
 			It("returns the error", func() {
 				acceptChan := make(chan io.ReadWriteCloser)
-				forwardErr := &crypto_ssh.OpenChannelError{
+				clientForwardErr := &crypto_ssh.OpenChannelError{
 					Reason:  0x2,
 					Message: "dial tcp 0.0.0.0:8000: connection refused",
 				}
 
 				fakeListener.ListenReturns(acceptChan, nil)
-				fakeClient.ForwardReturns(forwardErr)
+				fakeClient.ForwardReturns(clientForwardErr)
 				fakeClientDialer.DialReturns(fakeClient, nil)
 
 				Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
 				shellChan := make(chan error)
 				go func() {
+					defer GinkgoRecover()
 					shellChan <- appSSH.Forward("some local address", "some remote address")
 				}()
 
-				localConn := &dummyConn{}
-				acceptChan <- localConn
-
+				acceptChan <- &dummyConn{}
 				Eventually(fakeClient.ForwardCallCount).Should(Equal(1))
 				close(acceptChan)
 
-				Expect(<-shellChan).To(MatchError(forwardErr))
+				var err error
+				Eventually(shellChan).Should(Receive(&err))
+				Expect(err).To(MatchError(clientForwardErr))
 
 				Expect(fakeListener.ListenCallCount()).To(Equal(1))
 			})
@@ -271,6 +306,7 @@ var _ = Describe("SSH", func() {
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
 			go func() {
+				defer GinkgoRecover()
 				shellChan <- appSSH.Shell("", true)
 			}()
 
@@ -304,6 +340,7 @@ var _ = Describe("SSH", func() {
 			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
 
 			go func() {
+				defer GinkgoRecover()
 				shellChan <- appSSH.Shell("", true)
 			}()
 

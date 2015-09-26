@@ -85,13 +85,13 @@ func (f *SSHCommandFactory) ssh(context *cli.Context) {
 		return
 	}
 	if instanceIndex < 0 || instanceIndex >= appInfo.ActualRunningInstances {
-		f.ui.SayLine(fmt.Sprintf("Instance %s/%d does not exist.", appName, instanceIndex))
+		f.ui.SayLine("Instance %s/%d does not exist.", appName, instanceIndex)
 		f.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
 
 	if err := f.secureShell.Connect(appName, instanceIndex, f.config); err != nil {
-		f.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
+		f.ui.SayLine("Error connecting to %s/%d: %s", appName, instanceIndex, err)
 		f.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -143,7 +143,7 @@ func (f *SSHCommandFactory) forward(localForward, appName string, instanceIndex 
 	f.ui.SayLine("Forwarding %s to %s via %s/%d at %s", localAddr, remoteAddr, appName, instanceIndex, f.config.Target())
 
 	if err := f.secureShell.Forward(localAddr, remoteAddr); err != nil {
-		f.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
+		f.ui.SayLine("Error connecting to %s/%d: %s", appName, instanceIndex, err)
 		f.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
@@ -155,7 +155,7 @@ func (f *SSHCommandFactory) shell(command string, ptyDesired bool, appName strin
 	}
 
 	if err := f.secureShell.Shell(command, ptyDesired); err != nil {
-		f.ui.SayLine(fmt.Sprintf("Error connecting to %s/%d: %s", appName, instanceIndex, err.Error()))
+		f.ui.SayLine("Error connecting to %s/%d: %s", appName, instanceIndex, err)
 		f.exitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}

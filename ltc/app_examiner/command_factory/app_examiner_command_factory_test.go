@@ -70,7 +70,7 @@ var _ = Describe("CommandFactory", func() {
 
 		It("displays all the existing apps & tasks, making sure output spacing is correct", func() {
 			listApps := []app_examiner.AppInfo{
-				app_examiner.AppInfo{
+				{
 					ProcessGuid:            "process1",
 					DesiredInstances:       21,
 					ActualRunningInstances: 0,
@@ -79,14 +79,11 @@ var _ = Describe("CommandFactory", func() {
 					Ports:                  []uint16{54321},
 					Routes: route_helpers.Routes{
 						AppRoutes: route_helpers.AppRoutes{
-							route_helpers.AppRoute{
-								Hostnames: []string{"alldaylong.com"},
-								Port:      54321,
-							},
+							{Hostnames: []string{"alldaylong.com"}, Port: 54321},
 						},
 					},
 				},
-				app_examiner.AppInfo{
+				{
 					ProcessGuid:            "process2",
 					DesiredInstances:       8,
 					ActualRunningInstances: 9,
@@ -95,14 +92,11 @@ var _ = Describe("CommandFactory", func() {
 					Ports:                  []uint16{1234},
 					Routes: route_helpers.Routes{
 						AppRoutes: route_helpers.AppRoutes{
-							route_helpers.AppRoute{
-								Hostnames: []string{"never.io"},
-								Port:      1234,
-							},
+							{Hostnames: []string{"never.io"}, Port: 1234},
 						},
 					},
 				},
-				app_examiner.AppInfo{
+				{
 					ProcessGuid:            "process3",
 					DesiredInstances:       5,
 					ActualRunningInstances: 5,
@@ -111,14 +105,11 @@ var _ = Describe("CommandFactory", func() {
 					Ports:                  []uint16{1234},
 					Routes: route_helpers.Routes{
 						AppRoutes: route_helpers.AppRoutes{
-							route_helpers.AppRoute{
-								Hostnames: []string{"allthetime.com", "herewego.org"},
-								Port:      1234,
-							},
+							{Hostnames: []string{"allthetime.com", "herewego.org"}, Port: 1234},
 						},
 					},
 				},
-				app_examiner.AppInfo{
+				{
 					ProcessGuid:            "process4",
 					DesiredInstances:       0,
 					ActualRunningInstances: 0,
@@ -129,7 +120,7 @@ var _ = Describe("CommandFactory", func() {
 			}
 			fakeAppExaminer.ListAppsReturns(listApps, nil)
 			listTasks := []task_examiner.TaskInfo{
-				task_examiner.TaskInfo{
+				{
 					TaskGuid:      "task-guid-1",
 					CellID:        "cell-01",
 					Failed:        false,
@@ -137,7 +128,7 @@ var _ = Describe("CommandFactory", func() {
 					Result:        "Finished",
 					State:         "COMPLETED",
 				},
-				task_examiner.TaskInfo{
+				{
 					TaskGuid:      "task-guid-2",
 					CellID:        "cell-02",
 					Failed:        true,
@@ -145,7 +136,7 @@ var _ = Describe("CommandFactory", func() {
 					Result:        "Finished",
 					State:         "COMPLETED",
 				},
-				task_examiner.TaskInfo{
+				{
 					TaskGuid:      "task-guid-3",
 					CellID:        "",
 					Failed:        true,
@@ -226,7 +217,7 @@ var _ = Describe("CommandFactory", func() {
 			It("alerts the user fetching the app list returns an error", func() {
 				fakeAppExaminer.ListAppsReturns(nil, errors.New("The list was lost"))
 				listTasks := []task_examiner.TaskInfo{
-					task_examiner.TaskInfo{
+					{
 						TaskGuid:      "task-guid-1",
 						CellID:        "cell-01",
 						Failed:        false,
@@ -258,7 +249,7 @@ var _ = Describe("CommandFactory", func() {
 
 			It("alerts the user fetching the task list returns an error", func() {
 				listApps := []app_examiner.AppInfo{
-					app_examiner.AppInfo{
+					{
 						ProcessGuid:            "process1",
 						DesiredInstances:       21,
 						ActualRunningInstances: 0,
@@ -267,7 +258,7 @@ var _ = Describe("CommandFactory", func() {
 						Ports:                  []uint16{54321},
 						Routes: route_helpers.Routes{
 							AppRoutes: route_helpers.AppRoutes{
-								route_helpers.AppRoute{
+								{
 									Hostnames: []string{"alldaylong.com"},
 									Port:      54321,
 								},
@@ -300,7 +291,7 @@ var _ = Describe("CommandFactory", func() {
 		Context("when app has tcp routes", func() {
 			It("displays all tcp routes along with http routes", func() {
 				listApps := []app_examiner.AppInfo{
-					app_examiner.AppInfo{
+					{
 						ProcessGuid:            "process1",
 						DesiredInstances:       21,
 						ActualRunningInstances: 0,
@@ -316,7 +307,7 @@ var _ = Describe("CommandFactory", func() {
 							},
 						},
 					},
-					app_examiner.AppInfo{
+					{
 						ProcessGuid:            "process2",
 						DesiredInstances:       8,
 						ActualRunningInstances: 9,
@@ -332,7 +323,7 @@ var _ = Describe("CommandFactory", func() {
 							},
 						},
 					},
-					app_examiner.AppInfo{
+					{
 						ProcessGuid:            "process3",
 						DesiredInstances:       5,
 						ActualRunningInstances: 5,
@@ -348,7 +339,7 @@ var _ = Describe("CommandFactory", func() {
 							},
 						},
 					},
-					app_examiner.AppInfo{
+					{
 						ProcessGuid:            "process4",
 						DesiredInstances:       0,
 						ActualRunningInstances: 0,
@@ -377,7 +368,7 @@ var _ = Describe("CommandFactory", func() {
 		Context("when app has routes with container ports not listed in ports section", func() {
 			It("displays all tcp routes along with http routes", func() {
 				listApps := []app_examiner.AppInfo{
-					app_examiner.AppInfo{
+					{
 						ProcessGuid:            "process1",
 						DesiredInstances:       21,
 						ActualRunningInstances: 0,
@@ -393,7 +384,7 @@ var _ = Describe("CommandFactory", func() {
 							},
 						},
 					},
-					app_examiner.AppInfo{
+					{
 						ProcessGuid:            "process2",
 						DesiredInstances:       8,
 						ActualRunningInstances: 9,
