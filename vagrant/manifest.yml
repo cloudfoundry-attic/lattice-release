@@ -1,0 +1,182 @@
+---
+name: lattice
+
+releases:
+- name: diego
+  version: 0.1433.0
+  url: file:///tmp/bosh-releases/diego.tgz
+- name: garden-linux
+  version: 0.306.0
+  url: file:///tmp/bosh-releases/garden-linux.tgz
+- name: cf-routing
+  version: 0.99.0
+  url: file:///tmp/bosh-releases/cf-routing.tgz
+- name: cf
+  version: 218
+  url: file:///tmp/bosh-releases/cf.tgz
+
+networks:
+- name: default
+  type: dynamic
+
+update:
+  canary_watch_time: 5000 - 60000
+  update_watch_time: 5000 - 60000
+
+compilation:
+  network: default
+
+jobs:
+- name: lattice-collocated
+  instances: 1
+
+  networks:
+  - name: default
+
+  templates:
+
+  # Brain:
+  - name: auctioneer
+    release: diego
+  - name: bbs
+    release: diego
+  - name: converger
+    release: diego
+  - name: file_server
+    release: diego
+  - name: etcd
+    release: diego
+  - name: route_emitter
+    release: diego
+  - name: ssh_proxy
+    release: diego
+
+  - name: haproxy
+    release: cf-routing
+  - name: router_configurer
+    release: cf-routing
+  - name: tcp_emitter
+    release: cf-routing
+
+  - name: doppler
+    release: cf
+  - name: gorouter
+    release: cf
+  - name: loggregator_trafficcontroller
+    release: cf
+  - name: nats
+    release: cf
+
+  # Cell:
+  - name: rep
+    release: diego
+  - name: rootfses
+    release: diego
+
+  - name: garden
+    release: garden-linux
+
+  # Brain & Cell:
+  - name: consul_agent
+    release: cf
+  - name: metron_agent
+    release: cf
+
+properties:
+  # For metron_agent:
+  metron_agent:
+    deployment: lattice
+  nats: # For metron_agent to talk to collector
+    machines: [127.0.0.1]
+    user: nats
+    password: nats
+    port: 4443
+  etcd: # For metron_agent to find loggregator
+    machines: [127.0.0.1]
+  loggregator_endpoint:
+    shared_secret: loggregator-secret
+  syslog_daemon_config:
+    address: null
+    port: null
+
+  # For consul_agent:
+  consul:
+    agent:
+      log_level: null
+      servers:
+        lan: [127.0.0.1]
+    # encrypt_keys: []
+    require_ssl: false
+
+  # For Diego:
+  diego:
+    ssl:
+      skip_cert_verify: true
+    auctioneer:
+      bbs:
+        api_location: bbs.service.cf.internal:8889
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+    bbs:
+      active_key_label: key1
+      require_ssl: false
+      ca_cert: ""
+      server_cert: ""
+      server_key: ""
+      auctioneer:
+        api_url: http://auctioneer.service.cf.internal:9016
+      etcd:
+        machines: [etcd.service.cf.internal]
+        require_ssl: false
+    converger:
+      bbs:
+        api_location: bbs.service.cf.internal:8889
+        require_ssl: false
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+    etcd:
+      machines: etcd.service.cf.internal
+      cluster:
+        - name: database_z1
+          instances: 1
+      require_ssl: false
+      peer_require_ssl: false
+    rep:
+      bbs:
+        api_location: bbs.service.cf.internal:8889
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+    route_emitter:
+      bbs:
+        api_location: bbs.service.cf.internal:8889
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      nats:
+        machines: [127.0.0.1]
+        user: nats
+        password: nats
+    ssh_proxy:
+      bbs:
+        api_location: bbs.service.cf.internal:8889
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      host_key: "$(openssl genrsa 2048 2> /dev/null)"
+      enable_diego_auth: true
+      diego_credentials: "$(cat /var/lattice/credentials)"
+
+  # For Garden:
+  garden:
+    deny_networks: [0.0.0.0/0]
+    allow_host_access: true # turn off in favor of TCP routing
+    insecure_docker_registry_list: []
+    persistent_image_list: ["/var/vcap/packages/rootfs_cflinuxfs2/rootfs"]
+    enable_graph_cleanup: true

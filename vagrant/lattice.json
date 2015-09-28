@@ -1,0 +1,200 @@
+{
+    "variables": {
+        "ssh_username": "vagrant",
+        "ssh_password": "vagrant",
+        "hostname": "lattice",
+        "diego_version": "0.1433.0",
+        "garden_linux_version": "0.306.0",
+        "cf_routing_version": "0.99.0",
+        "cf_version": "218"
+    },
+    "builders": [
+        {
+            "type": "amazon-ebs",
+            "region": "us-east-1",
+            "source_ami": "ami-2dcf7b46",
+            "instance_type": "m4.large",
+            "ami_name": "lattice-vagrant-{{isotime \"20060102-1504\"}}",
+            "ami_groups": ["all"],
+            "ami_regions": [
+                "us-west-1",
+                "us-west-2"
+            ],
+            "ssh_username": "ubuntu"
+        },
+        {
+            "type": "vmware-iso",
+            "headless": true,
+            "vm_name": "lattice",
+            "guest_os_type": "ubuntu-64",
+            "disk_size": 10000,
+            "ssh_username": "{{user `ssh_username`}}",
+            "ssh_password": "{{user `ssh_password`}}",
+            "iso_url": "http://releases.ubuntu.com/trusty/ubuntu-14.04.3-server-amd64.iso",
+            "iso_checksum": "9e5fecc94b3925bededed0fdca1bd417",
+            "iso_checksum_type": "md5",
+            "http_directory": "preseed",
+            "tools_upload_flavor": "linux",
+            "ssh_wait_timeout": "20m",
+            "shutdown_command": "echo {{user `ssh_password`}} | sudo -S shutdown -P now",
+            "boot_command": [
+                "<esc><esc><enter><wait>",
+                "/install/vmlinuz noapic ",
+                "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+                "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
+                "hostname={{user `hostname`}} ",
+                "fb=false debconf/frontend=noninteractive ",
+                "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
+                "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+                "initrd=/install/initrd.gz -- <enter>"
+            ],
+            "vmx_data": {
+                "memsize": "4096"
+            }
+        },
+        {
+            "type": "virtualbox-iso",
+            "headless": true,
+            "vm_name": "lattice",
+            "guest_os_type": "Ubuntu_64",
+            "disk_size": 10000,
+            "ssh_username": "{{user `ssh_username`}}",
+            "ssh_password": "{{user `ssh_password`}}",
+            "iso_url": "http://releases.ubuntu.com/trusty/ubuntu-14.04.3-server-amd64.iso",
+            "iso_checksum": "9e5fecc94b3925bededed0fdca1bd417",
+            "iso_checksum_type": "md5",
+            "http_directory": "preseed",
+            "ssh_wait_timeout": "20m",
+            "shutdown_command": "echo {{user `ssh_password`}} | sudo -S shutdown -P now",
+            "boot_command": [
+                "<esc><esc><enter><wait>",
+                "/install/vmlinuz noapic ",
+                "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+                "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
+                "hostname={{user `hostname`}} ",
+                "fb=false debconf/frontend=noninteractive ",
+                "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
+                "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+                "initrd=/install/initrd.gz -- <enter>"
+            ],
+            "vboxmanage": [
+                [ "modifyvm", "{{.Name}}", "--memory", "4096" ],
+                [ "modifyvm", "{{.Name}}", "--natdnshostresolver1", "on" ]
+            ]
+        }
+    ],
+
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "mkdir -p /tmp/bosh-releases"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "../diego-release/releases/diego/diego-{{user `diego_version`}}.tgz",
+            "destination": "/tmp/bosh-releases/diego.tgz"
+        },
+        {
+            "type": "file",
+            "source": "../garden-linux-release/releases/garden-linux/garden-linux-{{user `garden_linux_version`}}.tgz",
+            "destination": "/tmp/bosh-releases/garden-linux.tgz"
+        },
+        {
+            "type": "file",
+            "source": "../cf-routing-release/releases/cf-routing/cf-routing-{{user `cf_routing_version`}}.tgz",
+            "destination": "/tmp/bosh-releases/cf-routing.tgz"
+        },
+        {
+            "type": "file",
+            "source": "../cf-release/releases/cf/cf-{{user `cf_version`}}.tgz",
+            "destination": "/tmp/bosh-releases/cf.tgz"
+        },
+        {
+            "type": "shell",
+            "execute_command": "echo '{{user `ssh_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "inline": [
+                "echo '%sudo    ALL=(ALL)  NOPASSWD:ALL' >> /etc/sudoers"
+            ]
+        },
+        {
+            "type": "shell",
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "apt-get -y update",
+                "apt-get -y --force-yes upgrade",
+                "apt-get -y update",
+                "apt-get -y install build-essential",
+                "apt-get -y install curl",
+                "apt-get -y install quota",
+                "apt-get -y install jq",
+                "apt-get -y install s3cmd",
+                "apt-get -y install unzip",
+                "apt-get -y install lighttpd lighttpd-mod-webdav",
+                "apt-get -y install linux-image-extra-$(uname -r)",
+                "echo 'UseDNS no' >> /etc/ssh/sshd_config"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["vmware-iso", "virtualbox-iso"],
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "mkdir -p /home/vagrant/.ssh",
+                "wget --no-check-certificate -O authorized_keys 'https://github.com/mitchellh/vagrant/raw/master/keys/vagrant.pub'",
+                "mv authorized_keys /home/vagrant/.ssh/",
+                "chown -R vagrant /home/vagrant/.ssh"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["vmware-iso"],
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "sudo apt-get -y install open-vm-tools",
+                "mkdir /tmp/vmware-tools-disk /tmp/vmware-tools",
+                "mount -o loop /home/vagrant/linux.iso /tmp/vmware-tools-disk",
+                "tar xzf /tmp/vmware-tools-disk/VMwareTools-*.tar.gz -C /tmp/vmware-tools",
+                "/tmp/vmware-tools/vmware-tools-distrib/vmware-install.pl --default",
+                "umount /tmp/vmware-tools-disk",
+                "rm -rf /home/vagrant/linux.iso /tmp/vware-tools-disk /tmp/vmware-tools"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["virtualbox-iso"],
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "sudo apt-get install -y dkms virtualbox-guest-utils virtualbox-guest-dkms"
+            ]
+        },
+        {
+            "type": "packer-bosh",
+            "manifest_path": "manifest.yml",
+            "assets_dir": "assets"
+        },
+        {
+            "type": "shell",
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "apt-get -y autoremove",
+                "apt-get -y clean"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["vmware-iso", "virtualbox-iso"],
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "dd if=/dev/zero of=/EMPTY bs=1M 2>/dev/null || true",
+                "rm -f /EMPTY"
+            ]
+        }
+    ],
+    "post-processors": [
+        {
+            "type": "vagrant"
+        }
+    ]
+}
