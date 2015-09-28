@@ -1,0 +1,16 @@
+#!/bin/bash
+
+tmp_tar_path=$1
+lattice_download_url=$2
+
+if [ -z "$lattice_download_url" ]; then
+  echo "ERROR: lattice_tar_source must be set in lattice.*.tf"
+  exit 1
+else
+  if [ `echo "$lattice_download_url" | grep -E '^[a-zA-Z0-9]+://.+'` ]; then
+    rm -f "$tmp_tar_path" > /dev/null
+    touch "$tmp_tar_path"
+  else
+    ln -sF "$lattice_download_url" "$tmp_tar_path"
+  fi
+fi

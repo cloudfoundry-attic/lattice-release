@@ -102,7 +102,7 @@ resource "aws_instance" "lattice-brain" {
     }
 
     provisioner "local-exec" {
-        command = "${path.module}/../scripts/local/get-lattice-tar \"${var.lattice_tar_source}\""
+        command = "${path.module}/../scripts/local/validate-lattice-tar .terraform/lattice.tgz \"${var.lattice_tar_source}\""
     }
 
     provisioner "file" {
@@ -123,7 +123,7 @@ resource "aws_instance" "lattice-brain" {
             "sudo sh -c 'echo \"CONSUL_SERVER_IP=${aws_instance.lattice-brain.private_ip}\" >> /var/lattice/setup/lattice-environment'",
 
             "sudo chmod 755 /tmp/install-from-tar",
-            "sudo /tmp/install-from-tar brain",
+            "sudo /tmp/install-from-tar brain \"${var.lattice_tar_source}\"",
         ]
     }
 }
@@ -149,7 +149,7 @@ resource "aws_instance" "cell" {
     }
 
     provisioner "local-exec" {
-        command = "${path.module}/../scripts/local/get-lattice-tar \"${var.lattice_tar_source}\""
+        command = "${path.module}/../scripts/local/validate-lattice-tar .terraform/lattice.tgz \"${var.lattice_tar_source}\""
     }
 
     provisioner "file" {
@@ -171,7 +171,7 @@ resource "aws_instance" "cell" {
             "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
 
             "sudo chmod +x /tmp/install-from-tar",
-            "sudo /tmp/install-from-tar cell",
+            "sudo /tmp/install-from-tar cell \"${var.lattice_tar_source}\"",
 
             "sudo tar cf /var/lattice/garden/graph/warmrootfs.tar /var/lattice/rootfs",
             "sudo rm -f /var/lattice/garden/graph/warmrootfs.tar"

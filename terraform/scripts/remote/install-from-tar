@@ -21,6 +21,7 @@ install_condenser() {
 }
 
 COMPONENT_TO_INSTALL=$1
+LATTICE_TAR_URL=$2
 
 if [ $COMPONENT_TO_INSTALL != "cell" ] && [ $COMPONENT_TO_INSTALL != "brain" ] && [ $COMPONENT_TO_INSTALL != "collocated" ]; then
     echo "Incorrect Usage. Must install either cell or brain or both.
@@ -31,6 +32,7 @@ if [ $COMPONENT_TO_INSTALL != "cell" ] && [ $COMPONENT_TO_INSTALL != "brain" ] &
     exit 2
 fi
 
+[ -s /tmp/lattice.tgz ] || curl -L -o /tmp/lattice.tgz "$LATTICE_TAR_URL"
 tar -xf /tmp/lattice.tgz -C /tmp
 
 /tmp/lattice-build/scripts/install-common
