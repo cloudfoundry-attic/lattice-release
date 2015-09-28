@@ -4,18 +4,12 @@ set -e
 
 mkdir -p /var/lattice/setup
 
-lattice_common_build_path=/tmp/lattice-build/common
+LATTICE_COMMON_BUILD_PATH=/tmp/lattice-build/common
 
-cp $lattice_common_build_path/health_check /var/lattice
+cp $LATTICE_COMMON_BUILD_PATH/health_check /var/lattice
+cp $LATTICE_COMMON_BUILD_PATH/*_VERSION /var/lattice
 
-cp $lattice_common_build_path/LATTICE_VERSION /var/lattice
-cp $lattice_common_build_path/DIEGO_VERSION /var/lattice
-cp $lattice_common_build_path/CF_VERSION /var/lattice
-cp $lattice_common_build_path/ROUTING_VERSION /var/lattice
-cp $lattice_common_build_path/STACK_VERSION /var/lattice
-
-## log rotation ##
-cp $lattice_common_build_path/system-config/lattice.logrotate.txt /etc/logrotate.d/lattice
+cp $LATTICE_COMMON_BUILD_PATH/system-config/lattice.logrotate.txt /etc/logrotate.d/lattice
 echo "## logrotation"  >> /etc/crontab
 echo "*/5 * 	* * * 	root	/etc/cron.daily/logrotate" >> /etc/crontab
 
