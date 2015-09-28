@@ -41,7 +41,6 @@ type SSH struct {
 	Term            Term
 	SessionFactory  SessionFactory
 	SigWinchChannel chan os.Signal
-	SigIntChannel   chan os.Signal
 	ExitHandler     exit_handler.ExitHandler
 	client          Client
 }
@@ -53,7 +52,6 @@ func New(exitHandler exit_handler.ExitHandler) *SSH {
 		Term:            &DockerTerm{},
 		SessionFactory:  &SSHAPISessionFactory{},
 		SigWinchChannel: make(chan os.Signal),
-		SigIntChannel:   make(chan os.Signal),
 		ExitHandler:     exitHandler,
 	}
 }
@@ -109,17 +107,9 @@ func (s *SSH) Shell(command string, desirePTY bool) error {
 		if state, err := s.Term.SetRawTerminal(os.Stdin.Fd()); err == nil {
 			defer s.Term.RestoreTerminal(os.Stdin.Fd(), state)
 
-			signal.Notify(s.SigIntChannel, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP)
-			go func() {
-				<-s.SigIntChannel
-
+			s.ExitHandler.OnExit(func() {
 				s.Term.RestoreTerminal(os.Stdin.Fd(), state)
-
-				signal.Stop(s.SigIntChannel)
-				close(s.SigIntChannel)
-
-				s.ExitHandler.Exit(160)
-			}()
+			})
 		}
 	}
 

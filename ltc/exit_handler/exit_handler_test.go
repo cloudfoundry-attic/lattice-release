@@ -13,63 +13,49 @@ import (
 )
 
 var _ = Describe("ExitHandler", func() {
-	var buffer *gbytes.Buffer
+	var (
+		buffer      *gbytes.Buffer
+		exitFunc    func(int)
+		signalChan  chan os.Signal
+		exitHandler exit_handler.ExitHandler
+	)
 
 	BeforeEach(func() {
 		buffer = gbytes.NewBuffer()
-	})
 
-	It("Executes exit handlers on os.Interupts", func() {
-		exitFunc := func(code int) {
+		exitFunc = func(code int) {
 			buffer.Write([]byte(fmt.Sprintf("Exit-Code=%d", code)))
 		}
 
-		signalChan := make(chan os.Signal)
-		exitHandler := exit_handler.New(signalChan, exitFunc)
+		signalChan = make(chan os.Signal)
+		exitHandler = exit_handler.New(signalChan, exitFunc)
 		go exitHandler.Run()
 
 		exitHandler.OnExit(func() {
-			buffer.Write([]byte("handler1"))
+			buffer.Write([]byte("handler1 "))
 		})
 
 		exitHandler.OnExit(func() {
-			buffer.Write([]byte("handler2"))
+			buffer.Write([]byte("handler2 "))
+		})
+	})
+
+	Context("Signals", func() {
+		It("Executes exit handlers on os.Interupts", func() {
+			signalChan <- os.Interrupt
+			Eventually(buffer).Should(gbytes.Say("handler1 handler2 Exit-Code=160"))
 		})
 
-		signalChan <- syscall.SIGHUP
-
-		Consistently(buffer).ShouldNot(gbytes.Say("handler"))
-
-		signalChan <- os.Interrupt
-
-		Eventually(buffer).Should(gbytes.Say("handler1"))
-		Eventually(buffer).Should(gbytes.Say("handler2"))
-		Eventually(buffer).Should(gbytes.Say("Exit-Code=130"))
+		It("Executes exit handlers on SIGTERM", func() {
+			signalChan <- syscall.SIGTERM
+			Eventually(buffer).Should(gbytes.Say("handler1 handler2 Exit-Code=160"))
+		})
 	})
 
 	Describe("Exit", func() {
 		It("triggers a system exit after calling all the exit funcs ", func() {
-			exitFunc := func(code int) {
-				buffer.Write([]byte(fmt.Sprintf("Exit-Code=%d", code)))
-			}
-
-			signalChan := make(chan os.Signal)
-			exitHandler := exit_handler.New(signalChan, exitFunc)
-			go exitHandler.Run()
-
-			exitHandler.OnExit(func() {
-				buffer.Write([]byte("handler1"))
-			})
-
-			exitHandler.OnExit(func() {
-				buffer.Write([]byte("handler2"))
-			})
-
 			exitHandler.Exit(222)
-
-			Eventually(buffer).Should(gbytes.Say("handler1"))
-			Eventually(buffer).Should(gbytes.Say("handler2"))
-			Eventually(buffer).Should(gbytes.Say("Exit-Code=222"))
+			Eventually(buffer).Should(gbytes.Say("handler1 handler2 Exit-Code=222"))
 		})
 	})
 })

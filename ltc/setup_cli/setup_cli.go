@@ -3,6 +3,7 @@ package setup_cli
 import (
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/cli_app_factory"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
@@ -23,7 +24,7 @@ func NewCliApp() *cli.App {
 	config := config.New(persister.NewFilePersister(config_helpers.ConfigFileLocation(ltcConfigRoot())))
 
 	signalChan := make(chan os.Signal)
-	signal.Notify(signalChan, os.Interrupt)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGHUP, syscall.SIGTERM)
 	exitHandler := exit_handler.New(signalChan, os.Exit)
 	go exitHandler.Run()
 

@@ -33,7 +33,6 @@ var _ = Describe("SSH", func() {
 		fakeSession        *mocks.FakeSession
 		fakeExitHandler    *fake_exit_handler.FakeExitHandler
 		sigWinchChan       chan os.Signal
-		sigIntChan         chan os.Signal
 
 		config *config_package.Config
 		appSSH *ssh.SSH
@@ -48,7 +47,6 @@ var _ = Describe("SSH", func() {
 		fakeSession = &mocks.FakeSession{}
 		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
 		sigWinchChan = make(chan os.Signal, 4)
-		sigIntChan = make(chan os.Signal, 4)
 
 		config = config_package.New(nil)
 		appSSH = &ssh.SSH{
@@ -58,7 +56,6 @@ var _ = Describe("SSH", func() {
 			SessionFactory:  fakeSessionFactory,
 			ExitHandler:     fakeExitHandler,
 			SigWinchChannel: sigWinchChan,
-			SigIntChannel:   sigIntChan,
 		}
 		fakeClientDialer.DialReturns(fakeClient, nil)
 		fakeSessionFactory.NewReturns(fakeSession, nil)
@@ -368,7 +365,7 @@ var _ = Describe("SSH", func() {
 			Expect(<-shellChan).To(Succeed())
 		})
 
-		It("resets the terminal and exits if a signal is received", func() {
+		It("resets the terminal on exit", func() {
 			state := &term.State{}
 			fakeTerm.SetRawTerminalReturns(state, nil)
 
@@ -389,7 +386,7 @@ var _ = Describe("SSH", func() {
 
 			<-waitChan
 
-			sigIntChan <- syscall.SIGINT
+			fakeExitHandler.Exit(123)
 
 			Eventually(fakeTerm.RestoreTerminalCallCount).Should(Equal(1))
 			actualFD, actualState := fakeTerm.RestoreTerminalArgsForCall(0)
@@ -397,8 +394,6 @@ var _ = Describe("SSH", func() {
 			Expect(reflect.ValueOf(actualState).Pointer()).To(Equal(reflect.ValueOf(state).Pointer()))
 
 			<-waitChan
-
-			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{160}))
 		})
 
 		Context("when we fail to set the raw terminal", func() {

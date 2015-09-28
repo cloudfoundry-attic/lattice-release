@@ -457,7 +457,7 @@ var _ = Describe("CommandFactory", func() {
 			var closeChan chan struct{}
 
 			AfterEach(func() {
-				go fakeExitHandler.Exit(exit_codes.SigInt)
+				go fakeExitHandler.Exit(exit_codes.Signal)
 				Eventually(closeChan).Should(BeClosed())
 			})
 
@@ -509,11 +509,11 @@ var _ = Describe("CommandFactory", func() {
 				closeChan = test_helpers.AsyncExecuteCommandWithArgs(visualizeCommand, []string{"--rate=1s"})
 
 				Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
-				fakeExitHandler.Exit(exit_codes.SigInt)
+				fakeExitHandler.Exit(exit_codes.Signal)
 				Eventually(closeChan).Should(BeClosed())
 
 				Expect(outputBuffer).To(test_helpers.Say(cursor.Show()))
-				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.SigInt}))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.Signal}))
 			})
 		})
 
@@ -1014,7 +1014,7 @@ var _ = Describe("CommandFactory", func() {
 			var closeChan chan struct{}
 
 			AfterEach(func() {
-				go fakeExitHandler.Exit(exit_codes.SigInt)
+				go fakeExitHandler.Exit(exit_codes.Signal)
 				Eventually(closeChan).Should(BeClosed())
 
 				_, err := fmt.Print(cursor.Show())
@@ -1132,11 +1132,11 @@ var _ = Describe("CommandFactory", func() {
 					closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate=1s"})
 
 					Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
-					fakeExitHandler.Exit(exit_codes.SigInt)
+					fakeExitHandler.Exit(exit_codes.Signal)
 					Eventually(closeChan).Should(BeClosed())
 
 					Expect(outputBuffer).To(test_helpers.Say(cursor.Show()))
-					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.SigInt}))
+					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.Signal}))
 				})
 			})
 		})

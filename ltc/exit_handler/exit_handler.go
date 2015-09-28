@@ -12,7 +12,7 @@ func New(signalChan chan os.Signal, systemExit func(code int)) ExitHandler {
 		signalChan:  signalChan,
 		systemExit:  systemExit,
 		onExitFuncs: make([]func(), 0),
-		exitCode:    exit_codes.SigInt,
+		exitCode:    exit_codes.Signal,
 	}
 }
 
@@ -33,10 +33,8 @@ type exitHandler struct {
 func (e *exitHandler) Run() {
 	for {
 		select {
-		case signal := <-e.signalChan:
-			if signal == os.Interrupt {
-				e.Exit(e.exitCode)
-			}
+		case <-e.signalChan:
+			e.Exit(e.exitCode)
 		}
 	}
 }

@@ -7,5 +7,5 @@ const (
 	InvalidSyntax   = 13
 	CommandFailed   = 14
 	BadDocker       = 15
-	SigInt          = 130
+	Signal          = 160
 )
