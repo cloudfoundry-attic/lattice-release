@@ -211,7 +211,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	configCommandFactory := config_command_factory.NewConfigCommandFactory(config, ui, targetVerifier, blobStoreVerifier, exitHandler)
 
-	sshCommandFactory := ssh_command_factory.NewSSHCommandFactory(config, ui, exitHandler, appExaminer, ssh.New())
+	sshCommandFactory := ssh_command_factory.NewSSHCommandFactory(config, ui, exitHandler, appExaminer, ssh.New(exitHandler))
 
 	helpCommand := cli.Command{
 		Name:        "help",

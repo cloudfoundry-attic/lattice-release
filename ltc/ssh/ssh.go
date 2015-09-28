@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/docker/docker/pkg/term"
 )
 
@@ -35,19 +36,25 @@ type SessionFactory interface {
 }
 
 type SSH struct {
-	Listener       Listener
-	ClientDialer   ClientDialer
-	Term           Term
-	SessionFactory SessionFactory
-	client         Client
+	Listener        Listener
+	ClientDialer    ClientDialer
+	Term            Term
+	SessionFactory  SessionFactory
+	SigWinchChannel chan os.Signal
+	SigIntChannel   chan os.Signal
+	ExitHandler     exit_handler.ExitHandler
+	client          Client
 }
 
-func New() *SSH {
+func New(exitHandler exit_handler.ExitHandler) *SSH {
 	return &SSH{
-		Listener:       &ChannelListener{},
-		ClientDialer:   &AppDialer{},
-		Term:           &DockerTerm{},
-		SessionFactory: &SSHAPISessionFactory{},
+		Listener:        &ChannelListener{},
+		ClientDialer:    &AppDialer{},
+		Term:            &DockerTerm{},
+		SessionFactory:  &SSHAPISessionFactory{},
+		SigWinchChannel: make(chan os.Signal),
+		SigIntChannel:   make(chan os.Signal),
+		ExitHandler:     exitHandler,
 	}
 }
 
@@ -101,16 +108,27 @@ func (s *SSH) Shell(command string, desirePTY bool) error {
 	if desirePTY {
 		if state, err := s.Term.SetRawTerminal(os.Stdin.Fd()); err == nil {
 			defer s.Term.RestoreTerminal(os.Stdin.Fd(), state)
+
+			signal.Notify(s.SigIntChannel, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP)
+			go func() {
+				<-s.SigIntChannel
+
+				s.Term.RestoreTerminal(os.Stdin.Fd(), state)
+
+				signal.Stop(s.SigIntChannel)
+				close(s.SigIntChannel)
+
+				s.ExitHandler.Exit(160)
+			}()
 		}
 	}
 
-	resized := make(chan os.Signal, 16)
-	signal.Notify(resized, syscall.SIGWINCH)
+	signal.Notify(s.SigWinchChannel, syscall.SIGWINCH)
 	defer func() {
-		signal.Stop(resized)
-		close(resized)
+		signal.Stop(s.SigWinchChannel)
+		close(s.SigWinchChannel)
 	}()
-	go s.resize(resized, session, os.Stdout.Fd(), width, height)
+	go s.resize(session, os.Stdout.Fd(), width, height)
 
 	defer close(session.KeepAlive())
 
@@ -124,11 +142,11 @@ func (s *SSH) Shell(command string, desirePTY bool) error {
 	return nil
 }
 
-func (s *SSH) resize(resized <-chan os.Signal, session Session, terminalFd uintptr, initialWidth, initialHeight int) {
+func (s *SSH) resize(session Session, terminalFd uintptr, initialWidth, initialHeight int) {
 	previousWidth := initialWidth
 	previousHeight := initialHeight
 
-	for range resized {
+	for range s.SigWinchChannel {
 		width, height := s.Term.GetWinsize(terminalFd)
 
 		if width == previousWidth && height == previousHeight {

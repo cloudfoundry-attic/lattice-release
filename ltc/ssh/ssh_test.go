@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"reflect"
 	"syscall"
 
 	"github.com/docker/docker/pkg/term"
@@ -12,6 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	config_package "github.com/cloudfoundry-incubator/lattice/ltc/config"
+	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/ssh"
 	"github.com/cloudfoundry-incubator/lattice/ltc/ssh/mocks"
 	crypto_ssh "golang.org/x/crypto/ssh"
@@ -29,6 +31,9 @@ var _ = Describe("SSH", func() {
 		fakeListener       *mocks.FakeListener
 		fakeSessionFactory *mocks.FakeSessionFactory
 		fakeSession        *mocks.FakeSession
+		fakeExitHandler    *fake_exit_handler.FakeExitHandler
+		sigWinchChan       chan os.Signal
+		sigIntChan         chan os.Signal
 
 		config *config_package.Config
 		appSSH *ssh.SSH
@@ -41,13 +46,19 @@ var _ = Describe("SSH", func() {
 		fakeListener = &mocks.FakeListener{}
 		fakeSessionFactory = &mocks.FakeSessionFactory{}
 		fakeSession = &mocks.FakeSession{}
+		fakeExitHandler = &fake_exit_handler.FakeExitHandler{}
+		sigWinchChan = make(chan os.Signal, 4)
+		sigIntChan = make(chan os.Signal, 4)
 
 		config = config_package.New(nil)
 		appSSH = &ssh.SSH{
-			Listener:       fakeListener,
-			ClientDialer:   fakeClientDialer,
-			Term:           fakeTerm,
-			SessionFactory: fakeSessionFactory,
+			Listener:        fakeListener,
+			ClientDialer:    fakeClientDialer,
+			Term:            fakeTerm,
+			SessionFactory:  fakeSessionFactory,
+			ExitHandler:     fakeExitHandler,
+			SigWinchChannel: sigWinchChan,
+			SigIntChannel:   sigIntChan,
 		}
 		fakeClientDialer.DialReturns(fakeClient, nil)
 		fakeSessionFactory.NewReturns(fakeSession, nil)
@@ -312,7 +323,8 @@ var _ = Describe("SSH", func() {
 
 			<-waitChan
 
-			Expect(syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)).To(Succeed())
+			sigWinchChan <- syscall.SIGWINCH
+
 			Eventually(fakeTerm.GetWinsizeCallCount, 5).Should(Equal(2))
 			Expect(fakeSession.ResizeCallCount()).To(Equal(1))
 			width, height := fakeSession.ResizeArgsForCall(0)
@@ -346,13 +358,47 @@ var _ = Describe("SSH", func() {
 
 			<-waitChan
 
-			Expect(syscall.Kill(syscall.Getpid(), syscall.SIGWINCH)).To(Succeed())
+			sigWinchChan <- syscall.SIGWINCH
+
 			Eventually(fakeTerm.GetWinsizeCallCount, 5).Should(Equal(2))
 			Expect(fakeSession.ResizeCallCount()).To(Equal(0))
 
 			<-waitChan
 
 			Expect(<-shellChan).To(Succeed())
+		})
+
+		It("resets the terminal and exits if a signal is received", func() {
+			state := &term.State{}
+			fakeTerm.SetRawTerminalReturns(state, nil)
+
+			fakeTerm.IsTTYReturns(true)
+
+			waitChan := make(chan struct{})
+			fakeSession.ShellStub = func() error {
+				waitChan <- struct{}{}
+				waitChan <- struct{}{}
+				return nil
+			}
+
+			Expect(appSSH.Connect("some-app-name", 100, config)).To(Succeed())
+
+			go func() {
+				appSSH.Shell("", true)
+			}()
+
+			<-waitChan
+
+			sigIntChan <- syscall.SIGINT
+
+			Eventually(fakeTerm.RestoreTerminalCallCount).Should(Equal(1))
+			actualFD, actualState := fakeTerm.RestoreTerminalArgsForCall(0)
+			Expect(actualFD).To(Equal(os.Stdin.Fd()))
+			Expect(reflect.ValueOf(actualState).Pointer()).To(Equal(reflect.ValueOf(state).Pointer()))
+
+			<-waitChan
+
+			Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{160}))
 		})
 
 		Context("when we fail to set the raw terminal", func() {
