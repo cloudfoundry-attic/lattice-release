@@ -1,6 +1,6 @@
 #!/bin/bash
 
-tmp_tar_path=$1
+tmp_tar_path=$(cd $(dirname "$1") && pwd )/$(basename "$1")
 lattice_download_url=$2
 
 if [ -z "$lattice_download_url" ]; then
