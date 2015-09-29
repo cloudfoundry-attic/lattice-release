@@ -11,6 +11,7 @@ else
     rm -f "$tmp_tar_path" > /dev/null
     touch "$tmp_tar_path"
   else
-    ln -sF "$lattice_download_url" "$tmp_tar_path"
+  	lattice_tar_path=$(cd $(dirname "$lattice_download_url") && pwd )/$(basename "$lattice_download_url")
+    ln -sF "$lattice_tar_path" "$tmp_tar_path"
   fi
 fi
