@@ -11,6 +11,6 @@ fi
 bosh create release releases/diego/diego-0.1433.0.yml --with-tarball --dir ../diego-release
 bosh create release releases/garden-linux/garden-linux-0.306.0.yml --with-tarball --dir ../garden-linux-release
 bosh create release releases/cf-routing/cf-routing-0.99.0.yml --with-tarball --dir ../cf-routing-release
-bosh create release releases/cf/cf-218.yml --with-tarball --dir ../cf-release
+bosh create release $LATTICE_VAGRANT_DIR/cf-lattice.yml --with-tarball --dir ../cf-release
 
 packer build $LATTICE_VAGRANT_DIR/lattice.json

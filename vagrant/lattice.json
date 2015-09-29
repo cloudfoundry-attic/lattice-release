@@ -6,7 +6,7 @@
         "diego_version": "0.1433.0",
         "garden_linux_version": "0.306.0",
         "cf_routing_version": "0.99.0",
-        "cf_version": "218"
+        "cf_lattice_version": "218"
     },
     "builders": [
         {
@@ -108,8 +108,8 @@
         },
         {
             "type": "file",
-            "source": "../cf-release/releases/cf/cf-{{user `cf_version`}}.tgz",
-            "destination": "/tmp/bosh-releases/cf.tgz"
+            "source": "../cf-release/releases/cf/cf-lattice-{{user `cf_lattice_version`}}.tgz",
+            "destination": "/tmp/bosh-releases/cf-lattice.tgz"
         },
         {
             "type": "shell",

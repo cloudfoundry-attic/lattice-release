@@ -11,9 +11,9 @@ releases:
 - name: cf-routing
   version: 0.99.0
   url: file:///tmp/bosh-releases/cf-routing.tgz
-- name: cf
+- name: cf-lattice
   version: 218
-  url: file:///tmp/bosh-releases/cf.tgz
+  url: file:///tmp/bosh-releases/cf-lattice.tgz
 
 networks:
 - name: default
@@ -59,13 +59,13 @@ jobs:
     release: cf-routing
 
   - name: doppler
-    release: cf
+    release: cf-lattice
   - name: gorouter
-    release: cf
+    release: cf-lattice
   - name: loggregator_trafficcontroller
-    release: cf
+    release: cf-lattice
   - name: nats
-    release: cf
+    release: cf-lattice
 
   # Cell:
   - name: rep
@@ -78,35 +78,13 @@ jobs:
 
   # Brain & Cell:
   - name: consul_agent
-    release: cf
+    release: cf-lattice
   - name: metron_agent
-    release: cf
+    release: cf-lattice
 
 properties:
-  # For metron_agent:
-  metron_agent:
-    deployment: lattice
-  nats: # For metron_agent to talk to collector
-    machines: [127.0.0.1]
-    user: nats
-    password: nats
-    port: 4443
-  etcd: # For metron_agent to find loggregator
-    machines: [127.0.0.1]
-  loggregator_endpoint:
-    shared_secret: loggregator-secret
-  syslog_daemon_config:
-    address: null
-    port: null
 
-  # For consul_agent:
-  consul:
-    agent:
-      log_level: null
-      servers:
-        lan: [127.0.0.1]
-    # encrypt_keys: []
-    require_ssl: false
+  system_domain: placeholder-system-domain
 
   # For Diego:
   diego:
@@ -130,6 +108,9 @@ properties:
       etcd:
         machines: [etcd.service.cf.internal]
         require_ssl: false
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
     converger:
       bbs:
         api_location: bbs.service.cf.internal:8889
@@ -178,5 +159,60 @@ properties:
     deny_networks: [0.0.0.0/0]
     allow_host_access: true # turn off in favor of TCP routing
     insecure_docker_registry_list: []
+    mount_btrfs_loopback: false
     persistent_image_list: ["/var/vcap/packages/rootfs_cflinuxfs2/rootfs"]
     enable_graph_cleanup: true
+
+  # For CF Routing:
+  router:
+    router_configurer:
+      gorouter_secret: router-secret
+    tcp_emitter:
+      bbs:
+        api_location: bbs.service.cf.internal:8889
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+
+  # For CF:
+  nats:
+    machines: [127.0.0.1]
+    user: nats
+    password: nats
+    port: 4443
+  etcd:
+    machines: [127.0.0.1]
+  metron_agent:
+    zone: z1
+    deployment: lattice
+  consul:
+    agent:
+      log_level: null
+      servers:
+        lan: [127.0.0.1]
+    # encrypt_keys: []
+    require_ssl: false
+  doppler:
+    zone: z1
+  traffic_controller:
+    zone: z1
+  metron_endpoint:
+    shared_secret: loggregator-secret
+  loggregator_endpoint:
+    shared_secret: loggregator-secret
+  doppler_endpoint:
+    shared_secret: loggregator-secret
+  syslog_daemon_config:
+    address: null
+    port: null
+  uaa:
+    url: ""
+    clients:
+      doppler:
+        secret: doppler-secret
+      gorouter:
+        secret: gorouter-secret
+  cc:
+    srv_api_uri: ""
+
