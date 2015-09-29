@@ -178,12 +178,12 @@ properties:
 
   # For CF:
   nats:
-    machines: [127.0.0.1]
+    machines: [10.0.2.15]
     user: nats
     password: nats
     port: 4443
   etcd:
-    machines: [127.0.0.1]
+    machines: [10.0.2.15]
   metron_agent:
     zone: z1
     deployment: lattice
@@ -191,8 +191,7 @@ properties:
     agent:
       log_level: null
       servers:
-        lan: [127.0.0.1]
-    # encrypt_keys: []
+        lan: [10.0.2.15]
     require_ssl: false
   doppler:
     zone: z1
@@ -204,9 +203,6 @@ properties:
     shared_secret: loggregator-secret
   doppler_endpoint:
     shared_secret: loggregator-secret
-  syslog_daemon_config:
-    address: null
-    port: null
   uaa:
     url: ""
     clients:
