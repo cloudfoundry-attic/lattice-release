@@ -1,2 +1,3 @@
 /vagrant/assets
 /vagrant/packer_cache
+/vagrant/output-*

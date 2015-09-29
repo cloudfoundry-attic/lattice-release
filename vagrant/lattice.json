@@ -138,6 +138,17 @@
         },
         {
             "type": "shell",
+            "execute_command": "sudo {{.Path}}",
+            "inline": [
+                "apt-get -y install software-properties-common",
+                "add-apt-repository ppa:brightbox/ruby-ng",
+                "apt-get -y update",
+                "apt-get -y install ruby2.1",
+                "ls -la `which ruby`"
+            ]
+        },
+        {
+            "type": "shell",
             "only": ["vmware-iso", "virtualbox-iso"],
             "execute_command": "sudo {{.Path}}",
             "inline": [

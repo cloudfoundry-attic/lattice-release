@@ -126,6 +126,7 @@ properties:
       require_ssl: false
       peer_require_ssl: false
     rep:
+      zone: z1
       bbs:
         api_location: bbs.service.cf.internal:8889
         ca_cert: ""
