@@ -364,34 +364,15 @@ var _ = Describe("TaskRunner", func() {
 	})
 
 	Describe("Delete Task", func() {
-		getTaskStatus := func(state string) task_examiner.TaskInfo {
+
+	        getTaskStatus := func(state string) task_examiner.TaskInfo {
 			return task_examiner.TaskInfo{
 				TaskGuid: "task-guid-1",
 				State:    state,
 			}
 		}
 
-		It("delete task when task in COMPLETED state", func() {
-			fakeTaskExaminer.TaskStatusReturns(getTaskStatus(receptor.TaskStateCompleted), nil)
-
-			err := taskRunner.DeleteTask("task-guid-1")
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("return error when task is not in COMPLETED state", func() {
-			fakeTaskExaminer.TaskStatusReturns(getTaskStatus(receptor.TaskStatePending), nil)
-
-			err := taskRunner.DeleteTask("task-guid-1")
-			Expect(err).To(MatchError("task-guid-1 is not in COMPLETED state"))
-		})
-
 		Context("when the receptor returns errors", func() {
-			It("bubbles up the error from task_examiner.TaskStatus", func() {
-				fakeTaskExaminer.TaskStatusReturns(task_examiner.TaskInfo{}, errors.New("Task not found"))
-
-				err := taskRunner.DeleteTask("task-guid-1")
-				Expect(err).To(MatchError("Task not found"))
-			})
 
 			It("returns error when not able to delete the task", func() {
 				fakeTaskExaminer.TaskStatusReturns(getTaskStatus(receptor.TaskStateCompleted), nil)
@@ -399,6 +380,24 @@ var _ = Describe("TaskRunner", func() {
 
 				err := taskRunner.DeleteTask("task-guid-1")
 				Expect(err).To(MatchError("task in unknown state"))
+			})
+
+			It("returns error when timeout to delete the task", func() {
+				fakeTaskExaminer.TaskStatusReturns(getTaskStatus(receptor.TaskStateRunning), nil)
+
+				err := taskRunner.DeleteTask("task-guid-1")
+				Expect(err).To(MatchError("Delete not completed because the timer expired before to complete the cancel task sucessfully"))
+			})
+		})
+
+		Context("Delete success even when the cancel returns errors", func() {
+
+			It("cancel returns error when TaskStateCompleted", func() {
+				fakeReceptorClient.CancelTaskReturns(errors.New("task in unknown state"))
+				fakeTaskExaminer.TaskStatusReturns(getTaskStatus(receptor.TaskStateCompleted), nil)
+
+				err := taskRunner.DeleteTask("task-guid-1")
+				Expect(err).ToNot(HaveOccurred())
 			})
 		})
 	})

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
+        "time"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/reserved_app_ids"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/receptor"
@@ -85,14 +85,28 @@ func (taskRunner *taskRunner) SubmitTask(submitTaskJson []byte) (string, error) 
 }
 
 func (e *taskRunner) DeleteTask(taskGuid string) error {
-	taskInfo, err := e.taskExaminer.TaskStatus(taskGuid)
-	if err != nil {
-		return err
-	}
-	if taskInfo.State != receptor.TaskStateCompleted {
-		return errors.New(taskGuid + " is not in COMPLETED state")
-	}
-	return e.receptorClient.DeleteTask(taskGuid)
+
+        /*Ignoring the error of cancel task */
+	e.receptorClient.CancelTask(taskGuid)
+       ticker := time.NewTicker(time.Second * 1)
+	count := 0
+	defer ticker.Stop()
+
+        for {
+            select {
+                case <- ticker.C:
+                  count++;
+		    if count == 30 {
+			return errors.New("Delete not completed because the timer expired before to complete the cancel task sucessfully")
+		    }
+
+		    taskInfo, err := e.taskExaminer.TaskStatus(taskGuid)
+                  if err == nil && taskInfo.State == receptor.TaskStateCompleted {
+                        err:= e.receptorClient.DeleteTask(taskGuid)
+                        return err
+                }
+            }
+        }
 }
 
 func (e *taskRunner) CancelTask(taskGuid string) error {
