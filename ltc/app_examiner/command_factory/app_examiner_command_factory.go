@@ -101,8 +101,8 @@ func (factory *AppExaminerCommandFactory) MakeVisualizeCommand() cli.Command {
 func (factory *AppExaminerCommandFactory) MakeStatusCommand() cli.Command {
 	var statusFlags = []cli.Flag{
 		cli.BoolFlag{
-			Name:  "summary, s",
-			Usage: "Summarizes the app instances",
+			Name:  "detailed, d",
+			Usage: "Full description of the app instances",
 		},
 		cli.DurationFlag{
 			Name:  "rate, r",
@@ -268,7 +268,7 @@ func (factory *AppExaminerCommandFactory) listApps(context *cli.Context) {
 }
 
 func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
-	summaryFlag := context.Bool("summary")
+	detailedFlag := context.Bool("detailed")
 	rateFlag := context.Duration("rate")
 
 	if len(context.Args()) < 1 {
@@ -290,10 +290,15 @@ func (factory *AppExaminerCommandFactory) appStatus(context *cli.Context) {
 
 	factory.printAppInfo(writer, appInfo)
 
-	if summaryFlag || rateFlag != 0 {
+	if rateFlag != 0 {
+		if detailedFlag {
+			factory.ui.SayLine("WARNING: flags '--detailed' and '--rate' are incompatible.")
+		}
 		factory.printInstanceSummary(writer, appInfo.ActualInstances)
-	} else {
+	} else if detailedFlag {
 		factory.printInstanceInfo(writer, appInfo.ActualInstances)
+	} else {
+		factory.printInstanceSummary(writer, appInfo.ActualInstances)
 	}
 
 	factory.ui.Write(writer.Bytes())

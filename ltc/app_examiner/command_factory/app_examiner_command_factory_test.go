@@ -637,110 +637,152 @@ var _ = Describe("CommandFactory", func() {
 			Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
 			Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
 
-			Expect(outputBuffer).To(test_helpers.Say("wompy-app"))
-
-			Expect(outputBuffer).To(test_helpers.Say("Instances"))
-			Expect(outputBuffer).To(test_helpers.Say("1/12"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-			Expect(outputBuffer).To(test_helpers.Say("Start Timeout"))
-			Expect(outputBuffer).To(test_helpers.SayLine("600"))
-
-			Expect(outputBuffer).To(test_helpers.Say("DiskMB"))
-			Expect(outputBuffer).To(test_helpers.SayLine("2048"))
-
-			Expect(outputBuffer).To(test_helpers.Say("MemoryMB"))
-			Expect(outputBuffer).To(test_helpers.SayLine("256"))
-
-			Expect(outputBuffer).To(test_helpers.Say("CPUWeight"))
-			Expect(outputBuffer).To(test_helpers.SayLine("100"))
-
-			Expect(outputBuffer).To(test_helpers.Say("Ports"))
-			Expect(outputBuffer).To(test_helpers.Say("8887"))
-			Expect(outputBuffer).To(test_helpers.Say("9000"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-			Expect(outputBuffer).To(test_helpers.Say("Routes"))
-			Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com => 8887"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-			Expect(outputBuffer).To(test_helpers.Say("cranky-app.my-fun-domain.com => 8887"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-			Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9000"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-			Expect(outputBuffer).To(test_helpers.Say("Stack"))
-			Expect(outputBuffer).To(test_helpers.SayLine("rootfs2"))
-
-			Expect(outputBuffer).To(test_helpers.Say("Annotation"))
-			Expect(outputBuffer).To(test_helpers.SayLine("I love this app. So wompy."))
-
-			Expect(outputBuffer).To(test_helpers.SayLine("Environment"))
-			Expect(outputBuffer).To(test_helpers.Say(`WOMPY_APP_PASSWORD="seekreet pass"`))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-			Expect(outputBuffer).To(test_helpers.Say(`WOMPY_APP_USERNAME="mrbigglesworth54"`))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-			Expect(outputBuffer).To(test_helpers.Say("Instance 3"))
-			Expect(outputBuffer).To(test_helpers.Say("RUNNING"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-			Expect(outputBuffer).To(test_helpers.Say("InstanceGuid"))
-			Expect(outputBuffer).To(test_helpers.SayLine("a0s9f-u9a8sf-aasdioasdjoi"))
-
-			Expect(outputBuffer).To(test_helpers.Say("Cell ID"))
-			Expect(outputBuffer).To(test_helpers.SayLine("cell-12"))
-
-			Expect(outputBuffer).To(test_helpers.Say("Ip"))
-			Expect(outputBuffer).To(test_helpers.SayLine("10.85.12.100"))
-
-			Expect(outputBuffer).To(test_helpers.Say("Port Mapping"))
-			Expect(outputBuffer).To(test_helpers.Say("1234:3000"))
-			Expect(outputBuffer).To(test_helpers.Say("5555:6666"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-
+			Expect(outputBuffer).To(test_helpers.Say("Instance"))
+			Expect(outputBuffer).To(test_helpers.Say("State"))
+			Expect(outputBuffer).To(test_helpers.Say("Crashes"))
+			Expect(outputBuffer).To(test_helpers.Say("CPU"))
+			Expect(outputBuffer).To(test_helpers.Say("Memory"))
 			Expect(outputBuffer).To(test_helpers.Say("Uptime"))
+			Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+			Expect(outputBuffer).To(test_helpers.Say("3"))
+			Expect(outputBuffer).To(test_helpers.Say("RUNNING"))
+			Expect(outputBuffer).To(test_helpers.Say("0"))
+			Expect(outputBuffer).To(test_helpers.Say("23.46%"))
+			Expect(outputBuffer).To(test_helpers.Say("640K"))
 			roundedTimeSince := roundTime(fakeClock.Now(), time.Unix(0, epochTime*1e9))
 			Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
 
-			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
-			Expect(outputBuffer).To(test_helpers.Say("0"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-			Expect(outputBuffer).To(test_helpers.Say("CPU"))
-			Expect(outputBuffer).To(test_helpers.Say("23.46%"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-			Expect(outputBuffer).To(test_helpers.Say("Memory"))
-			Expect(outputBuffer).To(test_helpers.Say("640K"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-			Expect(outputBuffer).To(test_helpers.Say("Instance 4"))
+			Expect(outputBuffer).To(test_helpers.Say("4"))
 			Expect(outputBuffer).To(test_helpers.Say("UNCLAIMED"))
-
-			Expect(outputBuffer).NotTo(test_helpers.Say("InstanceGuid"))
-			Expect(outputBuffer).To(test_helpers.Say("Placement Error"))
-			Expect(outputBuffer).To(test_helpers.Say("insufficient resources."))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
 			Expect(outputBuffer).To(test_helpers.Say("2"))
+			Expect(outputBuffer).To(test_helpers.Say("N/A"))
+			Expect(outputBuffer).To(test_helpers.Say("N/A"))
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
 
-			Expect(outputBuffer).NotTo(test_helpers.Say("CPU"))
-			Expect(outputBuffer).NotTo(test_helpers.Say("Memory"))
-
-			Expect(outputBuffer).To(test_helpers.Say("Instance 5"))
+			Expect(outputBuffer).To(test_helpers.Say("5"))
 			Expect(outputBuffer).To(test_helpers.Say("CRASHED"))
-			Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-			Expect(outputBuffer).NotTo(test_helpers.Say("InstanceGuid"))
-			Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
 			Expect(outputBuffer).To(test_helpers.Say("7"))
+			Expect(outputBuffer).To(test_helpers.Say("N/A"))
+			Expect(outputBuffer).To(test_helpers.Say("N/A"))
 			Expect(outputBuffer).To(test_helpers.SayNewLine())
+		})
 
-			Expect(outputBuffer).NotTo(test_helpers.Say("CPU"))
-			Expect(outputBuffer).NotTo(test_helpers.Say("Memory"))
+		Context("when the --detailed flag is passed", func() {
+			It("prints the instance info in full mode", func() {
+				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--detailed"})
+
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
+				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
+
+				Expect(outputBuffer).To(test_helpers.Say("wompy-app"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Instances"))
+				Expect(outputBuffer).To(test_helpers.Say("1/12"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).To(test_helpers.Say("Start Timeout"))
+				Expect(outputBuffer).To(test_helpers.SayLine("600"))
+
+				Expect(outputBuffer).To(test_helpers.Say("DiskMB"))
+				Expect(outputBuffer).To(test_helpers.SayLine("2048"))
+
+				Expect(outputBuffer).To(test_helpers.Say("MemoryMB"))
+				Expect(outputBuffer).To(test_helpers.SayLine("256"))
+
+				Expect(outputBuffer).To(test_helpers.Say("CPUWeight"))
+				Expect(outputBuffer).To(test_helpers.SayLine("100"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Ports"))
+				Expect(outputBuffer).To(test_helpers.Say("8887"))
+				Expect(outputBuffer).To(test_helpers.Say("9000"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).To(test_helpers.Say("Routes"))
+				Expect(outputBuffer).To(test_helpers.Say("wompy-app.my-fun-domain.com => 8887"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.Say("cranky-app.my-fun-domain.com => 8887"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.Say("route-me.my-fun-domain.com => 9000"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).To(test_helpers.Say("Stack"))
+				Expect(outputBuffer).To(test_helpers.SayLine("rootfs2"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Annotation"))
+				Expect(outputBuffer).To(test_helpers.SayLine("I love this app. So wompy."))
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Environment"))
+				Expect(outputBuffer).To(test_helpers.Say(`WOMPY_APP_PASSWORD="seekreet pass"`))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+				Expect(outputBuffer).To(test_helpers.Say(`WOMPY_APP_USERNAME="mrbigglesworth54"`))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).To(test_helpers.Say("Instance 3"))
+				Expect(outputBuffer).To(test_helpers.Say("RUNNING"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).To(test_helpers.Say("InstanceGuid"))
+				Expect(outputBuffer).To(test_helpers.SayLine("a0s9f-u9a8sf-aasdioasdjoi"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Cell ID"))
+				Expect(outputBuffer).To(test_helpers.SayLine("cell-12"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Ip"))
+				Expect(outputBuffer).To(test_helpers.SayLine("10.85.12.100"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Port Mapping"))
+				Expect(outputBuffer).To(test_helpers.Say("1234:3000"))
+				Expect(outputBuffer).To(test_helpers.Say("5555:6666"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).To(test_helpers.Say("Uptime"))
+				roundedTimeSince := roundTime(fakeClock.Now(), time.Unix(0, epochTime*1e9))
+				Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
+				Expect(outputBuffer).To(test_helpers.Say("0"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).To(test_helpers.Say("CPU"))
+				Expect(outputBuffer).To(test_helpers.Say("23.46%"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).To(test_helpers.Say("Memory"))
+				Expect(outputBuffer).To(test_helpers.Say("640K"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).To(test_helpers.Say("Instance 4"))
+				Expect(outputBuffer).To(test_helpers.Say("UNCLAIMED"))
+
+				Expect(outputBuffer).NotTo(test_helpers.Say("InstanceGuid"))
+				Expect(outputBuffer).To(test_helpers.Say("Placement Error"))
+				Expect(outputBuffer).To(test_helpers.Say("insufficient resources."))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
+				Expect(outputBuffer).To(test_helpers.Say("2"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).NotTo(test_helpers.Say("CPU"))
+				Expect(outputBuffer).NotTo(test_helpers.Say("Memory"))
+
+				Expect(outputBuffer).To(test_helpers.Say("Instance 5"))
+				Expect(outputBuffer).To(test_helpers.Say("CRASHED"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).NotTo(test_helpers.Say("InstanceGuid"))
+				Expect(outputBuffer).To(test_helpers.Say("Crash Count"))
+				Expect(outputBuffer).To(test_helpers.Say("7"))
+				Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+				Expect(outputBuffer).NotTo(test_helpers.Say("CPU"))
+				Expect(outputBuffer).NotTo(test_helpers.Say("Memory"))
+			})
 		})
 
 		Context("when the app was launched from a docker image", func() {
@@ -950,7 +992,7 @@ var _ = Describe("CommandFactory", func() {
 						},
 					}, nil)
 
-				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"swanky-app"})
+				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"swanky-app", "--detailed"})
 
 				Expect(outputBuffer).To(test_helpers.Say("Instance 7"))
 				Expect(outputBuffer).To(test_helpers.Say("UNCLAIMED"))
@@ -964,48 +1006,6 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(outputBuffer).To(test_helpers.Say("Placement Error"))
 				Expect(outputBuffer).To(test_helpers.Say("insufficient resources."))
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
-			})
-		})
-
-		Context("when the --summary flag is passed", func() {
-			It("prints the instance info in summary mode", func() {
-				fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
-
-				test_helpers.ExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--summary"})
-
-				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
-				Expect(fakeAppExaminer.AppStatusArgsForCall(0)).To(Equal("wompy-app"))
-
-				Expect(outputBuffer).To(test_helpers.Say("Instance"))
-				Expect(outputBuffer).To(test_helpers.Say("State"))
-				Expect(outputBuffer).To(test_helpers.Say("Crashes"))
-				Expect(outputBuffer).To(test_helpers.Say("CPU"))
-				Expect(outputBuffer).To(test_helpers.Say("Memory"))
-				Expect(outputBuffer).To(test_helpers.Say("Uptime"))
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-				Expect(outputBuffer).To(test_helpers.Say("3"))
-				Expect(outputBuffer).To(test_helpers.Say("RUNNING"))
-				Expect(outputBuffer).To(test_helpers.Say("0"))
-				Expect(outputBuffer).To(test_helpers.Say("23.46%"))
-				Expect(outputBuffer).To(test_helpers.Say("640K"))
-				roundedTimeSince := roundTime(fakeClock.Now(), time.Unix(0, epochTime*1e9))
-				Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-				Expect(outputBuffer).To(test_helpers.Say("4"))
-				Expect(outputBuffer).To(test_helpers.Say("UNCLAIMED"))
-				Expect(outputBuffer).To(test_helpers.Say("2"))
-				Expect(outputBuffer).To(test_helpers.Say("N/A"))
-				Expect(outputBuffer).To(test_helpers.Say("N/A"))
-				Expect(outputBuffer).To(test_helpers.SayNewLine())
-
-				Expect(outputBuffer).To(test_helpers.Say("5"))
-				Expect(outputBuffer).To(test_helpers.Say("CRASHED"))
-				Expect(outputBuffer).To(test_helpers.Say("7"))
-				Expect(outputBuffer).To(test_helpers.Say("N/A"))
-				Expect(outputBuffer).To(test_helpers.Say("N/A"))
 				Expect(outputBuffer).To(test_helpers.SayNewLine())
 			})
 		})
@@ -1137,6 +1137,70 @@ var _ = Describe("CommandFactory", func() {
 
 					Expect(outputBuffer).To(test_helpers.Say(cursor.Show()))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.Signal}))
+				})
+			})
+
+			Context("when the --detailed flag is also passed", func() {
+				It("prints a warning message", func() {
+					fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+					closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate", "2s", "--detailed"})
+
+					Consistently(closeChan).ShouldNot(BeClosed())
+					Eventually(outputBuffer).Should(test_helpers.SayLine("WARNING: flags '--detailed' and '--rate' are incompatible."))
+				})
+
+				It("continues as normal with summary output", func() {
+					fakeAppExaminer.AppStatusReturns(sampleAppInfo, nil)
+
+					closeChan = test_helpers.AsyncExecuteCommandWithArgs(statusCommand, []string{"wompy-app", "--rate", "2s", "--detailed"})
+
+					Consistently(closeChan).ShouldNot(BeClosed())
+					Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
+					Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+					roundedTimeSince := roundTime(fakeClock.Now(), time.Unix(0, epochTime*1e9))
+					Expect(outputBuffer).To(test_helpers.Say(roundedTimeSince))
+					Expect(outputBuffer).To(test_helpers.SayNewLine())
+
+					fakeClock.IncrementBySeconds(1)
+
+					Consistently(outputBuffer).ShouldNot(test_helpers.Say("wompy-app"))
+
+					refreshTime := int64(405234567)
+					refreshAppInfo := app_examiner.AppInfo{
+						ProcessGuid:            "wompy-app",
+						DesiredInstances:       1,
+						ActualRunningInstances: 1,
+						ActualInstances: []app_examiner.InstanceInfo{
+							{
+								InstanceGuid: "a0s9f-u9a8sf-aasdioasdjoi",
+								Index:        1,
+								State:        "RUNNING",
+								Since:        refreshTime * 1e9,
+							},
+						},
+						EnvironmentVariables: []app_examiner.EnvironmentVariable{
+							{
+								Name:  "VCAP_APPLICATION",
+								Value: `{"application_name":"latty","application_uris":["latty.192.168.11.11.xip.io","latty-8080.192.168.11.11.xip.io"],"name":"latty","uris":["latty.192.168.11.11.xip.io","latty-8080.192.168.11.11.xip.io"],"limits":{"mem":128}}`,
+							},
+						},
+					}
+
+					fakeAppExaminer.AppStatusReturns(refreshAppInfo, nil)
+
+					Eventually(outputBuffer).Should(test_helpers.Say(cursor.Hide()))
+
+					fakeClock.IncrementBySeconds(1)
+
+					Eventually(outputBuffer).Should(test_helpers.Say(cursor.Up(27)))
+					Eventually(outputBuffer).Should(test_helpers.Say("wompy-app"))
+					Eventually(outputBuffer).Should(test_helpers.SayNewLine())
+					roundedTimeSince = roundTime(fakeClock.Now(), time.Unix(0, refreshTime*1e9))
+					Eventually(outputBuffer).Should(test_helpers.Say(roundedTimeSince))
+
+					Consistently(closeChan).ShouldNot(BeClosed())
 				})
 			})
 		})
