@@ -99,6 +99,9 @@ properties:
         require_ssl: false
     bbs:
       active_key_label: key1
+      encryption_keys:
+      - label: key1
+        passphrase: bbs-secret
       require_ssl: false
       ca_cert: ""
       server_cert: ""
@@ -157,6 +160,7 @@ properties:
 
   # For Garden:
   garden:
+    disk_quota_enabled: false
     deny_networks: [0.0.0.0/0]
     allow_host_access: true # turn off in favor of TCP routing
     insecure_docker_registry_list: []
@@ -169,6 +173,7 @@ properties:
     router_configurer:
       gorouter_secret: router-secret
     tcp_emitter:
+      debug_addr: 0.0.0.0:17019
       bbs:
         api_location: bbs.service.cf.internal:8889
         ca_cert: ""
@@ -189,7 +194,14 @@ properties:
     deployment: lattice
   consul:
     agent:
-      log_level: null
+      mode: server
+      services:
+        etcd: {}
+        bbs: {}
+        auctioneer: {}
+        file_server: {}
+        ssh_proxy: {}
+        gorouter: {}
       servers:
         lan: [10.0.2.15]
     require_ssl: false
@@ -197,6 +209,9 @@ properties:
     zone: z1
   traffic_controller:
     zone: z1
+    outgoing_port: 8084
+  loggregator:
+    outgoing_dropsonde_port: 8083
   metron_endpoint:
     shared_secret: loggregator-secret
   loggregator_endpoint:

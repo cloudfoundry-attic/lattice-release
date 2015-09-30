@@ -79,7 +79,8 @@
             ],
             "vboxmanage": [
                 [ "modifyvm", "{{.Name}}", "--memory", "4096" ],
-                [ "modifyvm", "{{.Name}}", "--natdnshostresolver1", "on" ]
+                [ "modifyvm", "{{.Name}}", "--natdnshostresolver1", "on" ],
+                [ "modifyvm", "{{.Name}}", "--nic1", "nat" ]
             ]
         }
     ],
@@ -122,29 +123,30 @@
             "type": "shell",
             "execute_command": "sudo {{.Path}}",
             "inline": [
+                "apt-get -y install software-properties-common",
+                "add-apt-repository ppa:brightbox/ruby-ng",
                 "apt-get -y update",
-                "apt-get -y --force-yes upgrade",
-                "apt-get -y update",
-                "apt-get -y install build-essential",
-                "apt-get -y install curl",
-                "apt-get -y install quota",
-                "apt-get -y install jq",
-                "apt-get -y install s3cmd",
-                "apt-get -y install unzip",
-                "apt-get -y install lighttpd lighttpd-mod-webdav",
-                "apt-get -y install linux-image-extra-$(uname -r)",
-                "echo 'UseDNS no' >> /etc/ssh/sshd_config"
+                "apt-get -y install ruby2.1 curl unzip"
             ]
+        },
+        {
+            "type": "packer-bosh",
+            "manifest_path": "manifest.yml",
+            "assets_dir": "assets"
         },
         {
             "type": "shell",
             "execute_command": "sudo {{.Path}}",
             "inline": [
-                "apt-get -y install software-properties-common",
-                "add-apt-repository ppa:brightbox/ruby-ng",
+                "rm -rf /tmp/bosh-releases",
                 "apt-get -y update",
-                "apt-get -y install ruby2.1",
-                "ls -la `which ruby`"
+                "apt-get -y --force-yes upgrade",
+                "apt-get -y update",
+                "apt-get -y install build-essential",
+                "apt-get -y install jq s3cmd",
+                "apt-get -y install lighttpd lighttpd-mod-webdav",
+                "apt-get -y install linux-image-extra-$(uname -r)",
+                "echo 'UseDNS no' >> /etc/ssh/sshd_config"
             ]
         },
         {
@@ -179,11 +181,6 @@
             "inline": [
                 "sudo apt-get install -y dkms virtualbox-guest-utils virtualbox-guest-dkms"
             ]
-        },
-        {
-            "type": "packer-bosh",
-            "manifest_path": "manifest.yml",
-            "assets_dir": "assets"
         },
         {
             "type": "shell",
