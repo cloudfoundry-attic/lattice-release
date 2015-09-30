@@ -11,22 +11,23 @@ if [ ! -f $HOME/.packerconfig ]; then
   echo '{"provisioners": {"packer-bosh":"'$PACKER_BOSH'"}}' >$HOME/.packerconfig
 fi
 
-rm -rf $LATTICE_RELEASE_DIR/diego-release/dev_releases \
-      $LATTICE_RELEASE_DIR/garden-linux-release/dev_releases \
-      $LATTICE_RELEASE_DIR/cf-routing-release/dev_releases
-
-bosh create release --dir $LATTICE_RELEASE_DIR/diego-release --name diego --version 0 --with-tarball --force
-bosh create release --dir $LATTICE_RELEASE_DIR/garden-linux-release --name garden-linux --version 0 --with-tarball --force
-bosh create release --dir $LATTICE_RELEASE_DIR/cf-routing-release --name cf-routing --version 0 --with-tarball --force
-bosh create release $LATTICE_RELEASE_DIR/vagrant/cf-lattice.yml --dir $LATTICE_RELEASE_DIR/cf-release --with-tarball --force
+for RELEASE in diego garden-linux cf-routing; do
+  pushd $LATTICE_RELEASE_DIR/$RELEASE-release
+    yes yes | bosh reset release
+    bosh create release --name $RELEASE --version 0 --with-tarball --force
+  popd
+done
 
 mkdir -p $LATTICE_RELEASE_DIR/vagrant/assets/releases
+pushd $LATTICE_RELEASE_DIR/vagrant/assets/releases
+  rm -f cf-lattice-0.tgz
+  cp $LATTICE_RELEASE_DIR/vagrant/cf-lattice.yml ./
+  bosh create release $PWD/cf-lattice.yml --dir $LATTICE_RELEASE_DIR/cf-release --with-tarball --force
 
-cp $LATTICE_RELEASE_DIR/diego-release/dev_releases/diego/diego-0.tgz \
-   $LATTICE_RELEASE_DIR/garden-linux-release/dev_releases/garden-linux/garden-linux-0.tgz \
-   $LATTICE_RELEASE_DIR/cf-routing-release/dev_releases/cf-routing/cf-routing-0.tgz \
-   $LATTICE_RELEASE_DIR/vagrant/assets/releases/
-
-mv $LATTICE_RELEASE_DIR/vagrant/cf-lattice-0.tgz $LATTICE_RELEASE_DIR/vagrant/assets/releases/
+  mv $LATTICE_RELEASE_DIR/diego-release/dev_releases/diego/diego-0.tgz \
+     $LATTICE_RELEASE_DIR/garden-linux-release/dev_releases/garden-linux/garden-linux-0.tgz \
+     $LATTICE_RELEASE_DIR/cf-routing-release/dev_releases/cf-routing/cf-routing-0.tgz \
+     ./
+popd
 
 #packer build $LATTICE_RELEASE_DIR/vagrant/lattice.json

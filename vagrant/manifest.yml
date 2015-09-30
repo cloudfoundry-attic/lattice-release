@@ -20,7 +20,7 @@ networks:
   type: dynamic
 
 update:
-  update_watch_time: 60000 - 600000
+  update_watch_time: 60000 - 1200000
 
 compilation:
   network: default
