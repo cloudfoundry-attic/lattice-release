@@ -1,16 +1,32 @@
 #!/bin/bash
 
-LATTICE_VAGRANT_DIR=$(cd `dirname $0` && pwd)
-PACKER_BOSH=$LATTICE_VAGRANT_DIR/assets/packer-bosh
+set -e
 
-curl -s http://lattice.s3.amazonaws.com/packer-bosh-assets.tgz | tar -C "$LATTICE_VAGRANT_DIR" -xz
+LATTICE_RELEASE_DIR=$(cd `dirname $0` && cd .. && pwd)
+
+curl -s http://lattice.s3.amazonaws.com/packer-bosh-assets.tgz | tar -C "$LATTICE_RELEASE_DIR/vagrant/" -xz
 
 if [ ! -f $HOME/.packerconfig ]; then
+  PACKER_BOSH=$LATTICE_RELEASE_DIR/vagrant/assets/packer-bosh
   echo '{"provisioners": {"packer-bosh":"'$PACKER_BOSH'"}}' >$HOME/.packerconfig
 fi
-bosh create release releases/diego/diego-0.1433.0.yml --with-tarball --dir ../diego-release
-bosh create release releases/garden-linux/garden-linux-0.306.0.yml --with-tarball --dir ../garden-linux-release
-bosh create release releases/cf-routing/cf-routing-0.99.0.yml --with-tarball --dir ../cf-routing-release
-bosh create release $LATTICE_VAGRANT_DIR/cf-lattice.yml --with-tarball --dir ../cf-release
 
-packer build $LATTICE_VAGRANT_DIR/lattice.json
+rm -rf $LATTICE_RELEASE_DIR/diego-release/dev_releases \
+      $LATTICE_RELEASE_DIR/garden-linux-release/dev_releases \
+      $LATTICE_RELEASE_DIR/cf-routing-release/dev_releases
+
+bosh create release --dir $LATTICE_RELEASE_DIR/diego-release --name diego --version 0 --with-tarball --force
+bosh create release --dir $LATTICE_RELEASE_DIR/garden-linux-release --name garden-linux --version 0 --with-tarball --force
+bosh create release --dir $LATTICE_RELEASE_DIR/cf-routing-release --name cf-routing --version 0 --with-tarball --force
+bosh create release $LATTICE_RELEASE_DIR/vagrant/cf-lattice.yml --dir $LATTICE_RELEASE_DIR/cf-release --with-tarball --force
+
+mkdir -p $LATTICE_RELEASE_DIR/vagrant/assets/releases
+
+cp $LATTICE_RELEASE_DIR/diego-release/dev_releases/diego/diego-0.tgz \
+   $LATTICE_RELEASE_DIR/garden-linux-release/dev_releases/garden-linux/garden-linux-0.tgz \
+   $LATTICE_RELEASE_DIR/cf-routing-release/dev_releases/cf-routing/cf-routing-0.tgz \
+   $LATTICE_RELEASE_DIR/vagrant/assets/releases/
+
+mv $LATTICE_RELEASE_DIR/vagrant/cf-lattice-0.tgz $LATTICE_RELEASE_DIR/vagrant/assets/releases/
+
+#packer build $LATTICE_RELEASE_DIR/vagrant/lattice.json

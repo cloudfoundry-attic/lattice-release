@@ -80,6 +80,5 @@ license:
   fingerprint: 861d82c0d9745784acfcd026ccf44e942579824a
   sha1: 5c9086fe9ac03f83aae533889958269e7eacfcdd
 commit_hash: a80b4f5b
-uncommitted_changes: true
 name: cf-lattice
-version: '218'
+version: 0

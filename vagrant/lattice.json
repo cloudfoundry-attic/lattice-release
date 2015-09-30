@@ -2,11 +2,7 @@
     "variables": {
         "ssh_username": "vagrant",
         "ssh_password": "vagrant",
-        "hostname": "lattice",
-        "diego_version": "0.1433.0",
-        "garden_linux_version": "0.306.0",
-        "cf_routing_version": "0.99.0",
-        "cf_lattice_version": "218"
+        "hostname": "lattice"
     },
     "builders": [
         {
@@ -88,32 +84,6 @@
     "provisioners": [
         {
             "type": "shell",
-            "inline": [
-                "mkdir -p /tmp/bosh-releases"
-            ]
-        },
-        {
-            "type": "file",
-            "source": "../diego-release/releases/diego/diego-{{user `diego_version`}}.tgz",
-            "destination": "/tmp/bosh-releases/diego.tgz"
-        },
-        {
-            "type": "file",
-            "source": "../garden-linux-release/releases/garden-linux/garden-linux-{{user `garden_linux_version`}}.tgz",
-            "destination": "/tmp/bosh-releases/garden-linux.tgz"
-        },
-        {
-            "type": "file",
-            "source": "../cf-routing-release/releases/cf-routing/cf-routing-{{user `cf_routing_version`}}.tgz",
-            "destination": "/tmp/bosh-releases/cf-routing.tgz"
-        },
-        {
-            "type": "file",
-            "source": "../cf-release/releases/cf/cf-lattice-{{user `cf_lattice_version`}}.tgz",
-            "destination": "/tmp/bosh-releases/cf-lattice.tgz"
-        },
-        {
-            "type": "shell",
             "execute_command": "echo '{{user `ssh_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
             "inline": [
                 "echo '%sudo    ALL=(ALL)  NOPASSWD:ALL' >> /etc/sudoers"
@@ -138,12 +108,11 @@
             "type": "shell",
             "execute_command": "sudo {{.Path}}",
             "inline": [
-                "rm -rf /tmp/bosh-releases",
-                "apt-get -y update",
+                "rm -rf /opt/bosh-provisioner",
                 "apt-get -y --force-yes upgrade",
                 "apt-get -y update",
+                "apt-get -y install jq",
                 "apt-get -y install build-essential",
-                "apt-get -y install jq s3cmd",
                 "apt-get -y install lighttpd lighttpd-mod-webdav",
                 "apt-get -y install linux-image-extra-$(uname -r)",
                 "echo 'UseDNS no' >> /etc/ssh/sshd_config"
