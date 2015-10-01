@@ -219,7 +219,7 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 		Name:    "launch-droplet",
 		Aliases: []string{"ld"},
 		Usage:   "Launches a droplet as an app running on lattice",
-		Description: `ltc launch-droplet APP_NAME DROPLET_NAME
+		Description: `ltc launch-droplet APP_NAME DROPLET_NAME [-- custom-start-command -args]
 
    Two http routes are created by default, both routing to container port 8080. E.g. for application myapp:
      - requests to myapp.SYSTEM_DOMAIN:80 will be routed to container port 8080
