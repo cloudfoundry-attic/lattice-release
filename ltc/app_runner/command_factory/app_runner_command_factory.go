@@ -120,12 +120,11 @@ func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
 		},
 	}
 	var updateRoutesCommand = cli.Command{
-		Name:        "update-routes",
-		Aliases:     []string{"ur"},
-		Usage:       "Updates the routes for a running app",
-		Description: "ltc update-routes APP_NAME ROUTE,OTHER_ROUTE...",
-		Action:      factory.updateAppRoutes,
-		Flags:       updateRoutesFlags,
+		Name:    "update-routes",
+		Aliases: []string{"ur"},
+		Usage:   "DEPRECATED: 'ltc update-routes' will be removed in a future release. Please use 'ltc update' instead",
+		Action:  factory.updateAppRoutes,
+		Flags:   updateRoutesFlags,
 	}
 
 	return updateRoutesCommand
@@ -264,6 +263,8 @@ func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
 }
 
 func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
+	factory.UI.SayLine("DEPRECATED: 'ltc update-routes' will be removed in a future release. Please use 'ltc update' instead.")
+
 	appName := c.Args().First()
 	userDefinedRoutes := c.Args().Get(1)
 	noRoutesFlag := c.Bool("no-routes")
