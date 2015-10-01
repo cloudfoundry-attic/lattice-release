@@ -3,6 +3,9 @@ package graphical
 import (
 	"errors"
 	"fmt"
+	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
@@ -22,6 +25,21 @@ type GraphicalVisualizer interface {
 type graphicalVisualizer struct {
 	appExaminer app_examiner.AppExaminer
 }
+
+type cellBar struct {
+	index   int
+	label   string
+	running int
+	claimed int
+}
+
+type cellBarSliceSortedByLabelNumber []cellBar
+
+func (c cellBarSliceSortedByLabelNumber) Len() int { return len(c) }
+func (c cellBarSliceSortedByLabelNumber) Less(i, j int) bool {
+	return c[i].index < c[j].index
+}
+func (c cellBarSliceSortedByLabelNumber) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
 
 func NewGraphicalVisualizer(appExaminer app_examiner.AppExaminer) *graphicalVisualizer {
 	return &graphicalVisualizer{
@@ -139,47 +157,76 @@ func (gv *graphicalVisualizer) PrintDistributionChart(rate time.Duration) error 
 }
 
 func (gv *graphicalVisualizer) getProgressBars(bg *termui.MBarChart) error {
-
-	var barIntList [2][]int
-	var barStringList []string
-
-	var barLabel string
-	maxTotal := -1
-
 	cells, err := gv.appExaminer.ListCells()
 	if err != nil {
 		return err
 	}
 
+	cellBars := []cellBar{}
+	maxTotal := -1
 	for _, cell := range cells {
-
+		var bar cellBar
 		if cell.Missing {
-			barLabel = fmt.Sprintf("Missing")
-
-		} else if cell.RunningInstances == 0 && cell.ClaimedInstances == 0 && !cell.Missing {
-			barLabel = fmt.Sprintf("Empty")
-			barIntList[0] = append(barIntList[0], 0)
-			barIntList[1] = append(barIntList[1], 0)
+			bar = cellBar{label: "Missing"}
 		} else {
+			index := 0
+			if strings.HasPrefix(cell.CellID, "cell-") {
+				s := cell.CellID[5:len(cell.CellID)]
+				if cellIndexInt, err := strconv.Atoi(s); err == nil {
+					index = cellIndexInt
+				}
+			}
+
+			bar = cellBar{
+				label:   cell.CellID,
+				index:   index,
+				running: cell.RunningInstances,
+				claimed: cell.ClaimedInstances,
+			}
 
 			total := cell.RunningInstances + cell.ClaimedInstances
-			barIntList[0] = append(barIntList[0], cell.RunningInstances)
-			barIntList[1] = append(barIntList[1], cell.ClaimedInstances)
-			barLabel = cell.CellID
 			if total > maxTotal {
 				maxTotal = total
 			}
 		}
-		barStringList = append(barStringList, barLabel)
+		cellBars = append(cellBars, bar)
 	}
 
-	bg.Data[0] = barIntList[0]
-	bg.Data[1] = barIntList[1]
-	bg.DataLabels = barStringList
+	sort.Sort(cellBarSliceSortedByLabelNumber(cellBars))
+
+	bg.Data[0] = getRunningFromBars(cellBars)
+	bg.Data[1] = getClaimedFromBars(cellBars)
+	bg.DataLabels = getLabelFromBars(cellBars)
+
 	if maxTotal < 10 {
 		bg.SetMax(10)
 	} else {
 		bg.SetMax(maxTotal)
 	}
+
 	return nil
+}
+
+func getRunningFromBars(cellBars []cellBar) []int {
+	ints := []int{}
+	for _, bar := range cellBars {
+		ints = append(ints, bar.running)
+	}
+	return ints
+}
+
+func getClaimedFromBars(cellBars []cellBar) []int {
+	ints := []int{}
+	for _, bar := range cellBars {
+		ints = append(ints, bar.claimed)
+	}
+	return ints
+}
+
+func getLabelFromBars(cellBars []cellBar) []string {
+	labels := []string{}
+	for _, bar := range cellBars {
+		labels = append(labels, bar.label)
+	}
+	return labels
 }
