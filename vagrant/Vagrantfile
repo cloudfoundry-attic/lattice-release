@@ -80,7 +80,8 @@ Vagrant.configure("2") do |config|
       echo "PUBLIC_IP=$PUBLIC_IP" >> /var/lattice/network
       echo "PRIVATE_IP=$PRIVATE_IP" >> /var/lattice/network
       echo "SYSTEM_DOMAIN=$SYSTEM_DOMAIN" >> /var/lattice/network
-      echo "$USERNAME:$PASSWORD" > /var/lattice/credentials
+      echo $USERNAME > /var/lattice/username
+      echo $PASSWORD > /var/lattice/password
     SCRIPT
   end
 
@@ -92,8 +93,8 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "shell" do |s|
     s.inline = <<-SCRIPT
-      #tar xzf /vagrant/lattice.tgz -C /tmp install
-      #/tmp/install /vagrant/lattice.tgz
+      tar xzf /vagrant/lattice.tgz -C /tmp install
+      /tmp/install /vagrant/lattice.tgz
       echo "Lattice is now installed and running."
       echo "You may target it using: ltc target ${SYSTEM_DOMAIN}\n"
     SCRIPT

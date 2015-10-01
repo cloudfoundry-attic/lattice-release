@@ -1,8 +1,6 @@
 {
     "variables": {
-        "ssh_username": "vagrant",
-        "ssh_password": "vagrant",
-        "hostname": "lattice"
+        "vagrant_password": "vagrant"
     },
     "builders": [
         {
@@ -24,21 +22,21 @@
             "vm_name": "lattice",
             "guest_os_type": "ubuntu-64",
             "disk_size": 10000,
-            "ssh_username": "{{user `ssh_username`}}",
-            "ssh_password": "{{user `ssh_password`}}",
+            "ssh_username": "vagrant",
+            "ssh_password": "{{user `vagrant_password`}}",
             "iso_url": "http://releases.ubuntu.com/trusty/ubuntu-14.04.3-server-amd64.iso",
             "iso_checksum": "9e5fecc94b3925bededed0fdca1bd417",
             "iso_checksum_type": "md5",
             "http_directory": "preseed",
             "tools_upload_flavor": "linux",
             "ssh_wait_timeout": "20m",
-            "shutdown_command": "echo {{user `ssh_password`}} | sudo -S shutdown -P now",
+            "shutdown_command": "echo {{user `vagrant_password`}} | sudo -S shutdown -P now",
             "boot_command": [
                 "<esc><esc><enter><wait>",
                 "/install/vmlinuz noapic ",
                 "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
                 "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
-                "hostname={{user `hostname`}} ",
+                "hostname=lattice ",
                 "fb=false debconf/frontend=noninteractive ",
                 "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
                 "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
@@ -54,20 +52,20 @@
             "vm_name": "lattice",
             "guest_os_type": "Ubuntu_64",
             "disk_size": 10000,
-            "ssh_username": "{{user `ssh_username`}}",
-            "ssh_password": "{{user `ssh_password`}}",
+            "ssh_username": "vagrant",
+            "ssh_password": "{{user `vagrant_password`}}",
             "iso_url": "http://releases.ubuntu.com/trusty/ubuntu-14.04.3-server-amd64.iso",
             "iso_checksum": "9e5fecc94b3925bededed0fdca1bd417",
             "iso_checksum_type": "md5",
             "http_directory": "preseed",
             "ssh_wait_timeout": "20m",
-            "shutdown_command": "echo {{user `ssh_password`}} | sudo -S shutdown -P now",
+            "shutdown_command": "echo {{user `vagrant_password`}} | sudo -S shutdown -P now",
             "boot_command": [
                 "<esc><esc><enter><wait>",
                 "/install/vmlinuz noapic ",
                 "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
                 "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
-                "hostname={{user `hostname`}} ",
+                "hostname=lattice ",
                 "fb=false debconf/frontend=noninteractive ",
                 "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
                 "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
@@ -84,35 +82,44 @@
     "provisioners": [
         {
             "type": "shell",
-            "execute_command": "echo '{{user `ssh_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "execute_command": "echo '{{user `vagrant_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "inline": [
+                "echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
+            ]
+        },
+        {
+            "type": "shell",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
                 "apt-get -y install software-properties-common",
                 "add-apt-repository ppa:brightbox/ruby-ng",
                 "apt-get -y update",
-                "apt-get -y install ruby2.1 curl unzip"
+                "apt-get -y install ruby2.1 curl unzip",
+                "mkdir -p /var/lattice",
+                "touch /var/lattice/username /var/lattice/password"
             ]
         },
         {
             "type": "packer-bosh",
             "manifest_path": "manifest.yml",
-            "assets_dir": "assets",
-            "ssh_password": "vagrant"
+            "assets_dir": "assets"
         },
         {
             "type": "shell",
-            "execute_command": "echo '{{user `ssh_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "remote_path": "/home/vagrant/bosh-cleanup.sh",
             "inline": [
-                "mkdir -p /var/lattice",
                 "mv /opt/bosh-provisioner/assets/versions /var/lattice/",
                 "rm -rf /opt/bosh-provisioner",
-                "rm -f /etc/service/{monit,agent}",
-                "chmod 1777 /tmp"
+                "rm -f /etc/service/monit /etc/service/agent",
+                "chgrp vcap /var/vcap/data/sys/run",
+                "chmod 1777 /tmp",
+                "perl -p -i -e 's/10[.]0[.]2[.]15/127.0.0.1/g' `find /var/vcap/data/jobs -type f ! -wholename '/var/vcap/data/jobs/rootfses/*'`"
             ]
         },
         {
             "type": "shell",
-            "execute_command": "echo '{{user `ssh_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
                 "apt-get -y --force-yes upgrade",
                 "apt-get -y update",
@@ -123,7 +130,7 @@
         {
             "type": "shell",
             "only": ["vmware-iso", "virtualbox-iso"],
-            "execute_command": "echo '{{user `ssh_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
                 "mkdir -p /home/vagrant/.ssh",
                 "wget --no-check-certificate -O authorized_keys 'https://github.com/mitchellh/vagrant/raw/master/keys/vagrant.pub'",
@@ -134,7 +141,7 @@
         {
             "type": "shell",
             "only": ["vmware-iso"],
-            "execute_command": "echo '{{user `ssh_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
                 "sudo apt-get -y install open-vm-tools",
                 "mkdir /tmp/vmware-tools-disk /tmp/vmware-tools",
@@ -148,14 +155,14 @@
         {
             "type": "shell",
             "only": ["virtualbox-iso"],
-            "execute_command": "echo '{{user `ssh_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
                 "sudo apt-get install -y dkms virtualbox-guest-utils virtualbox-guest-dkms"
             ]
         },
         {
             "type": "shell",
-            "execute_command": "echo '{{user `ssh_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
                 "apt-get -y autoremove",
                 "apt-get -y clean"
@@ -164,7 +171,7 @@
         {
             "type": "shell",
             "only": ["vmware-iso", "virtualbox-iso"],
-            "execute_command": "echo '{{user `ssh_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
                 "dd if=/dev/zero of=/EMPTY bs=1M 2>/dev/null || true",
                 "rm -f /EMPTY"

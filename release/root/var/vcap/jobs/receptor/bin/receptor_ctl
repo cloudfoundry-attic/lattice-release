@@ -1,0 +1,77 @@
+#!/bin/bash -e
+
+RUN_DIR=/var/vcap/sys/run/receptor
+LOG_DIR=/var/vcap/sys/log/receptor
+PIDFILE=$RUN_DIR/receptor.pid
+DATA_DIR=/var/vcap/data/receptor
+TMP_DIR=$DATA_DIR/tmp
+
+source /var/vcap/packages/pid_utils/pid_utils.sh
+
+case $1 in
+
+  start)
+    pid_guard $PIDFILE "receptor"
+
+    mkdir -p $RUN_DIR
+    chown -R vcap:vcap $RUN_DIR
+
+    mkdir -p $LOG_DIR
+    chown -R vcap:vcap $LOG_DIR
+
+    mkdir -p $DATA_DIR
+    chown -R vcap:vcap $DATA_DIR
+
+    mkdir -p $TMP_DIR
+    chown -R vcap:vcap $TMP_DIR
+
+    echo $$ > $PIDFILE
+
+    # TCP_FIN_TIMEOUT
+    # This setting determines the time that must elapse before TCP/IP can release a closed connection and reuse
+    # its resources. During this TIME_WAIT state, reopening the connection to the client costs less than establishing
+    # a new connection. By reducing the value of this entry, TCP/IP can release closed connections faster, making more
+    # resources available for new connections. Addjust this in the presense of many connections sitting in the
+    # TIME_WAIT state:
+
+    echo 10 > /proc/sys/net/ipv4/tcp_fin_timeout
+
+    # TCP_TW_REUSE
+    # This allows reusing sockets in TIME_WAIT state for new connections when it is safe from protocol viewpoint.
+    # Default value is 0 (disabled). It is generally a safer alternative to tcp_tw_recycle
+
+    echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse
+
+    # Allowed number of open file descriptors
+    ulimit -n 100000
+
+    exec chpst -u vcap:vcap /usr/local/bin/receptor \
+      -address=0.0.0.0:8888 \
+      -bbsAddress=http://bbs.service.cf.internal:8889 \
+      -debugAddr=0.0.0.0:17012 \
+      -consulCluster=http://127.0.0.1:8500 \
+      -username="$(cat /var/lattice/username)" \
+      -password="$(cat /var/lattice/password)" \
+      -registerWithRouter=true \
+      -domainNames=receptor.placeholder-system-domain \
+      -natsAddresses=10.0.2.15:4222 \
+      -natsUsername=nats \
+      -natsPassword=nats \
+      -corsEnabled=true \
+      -logLevel=info \
+      2> >(tee -a $LOG_DIR/receptor.stderr.log | logger -p user.error -t vcap.receptor) \
+      1> >(tee -a $LOG_DIR/receptor.stdout.log | logger -p user.info -t vcap.receptor)
+
+    ;;
+
+  stop)
+    kill_and_wait $PIDFILE
+
+    ;;
+
+  *)
+    echo "Usage: receptor_ctl {start|stop}"
+
+    ;;
+
+esac

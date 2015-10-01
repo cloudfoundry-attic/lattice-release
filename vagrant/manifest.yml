@@ -143,7 +143,7 @@ properties:
         client_key: ""
         require_ssl: false
       nats:
-        machines: [127.0.0.1]
+        machines: [10.0.2.15]
         user: nats
         password: nats
     ssh_proxy:
@@ -155,7 +155,7 @@ properties:
         require_ssl: false
       host_key: "$(openssl genrsa 2048 2> /dev/null)"
       enable_diego_auth: true
-      diego_credentials: "$(cat /var/lattice/credentials)"
+      diego_credentials: "$(cat /var/lattice/username):$(cat /var/lattice/password)"
 
   # For Garden:
   garden:
@@ -166,6 +166,9 @@ properties:
     mount_btrfs_loopback: false
     persistent_image_list: ["/var/vcap/packages/rootfs_cflinuxfs2/rootfs"]
     enable_graph_cleanup: true
+    dropsonde:
+      origin: "garden-linux"
+      destination: 127.0.0.1:3457
 
   # For CF Routing:
   router:
@@ -185,7 +188,7 @@ properties:
     machines: [10.0.2.15]
     user: nats
     password: nats
-    port: 4443
+    port: 4222
   etcd:
     machines: [10.0.2.15]
   metron_agent:

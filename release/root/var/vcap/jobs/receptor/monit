@@ -1,0 +1,5 @@
+check process receptor
+  with pidfile /var/vcap/sys/run/receptor/receptor.pid
+  start program "/var/vcap/jobs/receptor/bin/receptor_ctl start"
+  stop program "/var/vcap/jobs/receptor/bin/receptor_ctl stop"
+  group vcap

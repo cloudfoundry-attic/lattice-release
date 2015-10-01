@@ -9,15 +9,10 @@ fi
 
 LATTICE_TGZ=$1
 
-TMP_DIR=$(mktemp -d /tmp/lattice.XXXXXX)
-tar -C "$TMP_DIR" xzf "$LATTICE_TGZ"
-mv $TMP_DIR/versions/* /var/lattice/versions/
+export $(cat /var/lattice/network)
 
 /etc/init.d/lighttpd stop
-
 mkdir -p /var/lattice/lighttpd/blobs
-
-export $(cat /var/lattice/network)
 cat > /var/lattice/lighttpd/proxyconf.json <<JSON
 {
     "http_proxy": $(echo $http_proxy | jq -R .),
@@ -25,22 +20,14 @@ cat > /var/lattice/lighttpd/proxyconf.json <<JSON
     "no_proxy": $(echo $no_proxy | jq -R .)
 }
 JSON
-
 chown -R www-data:www-data /var/lattice/lighttpd
+echo $(cat /var/lattice/username):$(openssl passwd -crypt `cat /var/lattice/password`) > /var/lattice/lighttpd.user
 
-mv $TMP_DIR/conf/lighttpd.conf /etc/lighttpd/lighttpd.conf
-USERNAME= # first part of creds
-PASSWORD= # second part of creds
-echo $USERNAME:$(openssl passwd -crypt $PASSWORD) > /var/lattice/etc/lighttpd.user
+tar xzf "$LATTICE_TGZ" --strip-components 2 -C / -- root
+
+ln -sf /var/vcap/jobs/receptor/monit /var/vcap/monit/job/0019_receptor.monitrc
+
+perl -p -i -e "s/placeholder-system-domain/$SYSTEM_DOMAIN/g" `find /var/vcap/data/jobs -type f ! -wholename '/var/vcap/data/jobs/rootfses/*'`
 
 /etc/init.d/lighttpd start
 ln -snf /etc/sv/monit /etc/service/monit
-
-# replace system domain
-# replace 10.0.2.15 with system ip
-
-# host static: builder launcher s3tool davtool diego-ssh healthcheck
-# start receptor using upstart
-
-# start monit
-
