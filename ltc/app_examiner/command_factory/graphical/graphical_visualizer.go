@@ -3,8 +3,6 @@ package graphical
 import (
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
@@ -146,7 +144,6 @@ func (gv *graphicalVisualizer) getProgressBars(bg *termui.MBarChart) error {
 	var barStringList []string
 
 	var barLabel string
-	var cellIndex int
 	maxTotal := -1
 
 	cells, err := gv.appExaminer.ListCells()
@@ -154,7 +151,7 @@ func (gv *graphicalVisualizer) getProgressBars(bg *termui.MBarChart) error {
 		return err
 	}
 
-	for i, cell := range cells {
+	for _, cell := range cells {
 
 		if cell.Missing {
 			barLabel = fmt.Sprintf("Missing")
@@ -165,16 +162,10 @@ func (gv *graphicalVisualizer) getProgressBars(bg *termui.MBarChart) error {
 			barIntList[1] = append(barIntList[1], 0)
 		} else {
 
-			cellNames := strings.Split(cell.CellID, "-")
-			if len(cellNames) == 3 { //The cell name is usually of the form lattice-cell-[CellNumber]
-				cellIndex, _ = strconv.Atoi(cellNames[2])
-			} else { //Otherwise print the index of this cell
-				cellIndex = i + 1
-			}
 			total := cell.RunningInstances + cell.ClaimedInstances
 			barIntList[0] = append(barIntList[0], cell.RunningInstances)
 			barIntList[1] = append(barIntList[1], cell.ClaimedInstances)
-			barLabel = fmt.Sprintf("cell-%d", cellIndex)
+			barLabel = cell.CellID
 			if total > maxTotal {
 				maxTotal = total
 			}
