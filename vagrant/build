@@ -11,14 +11,18 @@ if [ ! -f $HOME/.packerconfig ]; then
   echo '{"provisioners": {"packer-bosh":"'$PACKER_BOSH'"}}' >$HOME/.packerconfig
 fi
 
+mkdir -p $LATTICE_RELEASE_DIR/vagrant/assets/{releases,versions}
+git -C "$LATTICE_RELEASE_DIR" describe --tags --always > $LATTICE_RELEASE_DIR/vagrant/assets/versions/LATTICE_RELEASE_IMAGE
+
 for RELEASE in diego garden-linux cf-routing; do
   pushd $LATTICE_RELEASE_DIR/$RELEASE-release
     yes yes | bosh reset release
     bosh create release --name $RELEASE --version 0 --with-tarball --force
+    VERSION_FILE="$(echo ${RELEASE//-/_} | tr [:lower:] [:upper:])_RELEASE"
+    git describe --tags --always > $LATTICE_RELEASE_DIR/vagrant/assets/versions/$VERSION_FILE
   popd
 done
 
-mkdir -p $LATTICE_RELEASE_DIR/vagrant/assets/releases
 pushd $LATTICE_RELEASE_DIR/vagrant/assets/releases
   rm -f cf-lattice-0.tgz
   cp $LATTICE_RELEASE_DIR/vagrant/cf-lattice.yml ./
@@ -30,4 +34,4 @@ pushd $LATTICE_RELEASE_DIR/vagrant/assets/releases
      ./
 popd
 
-#packer build $LATTICE_RELEASE_DIR/vagrant/lattice.json
+packer build -only=virtualbox-iso $LATTICE_RELEASE_DIR/vagrant/lattice.json

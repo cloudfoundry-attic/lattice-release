@@ -103,6 +103,8 @@
             "execute_command": "echo '{{user `ssh_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
             "remote_path": "/home/vagrant/bosh-cleanup.sh",
             "inline": [
+                "mkdir -p /var/lattice",
+                "mv /opt/bosh-provisioner/assets/versions /var/lattice/",
                 "rm -rf /opt/bosh-provisioner",
                 "chmod 1777 /tmp"
             ]
@@ -113,10 +115,7 @@
             "inline": [
                 "apt-get -y --force-yes upgrade",
                 "apt-get -y update",
-                "apt-get -y install jq",
-                "apt-get -y install build-essential",
-                "apt-get -y install lighttpd lighttpd-mod-webdav",
-                "apt-get -y install linux-image-extra-$(uname -r)",
+                "apt-get -y install jq lighttpd lighttpd-mod-webdav",
                 "echo 'UseDNS no' >> /etc/ssh/sshd_config"
             ]
         },
