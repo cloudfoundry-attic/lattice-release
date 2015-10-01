@@ -9,7 +9,7 @@
 	url = https://github.com/cloudfoundry-incubator/garden-linux-release
 [submodule "src/github.com/cloudfoundry-incubator/receptor"]
 	path = src/github.com/cloudfoundry-incubator/receptor
-	url = https://github.com/cloudfoundry-incubator/receptor
+	url = git@github.com:cloudfoundry-incubator/receptor
 [submodule "src/github.com/cloudfoundry-incubator/lattice"]
 	path = src/github.com/cloudfoundry-incubator/lattice
 	url = https://github.com/cloudfoundry-incubator/lattice
