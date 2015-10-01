@@ -106,6 +106,7 @@
                 "mkdir -p /var/lattice",
                 "mv /opt/bosh-provisioner/assets/versions /var/lattice/",
                 "rm -rf /opt/bosh-provisioner",
+                "rm -f /etc/service/{monit,agent}",
                 "chmod 1777 /tmp"
             ]
         },

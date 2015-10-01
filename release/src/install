@@ -1,0 +1,46 @@
+#!/bin/bash
+
+set -e
+
+if [ -z "$1" ]; then
+    echo "Incorrect Usage. Usage: $0 /path/to/lattice.tgz"
+    exit 1
+fi
+
+LATTICE_TGZ=$1
+
+TMP_DIR=$(mktemp -d /tmp/lattice.XXXXXX)
+tar -C "$TMP_DIR" xzf "$LATTICE_TGZ"
+mv $TMP_DIR/versions/* /var/lattice/versions/
+
+/etc/init.d/lighttpd stop
+
+mkdir -p /var/lattice/lighttpd/blobs
+
+export $(cat /var/lattice/network)
+cat > /var/lattice/lighttpd/proxyconf.json <<JSON
+{
+    "http_proxy": $(echo $http_proxy | jq -R .),
+    "https_proxy": $(echo $https_proxy | jq -R .),
+    "no_proxy": $(echo $no_proxy | jq -R .)
+}
+JSON
+
+chown -R www-data:www-data /var/lattice/lighttpd
+
+mv $TMP_DIR/conf/lighttpd.conf /etc/lighttpd/lighttpd.conf
+USERNAME= # first part of creds
+PASSWORD= # second part of creds
+echo $USERNAME:$(openssl passwd -crypt $PASSWORD) > /var/lattice/etc/lighttpd.user
+
+/etc/init.d/lighttpd start
+ln -snf /etc/sv/monit /etc/service/monit
+
+# replace system domain
+# replace 10.0.2.15 with system ip
+
+# host static: builder launcher s3tool davtool diego-ssh healthcheck
+# start receptor using upstart
+
+# start monit
+

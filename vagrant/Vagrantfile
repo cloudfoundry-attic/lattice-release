@@ -1,0 +1,159 @@
+Vagrant.configure("2") do |config|
+  if Vagrant.has_plugin?("vagrant-proxyconf")
+    config.proxy.http     = ENV["http_proxy"]
+    config.proxy.https    = ENV["https_proxy"]
+    config.proxy.no_proxy = [
+      "localhost", "127.0.0.1",
+      (ENV["LATTICE_SYSTEM_IP"] || "192.168.11.11"),
+      (ENV["LATTICE_SYSTEM_DOMAIN"] || "192.168.11.11.xip.io"),
+      ".consul"
+    ].join(',')
+  end
+
+  # Source: https://stefanwrobel.com/how-to-make-vagrant-performance-not-suck
+  config.vm.provider "virtualbox" do |v|
+    host = RbConfig::CONFIG['host_os']
+    if host =~ /darwin/
+      cpus = `sysctl -n hw.ncpu`.to_i
+      mem = `sysctl -n hw.memsize`.to_i / 1024 / 1024 / 4
+    elsif host =~ /linux/
+      cpus = `nproc`.to_i
+      mem = `grep 'MemTotal' /proc/meminfo | sed -e 's/MemTotal://' -e 's/ kB//'`.to_i / 1024 / 4
+    else
+      cpus = 2
+      mem = 2048
+    end
+
+    v.customize ["modifyvm", :id, "--memory", mem]
+    v.customize ["modifyvm", :id, "--cpus", cpus]
+    v.customize ["modifyvm", :id, "--ioapic", "on"]
+  end
+
+  config.vm.provider :aws do |aws, override|
+    aws.access_key_id = ENV["AWS_ACCESS_KEY_ID"]
+    aws.secret_access_key = ENV["AWS_SECRET_ACCESS_KEY"]
+    aws.keypair_name = "concourse-test"
+    aws.instance_type = "m4.large"
+    aws.ebs_optimized = true
+    aws.tags = {
+      "Name" => (ENV["AWS_INSTANCE_NAME"] || "vagrant")
+    }
+
+    override.ssh.username = "ubuntu"
+    override.ssh.private_key_path = ENV["AWS_SSH_PRIVATE_KEY_PATH"]
+    override.nfs.functional = false
+  end
+
+  provider_is_aws = (!ARGV.nil? && ARGV.join(' ').match(/provider(=|\s+)aws/))
+  if provider_is_aws
+    system_config = <<-SCRIPT
+      PUBLIC_IP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
+      PRIVATE_IP=$(hostname -I|awk '{print $1}')
+      SYSTEM_DOMAIN="${PUBLIC_IP}.xip.io"
+    SCRIPT
+
+    config.ssh.insert_key = false
+  else
+    system_ip = ENV["LATTICE_SYSTEM_IP"] || "192.168.11.11"
+    system_domain = ENV["LATTICE_SYSTEM_DOMAIN"] || "#{system_ip}.xip.io"
+
+    system_config = <<-SCRIPT
+      PUBLIC_IP=#{system_ip}
+      PRIVATE_IP=#{system_ip}
+      SYSTEM_DOMAIN=#{system_domain}
+    SCRIPT
+
+    config.vm.network "private_network", ip: system_ip
+  end
+
+  system_config += <<-SCRIPT
+    USERNAME=#{ENV["LATTICE_USERNAME"]}
+    PASSWORD=#{ENV["LATTICE_PASSWORD"]}
+  SCRIPT
+
+  config.vm.box = "lattice/collocated"
+  config.vm.box_version = '0'
+
+  config.vm.provision "shell" do |s|
+    s.inline = <<-SCRIPT
+      #{system_config}
+      echo "PUBLIC_IP=$PUBLIC_IP" >> /var/lattice/network
+      echo "PRIVATE_IP=$PRIVATE_IP" >> /var/lattice/network
+      echo "SYSTEM_DOMAIN=$SYSTEM_DOMAIN" >> /var/lattice/network
+      echo "$USERNAME:$PASSWORD" > /var/lattice/credentials
+    SCRIPT
+  end
+
+  if Vagrant.has_plugin?("vagrant-proxyconf")
+    config.vm.provision "shell" do |s|
+      s.inline = "grep -i proxy /etc/environment >> /var/lattice/network || true"
+    end
+  end
+
+  config.vm.provision "shell" do |s|
+    s.inline = <<-SCRIPT
+      #tar xzf /vagrant/lattice.tgz -C /tmp install
+      #/tmp/install /vagrant/lattice.tgz
+      echo "Lattice is now installed and running."
+      echo "You may target it using: ltc target ${SYSTEM_DOMAIN}\n"
+    SCRIPT
+  end
+end
+
+provision_required = false && (!ARGV.nil? && ['up', 'provision', 'reload'].include?(ARGV[0]))
+lattice_tgz = File.join(File.dirname(__FILE__), "lattice.tgz")
+lattice_url = defined?(LATTICE_URL) && LATTICE_URL
+
+def download_lattice_tgz(url)
+  unless system('curl', '-sfo', 'lattice.tgz', url)
+    puts "Failed to download #{url}."
+    exit(1)
+  end
+end
+
+if provision_required && File.exists?(lattice_tgz)
+  tgz_version = `tar Oxzf #{lattice_tgz} lattice-build/common/LATTICE_VERSION`.chomp
+  if lattice_url
+    url_version = lattice_url.match(/backend\/lattice-(v.+)\.tgz$/)[1]
+    if tgz_version != url_version
+      puts "Warning: lattice.tgz file version (#{tgz_version}) does not match Vagrantfile version (#{url_version})."
+      puts 'Re-downloading and replacing local lattice.tgz...'
+      download_lattice_tgz(lattice_url)
+    end
+  else
+    repo_version = `git describe --tags --always`.chomp
+    if tgz_version != repo_version && ENV['IGNORE_VERSION_MISMATCH'] != "true"
+      puts <<-EOM.gsub(/^ +/, '')
+      *******************************************************************************
+      Error: lattice.tgz #{tgz_version} != current commit #{repo_version}
+
+      The lattice.tgz file was built using a different commit than the current one.
+      To ignore this error, set IGNORE_VERSION_MISMATCH=true in your environment.
+
+      NOTE: As of v0.4.0, the process for deploying Lattice via Vagrant has changed.
+      Please use the process documented here:
+      \thttp://github.com/cloudfoundry-incubator/lattice#launching-with-vagrant
+      *******************************************************************************
+      EOM
+      exit(1)
+    end
+  end
+end
+
+if provision_required && !File.exists?(lattice_tgz)
+  if lattice_url
+    puts 'Local lattice.tgz not found, downloading...'
+    download_lattice_tgz(lattice_url)
+  else
+    puts <<-EOM.gsub(/^ +/, '')
+    *******************************************************************************
+    Could not determine Lattice version, and no local lattice.tgz present.
+
+    NOTE: As of v0.4.0, the process for deploying Lattice via Vagrant has changed.
+    Please use the process documented here:
+    \thttp://github.com/cloudfoundry-incubator/lattice#launching-with-vagrant
+    *******************************************************************************
+    EOM
+    exit(1)
+  end
+end

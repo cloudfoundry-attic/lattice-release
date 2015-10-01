@@ -16,3 +16,9 @@
 [submodule "cf-release"]
 	path = cf-release
 	url = https://github.com/cloudfoundry/cf-release
+[submodule "src/github.com/cloudfoundry-incubator/natbeat"]
+	path = src/github.com/cloudfoundry-incubator/natbeat
+	url = git@github.com:/cloudfoundry-incubator/natbeat
+[submodule "src/github.com/goji/httpauth"]
+	path = src/github.com/goji/httpauth
+	url = https://github.com/goji/httpauth

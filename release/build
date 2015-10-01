@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -e
+
+if [ -z "$1" ]; then
+    echo "Incorrect Usage. Usage: $0 /path/to/lattice.tgz [lattice release version]"
+    exit 1
+fi
+
+LATTICE_TGZ=$1
+
+LATTICE_RELEASE_DIR=$(cd `dirname $0` && cd .. && pwd)
+DIEGO_RELEASE_DIR=$LATTICE_RELEASE_DIR/diego-release
+LATTICE_DIR=$LATTICE_RELEASE_DIR/src/github.com/cloudfoundry-incubator/lattice
+RECEPTOR_DIR=$LATTICE_RELEASE_DIR/src/github.com/cloudfoundry-incubator/receptor
+
+LATTICE_RELEASE_VERSION=${2:-`git -C "$LATTICE_RELEASE_DIR" describe --tags --always`}
+LATTICE_VERSION=$(git -C "$LATTICE_DIR" describe --tags --always)
+RECEPTOR_VERSION=$(git -C "$RECEPTOR_DIR" describe --tags --always)
+
+TMP_DIR=$(mktemp -d /tmp/lattice.XXXXXX)
+
+cp -a $LATTICE_RELEASE_DIR/release/conf $TMP_DIR/
+cp $LATTICE_RELEASE_DIR/release/src/install $TMP_DIR/
+
+mkdir -p $TMP_DIR/{bin,versions}
+
+export GOOS=linux
+export GOARCH=amd64
+export GOPATH=$LATTICE_RELEASE_DIR:$DIEGO_RELEASE_DIR
+
+pushd $TMP_DIR/bin
+    go build -a github.com/cloudfoundry-incubator/receptor/cmd/receptor
+    (
+        export GOPATH=$LATTICE_DIR/cell-helpers/Godeps/_workspace:$GOPATH
+        go build -a github.com/cloudfoundry-incubator/lattice/cell-helpers/davtool
+        go build -a github.com/cloudfoundry-incubator/lattice/cell-helpers/s3tool
+        go build -a github.com/cloudfoundry-incubator/lattice/cell-helpers/tee2metron
+    )
+popd
+
+echo $LATTICE_RELEASE_VERSION > $TMP_DIR/versions/LATTICE_RELEASE
+echo $LATTICE_VERSION > $TMP_DIR/versions/LATTICE
+echo $RECEPTOR_VERSION > $TMP_DIR/versions/RECEPTOR
+
+tar czf "$1" -C $TMP_DIR .
+
+rm -rf $TMP_DIR
