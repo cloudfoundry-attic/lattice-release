@@ -22,3 +22,9 @@
 [submodule "src/github.com/goji/httpauth"]
 	path = src/github.com/goji/httpauth
 	url = https://github.com/goji/httpauth
+[submodule "src/github.com/aws/aws-sdk-go"]
+	path = src/github.com/aws/aws-sdk-go
+	url = https://github.com/aws/aws-sdk-go
+[submodule "src/github.com/vaughan0/go-ini"]
+	path = src/github.com/vaughan0/go-ini
+	url = https://github.com/vaughan0/go-ini
