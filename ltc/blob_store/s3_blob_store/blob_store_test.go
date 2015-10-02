@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/service"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -17,6 +18,14 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/s3_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/config"
 )
+
+type nullRetryer struct {
+	service.DefaultRetryer
+}
+
+func (n nullRetryer) ShouldRetry(_ *request.Request) bool {
+	return false
+}
 
 var _ = Describe("BlobStore", func() {
 	var (
@@ -33,7 +42,7 @@ var _ = Describe("BlobStore", func() {
 		}
 
 		blobStore = s3_blob_store.New(blobTargetInfo)
-		blobStore.S3.ShouldRetry = func(_ *service.Request) bool { return false }
+		blobStore.S3.Retryer = nullRetryer{}
 
 		fakeServer = ghttp.NewServer()
 		blobStore.S3.Endpoint = fakeServer.URL()
