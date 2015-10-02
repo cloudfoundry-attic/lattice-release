@@ -164,7 +164,7 @@ var _ = Describe("DropletRunner", func() {
 			expectedActions := models.WrapAction(&models.SerialAction{
 				Actions: []*models.Action{
 					models.WrapAction(&models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
+						From: "http://file_server.service.cf.internal:8080/v1/static/cell-helpers/cell-helpers.tgz",
 						To:   "/tmp",
 						User: "vcap",
 					}),
@@ -368,12 +368,12 @@ var _ = Describe("DropletRunner", func() {
 				LogSource: "app-name",
 				Actions: []*models.Action{
 					models.WrapAction(&models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/lattice-cell-helpers.tgz",
+						From: "http://file_server.service.cf.internal:8080/v1/static/cell-helpers/cell-helpers.tgz",
 						To:   "/tmp",
 						User: "vcap",
 					}),
 					models.WrapAction(&models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						From: "http://file_server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
 						To:   "/tmp",
 						User: "vcap",
 					}),

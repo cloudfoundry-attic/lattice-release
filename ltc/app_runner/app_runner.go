@@ -97,11 +97,6 @@ const (
 	AttemptedToCreateLatticeDebugErrorMessage = reserved_app_ids.LatticeDebugLogStreamAppId + " is a reserved app name. It is used internally to stream debug logs for lattice components."
 )
 
-const (
-	healthcheckDownloadUrl string = "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz"
-	lrpDomain              string = "lattice"
-)
-
 type appRunner struct {
 	receptorClient receptor.Client
 	systemDomain   string
@@ -122,7 +117,7 @@ func (appRunner *appRunner) CreateApp(params CreateAppParams) error {
 		return newExistingAppError(params.Name)
 	}
 
-	if err := appRunner.receptorClient.UpsertDomain(lrpDomain, 0); err != nil {
+	if err := appRunner.receptorClient.UpsertDomain("lattice", 0); err != nil {
 		return err
 	}
 
@@ -146,7 +141,7 @@ func (appRunner *appRunner) SubmitLrp(lrpJSON []byte) (string, error) {
 		return desiredLRP.ProcessGuid, newExistingAppError(desiredLRP.ProcessGuid)
 	}
 
-	if err := appRunner.receptorClient.UpsertDomain(lrpDomain, 0); err != nil {
+	if err := appRunner.receptorClient.UpsertDomain("lattice", 0); err != nil {
 		return desiredLRP.ProcessGuid, err
 	}
 
@@ -313,7 +308,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		Actions: []*models.Action{
 			params.Setup,
 			models.WrapAction(&models.DownloadAction{
-				From: "http://file_server.service.dc1.consul:8080/v1/static/diego-sshd.tgz",
+				From: "http://file_server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
 				To:   "/tmp",
 				User: "vcap",
 			}),
@@ -327,7 +322,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 
 	req := receptor.DesiredLRPCreateRequest{
 		ProcessGuid:          params.Name,
-		Domain:               lrpDomain,
+		Domain:               "lattice",
 		RootFS:               params.RootFS,
 		Instances:            params.Instances,
 		Routes:               routes.RoutingInfo(),

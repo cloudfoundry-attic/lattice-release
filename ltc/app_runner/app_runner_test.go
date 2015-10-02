@@ -63,7 +63,7 @@ var _ = Describe("AppRunner", func() {
 				Annotation:   "some annotation",
 
 				Setup: models.WrapAction(&models.DownloadAction{
-					From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+					From: "some-cell-helper-url",
 					To:   "/tmp",
 					User: "download-user",
 				}),
@@ -120,12 +120,12 @@ var _ = Describe("AppRunner", func() {
 			Expect(req.Setup.SerialAction).To(Equal(&models.SerialAction{
 				Actions: []*models.Action{
 					models.WrapAction(&models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						From: "some-cell-helper-url",
 						To:   "/tmp",
 						User: "download-user",
 					}),
 					models.WrapAction(&models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/diego-sshd.tgz",
+						From: "http://file_server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
 						To:   "/tmp",
 						User: "vcap",
 					}),
@@ -558,7 +558,7 @@ var _ = Describe("AppRunner", func() {
 				MetricsGuid: "americano-app",
 				Setup: &models.Action{
 					DownloadAction: &models.DownloadAction{
-						From: "http://file_server.service.dc1.consul:8080/v1/static/healthcheck.tgz",
+						From: "some-cell-helper-url",
 						To:   "/tmp",
 						User: "zcap",
 					},
