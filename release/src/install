@@ -23,7 +23,7 @@ JSON
 chown -R www-data:www-data /var/lattice/lighttpd
 echo $(cat /var/lattice/username):$(openssl passwd -crypt `cat /var/lattice/password`) > /var/lattice/lighttpd.user
 
-tar xzf "$LATTICE_TGZ" --strip-components 2 -C / -- root
+tar xzf "$LATTICE_TGZ" --strip-components 2 --keep-directory-symlink --no-overwrite-dir --no-same-owner -C / -- ./root
 
 ln -sf /var/vcap/jobs/receptor/monit /var/vcap/monit/job/0019_receptor.monitrc
 

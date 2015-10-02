@@ -6,3 +6,5 @@
 /vagrant/output-*
 /vagrant/.vagrant
 /vagrant/*.box
+
+.DS_Store

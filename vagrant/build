@@ -35,4 +35,4 @@ pushd $LATTICE_RELEASE_DIR/vagrant/assets/releases
      ./
 popd
 
-packer build -only=virtualbox-iso $LATTICE_RELEASE_DIR/vagrant/lattice.json
+PACKER_LOG=1 packer build -debug -only=virtualbox-iso $LATTICE_RELEASE_DIR/vagrant/lattice.json

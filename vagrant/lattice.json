@@ -84,16 +84,12 @@
             "type": "shell",
             "execute_command": "echo '{{user `vagrant_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
             "inline": [
-                "echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
-            ]
-        },
-        {
-            "type": "shell",
-            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
-            "inline": [
+                "echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers",
+                "echo 'UseDNS no' >> /etc/ssh/sshd_config",
                 "apt-get -y install software-properties-common",
                 "add-apt-repository ppa:brightbox/ruby-ng",
                 "apt-get -y update",
+                "apt-get -y --force-yes upgrade",
                 "apt-get -y install ruby2.1 curl unzip",
                 "mkdir -p /var/lattice",
                 "touch /var/lattice/username /var/lattice/password"
@@ -121,10 +117,7 @@
             "type": "shell",
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
-                "apt-get -y --force-yes upgrade",
-                "apt-get -y update",
-                "apt-get -y install jq lighttpd lighttpd-mod-webdav",
-                "echo 'UseDNS no' >> /etc/ssh/sshd_config"
+                "apt-get -y install jq lighttpd lighttpd-mod-webdav"
             ]
         },
         {
