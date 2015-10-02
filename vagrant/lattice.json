@@ -107,10 +107,8 @@
             "inline": [
                 "mv /opt/bosh-provisioner/assets/versions /var/lattice/",
                 "rm -rf /opt/bosh-provisioner",
-                "rm -f /etc/service/monit /etc/service/agent",
-                "chgrp vcap /var/vcap/data/sys/run",
-                "chmod 1777 /tmp",
-                "perl -p -i -e 's/10[.]0[.]2[.]15/127.0.0.1/g' `find /var/vcap/data/jobs -type f ! -wholename '/var/vcap/data/jobs/rootfses/*'`"
+                "echo manual > /etc/init/runsvdir.override",
+                "chmod 1777 /tmp"
             ]
         },
         {
@@ -150,7 +148,9 @@
             "only": ["virtualbox-iso"],
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
-                "sudo apt-get install -y dkms virtualbox-guest-utils virtualbox-guest-dkms"
+                "mount -o loop /home/vagrant/VBoxGuestAdditions.iso /mnt",
+                "sh /mnt/VBoxLinuxAdditions.run --nox11",
+                "umount /mnt"
             ]
         },
         {

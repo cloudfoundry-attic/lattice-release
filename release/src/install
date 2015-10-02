@@ -29,5 +29,7 @@ ln -sf /var/vcap/jobs/receptor/monit /var/vcap/monit/job/0019_receptor.monitrc
 
 perl -p -i -e "s/placeholder-system-domain/$SYSTEM_DOMAIN/g" `find /var/vcap/data/jobs -type f ! -wholename '/var/vcap/data/jobs/rootfses/*'`
 
+rm -f /etc/init/runsvdir.override
+
 /etc/init.d/lighttpd start
-ln -snf /etc/sv/monit /etc/service/monit
+start runsvdir
