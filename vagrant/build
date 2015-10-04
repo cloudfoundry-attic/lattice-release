@@ -2,37 +2,37 @@
 
 set -e
 
-LATTICE_RELEASE_DIR=$(cd `dirname $0` && cd .. && pwd)
+lattice_release_dir=$(cd `dirname $0` && cd .. && pwd)
 
-curl -s http://lattice.s3.amazonaws.com/packer-bosh-assets.tgz | tar -C "$LATTICE_RELEASE_DIR/vagrant/" -xz
+curl -s http://lattice.s3.amazonaws.com/packer-bosh-assets.tgz | tar -C "$lattice_release_dir/vagrant/" -xz
 
 if [ ! -f $HOME/.packerconfig ]; then
-  PACKER_BOSH=$LATTICE_RELEASE_DIR/vagrant/assets/packer-bosh
-  echo '{"provisioners": {"packer-bosh":"'$PACKER_BOSH'"}}' >$HOME/.packerconfig
+  packer_bosh=$lattice_release_dir/vagrant/assets/packer-bosh
+  echo '{"provisioners": {"packer-bosh":"'$packer_bosh'"}}' >$HOME/.packerconfig
 fi
 
-rm -rf $LATTICE_RELEASE_DIR/vagrant/assets/{releases,versions}
-mkdir $LATTICE_RELEASE_DIR/vagrant/assets/{releases,versions}
+rm -rf $lattice_release_dir/vagrant/assets/{releases,versions}
+mkdir $lattice_release_dir/vagrant/assets/{releases,versions}
 
-git -C "$LATTICE_RELEASE_DIR" describe --tags --always > $LATTICE_RELEASE_DIR/vagrant/assets/versions/LATTICE_RELEASE_IMAGE
+git -C "$lattice_release_dir" describe --tags --always > $lattice_release_dir/vagrant/assets/versions/LATTICE_RELEASE_IMAGE
 
-for RELEASE in diego garden-linux cf-routing; do
-  pushd $LATTICE_RELEASE_DIR/$RELEASE-release
+for release in diego garden-linux cf-routing; do
+  pushd $lattice_release_dir/$release-release
     yes yes | bosh reset release
-    bosh create release --name $RELEASE --version 0 --with-tarball --force
-    VERSION_FILE="$(echo ${RELEASE//-/_} | tr [:lower:] [:upper:])_RELEASE"
-    git describe --tags --always > $LATTICE_RELEASE_DIR/vagrant/assets/versions/$VERSION_FILE
+    bosh create release --name $release --version 0 --with-tarball --force
+    version_file="$(echo ${release//-/_} | tr [:lower:] [:upper:])_RELEASE"
+    git describe --tags --always > $lattice_release_dir/vagrant/assets/versions/$version_file
   popd
 done
 
-pushd $LATTICE_RELEASE_DIR/vagrant/assets/releases
-  cp $LATTICE_RELEASE_DIR/vagrant/cf-lattice.yml ./
-  bosh create release $PWD/cf-lattice.yml --dir $LATTICE_RELEASE_DIR/cf-release --with-tarball --force
+pushd $lattice_release_dir/vagrant/assets/releases
+  cp $lattice_release_dir/vagrant/cf-lattice.yml ./
+  bosh create release $PWD/cf-lattice.yml --dir $lattice_release_dir/cf-release --with-tarball --force
 
-  mv $LATTICE_RELEASE_DIR/diego-release/dev_releases/diego/diego-0.tgz \
-     $LATTICE_RELEASE_DIR/garden-linux-release/dev_releases/garden-linux/garden-linux-0.tgz \
-     $LATTICE_RELEASE_DIR/cf-routing-release/dev_releases/cf-routing/cf-routing-0.tgz \
+  mv $lattice_release_dir/diego-release/dev_releases/diego/diego-0.tgz \
+     $lattice_release_dir/garden-linux-release/dev_releases/garden-linux/garden-linux-0.tgz \
+     $lattice_release_dir/cf-routing-release/dev_releases/cf-routing/cf-routing-0.tgz \
      ./
 popd
 
-packer build -only=virtualbox-iso $LATTICE_RELEASE_DIR/vagrant/lattice.json
+packer build -only=virtualbox-iso $lattice_release_dir/vagrant/lattice.json

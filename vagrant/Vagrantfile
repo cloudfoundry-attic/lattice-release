@@ -3,8 +3,8 @@ Vagrant.configure("2") do |config|
   config.vm.box_version = '0'
 
   if Vagrant.has_plugin?("vagrant-proxyconf")
-    config.proxy.http     = ENV["http_proxy"]
-    config.proxy.https    = ENV["https_proxy"]
+    config.proxy.http = ENV["http_proxy"]
+    config.proxy.https = ENV["https_proxy"]
     config.proxy.no_proxy = [
       "localhost", "127.0.0.1",
       (ENV["LATTICE_SYSTEM_IP"] || "192.168.11.11"),
@@ -13,7 +13,7 @@ Vagrant.configure("2") do |config|
     ].join(',')
 
     config.vm.provision "shell" do |s|
-      s.inline = "grep -i proxy /etc/environment >> /var/lattice/network || true"
+      s.inline = "grep -i proxy /etc/environment > /var/lattice/proxy || true"
     end
   end
 
@@ -39,12 +39,10 @@ Vagrant.configure("2") do |config|
   config.vm.provider :aws do |aws, override|
     aws.access_key_id = ENV["AWS_ACCESS_KEY_ID"]
     aws.secret_access_key = ENV["AWS_SECRET_ACCESS_KEY"]
-    aws.keypair_name = "concourse-test"
+    aws.keypair_name = ENV["AWS_SSH_PRIVATE_KEY_NAME"]
     aws.instance_type = "m4.large"
     aws.ebs_optimized = true
-    aws.tags = {
-      "Name" => (ENV["AWS_INSTANCE_NAME"] || "vagrant")
-    }
+    aws.tags = { "Name" => (ENV["AWS_INSTANCE_NAME"] || "vagrant") }
 
     override.ssh.username = "ubuntu"
     override.ssh.private_key_path = ENV["AWS_SSH_PRIVATE_KEY_PATH"]
@@ -54,20 +52,19 @@ Vagrant.configure("2") do |config|
   provider_is_aws = (!ARGV.nil? && ARGV.join(' ').match(/provider(=|\s+)aws/))
   if provider_is_aws
     network_config = <<-SCRIPT
-      PUBLIC_IP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
-      PRIVATE_IP=$(hostname -I|awk '{print $1}')
-      SYSTEM_DOMAIN="${PUBLIC_IP}.xip.io"
+      private_ip="$(hostname -I|awk '{print $1}')"
+      public_ip="$(curl http://169.254.169.254/latest/meta-data/public-ipv4)"
+      system_domain="#{ENV["LATTICE_SYSTEM_DOMAIN"] || "${public_ip}.xip.io"}"
     SCRIPT
 
     config.ssh.insert_key = false
   else
     system_ip = ENV["LATTICE_SYSTEM_IP"] || "192.168.11.11"
-    system_domain = ENV["LATTICE_SYSTEM_DOMAIN"] || "#{system_ip}.xip.io"
+    default_domain = (system_ip == "192.168.11.11") ? "local.lattice.cf" : "#{system_ip}.xip.io"
 
     network_config = <<-SCRIPT
-      PUBLIC_IP=#{system_ip}
-      PRIVATE_IP=#{system_ip}
-      SYSTEM_DOMAIN=#{system_domain}
+      private_ip="$(hostname -I|awk '{print $1}')"
+      system_domain="#{ENV["LATTICE_SYSTEM_DOMAIN"] || default_domain}"
     SCRIPT
 
     config.vm.network "private_network", ip: system_ip
@@ -76,16 +73,16 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell" do |s|
     s.inline = <<-SCRIPT
       #{network_config}
-      echo "PUBLIC_IP=$PUBLIC_IP" >> /var/lattice/network
-      echo "PRIVATE_IP=$PRIVATE_IP" >> /var/lattice/network
-      echo "SYSTEM_DOMAIN=$SYSTEM_DOMAIN" >> /var/lattice/network
+      echo "SYSTEM_DOMAIN=$system_domain" >> /var/lattice/network
+      echo "PRIVATE_IP=$private_ip" >> /var/lattice/network
+
       echo '#{ENV["LATTICE_USERNAME"]}' > /var/lattice/username
       echo '#{ENV["LATTICE_PASSWORD"]}' > /var/lattice/password
 
       tar xzf /vagrant/lattice.tgz -C /tmp ./install
       sudo /tmp/install /vagrant/lattice.tgz
       echo "Lattice is now installed and running."
-      echo "You may target it using: ltc target $SYSTEM_DOMAIN\n"
+      echo "You may target it using: ltc target $system_domain\n"
     SCRIPT
   end
 end

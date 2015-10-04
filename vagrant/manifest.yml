@@ -82,7 +82,6 @@ jobs:
     release: cf-lattice
 
 properties:
-
   system_domain: placeholder-system-domain
 
   # For Diego:
@@ -160,15 +159,9 @@ properties:
   # For Garden:
   garden:
     disk_quota_enabled: false
-    deny_networks: [0.0.0.0/0]
     allow_host_access: true # turn off in favor of TCP routing
-    insecure_docker_registry_list: []
-    mount_btrfs_loopback: false
     persistent_image_list: ["/var/vcap/packages/rootfs_cflinuxfs2/rootfs"]
     enable_graph_cleanup: true
-    dropsonde:
-      origin: "garden-linux"
-      destination: 127.0.0.1:3457
 
   # For CF Routing:
   router:
