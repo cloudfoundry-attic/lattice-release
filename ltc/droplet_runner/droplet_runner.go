@@ -121,7 +121,12 @@ func (dr *dropletRunner) BuildDroplet(taskName, dropletName, buildpackUrl string
 	action := models.WrapAction(&models.SerialAction{
 		Actions: []*models.Action{
 			models.WrapAction(&models.DownloadAction{
-				From: "http://file_server.service.cf.internal:8080/v1/static/cell-helpers/cell-helpers.tgz",
+				From: "http://file-server.service.cf.internal:8080/v1/static/cell-helpers/cell-helpers.tgz",
+				To:   "/tmp",
+				User: "vcap",
+			}),
+			models.WrapAction(&models.DownloadAction{
+				From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
 				To:   "/tmp",
 				User: "vcap",
 			}),
@@ -191,6 +196,7 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 
 	appEnvironmentParams.EnvironmentVariables["PWD"] = "/home/vcap"
 	appEnvironmentParams.EnvironmentVariables["TMPDIR"] = "/home/vcap/tmp"
+	appEnvironmentParams.WorkingDir = "/home/vcap"
 
 	proxyConf, err := dr.proxyConfReader.ProxyConf()
 	if err != nil {
@@ -218,12 +224,12 @@ func (dr *dropletRunner) LaunchDroplet(appName, dropletName string, startCommand
 			LogSource: appName,
 			Actions: []*models.Action{
 				models.WrapAction(&models.DownloadAction{
-					From: "http://file_server.service.cf.internal:8080/v1/static/cell-helpers/cell-helpers.tgz",
+					From: "http://file-server.service.cf.internal:8080/v1/static/cell-helpers/cell-helpers.tgz",
 					To:   "/tmp",
 					User: "vcap",
 				}),
 				models.WrapAction(&models.DownloadAction{
-					From: "http://file_server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
+					From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
 					To:   "/tmp",
 					User: "vcap",
 				}),

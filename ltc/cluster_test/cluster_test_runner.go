@@ -121,8 +121,8 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 
 					Eventually(errorCheckForRoute(appRoute), timeout, 1).ShouldNot(HaveOccurred())
 
-					Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("rep.*cell-\\d+"))
-					Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("garden-linux.*cell-\\d+"))
+					Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("rep.*lattice-(collocated|cell|brain)-\\d+"))
+					Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("garden-linux.*lattice-(collocated|cell|brain)-\\d+"))
 					debugLogsStream.Terminate().Wait()
 
 					logsStream := runner.streamLogs(timeout, appName)

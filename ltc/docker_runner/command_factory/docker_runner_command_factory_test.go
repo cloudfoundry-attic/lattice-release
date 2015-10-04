@@ -143,7 +143,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
 			reqSetup := createAppParams.Setup.GetDownloadAction()
-			Expect(reqSetup.From).To(Equal("http://file_server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz"))
+			Expect(reqSetup.From).To(Equal("http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz"))
 			Expect(reqSetup.To).To(Equal("/tmp"))
 			Expect(reqSetup.User).To(Equal("vcap"))
 
@@ -974,7 +974,7 @@ var _ = Describe("CommandFactory", func() {
 
 			Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
 			reqSetup := createAppParams.Setup.GetDownloadAction()
-			Expect(reqSetup.From).To(Equal("http://file_server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz"))
+			Expect(reqSetup.From).To(Equal("http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz"))
 			Expect(reqSetup.To).To(Equal("/tmp"))
 			Expect(reqSetup.User).To(Equal("vcap"))
 

@@ -125,7 +125,7 @@ var _ = Describe("AppRunner", func() {
 						User: "download-user",
 					}),
 					models.WrapAction(&models.DownloadAction{
-						From: "http://file_server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
+						From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
 						To:   "/tmp",
 						User: "vcap",
 					}),

@@ -164,7 +164,12 @@ var _ = Describe("DropletRunner", func() {
 			expectedActions := models.WrapAction(&models.SerialAction{
 				Actions: []*models.Action{
 					models.WrapAction(&models.DownloadAction{
-						From: "http://file_server.service.cf.internal:8080/v1/static/cell-helpers/cell-helpers.tgz",
+						From: "http://file-server.service.cf.internal:8080/v1/static/cell-helpers/cell-helpers.tgz",
+						To:   "/tmp",
+						User: "vcap",
+					}),
+					models.WrapAction(&models.DownloadAction{
+						From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
 						To:   "/tmp",
 						User: "vcap",
 					}),
@@ -351,6 +356,7 @@ var _ = Describe("DropletRunner", func() {
 			Expect(createAppParams.RootFS).To(Equal(droplet_runner.DropletRootFS))
 			Expect(createAppParams.StartCommand).To(Equal("/tmp/launcher"))
 			Expect(createAppParams.AppArgs).To(Equal([]string{"/home/vcap/app", "", `{"start_command": "start"}`}))
+			Expect(createAppParams.WorkingDir).To(Equal("/home/vcap"))
 			Expect(createAppParams.AppEnvironmentParams.EnvironmentVariables).To(matchers.ContainExactly(map[string]string{
 				"PWD":         "/home/vcap",
 				"TMPDIR":      "/home/vcap/tmp",
@@ -368,12 +374,12 @@ var _ = Describe("DropletRunner", func() {
 				LogSource: "app-name",
 				Actions: []*models.Action{
 					models.WrapAction(&models.DownloadAction{
-						From: "http://file_server.service.cf.internal:8080/v1/static/cell-helpers/cell-helpers.tgz",
+						From: "http://file-server.service.cf.internal:8080/v1/static/cell-helpers/cell-helpers.tgz",
 						To:   "/tmp",
 						User: "vcap",
 					}),
 					models.WrapAction(&models.DownloadAction{
-						From: "http://file_server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
+						From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
 						To:   "/tmp",
 						User: "vcap",
 					}),
