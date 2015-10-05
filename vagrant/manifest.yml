@@ -165,9 +165,12 @@ properties:
 
   # For CF Routing:
   router:
+    enable_routing_api: false
     router_configurer:
       gorouter_secret: router-secret
     tcp_emitter:
+      diego_api_url: http://placeholder-username:placeholder-password@receptor.service.cf.internal:8888
+      gorouter_secret: router-secret
       debug_addr: 0.0.0.0:17019
       bbs:
         api_location: bbs.service.cf.internal:8889
@@ -197,6 +200,8 @@ properties:
         file_server: {}
         ssh_proxy: {}
         gorouter: {}
+        receptor: {}
+        router_configurer: {}
       servers:
         lan: [10.0.2.15]
     require_ssl: false
@@ -218,8 +223,6 @@ properties:
     clients:
       doppler:
         secret: doppler-secret
-      gorouter:
-        secret: gorouter-secret
   cc:
     srv_api_uri: ""
 

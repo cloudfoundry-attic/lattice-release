@@ -11,6 +11,8 @@ fi
 
 # Overlay Lattice support files
 tar xzf "$1" --strip-components 2 --keep-directory-symlink --no-overwrite-dir --no-same-owner -C / -- ./root
+username=$(cat /var/lattice/username)
+password=$(cat /var/lattice/password)
 
 # Config proxy support
 mkdir -p /var/lattice/lighttpd
@@ -28,15 +30,19 @@ fi
 # Configure and secure lighttpd
 mkdir -p /var/lattice/lighttpd/blobs
 chown -R www-data:www-data /var/lattice/lighttpd
-lighttpd_password=`openssl passwd -crypt "$(cat /var/lattice/password)"`
-echo $(cat /var/lattice/username):$lighttpd_password > /var/lattice/lighttpd.user
+lighttpd_password=$(openssl passwd -crypt "$password")
+echo $username:$lighttpd_password > /var/lattice/lighttpd.user
 
 # Enabled receptor
 ln -sf /var/vcap/jobs/receptor/monit /var/vcap/monit/job/0019_receptor.monitrc
 
 # Modify deployed jobs for Lattice
 export $(cat /var/lattice/network)
-perl -p -i -e "s/placeholder-system-domain/$SYSTEM_DOMAIN/g" $(find /var/vcap/jobs/*/ -type f)
+job_files=$(find /var/vcap/jobs/*/ -type f)
+perl -p -i -e "s/placeholder-system-domain/$SYSTEM_DOMAIN/g" $job_files
+perl -p -i -e "s/placeholder-username/$username/g" $job_files
+perl -p -i -e "s/placeholder-password/$password/g" $job_files
+
 sed -i 's%/var/vcap/packages/loggregator_trafficcontroller/trafficcontroller%& --disableAccessControl%' \
   /var/vcap/jobs/loggregator_trafficcontroller/bin/loggregator_trafficcontroller_ctl
 sed -i 's%/var/vcap/packages/rep/bin/rep%/usr/local/bin/tee2metron -dropsondeDestination=127.0.0.1:3457 -sourceInstance=lattice-collocated-0 &%' \

@@ -3,7 +3,6 @@
 
 /vagrant/assets
 /vagrant/packer_cache
-/vagrant/output-*
 /vagrant/.vagrant
 /vagrant/*.box
 /vagrant/lattice.tgz

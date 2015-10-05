@@ -173,7 +173,8 @@
     ],
     "post-processors": [
         {
-            "type": "vagrant"
+            "type": "vagrant",
+            "output": "lattice-{{.Provider}}.box"
         }
     ]
 }
