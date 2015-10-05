@@ -116,7 +116,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				debugLogsStream := runner.streamDebugLogs(timeout)
 				defer func() { debugLogsStream.Terminate().Wait() }()
 
-				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app")
+				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app", fmt.Sprintf("--timeout=%s", timeout.String()))
 
 				Eventually(errorCheckForRoute(appRoute), timeout, 1).ShouldNot(HaveOccurred())
 
