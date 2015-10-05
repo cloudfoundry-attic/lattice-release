@@ -90,7 +90,6 @@ var _ = Describe("CommandFactory", func() {
 				"--disk-mb=12",
 				"--http-routes=route-3000-yay:3000,route-1111-wahoo:1111,route-1111-me-too:1111",
 				"--working-dir=/applications",
-				"--run-as-root=true",
 				"--instances=22",
 				"--env=TIMEZONE=CST",
 				`--env=LANG="Chicago English"`,
@@ -126,7 +125,7 @@ var _ = Describe("CommandFactory", func() {
 				"COLOR":        "Blue",
 				"UNSET":        "",
 			}))
-			Expect(createAppParams.Privileged).To(BeTrue())
+			Expect(createAppParams.Privileged).To(BeFalse())
 			Expect(createAppParams.User).To(Equal("root"))
 			Expect(createAppParams.CPUWeight).To(Equal(uint(57)))
 			Expect(createAppParams.MemoryMB).To(Equal(12))
@@ -145,7 +144,7 @@ var _ = Describe("CommandFactory", func() {
 			reqSetup := createAppParams.Setup.GetDownloadAction()
 			Expect(reqSetup.From).To(Equal("http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz"))
 			Expect(reqSetup.To).To(Equal("/tmp"))
-			Expect(reqSetup.User).To(Equal("vcap"))
+			Expect(reqSetup.User).To(Equal("root"))
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Creating App: cool-web-app"))
 			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))
@@ -348,7 +347,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 					Expect(createAppParams.Privileged).To(BeFalse())
-					Expect(createAppParams.User).To(Equal("vcap"))
+					Expect(createAppParams.User).To(Equal("root"))
 					Expect(createAppParams.MemoryMB).To(Equal(128))
 					Expect(createAppParams.DiskMB).To(Equal(0))
 					Expect(createAppParams.Monitor.Port).To(Equal(uint16(8080)))
@@ -976,7 +975,7 @@ var _ = Describe("CommandFactory", func() {
 			reqSetup := createAppParams.Setup.GetDownloadAction()
 			Expect(reqSetup.From).To(Equal("http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz"))
 			Expect(reqSetup.To).To(Equal("/tmp"))
-			Expect(reqSetup.User).To(Equal("vcap"))
+			Expect(reqSetup.User).To(Equal("root"))
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Creating App: cool-web-app"))
 			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))

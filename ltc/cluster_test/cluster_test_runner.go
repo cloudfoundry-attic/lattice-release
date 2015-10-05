@@ -94,104 +94,86 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 		gexec.CleanupBuildArtifacts()
 	})
 
-	Describe("Lattice", func() {
-		Context("docker", func() {
-			Context("when desiring a docker-based LRP", func() {
-				var appName, appRoute string
+	Describe("Lattice cluster", func() {
+		Describe("docker apps with HTTP routes", func() {
+			var appName, appRoute string
 
-				BeforeEach(func() {
-					appGUID, err := uuid.NewV4()
-					Expect(err).NotTo(HaveOccurred())
+			BeforeEach(func() {
+				appGUID, err := uuid.NewV4()
+				Expect(err).NotTo(HaveOccurred())
 
-					appName = fmt.Sprintf("lattice-test-app-%s", appGUID.String())
-					appRoute = fmt.Sprintf("%s.%s", appName, runner.config.Target())
-				})
-
-				AfterEach(func() {
-					runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
-
-					Eventually(errorCheckForRoute(appRoute), timeout, 1).Should(HaveOccurred())
-				})
-
-				It("should run a docker app", func() {
-					debugLogsStream := runner.streamDebugLogs(timeout)
-					defer func() { debugLogsStream.Terminate().Wait() }()
-
-					runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app", fmt.Sprintf("--timeout=%s", timeout.String()), "--working-dir=/", "--env", "APP_NAME", "--", "/lattice-app", "--message", "Hello Lattice User", "--quiet")
-
-					Eventually(errorCheckForRoute(appRoute), timeout, 1).ShouldNot(HaveOccurred())
-
-					Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("rep.*lattice-(collocated|cell|brain)-\\d+"))
-					Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("garden-linux.*lattice-(collocated|cell|brain)-\\d+"))
-					debugLogsStream.Terminate().Wait()
-
-					logsStream := runner.streamLogs(timeout, appName)
-					defer func() { logsStream.Terminate().Wait() }()
-
-					Eventually(logsStream.Out, timeout).Should(gbytes.Say("LATTICE-TEST-APP. Says Hello Lattice User."))
-
-					runner.scaleApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
-
-					instanceCountChan := make(chan int, numCPU)
-					go countInstances(appRoute, instanceCountChan)
-					Eventually(instanceCountChan, timeout).Should(Receive(Equal(3)))
-				})
-
-				It("should run a docker app using metadata from Docker Hub", func() {
-					runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app")
-
-					Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
-				})
-
-				Context("when `--run-as-root` is passed as an argument to `ltc create`", func() {
-					It("should run the app as the root user", func() {
-						runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app", "--run-as-root", fmt.Sprintf("--timeout=%s", timeout.String()))
-
-						Eventually(errorCheckForRoute(appRoute), timeout, .5).ShouldNot(HaveOccurred())
-
-						resp, err := makeGetRequestToURL(appRoute + "/env")
-						Expect(err).NotTo(HaveOccurred())
-						defer resp.Body.Close()
-						respBytes, err := ioutil.ReadAll(resp.Body)
-						Expect(err).NotTo(HaveOccurred())
-
-						Expect(respBytes).To(MatchRegexp("<dt>USER</dt><dd>root</dd>"), "lattice-app should report running as root")
-					})
-				})
+				appName = fmt.Sprintf("lattice-test-app-%s", appGUID.String())
+				appRoute = fmt.Sprintf("%s.%s", appName, runner.config.Target())
 			})
 
-			Context("when desiring a docker-based LRP with tcp routes", func() {
-				var appName string
+			AfterEach(func() {
+				runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
 
-				BeforeEach(func() {
-					appGUID, err := uuid.NewV4()
-					Expect(err).NotTo(HaveOccurred())
+				Eventually(errorCheckForRoute(appRoute), timeout, 1).Should(HaveOccurred())
+			})
 
-					appName = fmt.Sprintf("lattice-test-app-%s", appGUID.String())
-				})
+			It("should run with the provided ltc options", func() {
+				debugLogsStream := runner.streamDebugLogs(timeout)
+				defer func() { debugLogsStream.Terminate().Wait() }()
 
-				AfterEach(func() {
-					runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
-				})
+				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-app")
 
-				It("should run a docker app exposing tcp routes", func() {
-					externalPort := uint16(rand.Intn(9999) + 50000)
-					runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-tcp-test", fmt.Sprintf("--tcp-routes=%d:5222", externalPort), fmt.Sprintf("--timeout=%s", timeout.String()))
-					Eventually(readLineFromConnection(runner.config.Target(), externalPort), timeout, 1).Should(Equal("y"))
+				Eventually(errorCheckForRoute(appRoute), timeout, 1).ShouldNot(HaveOccurred())
 
-					externalPort++
-					By("Updating the routes")
-					runner.updateApp(timeout, appName, fmt.Sprintf("--tcp-routes=%d:5222", externalPort))
-					Eventually(readLineFromConnection(runner.config.Target(), externalPort), timeout, 1).Should(Equal("y"))
-				})
+				Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("rep.*lattice-(collocated|cell|brain)-\\d+"))
+				Eventually(debugLogsStream.Out, timeout).Should(gbytes.Say("garden-linux.*lattice-(collocated|cell|brain)-\\d+"))
+				debugLogsStream.Terminate().Wait()
+
+				logsStream := runner.streamLogs(timeout, appName)
+				defer func() { logsStream.Terminate().Wait() }()
+
+				Eventually(logsStream.Out, timeout).Should(gbytes.Say("Lattice-app. Says Hello."))
+
+				resp, err := makeGetRequestToURL(appRoute + "/env")
+				Expect(err).NotTo(HaveOccurred())
+				defer resp.Body.Close()
+				respBytes, err := ioutil.ReadAll(resp.Body)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(respBytes).To(MatchRegexp("<dt>USER</dt><dd>root</dd>"))
+
+				runner.scaleApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
+
+				instanceCountChan := make(chan int, numCPU)
+				go countInstances(appRoute, instanceCountChan)
+				Eventually(instanceCountChan, timeout).Should(Receive(Equal(3)))
 			})
 		})
 
-		Context("droplets", func() {
+		Context("docker apps with TCP routes", func() {
+			var appName string
+
+			BeforeEach(func() {
+				appGUID, err := uuid.NewV4()
+				Expect(err).NotTo(HaveOccurred())
+
+				appName = fmt.Sprintf("lattice-test-app-%s", appGUID.String())
+			})
+
+			AfterEach(func() {
+				runner.removeApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
+			})
+
+			It("should run with the provided ltc options", func() {
+				externalPort := uint16(rand.Intn(9999) + 50000)
+				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-tcp-test", fmt.Sprintf("--tcp-routes=%d:5222", externalPort), fmt.Sprintf("--timeout=%s", timeout.String()))
+				Eventually(readLineFromConnection(runner.config.Target(), externalPort), timeout, 1).Should(Equal("y"))
+
+				externalPort++
+				By("Updating the routes")
+				runner.updateApp(timeout, appName, fmt.Sprintf("--tcp-routes=%d:5222", externalPort))
+				Eventually(readLineFromConnection(runner.config.Target(), externalPort), timeout, 1).Should(Equal("y"))
+			})
+		})
+
+		Context("droplet apps", func() {
 			var dropletName, appName, dropletFolderURL, appRoute string
 
 			BeforeEach(func() {
-				// Generate a droplet name up front so that it can persist across droplet tests
 				dropletGUID, err := uuid.NewV4()
 				Expect(err).NotTo(HaveOccurred())
 				dropletName = "droplet-" + dropletGUID.String()
@@ -404,9 +386,8 @@ func (runner *clusterTestRunner) removeApp(timeout time.Duration, appName string
 //TODO: add subcommand string param
 func (runner *clusterTestRunner) command(arg ...string) *exec.Cmd {
 	command := exec.Command(runner.ltcExecutablePath, arg...)
-	appName := "APP_NAME=LATTICE-TEST-APP"
 	cliHome := fmt.Sprintf("LATTICE_CLI_HOME=%s", runner.latticeCliHome)
-	command.Env = []string{cliHome, appName}
+	command.Env = []string{cliHome}
 	return command
 }
 

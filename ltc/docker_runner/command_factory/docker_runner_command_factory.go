@@ -68,10 +68,6 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Usage: "Working directory for container (overrides Docker metadata)",
 			Value: "",
 		},
-		cli.BoolFlag{
-			Name:  "run-as-root, r",
-			Usage: "Runs in the context of the root user",
-		},
 		cli.StringSliceFlag{
 			Name:  "env, e",
 			Usage: "Environment variables (can be passed multiple times)",
@@ -168,7 +164,7 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 
    By default, http routes will be created for all container ports specified in the EXPOSE directive in
    the Docker image. E.g. for application myapp and a Docker image that specifies ports 80 and 8080,
-   two http routes will be created by default: 
+   two http routes will be created by default:
 
      - requests to myapp.SYSTEM_DOMAIN:80 will be routed to container port 80
      - requests to myapp-8080.SYSTEM_DOMAIN:80 will be routed to container port 8080
@@ -195,7 +191,6 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	memoryMBFlag := context.Int("memory-mb")
 	diskMBFlag := context.Int("disk-mb")
 	portsFlag := context.String("ports")
-	runAsRootFlag := context.Bool("run-as-root")
 	noMonitorFlag := context.Bool("no-monitor")
 	portMonitorFlag := context.Int("monitor-port")
 	urlMonitorFlag := context.String("monitor-url")
@@ -324,16 +319,10 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		envVars[appEnvKey] = appEnvVars[appEnvKey]
 	}
 
-	user := "vcap"
-	if runAsRootFlag {
-		user = "root"
-	}
-
 	err = factory.AppRunner.CreateApp(app_runner.CreateAppParams{
 		AppEnvironmentParams: app_runner.AppEnvironmentParams{
 			EnvironmentVariables: envVars,
-			Privileged:           runAsRootFlag,
-			User:                 user,
+			User:                 "root",
 			Monitor:              monitorConfig,
 			Instances:            instancesFlag,
 			CPUWeight:            cpuWeightFlag,
@@ -355,7 +344,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		Setup: models.WrapAction(&models.DownloadAction{
 			From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
 			To:   "/tmp",
-			User: "vcap",
+			User: "root",
 		}),
 	})
 	if err != nil {
