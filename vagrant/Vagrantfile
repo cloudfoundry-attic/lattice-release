@@ -52,30 +52,26 @@ Vagrant.configure("2") do |config|
   provider_is_aws = (!ARGV.nil? && ARGV.join(' ').match(/provider(=|\s+)aws/))
   if provider_is_aws
     network_config = <<-SCRIPT
-      private_ip="$(hostname -I|awk '{print $1}')"
       public_ip="$(curl http://169.254.169.254/latest/meta-data/public-ipv4)"
-      system_domain="#{ENV["LATTICE_SYSTEM_DOMAIN"] || "${public_ip}.xip.io"}"
+      domain="#{ENV["LATTICE_DOMAIN"] || "${public_ip}.xip.io"}"
     SCRIPT
 
     config.ssh.insert_key = false
   else
-    system_ip = ENV["LATTICE_SYSTEM_IP"] || "192.168.11.11"
-    default_domain = (system_ip == "192.168.11.11") ? "local.lattice.cf" : "#{system_ip}.xip.io"
+    public_ip = ENV["LATTICE_IP"] || "192.168.11.11"
+    default_domain = (public_ip == "192.168.11.11") ? "local.lattice.cf" : "#{public_ip}.xip.io"
 
     network_config = <<-SCRIPT
-      private_ip="$(hostname -I|awk '{print $1}')"
-      system_domain="#{ENV["LATTICE_SYSTEM_DOMAIN"] || default_domain}"
+      domain="#{ENV["LATTICE_DOMAIN"] || default_domain}"
     SCRIPT
 
-    config.vm.network "private_network", ip: system_ip
+    config.vm.network "private_network", ip: public_ip
   end
 
   config.vm.provision "shell" do |s|
     s.inline = <<-SCRIPT
       #{network_config}
-      echo "SYSTEM_DOMAIN=$system_domain" >> /var/lattice/network
-      echo "PRIVATE_IP=$private_ip" >> /var/lattice/network
-
+      echo $domain > /var/lattice/domain
       echo '#{ENV["LATTICE_USERNAME"]}' > /var/lattice/username
       echo '#{ENV["LATTICE_PASSWORD"]}' > /var/lattice/password
 

@@ -37,9 +37,12 @@ echo $username:$lighttpd_password > /var/lattice/lighttpd.user
 ln -sf /var/vcap/jobs/receptor/monit /var/vcap/monit/job/0019_receptor.monitrc
 
 # Modify deployed jobs for Lattice
-export $(cat /var/lattice/network)
+domain=$(cat /var/lattice/domain)
+old_ip=$(cat /var/lattice/ip)
+new_ip=$(ip route get 1 | awk '{print $NF;exit}')
 job_files=$(find /var/vcap/jobs/*/ -type f)
-perl -p -i -e "s/placeholder-system-domain/$SYSTEM_DOMAIN/g" $job_files
+perl -p -i -e "s/placeholder-system-domain/$domain/g" $job_files
+perl -p -i -e "s/\\Q$old_ip\\E/$new_ip/g" $job_files
 perl -p -i -e "s/placeholder-username/$username/g" $job_files
 perl -p -i -e "s/placeholder-password/$password/g" $job_files
 

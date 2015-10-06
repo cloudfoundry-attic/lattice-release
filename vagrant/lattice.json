@@ -94,6 +94,11 @@
             ]
         },
         {
+            "type": "file",
+            "source": "manifest.yml",
+            "destination": "/tmp/manifest.yml"
+        },
+        {
             "type": "shell",
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
@@ -104,7 +109,9 @@
                 "apt-get -y --force-yes upgrade",
                 "apt-get -y install ruby2.1 curl unzip",
                 "mkdir -p /var/lattice",
-                "touch /var/lattice/username /var/lattice/password"
+                "touch /var/lattice/username /var/lattice/password",
+                "ip route get 1 | awk '{print $NF;exit}' > /var/lattice/ip",
+                "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml"
             ]
         },
         {
@@ -117,8 +124,8 @@
         },
         {
             "type": "packer-bosh",
-            "manifest_path": "manifest.yml",
-            "assets_dir": "assets"
+            "assets_dir": "assets",
+            "remote_manifest_path": "/var/lattice/manifest.yml"
         },
         {
             "type": "shell",

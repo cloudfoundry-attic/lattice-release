@@ -142,7 +142,7 @@ properties:
         client_key: ""
         require_ssl: false
       nats:
-        machines: [10.0.2.15]
+        machines: [placeholder-ip]
         user: nats
         password: nats
     ssh_proxy:
@@ -181,12 +181,12 @@ properties:
 
   # For CF:
   nats:
-    machines: [10.0.2.15]
+    machines: [placeholder-ip]
     user: nats
     password: nats
     port: 4222
   etcd:
-    machines: [10.0.2.15]
+    machines: [placeholder-ip]
   metron_agent:
     zone: z1
     deployment: lattice
@@ -203,7 +203,7 @@ properties:
         receptor: {}
         router_configurer: {}
       servers:
-        lan: [10.0.2.15]
+        lan: [placeholder-ip]
     require_ssl: false
   doppler:
     zone: z1
