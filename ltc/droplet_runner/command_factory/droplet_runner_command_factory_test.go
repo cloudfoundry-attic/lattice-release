@@ -641,7 +641,6 @@ var _ = Describe("CommandFactory", func() {
 				"--memory-mb=12",
 				"--disk-mb=12",
 				"--http-routes=ninetyninety:4444,fourtyfourfourtyfour:9090",
-				"--working-dir=/xxx",
 				"--instances=11",
 				"--env=TIMEZONE=CST",
 				`--env=LANG="Chicago English"`,
@@ -669,7 +668,6 @@ var _ = Describe("CommandFactory", func() {
 			Expect(dropletNameParam).To(Equal("droplet-name"))
 			Expect(startCommandParam).To(Equal("start-em"))
 			Expect(startArgsParam).To(Equal([]string{"-app-arg"}))
-			Expect(appEnvParam.WorkingDir).To(Equal("/xxx"))
 			Expect(appEnvParam.CPUWeight).To(Equal(uint(57)))
 			Expect(appEnvParam.MemoryMB).To(Equal(12))
 			Expect(appEnvParam.DiskMB).To(Equal(12))
@@ -712,7 +710,6 @@ var _ = Describe("CommandFactory", func() {
 			Expect(dropletNameParam).To(Equal("droplet-name"))
 			Expect(startCommandParam).To(Equal(""))
 			Expect(startArgsParam).To(BeNil())
-			Expect(appEnvParam.WorkingDir).To(Equal("/home/vcap/app"))
 			Expect(appEnvParam.Privileged).To(BeTrue())
 			Expect(appEnvParam.User).To(Equal("vcap"))
 			Expect(appEnvParam.Instances).To(Equal(1))

@@ -144,11 +144,6 @@ func (factory *DropletRunnerCommandFactory) MakeBuildDropletCommand() cli.Comman
 
 func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Command {
 	var launchFlags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "working-dir, w",
-			Usage: "Working directory for container",
-			Value: "/home/vcap/app",
-		},
 		cli.StringSliceFlag{
 			Name:  "env, e",
 			Usage: "Environment variables (can be passed multiple times)",
@@ -484,7 +479,6 @@ func (factory *DropletRunnerCommandFactory) pollUntilSuccess(pollTimeout time.Du
 }
 
 func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) {
-	workingDirFlag := context.String("working-dir")
 	envVarsFlag := context.StringSlice("env")
 	instancesFlag := context.Int("instances")
 	cpuWeightFlag := uint(context.Int("cpu-weight"))
@@ -561,7 +555,6 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 		MemoryMB:             memoryMBFlag,
 		DiskMB:               diskMBFlag,
 		ExposedPorts:         exposedPorts,
-		WorkingDir:           workingDirFlag,
 		RouteOverrides:       routeOverrides,
 		TcpRoutes:            tcpRoutes,
 		NoRoutes:             noRoutesFlag,
