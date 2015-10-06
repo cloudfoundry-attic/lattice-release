@@ -1,6 +1,6 @@
 {
     "variables": {
-        "vagrant_password": "vagrant"
+        "password": "vagrant"
     },
     "builders": [
         {
@@ -10,10 +10,7 @@
             "instance_type": "m4.large",
             "ami_name": "lattice-vagrant-{{isotime \"20060102-1504\"}}",
             "ami_groups": ["all"],
-            "ami_regions": [
-                "us-west-1",
-                "us-west-2"
-            ],
+            "ami_regions": [],
             "ssh_username": "ubuntu"
         },
         {
@@ -23,14 +20,14 @@
             "guest_os_type": "ubuntu-64",
             "disk_size": 15000,
             "ssh_username": "vagrant",
-            "ssh_password": "{{user `vagrant_password`}}",
+            "ssh_password": "{{user `password`}}",
             "iso_url": "http://releases.ubuntu.com/trusty/ubuntu-14.04.3-server-amd64.iso",
             "iso_checksum": "9e5fecc94b3925bededed0fdca1bd417",
             "iso_checksum_type": "md5",
-            "http_directory": "preseed",
+            "http_directory": "http",
             "tools_upload_flavor": "linux",
             "ssh_wait_timeout": "20m",
-            "shutdown_command": "echo {{user `vagrant_password`}} | sudo -S shutdown -P now",
+            "shutdown_command": "echo {{user `password`}} | sudo -S shutdown -P now",
             "boot_command": [
                 "<esc><esc><enter><wait>",
                 "/install/vmlinuz noapic ",
@@ -53,13 +50,13 @@
             "guest_os_type": "Ubuntu_64",
             "disk_size": 15000,
             "ssh_username": "vagrant",
-            "ssh_password": "{{user `vagrant_password`}}",
+            "ssh_password": "{{user `password`}}",
             "iso_url": "http://releases.ubuntu.com/trusty/ubuntu-14.04.3-server-amd64.iso",
             "iso_checksum": "9e5fecc94b3925bededed0fdca1bd417",
             "iso_checksum_type": "md5",
-            "http_directory": "preseed",
+            "http_directory": "http",
             "ssh_wait_timeout": "20m",
-            "shutdown_command": "echo {{user `vagrant_password`}} | sudo -S shutdown -P now",
+            "shutdown_command": "echo {{user `password`}} | sudo -S shutdown -P now",
             "boot_command": [
                 "<esc><esc><enter><wait>",
                 "/install/vmlinuz noapic ",
@@ -82,9 +79,24 @@
     "provisioners": [
         {
             "type": "shell",
-            "execute_command": "echo '{{user `vagrant_password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "only": ["vmware-iso", "virtualbox-iso"],
+            "execute_command": "echo '{{user `password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
             "inline": [
-                "echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers",
+                "echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["amazon-ebs"],
+            "execute_command": "echo '{{user `password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "inline": [
+                "echo 'ubuntu ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
+            ]
+        },
+        {
+            "type": "shell",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
                 "echo 'UseDNS no' >> /etc/ssh/sshd_config",
                 "apt-get -y install software-properties-common",
                 "add-apt-repository ppa:brightbox/ruby-ng",
@@ -93,6 +105,14 @@
                 "apt-get -y install ruby2.1 curl unzip",
                 "mkdir -p /var/lattice",
                 "touch /var/lattice/username /var/lattice/password"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["amazon-ebs"],
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
+                "apt-get -y update"
             ]
         },
         {

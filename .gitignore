@@ -6,5 +6,6 @@
 /vagrant/.vagrant
 /vagrant/*.box
 /vagrant/lattice.tgz
+/vagrant/output-*
 
 .DS_Store
