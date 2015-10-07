@@ -37,24 +37,28 @@ echo $username:$lighttpd_password > /var/lattice/lighttpd.user
 ln -sf /var/vcap/jobs/receptor/monit /var/vcap/monit/job/0019_receptor.monitrc
 
 # Modify deployed jobs for Lattice
+job_files=$(find /var/vcap/jobs/*/ -type f)
+
 domain=$(cat /var/lattice/domain)
+perl -p -i -e "s/placeholder-system-domain/$domain/g" $job_files
+
 old_ip=$(cat /var/lattice/ip)
 new_ip=$(ip route get 1 | awk '{print $NF;exit}')
-job_files=$(find /var/vcap/jobs/*/ -type f)
-perl -p -i -e "s/placeholder-system-domain/$domain/g" $job_files
 perl -p -i -e "s/\\Q$old_ip\\E/$new_ip/g" $job_files
+
 perl -p -i -e "s/placeholder-username/$username/g" $job_files
 perl -p -i -e "s/placeholder-password/$password/g" $job_files
+
+public_ip=$(cat /var/lattice/public_ip)
+tee2metron='/usr/local/bin/tee2metron -dropsondeDestination=127.0.0.1:3457 -sourceInstance=lattice-collocated-0'
+external_ip="-externalIP=$public_ip"
+sed -i "s%/var/vcap/packages/garden-linux/bin/garden-linux%$tee2metron & $external_ip%" \
+  /var/vcap/jobs/garden/bin/garden_ctl
 
 sed -i 's%/var/vcap/packages/loggregator_trafficcontroller/trafficcontroller%& --disableAccessControl%' \
   /var/vcap/jobs/loggregator_trafficcontroller/bin/loggregator_trafficcontroller_ctl
 sed -i 's%/var/vcap/packages/rep/bin/rep%/usr/local/bin/tee2metron -dropsondeDestination=127.0.0.1:3457 -sourceInstance=lattice-collocated-0 &%' \
   /var/vcap/jobs/rep/bin/rep_ctl
-
-tee2metron='/usr/local/bin/tee2metron -dropsondeDestination=127.0.0.1:3457 -sourceInstance=lattice-collocated-0'
-external_ip="-externalIP=$new_ip"
-sed -i "s%/var/vcap/packages/garden-linux/bin/garden-linux%$tee2metron & $external_ip%" \
-  /var/vcap/jobs/garden/bin/garden_ctl
 
 
 # Start all services
