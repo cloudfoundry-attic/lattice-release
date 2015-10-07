@@ -79,18 +79,30 @@
     "provisioners": [
         {
             "type": "shell",
-            "only": ["vmware-iso", "virtualbox-iso"],
             "execute_command": "echo '{{user `password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "inline": [ "echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" ],
+            "override": {
+                "amazon-ebs": { "inline": [ "echo 'ubuntu ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" ] }
+            }
+        },
+        {
+            "type": "shell",
+            "only": ["vmware-iso"],
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
-                "echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
+                "apt-get install -y dkms",
+                "apt-get install -y --no-install-recommends open-vm-dkms"
             ]
         },
         {
             "type": "shell",
-            "only": ["amazon-ebs"],
-            "execute_command": "echo '{{user `password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "only": ["virtualbox-iso"],
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
-                "echo 'ubuntu ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers"
+                "apt-get install -y dkms",
+                "mount -o loop /home/vagrant/VBoxGuestAdditions.iso /mnt",
+                "sh /mnt/VBoxLinuxAdditions.run --nox11",
+                "umount /mnt"
             ]
         },
         {
@@ -102,7 +114,6 @@
             "type": "shell",
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
-                "echo 'UseDNS no' >> /etc/ssh/sshd_config",
                 "apt-get -y install software-properties-common",
                 "add-apt-repository ppa:brightbox/ruby-ng",
                 "apt-get -y update",
@@ -112,7 +123,8 @@
                 "mkdir -p /var/lattice",
                 "touch /var/lattice/username /var/lattice/password",
                 "ip route get 1 | awk '{print $NF;exit}' > /var/lattice/ip",
-                "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml"
+                "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml",
+                "echo 'UseDNS no' >> /etc/ssh/sshd_config"
             ]
         },
         {
@@ -159,30 +171,6 @@
                 "wget --no-check-certificate -O authorized_keys 'https://github.com/mitchellh/vagrant/raw/master/keys/vagrant.pub'",
                 "mv authorized_keys /home/vagrant/.ssh/",
                 "chown -R vagrant /home/vagrant/.ssh"
-            ]
-        },
-        {
-            "type": "shell",
-            "only": ["vmware-iso"],
-            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
-            "inline": [
-                "sudo apt-get -y install open-vm-tools",
-                "mkdir /tmp/vmware-tools-disk /tmp/vmware-tools",
-                "mount -o loop /home/vagrant/linux.iso /tmp/vmware-tools-disk",
-                "tar xzf /tmp/vmware-tools-disk/VMwareTools-*.tar.gz -C /tmp/vmware-tools",
-                "/tmp/vmware-tools/vmware-tools-distrib/vmware-install.pl --default",
-                "umount /tmp/vmware-tools-disk",
-                "rm -rf /home/vagrant/linux.iso /tmp/vware-tools-disk /tmp/vmware-tools"
-            ]
-        },
-        {
-            "type": "shell",
-            "only": ["virtualbox-iso"],
-            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
-            "inline": [
-                "mount -o loop /home/vagrant/VBoxGuestAdditions.iso /mnt",
-                "sh /mnt/VBoxLinuxAdditions.run --nox11",
-                "umount /mnt"
             ]
         },
         {
