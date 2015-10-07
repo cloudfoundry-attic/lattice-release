@@ -106,8 +106,9 @@
                 "apt-get -y install software-properties-common",
                 "add-apt-repository ppa:brightbox/ruby-ng",
                 "apt-get -y update",
-                "apt-get -y --force-yes upgrade",
-                "apt-get -y install ruby2.1 curl unzip",
+                "apt-get -y --force-yes dist-upgrade",
+                "apt-get -y install curl unzip",
+                "apt-get -y install libruby2.1 ruby2.1",
                 "mkdir -p /var/lattice",
                 "touch /var/lattice/username /var/lattice/password",
                 "ip route get 1 | awk '{print $NF;exit}' > /var/lattice/ip",
@@ -131,11 +132,14 @@
             "type": "shell",
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "remote_path": "/home/vagrant/bosh-cleanup.sh",
+            "override": {
+                "amazon-ebs": { "remote_path": "/home/ubuntu/bosh-cleanup.sh" }
+            },
             "inline": [
+                "chmod 1777 /tmp",
                 "mv /opt/bosh-provisioner/assets/versions /var/lattice/",
                 "rm -rf /opt/bosh-provisioner",
-                "echo manual > /etc/init/runsvdir.override",
-                "chmod 1777 /tmp"
+                "echo manual > /etc/init/runsvdir.override"
             ]
         },
         {
