@@ -45,6 +45,7 @@ perl -p -i -e "s/placeholder-system-domain/$domain/g" $job_files
 old_ip=$(cat /var/lattice/ip)
 new_ip=$(ip route get 1 | awk '{print $NF;exit}')
 perl -p -i -e "s/\\Q$old_ip\\E/$new_ip/g" $job_files
+perl -p -i -e "s/placeholder-ip/$new_ip/g" $job_files
 
 perl -p -i -e "s/placeholder-username/$username/g" $job_files
 perl -p -i -e "s/placeholder-password/$password/g" $job_files

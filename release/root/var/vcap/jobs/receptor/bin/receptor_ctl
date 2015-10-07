@@ -54,7 +54,7 @@ case $1 in
       -password="$(cat /var/lattice/password)" \
       -registerWithRouter=true \
       -domainNames=receptor.placeholder-system-domain \
-      -natsAddresses=10.0.2.15:4222 \
+      -natsAddresses=placeholder-ip:4222 \
       -natsUsername=nats \
       -natsPassword=nats \
       -corsEnabled=true \

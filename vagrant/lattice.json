@@ -139,6 +139,7 @@
                 "chmod 1777 /tmp",
                 "mv /opt/bosh-provisioner/assets/versions /var/lattice/",
                 "rm -rf /opt/bosh-provisioner",
+                "rm -f /var/vcap/data/garden/garden_graph_backing_store",
                 "echo manual > /etc/init/runsvdir.override"
             ]
         },
