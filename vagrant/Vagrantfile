@@ -78,7 +78,7 @@ Vagrant.configure("2") do |config|
       tar xzf /vagrant/lattice.tgz -C /tmp ./install
       sudo /tmp/install /vagrant/lattice.tgz
       echo "Lattice is now installed and running."
-      echo "You may target it using: ltc target $system_domain\n"
+      echo "You may target it using: ltc target $domain\n"
     SCRIPT
   end
 end
