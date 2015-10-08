@@ -88,9 +88,10 @@ var _ = Describe("CommandFactory", func() {
 				"--cpu-weight=57",
 				"--memory-mb=12",
 				"--disk-mb=12",
-				"--http-routes=route-3000-yay:3000,route-1111-wahoo:1111,route-1111-me-too:1111",
+				"--user=some-user",
 				"--working-dir=/applications",
 				"--instances=22",
+				"--http-routes=route-3000-yay:3000,route-1111-wahoo:1111,route-1111-me-too:1111",
 				"--env=TIMEZONE=CST",
 				`--env=LANG="Chicago English"`,
 				`--env=JAVA_OPTS="-Djava.arg=/dev/urandom"`,
@@ -126,7 +127,7 @@ var _ = Describe("CommandFactory", func() {
 				"UNSET":        "",
 			}))
 			Expect(createAppParams.Privileged).To(BeFalse())
-			Expect(createAppParams.User).To(Equal("root"))
+			Expect(createAppParams.User).To(Equal("some-user"))
 			Expect(createAppParams.CPUWeight).To(Equal(uint(57)))
 			Expect(createAppParams.MemoryMB).To(Equal(12))
 			Expect(createAppParams.DiskMB).To(Equal(12))
@@ -144,7 +145,7 @@ var _ = Describe("CommandFactory", func() {
 			reqSetup := createAppParams.Setup.GetDownloadAction()
 			Expect(reqSetup.From).To(Equal("http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz"))
 			Expect(reqSetup.To).To(Equal("/tmp"))
-			Expect(reqSetup.User).To(Equal("root"))
+			Expect(reqSetup.User).To(Equal("some-user"))
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Creating App: cool-web-app"))
 			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))
@@ -204,6 +205,30 @@ var _ = Describe("CommandFactory", func() {
 				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.MalformedRouteErrorMessage))
 				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+		})
+
+		Describe("User Context", func() {
+			BeforeEach(func() {
+				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+			})
+
+			It("should default user to 'root'", func() {
+				args := []string{
+					"cool-web-app",
+					"superfun/app",
+					"--",
+					"/start-me-please",
+				}
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+				Expect(createAppParams.User).To(Equal("root"))
+
+				Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
+				reqSetup := createAppParams.Setup.GetDownloadAction()
+				Expect(reqSetup.User).To(Equal("root"))
 			})
 		})
 

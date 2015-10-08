@@ -89,6 +89,11 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Value: 0,
 		},
 		cli.StringFlag{
+			Name:  "user, u",
+			Usage: "Runs the app under this user context",
+			Value: "root",
+		},
+		cli.StringFlag{
 			Name:  "ports, p",
 			Usage: "Ports to expose on the container (comma delimited)",
 		},
@@ -190,6 +195,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	cpuWeightFlag := uint(context.Int("cpu-weight"))
 	memoryMBFlag := context.Int("memory-mb")
 	diskMBFlag := context.Int("disk-mb")
+	userFlag := context.String("user")
 	portsFlag := context.String("ports")
 	noMonitorFlag := context.Bool("no-monitor")
 	portMonitorFlag := context.Int("monitor-port")
@@ -322,7 +328,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	err = factory.AppRunner.CreateApp(app_runner.CreateAppParams{
 		AppEnvironmentParams: app_runner.AppEnvironmentParams{
 			EnvironmentVariables: envVars,
-			User:                 "root",
+			User:                 userFlag,
 			Monitor:              monitorConfig,
 			Instances:            instancesFlag,
 			CPUWeight:            cpuWeightFlag,
@@ -344,7 +350,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		Setup: models.WrapAction(&models.DownloadAction{
 			From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
 			To:   "/tmp",
-			User: "root",
+			User: userFlag,
 		}),
 	})
 	if err != nil {
