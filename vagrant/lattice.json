@@ -1,7 +1,4 @@
 {
-    "variables": {
-        "password": "vagrant"
-    },
     "builders": [
         {
             "type": "amazon-ebs",
@@ -20,14 +17,14 @@
             "guest_os_type": "ubuntu-64",
             "disk_size": 15000,
             "ssh_username": "vagrant",
-            "ssh_password": "{{user `password`}}",
+            "ssh_password": "vagrant",
             "iso_url": "http://releases.ubuntu.com/trusty/ubuntu-14.04.3-server-amd64.iso",
             "iso_checksum": "9e5fecc94b3925bededed0fdca1bd417",
             "iso_checksum_type": "md5",
             "http_directory": "http",
             "tools_upload_flavor": "linux",
             "ssh_wait_timeout": "20m",
-            "shutdown_command": "echo {{user `password`}} | sudo -S shutdown -P now",
+            "shutdown_command": "echo vagrant | sudo -S shutdown -P now",
             "boot_command": [
                 "<esc><esc><enter><wait>",
                 "/install/vmlinuz noapic ",
@@ -50,13 +47,13 @@
             "guest_os_type": "Ubuntu_64",
             "disk_size": 15000,
             "ssh_username": "vagrant",
-            "ssh_password": "{{user `password`}}",
+            "ssh_password": "vagrant",
             "iso_url": "http://releases.ubuntu.com/trusty/ubuntu-14.04.3-server-amd64.iso",
             "iso_checksum": "9e5fecc94b3925bededed0fdca1bd417",
             "iso_checksum_type": "md5",
             "http_directory": "http",
             "ssh_wait_timeout": "20m",
-            "shutdown_command": "echo {{user `password`}} | sudo -S shutdown -P now",
+            "shutdown_command": "echo vagrant | sudo -S shutdown -P now",
             "boot_command": [
                 "<esc><esc><enter><wait>",
                 "/install/vmlinuz noapic ",
@@ -79,11 +76,9 @@
     "provisioners": [
         {
             "type": "shell",
-            "execute_command": "echo '{{user `password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
-            "inline": [ "echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" ],
-            "override": {
-                "amazon-ebs": { "inline": [ "echo 'ubuntu ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" ] }
-            }
+            "only": ["vmware-iso", "virtualbox-iso"],
+            "execute_command": "echo vagrant | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "inline": [ "echo 'vagrant ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" ]
         },
         {
             "type": "shell",

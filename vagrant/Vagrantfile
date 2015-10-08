@@ -81,13 +81,15 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell" do |s|
     s.inline = <<-SCRIPT
       #{network_config}
-      echo $domain > /var/lattice/domain
-      echo $garden_ip > /var/lattice/garden_ip
-      echo '#{ENV["LATTICE_USERNAME"]}' > /var/lattice/username
-      echo '#{ENV["LATTICE_PASSWORD"]}' > /var/lattice/password
+      echo "GARDEN_IP=$garden_ip" >> /var/lattice/setup
+      echo "DOMAIN=$domain" >> /var/lattice/setup
+      echo 'USERNAME=#{ENV["LATTICE_USERNAME"]}' >> /var/lattice/setup
+      echo 'PASSWORD=#{ENV["LATTICE_PASSWORD"]}' >> /var/lattice/setup
 
-      tar xzf /vagrant/lattice.tgz -C /tmp ./install
-      sudo /tmp/install /vagrant/lattice.tgz
+      tar xzf /vagrant/lattice.tgz -C /tmp install
+      sudo /tmp/install/brain /vagrant/lattice.tgz
+      sudo /tmp/install/cell /vagrant/lattice.tgz
+      sudo /tmp/install/start
       echo "Lattice is now installed and running."
       echo "You may target it using: ltc target $domain\n"
     SCRIPT
@@ -106,7 +108,7 @@ def download_lattice_tgz(url)
 end
 
 if provision_required && File.exists?(lattice_tgz)
-  tgz_version = `tar Oxzf #{lattice_tgz} ./root/var/lattice/versions/LATTICE_RELEASE`.chomp
+  tgz_version = `tar Oxzf #{lattice_tgz} brain/var/lattice/versions/LATTICE_RELEASE`.chomp
   if lattice_url
     url_version = lattice_url.match(/backend\/lattice-(v.+)\.tgz$/)[1]
     if tgz_version != url_version

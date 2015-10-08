@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+
+if [[ ! -f $1 ]]; then
+  echo "Usage:"
+  echo -e "\t$0 /path/to/lattice.tgz"
+  exit 1
+fi
+
+export $(cat /var/lattice/setup)
+
+tar xzf "$1" --strip-components 1 --keep-directory-symlink --no-overwrite-dir --no-same-owner -C / -- cell
+
+tee2metron='/usr/local/bin/tee2metron -dropsondeDestination=127.0.0.1:3457 -sourceInstance=lattice-collocated-0'
+sed -i "s%/var/vcap/packages/garden-linux/bin/garden-linux%$tee2metron & -externalIP=$GARDEN_IP%" \
+  /var/vcap/jobs/garden/bin/garden_ctl
+sed -i "s%/var/vcap/packages/rep/bin/rep%$tee2metron &%" \
+  /var/vcap/jobs/rep/bin/rep_ctl

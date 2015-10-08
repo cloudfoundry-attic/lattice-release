@@ -1,0 +1,53 @@
+#!/bin/bash
+
+set -e
+
+if [[ ! -f $1 ]]; then
+  echo "Usage:"
+  echo -e "\t$0 /path/to/lattice.tgz"
+  exit 1
+fi
+
+export $(cat /var/lattice/setup)
+
+/etc/init.d/lighttpd stop >/dev/null
+
+tar xzf "$1" --strip-components 1 --keep-directory-symlink --no-overwrite-dir --no-same-owner -C / -- brain
+
+# Configure proxy support
+mkdir -p /var/lattice/lighttpd
+if [[ -f /var/lattice/proxy ]]; then
+  export $(cat /var/lattice/proxy)
+  cat > /var/lattice/lighttpd/proxyconf.json <<JSON
+  {
+      "http_proxy": $(echo $http_proxy | jq -R .),
+      "https_proxy": $(echo $https_proxy | jq -R .),
+      "no_proxy": $(echo $no_proxy | jq -R .)
+  }
+JSON
+fi
+
+# Configure and secure lighttpd
+mkdir -p /var/lattice/lighttpd/blobs
+chown -R www-data:www-data /var/lattice/lighttpd
+lighttpd_password=$(openssl passwd -crypt "$PASSWORD")
+echo $USERNAME:$lighttpd_password > /var/lattice/lighttpd.user
+
+# Enabled receptor
+ln -sf /var/vcap/jobs/receptor/monit /var/vcap/monit/job/0019_receptor.monitrc
+
+# Replace placeholder values
+job_files=$(find /var/vcap/jobs/*/ -type f)
+old_ip=$(cat /var/lattice/ip)
+new_ip=$(ip route get 1 | awk '{print $NF;exit}')
+
+perl -p -i -e "s/placeholder-system-domain/$DOMAIN/g" $job_files
+perl -p -i -e "s/\\Q$old_ip\\E/$new_ip/g" $job_files
+perl -p -i -e "s/placeholder-ip/$new_ip/g" $job_files
+perl -p -i -e "s/placeholder-username/$USERNAME/g" $job_files
+perl -p -i -e "s/placeholder-password/$PASSWORD/g" $job_files
+
+sed -i 's%/var/vcap/packages/loggregator_trafficcontroller/trafficcontroller%& --disableAccessControl%' \
+  /var/vcap/jobs/loggregator_trafficcontroller/bin/loggregator_trafficcontroller_ctl
+
+/etc/init.d/lighttpd start >/dev/null

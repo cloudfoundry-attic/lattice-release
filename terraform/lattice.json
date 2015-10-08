@@ -1,7 +1,4 @@
 {
-    "variables": {
-        "password": "vagrant"
-    },
     "builders": [
         {
             "name": "brain",
@@ -9,7 +6,7 @@
             "region": "us-east-1",
             "source_ami": "ami-2dcf7b46",
             "instance_type": "t2.medium",
-            "ami_name": "lattice-vagrant-{{isotime \"20060102-1504\"}}",
+            "ami_name": "lattice-terraform-{{isotime \"20060102-1504\"}}",
             "ami_groups": ["all"],
             "ami_regions": [],
             "ssh_username": "ubuntu"
@@ -20,7 +17,7 @@
             "region": "us-east-1",
             "source_ami": "ami-2dcf7b46",
             "instance_type": "m4.large",
-            "ami_name": "lattice-vagrant-{{isotime \"20060102-1504\"}}",
+            "ami_name": "lattice-terraform-{{isotime \"20060102-1504\"}}",
             "ami_groups": ["all"],
             "ami_regions": [],
             "ssh_username": "ubuntu"
@@ -28,11 +25,6 @@
     ],
 
     "provisioners": [
-        {
-            "type": "shell",
-            "execute_command": "echo '{{user `password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
-            "inline": [ "echo 'ubuntu ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" ]
-        },
         {
             "type": "file",
             "destination": "/tmp/manifest.yml",
@@ -52,11 +44,27 @@
                 "apt-get -y update",
                 "apt-get -y install curl unzip",
                 "apt-get -y install libruby2.1 ruby2.1",
-                "mkdir -p /var/lattice",
+                "echo 'UseDNS no' >> /etc/ssh/sshd_config",
+                "mkdir -p /var/lattice"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["brain"],
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
                 "touch /var/lattice/username /var/lattice/password",
                 "ip route get 1 | awk '{print $NF;exit}' > /var/lattice/ip",
-                "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml",
-                "echo 'UseDNS no' >> /etc/ssh/sshd_config"
+                "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["cell"],
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
+                "echo 192.0.2.1 > /var/lattice/brain_ip",
+                "sed \"s/placeholder-brain-ip/$(cat /var/lattice/brain_ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml"
             ]
         },
         {
@@ -72,21 +80,30 @@
                 "chmod 1777 /tmp",
                 "mv /opt/bosh-provisioner/assets/versions /var/lattice/",
                 "rm -rf /opt/bosh-provisioner",
-                "rm -f /var/vcap/data/garden/garden_graph_backing_store",
                 "echo manual > /etc/init/runsvdir.override"
             ]
         },
         {
             "type": "shell",
+            "only": ["cell"],
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
-                "apt-get -y install jq lighttpd lighttpd-mod-webdav"
+                "rm -f /var/vcap/data/garden/garden_graph_backing_store"
+            ]
+        },
+        {
+            "type": "shell",
+            "only": ["brain"],
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
+                "apt-get -y install lighttpd lighttpd-mod-webdav"
             ]
         },
         {
             "type": "shell",
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
+                "apt-get -y install jq",
                 "apt-get -y autoremove",
                 "apt-get -y clean"
             ]

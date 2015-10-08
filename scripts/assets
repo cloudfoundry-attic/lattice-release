@@ -10,7 +10,7 @@ lattice_release_dir=$(cd `dirname $0` && cd .. && pwd)
 
 curl -s http://lattice.s3.amazonaws.com/packer-bosh-assets.tgz | tar -C "$assets_dir" -xz --strip-components 1
 
-if [ -f $HOME/.packerconfig ]; then
+if [[ -f $HOME/.packerconfig ]]; then
   packer_config=$(cat $HOME/.packerconfig)
   echo "Updating existing ~/.packerconfig to point to downloaded packer-bosh."
 fi

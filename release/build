@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ -z "$1" ]] && [[ -t 1 ]]; then
+if [[ -z $1 ]] && [[ -t 1 ]]; then
     echo "Usage:"
     echo -e "\t$0 /path/to/lattice.tgz [lattice release version]"
     echo -e "\t$0 [lattice release version] > /path/to/lattice.tgz"
@@ -28,42 +28,50 @@ receptor_version=$(git -C "$receptor_dir" describe --tags --always)
 
 tmp_dir=$(mktemp -d /tmp/lattice.XXXXXX)
 
-cp -a $lattice_release_dir/release/root $tmp_dir/
-cp $lattice_release_dir/release/src/install $tmp_dir/
-
-lighttpd_dir=$tmp_dir/root/var/lattice/lighttpd
-bin_dir=$tmp_dir/root/usr/local/bin
-cell_helper_dir=$tmp_dir/root/var/vcap/jobs/file_server/packages/cell-helpers
-versions_dir=$tmp_dir/root/var/lattice/versions
-mkdir -p $lighttpd_dir $bin_dir $cell_helper_dir $versions_dir
+cp -a $lattice_release_dir/release/install $tmp_dir/
 
 export GOPATH=$lattice_release_dir:$diego_release_dir
-
-pushd $lighttpd_dir >/dev/null
-  ltc_src=github.com/cloudfoundry-incubator/lattice/ltc
-  GOOS=linux GOARCH=amd64 go build -a -o linux/ltc "$ltc_src"
-  GOOS=darwin GOARCH=amd64 go build -a -o osx/ltc "$ltc_src"
-popd >/dev/null
-
 export GOOS=linux
 export GOARCH=amd64
 
-pushd $bin_dir >/dev/null
-  go build -a github.com/cloudfoundry-incubator/receptor/cmd/receptor
-  go build -a github.com/cloudfoundry-incubator/lattice/cell-helpers/tee2metron
-popd >/dev/null
+# Brain
 
-pushd $cell_helper_dir >/dev/null
+cp -a $lattice_release_dir/release/brain $tmp_dir/
+
+brain_bin_dir=$tmp_dir/brain/usr/local/bin
+brain_lighttpd_dir=$tmp_dir/brain/var/lattice/lighttpd
+brain_cell_helper_dir=$tmp_dir/brain/var/vcap/jobs/file_server/packages/cell-helpers
+brain_versions_dir=$tmp_dir/brain/var/lattice/versions
+mkdir -p $brain_lighttpd_dir $brain_bin_dir $brain_cell_helper_dir $brain_versions_dir
+
+go build -a -o $brain_lighttpd_dir/linux/ltc github.com/cloudfoundry-incubator/lattice/ltc
+GOOS=darwin go build -a -o $brain_lighttpd_dir/osx/ltc github.com/cloudfoundry-incubator/lattice/ltc
+go build -a -o $brain_bin_dir/receptor github.com/cloudfoundry-incubator/receptor/cmd/receptor
+
+pushd $brain_cell_helper_dir >/dev/null
   go build -a github.com/cloudfoundry-incubator/lattice/cell-helpers/davtool
   go build -a github.com/cloudfoundry-incubator/lattice/cell-helpers/s3tool
   tar czf cell-helpers.tgz davtool s3tool
   rm -f davtool s3tool
 popd >/dev/null
 
-echo $lattice_release_version > $versions_dir/LATTICE_RELEASE
-echo $lattice_version > $versions_dir/LATTICE
-echo $receptor_version > $versions_dir/RECEPTOR
+echo $lattice_version > $brain_versions_dir/LATTICE
+echo $lattice_release_version > $brain_versions_dir/LATTICE_RELEASE
+echo $receptor_version > $brain_versions_dir/RECEPTOR
 
-tar -czf "$lattice_tgz" -C "$tmp_dir" .
+# Cell
+
+cell_bin_dir=$tmp_dir/cell/usr/local/bin
+cell_versions_dir=$tmp_dir/cell/var/lattice/versions
+mkdir -p $cell_bin_dir $cell_versions_dir
+
+go build -a -o $cell_bin_dir/tee2metron github.com/cloudfoundry-incubator/lattice/cell-helpers/tee2metron
+
+echo $lattice_version > $cell_versions_dir/LATTICE
+echo $lattice_release_version > $cell_versions_dir/LATTICE_RELEASE
+
+# Output
+
+tar -czf "$lattice_tgz" -C "$tmp_dir" brain cell install
 
 rm -rf "$tmp_dir"
