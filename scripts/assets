@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -e
+
+assets_dir_option=${1:-assets}
+
+mkdir -p "$assets_dir_option"
+assets_dir=$(cd "$assets_dir_option" && pwd)
+lattice_release_dir=$(cd `dirname $0` && cd .. && pwd)
+
+curl -s http://lattice.s3.amazonaws.com/packer-bosh-assets.tgz | tar -C "$assets_dir" -xz --strip-components 1
+
+if [ -f $HOME/.packerconfig ]; then
+  packer_config=$(cat $HOME/.packerconfig)
+  echo "Updating existing ~/.packerconfig to point to downloaded packer-bosh."
+fi
+packer_bosh=$assets_dir/packer-bosh
+filter='. + {"provisioners": (.provisioners + {"packer-bosh": "'$packer_bosh'"})}'
+echo ${packer_config:-'{}'} | jq "$filter" >$HOME/.packerconfig
+
+rm -rf $assets_dir/{releases,versions}
+mkdir $assets_dir/{releases,versions}
+
+git -C "$lattice_release_dir" describe --tags --always > $assets_dir/versions/LATTICE_RELEASE_IMAGE
+
+for release in diego garden-linux cf-routing; do
+  pushd $lattice_release_dir/$release-release >/dev/null
+    yes yes | bosh -n reset release
+    bosh -n create release --name $release --version 0 --with-tarball --force
+    mv dev_releases/$release/$release-0.tgz $assets_dir/releases/
+    version_file="$(echo ${release//-/_} | tr [:lower:] [:upper:])_RELEASE"
+    git describe --tags --always > $assets_dir/versions/$version_file
+  popd >/dev/null
+done
+
+# Use custom cf-release until components are broken out
+git -C $lattice_release_dir/cf-release describe --tags --always > $assets_dir/versions/CF_RELEASE
+pushd $assets_dir/releases >/dev/null
+  cp $lattice_release_dir/cf-lattice.yml ./
+  bosh create release $PWD/cf-lattice.yml --dir $lattice_release_dir/cf-release --with-tarball --force
+popd >/dev/null
+

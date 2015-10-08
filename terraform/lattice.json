@@ -1,0 +1,95 @@
+{
+    "variables": {
+        "password": "vagrant"
+    },
+    "builders": [
+        {
+            "name": "brain",
+            "type": "amazon-ebs",
+            "region": "us-east-1",
+            "source_ami": "ami-2dcf7b46",
+            "instance_type": "t2.medium",
+            "ami_name": "lattice-vagrant-{{isotime \"20060102-1504\"}}",
+            "ami_groups": ["all"],
+            "ami_regions": [],
+            "ssh_username": "ubuntu"
+        },
+        {
+            "name": "cell",
+            "type": "amazon-ebs",
+            "region": "us-east-1",
+            "source_ami": "ami-2dcf7b46",
+            "instance_type": "m4.large",
+            "ami_name": "lattice-vagrant-{{isotime \"20060102-1504\"}}",
+            "ami_groups": ["all"],
+            "ami_regions": [],
+            "ssh_username": "ubuntu"
+        }
+    ],
+
+    "provisioners": [
+        {
+            "type": "shell",
+            "execute_command": "echo '{{user `password`}}' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+            "inline": [ "echo 'ubuntu ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" ]
+        },
+        {
+            "type": "file",
+            "destination": "/tmp/manifest.yml",
+            "override": {
+              "brain": { "source": "brain.yml" },
+              "cell": { "source": "cell.yml" }
+            }
+        },
+        {
+            "type": "shell",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
+                "apt-get -y install software-properties-common",
+                "add-apt-repository ppa:brightbox/ruby-ng",
+                "apt-get -y update",
+                "apt-get -y --force-yes dist-upgrade",
+                "apt-get -y update",
+                "apt-get -y install curl unzip",
+                "apt-get -y install libruby2.1 ruby2.1",
+                "mkdir -p /var/lattice",
+                "touch /var/lattice/username /var/lattice/password",
+                "ip route get 1 | awk '{print $NF;exit}' > /var/lattice/ip",
+                "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml",
+                "echo 'UseDNS no' >> /etc/ssh/sshd_config"
+            ]
+        },
+        {
+            "type": "packer-bosh",
+            "assets_dir": "assets",
+            "remote_manifest_path": "/var/lattice/manifest.yml"
+        },
+        {
+            "type": "shell",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "remote_path": "/home/ubuntu/bosh-cleanup.sh",
+            "inline": [
+                "chmod 1777 /tmp",
+                "mv /opt/bosh-provisioner/assets/versions /var/lattice/",
+                "rm -rf /opt/bosh-provisioner",
+                "rm -f /var/vcap/data/garden/garden_graph_backing_store",
+                "echo manual > /etc/init/runsvdir.override"
+            ]
+        },
+        {
+            "type": "shell",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
+                "apt-get -y install jq lighttpd lighttpd-mod-webdav"
+            ]
+        },
+        {
+            "type": "shell",
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
+                "apt-get -y autoremove",
+                "apt-get -y clean"
+            ]
+        }
+    ]
+}
