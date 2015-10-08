@@ -118,6 +118,7 @@
                 "add-apt-repository ppa:brightbox/ruby-ng",
                 "apt-get -y update",
                 "apt-get -y --force-yes dist-upgrade",
+                "apt-get -y update",
                 "apt-get -y install curl unzip",
                 "apt-get -y install libruby2.1 ruby2.1",
                 "mkdir -p /var/lattice",
@@ -125,14 +126,6 @@
                 "ip route get 1 | awk '{print $NF;exit}' > /var/lattice/ip",
                 "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml",
                 "echo 'UseDNS no' >> /etc/ssh/sshd_config"
-            ]
-        },
-        {
-            "type": "shell",
-            "only": ["amazon-ebs"],
-            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
-            "inline": [
-                "apt-get -y update"
             ]
         },
         {

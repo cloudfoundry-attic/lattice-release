@@ -50,17 +50,13 @@ perl -p -i -e "s/placeholder-ip/$new_ip/g" $job_files
 perl -p -i -e "s/placeholder-username/$username/g" $job_files
 perl -p -i -e "s/placeholder-password/$password/g" $job_files
 
-public_ip=$(cat /var/lattice/public_ip)
 tee2metron='/usr/local/bin/tee2metron -dropsondeDestination=127.0.0.1:3457 -sourceInstance=lattice-collocated-0'
-external_ip="-externalIP=$public_ip"
-sed -i "s%/var/vcap/packages/garden-linux/bin/garden-linux%$tee2metron & $external_ip%" \
+sed -i "s%/var/vcap/packages/garden-linux/bin/garden-linux%$tee2metron & -externalIP=$(cat /var/lattice/garden_ip)%" \
   /var/vcap/jobs/garden/bin/garden_ctl
-
+sed -i "s%/var/vcap/packages/rep/bin/rep%$tee2metron &%" \
+  /var/vcap/jobs/rep/bin/rep_ctl
 sed -i 's%/var/vcap/packages/loggregator_trafficcontroller/trafficcontroller%& --disableAccessControl%' \
   /var/vcap/jobs/loggregator_trafficcontroller/bin/loggregator_trafficcontroller_ctl
-sed -i 's%/var/vcap/packages/rep/bin/rep%/usr/local/bin/tee2metron -dropsondeDestination=127.0.0.1:3457 -sourceInstance=lattice-collocated-0 &%' \
-  /var/vcap/jobs/rep/bin/rep_ctl
-
 
 # Start all services
 rm -f /etc/init/runsvdir.override

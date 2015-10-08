@@ -62,6 +62,7 @@ Vagrant.configure("2") do |config|
     network_config = <<-SCRIPT
       public_ip="$(curl http://169.254.169.254/latest/meta-data/public-ipv4)"
       domain="#{ENV["LATTICE_DOMAIN"] || "${public_ip}.xip.io"}"
+      garden_ip="$(ip route get 1 | awk '{print $NF;exit}')"
     SCRIPT
 
     config.ssh.insert_key = false
@@ -70,8 +71,8 @@ Vagrant.configure("2") do |config|
     default_domain = (public_ip == "192.168.11.11") ? "local.lattice.cf" : "#{public_ip}.xip.io"
 
     network_config = <<-SCRIPT
-      public_ip="#{public_ip}"
       domain="#{ENV["LATTICE_DOMAIN"] || default_domain}"
+      garden_ip="#{public_ip}"
     SCRIPT
 
     config.vm.network "private_network", ip: public_ip
@@ -81,7 +82,7 @@ Vagrant.configure("2") do |config|
     s.inline = <<-SCRIPT
       #{network_config}
       echo $domain > /var/lattice/domain
-      echo $public_ip > /var/lattice/public_ip
+      echo $garden_ip > /var/lattice/garden_ip
       echo '#{ENV["LATTICE_USERNAME"]}' > /var/lattice/username
       echo '#{ENV["LATTICE_PASSWORD"]}' > /var/lattice/password
 
