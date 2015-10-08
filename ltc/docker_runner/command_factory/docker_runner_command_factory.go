@@ -91,7 +91,6 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 		cli.StringFlag{
 			Name:  "user, u",
 			Usage: "Runs the app under this user context",
-			Value: "root",
 		},
 		cli.StringFlag{
 			Name:  "ports, p",
@@ -234,6 +233,14 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		factory.UI.SayLine(fmt.Sprintf("Error fetching image metadata: %s", err))
 		factory.ExitHandler.Exit(exit_codes.BadDocker)
 		return
+	}
+
+	if userFlag == "" {
+		if imageMetadata.User != "" {
+			userFlag = imageMetadata.User
+		} else {
+			userFlag = "root"
+		}
 	}
 
 	exposedPorts, err := factory.getExposedPortsFromArgs(portsFlag, imageMetadata)

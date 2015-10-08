@@ -11,6 +11,7 @@ import (
 )
 
 type ImageMetadata struct {
+	User         string
 	WorkingDir   string
 	ExposedPorts []uint16
 	StartCommand []string
@@ -92,6 +93,7 @@ func (fetcher *dockerMetadataFetcher) FetchMetadata(dockerPath string) (*ImageMe
 
 	return &ImageMetadata{
 		WorkingDir:   img.Config.WorkingDir,
+		User:         img.Config.User,
 		StartCommand: startCommand,
 		ExposedPorts: exposedPorts,
 		Env:          img.Config.Env,

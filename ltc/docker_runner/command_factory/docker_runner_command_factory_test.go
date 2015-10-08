@@ -208,30 +208,6 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
-		Describe("User Context", func() {
-			BeforeEach(func() {
-				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
-			})
-
-			It("should default user to 'root'", func() {
-				args := []string{
-					"cool-web-app",
-					"superfun/app",
-					"--",
-					"/start-me-please",
-				}
-				test_helpers.ExecuteCommandWithArgs(createCommand, args)
-
-				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
-				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
-				Expect(createAppParams.User).To(Equal("root"))
-
-				Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
-				reqSetup := createAppParams.Setup.GetDownloadAction()
-				Expect(reqSetup.User).To(Equal("root"))
-			})
-		})
-
 		Describe("Exposed Ports", func() {
 			BeforeEach(func() {
 				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
@@ -379,6 +355,10 @@ var _ = Describe("CommandFactory", func() {
 					Expect(createAppParams.ExposedPorts).To(Equal([]uint16{8080}))
 					Expect(createAppParams.Instances).To(Equal(1))
 					Expect(createAppParams.WorkingDir).To(Equal("/"))
+
+					Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
+					reqSetup := createAppParams.Setup.GetDownloadAction()
+					Expect(reqSetup.User).To(Equal("root"))
 				})
 			})
 
@@ -398,6 +378,34 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 					Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.BadDocker}))
 				})
+			})
+		})
+
+		Describe("User Context", func() {
+			BeforeEach(func() {
+				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+			})
+
+			It("should default user to 'root'", func() {
+				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{
+					User: "meta-user",
+				}, nil)
+
+				args := []string{
+					"cool-web-app",
+					"superfun/app",
+					"--",
+					"/start-me-please",
+				}
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+				Expect(createAppParams.User).To(Equal("meta-user"))
+
+				Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
+				reqSetup := createAppParams.Setup.GetDownloadAction()
+				Expect(reqSetup.User).To(Equal("meta-user"))
 			})
 		})
 

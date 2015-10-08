@@ -48,10 +48,11 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 					[]byte(`{
 					"container_config":{ "ExposedPorts":{"28321/tcp":{}, "6923/udp":{}, "27017/tcp":{}} },
 				 	"config":{
-				 				"WorkingDir":"/home/app",
-				 				"Entrypoint":["/lattice-app"],
-				 				"Cmd":["--enableAwesomeMode=true","iloveargs"],
-				 				"Env":["A=1","B=2"]
+								"WorkingDir":"/home/app",
+								"User":"the-meta-user",
+								"Entrypoint":["/lattice-app"],
+								"Cmd":["--enableAwesomeMode=true","iloveargs"],
+								"Env":["A=1","B=2"]
 							}
 						}`),
 					0,
@@ -60,8 +61,9 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				dockerImageNoTag := "cool_user123/sweetapp"
 
 				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(dockerPath)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(imageMetadata).ToNot(BeNil())
+				Expect(err).NotTo(HaveOccurred())
+				Expect(imageMetadata).NotTo(BeNil())
+				Expect(imageMetadata.User).To(Equal("the-meta-user"))
 				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
 				Expect(imageMetadata.StartCommand).To(ConsistOf("/lattice-app", "--enableAwesomeMode=true", "iloveargs"))
 				Expect(imageMetadata.ExposedPorts).To(Equal([]uint16{uint16(27017), uint16(28321)}))
@@ -109,9 +111,11 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 					[]byte(`{
 					"container_config":{ "ExposedPorts":{"4444/tcp":{}, "5555/udp":{}, "3333/tcp":{}} },
 				 	"config":{
-				 				"WorkingDir":"/home/app",
-				 				"Entrypoint":["/savory-app"],
-				 				"Cmd":["--pretzels=salty","cheesy"]
+								"WorkingDir":"/home/app",
+								"User":"the-meta-user",
+								"Entrypoint":["/savory-app"],
+								"Cmd":["--pretzels=salty","cheesy"],
+								"Env":["A=1","B=2"]
 							}
 						}`),
 					0,
@@ -120,10 +124,12 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				dockerPath := "my.custom.registry:5000/savory-app"
 				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(dockerPath)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(imageMetadata).ToNot(BeNil())
+				Expect(imageMetadata).NotTo(BeNil())
+				Expect(imageMetadata.User).To(Equal("the-meta-user"))
 				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
 				Expect(imageMetadata.StartCommand).To(ConsistOf("/savory-app", "--pretzels=salty", "cheesy"))
 				Expect(imageMetadata.ExposedPorts).To(ConsistOf(uint16(3333), uint16(4444)))
+				Expect(imageMetadata.Env).To(ConsistOf([]string{"A=1", "B=2"}))
 
 				Expect(fakeDockerSessionFactory.MakeSessionCallCount()).To(Equal(1))
 				Expect(fakeDockerSessionFactory.MakeSessionArgsForCall(0)).To(Equal(dockerPath))
@@ -175,9 +181,11 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 					[]byte(`{
 					"container_config":{ "ExposedPorts":{"4444/tcp":{}, "5555/udp":{}, "3333/tcp":{}} },
 				 	"config":{
-				 				"WorkingDir":"/home/app",
-				 				"Entrypoint":["/savory-app"],
-				 				"Cmd":["--pretzels=salty","cheesy"]
+								"WorkingDir":"/home/app",
+								"User":"the-meta-user",
+								"Entrypoint":["/savory-app"],
+								"Cmd":["--pretzels=salty","cheesy"],
+								"Env":["A=1","B=2"]
 							}
 						}`),
 					0,
@@ -186,10 +194,12 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 				dockerPath := "my.custom.registry:5000/savory-app"
 				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(dockerPath)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(imageMetadata).ToNot(BeNil())
+				Expect(imageMetadata).NotTo(BeNil())
+				Expect(imageMetadata.User).To(Equal("the-meta-user"))
 				Expect(imageMetadata.WorkingDir).To(Equal("/home/app"))
 				Expect(imageMetadata.StartCommand).To(ConsistOf("/savory-app", "--pretzels=salty", "cheesy"))
 				Expect(imageMetadata.ExposedPorts).To(ConsistOf(uint16(3333), uint16(4444)))
+				Expect(imageMetadata.Env).To(ConsistOf([]string{"A=1", "B=2"}))
 
 				Expect(fakeDockerSessionFactory.MakeSessionCallCount()).To(Equal(2))
 
@@ -263,9 +273,11 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 					[]byte(`{
 					"container_config":{ "ExposedPorts":null },
 				 	"config":{
-				 				"WorkingDir":"/home/app",
-				 				"Entrypoint":["/lattice-app"],
-				 				"Cmd":["--enableAwesomeMode=true","iloveargs"]
+								"WorkingDir":"/home/app",
+								"User":"the-meta-user",
+								"Entrypoint":["/lattice-app"],
+								"Cmd":["--enableAwesomeMode=true","iloveargs"],
+								"Env":["A=1","B=2"]
 							}
 						}`),
 					0,
@@ -274,7 +286,7 @@ var _ = Describe("DockerMetaDataFetcher", func() {
 
 				imageMetadata, err := dockerMetadataFetcher.FetchMetadata(repoName)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(imageMetadata).ToNot(BeNil())
+				Expect(imageMetadata).NotTo(BeNil())
 				Expect(imageMetadata.ExposedPorts).To(BeEmpty())
 			})
 		})
