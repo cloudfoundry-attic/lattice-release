@@ -1,180 +1,165 @@
-resource "aws_vpc" "lattice-network" {
-    cidr_block = "${var.aws_vpc_cidr_block}"
+resource "aws_vpc" "network" {
+    cidr_block = "${var.vpc_cidr_block}"
     enable_dns_support = true
     enable_dns_hostnames = true
+
     tags {
         Name = "lattice"
     }
 }
 
-resource "aws_subnet" "lattice-network" {
-    vpc_id = "${aws_vpc.lattice-network.id}"
-    cidr_block = "${var.aws_subnet_cidr_block}"
+resource "aws_subnet" "network" {
+    vpc_id = "${aws_vpc.network.id}"
+    cidr_block = "${var.subnet_cidr_block}"
     map_public_ip_on_launch = true
+
     tags {
         Name = "lattice"
     }
 }
 
-resource "aws_internet_gateway" "lattice-network" {
-    vpc_id = "${aws_vpc.lattice-network.id}"
+resource "aws_internet_gateway" "network" {
+    vpc_id = "${aws_vpc.network.id}"
 }
 
-resource "aws_route_table" "lattice-network" {
-    vpc_id = "${aws_vpc.lattice-network.id}"
+resource "aws_route_table" "network" {
+    vpc_id = "${aws_vpc.network.id}"
+
     route {
         cidr_block = "0.0.0.0/0"
-        gateway_id = "${aws_internet_gateway.lattice-network.id}"
+        gateway_id = "${aws_internet_gateway.network.id}"
     }
 }
 
-resource "aws_route_table_association" "lattice-network" {
-    subnet_id = "${aws_subnet.lattice-network.id}"
-    route_table_id = "${aws_route_table.lattice-network.id}"
+resource "aws_route_table_association" "network" {
+    subnet_id = "${aws_subnet.network.id}"
+    route_table_id = "${aws_route_table.network.id}"
 }
 
-resource "aws_security_group" "lattice-network" {
+resource "aws_security_group" "network" {
     name = "lattice"
-    description = "lattice security group"
-    vpc_id = "${aws_vpc.lattice-network.id}"
+    description = "Lattice security group"
+    vpc_id = "${aws_vpc.network.id}"
+
     ingress {
         protocol = "tcp"
         from_port = 1
         to_port = 65535
         cidr_blocks = ["0.0.0.0/0"]
     }
+
     ingress {
         protocol = "udp"
         from_port = 1
         to_port = 65535
         cidr_blocks = ["0.0.0.0/0"]
     }
+
     egress {
         protocol = "tcp"
         from_port = 1
         to_port = 65535
         cidr_blocks = ["0.0.0.0/0"]
     }
+
     egress {
         protocol = "udp"
         from_port = 1
         to_port = 65535
         cidr_blocks = ["0.0.0.0/0"]
     }
+
     tags {
         Name = "lattice"
     }
 }
 
-resource "aws_eip" "ip" {
-    instance = "${aws_instance.lattice-brain.id}"
-    vpc = true
-    connection {
-        host = "${aws_eip.ip.public_ip}"
-        user = "${var.aws_ssh_user}"
-        key_file = "${var.aws_ssh_private_key_file}"
-    }
-    provisioner "remote-exec" {
-        inline = [
-          "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_eip.ip.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
-          "sudo restart receptor",
-          "sudo restart trafficcontroller"
-        ]
-    }
-}
+resource "aws_instance" "brain" {
+    ami = "${lookup(var.brain_ami, var.aws_region)}"
+    instance_type = "${var.brain_instance_type}"
+    key_name = "${var.aws_ssh_private_key_name}"
+    subnet_id = "${aws_subnet.network.id}"
+    security_groups = ["${aws_security_group.network.id}"]
 
-resource "aws_instance" "lattice-brain" {
-    ami = "${lookup(var.aws_image, var.aws_region)}"
-    instance_type = "${var.aws_instance_type_brain}"
-    ebs_optimized = true
-    key_name = "${var.aws_key_name}"
-    subnet_id = "${aws_subnet.lattice-network.id}"
-    security_groups = [
-        "${aws_security_group.lattice-network.id}",
-    ]
     tags {
         Name = "lattice-brain"
     }
 
     connection {
-        user = "${var.aws_ssh_user}"
-        key_file = "${var.aws_ssh_private_key_file}"
+        user = "${var.ssh_username}"
+        key_file = "${var.aws_ssh_private_key_path}"
     }
 
     provisioner "local-exec" {
-        command = "${path.module}/../scripts/local/validate-lattice-tar .terraform/lattice.tgz \"${var.lattice_tar_source}\""
+        command = "mkdir -p .lattice"
     }
 
     provisioner "file" {
-        source = ".terraform/lattice.tgz"
-        destination = "/tmp/lattice.tgz"
+        source = ".lattice/"
+        destination = "/tmp"
     }
+}
 
-    provisioner "file" {
-        source = "${path.module}/../scripts/remote/install-from-tar"
-        destination = "/tmp/install-from-tar"
+resource "aws_eip" "ip" {
+    instance = "${aws_instance.brain.id}"
+    vpc = true
+
+    connection {
+        host = "${aws_eip.ip.public_ip}"
+        user = "${var.ssh_username}"
+        key_file = "${var.aws_ssh_private_key_path}"
     }
 
     provisioner "remote-exec" {
         inline = [
-            "sudo mkdir -p /var/lattice/setup",
-            "sudo sh -c 'echo \"LATTICE_USERNAME=${var.lattice_username}\" > /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"LATTICE_PASSWORD=${var.lattice_password}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${aws_instance.lattice-brain.private_ip}\" >> /var/lattice/setup/lattice-environment'",
-
-            "sudo chmod 755 /tmp/install-from-tar",
-            "sudo /tmp/install-from-tar brain \"${var.lattice_tar_source}\"",
+            "sudo -s \"echo USERNAME=${var.username} >> /var/lattice/setup\"",
+            "sudo -s \"echo PASSWORD=${var.password} >> /var/lattice/setup\"",
+            "sudo -s \"echo DOMAIN=${aws_eip.ip.public_ip}.xip.io >> /var/lattice/setup\"",
+            "[ -f /tmp/lattice.tgz ] || curl -s -o /tmp/lattice.tgz '${var.lattice_tgz_url}'",
+            "tar xzf /tmp/lattice.tgz -C /tmp install",
+            "sudo /tmp/install/brain /tmp/lattice.tgz",
+            "sudo /tmp/install/start"
         ]
     }
 }
 
 resource "aws_instance" "cell" {
-    depends_on = ["aws_eip.ip"]
-    count = "${var.num_cells}"
-    ami = "${lookup(var.aws_image, var.aws_region)}"
-    instance_type = "${var.aws_instance_type_cell}"
+    count = "${var.cell_count}"
+    ami = "${lookup(var.cell_ami, var.aws_region)}"
+    instance_type = "${var.cell_instance_type}"
     ebs_optimized = true
-    key_name = "${var.aws_key_name}"
-    subnet_id = "${aws_subnet.lattice-network.id}"
-    security_groups = [
-        "${aws_security_group.lattice-network.id}",
-    ]
+    key_name = "${var.aws_ssh_private_key_name}"
+    subnet_id = "${aws_subnet.network.id}"
+    security_groups = ["${aws_security_group.network.id}"]
+
     tags {
-        Name = "cell-${count.index}"
+        Name = "lattice-cell-${count.index}"
     }
 
     connection {
-        user = "${var.aws_ssh_user}"
-        key_file = "${var.aws_ssh_private_key_file}"
+        user = "${var.ssh_username}"
+        key_file = "${var.aws_ssh_private_key_path}"
     }
 
     provisioner "local-exec" {
-        command = "${path.module}/../scripts/local/validate-lattice-tar .terraform/lattice.tgz \"${var.lattice_tar_source}\""
+        command = "mkdir -p .lattice"
     }
 
     provisioner "file" {
-        source = ".terraform/lattice.tgz"
-        destination = "/tmp/lattice.tgz"
-    }
-
-    provisioner "file" {
-        source = "${path.module}/../scripts/remote/install-from-tar"
-        destination = "/tmp/install-from-tar"
+        source = ".lattice/"
+        destination = "/tmp"
     }
 
     provisioner "remote-exec" {
         inline = [
-            "sudo mkdir -p /var/lattice/setup",
-            "sudo sh -c 'echo \"CONSUL_SERVER_IP=${aws_instance.lattice-brain.private_ip}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"SYSTEM_DOMAIN=${aws_eip.ip.public_ip}.xip.io\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"LATTICE_CELL_ID=cell-${count.index}\" >> /var/lattice/setup/lattice-environment'",
-            "sudo sh -c 'echo \"GARDEN_EXTERNAL_IP=$(hostname -I | awk '\"'\"'{ print $1 }'\"'\"')\" >> /var/lattice/setup/lattice-environment'",
-
-            "sudo chmod +x /tmp/install-from-tar",
-            "sudo /tmp/install-from-tar cell \"${var.lattice_tar_source}\"",
-
-            "sudo tar cf /var/lattice/garden/graph/warmrootfs.tar /var/lattice/rootfs",
-            "sudo rm -f /var/lattice/garden/graph/warmrootfs.tar"
+            "sudo -s \"echo CELL_ID=lattice-cell-${count.index} >> /var/lattice/setup\"",
+            "sudo -s \"echo GARDEN_IP=$(ip route get 1 | awk '{print $NF;exit}') >> /var/lattice/setup\"",
+            "sudo -s \"echo BRAIN_IP=${aws_instance.brain.private_ip} >> /var/lattice/setup\"",
+            "[ -f /tmp/lattice.tgz ] || curl -s -o /tmp/lattice.tgz '${var.lattice_tgz_url}'",
+            "tar xzf /tmp/lattice.tgz -C /tmp install",
+            "sudo /tmp/install/cell /tmp/lattice.tgz",
+            "sudo /tmp/install/terraform/cell",
+            "sudo /tmp/install/start"
         ]
     }
 }

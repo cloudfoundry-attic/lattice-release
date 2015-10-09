@@ -75,18 +75,6 @@ properties:
     zone: z1
     deployment: lattice
   consul:
-    agent:
-      services:
-        etcd: {}
-        bbs: {}
-        auctioneer: {}
-        file_server: {}
-        ssh_proxy: {}
-        gorouter: {}
-        receptor: {}
-        router_configurer: {}
-      servers:
-        lan: [placeholder-brain-ip]
     require_ssl: false
   loggregator_endpoint:
     shared_secret: loggregator-secret

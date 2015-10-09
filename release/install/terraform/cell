@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+export $(cat /var/lattice/setup)
+
+tee2metron="/usr/local/bin/tee2metron -dropsondeDestination=$BRAIN_IP:3457 -sourceInstance=$CELL_ID"
+sed -i "s%/var/vcap/packages/rep/bin/rep%$tee2metron &%" \
+  /var/vcap/jobs/rep/bin/rep_ctl
+sed -i "s%/var/vcap/packages/garden-linux/bin/garden-linux%$tee2metron & -externalIP=$GARDEN_IP%" \
+  /var/vcap/jobs/garden/bin/garden_ctl
+sed -i "s/-cellID=lattice-cell-0/-cellID=$CELL_ID/" \
+  /var/vcap/jobs/garden/bin/garden_ctl
+
+agent_ctl=/var/vcap/jobs/consul_agent/bin/agent_ctl
+sed -i 's/expected=0/expected=1/' "$agent_ctl"
+sed -i 's/consul_join=""/consul_join="192.0.2.1"/' "$agent_ctl"
+sed -i 's/consul_server_ips=""/consul_server_ips="192.0.2.1"/' "$agent_ctl"
+
+job_files=$(find /var/vcap/jobs/*/ -type f)
+perl -p -i -e "s/192.0.2.1/$BRAIN_IP/g" $job_files
