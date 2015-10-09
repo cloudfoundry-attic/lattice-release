@@ -6,7 +6,7 @@
             "region": "us-east-1",
             "source_ami": "ami-2dcf7b46",
             "instance_type": "t2.medium",
-            "ami_name": "lattice-terraform-{{isotime \"20060102-1504\"}}",
+            "ami_name": "lattice-terraform-brain-{{isotime \"20060102-1504\"}}",
             "ami_groups": ["all"],
             "ami_regions": [],
             "ssh_username": "ubuntu"
@@ -17,7 +17,7 @@
             "region": "us-east-1",
             "source_ami": "ami-2dcf7b46",
             "instance_type": "m4.large",
-            "ami_name": "lattice-terraform-{{isotime \"20060102-1504\"}}",
+            "ami_name": "lattice-terraform-cell-{{isotime \"20060102-1504\"}}",
             "ami_groups": ["all"],
             "ami_regions": [],
             "ssh_username": "ubuntu"
