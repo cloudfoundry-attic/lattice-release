@@ -16,9 +16,6 @@ bosh_provisioner_dir=$lattice_release_dir/src/github.com/sclevine/bosh-provision
 rm -rf $assets_dir/{monit,agent}
 cp -r $bosh_provisioner_dir/assets/{monit,agent} $assets_dir/
 
-monit_binary_url=https://lattice.s3.amazonaws.com/monit/monit-5.14-linux-x64.tar.gz
-curl -s "$monit_binary_url" | tar -C $assets_dir/monit -xz --strip-components 2 monit-5.14/bin/monit
-
 GOPATH=$packer_bosh_dir/Godeps/_workspace:$GOPATH \
   go build -a -o $assets_dir/packer-bosh github.com/sclevine/packer-bosh/main
 
