@@ -2,10 +2,13 @@
 
 set -e
 
-assets_dir_option=${1:-assets}
+if [[ -z $1 ]] || [[ ! -d $1/.. ]]; then
+  echo "Usage:"
+  echo -e "\t$0 /new/or/existing/assets/directory"
+  exit 1
+fi
 
-mkdir -p "$assets_dir_option"
-assets_dir=$(cd "$assets_dir_option" && pwd)
+assets_dir=$(mkdir -p "$1" && cd "$1" && pwd)
 lattice_release_dir=$(cd `dirname $0` && cd .. && pwd)
 
 rm -rf $assets_dir/{releases,versions}

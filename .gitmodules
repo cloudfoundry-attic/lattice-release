@@ -61,9 +61,6 @@
 [submodule "src/github.com/sclevine/bosh-provisioner"]
 	path = src/github.com/sclevine/bosh-provisioner
 	url = git@github.com:sclevine/bosh-provisioner
-[submodule "src/github.com/cloudfoundry/bosh-agent"]
-	path = src/github.com/cloudfoundry/bosh-agent
-	url = https://github.com/cloudfoundry/bosh-agent
 [submodule "src/github.com/hashicorp/go-msgpack"]
 	path = src/github.com/hashicorp/go-msgpack
 	url = https://github.com/hashicorp/go-msgpack

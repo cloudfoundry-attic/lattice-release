@@ -2,34 +2,28 @@
 
 set -e
 
-assets_dir_option=${1:-assets}
+if [[ -z $1 ]] || [[ ! -d $1/.. ]]; then
+  echo "Usage:"
+  echo -e "\t$0 /new/or/existing/assets/directory"
+  exit 1
+fi
 
-mkdir -p "$assets_dir_option"
-assets_dir=$(cd "$assets_dir_option" && pwd)
+assets_dir=$(mkdir -p "$1" && cd "$1" && pwd)
 lattice_release_dir=$(cd `dirname $0` && cd .. && pwd)
 packer_bosh_dir=$lattice_release_dir/src/github.com/sclevine/packer-bosh
 bosh_provisioner_dir=$lattice_release_dir/src/github.com/sclevine/bosh-provisioner
-bosh_agent_dir=$lattice_release_dir/src/github.com/cloudfoundry/bosh-agent
 
 rm -rf $assets_dir/{monit,agent}
-cp -r $lattice_release_dir/bosh/assets/{monit,agent} $assets_dir/
-cp $bosh_provisioner_dir/assets/monit/monit $assets_dir/monit/monit
+cp -r $bosh_provisioner_dir/assets/{monit,agent} $assets_dir/
+
+monit_binary_url=https://lattice.s3.amazonaws.com/monit/monit-5.14-linux-x64.tar.gz
+curl -s "$monit_binary_url" | tar -C $assets_dir/monit -xz --strip-components 2 monit-5.14/bin/monit
 
 GOPATH=$packer_bosh_dir/Godeps/_workspace:$GOPATH \
   go build -a -o $assets_dir/packer-bosh github.com/sclevine/packer-bosh/main
 
-export GOOS=linux
-export GOARCH=amd64
-
-pushd "$assets_dir" >/dev/null
-  GOPATH=$bosh_provisioner_dir/Godeps/_workspace:$GOPATH \
-    go build -a -o bosh-provisioner github.com/sclevine/bosh-provisioner/main
-  GOPATH=$bosh_agent_dir/Godeps/_workspace:$GOPATH \
-    go build -a -o agent/bosh-agent github.com/cloudfoundry/bosh-agent/main
-  GOPATH=$bosh_agent_dir/Godeps/_workspace:$GOPATH \
-    go build -a -o agent/bosh-blobstore-dav github.com/cloudfoundry/bosh-agent/davcli/main
-  cp $bosh_agent_dir/Tools/bosh-agent-rc agent/
-popd >/dev/null
+GOOS=linux GOARCH=amd64 GOPATH=$bosh_provisioner_dir/Godeps/_workspace:$GOPATH \
+  go build -a -o $assets_dir/bosh-provisioner github.com/sclevine/bosh-provisioner/main
 
 if [[ -f $HOME/.packerconfig ]]; then
   packer_config=$(cat $HOME/.packerconfig)

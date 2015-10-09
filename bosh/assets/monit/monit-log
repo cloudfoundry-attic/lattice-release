@@ -1,5 +1,0 @@
-#!/bin/bash
-
-set -e
-
-exec svlogd -tt /var/vcap/monit/svlog
