@@ -116,11 +116,10 @@
                 "apt-get -y update",
                 "apt-get -y install curl unzip",
                 "apt-get -y install libruby2.1 ruby2.1",
+                "echo 'UseDNS no' >> /etc/ssh/sshd_config",
                 "mkdir -p /var/lattice",
-                "touch /var/lattice/username /var/lattice/password",
                 "ip route get 1 | awk '{print $NF;exit}' > /var/lattice/ip",
-                "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml",
-                "echo 'UseDNS no' >> /etc/ssh/sshd_config"
+                "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml"
             ]
         },
         {

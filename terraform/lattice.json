@@ -53,7 +53,6 @@
             "only": ["brain"],
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
-                "touch /var/lattice/username /var/lattice/password",
                 "ip route get 1 | awk '{print $NF;exit}' > /var/lattice/ip",
                 "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml"
             ]

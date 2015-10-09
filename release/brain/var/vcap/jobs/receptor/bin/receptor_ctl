@@ -50,8 +50,8 @@ case $1 in
       -bbsAddress=http://bbs.service.cf.internal:8889 \
       -debugAddr=0.0.0.0:17012 \
       -consulCluster=http://127.0.0.1:8500 \
-      -username="$(cat /var/lattice/username)" \
-      -password="$(cat /var/lattice/password)" \
+      -username="placeholder-username" \
+      -password="placeholder-password" \
       -registerWithRouter=true \
       -domainNames=receptor.placeholder-system-domain \
       -natsAddresses=placeholder-ip:4222 \

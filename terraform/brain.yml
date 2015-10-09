@@ -131,7 +131,7 @@ properties:
         require_ssl: false
       host_key: "$(openssl genrsa 2048 2> /dev/null)"
       enable_diego_auth: true
-      diego_credentials: "$(cat /var/lattice/username):$(cat /var/lattice/password)"
+      diego_credentials: placeholder-username:placeholder-password
 
   # For CF Routing:
   router:
