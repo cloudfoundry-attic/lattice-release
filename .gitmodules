@@ -18,7 +18,7 @@
 	url = https://github.com/cloudfoundry/cf-release
 [submodule "src/github.com/cloudfoundry-incubator/natbeat"]
 	path = src/github.com/cloudfoundry-incubator/natbeat
-	url = git@github.com:/cloudfoundry-incubator/natbeat
+	url = git@github.com:cloudfoundry-incubator/natbeat
 [submodule "src/github.com/goji/httpauth"]
 	path = src/github.com/goji/httpauth
 	url = https://github.com/goji/httpauth
@@ -55,3 +55,18 @@
 [submodule "src/github.com/nsf/termbox-go"]
 	path = src/github.com/nsf/termbox-go
 	url = https://github.com/nsf/termbox-go
+[submodule "src/github.com/sclevine/packer-bosh"]
+	path = src/github.com/sclevine/packer-bosh
+	url = git@github.com:sclevine/packer-bosh
+[submodule "src/github.com/sclevine/bosh-provisioner"]
+	path = src/github.com/sclevine/bosh-provisioner
+	url = git@github.com:sclevine/bosh-provisioner
+[submodule "src/github.com/cloudfoundry/bosh-agent"]
+	path = src/github.com/cloudfoundry/bosh-agent
+	url = https://github.com/cloudfoundry/bosh-agent
+[submodule "src/github.com/hashicorp/go-msgpack"]
+	path = src/github.com/hashicorp/go-msgpack
+	url = https://github.com/hashicorp/go-msgpack
+[submodule "src/github.com/hashicorp/yamux"]
+	path = src/github.com/hashicorp/yamux
+	url = https://github.com/hashicorp/yamux
