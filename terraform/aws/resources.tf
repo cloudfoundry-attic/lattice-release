@@ -112,11 +112,11 @@ resource "aws_eip" "ip" {
 
     provisioner "remote-exec" {
         inline = [
-            "sudo -s \"echo USERNAME=${var.username} >> /var/lattice/setup\"",
-            "sudo -s \"echo PASSWORD=${var.password} >> /var/lattice/setup\"",
-            "sudo -s \"echo DOMAIN=${aws_eip.ip.public_ip}.xip.io >> /var/lattice/setup\"",
+            "sudo sh -c 'echo USERNAME=${var.username} >> /var/lattice/setup'",
+            "sudo sh -c 'echo PASSWORD=${var.password} >> /var/lattice/setup'",
+            "sudo sh -c 'echo DOMAIN=${aws_eip.ip.public_ip}.xip.io >> /var/lattice/setup'",
             "[ -f /tmp/lattice.tgz ] || curl -s -o /tmp/lattice.tgz '${var.lattice_tgz_url}'",
-            "tar xzf /tmp/lattice.tgz -C /tmp install",
+            "sudo tar xzf /tmp/lattice.tgz -C /tmp install",
             "sudo /tmp/install/brain /tmp/lattice.tgz",
             "sudo /tmp/install/start"
         ]
@@ -152,11 +152,11 @@ resource "aws_instance" "cell" {
 
     provisioner "remote-exec" {
         inline = [
-            "sudo -s \"echo CELL_ID=lattice-cell-${count.index} >> /var/lattice/setup\"",
-            "sudo -s \"echo GARDEN_IP=$(ip route get 1 | awk '{print $NF;exit}') >> /var/lattice/setup\"",
-            "sudo -s \"echo BRAIN_IP=${aws_instance.brain.private_ip} >> /var/lattice/setup\"",
+            "sudo sh -c 'echo CELL_ID=lattice-cell-${count.index} >> /var/lattice/setup'",
+            "sudo sh -c \"echo GARDEN_IP=$(ip route get 1 | awk '{print $NF;exit}') >> /var/lattice/setup\"",
+            "sudo sh -c 'echo BRAIN_IP=${aws_instance.brain.private_ip} >> /var/lattice/setup'",
             "[ -f /tmp/lattice.tgz ] || curl -s -o /tmp/lattice.tgz '${var.lattice_tgz_url}'",
-            "tar xzf /tmp/lattice.tgz -C /tmp install",
+            "sudo tar xzf /tmp/lattice.tgz -C /tmp install",
             "sudo /tmp/install/cell /tmp/lattice.tgz",
             "sudo /tmp/install/terraform/cell",
             "sudo /tmp/install/start"
