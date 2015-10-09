@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ -z $1 ]] || [[ ! -d $1/.. ]]; then
+if [[ -z $1 ]] || [[ ! -d $(dirname "$1") ]]; then
   echo "Usage:"
   echo -e "\t$0 /new/or/existing/assets/directory"
   exit 1
