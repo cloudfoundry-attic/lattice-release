@@ -1,3 +1,0 @@
-#!/bin/bash
-
-/var/lattice/health_check "auctioneer" "consul" "doppler" "etcd" "bbs" "file-server" "gnatsd" "gorouter" "receptor" "route-emitter" "trafficcontroller" "metron"
