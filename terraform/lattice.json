@@ -1,4 +1,7 @@
 {
+    "variables": {
+        "version": "development"
+    },
     "builders": [
         {
             "name": "brain",
@@ -9,7 +12,8 @@
             "ami_name": "lattice-terraform-brain-{{isotime \"20060102-1504\"}}",
             "ami_groups": ["all"],
             "ami_regions": [],
-            "ssh_username": "ubuntu"
+            "ssh_username": "ubuntu",
+            "tags": {"Name": "{{user `version`}}"}
         },
         {
             "name": "cell",
@@ -20,7 +24,8 @@
             "ami_name": "lattice-terraform-cell-{{isotime \"20060102-1504\"}}",
             "ami_groups": ["all"],
             "ami_regions": [],
-            "ssh_username": "ubuntu"
+            "ssh_username": "ubuntu",
+            "tags": {"Name": "{{user `version`}}"}
         }
     ],
 
@@ -45,16 +50,10 @@
                 "apt-get -y install curl unzip",
                 "apt-get -y install libruby2.1 ruby2.1",
                 "echo 'UseDNS no' >> /etc/ssh/sshd_config",
-                "mkdir -p /var/lattice"
-            ]
-        },
-        {
-            "type": "shell",
-            "only": ["brain"],
-            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
-            "inline": [
+                "mkdir -p /var/lattice",
+                "cp /tmp/manifest.yml /var/lattice/manifest.yml",
                 "ip route get 1 | awk '{print $NF;exit}' > /var/lattice/ip",
-                "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml"
+                "sed -i \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /var/lattice/manifest.yml"
             ]
         },
         {
@@ -63,7 +62,7 @@
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
                 "echo 192.0.2.1 > /var/lattice/brain_ip",
-                "sed \"s/placeholder-brain-ip/$(cat /var/lattice/brain_ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml"
+                "sed -i \"s/placeholder-brain-ip/$(cat /var/lattice/brain_ip)/\" /var/lattice/manifest.yml"
             ]
         },
         {

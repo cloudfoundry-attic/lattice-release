@@ -14,8 +14,9 @@ sed -i "s/-cellID=lattice-cell-0/-cellID=$CELL_ID/" \
 
 agent_ctl=/var/vcap/jobs/consul_agent/bin/agent_ctl
 sed -i 's/expected=0/expected=1/' "$agent_ctl"
-sed -i 's/consul_join=""/consul_join="192.0.2.1"/' "$agent_ctl"
-sed -i 's/consul_server_ips=""/consul_server_ips="192.0.2.1"/' "$agent_ctl"
+sed -i 's/consul_join=""/consul_join="'$BRAIN_IP'"/' "$agent_ctl"
+sed -i 's/consul_server_ips=""/consul_server_ips="'$BRAIN_IP'"/' "$agent_ctl"
 
 job_files=$(find /var/vcap/jobs/*/ -type f)
-perl -p -i -e "s/192.0.2.1/$BRAIN_IP/g" $job_files
+old_brain_ip=$(cat /var/lattice/brain_ip)
+perl -p -i -e "s/$old_brain_ip/$BRAIN_IP/g" $job_files

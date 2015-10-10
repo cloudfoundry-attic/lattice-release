@@ -117,6 +117,7 @@ resource "aws_eip" "ip" {
             "sudo sh -c 'echo DOMAIN=${aws_eip.ip.public_ip}.xip.io >> /var/lattice/setup'",
             "[ -f /tmp/lattice.tgz ] || curl -s -o /tmp/lattice.tgz '${var.lattice_tgz_url}'",
             "sudo tar xzf /tmp/lattice.tgz -C /tmp install",
+            "sudo /tmp/install/common",
             "sudo /tmp/install/brain /tmp/lattice.tgz",
             "sudo /tmp/install/start"
         ]
@@ -157,6 +158,7 @@ resource "aws_instance" "cell" {
             "sudo sh -c 'echo BRAIN_IP=${aws_instance.brain.private_ip} >> /var/lattice/setup'",
             "[ -f /tmp/lattice.tgz ] || curl -s -o /tmp/lattice.tgz '${var.lattice_tgz_url}'",
             "sudo tar xzf /tmp/lattice.tgz -C /tmp install",
+            "sudo /tmp/install/common",
             "sudo /tmp/install/cell /tmp/lattice.tgz",
             "sudo /tmp/install/terraform/cell",
             "sudo /tmp/install/start"

@@ -70,7 +70,7 @@ variable "brain_ami" {
         eu-central-1 = ""
         eu-west-1 = ""
         sa-east-1 = ""
-        us-east-1 = "ami-8f80ceea"
+        us-east-1 = "ami-3fe5ab5a"
         us-west-1 = ""
         us-west-2 = ""
     }
@@ -85,7 +85,7 @@ variable "cell_ami" {
         eu-central-1 = ""
         eu-west-1 = ""
         sa-east-1 = ""
-        us-east-1 = "ami-d580ceb0"
+        us-east-1 = "ami-2de5ab48"
         us-west-1 = ""
         us-west-2 = ""
     }
