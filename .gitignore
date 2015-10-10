@@ -1,16 +1,17 @@
 .DS_Store
 
+*.box
+*.tfstate
+*.tfstate.backup
+*.tfvars
+lattice.tgz
+
 /bin
 /pkg
 
 /vagrant/assets
 /vagrant/packer_cache
 /vagrant/.vagrant
-/vagrant/*.box
-/vagrant/lattice.tgz
 /vagrant/output-*
 
 /terraform/assets
-/terraform/packer_cache
-/terraform/*.box
-/terraform/output-*

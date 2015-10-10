@@ -125,6 +125,7 @@ resource "aws_eip" "ip" {
 }
 
 resource "aws_instance" "cell" {
+    depends_on = ["aws_eip.ip"]
     count = "${var.cell_count}"
     ami = "${lookup(var.cell_ami, var.aws_region)}"
     instance_type = "${var.cell_instance_type}"
