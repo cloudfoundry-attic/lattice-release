@@ -83,6 +83,7 @@ Vagrant.configure("2") do |config|
       #{network_config}
       echo "GARDEN_IP=$garden_ip" >> /var/lattice/setup
       echo "DOMAIN=$domain" >> /var/lattice/setup
+      echo 'HOST_ID=lattice-collocated-0' >> /var/lattice/setup
       echo 'USERNAME=#{ENV["LATTICE_USERNAME"]}' >> /var/lattice/setup
       echo 'PASSWORD=#{ENV["LATTICE_PASSWORD"]}' >> /var/lattice/setup
 
