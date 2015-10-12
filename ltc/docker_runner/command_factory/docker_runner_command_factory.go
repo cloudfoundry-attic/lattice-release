@@ -91,6 +91,10 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Name:  "user, u",
 			Usage: "Runs the app under this user context",
 		},
+		cli.BoolFlag{
+			Name:  "run-as-root, r",
+			Usage: "Deprecated: please use --user instead",
+		},
 		cli.StringFlag{
 			Name:  "ports, p",
 			Usage: "Ports to expose on the container (comma delimited)",
@@ -194,6 +198,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	memoryMBFlag := context.Int("memory-mb")
 	diskMBFlag := context.Int("disk-mb")
 	userFlag := context.String("user")
+	runAsRootFlag := context.Bool("run-as-root")
 	portsFlag := context.String("ports")
 	noMonitorFlag := context.Bool("no-monitor")
 	portMonitorFlag := context.Int("monitor-port")
@@ -234,13 +239,21 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		return
 	}
 
+	if runAsRootFlag {
+		userFlag = "root"
+		factory.UI.SayLine("Warning: run-as-root has been deprecated, please use '--user=root' instead)")
+	}
+
 	if userFlag == "" {
 		if imageMetadata.User != "" {
 			userFlag = imageMetadata.User
+			factory.UI.SayLine("Setting the user to %s (obtained from docker image metadata)...", imageMetadata.User)
 		} else {
 			userFlag = "root"
 			factory.UI.SayLine("Warning: No container user specified to run your app, your app will be run as root!")
 		}
+	} else {
+		factory.UI.SayLine("Setting the user to %s from option...", userFlag)
 	}
 
 	exposedPorts, err := factory.getExposedPortsFromArgs(portsFlag, imageMetadata)

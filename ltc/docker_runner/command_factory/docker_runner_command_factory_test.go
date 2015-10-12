@@ -376,8 +376,8 @@ var _ = Describe("CommandFactory", func() {
 			})
 
 			Context("When the user has been set", func() {
-				It("should use the given user", func() {
-					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+				It("should use the given user, overriding image metadata", func() {
+					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{User: "meta-user"}, nil)
 
 					args := []string{
 						"--user=some-user",
@@ -391,6 +391,7 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 					Expect(createAppParams.User).To(Equal("some-user"))
+					Expect(outputBuffer).To(test_helpers.SayLine("Setting the user to some-user from option..."))
 				})
 
 				It("should not print a warning message if user is set to root", func() {
@@ -408,7 +409,49 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 					Expect(createAppParams.User).To(Equal("root"))
+					Expect(outputBuffer).To(test_helpers.SayLine("Setting the user to root from option..."))
 					Expect(outputBuffer).NotTo(test_helpers.SayLine("Warning: No container user specified to run your app, your app will be run as root!"))
+				})
+
+				Context("when the deprecated --run-as-root flag is passed", func() {
+					It("should print a warning message", func() {
+						fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+
+						args := []string{
+							"--run-as-root",
+							"cool-web-app",
+							"superfun/app",
+							"--",
+							"/start-me-please",
+						}
+						test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+						Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+						createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+						Expect(createAppParams.User).To(Equal("root"))
+						Expect(outputBuffer).To(test_helpers.SayLine("Warning: run-as-root has been deprecated, please use '--user=root' instead)"))
+						Expect(outputBuffer).To(test_helpers.SayLine("Setting the user to root from option..."))
+					})
+
+					It("overrides given --user option and image metadata", func() {
+						fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{User: "meta-user"}, nil)
+
+						args := []string{
+							"--run-as-root",
+							"--user=some-user",
+							"cool-web-app",
+							"superfun/app",
+							"--",
+							"/start-me-please",
+						}
+						test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+						Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+						createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+						Expect(createAppParams.User).To(Equal("root"))
+						Expect(outputBuffer).To(test_helpers.SayLine("Warning: run-as-root has been deprecated, please use '--user=root' instead)"))
+						Expect(outputBuffer).To(test_helpers.SayLine("Setting the user to root from option..."))
+					})
 				})
 			})
 
@@ -429,6 +472,8 @@ var _ = Describe("CommandFactory", func() {
 					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 					Expect(createAppParams.User).To(Equal("meta-user"))
+					Expect(outputBuffer).To(test_helpers.SayLine("Setting the user to meta-user (obtained from docker image metadata)..."))
+
 				})
 
 				It("should default to 'root' when no metadata user is present", func() {
