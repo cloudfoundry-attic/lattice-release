@@ -375,22 +375,78 @@ var _ = Describe("CommandFactory", func() {
 				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 			})
 
-			It("should default user to 'root'", func() {
-				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{
-					User: "meta-user",
-				}, nil)
+			Context("When the user has been set", func() {
+				It("should use the given user", func() {
+					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 
-				args := []string{
-					"cool-web-app",
-					"superfun/app",
-					"--",
-					"/start-me-please",
-				}
-				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+					args := []string{
+						"--user=some-user",
+						"cool-web-app",
+						"superfun/app",
+						"--",
+						"/start-me-please",
+					}
+					test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
-				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
-				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
-				Expect(createAppParams.User).To(Equal("meta-user"))
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+					Expect(createAppParams.User).To(Equal("some-user"))
+				})
+
+				It("should not print a warning message if user is set to root", func() {
+					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+
+					args := []string{
+						"--user=root",
+						"cool-web-app",
+						"superfun/app",
+						"--",
+						"/start-me-please",
+					}
+					test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+					Expect(createAppParams.User).To(Equal("root"))
+					Expect(outputBuffer).NotTo(test_helpers.SayLine("Warning: No container user specified to run your app, your app will be run as root!"))
+				})
+			})
+
+			Context("When the user has not been set", func() {
+				It("should set user to metadata user", func() {
+					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{
+						User: "meta-user",
+					}, nil)
+
+					args := []string{
+						"cool-web-app",
+						"superfun/app",
+						"--",
+						"/start-me-please",
+					}
+					test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+					Expect(createAppParams.User).To(Equal("meta-user"))
+				})
+
+				It("should default to 'root' when no metadata user is present", func() {
+					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+
+					args := []string{
+						"cool-web-app",
+						"superfun/app",
+						"--",
+						"/start-me-please",
+					}
+					test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+					Expect(createAppParams.User).To(Equal("root"))
+					Expect(outputBuffer).To(test_helpers.SayLine("Warning: No container user specified to run your app, your app will be run as root!"))
+				})
 			})
 		})
 

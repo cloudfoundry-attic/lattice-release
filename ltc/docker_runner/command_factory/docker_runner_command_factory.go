@@ -239,6 +239,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 			userFlag = imageMetadata.User
 		} else {
 			userFlag = "root"
+			factory.UI.SayLine("Warning: No container user specified to run your app, your app will be run as root!")
 		}
 	}
 
