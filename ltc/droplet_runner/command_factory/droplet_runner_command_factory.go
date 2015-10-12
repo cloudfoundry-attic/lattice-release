@@ -553,7 +553,7 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 
 	appEnvironmentParams := app_runner.AppEnvironmentParams{
 		EnvironmentVariables: factory.BuildAppEnvironment(envVarsFlag, appName),
-		Privileged:           true,
+		Privileged:           false,
 		User:                 "vcap",
 		Monitor:              monitorConfig,
 		Instances:            instancesFlag,
