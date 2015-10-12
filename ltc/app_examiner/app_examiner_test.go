@@ -246,20 +246,20 @@ var _ = Describe("AppExaminer", func() {
 	})
 
 	Describe("ListCells", func() {
-		Context("receptor returns actual lrps that are all on existing cells", func() {
+		Context("receptor returns actual lrps that are all on existing cells with single digit IDs", func() {
 			BeforeEach(func() {
 				actualLrps := []receptor.ActualLRPResponse{
-					receptor.ActualLRPResponse{CellID: "Cell-1", State: receptor.ActualLRPStateRunning},
-					receptor.ActualLRPResponse{CellID: "Cell-1", State: receptor.ActualLRPStateRunning},
-					receptor.ActualLRPResponse{CellID: "Cell-2", State: receptor.ActualLRPStateClaimed},
-					receptor.ActualLRPResponse{CellID: "Cell-2", State: receptor.ActualLRPStateRunning},
+					receptor.ActualLRPResponse{CellID: "cell-1", State: receptor.ActualLRPStateRunning},
+					receptor.ActualLRPResponse{CellID: "cell-1", State: receptor.ActualLRPStateRunning},
+					receptor.ActualLRPResponse{CellID: "cell-2", State: receptor.ActualLRPStateClaimed},
+					receptor.ActualLRPResponse{CellID: "cell-2", State: receptor.ActualLRPStateRunning},
 				}
 				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
 
 				cells := []receptor.CellResponse{
-					receptor.CellResponse{CellID: "Cell-1", Zone: "z1", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
-					receptor.CellResponse{CellID: "Cell-2", Zone: "z1", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
-					receptor.CellResponse{CellID: "Cell-3", Zone: "z2", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
+					receptor.CellResponse{CellID: "cell-1", Zone: "z1", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
+					receptor.CellResponse{CellID: "cell-2", Zone: "z1", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
+					receptor.CellResponse{CellID: "cell-3", Zone: "z2", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
 				}
 				fakeReceptorClient.CellsReturns(cells, nil)
 			})
@@ -270,7 +270,7 @@ var _ = Describe("AppExaminer", func() {
 				Expect(cellList).To(HaveLen(3))
 
 				cell1 := cellList[0]
-				Expect(cell1.CellID).To(Equal("Cell-1"))
+				Expect(cell1.CellID).To(Equal("cell-1"))
 				Expect(cell1.RunningInstances).To(Equal(2))
 				Expect(cell1.ClaimedInstances).To(Equal(0))
 				Expect(cell1.Zone).To(Equal("z1"))
@@ -279,29 +279,92 @@ var _ = Describe("AppExaminer", func() {
 				Expect(cell1.Containers).To(Equal(512))
 
 				cell2 := cellList[1]
-				Expect(cell2.CellID).To(Equal("Cell-2"))
+				Expect(cell2.CellID).To(Equal("cell-2"))
 				Expect(cell2.RunningInstances).To(Equal(1))
 				Expect(cell2.ClaimedInstances).To(Equal(1))
 				Expect(cell2.Zone).To(Equal("z1"))
 
 				cell3 := cellList[2]
-				Expect(cell3.CellID).To(Equal("Cell-3"))
+				Expect(cell3.CellID).To(Equal("cell-3"))
 				Expect(cell3.RunningInstances).To(Equal(0))
 				Expect(cell3.ClaimedInstances).To(Equal(0))
 				Expect(cell3.Zone).To(Equal("z2"))
 			})
 		})
 
+		Context("receptor returns actual lrps that are all on existing cells with Multi Digit IDs", func() {
+			BeforeEach(func() {
+				actualLrps := []receptor.ActualLRPResponse{
+					receptor.ActualLRPResponse{CellID: "cell-01", State: receptor.ActualLRPStateRunning},
+					receptor.ActualLRPResponse{CellID: "cell-01", State: receptor.ActualLRPStateRunning},
+					receptor.ActualLRPResponse{CellID: "cell-2", State: receptor.ActualLRPStateClaimed},
+					receptor.ActualLRPResponse{CellID: "cell-2", State: receptor.ActualLRPStateRunning},
+					receptor.ActualLRPResponse{CellID: "cell-10", State: receptor.ActualLRPStateRunning},
+					receptor.ActualLRPResponse{CellID: "cell-10", State: receptor.ActualLRPStateRunning},
+				}
+				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
+
+				cells := []receptor.CellResponse{
+					receptor.CellResponse{CellID: "cell-01", Zone: "z1", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
+					receptor.CellResponse{CellID: "cell-2", Zone: "z1", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
+					receptor.CellResponse{CellID: "cell-3", Zone: "z2", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
+					receptor.CellResponse{CellID: "cell-9", Zone: "z9", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
+					receptor.CellResponse{CellID: "cell-10", Zone: "z10", Capacity: receptor.CellCapacity{MemoryMB: 12394, DiskMB: 2349083, Containers: 512}},
+				}
+				fakeReceptorClient.CellsReturns(cells, nil)
+			})
+
+			It("returns a list of alphabetically sorted examined cells", func() {
+				cellList, err := appExaminer.ListCells()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(cellList).To(HaveLen(5))
+
+				cell1 := cellList[0]
+				Expect(cell1.CellID).To(Equal("cell-01"))
+				Expect(cell1.RunningInstances).To(Equal(2))
+				Expect(cell1.ClaimedInstances).To(Equal(0))
+				Expect(cell1.Zone).To(Equal("z1"))
+				Expect(cell1.MemoryMB).To(Equal(12394))
+				Expect(cell1.DiskMB).To(Equal(2349083))
+				Expect(cell1.Containers).To(Equal(512))
+
+				cell2 := cellList[1]
+				Expect(cell2.CellID).To(Equal("cell-2"))
+				Expect(cell2.RunningInstances).To(Equal(1))
+				Expect(cell2.ClaimedInstances).To(Equal(1))
+				Expect(cell2.Zone).To(Equal("z1"))
+
+				cell3 := cellList[2]
+				Expect(cell3.CellID).To(Equal("cell-3"))
+				Expect(cell3.RunningInstances).To(Equal(0))
+				Expect(cell3.ClaimedInstances).To(Equal(0))
+				Expect(cell3.Zone).To(Equal("z2"))
+
+				cell4 := cellList[3]
+				Expect(cell4.CellID).To(Equal("cell-9"))
+				Expect(cell4.RunningInstances).To(Equal(0))
+				Expect(cell4.ClaimedInstances).To(Equal(0))
+				Expect(cell4.Zone).To(Equal("z9"))
+
+				cell5 := cellList[4]
+				Expect(cell5.CellID).To(Equal("cell-10"))
+				Expect(cell5.RunningInstances).To(Equal(2))
+				Expect(cell5.ClaimedInstances).To(Equal(0))
+				Expect(cell5.Zone).To(Equal("z10"))
+
+			})
+		})
+
 		Context("receptor returns actual lrps, and some of their cells no longer exist", func() {
 			BeforeEach(func() {
 				actualLrps := []receptor.ActualLRPResponse{
-					{CellID: "Cell-0", State: receptor.ActualLRPStateRunning},
-					{CellID: "Cell-0", State: receptor.ActualLRPStateClaimed},
-					{CellID: "Cell-1", State: receptor.ActualLRPStateRunning},
+					{CellID: "cell-0", State: receptor.ActualLRPStateRunning},
+					{CellID: "cell-0", State: receptor.ActualLRPStateClaimed},
+					{CellID: "cell-1", State: receptor.ActualLRPStateRunning},
 				}
 				fakeReceptorClient.ActualLRPsReturns(actualLrps, nil)
 				cells := []receptor.CellResponse{
-					{CellID: "Cell-1"},
+					{CellID: "cell-1"},
 				}
 				fakeReceptorClient.CellsReturns(cells, nil)
 			})
@@ -312,7 +375,7 @@ var _ = Describe("AppExaminer", func() {
 				Expect(cellList).To(HaveLen(2))
 
 				cell0 := cellList[0]
-				Expect(cell0.CellID).To(Equal("Cell-0"))
+				Expect(cell0.CellID).To(Equal("cell-0"))
 				Expect(cell0.Missing).To(BeTrue())
 				Expect(cell0.RunningInstances).To(Equal(1))
 				Expect(cell0.ClaimedInstances).To(Equal(1))
