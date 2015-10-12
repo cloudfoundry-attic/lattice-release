@@ -113,6 +113,15 @@ var _ = Describe("Prettify", func() {
 				Expect(prettyLog).To(MatchRegexp(strings.Replace(colors.Colorize("\x1b[34m", "rep"), "[", `\[`, -1)))
 			})
 
+			It("chooses color based on file component of sourceType path", func() {
+				input = []byte(`{"timestamp":"1429296198.620077372","source":"/var/vcap/packages/rep/bin/rep","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{}}`)
+				logMessage := buildLogMessage("/var/vcap/packages/rep/bin/rep", "cell-77", time.Time{}, input)
+
+				prettyLog := prettify.Prettify(logMessage)
+
+				Expect(prettyLog).To(MatchRegexp(strings.Replace(colors.Colorize("\x1b[34m", "rep"), "[", `\[`, -1)))
+			})
+
 			Context("when the source type is unknown", func() {
 				It("highlights the source type column with no color", func() {
 					input = []byte(`{"timestamp":"1429296198.620077372","source":"happyjoy","message":"rep.event-consumer.operation-stream.executing-container-operation.succeeded-fetch-container","log_level":1,"data":{"container-guid":"app-9eb203ad-72f3-4f26-6424-48f20dc12298","session":"7.1.10"}}`)

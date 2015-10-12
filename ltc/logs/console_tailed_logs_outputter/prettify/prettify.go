@@ -3,6 +3,7 @@ package prettify
 import (
 	"encoding/json"
 	"fmt"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -22,12 +23,12 @@ func Prettify(logMessage *events.LogMessage) string {
 	entry := chug.ChugLogMessage(logMessage)
 
 	// TODO: Or, do we use GetSourceType() for raw and Json source for pretty?
-	color, ok := colorLookup[strings.Split(entry.LogMessage.GetSourceType(), ":")[0]]
+	color, ok := colorLookup[path.Base(strings.Split(entry.LogMessage.GetSourceType(), ":")[0])]
 	if !ok {
 		color = colors.ColorDefault
 	}
 
-	sourcePrefix := fmt.Sprintf("[%s%s%s|%s%s%s]", color, entry.LogMessage.GetSourceType(), colors.ColorDefault, color, entry.LogMessage.GetSourceInstance(), colors.ColorDefault)
+	sourcePrefix := fmt.Sprintf("[%s%s%s|%s%s%s]", color, path.Base(entry.LogMessage.GetSourceType()), colors.ColorDefault, color, entry.LogMessage.GetSourceInstance(), colors.ColorDefault)
 	colorWidth := len(color)*2 + len(colors.ColorDefault)*2
 	sourcePrefixWidth := strconv.Itoa(22 + colorWidth)
 
