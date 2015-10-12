@@ -95,6 +95,10 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Name:  "run-as-root, r",
 			Usage: "Deprecated: please use --user instead",
 		},
+		cli.BoolFlag{
+			Name:  "privileged",
+			Usage: "Run the app in a privileged container (Warning: This is insecure.)",
+		},
 		cli.StringFlag{
 			Name:  "ports, p",
 			Usage: "Ports to expose on the container (comma delimited)",
@@ -199,6 +203,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	diskMBFlag := context.Int("disk-mb")
 	userFlag := context.String("user")
 	runAsRootFlag := context.Bool("run-as-root")
+	privilegedFlag := context.Bool("privileged")
 	portsFlag := context.String("ports")
 	noMonitorFlag := context.Bool("no-monitor")
 	portMonitorFlag := context.Int("monitor-port")
@@ -237,6 +242,10 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		factory.UI.SayLine(fmt.Sprintf("Error fetching image metadata: %s", err))
 		factory.ExitHandler.Exit(exit_codes.BadDocker)
 		return
+	}
+
+	if privilegedFlag {
+		factory.UI.SayLine("Warning: It is possible for a privileged app to break out of its container and access the host OS!")
 	}
 
 	if runAsRootFlag {
@@ -349,6 +358,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		AppEnvironmentParams: app_runner.AppEnvironmentParams{
 			EnvironmentVariables: envVars,
 			User:                 userFlag,
+			Privileged:           privilegedFlag,
 			Monitor:              monitorConfig,
 			Instances:            instancesFlag,
 			CPUWeight:            cpuWeightFlag,

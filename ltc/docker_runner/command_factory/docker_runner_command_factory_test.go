@@ -375,6 +375,26 @@ var _ = Describe("CommandFactory", func() {
 				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 			})
 
+			Context("when a privileged container has been requested", func() {
+				It("sets the param and warns the user", func() {
+					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
+
+					args := []string{
+						"--privileged",
+						"cool-web-app",
+						"superfun/app",
+						"--",
+						"/start-me-please",
+					}
+					test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+					Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
+					createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
+					Expect(createAppParams.Privileged).To(BeTrue())
+					Expect(outputBuffer).To(test_helpers.SayLine("Warning: It is possible for a privileged app to break out of its container and access the host OS!"))
+				})
+			})
+
 			Context("When the user has been set", func() {
 				It("should use the given user, overriding image metadata", func() {
 					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{User: "meta-user"}, nil)
