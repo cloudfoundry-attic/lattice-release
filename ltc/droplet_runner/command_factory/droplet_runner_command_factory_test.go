@@ -673,7 +673,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(appEnvParam.CPUWeight).To(Equal(uint(57)))
 			Expect(appEnvParam.MemoryMB).To(Equal(12))
 			Expect(appEnvParam.DiskMB).To(Equal(12))
-			Expect(appEnvParam.Privileged).To(BeFalse())
+			Expect(appEnvParam.Privileged).To(BeTrue())
 			Expect(appEnvParam.Instances).To(Equal(11))
 			Expect(appEnvParam.NoRoutes).To(BeFalse())
 			Expect(appEnvParam.Monitor).To(Equal(app_runner.MonitorConfig{
@@ -713,7 +713,7 @@ var _ = Describe("CommandFactory", func() {
 			Expect(startCommandParam).To(Equal(""))
 			Expect(startArgsParam).To(BeNil())
 			Expect(appEnvParam.WorkingDir).To(Equal("/home/vcap/app"))
-			Expect(appEnvParam.Privileged).To(BeFalse())
+			Expect(appEnvParam.Privileged).To(BeTrue())
 			Expect(appEnvParam.User).To(Equal("vcap"))
 			Expect(appEnvParam.Instances).To(Equal(1))
 			Expect(appEnvParam.Monitor).To(Equal(app_runner.MonitorConfig{
