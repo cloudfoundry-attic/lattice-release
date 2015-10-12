@@ -304,15 +304,23 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		envVars = append(envVars, receptor.EnvironmentVariable{Name: "VCAP_SERVICES", Value: "{}"})
 	}
 
-	setupAction := &models.SerialAction{
-		Actions: []*models.Action{
-			params.Setup,
-			models.WrapAction(&models.DownloadAction{
-				From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
-				To:   "/tmp",
-				User: params.User,
-			}),
-		},
+	var setupAction *models.Action
+	if params.Setup != nil {
+		setupAction = models.WrapAction(&models.SerialAction{
+			Actions: []*models.Action{
+				params.Setup,
+				models.WrapAction(&models.DownloadAction{
+					From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
+					To:   "/tmp",
+					User: params.User,
+				}),
+			}})
+	} else {
+		setupAction = models.WrapAction(&models.DownloadAction{
+			From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
+			To:   "/tmp",
+			User: params.User,
+		})
 	}
 
 	hostKey, err := appRunner.keygen.GenerateRSAPrivateKey(2048)
@@ -336,7 +344,7 @@ func (appRunner *appRunner) desireLrp(params CreateAppParams) error {
 		MetricsGuid:          params.Name,
 		EnvironmentVariables: envVars,
 		Annotation:           params.Annotation,
-		Setup:                &models.Action{SerialAction: setupAction},
+		Setup:                setupAction,
 		Action: &models.Action{
 			ParallelAction: &models.ParallelAction{
 				Actions: []*models.Action{

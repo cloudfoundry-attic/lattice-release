@@ -161,6 +161,23 @@ var _ = Describe("AppRunner", func() {
 			Expect(reqMonitor.User).To(Equal("start-user"))
 		})
 
+		It("skips SerialAction when Setup action is nil", func() {
+			createAppParams.Setup = nil
+
+			err := appRunner.CreateApp(createAppParams)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(fakeReceptorClient.CreateDesiredLRPCallCount()).To(Equal(1))
+			req := fakeReceptorClient.CreateDesiredLRPArgsForCall(0)
+
+			Expect(req.Setup.SerialAction).To(BeNil())
+			Expect(req.Setup.DownloadAction).To(Equal(&models.DownloadAction{
+				From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
+				To:   "/tmp",
+				User: "start-user",
+			}))
+		})
+
 		Context("when VCAP_SERVICES is passed in by the user", func() {
 			It("doesn't overwrite it with a default", func() {
 				createAppParams.AppEnvironmentParams.EnvironmentVariables["VCAP_SERVICES"] = "{totally valid json}"

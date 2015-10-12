@@ -379,11 +379,6 @@ var _ = Describe("DropletRunner", func() {
 						User: "vcap",
 					}),
 					models.WrapAction(&models.DownloadAction{
-						From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
-						To:   "/tmp",
-						User: "vcap",
-					}),
-					models.WrapAction(&models.DownloadAction{
 						From: "http://dav-user:dav-pass@blob-host:7474/blobs/droplet-name/droplet.tgz",
 						To:   "/home/vcap",
 						User: "vcap",

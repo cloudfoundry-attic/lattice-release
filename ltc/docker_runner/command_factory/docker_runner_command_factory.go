@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
@@ -353,12 +352,6 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		StartCommand: startCommand,
 		AppArgs:      appArgs,
 		Timeout:      timeoutFlag,
-
-		Setup: models.WrapAction(&models.DownloadAction{
-			From: "http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz",
-			To:   "/tmp",
-			User: userFlag,
-		}),
 	})
 	if err != nil {
 		factory.UI.SayLine(fmt.Sprintf("Error creating app: %s", err))

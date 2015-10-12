@@ -8,7 +8,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
-	"github.com/cloudfoundry-incubator/bbs/models"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
@@ -140,12 +139,6 @@ var _ = Describe("CommandFactory", func() {
 			}))
 			Expect(createAppParams.NoRoutes).To(BeFalse())
 			Expect(createAppParams.WorkingDir).To(Equal("/applications"))
-
-			Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
-			reqSetup := createAppParams.Setup.GetDownloadAction()
-			Expect(reqSetup.From).To(Equal("http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz"))
-			Expect(reqSetup.To).To(Equal("/tmp"))
-			Expect(reqSetup.User).To(Equal("some-user"))
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Creating App: cool-web-app"))
 			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))
@@ -355,10 +348,6 @@ var _ = Describe("CommandFactory", func() {
 					Expect(createAppParams.ExposedPorts).To(Equal([]uint16{8080}))
 					Expect(createAppParams.Instances).To(Equal(1))
 					Expect(createAppParams.WorkingDir).To(Equal("/"))
-
-					Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
-					reqSetup := createAppParams.Setup.GetDownloadAction()
-					Expect(reqSetup.User).To(Equal("root"))
 				})
 			})
 
@@ -402,10 +391,6 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(1))
 				createAppParams := fakeAppRunner.CreateAppArgsForCall(0)
 				Expect(createAppParams.User).To(Equal("meta-user"))
-
-				Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
-				reqSetup := createAppParams.Setup.GetDownloadAction()
-				Expect(reqSetup.User).To(Equal("meta-user"))
 			})
 		})
 
@@ -1003,12 +988,6 @@ var _ = Describe("CommandFactory", func() {
 				{ExternalPort: 50001, Port: 5223},
 			}))
 			Expect(createAppParams.NoRoutes).To(BeFalse())
-
-			Expect(createAppParams.Setup.GetDownloadAction().ActionType()).To(Equal(models.ActionTypeDownload))
-			reqSetup := createAppParams.Setup.GetDownloadAction()
-			Expect(reqSetup.From).To(Equal("http://file-server.service.cf.internal:8080/v1/static/buildpack_app_lifecycle/buildpack_app_lifecycle.tgz"))
-			Expect(reqSetup.To).To(Equal("/tmp"))
-			Expect(reqSetup.User).To(Equal("root"))
 
 			Expect(outputBuffer).To(test_helpers.SayLine("Creating App: cool-web-app"))
 			Expect(outputBuffer).To(test_helpers.SayLine(colors.Green("cool-web-app is now running.")))
