@@ -59,6 +59,7 @@ case $1 in
       -natsPassword=nats \
       -corsEnabled=true \
       -logLevel=info \
+      -artifactPath=/var/lattice/artifacts \
       2> >(tee -a $LOG_DIR/receptor.stderr.log | logger -p user.error -t vcap.receptor) \
       1> >(tee -a $LOG_DIR/receptor.stdout.log | logger -p user.info -t vcap.receptor)
 
