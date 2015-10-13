@@ -78,6 +78,16 @@ Vagrant.configure("2") do |config|
     config.vm.network "private_network", ip: public_ip
   end
 
+  arch=`uname -s`.chomp
+  if arch == 'Darwin'
+    arch='osx'
+  elsif arch == 'Linux'
+    arch='linux'
+  else
+    puts 'WARNING: Unable to detect OS architecture.'
+    arch=''
+  end
+
   config.vm.provision "shell" do |s|
     s.inline = <<-SCRIPT
       #{network_config}
@@ -92,8 +102,19 @@ Vagrant.configure("2") do |config|
       /tmp/install/brain /vagrant/lattice.tgz
       /tmp/install/cell /vagrant/lattice.tgz
       /tmp/install/start
+
       echo "Lattice is now installed and running."
-      echo "You may target it using: ltc target $domain\n"
+
+      if [[ "#{arch}" != "" ]]; then
+        echo "---------------------------------------------------------------"
+        echo "To install ltc:"
+        echo "$ curl -O http://receptor.$domain/v1/sync/#{arch}/ltc"
+        echo "$ chmod a+x ltc"
+        echo "# optionally, move ltc to a directory in your PATH"
+        echo "---------------------------------------------------------------"
+      fi
+
+      echo "You may target it using: ltc target $domain"
     SCRIPT
   end
 end
