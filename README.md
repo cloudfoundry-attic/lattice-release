@@ -51,10 +51,15 @@ vagrant up
 
 This spins up a virtual environment that is accessible at `192.168.11.11`.
 
-Use the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) to target Lattice:
+Download the [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/tree/master/ltc) from the running cluster:
 
 ```bash
-cd lattice-bundle-VERSION-PLATFORM
+$ curl -O http://receptor.192.168.11.11.xip.io/v1/sync/linux/ltc # Linux
+# -or-
+$ curl -O http://receptor.192.168.11.11.xip.io/v1/sync/osx/ltc # OS X
+# then:
+$ chmod a+x ltc
+# optionally move ltc into a directory in your path
 ./ltc target 192.168.11.11.xip.io
 ```
 

@@ -29,13 +29,16 @@ With `ltc` you can:
 
 ## Setup:
 
-Download the appropriate bundle for your architecture.  Stable versions can be found on the [GitHub Releases](https://github.com/cloudfoundry-incubator/lattice/releases) page.  Nightly builds can be found [here](https://lattice.s3.amazonaws.com/nightly/index.html).
-
-Here's how to access the `ltc` binary inside the Lattice bundle.  You can copy this file to some folder in your `$PATH`.
+Download the appropriate ltc binary for your architecture:
 
 ```bash
-unzip lattice-bundle-VERSION-PLATFORM.zip
-cd lattice-bundle-VERSION-PLATFORM
+$ curl -O http://receptor.192.168.11.11.xip.io/v1/sync/linux/ltc # Linux
+# -or-
+$ curl -O http://receptor.192.168.11.11.xip.io/v1/sync/osx/ltc # OS X
+# then:
+$ chmod a+x ltc
+# optionally move ltc into a directory in your path
+./ltc target 192.168.11.11.xip.io
 ./ltc -v
 ```
 
