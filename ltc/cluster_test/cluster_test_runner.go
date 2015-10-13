@@ -134,7 +134,7 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 				defer resp.Body.Close()
 				respBytes, err := ioutil.ReadAll(resp.Body)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(respBytes).To(MatchRegexp("<dt>USER</dt><dd>root</dd>"))
+				Expect(respBytes).To(MatchRegexp("<dt>USER</dt><dd>lattice</dd>"))
 
 				runner.scaleApp(timeout, appName, fmt.Sprintf("--timeout=%s", timeout.String()))
 
