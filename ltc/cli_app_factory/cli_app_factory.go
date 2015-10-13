@@ -237,7 +237,6 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		taskRunnerCommandFactory.MakeDeleteTaskCommand(),
 		taskRunnerCommandFactory.MakeCancelTaskCommand(),
 		clusterTestCommandFactory.MakeClusterTestCommand(),
-		appRunnerCommandFactory.MakeUpdateRoutesCommand(),
 		appRunnerCommandFactory.MakeUpdateCommand(),
 		appExaminerCommandFactory.MakeVisualizeCommand(),
 		dropletRunnerCommandFactory.MakeBuildDropletCommand(),

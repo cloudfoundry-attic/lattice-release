@@ -112,24 +112,6 @@ func (factory *AppRunnerCommandFactory) MakeScaleAppCommand() cli.Command {
 	return scaleAppCommand
 }
 
-func (factory *AppRunnerCommandFactory) MakeUpdateRoutesCommand() cli.Command {
-	var updateRoutesFlags = []cli.Flag{
-		cli.BoolFlag{
-			Name:  "no-routes",
-			Usage: "Registers no routes for the app",
-		},
-	}
-	var updateRoutesCommand = cli.Command{
-		Name:    "update-routes",
-		Aliases: []string{"ur"},
-		Usage:   "DEPRECATED: 'ltc update-routes' will be removed in a future release. Please use 'ltc update' instead",
-		Action:  factory.updateAppRoutes,
-		Flags:   updateRoutesFlags,
-	}
-
-	return updateRoutesCommand
-}
-
 func (factory *AppRunnerCommandFactory) MakeUpdateCommand() cli.Command {
 	var updateFlags = []cli.Flag{
 		cli.BoolFlag{
@@ -255,39 +237,6 @@ func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
 
 	if err := factory.AppRunner.UpdateApp(updateAppParams); err != nil {
 		factory.UI.SayLine(fmt.Sprintf("Error updating application: %s", err))
-		factory.ExitHandler.Exit(exit_codes.CommandFailed)
-		return
-	}
-
-	factory.UI.SayLine(fmt.Sprintf("Updating %s routes. You can check this app's current routes by running 'ltc status %s'", appName, appName))
-}
-
-func (factory *AppRunnerCommandFactory) updateAppRoutes(c *cli.Context) {
-	factory.UI.SayLine("DEPRECATED: 'ltc update-routes' will be removed in a future release. Please use 'ltc update' instead.")
-
-	appName := c.Args().First()
-	userDefinedRoutes := c.Args().Get(1)
-	noRoutesFlag := c.Bool("no-routes")
-
-	if appName == "" || (userDefinedRoutes == "" && !noRoutesFlag) {
-		factory.UI.SayIncorrectUsage("Please enter 'ltc update-routes APP_NAME NEW_ROUTES' or pass '--no-routes' flag.")
-		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
-		return
-	}
-
-	desiredRoutes := app_runner.RouteOverrides{}
-	var err error
-	if !noRoutesFlag {
-		desiredRoutes, err = factory.ParseRouteOverrides(userDefinedRoutes)
-		if err != nil {
-			factory.UI.SayLine(err.Error())
-			factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
-			return
-		}
-	}
-
-	if err := factory.AppRunner.UpdateAppRoutes(appName, desiredRoutes); err != nil {
-		factory.UI.SayLine(fmt.Sprintf("Error updating routes: %s", err))
 		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
 	}
