@@ -46,7 +46,7 @@ func (factory *TaskRunnerCommandFactory) MakeDeleteTaskCommand() cli.Command {
 		Name:        "delete-task",
 		Aliases:     []string{"dt"},
 		Usage:       "Deletes the given task",
-		Description: "ltc delete-task TASK_NAME",
+		Description: "ltc delete-task TASK_GUID",
 		Action:      factory.deleteTask,
 		Flags:       []cli.Flag{},
 	}
@@ -58,7 +58,7 @@ func (factory *TaskRunnerCommandFactory) MakeCancelTaskCommand() cli.Command {
 		Name:        "cancel-task",
 		Aliases:     []string{"ct"},
 		Usage:       "Cancels the given task",
-		Description: "ltc cancel-task TASK_NAME",
+		Description: "ltc cancel-task TASK_GUID",
 		Action:      factory.cancelTask,
 		Flags:       []cli.Flag{},
 	}

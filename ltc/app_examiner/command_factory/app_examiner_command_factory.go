@@ -125,7 +125,7 @@ func (factory *AppExaminerCommandFactory) MakeCellsCommand() cli.Command {
 		Name:    "cells",
 		Aliases: []string{"ce"},
 		Usage:   "Shows details about lattice cells",
-		Description: `ltc cells APP_NAME
+		Description: `ltc cells
  
     Output format is:
 

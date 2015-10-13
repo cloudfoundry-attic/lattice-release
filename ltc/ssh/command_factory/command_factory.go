@@ -73,7 +73,7 @@ func (f *SSHCommandFactory) ssh(context *cli.Context) {
 	appName := context.Args().First()
 
 	if appName == "" {
-		f.ui.SayIncorrectUsage("")
+		f.ui.SayIncorrectUsage("Please input a valid APP_NAME")
 		f.exitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}

@@ -287,7 +287,7 @@ var _ = Describe("SSH CommandFactory", func() {
 			It("prints an error", func() {
 				test_helpers.ExecuteCommandWithArgs(sshCommand, []string{})
 
-				Expect(outputBuffer).To(test_helpers.SayIncorrectUsage())
+				Expect(outputBuffer).To(test_helpers.SayLine("Please input a valid APP_NAME"))
 
 				Expect(fakeSSH.ConnectCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
