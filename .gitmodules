@@ -55,15 +55,15 @@
 [submodule "src/github.com/nsf/termbox-go"]
 	path = src/github.com/nsf/termbox-go
 	url = https://github.com/nsf/termbox-go
-[submodule "src/github.com/sclevine/packer-bosh"]
-	path = src/github.com/sclevine/packer-bosh
+[submodule "bosh/src/github.com/sclevine/packer-bosh"]
+	path = bosh/src/github.com/sclevine/packer-bosh
 	url = git@github.com:sclevine/packer-bosh
-[submodule "src/github.com/sclevine/bosh-provisioner"]
-	path = src/github.com/sclevine/bosh-provisioner
+[submodule "bosh/src/github.com/sclevine/bosh-provisioner"]
+	path = bosh/src/github.com/sclevine/bosh-provisioner
 	url = git@github.com:sclevine/bosh-provisioner
-[submodule "src/github.com/hashicorp/go-msgpack"]
-	path = src/github.com/hashicorp/go-msgpack
+[submodule "bosh/src/github.com/hashicorp/go-msgpack"]
+	path = bosh/src/github.com/hashicorp/go-msgpack
 	url = https://github.com/hashicorp/go-msgpack
-[submodule "src/github.com/hashicorp/yamux"]
-	path = src/github.com/hashicorp/yamux
+[submodule "bosh/src/github.com/hashicorp/yamux"]
+	path = bosh/src/github.com/hashicorp/yamux
 	url = https://github.com/hashicorp/yamux

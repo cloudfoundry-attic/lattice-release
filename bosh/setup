@@ -10,16 +10,17 @@ fi
 
 assets_dir=$(mkdir -p "$1" && cd "$1" && pwd)
 lattice_release_dir=$(cd `dirname $0` && cd .. && pwd)
-packer_bosh_dir=$lattice_release_dir/src/github.com/sclevine/packer-bosh
-bosh_provisioner_dir=$lattice_release_dir/src/github.com/sclevine/bosh-provisioner
+bosh_gopath=$lattice_release_dir/bosh
+packer_bosh_dir=$bosh_gopath/src/github.com/sclevine/packer-bosh
+bosh_provisioner_dir=$bosh_gopath/src/github.com/sclevine/bosh-provisioner
 
 rm -rf $assets_dir/{monit,agent}
 cp -r $bosh_provisioner_dir/assets/{monit,agent} $assets_dir/
 
-GOPATH=$packer_bosh_dir/Godeps/_workspace:$GOPATH \
+GOPATH=$packer_bosh_dir/Godeps/_workspace:$bosh_gopath \
   go build -a -o $assets_dir/packer-bosh github.com/sclevine/packer-bosh/main
 
-GOOS=linux GOARCH=amd64 GOPATH=$bosh_provisioner_dir/Godeps/_workspace:$GOPATH \
+GOOS=linux GOARCH=amd64 GOPATH=$bosh_provisioner_dir/Godeps/_workspace:$bosh_gopath \
   go build -a -o $assets_dir/bosh-provisioner github.com/sclevine/bosh-provisioner/main
 
 if [[ -f $HOME/.packerconfig ]]; then
