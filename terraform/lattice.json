@@ -43,7 +43,7 @@
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
                 "apt-get -y install software-properties-common",
-                "add-apt-repository ppa:brightbox/ruby-ng",
+                "add-apt-repository -y ppa:brightbox/ruby-ng",
                 "apt-get -y update",
                 "apt-get -y --force-yes dist-upgrade",
                 "apt-get -y update",

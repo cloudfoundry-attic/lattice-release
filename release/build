@@ -23,6 +23,7 @@ lattice_dir=$lattice_release_dir/src/github.com/cloudfoundry-incubator/lattice
 receptor_dir=$lattice_release_dir/src/github.com/cloudfoundry-incubator/receptor
 
 lattice_release_version=${version_override:-`git -C "$lattice_release_dir" describe --tags --always`}
+diego_release_version=$(git -C "$diego_release_dir" describe --tags --always)
 lattice_version=$(git -C "$lattice_dir" describe --tags --always)
 receptor_version=$(git -C "$receptor_dir" describe --tags --always)
 
@@ -45,8 +46,12 @@ brain_cell_helper_dir=$tmp_dir/brain/var/vcap/jobs/file_server/packages/cell-hel
 brain_versions_dir=$tmp_dir/brain/var/lattice/versions
 mkdir -p $brain_lighttpd_dir $brain_artifacts_dir $brain_bin_dir $brain_cell_helper_dir $brain_versions_dir
 
-go build -a -o $brain_artifacts_dir/linux/ltc github.com/cloudfoundry-incubator/lattice/ltc
-GOOS=darwin go build -a -o $brain_artifacts_dir/osx/ltc github.com/cloudfoundry-incubator/lattice/ltc
+flags="-X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.latticeVersion $lattice_release_version
+       -X github.com/cloudfoundry-incubator/lattice/ltc/setup_cli.diegoVersion $diego_release_version"
+
+go build -a -ldflags "$flags" -o $brain_artifacts_dir/linux/ltc github.com/cloudfoundry-incubator/lattice/ltc
+GOOS=darwin go build -a -ldflags "$flags" -o $brain_artifacts_dir/osx/ltc github.com/cloudfoundry-incubator/lattice/ltc
+
 go build -a -o $brain_bin_dir/receptor github.com/cloudfoundry-incubator/receptor/cmd/receptor
 
 pushd $brain_cell_helper_dir >/dev/null
