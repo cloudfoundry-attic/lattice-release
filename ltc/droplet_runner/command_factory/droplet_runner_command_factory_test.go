@@ -585,7 +585,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 					"superfun/app",
-					"--tcp-routes=woo:50000",
+					"--tcp-route=woo:50000",
 					"--",
 					"/start-me-please",
 				}
@@ -601,8 +601,10 @@ var _ = Describe("CommandFactory", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 
 			args := []string{
-				"--http-routes=ninetyninety:4444,fourtyfourfourtyfour:9090",
-				"--tcp-routes=50000:5222,50001:5223",
+				"--http-route=ninetyninety:4444",
+				"--http-route=fourtyfourfourtyfour:9090",
+				"--tcp-route=50000:5222",
+				"--tcp-route=50001:5223",
 				"droppy",
 				"droplet-name",
 				"--",
@@ -640,7 +642,8 @@ var _ = Describe("CommandFactory", func() {
 				"--cpu-weight=57",
 				"--memory-mb=12",
 				"--disk-mb=12",
-				"--http-routes=ninetyninety:4444,fourtyfourfourtyfour:9090",
+				"--http-route=ninetyninety:4444",
+				"--http-route=fourtyfourfourtyfour:9090",
 				"--instances=11",
 				"--env=TIMEZONE=CST",
 				`--env=LANG="Chicago English"`,
@@ -768,7 +771,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 					"cool-web-droplet",
-					"--http-routes=woo:aahh",
+					"--http-route=woo:aahh",
 				}
 
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
@@ -782,7 +785,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 					"cool-web-droplet",
-					"--http-routes=8888",
+					"--http-route=8888",
 				}
 				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
 

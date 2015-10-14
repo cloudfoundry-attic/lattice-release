@@ -121,13 +121,13 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
 			Name:  "monitor-command",
 			Usage: "Uses the command (with arguments) to healthcheck the app",
 		},
-		cli.StringFlag{
-			Name:  "http-routes, R",
-			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port. Container ports must be among those specified with --ports or with the EXPOSE Docker image directive. Usage: --http-routes HOST:CONTAINER_PORT[,...].",
+		cli.StringSliceFlag{
+			Name:  "http-route, R",
+			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port. Container ports must be among those specified with --ports or with the EXPOSE Docker image directive. Usage: --http-route HOST:CONTAINER_PORT. Can be passed multiple times.",
 		},
-		cli.StringFlag{
-			Name:  "tcp-routes, T",
-			Usage: "Requests for the provided external port will be forwarded to the associated container port. Container ports must be among those specified with --ports or with the EXPOSE Docker image directive. Usage: --tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]  ",
+		cli.StringSliceFlag{
+			Name:  "tcp-route, T",
+			Usage: "Requests for the provided external port will be forwarded to the associated container port. Container ports must be among those specified with --ports or with the EXPOSE Docker image directive. Usage: --tcp-route EXTERNAL_PORT:CONTAINER_PORT. Can be passed multiple times.",
 		},
 		cli.IntFlag{
 			Name:  "instances, i",
@@ -181,11 +181,12 @@ func (factory *DockerRunnerCommandFactory) MakeCreateAppCommand() cli.Command {
      - requests to myapp-8080.SYSTEM_DOMAIN:80 will be routed to container port 8080
 
    To configure your own routing:
-   ltc create APP_NAME DOCKER_IMAGE --http-routes HOST:CONTAINER_PORT[,...] --tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]
+   ltc create APP_NAME DOCKER_IMAGE --http-route HOST:CONTAINER_PORT [ --http-route HOST:CONTAINER_PORT ...] --tcp-route EXTERNAL_PORT:CONTAINER_PORT [ --tcp-route EXTERNAL_PORT:CONTAINER_PORT ...]
+]
 
    Examples:
-     ltc create myapp mydockerimage --http-routes=myapp-admin:6000 will route requests received at myapp-admin.SYSTEM_DOMAIN:80 to container port 6000.
-     ltc create myredis redis --tcp-routes=50000:6379 will route requests received at SYSTEM_DOMAIN:50000 to container port 6379.
+     ltc create myapp mydockerimage --http-route=myapp-admin:6000 will route requests received at myapp-admin.SYSTEM_DOMAIN:80 to container port 6000.
+     ltc create myredis redis --tcp-route=50000:6379 will route requests received at SYSTEM_DOMAIN:50000 to container port 6379.
 `,
 		Action: factory.createApp,
 		Flags:  createFlags,
@@ -210,8 +211,8 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 	urlMonitorFlag := context.String("monitor-url")
 	monitorTimeoutFlag := context.Duration("monitor-timeout")
 	monitorCommandFlag := context.String("monitor-command")
-	httpRoutesFlag := context.String("http-routes")
-	tcpRoutesFlag := context.String("tcp-routes")
+	httpRouteFlag := context.StringSlice("http-route")
+	tcpRouteFlag := context.StringSlice("tcp-route")
 	noRoutesFlag := context.Bool("no-routes")
 	timeoutFlag := context.Duration("timeout")
 	name := context.Args().Get(0)
@@ -319,14 +320,14 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		appArgs = imageMetadata.StartCommand[1:]
 	}
 
-	routeOverrides, err := factory.ParseRouteOverrides(httpRoutesFlag)
+	routeOverrides, err := factory.ParseRouteOverrides(httpRouteFlag)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
-	tcpRoutes, err := factory.ParseTcpRoutes(tcpRoutesFlag)
+	tcpRoutes, err := factory.ParseTcpRoutes(tcpRouteFlag)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)

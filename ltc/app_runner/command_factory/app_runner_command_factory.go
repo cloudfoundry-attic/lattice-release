@@ -118,20 +118,20 @@ func (factory *AppRunnerCommandFactory) MakeUpdateCommand() cli.Command {
 			Name:  "no-routes",
 			Usage: "Registers no routes for the app",
 		},
-		cli.StringFlag{
-			Name:  "http-routes, R",
-			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port. Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive. Replaces all existing routes. Usage: --http-routes HOST:CONTAINER_PORT[,...]",
+		cli.StringSliceFlag{
+			Name:  "http-route, R",
+			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port. Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive. Can be passed multiple times. Usage: --http-route HOST:CONTAINER_PORT. Can be passed multiple times.",
 		},
-		cli.StringFlag{
-			Name:  "tcp-routes, T",
-			Usage: "Requests for the external port will be forwarded to the associated container port. Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive. Replaces all existing routes. Usage: EXTERNAL_PORT:CONTAINER_PORT[,...]",
+		cli.StringSliceFlag{
+			Name:  "tcp-route, T",
+			Usage: "Requests for the external port will be forwarded to the associated container port. Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive. Replaces all existing routes. Usage: EXTERNAL_PORT:CONTAINER_PORT. Can be passed multiple times.",
 		},
 	}
 	var updateCommand = cli.Command{
 		Name:        "update",
 		Aliases:     []string{"up"},
 		Usage:       "Updates attributes of an existing application",
-		Description: "ltc update APP_NAME [--http-routes HOST:CONTAINER_PORT[,...]] [--tcp-routes EXTERNAL_PORT:CONTAINER_PORT[,...]]\n",
+		Description: "ltc update APP_NAME [--http-route HOST:CONTAINER_PORT] [--tcp-route EXTERNAL_PORT:CONTAINER_PORT]\n",
 		Action:      factory.updateApp,
 		Flags:       updateFlags,
 	}
@@ -200,17 +200,17 @@ func (factory *AppRunnerCommandFactory) scaleApp(c *cli.Context) {
 func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
 	appName := c.Args().First()
 	if appName == "" {
-		factory.UI.SayIncorrectUsage("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag.")
+		factory.UI.SayIncorrectUsage("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag.")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
-	httpRoutesFlag := c.String("http-routes")
-	tcpRoutesFlag := c.String("tcp-routes")
+	httpRouteFlag := c.StringSlice("http-route")
+	tcpRouteFlag := c.StringSlice("tcp-route")
 	noRoutes := c.Bool("no-routes")
 
-	if httpRoutesFlag == "" && tcpRoutesFlag == "" && !noRoutes {
-		factory.UI.SayIncorrectUsage("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag.")
+	if len(httpRouteFlag) == 0 && len(tcpRouteFlag) == 0 && !noRoutes {
+		factory.UI.SayIncorrectUsage("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag.")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
@@ -219,7 +219,7 @@ func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
 	updateAppParams.Name = appName
 	updateAppParams.NoRoutes = noRoutes
 
-	routeOverrides, err := factory.ParseRouteOverrides(httpRoutesFlag)
+	routeOverrides, err := factory.ParseRouteOverrides(httpRouteFlag)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
@@ -227,7 +227,7 @@ func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
 	}
 	updateAppParams.RouteOverrides = routeOverrides
 
-	tcpRoutes, err := factory.ParseTcpRoutes(tcpRoutesFlag)
+	tcpRoutes, err := factory.ParseTcpRoutes(tcpRouteFlag)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
@@ -407,19 +407,15 @@ func (factory *AppRunnerCommandFactory) grabVarFromEnv(name string) string {
 	return ""
 }
 
-func (factory *AppRunnerCommandFactory) ParseTcpRoutes(tcpRoutesFlag string) (app_runner.TcpRoutes, error) {
+func (factory *AppRunnerCommandFactory) ParseTcpRoutes(routesTcp []string) (app_runner.TcpRoutes, error) {
 	var tcpRoutes app_runner.TcpRoutes
 
-	if tcpRoutesFlag == "" {
-		return tcpRoutes, nil
-	}
-
-	for _, tcpRoute := range strings.Split(tcpRoutesFlag, ",") {
-		if tcpRoute == "" {
+	for _, routeTcp := range routesTcp {
+		if routeTcp == "" {
 			continue
 		}
 
-		portsArr := strings.Split(tcpRoute, ":")
+		portsArr := strings.Split(routeTcp, ":")
 		if len(portsArr) < 2 {
 			return nil, errors.New(MalformedTcpRouteErrorMessage)
 		}
@@ -459,10 +455,10 @@ func getPort(port string) (uint16, error) {
 	return uint16(mayBePort), nil
 }
 
-func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes string) (app_runner.RouteOverrides, error) {
+func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes []string) (app_runner.RouteOverrides, error) {
 	var routeOverrides app_runner.RouteOverrides
 
-	for _, route := range strings.Split(routes, ",") {
+	for _, route := range routes {
 		if route == "" {
 			continue
 		}

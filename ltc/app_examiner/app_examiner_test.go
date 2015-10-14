@@ -120,7 +120,7 @@ var _ = Describe("AppExaminer", func() {
 				Expect(process3.Routes).To(BeZero())
 			})
 
-			Context("with tcp-routes", func() {
+			Context("with tcp-route", func() {
 				BeforeEach(func() {
 					desiredLrps := []receptor.DesiredLRPResponse{
 						receptor.DesiredLRPResponse{

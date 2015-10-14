@@ -90,7 +90,9 @@ var _ = Describe("CommandFactory", func() {
 				"--user=some-user",
 				"--working-dir=/applications",
 				"--instances=22",
-				"--http-routes=route-3000-yay:3000,route-1111-wahoo:1111,route-1111-me-too:1111",
+				"--http-route=route-3000-yay:3000",
+				"--http-route=route-1111-wahoo:1111",
+				"--http-route=route-1111-me-too:1111",
 				"--env=TIMEZONE=CST",
 				`--env=LANG="Chicago English"`,
 				`--env=JAVA_OPTS="-Djava.arg=/dev/urandom"`,
@@ -174,7 +176,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 					"superfun/app",
-					"--http-routes=woo:aahh",
+					"--http-route=woo:aahh",
 					"--",
 					"/start-me-please",
 				}
@@ -189,7 +191,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 					"superfun/app",
-					"--http-routes=8888",
+					"--http-route=8888",
 					"--",
 					"/start-me-please",
 				}
@@ -1052,7 +1054,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 					"superfun/app",
-					"--tcp-routes=woo:50000",
+					"--tcp-route=woo:50000",
 					"--",
 					"/start-me-please",
 				}
@@ -1067,7 +1069,7 @@ var _ = Describe("CommandFactory", func() {
 				args := []string{
 					"cool-web-app",
 					"superfun/app",
-					"--tcp-routes=5222,50000",
+					"--tcp-route=5222,50000",
 					"--",
 					"/start-me-please",
 				}
@@ -1084,7 +1086,8 @@ var _ = Describe("CommandFactory", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 
 			args := []string{
-				"--tcp-routes=50000:5222,50001:5223",
+				"--tcp-route=50000:5222",
+				"--tcp-route=50001:5223",
 				"cool-web-app",
 				"superfun/app:mycooltag",
 				"--",

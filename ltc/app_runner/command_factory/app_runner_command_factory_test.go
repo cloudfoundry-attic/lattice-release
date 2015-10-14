@@ -88,7 +88,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		Describe("ParseTcpRoutes", func() {
 			It("parses delimited tcp routes into the TcpRoutes struct", func() {
-				tcpRoutes, err := factory.ParseTcpRoutes("50000:7777,50001:5222")
+				tcpRoutes, err := factory.ParseTcpRoutes([]string{"50000:7777", "50001:5222"})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(tcpRoutes).To(ContainExactly(app_runner.TcpRoutes{
 					{ExternalPort: 50000, Port: 7777},
@@ -98,41 +98,41 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 			Context("when a malformed tcp routes is passed", func() {
 				It("errors out when the container port is not an int", func() {
-					_, err := factory.ParseTcpRoutes("50000:woo")
+					_, err := factory.ParseTcpRoutes([]string{"50000:woo"})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the tcp route is incomplete", func() {
-					_, err := factory.ParseTcpRoutes("5222,50000")
+					_, err := factory.ParseTcpRoutes([]string{"5222,50000"})
 					Expect(err).To(MatchError(command_factory.MalformedTcpRouteErrorMessage))
 				})
 			})
 
 			Context("when invalid port is passed in tcp routes", func() {
 				It("errors out when the container port is a negative number", func() {
-					_, err := factory.ParseTcpRoutes("50000:-1")
+					_, err := factory.ParseTcpRoutes([]string{"50000:-1"})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the container port is bigger than 65535", func() {
-					_, err := factory.ParseTcpRoutes("50000:65536")
+					_, err := factory.ParseTcpRoutes([]string{"50000:65536"})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the external port is a negative number", func() {
-					_, err := factory.ParseTcpRoutes("-1:6379")
+					_, err := factory.ParseTcpRoutes([]string{"-1:6379"})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the external port is bigger than 65535", func() {
-					_, err := factory.ParseTcpRoutes("65536:6379")
+					_, err := factory.ParseTcpRoutes([]string{"65536:6379"})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 			})
 
 			Context("when a reserved external port is passed", func() {
 				It("errors out", func() {
-					_, err := factory.ParseTcpRoutes("7777:1234")
+					_, err := factory.ParseTcpRoutes([]string{"7777:1234"})
 					Expect(err).To(MatchError("Port 7777 is reserved by Lattice.\nSee: http://lattice.cf/docs/troubleshooting#what-external-ports-are-unavailable-to-bind-as-tcp-routes"))
 				})
 			})
@@ -141,7 +141,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Describe("ParseRouteOverrides", func() {
 			Context("when valid http route is passed", func() {
 				It("returns a valid RouteOverrides", func() {
-					routeOverrides, err := factory.ParseRouteOverrides("foo.com:8080, bar.com:8181")
+					routeOverrides, err := factory.ParseRouteOverrides([]string{"foo.com:8080", "bar.com:8181"})
 					Expect(err).NotTo(HaveOccurred())
 					Expect(routeOverrides).To(ContainExactly(
 						app_runner.RouteOverrides{
@@ -154,29 +154,29 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 			Context("when a malformed http route is passed", func() {
 				It("errors out when the container port is not an int", func() {
-					_, err := factory.ParseRouteOverrides("foo:bar")
+					_, err := factory.ParseRouteOverrides([]string{"foo:bar"})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the http route is incomplete", func() {
-					_, err := factory.ParseRouteOverrides("foo.com,bar.com")
+					_, err := factory.ParseRouteOverrides([]string{"foo.com,bar.com"})
 					Expect(err).To(MatchError(command_factory.MalformedRouteErrorMessage))
 				})
 			})
 
 			Context("when invalid port is passed in https routes", func() {
 				It("errors out when the container port is a negative number", func() {
-					_, err := factory.ParseRouteOverrides("foo.com:-1")
+					_, err := factory.ParseRouteOverrides([]string{"foo.com:-1"})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the container port is bigger than 65535", func() {
-					_, err := factory.ParseRouteOverrides("foo.com:65536")
+					_, err := factory.ParseRouteOverrides([]string{"foo.com:65536"})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the host name is empty", func() {
-					_, err := factory.ParseRouteOverrides(":6379")
+					_, err := factory.ParseRouteOverrides([]string{":6379"})
 					Expect(err).To(MatchError(command_factory.MalformedRouteErrorMessage))
 				})
 			})
@@ -442,7 +442,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				args := []string{
 					"cool-web-app",
-					"--http-routes=foo.com:8080,bar.com:9090",
+					"--http-route=foo.com:8080",
+					"--http-route=bar.com:9090",
 				}
 				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
@@ -465,7 +466,8 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				args := []string{
 					"cool-web-app",
-					"--tcp-routes=50000:8080,51000:8181",
+					"--tcp-route=50000:8080",
+					"--tcp-route=51000:8181",
 				}
 				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
@@ -493,8 +495,10 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				args := []string{
 					"cool-web-app",
-					"--http-routes=foo.com:8080,bar.com:9090",
-					"--tcp-routes=50000:5222,51000:6379",
+					"--http-route=foo.com:8080",
+					"--http-route=bar.com:9090",
+					"--tcp-route=50000:5222",
+					"--tcp-route=51000:6379",
 				}
 				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
@@ -514,34 +518,34 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					It("prints usage message", func() {
 						test_helpers.ExecuteCommandWithArgs(updateCommand, []string{})
 
-						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag."))
 					})
 				})
 
 				Context("when http routes are passed", func() {
 					It("returns usage message", func() {
-						args := []string{"--http-routes=foo.com:8080,bar.com:9090"}
+						args := []string{"--http-route=foo.com:8080", "-http-route=bar.com:9090"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag."))
 					})
 				})
 
 				Context("when tcp routes are passed", func() {
 					It("returns usage message", func() {
-						args := []string{"--tcp-routes=50000:5222,51000:6379"}
+						args := []string{"--tcp-route=50000:5222", "--tcp-route=51000:6379"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag."))
 					})
 				})
 
 				Context("when both http and tcp routes are passed", func() {
 					It("returns usage message", func() {
-						args := []string{"--tcp-routes=50000:5222,51000:6379", "--http-routes=foo.com:8080,bar.com:9090"}
+						args := []string{"--tcp-route=50000:5222", "--tcp-route=51000:6379", "--http-route=foo.com:8080", "--http-route=bar.com:9090"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag."))
 					})
 				})
 
@@ -550,7 +554,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 						args := []string{"--no-routes"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag."))
 					})
 				})
 			})
@@ -560,7 +564,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					args := []string{"cool-web-app"}
 					test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
-					Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-routes' or '--tcp-routes' flag."))
+					Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag."))
 				})
 			})
 		})
@@ -589,7 +593,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 				args := []string{
 					"cool-web-app",
-					"--http-routes=foo.com:8080",
+					"--http-route=foo.com:8080",
 				}
 				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
@@ -604,7 +608,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				It("returns invalid syntax error", func() {
 					args := []string{
 						"cool-web-app",
-						"--http-routes=woo:aahh",
+						"--http-route=woo:aahh",
 					}
 					test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
@@ -618,7 +622,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				It("returns invalid syntax error", func() {
 					args := []string{
 						"cool-web-app",
-						"--tcp-routes=-1:5222",
+						"--tcp-route=-1:5222",
 					}
 					test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 

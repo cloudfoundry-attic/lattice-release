@@ -160,12 +160,12 @@ func defineTheGinkgoTests(runner *clusterTestRunner, timeout time.Duration) {
 
 			It("should run with the provided ltc options", func() {
 				externalPort := uint16(rand.Intn(9999) + 50000)
-				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-tcp-test", fmt.Sprintf("--tcp-routes=%d:5222", externalPort), fmt.Sprintf("--timeout=%s", timeout.String()))
+				runner.createDockerApp(timeout, appName, "cloudfoundry/lattice-tcp-test", fmt.Sprintf("--tcp-route=%d:5222", externalPort), fmt.Sprintf("--timeout=%s", timeout.String()))
 				Eventually(readLineFromConnection(runner.config.Target(), externalPort), timeout, 1).Should(Equal("y"))
 
 				externalPort++
 				By("Updating the routes")
-				runner.updateApp(timeout, appName, fmt.Sprintf("--tcp-routes=%d:5222", externalPort))
+				runner.updateApp(timeout, appName, fmt.Sprintf("--tcp-route=%d:5222", externalPort))
 				Eventually(readLineFromConnection(runner.config.Target(), externalPort), timeout, 1).Should(Equal("y"))
 			})
 		})
