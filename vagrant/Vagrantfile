@@ -2,7 +2,9 @@ Vagrant.configure("2") do |config|
   config.vm.box = "lattice/collocated"
   config.vm.box_version = '0'
 
-  if Vagrant.has_plugin?("vagrant-proxyconf")
+  provider_is_aws = (!ARGV.nil? && ARGV.join(' ').match(/provider(=|\s+)aws/))
+
+  if Vagrant.has_plugin?("vagrant-proxyconf") && !provider_is_aws
     config.proxy.http = ENV["http_proxy"]
     config.proxy.https = ENV["https_proxy"]
     config.proxy.no_proxy = [
@@ -57,7 +59,6 @@ Vagrant.configure("2") do |config|
     override.nfs.functional = false
   end
 
-  provider_is_aws = (!ARGV.nil? && ARGV.join(' ').match(/provider(=|\s+)aws/))
   if provider_is_aws
     network_config = <<-SCRIPT
       public_ip="$(curl http://169.254.169.254/latest/meta-data/public-ipv4)"
