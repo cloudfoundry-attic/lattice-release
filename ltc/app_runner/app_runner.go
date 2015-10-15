@@ -443,11 +443,11 @@ func (appRunner *appRunner) updateLrpRoutes(name string, routes RouteOverrides) 
 }
 
 func (appRunner *appRunner) appendDomain(hostnamePrefix string) string {
-	splitName := strings.Split(hostnamePrefix, ".")
-	if len(splitName) == 1 {
-		return fmt.Sprintf("%s.%s", hostnamePrefix, appRunner.systemDomain)
+	splitName := strings.Split(hostnamePrefix, "/")
+	if !strings.ContainsRune(splitName[0], rune('.')) {
+		splitName[0] = fmt.Sprintf("%s.%s", splitName[0], appRunner.systemDomain)
 	}
-	return hostnamePrefix
+	return strings.Join(splitName, "/")
 }
 
 func buildEnvironmentVariables(environmentVariables map[string]string) []receptor.EnvironmentVariable {

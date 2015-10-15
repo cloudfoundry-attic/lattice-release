@@ -233,7 +233,8 @@ var _ = Describe("AppRunner", func() {
 			Context("and when route overrides are not empty", func() {
 				BeforeEach(func() {
 					createAppParams.AppEnvironmentParams.RouteOverrides = app_runner.RouteOverrides{
-						{HostnamePrefix: "wiggle", Port: 2000},
+						{HostnamePrefix: "wiggle/this", Port: 2000},
+						{HostnamePrefix: "wiggle.com/this", Port: 2000},
 						{HostnamePrefix: "swang", Port: 2000},
 						{HostnamePrefix: "shuffle", Port: 4000},
 					}
@@ -251,7 +252,7 @@ var _ = Describe("AppRunner", func() {
 						{ExternalPort: 60020, Port: 3000},
 					}))
 					Expect(routes.AppRoutes).To(ContainExactly(route_helpers.AppRoutes{
-						{Hostnames: []string{"wiggle.myDiegoInstall.com", "swang.myDiegoInstall.com"}, Port: 2000},
+						{Hostnames: []string{"wiggle.myDiegoInstall.com/this", "wiggle.com/this", "swang.myDiegoInstall.com"}, Port: 2000},
 						{Hostnames: []string{"shuffle.myDiegoInstall.com"}, Port: 4000},
 					}))
 				})
