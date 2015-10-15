@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cloudfoundry-incubator/bbs/models"
@@ -219,7 +220,7 @@ func (appRunner *appRunner) buildRoutes(noRoutes bool, routeOverrides RouteOverr
 	} else if len(routeOverrides) > 0 {
 		routeMap := make(map[uint16][]string)
 		for _, override := range routeOverrides {
-			routeMap[override.Port] = append(routeMap[override.Port], fmt.Sprintf("%s.%s", override.HostnamePrefix, appRunner.systemDomain))
+			routeMap[override.Port] = append(routeMap[override.Port], appRunner.appendDomain(override.HostnamePrefix))
 		}
 		for port, hostnames := range routeMap {
 			appRoutes = append(appRoutes, route_helpers.AppRoute{
@@ -422,7 +423,7 @@ func (appRunner *appRunner) updateLrpRoutes(name string, routes RouteOverrides) 
 
 	routeMap := make(map[uint16][]string)
 	for _, override := range routes {
-		routeMap[override.Port] = append(routeMap[override.Port], fmt.Sprintf("%s.%s", override.HostnamePrefix, appRunner.systemDomain))
+		routeMap[override.Port] = append(routeMap[override.Port], appRunner.appendDomain(override.HostnamePrefix))
 	}
 	for port, hostnames := range routeMap {
 		appRoutes = append(appRoutes, route_helpers.AppRoute{
@@ -439,6 +440,14 @@ func (appRunner *appRunner) updateLrpRoutes(name string, routes RouteOverrides) 
 	)
 
 	return err
+}
+
+func (appRunner *appRunner) appendDomain(hostnamePrefix string) string {
+	splitName := strings.Split(hostnamePrefix, ".")
+	if len(splitName) == 1 {
+		return fmt.Sprintf("%s.%s", hostnamePrefix, appRunner.systemDomain)
+	}
+	return hostnamePrefix
 }
 
 func buildEnvironmentVariables(environmentVariables map[string]string) []receptor.EnvironmentVariable {
