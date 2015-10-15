@@ -1,6 +1,8 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "lattice/collocated"
   config.vm.box_version = '0'
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.provision "file", source: "lattice.tgz", destination: "/tmp/lattice.tgz"
 
   provider_is_aws = (!ARGV.nil? && ARGV.join(' ').match(/provider(=|\s+)aws/))
 
@@ -14,9 +16,7 @@ Vagrant.configure("2") do |config|
       ".consul"
     ].join(',')
 
-    config.vm.provision "shell" do |s|
-      s.inline = "grep -i proxy /etc/environment > /var/lattice/proxy || true"
-    end
+    config.vm.provision "shell", inline: "grep -i proxy /etc/environment > /var/lattice/proxy || true"
   end
 
   # Source: https://stefanwrobel.com/how-to-make-vagrant-performance-not-suck
@@ -56,7 +56,6 @@ Vagrant.configure("2") do |config|
 
     override.ssh.username = "ubuntu"
     override.ssh.private_key_path = ENV["AWS_SSH_PRIVATE_KEY_PATH"]
-    override.nfs.functional = false
   end
 
   if provider_is_aws
@@ -80,27 +79,29 @@ Vagrant.configure("2") do |config|
   arch = (/darwin/ =~ RUBY_PLATFORM) ? 'osx' : 'linux'
   config.vm.provision "shell" do |s|
     s.inline = <<-SCRIPT
+      set -e
       #{network_config}
+
       echo "GARDEN_IP=$garden_ip" >> /var/lattice/setup
       echo "DOMAIN=$domain" >> /var/lattice/setup
       echo 'HOST_ID=lattice-collocated-0' >> /var/lattice/setup
       echo 'USERNAME=#{ENV["LATTICE_USERNAME"]}' >> /var/lattice/setup
       echo 'PASSWORD=#{ENV["LATTICE_PASSWORD"]}' >> /var/lattice/setup
 
-      tar xzf /vagrant/lattice.tgz -C /tmp install
+      tar xzf /tmp/lattice.tgz -C /tmp install
       /tmp/install/common
-      /tmp/install/brain /vagrant/lattice.tgz
-      /tmp/install/cell /vagrant/lattice.tgz
+      /tmp/install/brain /tmp/lattice.tgz
+      /tmp/install/cell /tmp/lattice.tgz
       /tmp/install/start
 
       echo "Lattice is now installed and running."
-      echo "---------------------------------------------------------------"
-      echo "To obtain a version of ltc compatible with your cluster:"
+      echo "----------------------------------------------------------------"
+      echo "To obtain a version of ltc that is compatible with your cluster:"
       echo "$ curl -O http://receptor.$domain/v1/sync/#{arch}/ltc"
       echo "$ chmod +x ltc"
       echo "Optionally, move ltc to a directory in your PATH."
-      echo "You may target your cluster using: ltc target $domain"
-      echo "---------------------------------------------------------------"
+      echo "You may then target your cluster using: ltc target $domain"
+      echo "----------------------------------------------------------------"
     SCRIPT
   end
 end

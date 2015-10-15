@@ -88,8 +88,7 @@
             "only": ["vmware-iso"],
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
-                "apt-get install -y dkms",
-                "apt-get install -y --no-install-recommends open-vm-dkms"
+                "apt-get install -y open-vm-tools"
             ]
         },
         {
