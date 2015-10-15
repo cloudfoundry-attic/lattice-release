@@ -25,8 +25,8 @@ import (
 const (
 	InvalidPortErrorMessage          = "Invalid port specified. Ports must be a positive integer less than 65536."
 	ReservedPortErrorMessage         = "Port %d is reserved by Lattice.\nSee: http://lattice.cf/docs/troubleshooting#what-external-ports-are-unavailable-to-bind-as-tcp-routes"
-	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format port:route"
-	MalformedTcpRouteErrorMessage    = "Malformed TCP route. A TCP Route must be of the format container_Port:external_port"
+	MalformedRouteErrorMessage       = "Malformed route. Routes must be of the format route:port"
+	MalformedTcpRouteErrorMessage    = "Malformed TCP route. A TCP Route must be of the format container_port:external_port"
 	MustSetMonitoredPortErrorMessage = "Must set monitor-port when specifying multiple exposed ports unless --no-monitor is set."
 	MonitorPortNotExposed            = "Must have an exposed port that matches the monitored port"
 
