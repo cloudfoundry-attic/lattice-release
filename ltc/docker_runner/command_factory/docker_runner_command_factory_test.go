@@ -90,7 +90,8 @@ var _ = Describe("CommandFactory", func() {
 				"--user=some-user",
 				"--working-dir=/applications",
 				"--instances=22",
-				"--http-route=route-3000-yay:3000",
+				"--ports=3000",
+				"--http-route=route-3000-yay",
 				"--http-route=route-1111-wahoo:1111",
 				"--http-route=route-1111-me-too:1111",
 				"--env=TIMEZONE=CST",
@@ -183,21 +184,6 @@ var _ = Describe("CommandFactory", func() {
 				test_helpers.ExecuteCommandWithArgs(createCommand, args)
 
 				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.InvalidPortErrorMessage))
-				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
-				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-			})
-
-			It("errors out when there is no colon", func() {
-				args := []string{
-					"cool-web-app",
-					"superfun/app",
-					"--http-route=8888",
-					"--",
-					"/start-me-please",
-				}
-				test_helpers.ExecuteCommandWithArgs(createCommand, args)
-
-				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.MalformedRouteErrorMessage))
 				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
@@ -1064,29 +1050,14 @@ var _ = Describe("CommandFactory", func() {
 				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
-
-			It("errors out when the tcp route is incomplete", func() {
-				args := []string{
-					"cool-web-app",
-					"superfun/app",
-					"--tcp-route=5222,50000",
-					"--",
-					"/start-me-please",
-				}
-				test_helpers.ExecuteCommandWithArgs(createCommand, args)
-
-				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.MalformedTcpRouteErrorMessage))
-				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
-				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-			})
-
 		})
 
 		It("creates a Docker based app with tcp routes as specified in the command via the AppRunner", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 
 			args := []string{
-				"--tcp-route=50000:5222",
+				"--ports=5222",
+				"--tcp-route=50000",
 				"--tcp-route=50001:5223",
 				"cool-web-app",
 				"superfun/app:mycooltag",

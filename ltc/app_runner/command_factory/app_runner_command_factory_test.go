@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
@@ -88,7 +89,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 		Describe("ParseTcpRoutes", func() {
 			It("parses delimited tcp routes into the TcpRoutes struct", func() {
-				tcpRoutes, err := factory.ParseTcpRoutes([]string{"50000:7777", "50001:5222"})
+				tcpRoutes, err := factory.ParseTcpRoutes([]string{"50000:7777", "50001:5222"}, []uint16{})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(tcpRoutes).To(ContainExactly(app_runner.TcpRoutes{
 					{ExternalPort: 50000, Port: 7777},
@@ -98,42 +99,59 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 			Context("when a malformed tcp routes is passed", func() {
 				It("errors out when the container port is not an int", func() {
-					_, err := factory.ParseTcpRoutes([]string{"50000:woo"})
+					_, err := factory.ParseTcpRoutes([]string{"50000:woo"}, []uint16{})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
-				})
-
-				It("errors out when the tcp route is incomplete", func() {
-					_, err := factory.ParseTcpRoutes([]string{"5222,50000"})
-					Expect(err).To(MatchError(command_factory.MalformedTcpRouteErrorMessage))
 				})
 			})
 
 			Context("when invalid port is passed in tcp routes", func() {
 				It("errors out when the container port is a negative number", func() {
-					_, err := factory.ParseTcpRoutes([]string{"50000:-1"})
+					_, err := factory.ParseTcpRoutes([]string{"50000:-1"}, []uint16{})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the container port is bigger than 65535", func() {
-					_, err := factory.ParseTcpRoutes([]string{"50000:65536"})
+					_, err := factory.ParseTcpRoutes([]string{"50000:65536"}, []uint16{})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the external port is a negative number", func() {
-					_, err := factory.ParseTcpRoutes([]string{"-1:6379"})
+					_, err := factory.ParseTcpRoutes([]string{"-1:6379"}, []uint16{})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the external port is bigger than 65535", func() {
-					_, err := factory.ParseTcpRoutes([]string{"65536:6379"})
+					_, err := factory.ParseTcpRoutes([]string{"65536:6379"}, []uint16{})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 			})
 
 			Context("when a reserved external port is passed", func() {
 				It("errors out", func() {
-					_, err := factory.ParseTcpRoutes([]string{"7777:1234"})
+					_, err := factory.ParseTcpRoutes([]string{"7777:1234"}, []uint16{})
 					Expect(err).To(MatchError("Port 7777 is reserved by Lattice.\nSee: http://lattice.cf/docs/troubleshooting#what-external-ports-are-unavailable-to-bind-as-tcp-routes"))
+				})
+			})
+
+			Context("when no port is passed", func() {
+				It("uses the exposed port if only one port exists", func() {
+					tcpRoutes, err := factory.ParseTcpRoutes([]string{"50000"}, []uint16{7777, 2222})
+					Expect(err).NotTo(HaveOccurred())
+					Expect(tcpRoutes).To(ContainExactly(
+						[]app_runner.TcpRoute{
+							{ExternalPort: 50000, Port: 7777},
+						},
+					))
+				})
+
+				It("returns an error if no exposed ports exist", func() {
+					_, err := factory.ParseTcpRoutes([]string{"50000"}, []uint16{})
+					Expect(err).To(MatchError("Cannot assign default port to route. No ports are exposed."))
+				})
+
+				It("returns an error if more than one exposed port exists", func() {
+					_, err := factory.ParseTcpRoutes([]string{"50000"}, []uint16{8080, 4444})
+					Expect(err).To(MatchError("Cannot assign default port to route. More than one exposed port: [8080 4444]"))
 				})
 			})
 		})
@@ -141,7 +159,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		Describe("ParseRouteOverrides", func() {
 			Context("when valid http route is passed", func() {
 				It("returns a valid RouteOverrides", func() {
-					routeOverrides, err := factory.ParseRouteOverrides([]string{"foo.com:8080", "bar.com:8181"})
+					routeOverrides, err := factory.ParseRouteOverrides([]string{"foo.com:8080", "bar.com:8181"}, []uint16{})
 					Expect(err).NotTo(HaveOccurred())
 					Expect(routeOverrides).To(ContainExactly(
 						app_runner.RouteOverrides{
@@ -154,33 +172,49 @@ var _ = Describe("AppRunner CommandFactory", func() {
 
 			Context("when a malformed http route is passed", func() {
 				It("errors out when the container port is not an int", func() {
-					_, err := factory.ParseRouteOverrides([]string{"foo:bar"})
+					_, err := factory.ParseRouteOverrides([]string{"foo:bar"}, []uint16{})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
-				})
-
-				It("errors out when the http route is incomplete", func() {
-					_, err := factory.ParseRouteOverrides([]string{"foo.com,bar.com"})
-					Expect(err).To(MatchError(command_factory.MalformedRouteErrorMessage))
 				})
 			})
 
 			Context("when invalid port is passed in https routes", func() {
 				It("errors out when the container port is a negative number", func() {
-					_, err := factory.ParseRouteOverrides([]string{"foo.com:-1"})
+					_, err := factory.ParseRouteOverrides([]string{"foo.com:-1"}, []uint16{})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the container port is bigger than 65535", func() {
-					_, err := factory.ParseRouteOverrides([]string{"foo.com:65536"})
+					_, err := factory.ParseRouteOverrides([]string{"foo.com:65536"}, []uint16{})
 					Expect(err).To(MatchError(command_factory.InvalidPortErrorMessage))
 				})
 
 				It("errors out when the host name is empty", func() {
-					_, err := factory.ParseRouteOverrides([]string{":6379"})
+					_, err := factory.ParseRouteOverrides([]string{":6379"}, []uint16{})
 					Expect(err).To(MatchError(command_factory.MalformedRouteErrorMessage))
 				})
 			})
 
+			Context("when no port is passed", func() {
+				It("uses the exposed port if only one port exists", func() {
+					routeOverrides, err := factory.ParseRouteOverrides([]string{"foo.com"}, []uint16{8080, 2222})
+					Expect(err).NotTo(HaveOccurred())
+					Expect(routeOverrides).To(ContainExactly(
+						app_runner.RouteOverrides{
+							{HostnamePrefix: "foo.com", Port: 8080},
+						},
+					))
+				})
+
+				It("returns an error if no exposed ports exist", func() {
+					_, err := factory.ParseRouteOverrides([]string{"foo.com"}, []uint16{})
+					Expect(err).To(MatchError("Cannot assign default port to route. No ports are exposed."))
+				})
+
+				It("returns an error if more than one exposed port exists", func() {
+					_, err := factory.ParseRouteOverrides([]string{"foo.com"}, []uint16{8080, 4444})
+					Expect(err).To(MatchError("Cannot assign default port to route. More than one exposed port: [8080 4444]"))
+				})
+			})
 		})
 	})
 
@@ -425,10 +459,12 @@ var _ = Describe("AppRunner CommandFactory", func() {
 		BeforeEach(func() {
 			appRunnerCommandFactoryConfig = command_factory.AppRunnerCommandFactoryConfig{
 				AppRunner:   fakeAppRunner,
+				AppExaminer: fakeAppExaminer,
 				UI:          terminalUI,
 				ExitHandler: fakeExitHandler,
 			}
 
+			fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{}, nil)
 			commandFactory := command_factory.NewAppRunnerCommandFactory(appRunnerCommandFactoryConfig)
 			updateCommand = commandFactory.MakeUpdateCommand()
 		})
@@ -440,9 +476,11 @@ var _ = Describe("AppRunner CommandFactory", func() {
 					{HostnamePrefix: "bar.com", Port: 9090},
 				}
 
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{Ports: []uint16{8080, 2222}}, nil)
+
 				args := []string{
 					"cool-web-app",
-					"--http-route=foo.com:8080",
+					"--http-route=foo.com",
 					"--http-route=bar.com:9090",
 				}
 				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
@@ -454,6 +492,7 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				Expect(updateAppParams.RouteOverrides).To(Equal(expectedRouteOverrides))
 				Expect(updateAppParams.TcpRoutes).To(BeNil())
 				Expect(updateAppParams.NoRoutes).To(BeFalse())
+				Expect(fakeAppExaminer.AppStatusCallCount()).To(Equal(1))
 			})
 		})
 
@@ -584,6 +623,22 @@ var _ = Describe("AppRunner CommandFactory", func() {
 				Expect(updateAppParams.NoRoutes).To(BeTrue())
 				Expect(updateAppParams.TcpRoutes).To(BeNil())
 				Expect(updateAppParams.RouteOverrides).To(BeNil())
+			})
+		})
+
+		Context("when the app examiner returns errors", func() {
+			It("outputs error messages", func() {
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{}, errors.New("Major Fault"))
+
+				args := []string{
+					"cool-web-app",
+					"--http-route=foo.com:8080",
+				}
+				test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Error querying application status: Major Fault"))
+				Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.CommandFailed}))
 			})
 		})
 

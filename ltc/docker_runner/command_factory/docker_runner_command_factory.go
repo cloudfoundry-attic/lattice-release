@@ -320,14 +320,14 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		appArgs = imageMetadata.StartCommand[1:]
 	}
 
-	routeOverrides, err := factory.ParseRouteOverrides(httpRouteFlag)
+	routeOverrides, err := factory.ParseRouteOverrides(httpRouteFlag, exposedPorts)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}
 
-	tcpRoutes, err := factory.ParseTcpRoutes(tcpRouteFlag)
+	tcpRoutes, err := factory.ParseTcpRoutes(tcpRouteFlag, exposedPorts)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)

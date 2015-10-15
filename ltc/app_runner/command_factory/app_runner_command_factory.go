@@ -219,7 +219,14 @@ func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
 	updateAppParams.Name = appName
 	updateAppParams.NoRoutes = noRoutes
 
-	routeOverrides, err := factory.ParseRouteOverrides(httpRouteFlag)
+	appInfo, err := factory.AppExaminer.AppStatus(appName)
+	if err != nil {
+		factory.UI.SayLine("Error querying application status: " + err.Error())
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
+		return
+	}
+
+	routeOverrides, err := factory.ParseRouteOverrides(httpRouteFlag, appInfo.Ports)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
@@ -227,7 +234,7 @@ func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
 	}
 	updateAppParams.RouteOverrides = routeOverrides
 
-	tcpRoutes, err := factory.ParseTcpRoutes(tcpRouteFlag)
+	tcpRoutes, err := factory.ParseTcpRoutes(tcpRouteFlag, appInfo.Ports)
 	if err != nil {
 		factory.UI.SayLine(err.Error())
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
@@ -407,7 +414,7 @@ func (factory *AppRunnerCommandFactory) grabVarFromEnv(name string) string {
 	return ""
 }
 
-func (factory *AppRunnerCommandFactory) ParseTcpRoutes(routesTcp []string) (app_runner.TcpRoutes, error) {
+func (factory *AppRunnerCommandFactory) ParseTcpRoutes(routesTcp []string, ports []uint16) (app_runner.TcpRoutes, error) {
 	var tcpRoutes app_runner.TcpRoutes
 
 	for _, routeTcp := range routesTcp {
@@ -415,17 +422,28 @@ func (factory *AppRunnerCommandFactory) ParseTcpRoutes(routesTcp []string) (app_
 			continue
 		}
 
+		var containerPort uint16
+		var err error
+
 		portsArr := strings.Split(routeTcp, ":")
+
 		if len(portsArr) < 2 {
-			return nil, errors.New(MalformedTcpRouteErrorMessage)
+			appPorts := removePort(ports, 2222)
+			if len(appPorts) == 0 {
+				return nil, errors.New("Cannot assign default port to route. No ports are exposed.")
+			} else if len(appPorts) > 1 {
+				return nil, fmt.Errorf("Cannot assign default port to route. More than one exposed port: %v", appPorts)
+			}
+
+			containerPort = appPorts[0]
+		} else {
+			containerPort, err = getPort(portsArr[1])
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		externalPort, err := getPort(portsArr[0])
-		if err != nil {
-			return nil, err
-		}
-
-		containerPort, err := getPort(portsArr[1])
 		if err != nil {
 			return nil, err
 		}
@@ -455,7 +473,7 @@ func getPort(port string) (uint16, error) {
 	return uint16(mayBePort), nil
 }
 
-func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes []string) (app_runner.RouteOverrides, error) {
+func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes []string, ports []uint16) (app_runner.RouteOverrides, error) {
 	var routeOverrides app_runner.RouteOverrides
 
 	for _, route := range routes {
@@ -463,9 +481,24 @@ func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes []string) (ap
 			continue
 		}
 
+		var port uint16
+		var err error
+
 		routeArr := strings.Split(route, ":")
 		if len(routeArr) < 2 {
-			return nil, errors.New(MalformedRouteErrorMessage)
+			appPorts := removePort(ports, 2222)
+			if len(appPorts) == 0 {
+				return nil, errors.New("Cannot assign default port to route. No ports are exposed.")
+			} else if len(appPorts) > 1 {
+				return nil, fmt.Errorf("Cannot assign default port to route. More than one exposed port: %v", appPorts)
+			}
+
+			port = appPorts[0]
+		} else {
+			port, err = getPort(routeArr[1])
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		hostnamePrefix := strings.Trim(routeArr[0], " ")
@@ -473,15 +506,22 @@ func (factory *AppRunnerCommandFactory) ParseRouteOverrides(routes []string) (ap
 			return nil, errors.New(MalformedRouteErrorMessage)
 		}
 
-		port, err := getPort(routeArr[1])
-		if err != nil {
-			return nil, err
-		}
-
 		routeOverrides = append(routeOverrides, app_runner.RouteOverride{HostnamePrefix: hostnamePrefix, Port: port})
 	}
 
 	return routeOverrides, nil
+}
+
+func removePort(ports []uint16, badPort uint16) []uint16 {
+	goodPorts := []uint16{}
+
+	for _, port := range ports {
+		if port != badPort {
+			goodPorts = append(goodPorts, port)
+		}
+	}
+
+	return goodPorts
 }
 
 func parseEnvVarPair(envVarPair string) (name, value string) {

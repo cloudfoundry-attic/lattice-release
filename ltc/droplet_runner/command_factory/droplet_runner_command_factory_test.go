@@ -601,9 +601,10 @@ var _ = Describe("CommandFactory", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
 
 			args := []string{
-				"--http-route=ninetyninety:4444",
+				"--ports=4444",
+				"--http-route=ninetyninety",
 				"--http-route=fourtyfourfourtyfour:9090",
-				"--tcp-route=50000:5222",
+				"--tcp-route=50000",
 				"--tcp-route=50001:5223",
 				"droppy",
 				"droplet-name",
@@ -630,7 +631,7 @@ var _ = Describe("CommandFactory", func() {
 				{HostnamePrefix: "fourtyfourfourtyfour", Port: 9090},
 			}))
 			Expect(appEnvParam.TcpRoutes).To(ContainExactly(app_runner.TcpRoutes{
-				{ExternalPort: 50000, Port: 5222},
+				{ExternalPort: 50000, Port: 4444},
 				{ExternalPort: 50001, Port: 5223},
 			}))
 		})
@@ -778,19 +779,6 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.InvalidPortErrorMessage))
-				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
-			})
-
-			It("errors out when there is no colon", func() {
-				args := []string{
-					"cool-web-app",
-					"cool-web-droplet",
-					"--http-route=8888",
-				}
-				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
-
-				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
-				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.MalformedRouteErrorMessage))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})
