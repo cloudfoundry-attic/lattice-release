@@ -88,27 +88,19 @@ Terraform will generate a `terraform.tfstate` file.  This file describes the clu
 
 #####Install the Lattice CLI
 
-> NOTE: If your receptor has user/password authorization, you will need those credentials when downloading ltc for Terraform with curl.
+After a successful deployment Terraform will print the Lattice target and Lattice user information. Refer to the `lattice_target = x.x.x.x.xip.io` output line to find the address of your cluster.
 
-If you're running Linux: `curl -Ou <username> http://receptor.192.168.11.11.xip.io/v1/sync/linux/ltc`
+If you're running Linux: `curl -O http://receptor.x.x.x.x.xip.io/v1/sync/linux/ltc`
 
-If you're running OS X: `curl -Ou <username> http://receptor.192.168.11.11.xip.io/v1/sync/osx/ltc`
+If you're running OS X: `curl -O http://receptor.x.x.x.x.xip.io/v1/sync/osx/ltc`
 
 ```bash
 chmod a+x ltc
-./ltc target 192.168.11.11.xip.io
+./ltc target x.x.x.x.xip.io
 ./ltc -v
 ```
 
 For more information visit [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/blob/master/ltc/README.md)
-
-#####Use the Lattice CLI to target Lattice
-
-After a successful deployment Terraform will print the Lattice target and Lattice user information. Use the `lattice_target = x.x.x.x.xip.io` to target Lattice.
-
-```bash
-ltc target x.x.x.x.xip.io
-```
 
 [Lattice.cf](http://lattice.cf) | [Latest Release](https://github.com/cloudfoundry-incubator/lattice/releases/latest) | [Nightly Builds](https://lattice.s3.amazonaws.com/nightly/index.html)
 
