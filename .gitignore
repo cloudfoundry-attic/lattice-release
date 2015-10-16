@@ -4,6 +4,7 @@
 *.tfstate
 *.tfstate.backup
 *.tfvars
+lattice.tf.json
 lattice.tgz
 
 /bin

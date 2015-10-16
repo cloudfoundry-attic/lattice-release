@@ -1,7 +1,3 @@
-variable "lattice_tgz_url" {
-    description = "URL for lattice.tgz"
-}
-
 variable "username" {
     description = "Lattice username"
 }
@@ -60,34 +56,3 @@ variable "subnet_cidr_block" {
     description = "CIDR address range for AWS subnet"
     default = "10.0.1.0/24"
 }
-
-variable "brain_ami" {
-    description = "Brain base image AMI"
-    default = {
-        ap-northeast-1 = ""
-        ap-southeast-1 = ""
-        ap-southeast-2 = ""
-        eu-central-1 = ""
-        eu-west-1 = ""
-        sa-east-1 = ""
-        us-east-1 = "ami-3fe5ab5a"
-        us-west-1 = ""
-        us-west-2 = ""
-    }
-}
-
-variable "cell_ami" {
-    description = "Cell base image AMI"
-    default = {
-        ap-northeast-1 = ""
-        ap-southeast-1 = ""
-        ap-southeast-2 = ""
-        eu-central-1 = ""
-        eu-west-1 = ""
-        sa-east-1 = ""
-        us-east-1 = "ami-2de5ab48"
-        us-west-1 = ""
-        us-west-2 = ""
-    }
-}
-
