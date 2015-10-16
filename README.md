@@ -1,4 +1,4 @@
-# lattice-release
+# Cloud Foundry Lattice
 
 <table width="100%" border="0">
   <tr>
@@ -10,7 +10,7 @@
   </tr>
 </table>
 
-[Lattice.cf](http://lattice.cf) | [Latest Release](https://github.com/cloudfoundry-incubator/lattice/releases/latest) | [Nightly Builds](https://lattice.s3.amazonaws.com/nightly/index.html)
+[ [Website](http://lattice.cf) | [Latest Release](https://github.com/cloudfoundry-incubator/lattice/releases/latest) | [Nightly Builds](https://lattice.s3.amazonaws.com/nightly/index.html) ]
 
 ## Deploy Lattice with Vagrant
 
@@ -21,7 +21,7 @@ A collocated deployment of Lattice can be launched locally with [Vagrant](https:
 
 > NOTE: Ubuntu 14.04 LTS does not install a compatible version of Vagrant by default. You can upgrade the version that you get out of the box by downloading the `.deb` file from [Vagrant](http://www.vagrantup.com/downloads.html).
 
-#####Spin up a virtual environment
+##### Spin up a virtual environment
 
 Unzip the Lattice bundle, and switch to the vagrant directory
 
@@ -33,7 +33,7 @@ vagrant up --provider virtualbox
 
 This spins up a virtual environment that is accessible at `192.168.11.11`
 
-#####Install the Lattice CLI
+##### Install the Lattice CLI
 
 If you're running Linux: `curl -O http://receptor.192.168.11.11.xip.io/v1/sync/linux/ltc`
 
@@ -47,7 +47,7 @@ chmod a+x ltc
 
 For more information visit [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/blob/master/ltc/README.md)
 
-#####Use the Lattice CLI to target Lattice
+##### Use the Lattice CLI to target Lattice
 
 ```bash
 cd lattice-bundle-VERSION-PLATFORM
@@ -64,7 +64,7 @@ A scalable cluster deployment of Lattice can be launched on [AWS](https://github
 * [Terraform 0.6.2+](https://www.terraform.io/intro/getting-started/install.html)
 * A Lattice bundle from the [latest release](https://github.com/cloudfoundry-incubator/lattice/releases/latest) or the [nightly builds](https://lattice.s3.amazonaws.com/nightly/index.html) page
 
-#####Configure your virtual environment
+##### Configure your virtual environment
 
 Unzip the Lattice bundle, and switch to the terraform/aws directory
 
@@ -75,7 +75,7 @@ cd lattice-bundle-VERSION-PLATFORM/terraform/aws
 
 Update the `lattice.aws.tf` by [filling in the values for the variables](https://github.com/cloudfoundry-incubator/lattice/blob/master/terraform/aws/README.md#configure).
 
-#####Deploy the cluster to AWS
+##### Deploy the cluster to AWS
 
 From the folder containing the `lattice.aws.tf`, run these commands to deploy your cluster 
 
@@ -86,7 +86,7 @@ terraform apply
 
 Terraform will generate a `terraform.tfstate` file.  This file describes the cluster that was built - keep it around in order to modify/tear down the cluster.
 
-#####Install the Lattice CLI
+##### Install `ltc` (the Lattice CLI)
 
 After a successful deployment Terraform will print the Lattice target and Lattice user information. Refer to the `lattice_target = x.x.x.x.xip.io` output line to find the address of your cluster.
 
@@ -101,6 +101,4 @@ chmod a+x ltc
 ```
 
 For more information visit [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/blob/master/ltc/README.md)
-
-[Lattice.cf](http://lattice.cf) | [Latest Release](https://github.com/cloudfoundry-incubator/lattice/releases/latest) | [Nightly Builds](https://lattice.s3.amazonaws.com/nightly/index.html)
 
