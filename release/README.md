@@ -14,6 +14,9 @@ following dependencies:
 
 ## Installation
 
+Installation is usually handled by a Terraform or Vagrant deployment configuration. All
+Lattice deployment configurations should adhere to the following guidelines.
+
 To install a `lattice.tgz` file, first extract the `install` folder at the root of the tarball.
 - The `install/common` script must be run on every Lattice instance.
 - The `install/cell` script must be run on every Lattice cell
