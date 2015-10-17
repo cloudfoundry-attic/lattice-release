@@ -1,6 +1,6 @@
 {
     "variables": {
-        "version": "development"
+        "version": "0"
     },
     "builders": [
         {
@@ -11,7 +11,10 @@
             "instance_type": "t2.medium",
             "ami_name": "lattice-terraform-brain-{{isotime \"20060102-1504\"}}",
             "ami_groups": ["all"],
-            "ami_regions": [],
+            "ami_regions": [
+                "ap-northeast-1", "ap-southeast-1", "ap-southeast-2", "sa-east-1",
+                "eu-central-1", "eu-west-1", "us-west-1", "us-west-2"
+            ],
             "ssh_username": "ubuntu",
             "tags": {"Name": "{{user `version`}}"}
         },
@@ -23,7 +26,10 @@
             "instance_type": "m4.large",
             "ami_name": "lattice-terraform-cell-{{isotime \"20060102-1504\"}}",
             "ami_groups": ["all"],
-            "ami_regions": [],
+            "ami_regions": [
+                "ap-northeast-1", "ap-southeast-1", "ap-southeast-2", "sa-east-1",
+                "eu-central-1", "eu-west-1", "us-west-1", "us-west-2"
+            ],
             "ssh_username": "ubuntu",
             "tags": {"Name": "{{user `version`}}"}
         }
