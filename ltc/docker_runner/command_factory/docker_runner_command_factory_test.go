@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
@@ -17,6 +18,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/cloudfoundry-incubator/lattice/ltc/test_helpers"
@@ -82,6 +84,24 @@ var _ = Describe("CommandFactory", func() {
 
 		It("creates a Docker based app as specified in the command via the AppRunner", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(22, false, nil)
+			fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{
+				Routes: route_helpers.Routes{
+					AppRoutes: []route_helpers.AppRoute{
+						{
+							Hostnames: []string{"route-3000-yay.192.168.11.11.xip.io"},
+							Port:      8080,
+						},
+						{
+							Hostnames: []string{"route-1111-wahoo.192.168.11.11.xip.io"},
+							Port:      1111,
+						},
+						{
+							Hostnames: []string{"route-1111-me-too.192.168.11.11.xip.io"},
+							Port:      1111,
+						},
+					},
+				},
+			}, nil)
 
 			args := []string{
 				"--cpu-weight=57",
@@ -192,6 +212,20 @@ var _ = Describe("CommandFactory", func() {
 		Describe("Exposed Ports", func() {
 			BeforeEach(func() {
 				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{
+					Routes: route_helpers.Routes{
+						AppRoutes: []route_helpers.AppRoute{
+							{
+								Hostnames: []string{"cool-web-app.192.168.11.11.xip.io", "cool-web-app-8080.192.168.11.11.xip.io"},
+								Port:      8080,
+							},
+							{
+								Hostnames: []string{"cool-web-app-9090.192.168.11.11.xip.io"},
+								Port:      9090,
+							},
+						},
+					},
+				}, nil)
 			})
 
 			It("exposes ports passed by --ports", func() {
@@ -217,6 +251,29 @@ var _ = Describe("CommandFactory", func() {
 			It("exposes ports from image metadata", func() {
 				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{
 					ExposedPorts: []uint16{1200, 2701, 4302},
+				}, nil)
+
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{
+					Routes: route_helpers.Routes{
+						AppRoutes: []route_helpers.AppRoute{
+							{
+								Hostnames: []string{"cool-web-app.192.168.11.11.xip.io", "cool-web-app-8080.192.168.11.11.xip.io"},
+								Port:      8080,
+							},
+							{
+								Hostnames: []string{"cool-web-app-1200.192.168.11.11.xip.io"},
+								Port:      1200,
+							},
+							{
+								Hostnames: []string{"cool-web-app-2701.192.168.11.11.xip.io"},
+								Port:      2701,
+							},
+							{
+								Hostnames: []string{"cool-web-app-4302.192.168.11.11.xip.io"},
+								Port:      4302,
+							},
+						},
+					},
 				}, nil)
 
 				args := []string{
@@ -856,6 +913,16 @@ var _ = Describe("CommandFactory", func() {
 			It("polls for the app to start with correct number of instances, outputting logs while the app starts", func() {
 				fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 				fakeAppExaminer.RunningAppInstancesInfoReturns(0, false, nil)
+				fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{
+					Routes: route_helpers.Routes{
+						AppRoutes: []route_helpers.AppRoute{
+							{
+								Hostnames: []string{"cool-web-app.192.168.11.11.xip.io", "cool-web-app-8080.192.168.11.11.xip.io"},
+								Port:      8080,
+							},
+						},
+					},
+				}, nil)
 
 				args := []string{
 					"--instances=10",
@@ -899,6 +966,16 @@ var _ = Describe("CommandFactory", func() {
 				It("alerts the user the app took too long to start", func() {
 					fakeDockerMetadataFetcher.FetchMetadataReturns(&docker_metadata_fetcher.ImageMetadata{}, nil)
 					fakeAppExaminer.RunningAppInstancesInfoReturns(0, false, nil)
+					fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{
+						Routes: route_helpers.Routes{
+							AppRoutes: []route_helpers.AppRoute{
+								{
+									Hostnames: []string{"cool-web-app.192.168.11.11.xip.io", "cool-web-app-8080.192.168.11.11.xip.io"},
+									Port:      8080,
+								},
+							},
+						},
+					}, nil)
 
 					args := []string{
 						"cool-web-app",
@@ -1054,6 +1131,20 @@ var _ = Describe("CommandFactory", func() {
 
 		It("creates a Docker based app with tcp routes as specified in the command via the AppRunner", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+			fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{
+				Routes: route_helpers.Routes{
+					TcpRoutes: []route_helpers.TcpRoute{
+						{
+							ExternalPort: 50000,
+							Port:         5222,
+						},
+						{
+							ExternalPort: 50001,
+							Port:         5223,
+						},
+					},
+				},
+			}, nil)
 
 			args := []string{
 				"--ports=5222",

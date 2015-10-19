@@ -384,8 +384,7 @@ func (factory *DockerRunnerCommandFactory) createApp(context *cli.Context) {
 		return
 	}
 
-	factory.WaitForAppCreation(name, timeoutFlag, instancesFlag,
-		noRoutesFlag, routeOverrides, tcpRoutes, monitorConfig.Port, exposedPorts)
+	factory.WaitForAppCreation(name, timeoutFlag, instancesFlag)
 }
 
 func (factory *DockerRunnerCommandFactory) getExposedPortsFromArgs(portsFlag string, imageMetadata *docker_metadata_fetcher.ImageMetadata) ([]uint16, error) {

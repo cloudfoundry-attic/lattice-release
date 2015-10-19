@@ -14,7 +14,6 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter"
-	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/colors"
 	"github.com/codegangsta/cli"
@@ -282,56 +281,49 @@ func (factory *AppRunnerCommandFactory) removeApp(c *cli.Context) {
 	}
 }
 
-func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollTimeout time.Duration, instanceCount int, noRoutesFlag bool, routeOverrides app_runner.RouteOverrides, tcpRoutes app_runner.TcpRoutes, monitorPort uint16, exposedPorts []uint16) {
+func (factory *AppRunnerCommandFactory) WaitForAppCreation(appName string, pollTimeout time.Duration, instanceCount int) {
 	factory.UI.SayLine("Creating App: " + appName)
 
 	go factory.TailedLogsOutputter.OutputTailedLogs(appName)
 	defer factory.TailedLogsOutputter.StopOutputting()
 
-	ok := factory.pollUntilAllInstancesRunning(pollTimeout, appName, instanceCount, "start")
-	if noRoutesFlag {
+	appStarted := factory.pollUntilAllInstancesRunning(pollTimeout, appName, instanceCount, "start")
+	if appStarted {
 		factory.UI.SayLine(colors.Green(appName + " is now running."))
+	}
+
+	appStatus, err := factory.AppExaminer.AppStatus(appName)
+	if err != nil {
+		factory.UI.SayLine(fmt.Sprintf("Error querying status of %s: %s", appName, err.Error()))
+		factory.ExitHandler.Exit(exit_codes.CommandFailed)
 		return
-	} else if ok {
-		factory.UI.SayLine(colors.Green(appName + " is now running."))
-		factory.UI.SayLine("App is reachable at:")
-	} else {
-		factory.UI.SayLine("App will be reachable at:")
 	}
-	if tcpRoutes != nil {
-		for _, tcpRoute := range tcpRoutes {
-			factory.UI.SayLine(colors.Green(factory.externalPortMappingForApp(tcpRoute.ExternalPort, tcpRoute.Port)))
-		}
-	}
-	if routeOverrides != nil {
-		for _, route := range routeOverrides {
-			factory.UI.SayLine(colors.Green(factory.urlForAppName(route.HostnamePrefix)))
-		}
-	} else if len(tcpRoutes) == 0 {
-		factory.displayDefaultRoutes(appName, monitorPort, exposedPorts)
-	}
-}
 
-func (factory *AppRunnerCommandFactory) displayDefaultRoutes(appName string, monitorPort uint16, exposedPorts []uint16) {
-	factory.UI.SayLine(colors.Green(factory.urlForAppName(appName)))
+	if len(appStatus.Routes.TcpRoutes) > 0 || len(appStatus.Routes.AppRoutes) > 0 {
+		if appStarted {
+			factory.UI.SayLine("App is reachable at:")
+		} else {
+			factory.UI.SayLine("App will be reachable at:")
+		}
 
-	primaryPort := route_helpers.GetPrimaryPort(monitorPort, exposedPorts)
-	appRoutes := route_helpers.BuildDefaultRoutingInfo(appName, exposedPorts, primaryPort, factory.Domain)
-	for _, appRoute := range appRoutes {
-		factory.UI.SayLine(colors.Green(factory.urlForAppNameAndPort(appName, appRoute.Port)))
+		if appStatus.Routes.TcpRoutes != nil {
+			for _, tcpRoute := range appStatus.Routes.TcpRoutes {
+				factory.UI.SayLine(colors.Green(factory.externalPortMappingForApp(tcpRoute.ExternalPort, tcpRoute.Port)))
+			}
+		}
+
+		if appStatus.Routes.AppRoutes != nil {
+			for _, route := range appStatus.Routes.AppRoutes {
+				for _, hostname := range route.Hostnames {
+					factory.UI.SayLine(colors.Green(fmt.Sprintf("http://%s", hostname)))
+				}
+			}
+		}
 	}
 }
 
 func (factory *AppRunnerCommandFactory) externalPortMappingForApp(externalPort uint16, containerPort uint16) string {
 	return fmt.Sprintf("%s:%d", factory.Domain, externalPort)
-}
-
-func (factory *AppRunnerCommandFactory) urlForAppNameAndPort(name string, port uint16) string {
-	return fmt.Sprintf("http://%s-%d.%s", name, port, factory.Domain)
-}
-
-func (factory *AppRunnerCommandFactory) urlForAppName(name string) string {
-	return fmt.Sprintf("http://%s.%s", name, factory.Domain)
 }
 
 func (factory *AppRunnerCommandFactory) pollUntilAllInstancesRunning(pollTimeout time.Duration, appName string, instances int, action pollingAction) bool {

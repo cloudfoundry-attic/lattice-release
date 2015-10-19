@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 
+	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/fake_app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner/fake_app_runner"
@@ -23,6 +24,7 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/exit_codes"
 	"github.com/cloudfoundry-incubator/lattice/ltc/exit_handler/fake_exit_handler"
 	"github.com/cloudfoundry-incubator/lattice/ltc/logs/console_tailed_logs_outputter/fake_tailed_logs_outputter"
+	"github.com/cloudfoundry-incubator/lattice/ltc/route_helpers"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/task_examiner/fake_task_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal"
@@ -599,6 +601,20 @@ var _ = Describe("CommandFactory", func() {
 
 		It("launches the specified droplet with tcp routes", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+			fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{
+				Routes: route_helpers.Routes{
+					AppRoutes: []route_helpers.AppRoute{
+						{
+							Hostnames: []string{"ninetyninety.192.168.11.11.xip.io"},
+							Port:      4444,
+						},
+						{
+							Hostnames: []string{"fourtyfourfourtyfour.192.168.11.11.xip.io"},
+							Port:      9090,
+						},
+					},
+				},
+			}, nil)
 
 			args := []string{
 				"--ports=4444",
@@ -638,6 +654,20 @@ var _ = Describe("CommandFactory", func() {
 
 		It("launches the specified droplet", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(11, false, nil)
+			fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{
+				Routes: route_helpers.Routes{
+					AppRoutes: []route_helpers.AppRoute{
+						{
+							Hostnames: []string{"ninetyninety.192.168.11.11.xip.io"},
+							Port:      4444,
+						},
+						{
+							Hostnames: []string{"fourtyfourfourtyfour.192.168.11.11.xip.io"},
+							Port:      9090,
+						},
+					},
+				},
+			}, nil)
 
 			args := []string{
 				"--cpu-weight=57",
@@ -699,6 +729,16 @@ var _ = Describe("CommandFactory", func() {
 
 		It("launches the specified droplet with default values", func() {
 			fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
+			fakeAppExaminer.AppStatusReturns(app_examiner.AppInfo{
+				Routes: route_helpers.Routes{
+					AppRoutes: []route_helpers.AppRoute{
+						{
+							Hostnames: []string{"droppy.192.168.11.11.xip.io"},
+							Port:      8080,
+						},
+					},
+				},
+			}, nil)
 
 			test_helpers.ExecuteCommandWithArgs(launchDropletCommand, []string{"droppy", "droplet-name"})
 
