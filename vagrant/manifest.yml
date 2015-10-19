@@ -24,6 +24,7 @@ update:
 
 compilation:
   network: default
+  another_thing: true
 
 jobs:
 - name: lattice-collocated
