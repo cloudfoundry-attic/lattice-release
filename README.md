@@ -100,5 +100,100 @@ chmod a+x ltc
 ./ltc -v
 ```
 
-For more information visit [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/blob/master/ltc/README.md)
+## Development
 
+> NOTE: These instructions are for people contributing code to Lattice. If you want to install a Lattice release, see above.
+
+To develop lattice release you will need to have the following tools installed:
+
+- vagrant
+- packer
+- virtualbox
+- direnv _(optional)_
+
+### Clone the Lattice source
+
+```bash
+git clone --recursive https://github.com/cloudfoundry-incubator/lattice-release.git
+cd lattice-release
+```
+
+### Build Lattice
+
+Setup your shell for building Lattice:
+
+```bash
+# in lattice-release
+direnv allow
+# or
+source .envrc
+```
+
+If you want to build and deploy Lattice on AWS using Vagrant, you'll need to add your AWS credentials to the environment:
+
+```bash
+export AWS_ACCESS_KEY_ID=<...>
+export AWS_SECRET_ACCESS_KEY=<...>
+export AWS_SSH_PRIVATE_KEY_NAME=<...> # name of the remote SSH key in AWS
+export AWS_SSH_PRIVATE_KEY_PATH=<...> # path to the local SSH key
+export AWS_INSTANCE_NAME=<...> # optional
+```
+
+The first time you build Lattice, you'll need to create a local Vagrant box containing Diego. You can skip this step for subsequent Lattice builds unless the Diego release has changed.
+
+```bash
+# in lattice-release
+bundle
+cd vagrant
+
+./build -only=virtualbox-iso
+vagrant box add --force lattice-virtualbox-v0.box --name lattice/collocated
+# or 
+./build -only=vmware-iso
+vagrant box add --force lattice-vmware-v0.box --name lattice/collocated
+# or 
+./build -only=amazon-ebs # NOTE: Requires AWS credentials in the environment
+vagrant box add --force lattice-aws-v0.box --name lattice/collocated
+
+cd ..
+```
+
+Finally, build the Lattice tarball:
+
+```bash
+# in lattice-release
+./release/build vagrant/lattice.tgz
+```
+
+### Deploy Lattice
+
+Once you have a Lattice tarball, use `vagrant` to deploy Lattice:
+
+```bash
+# in lattice-release
+cd vagrant
+vagrant up --provider=virtualbox
+# or
+vagrant up --provider=vmware_fusion
+# or
+vagrant up --provider=aws # NOTE: Requires AWS credentials in the environment
+```
+
+### Install ltc and test deployed Lattice cluster
+
+Compiling ltc is as simple as using `go install`:
+
+```bash
+# in lattice-release
+go install github.com/cloudfoundry-incubator/lattice/ltc
+```
+
+With a running Lattice cluster, target and run the cluster tests:
+
+```bash
+# in lattice-release
+ltc target local.lattice.cf
+ltc test -v
+```
+
+For more information, visit [Lattice CLI](https://github.com/cloudfoundry-incubator/lattice/blob/master/ltc/README.md).
