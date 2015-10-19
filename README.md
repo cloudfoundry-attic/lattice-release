@@ -69,6 +69,16 @@ Virtualbox:
 ```bash
 vagrant up --provider virtualbox
 ```
+If you get an error message saying
+```
+Vagrant has detected that you have a version of VirtualBox installed
+that is not supported. Please install one of the supported versions
+listed below to use Vagrant:
+
+4.0, 4.1, 4.2, 4.3
+```
+you are running an old version of Vagrant that doesn't support VirutalBox 5+.
+[Upgrading Vagrant](https://www.vagrantup.com/downloads.html) to 1.7.3+ will fix the issue.
 
 VMware Fusion:
 ```bash
