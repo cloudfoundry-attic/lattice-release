@@ -112,30 +112,55 @@ provision_required = (!ARGV.nil? && ['up', 'provision', 'reload'].include?(ARGV[
 lattice_tgz = File.join(File.dirname(__FILE__), "lattice.tgz")
 lattice_tgz_url = defined?(LATTICE_TGZ_URL) && LATTICE_TGZ_URL
 
-def download_lattice_tgz(url)
-  unless system('curl', '-sfo', 'lattice.tgz', url)
-    puts "Failed to download #{url}."
-    exit(1)
+def download_lattice_tgz(url, output_file)
+  uri=URI(url)
+  Net::HTTP.start(uri.host, uri.port) do |http|
+    request = Net::HTTP::Get.new(uri)
+    http.request(request) do |response|
+      open(output_file, 'wb') do |io|
+        response.read_body do |chunk|
+          io.write(chunk)
+          sleep(0.005)
+        end
+      end
+    end
   end
 end
 
+def read_lattice_version_from_tgz(filename)
+    require 'zlib'
+    require 'rubygems'
+    require 'rubygems/package'
+    require 'rubygems/package/tar_reader'
+
+    Zlib::GzipReader.open(filename) do |gz| 
+      tr = Gem::Package::TarReader.new(gz)
+      tr.each do |f|
+        if f.full_name == 'brain/var/lattice/versions/LATTICE_RELEASE'
+          return f.read.chomp
+        end
+      end
+    end
+    return nil
+end
+
 if provision_required && File.exists?(lattice_tgz)
-  tgz_version = `tar Oxzf #{lattice_tgz} brain/var/lattice/versions/LATTICE_RELEASE`.chomp
+  tgz_version = read_lattice_version_from_tgz(lattice_tgz)
   if lattice_tgz_url
     url_version = lattice_tgz_url.match(/\/lattice-(v[^\/]+)\.tgz$/)[1]
     if tgz_version != url_version
-      puts "Warning: lattice.tgz file version (#{tgz_version}) does not match Vagrantfile version (#{url_version})."
-      puts 'Re-downloading and replacing local lattice.tgz...'
-      download_lattice_tgz(lattice_tgz_url)
+      puts "Warning: #{lattice_tgz} file version (#{tgz_version}) does not match Vagrantfile version (#{url_version})."
+      puts "Re-downloading and replacing local #{lattice_tgz}..."
+      download_lattice_tgz(lattice_tgz_url, lattice_tgz)
     end
   else
     repo_version = `git describe --tags --always`.chomp
     if tgz_version != repo_version && ENV['IGNORE_VERSION_MISMATCH'] != "true"
       puts <<-EOM.gsub(/^ +/, '')
       *******************************************************************************
-      Error: lattice.tgz #{tgz_version} != current commit #{repo_version}
+      Error: #{lattice_tgz} #{tgz_version} != current commit #{repo_version}
 
-      The lattice.tgz file was built using a different commit than the current one.
+      The #{lattice_tgz} file was built using a different commit than the current one.
       To ignore this error, set IGNORE_VERSION_MISMATCH=true in your environment.
 
       NOTE: As of v0.4.0, the process for deploying Lattice via Vagrant has changed.
