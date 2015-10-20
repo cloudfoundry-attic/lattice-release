@@ -10,9 +10,6 @@
 [submodule "src/github.com/cloudfoundry-incubator/receptor"]
 	path = src/github.com/cloudfoundry-incubator/receptor
 	url = git@github.com:cloudfoundry-incubator/receptor
-[submodule "src/github.com/cloudfoundry-incubator/lattice"]
-	path = src/github.com/cloudfoundry-incubator/lattice
-	url = git@github.com:cloudfoundry-incubator/lattice
 [submodule "cf-release"]
 	path = cf-release
 	url = https://github.com/cloudfoundry/cf-release
@@ -67,3 +64,6 @@
 [submodule "bosh/src/github.com/hashicorp/yamux"]
 	path = bosh/src/github.com/hashicorp/yamux
 	url = https://github.com/hashicorp/yamux
+[submodule "src/github.com/cloudfoundry-incubator/ltc"]
+	path = src/github.com/cloudfoundry-incubator/ltc
+	url = git@github.com:cloudfoundry-incubator/ltc
