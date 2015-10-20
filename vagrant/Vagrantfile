@@ -154,7 +154,7 @@ if provision_required && File.exists?(lattice_tgz)
       download_lattice_tgz(lattice_tgz_url, lattice_tgz)
     end
   else
-    repo_version = `git describe --tags --always`.chomp
+    repo_version = `git describe`.chomp
     if tgz_version != repo_version && ENV['IGNORE_VERSION_MISMATCH'] != "true"
       puts <<-EOM.gsub(/^ +/, '')
       *******************************************************************************

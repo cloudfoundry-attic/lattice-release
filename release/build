@@ -22,7 +22,7 @@ diego_release_dir=$lattice_release_dir/diego-release
 ltc_dir=$lattice_release_dir/src/github.com/cloudfoundry-incubator/ltc
 receptor_dir=$lattice_release_dir/src/github.com/cloudfoundry-incubator/receptor
 
-lattice_release_version=${version_override:-`git -C "$lattice_release_dir" describe --tags --always`}
+lattice_release_version=${version_override:-`git -C "$lattice_release_dir" describe`}
 diego_release_version=$(git -C "$diego_release_dir" describe --tags --always)
 ltc_version=$(git -C "$ltc_dir" describe --tags --always)
 receptor_version=$(git -C "$receptor_dir" describe --tags --always)
