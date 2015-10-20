@@ -75,7 +75,7 @@ jobs:
   - name: garden
     release: garden-linux
 
-  # Brain & Cell:
+  # Brain and Cell:
   - name: consul_agent
     release: cf-lattice
   - name: metron_agent
