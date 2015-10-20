@@ -131,6 +131,13 @@ func newAppPresenter(app *cli.App) (presenter appPresenter) {
 				},
 			},
 		}, {
+			Name: "SYNC LTC",
+			CommandSubGroups: [][]cmdPresenter{
+				{
+					presentCommand("sync"),
+				},
+			},
+		}, {
 			Name: "ADVANCED",
 			CommandSubGroups: [][]cmdPresenter{
 				{

@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory/graphical"
 	"github.com/cloudfoundry-incubator/lattice/ltc/app_runner"
+	"github.com/cloudfoundry-incubator/lattice/ltc/autoupdate"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/dav_blob_store"
 	"github.com/cloudfoundry-incubator/lattice/ltc/blob_store/s3_blob_store"
@@ -32,11 +34,13 @@ import (
 	"github.com/cloudfoundry-incubator/lattice/ltc/terminal/password_reader"
 	"github.com/cloudfoundry/noaa"
 	"github.com/codegangsta/cli"
+	"github.com/kardianos/osext"
 	"github.com/pivotal-golang/clock"
 	"github.com/pivotal-golang/lager"
 
 	app_examiner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_examiner/command_factory"
 	app_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/app_runner/command_factory"
+	autoupdate_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/autoupdate/command_factory"
 	cluster_test_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/cluster_test/command_factory"
 	config_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/config/command_factory"
 	docker_runner_command_factory "github.com/cloudfoundry-incubator/lattice/ltc/docker_runner/command_factory"
@@ -213,6 +217,9 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 
 	sshCommandFactory := ssh_command_factory.NewSSHCommandFactory(config, ui, exitHandler, appExaminer, ssh.New(exitHandler))
 
+	ltcPath, _ := osext.Executable()
+	syncCommandFactory := autoupdate_command_factory.NewSyncCommandFactory(config, ui, exitHandler, runtime.GOOS, ltcPath, autoupdate.NewSync(&autoupdate.AppFileSwapper{}))
+
 	helpCommand := cli.Command{
 		Name:        "help",
 		Aliases:     []string{"h"},
@@ -246,6 +253,7 @@ func cliCommands(ltcConfigRoot string, exitHandler exit_handler.ExitHandler, con
 		dropletRunnerCommandFactory.MakeImportDropletCommand(),
 		dropletRunnerCommandFactory.MakeExportDropletCommand(),
 		sshCommandFactory.MakeSSHCommand(),
+		syncCommandFactory.MakeSyncCommand(),
 		helpCommand,
 	}
 }
