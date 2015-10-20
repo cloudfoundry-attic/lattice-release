@@ -208,6 +208,14 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 			Usage: "Polling timeout for app to start",
 			Value: app_runner_command_factory.DefaultPollingTimeout,
 		},
+		cli.StringFlag{
+			Name:  "http-routes",
+			Usage: "DEPRECATED: Please use --http-route instead.",
+		},
+		cli.StringFlag{
+			Name:  "tcp-routes",
+			Usage: "DEPRECATED: Please use --tcp-route instead.",
+		},
 	}
 
 	var launchDropletCommand = cli.Command{
@@ -513,6 +521,20 @@ func (factory *DropletRunnerCommandFactory) launchDroplet(context *cli.Context) 
 		startArgs = context.Args()[4:]
 	case cpuWeightFlag < 1 || cpuWeightFlag > 100:
 		factory.UI.SayIncorrectUsage("invalid CPU Weight")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	httpRoutesFlag := context.String("http-routes")
+	if httpRoutesFlag != "" {
+		factory.UI.SayIncorrectUsage("Unable to parse routes\n  Pass multiple --http-route flags instead of comma-delimiting.  See help page for details.")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	tcpRoutesFlag := context.String("tcp-routes")
+	if tcpRoutesFlag != "" {
+		factory.UI.SayIncorrectUsage("Unable to parse routes\n  Pass multiple --tcp-route flags instead of comma-delimiting.  See help page for details.")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}

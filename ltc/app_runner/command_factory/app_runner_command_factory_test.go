@@ -558,42 +558,74 @@ var _ = Describe("AppRunner CommandFactory", func() {
 						test_helpers.ExecuteCommandWithArgs(updateCommand, []string{})
 
 						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag."))
+						Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
+						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 					})
 				})
 
 				Context("when http routes are passed", func() {
-					It("returns usage message", func() {
+					It("prints usage message", func() {
 						args := []string{"--http-route=foo.com:8080", "-http-route=bar.com:9090"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
 						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag."))
+						Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
+						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 					})
 				})
 
 				Context("when tcp routes are passed", func() {
-					It("returns usage message", func() {
+					It("prints usage message", func() {
 						args := []string{"--tcp-route=50000:5222", "--tcp-route=51000:6379"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
 						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag."))
+						Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
+						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 					})
 				})
 
 				Context("when both http and tcp routes are passed", func() {
-					It("returns usage message", func() {
+					It("prints usage message", func() {
 						args := []string{"--tcp-route=50000:5222", "--tcp-route=51000:6379", "--http-route=foo.com:8080", "--http-route=bar.com:9090"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
 						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag."))
+						Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
+						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 					})
 				})
 
 				Context("when no routes are passed", func() {
-					It("returns usage message", func() {
+					It("prints usage message", func() {
 						args := []string{"--no-routes"}
 						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
 
 						Expect(outputBuffer).To(test_helpers.SayLine("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag."))
+						Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
+						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+					})
+				})
+
+				Context("when deprecated --http-routes is passed", func() {
+					It("prints a deprecation warning", func() {
+						args := []string{"app", "--http-routes=a,b,c"}
+						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+
+						Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Unable to parse routes\n  Pass multiple --http-route flags instead of comma-delimiting.  See help page for details."))
+						Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
+						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+					})
+				})
+
+				Context("when deprecated --tcp-routes is passed", func() {
+					It("prints a deprecation warning", func() {
+						args := []string{"app", "--tcp-routes=a,b,c"}
+						test_helpers.ExecuteCommandWithArgs(updateCommand, args)
+
+						Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Unable to parse routes\n  Pass multiple --tcp-route flags instead of comma-delimiting.  See help page for details."))
+						Expect(fakeAppRunner.UpdateAppCallCount()).To(Equal(0))
+						Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 					})
 				})
 			})

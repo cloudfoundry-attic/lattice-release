@@ -125,6 +125,14 @@ func (factory *AppRunnerCommandFactory) MakeUpdateCommand() cli.Command {
 			Name:  "tcp-route, T",
 			Usage: "Requests for the external port will be forwarded to the associated container port. Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive. Replaces all existing routes. Usage: EXTERNAL_PORT:CONTAINER_PORT. Can be passed multiple times.",
 		},
+		cli.StringFlag{
+			Name:  "http-routes",
+			Usage: "DEPRECATED: Please use --http-route instead.",
+		},
+		cli.StringFlag{
+			Name:  "tcp-routes",
+			Usage: "DEPRECATED: Please use --tcp-route instead.",
+		},
 	}
 	var updateCommand = cli.Command{
 		Name:        "update",
@@ -200,6 +208,20 @@ func (factory *AppRunnerCommandFactory) updateApp(c *cli.Context) {
 	appName := c.Args().First()
 	if appName == "" {
 		factory.UI.SayIncorrectUsage("Please enter 'ltc update APP_NAME' followed by at least one of: '--no-routes', '--http-route' or '--tcp-route' flag.")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	httpRoutesFlag := c.String("http-routes")
+	if httpRoutesFlag != "" {
+		factory.UI.SayIncorrectUsage("Unable to parse routes\n  Pass multiple --http-route flags instead of comma-delimiting.  See help page for details.")
+		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
+		return
+	}
+
+	tcpRoutesFlag := c.String("tcp-routes")
+	if tcpRoutesFlag != "" {
+		factory.UI.SayIncorrectUsage("Unable to parse routes\n  Pass multiple --tcp-route flags instead of comma-delimiting.  See help page for details.")
 		factory.ExitHandler.Exit(exit_codes.InvalidSyntax)
 		return
 	}

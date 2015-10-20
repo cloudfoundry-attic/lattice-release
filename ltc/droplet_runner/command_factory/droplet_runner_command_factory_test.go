@@ -586,7 +586,7 @@ var _ = Describe("CommandFactory", func() {
 			It("errors out", func() {
 				args := []string{
 					"cool-web-app",
-					"superfun/app",
+					"cool-droplet",
 					"--tcp-route=woo:50000",
 					"--",
 					"/start-me-please",
@@ -595,6 +595,30 @@ var _ = Describe("CommandFactory", func() {
 
 				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
 				Expect(outputBuffer).To(test_helpers.SayLine(app_runner_command_factory.InvalidPortErrorMessage))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+		})
+
+		Context("when deprecated --http-routes is passed", func() {
+			It("prints a deprecation warning", func() {
+				args := []string{"cool-web-app", "cool-droplet", "--http-routes=a,b,c"}
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Unable to parse routes"))
+				Expect(outputBuffer).To(test_helpers.SayLine("  Pass multiple --http-route flags instead of comma-delimiting.  See help page for details."))
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+		})
+
+		Context("when deprecated --tcp-routes is passed", func() {
+			It("prints a deprecation warning", func() {
+				args := []string{"cool-web-app", "cool-droplet", "--tcp-routes=a,b,c"}
+				test_helpers.ExecuteCommandWithArgs(launchDropletCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Unable to parse routes"))
+				Expect(outputBuffer).To(test_helpers.SayLine("  Pass multiple --tcp-route flags instead of comma-delimiting.  See help page for details."))
+				Expect(fakeDropletRunner.LaunchDropletCallCount()).To(Equal(0))
 				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
 			})
 		})

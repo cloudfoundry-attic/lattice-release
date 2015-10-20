@@ -209,6 +209,28 @@ var _ = Describe("CommandFactory", func() {
 			})
 		})
 
+		Context("when deprecated --http-routes is passed", func() {
+			It("prints a deprecation warning", func() {
+				args := []string{"app", "docker/docker", "--http-routes=a,b,c"}
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Unable to parse routes\n  Pass multiple --http-route flags instead of comma-delimiting.  See help page for details."))
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+		})
+
+		Context("when deprecated --tcp-routes is passed", func() {
+			It("prints a deprecation warning", func() {
+				args := []string{"app", "docker/docker", "--tcp-routes=a,b,c"}
+				test_helpers.ExecuteCommandWithArgs(createCommand, args)
+
+				Expect(outputBuffer).To(test_helpers.SayLine("Incorrect Usage: Unable to parse routes\n  Pass multiple --tcp-route flags instead of comma-delimiting.  See help page for details."))
+				Expect(fakeAppRunner.CreateAppCallCount()).To(Equal(0))
+				Expect(fakeExitHandler.ExitCalledWith).To(Equal([]int{exit_codes.InvalidSyntax}))
+			})
+		})
+
 		Describe("Exposed Ports", func() {
 			BeforeEach(func() {
 				fakeAppExaminer.RunningAppInstancesInfoReturns(1, false, nil)
