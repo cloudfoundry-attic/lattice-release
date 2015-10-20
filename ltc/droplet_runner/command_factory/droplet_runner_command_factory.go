@@ -184,7 +184,7 @@ func (factory *DropletRunnerCommandFactory) MakeLaunchDropletCommand() cli.Comma
 		},
 		cli.StringSliceFlag{
 			Name:  "http-route, R",
-			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port. Container ports must be among those specified with --ports or with the EXPOSE Docker image directive. Usage: --http-route HOST:CONTAINER_PORT. Can be passed multiple times.",
+			Usage: "Requests for HOST on port 80 will be forwarded to the associated container port. Container ports must be among those specified with --ports or with the EXPOSE Docker image directive. Usage: --http-route HOST:CONTAINER_PORT. Can be passed multiple times.",
 		},
 		cli.StringSliceFlag{
 			Name:  "tcp-route, T",

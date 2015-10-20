@@ -119,7 +119,7 @@ func (factory *AppRunnerCommandFactory) MakeUpdateCommand() cli.Command {
 		},
 		cli.StringSliceFlag{
 			Name:  "http-route, R",
-			Usage: "Requests for HOST.SYSTEM_DOMAIN on port 80 will be forwarded to the associated container port. Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive. Can be passed multiple times. Usage: --http-route HOST:CONTAINER_PORT. Can be passed multiple times.",
+			Usage: "Requests for HOST on port 80 will be forwarded to the associated container port. Container ports must be among those specified on create with --ports or with the EXPOSE Docker image directive. Can be passed multiple times. Usage: --http-route HOST:CONTAINER_PORT. Can be passed multiple times.",
 		},
 		cli.StringSliceFlag{
 			Name:  "tcp-route, T",
