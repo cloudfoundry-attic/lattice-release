@@ -67,3 +67,6 @@
 [submodule "src/github.com/cloudfoundry-incubator/ltc"]
 	path = src/github.com/cloudfoundry-incubator/ltc
 	url = git@github.com:cloudfoundry-incubator/ltc
+[submodule "src/github.com/kardianos/osext"]
+	path = src/github.com/kardianos/osext
+	url = https://github.com/kardianos/osext
