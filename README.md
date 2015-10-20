@@ -14,7 +14,7 @@
 
 ## Deploy Lattice with Vagrant
 
-A collocated deployment of Lattice can be launched locally with [Vagrant](https://vagrantup.com/). You will need:
+A colocated deployment of Lattice can be launched locally with [Vagrant](https://vagrantup.com/). You will need:
 
 * A Lattice bundle from the [latest release](https://github.com/cloudfoundry-incubator/lattice-release/releases/latest) or [nightly builds](https://lattice.s3.amazonaws.com/nightly/index.html)
 * [Vagrant](https://vagrantup.com/) 1.6+ installed
@@ -124,14 +124,14 @@ direnv allow # or: source .envrc
 
 If you change any Diego components, you'll need to build a local Vagrant box with your changes.
 If you don't plan to change any Diego components, you can update the `box_version` property
-in `vagrant/Vagrantfile` to point to a [pre-built Lattice box on Atlas](https://atlas.hashicorp.com/lattice/boxes/collocated)
+in `vagrant/Vagrantfile` to point to a [pre-built Lattice box on Atlas](https://atlas.hashicorp.com/lattice/boxes/colocated)
 and skip this step.
 
 ```bash
 bundle
 cd vagrant
 ./build -only=virtualbox-iso
-vagrant box add --force lattice-virtualbox-v0.box --name lattice/collocated
+vagrant box add --force lattice-virtualbox-v0.box --name lattice/colocated
 ```
 
 #### Building a release of Lattice

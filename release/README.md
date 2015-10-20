@@ -24,7 +24,7 @@ To install a `lattice.tgz` file, first extract the `install` folder at the root 
 - The `install/brain` script must be run on every Lattice brain
   with the `lattice.tgz` file as the first argument.
 - These may be run in any order. All of them are necessary
-  to provision a collocated Lattice instance.
+  to provision a colocated Lattice instance.
 
 Other directories inside of the `install` directory contain infrastructure-specific patch scripts.
 - These scripts must be executed after the platform-independent install scripts described above.
