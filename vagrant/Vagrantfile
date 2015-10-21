@@ -120,11 +120,11 @@ lattice_tgz_url = defined?(LATTICE_TGZ_URL) && LATTICE_TGZ_URL
 
 def download_lattice_tgz(url)
   uri = URI(url)
-  Net::HTTP.start(uri.host, uri.port) do |http|
-    http.request(Net::HTTP::Get.new(uri)) do |response|
-      open('lattice.tgz', 'wb') do |io|
+  Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https' ) do |http|
+    http.request_get(uri) do |response|
+      open('lattice.tgz', 'wb') do |file|
         response.read_body do |chunk|
-          io.write(chunk)
+          file.write(chunk)
           sleep(0.005)
         end
       end
