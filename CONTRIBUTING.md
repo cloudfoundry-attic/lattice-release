@@ -1,4 +1,4 @@
-# contributing
+# Contributing
 
 Everyone is encouraged to help improve this project.
 

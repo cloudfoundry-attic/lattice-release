@@ -164,3 +164,12 @@ go install github.com/cloudfoundry-incubator/ltc
 ltc target local.lattice.cf
 ltc test -v
 ```
+
+## Contributing
+
+If you are interested in contributing to Lattice, please refer to [CONTRIBUTING](CONTRIBUTING.md).
+
+# Copyright
+
+See [LICENSE](LICENSE) for details.
+Copyright (c) 2015 [Pivotal Software, Inc](http://www.pivotal.io/).
