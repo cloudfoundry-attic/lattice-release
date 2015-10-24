@@ -65,6 +65,8 @@ jobs:
     release: cf-lattice
   - name: nats
     release: cf-lattice
+  - name: routing-api
+    release: cf-routing
 
   # Cell:
   - name: rep
@@ -168,10 +170,12 @@ properties:
     enable_routing_api: false
     router_configurer:
       gorouter_secret: router-secret
+      routing_api_auth_disabled: true
     tcp_emitter:
       diego_api_url: http://placeholder-username:placeholder-password@receptor.service.cf.internal:8888
       gorouter_secret: router-secret
       debug_addr: 0.0.0.0:17019
+      routing_api_auth_disabled: true
       bbs:
         api_location: bbs.service.cf.internal:8889
         ca_cert: ""
@@ -202,6 +206,7 @@ properties:
         gorouter: {}
         receptor: {}
         router_configurer: {}
+        routing-api: {}
       servers:
         lan: [placeholder-ip]
     require_ssl: false
@@ -218,11 +223,15 @@ properties:
     shared_secret: loggregator-secret
   doppler_endpoint:
     shared_secret: loggregator-secret
+  routing-api:
+    auth_disabled: true
   uaa:
     url: ""
     clients:
       doppler:
         secret: doppler-secret
+    jwt:
+      verification_key: ""
   cc:
     srv_api_uri: ""
 
