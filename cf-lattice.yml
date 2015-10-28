@@ -50,6 +50,27 @@ packages:
   sha1: 759a8f85b4bca21163c268ab9a7b40bf914d0528
   dependencies:
   - golang1.3
+- name: uaa
+  version: c712cd0a90488194d2180aea184ce179dd6fb7ab
+  fingerprint: c712cd0a90488194d2180aea184ce179dd6fb7ab
+  sha1: 4547582c6cb09c661d7646118a3eef28b64d63c1
+  dependencies:
+  - ruby-2.1.7
+- name: ruby-2.1.7
+  version: c977026b967eab6fad2b03a820dca6f84a900f92
+  fingerprint: c977026b967eab6fad2b03a820dca6f84a900f92
+  sha1: e426fcf4dae07152df4ea717d8e90a1dff5172de
+  dependencies: []
+- name: postgres
+  version: b63fe0176a93609bd4ba44751ea490a3ee0f646c
+  fingerprint: b63fe0176a93609bd4ba44751ea490a3ee0f646c
+  sha1: e440c1cbf63a9d15e4d6a441038aa81687e64fe2
+  dependencies: []
+- name: postgres-9.4.2
+  version: ac1c8a521594f9459ffede25b9d7e0308811f139
+  fingerprint: ac1c8a521594f9459ffede25b9d7e0308811f139
+  sha1: 91515e17d2ce8875f22e24504144b78337e4447a
+  dependencies: []
 jobs:
 - name: gorouter
   version: b15838fa98eba3c8b3a8872d4541b77a8f42cce3
@@ -75,6 +96,14 @@ jobs:
   version: e1ee7fe6c73bc5ea30af43b68936d90bf44e7a2d
   fingerprint: e1ee7fe6c73bc5ea30af43b68936d90bf44e7a2d
   sha1: b781db401d896f9b1bdaea1febc1dafda16c324a
+- name: uaa
+  version: 7a862f91ebb65b3ac029699f28da0c495a6ed6b3
+  fingerprint: 7a862f91ebb65b3ac029699f28da0c495a6ed6b3
+  sha1: 3780a73d26518bf7902eacc91d050a37d31680ea
+- name: postgres
+  version: ae6dd901201a46ebbdbbebe41335dbeb551eaf86
+  fingerprint: ae6dd901201a46ebbdbbebe41335dbeb551eaf86
+  sha1: 22f9b86249d6f59676b4bb8dd9aca0a20ba9d3c6
 license:
   version: 861d82c0d9745784acfcd026ccf44e942579824a
   fingerprint: 861d82c0d9745784acfcd026ccf44e942579824a

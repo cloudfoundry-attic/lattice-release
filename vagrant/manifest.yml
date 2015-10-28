@@ -65,6 +65,10 @@ jobs:
     release: cf-lattice
   - name: nats
     release: cf-lattice
+  - name: uaa
+    release: cf-lattice
+  - name: postgres
+    release: cf-lattice
 
   # Cell:
   - name: rep
@@ -202,6 +206,7 @@ properties:
         gorouter: {}
         receptor: {}
         router_configurer: {}
+        uaa: {}
       servers:
         lan: [placeholder-ip]
     require_ssl: false
@@ -218,11 +223,40 @@ properties:
     shared_secret: loggregator-secret
   doppler_endpoint:
     shared_secret: loggregator-secret
+  domain: placeholder-system-domain
   uaa:
-    url: ""
+    port: 8085
     clients:
       doppler:
         secret: doppler-secret
+      login:
+        secret: login-secret
+    admin:
+      client_secret: admin-client-secret
+    cc:
+      client_secret: cc-client-secret
+      token_secret: cc-token-secret
+    scim:
+      user:
+        override: true
+      users:
+      - admin|admin|scim.write,scim.read,openid,cloud_controller.admin,doppler.firehose
+    issuer: ""
+  uaadb:
+    address: localhost
+    databases:
+    - {name: uaadb, tag: uaa}
+    db_scheme: postgresql
+    port: 5524
+    roles:
+    - {name: uaaadmin, password: admin, tag: admin}
+  databases:
+    port: 5524
+    databases:
+    - {name: uaadb, tag: uaa, citext: true}
+    roles:
+    - {name: uaaadmin, password: admin, tag: admin}
   cc:
     srv_api_uri: ""
-
+  login:
+    catalina_opts: -Xmx768m
