@@ -80,9 +80,17 @@ Terraform will generate a `terraform.tfstate` file.  This file describes the clu
 
 After a successful deployment Terraform will print the Lattice target and Lattice user information. Refer to the `target = local.lattice.cf` output line to find the address of your cluster.
 
+###### Local Virtualbox install 
 If you're running Linux: `curl -O http://receptor.local.lattice.cf/v1/sync/linux/ltc`
 
 If you're running OS X: `curl -O http://receptor.local.lattice.cf/v1/sync/osx/ltc`
+
+###### AWS Terraform install 
+
+If you're running Linux: `curl -O http://receptor.<lattice target>/v1/sync/linux/ltc`
+
+If you're running OS X: `curl -O http://receptor.<lattice target>/v1/sync/osx/ltc`
+
 
 Finally: `chmod +x ltc`
 
