@@ -132,7 +132,16 @@ lattice_tgz_url = defined?(LATTICE_TGZ_URL) && LATTICE_TGZ_URL
 
 def download_lattice_tgz(url)
   uri = URI(url)
-  Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https' ) do |http|
+
+  http_args = [uri.host, uri.port]
+  proxy_url = ENV[(uri.scheme=='https' ? 'https_proxy' : 'http_proxy')]
+  if proxy_url
+    proxy_uri = URI(proxy_url)
+    http_args << proxy_uri.host
+    http_args << proxy_uri.port
+  end
+
+  Net::HTTP.start(*http_args, use_ssl: uri.scheme == 'https') do |http|
     http.request_get(uri) do |response|
       open('lattice.tgz', 'wb') do |file|
         response.read_body do |chunk|
