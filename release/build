@@ -51,6 +51,7 @@ flags="-X github.com/cloudfoundry-incubator/ltc/setup_cli.latticeVersion $lattic
 
 go build -a -ldflags "$flags" -o $brain_artifacts_dir/linux/ltc github.com/cloudfoundry-incubator/ltc
 GOOS=darwin go build -a -ldflags "$flags" -o $brain_artifacts_dir/osx/ltc github.com/cloudfoundry-incubator/ltc
+GOOS=windows go build -a -ldflags "$flags" -o $brain_artifacts_dir/windows/ltc.exe github.com/cloudfoundry-incubator/ltc
 
 go build -a -o $brain_bin_dir/receptor github.com/cloudfoundry-incubator/receptor/cmd/receptor
 

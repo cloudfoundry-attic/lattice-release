@@ -79,7 +79,15 @@ Vagrant.configure("2") do |config|
     config.vm.network "private_network", ip: public_ip
   end
 
-  arch = (/darwin/ =~ RUBY_PLATFORM) ? 'osx' : 'linux'
+  case RUBY_PLATFORM
+  when /darwin/
+    ltc_arch_path = 'osx/ltc'
+  when /linux/i
+    ltc_arch_path = 'linux/ltc'
+  when /cygwin|mswin|mingw|bccwin|wince|emx/i
+    ltc_arch_path = 'windows/ltc.exe'
+  end
+
   config.vm.provision "shell" do |s|
     s.inline = <<-SCRIPT
       set -e
@@ -100,8 +108,12 @@ Vagrant.configure("2") do |config|
       echo "Lattice is now installed and running."
       echo "----------------------------------------------------------------"
       echo "To obtain a version of ltc that is compatible with your cluster:"
-      echo "$ curl -O http://receptor.$domain/v1/sync/#{arch}/ltc"
-      echo "$ chmod +x ltc"
+      if [ "#{ltc_arch_path}" = "windows/ltc.exe" ]; then
+        echo "Download http://receptor.$domain/v1/sync/#{ltc_arch_path}"
+      else
+        echo "$ curl -O http://receptor.$domain/v1/sync/#{ltc_arch_path}"
+        echo "$ chmod +x ltc"
+      fi
       echo "Optionally, move ltc to a directory in your PATH."
       echo "You may then target your cluster using: ltc target $domain"
       echo "----------------------------------------------------------------"
