@@ -90,13 +90,13 @@ resource "aws_instance" "brain" {
         key_file = "${var.aws_ssh_private_key_path}"
     }
 
-	provisioner "remote-exec" {
-		inline = ["mkdir -p /tmp/terraform"]
-	}
+    provisioner "local-exec" {
+        command = "mkdir -p .lattice"
+    }
 
     provisioner "file" {
-        source = "."
-        destination = "/tmp/terraform"
+        source = ".lattice/"
+        destination = "/tmp"
     }
 }
 
@@ -116,13 +116,11 @@ resource "aws_eip" "ip" {
             "sudo sh -c 'echo PASSWORD=${var.password} >> /var/lattice/setup'",
             "sudo sh -c 'echo DOMAIN=${aws_eip.ip.public_ip}.xip.io >> /var/lattice/setup'",
             "sudo sh -c 'echo HOST_ID=lattice-brain-0 >> /var/lattice/setup'",
-            "mkdir -p /tmp/terraform/.lattice",
-            "[ -f /tmp/terraform/.lattice/lattice.tgz ] || curl -s -o /tmp/terraform/.lattice/lattice.tgz '${var.lattice_tgz_url}'",
-            "sudo tar xzf /tmp/terraform/.lattice/lattice.tgz -C /tmp install",
+            "[ -f /tmp/lattice.tgz ] || curl -s -o /tmp/lattice.tgz '${var.lattice_tgz_url}'",
+            "sudo tar xzf /tmp/lattice.tgz -C /tmp install",
             "sudo /tmp/install/common",
-            "sudo /tmp/install/brain /tmp/terraform/.lattice/lattice.tgz",
-            "sudo /tmp/install/start",
-            "rm -rf /tmp/terraform"
+            "sudo /tmp/install/brain /tmp/lattice.tgz",
+            "sudo /tmp/install/start"
         ]
     }
 }
@@ -146,13 +144,13 @@ resource "aws_instance" "cell" {
         key_file = "${var.aws_ssh_private_key_path}"
     }
 
-	provisioner "remote-exec" {
-		inline = ["mkdir -p /tmp/terraform"]
-	}
+    provisioner "local-exec" {
+        command = "mkdir -p .lattice"
+    }
 
     provisioner "file" {
-        source = "."
-        destination = "/tmp/terraform"
+        source = ".lattice/"
+        destination = "/tmp"
     }
 
     provisioner "remote-exec" {
@@ -160,14 +158,12 @@ resource "aws_instance" "cell" {
             "sudo sh -c 'echo HOST_ID=lattice-cell-${count.index} >> /var/lattice/setup'",
             "sudo sh -c \"echo GARDEN_IP=$(ip route get 1 | awk '{print $NF;exit}') >> /var/lattice/setup\"",
             "sudo sh -c 'echo BRAIN_IP=${aws_instance.brain.private_ip} >> /var/lattice/setup'",
-            "mkdir -p /tmp/terraform/.lattice",
-            "[ -f /tmp/terraform/.lattice/lattice.tgz ] || curl -s -o /tmp/terraform/.lattice/lattice.tgz '${var.lattice_tgz_url}'",
-            "sudo tar xzf /tmp/terraform/.lattice/lattice.tgz -C /tmp install",
+            "[ -f /tmp/lattice.tgz ] || curl -s -o /tmp/lattice.tgz '${var.lattice_tgz_url}'",
+            "sudo tar xzf /tmp/lattice.tgz -C /tmp install",
             "sudo /tmp/install/common",
-            "sudo /tmp/install/cell /tmp/terraform/.lattice/lattice.tgz",
+            "sudo /tmp/install/cell /tmp/lattice.tgz",
             "sudo /tmp/install/terraform/cell",
-            "sudo /tmp/install/start",
-            "rm -rf /tmp/terraform"
+            "sudo /tmp/install/start"
         ]
     }
 }
