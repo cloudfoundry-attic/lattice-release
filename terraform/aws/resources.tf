@@ -90,9 +90,9 @@ resource "aws_instance" "brain" {
         key_file = "${var.aws_ssh_private_key_path}"
     }
 
-	provisioner "remote-exec" {
-		inline = ["mkdir -p /tmp/terraform"]
-	}
+    provisioner "remote-exec" {
+        inline = ["mkdir -p /tmp/terraform"]
+    }
 
     provisioner "file" {
         source = "."
@@ -146,9 +146,9 @@ resource "aws_instance" "cell" {
         key_file = "${var.aws_ssh_private_key_path}"
     }
 
-	provisioner "remote-exec" {
-		inline = ["mkdir -p /tmp/terraform"]
-	}
+    provisioner "remote-exec" {
+        inline = ["mkdir -p /tmp/terraform"]
+    }
 
     provisioner "file" {
         source = "."
