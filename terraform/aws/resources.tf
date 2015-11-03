@@ -91,7 +91,7 @@ resource "aws_instance" "brain" {
     }
 
     provisioner "local-exec" {
-        command = "mkdir -p .lattice"
+        command = "mkdir .lattice || echo"
     }
 
     provisioner "file" {
@@ -145,7 +145,7 @@ resource "aws_instance" "cell" {
     }
 
     provisioner "local-exec" {
-        command = "mkdir -p .lattice"
+        command = "mkdir .lattice || echo"
     }
 
     provisioner "file" {
