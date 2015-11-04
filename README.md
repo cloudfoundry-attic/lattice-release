@@ -33,7 +33,7 @@ vagrant up --provider virtualbox
 
 This spins up a virtual environment that is accessible at `local.lattice.cf`
 
-##### Install the Lattice CLI
+##### Install `ltc` (the Lattice CLI)
 
 If you're running Linux: `curl -O http://receptor.local.lattice.cf/v1/sync/linux/ltc`
 
@@ -79,8 +79,6 @@ Terraform will generate a `terraform.tfstate` file.  This file describes the clu
 ##### Install `ltc` (the Lattice CLI)
 
 After a successful deployment Terraform will print the Lattice target and Lattice user information. Refer to the `target = <lattice target>` output line to find the address of your cluster.
-
-###### AWS Terraform install 
 
 If you're running Linux: `curl -O http://receptor.<lattice target>/v1/sync/linux/ltc`
 
