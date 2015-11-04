@@ -14,7 +14,7 @@ lattice_release_dir=$(cd `dirname $0` && cd .. && pwd)
 rm -rf $assets_dir/{releases,versions}
 mkdir $assets_dir/{releases,versions}
 
-git -C "$lattice_release_dir" describe > $assets_dir/versions/LATTICE_RELEASE_IMAGE
+git -C "$lattice_release_dir" rev-parse HEAD > $assets_dir/versions/LATTICE_RELEASE_IMAGE
 
 for release in diego garden-linux cf-routing; do
   pushd $lattice_release_dir/$release-release >/dev/null
