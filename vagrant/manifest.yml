@@ -11,9 +11,9 @@ releases:
 - name: cf-routing
   version: 0
   url: file:///opt/bosh-provisioner/assets/releases/cf-routing-0.tgz
-- name: cf
+- name: cf-lattice
   version: 0
-  url: file:///opt/bosh-provisioner/assets/releases/cf-0.tgz
+  url: file:///opt/bosh-provisioner/assets/releases/cf-lattice-0.tgz
 
 networks:
 - name: default
@@ -58,23 +58,23 @@ jobs:
     release: cf-routing
 
   - name: doppler
-    release: cf
+    release: cf-lattice
   - name: gorouter
-    release: cf
+    release: cf-lattice
   - name: loggregator_trafficcontroller
-    release: cf
+    release: cf-lattice
   - name: nats
-    release: cf
+    release: cf-lattice
   - name: uaa
-    release: cf
+    release: cf-lattice
   - name: postgres
-    release: cf
+    release: cf-lattice
   - name: cloud_controller_ng
-    release: cf
+    release: cf-lattice
   # - name: cloud_controller_worker
-  #   release: cf
+  #   release: cf-lattice
   # - name: cloud_controller_clock
-  #   release: cf
+  #   release: cf-lattice
 
   # Cell:
   - name: rep
@@ -87,14 +87,15 @@ jobs:
 
   # Brain and Cell:
   - name: consul_agent
-    release: cf
+    release: cf-lattice
   - name: metron_agent
-    release: cf
+    release: cf-lattice
 
 properties:
+  support_address: ""
   system_domain: placeholder-system-domain
   system_domain_organization: placeholder-system-domain-org
-  app_domains: ["local.lattice.cf"]
+  app_domains: ["placeholder-system-domain"]
 
   # For Diego:
   diego:
@@ -295,15 +296,6 @@ properties:
           non_basic_services_allowed: true
           total_routes: 1000
           total_services: -1
-    install_buildpacks:
-    - {name: java_buildpack, package: buildpack_java}
-    - {name: ruby_buildpack, package: buildpack_ruby}
-    - {name: nodejs_buildpack, package: buildpack_nodejs}
-    - {name: go_buildpack, package: buildpack_go}
-    - {name: python_buildpack, package: buildpack_python}
-    - {name: php_buildpack, package: buildpack_php}
-    - {name: staticfile_buildpack, package: buildpack_staticfile}
-    - {name: binary_buildpack, package: buildpack_binary}
     security_group_definitions:
     - name: public_networks
       rules:

@@ -1,0 +1,541 @@
+---
+name: cloud_controller_ng
+
+description: "The Cloud Controller provides primary Cloud Foundry API that is by the CF CLI. The Cloud Controller uses a database to keep tables for organizations, spaces, apps, services, service instances, user roles, and more. Typically multiple instances of Cloud Controller are load balanced."
+
+templates:
+  nginx_ctl.erb: bin/nginx_ctl
+  nginx.conf.erb: config/nginx.conf
+  drain.rb: bin/drain
+  restart_drain.rb: bin/restart_drain
+  mime.types: config/mime.types
+  cloud_controller_api.yml.erb: config/cloud_controller_ng.yml
+  cloud_controller_api_ctl.erb: bin/cloud_controller_ng_ctl
+  cloud_controller_api_worker_ctl.erb: bin/cloud_controller_worker_ctl
+  cloud_controller_api_migration_ctl.erb: bin/cloud_controller_migration_ctl
+  handle_local_blobstore.sh.erb: bin/handle_local_blobstore.sh
+  stacks.yml.erb: config/stacks.yml
+  newrelic.yml.erb: config/newrelic.yml
+  nginx_newrelic_plugin_ctl.erb: bin/nginx_newrelic_plugin_ctl
+  newrelic_plugin.yml.erb: config/newrelic_plugin.yml
+  ruby_version.sh.erb: bin/ruby_version.sh
+  console.erb: bin/console
+  dns_health_check.erb: bin/dns_health_check
+
+packages:
+  - common
+  - cloud_controller_ng
+  - nginx
+  - nginx_newrelic_plugin
+  - libpq
+  - mysqlclient
+  - ruby-2.1.7
+
+properties:
+  ssl.skip_cert_verify:
+    description: "specifies that the job is allowed to skip ssl cert verification"
+    default: false
+
+  name:
+    default: "vcap"
+    description:
+  build:
+    default: "2222"
+    description:
+  version:
+    default: "2"
+    description:
+  support_address:
+    default:
+    description:
+  description:
+    default: "Cloud Foundry sponsored by Pivotal"
+    description:
+  domain:
+    description: "domain where cloud_controller will listen (api.domain) often the same as the system domain"
+  system_domain:
+    description: "Domain reserved for CF operator, base URL where the login, uaa, and other non-user apps listen"
+  system_domain_organization:
+    description: "The User Org that owns the system_domain, required if system_domain is defined"
+    default: ""
+  app_domains:
+    description: "Array of domains for user apps (example: 'user.app.space.foo', a user app called 'neat' will listen at 'http://neat.user.app.space.foo')"
+
+  app_ssh.host_key_fingerprint:
+    description: "Fingerprint of the host key of the SSH proxy that brokers connections to application instances"
+    default: ~
+  app_ssh.port:
+    description: "External port for SSH access to application instances"
+    default: 2222
+
+  nats.user:
+    description: "Username for cc client to connect to NATS"
+  nats.password:
+    description: "Password for cc client to connect to NATS"
+  nats.port:
+    description: "IP port of Cloud Foundry NATS server"
+  nats.machines:
+    description: "IP of each NATS cluster member."
+
+  nfs_server.address:
+    description: "NFS server for droplets and apps (not used in an AWS deploy, use s3 instead)"
+  nfs_server.share_path:
+    description: "The location at which to mount the nfs share"
+
+  request_timeout_in_seconds:
+    description: "Timeout for requests in seconds."
+    default: 900
+
+  cc.external_port:
+    description: "External Cloud Controller port"
+    default: 9022
+
+  cc.jobs.global.timeout_in_seconds:
+    description: "The longest any job can take before it is cancelled unless overriden per job"
+    default: 14400 # 4 hours
+  cc.jobs.app_bits_packer.timeout_in_seconds:
+    description: "The longest this job can take before it is cancelled"
+  cc.jobs.app_events_cleanup.timeout_in_seconds:
+    description: "The longest this job can take before it is cancelled"
+  cc.jobs.app_usage_events_cleanup.timeout_in_seconds:
+    description: "The longest this job can take before it is cancelled"
+  cc.jobs.blobstore_delete.timeout_in_seconds:
+    description: "The longest this job can take before it is cancelled"
+  cc.jobs.blobstore_upload.timeout_in_seconds:
+    description: "The longest this job can take before it is cancelled"
+  cc.jobs.droplet_deletion.timeout_in_seconds:
+    description: "The longest this job can take before it is cancelled"
+  cc.jobs.droplet_upload.timeout_in_seconds:
+    description: "The longest this job can take before it is cancelled"
+
+  cc.app_events.cutoff_age_in_days:
+    description: "How old an app event should stay in cloud controller database before being cleaned up"
+    default: 31
+  cc.app_usage_events.cutoff_age_in_days:
+    description: "How old an app usage event should stay in cloud controller database before being cleaned up"
+    default: 31
+  cc.audit_events.cutoff_age_in_days:
+    description: "How old an audit event should stay in cloud controller database before being cleaned up"
+    default: 31
+  cc.failed_jobs.cutoff_age_in_days:
+    description: "How old a failed job should stay in cloud controller database before being cleaned up"
+    default: 31
+  cc.info.name:
+    description: "name attribute in the /info endpoint"
+  cc.info.build:
+    description: "build attribute in the /info endpoint"
+  cc.info.version:
+    description: "version attribute in the /info endpoint"
+  cc.info.description:
+    description: "free form description for attribute in the /info endpoint"
+  cc.info.custom:
+    description: "Custom values for /v2/info endpoint"
+
+  cc.directories.tmpdir:
+    default: "/var/vcap/data/cloud_controller_ng/tmp"
+    description: "The directory to use for temporary files"
+  cc.directories.diagnostics:
+    default: "/var/vcap/data/cloud_controller_ng/diagnostics"
+    description: "The directory where operator requested diagnostic files should be placed"
+
+  cc.external_protocol:
+    default: "http"
+    description: "The protocol used to access the CC API from an external entity"
+  cc.external_host:
+    default: "api"
+    description: "Host part of the cloud_controller api URI, will be joined with value of 'domain'"
+  cc.cc_partition:
+    default: "default"
+    description: "Deprecated. Defines a 'partition' for the health_manager job"
+
+  cc.bulk_api_user:
+    default: "bulk_api"
+    description: "User used to access the bulk_api, health_manager uses it to connect to the cc, announced over NATS"
+  cc.bulk_api_password:
+    description: "Password used to access the bulk_api, health_manager uses it to connect to the cc, announced over NATS"
+
+  cc.internal_api_user:
+    default: "internal_user"
+    description: "User name used by Diego to access internal endpoints"
+  cc.internal_api_password:
+    description: "Password used by Diego to access internal endpoints"
+  cc.diego.nsync_url:
+    default: http://nsync.service.cf.internal:8787
+    description: "URL of the Diego nsync service"
+  cc.diego.stager_url:
+    default: http://stager.service.cf.internal:8888
+    description: "URL of the Diego stager service"
+  cc.diego.tps_url:
+    default: http://tps.service.cf.internal:1518
+    description: "URL of the Diego tps service"
+
+  cc.min_cli_version:
+    description: "Minimum version of the CF CLI to work with the API."
+  cc.min_recommended_cli_version:
+    description: "Minimum recommended version of the CF CLI."
+
+  cc.uaa_resource_id:
+    default: "cloud_controller,cloud_controller_service_permissions"
+    description: "Name of service to register to UAA"
+
+  cc.db_logging_level:
+    default: "debug2"
+    description: "Log level for cc database operations"
+
+  cc.logging_level:
+    default: "debug2"
+    description: "Log level for cc"
+  cc.logging_max_retries:
+    default: 1
+    description: "Passthru value for Steno logger"
+
+  cc.staging_timeout_in_seconds:
+    default: 900
+    description: "Timeout for staging a droplet"
+  cc.default_health_check_timeout:
+    default: 60
+    description: "Default health check timeout (in seconds) that can be set for the app"
+  cc.maximum_health_check_timeout:
+    default: 180
+    description: "Maximum health check timeout (in seconds) that can be set for the app"
+
+  cc.stacks:
+    default:
+      - name: "cflinuxfs2"
+        description: "Cloud Foundry Linux-based filesystem"
+    description: "Tag used by the DEA to describe capabilities (i.e. 'Windows7', 'python-linux'). DEA and CC must agree."
+  cc.default_stack:
+    default: "cflinuxfs2"
+    description: "The default stack to use if no custom stack is specified by an app."
+
+  cc.staging_upload_user:
+    default: ""
+    description: "User name used to access internal endpoints of Cloud Controller to upload files when staging"
+  cc.staging_upload_password:
+    default: ""
+    description: "User's password used to access internal endpoints of Cloud Controller to upload files when staging"
+
+  cc.quota_definitions:
+    description: "Hash of default quota definitions. Overriden by custom quota definitions."
+
+  cc.default_quota_definition:
+    default: default
+    description: "Local to use a local (NFS) file system.  AWS to use AWS."
+
+  cc.default_fog_connection.provider:
+    description: "Local fog provider (should always be 'Local'), used if fog_connection hash is not provided in the manifest"
+    default: "Local"
+  cc.default_fog_connection.local_root:
+    description: "Local root when fog provider is not overridden (should be an NFS mount if using more than one cloud controller)"
+    default: "/var/vcap/nfs/shared"
+
+  cc.resource_pool.minimum_size:
+    description: "Minimum size of a resource to add to the pool"
+    default: 65536
+  cc.resource_pool.maximum_size:
+    description: "Maximum size of a resource to add to the pool"
+    default: 536870912
+  cc.resource_pool.resource_directory_key:
+    description: "Directory (bucket) used store app resources.  It does not have be pre-created."
+    default: "cc-resources"
+  cc.resource_pool.fog_connection:
+    description: "Fog connection hash"
+  cc.resource_pool.cdn.uri:
+    description: "URI for a CDN to used for resource pool downloads"
+    default: ""
+  cc.resource_pool.cdn.private_key:
+    description: "Private key for signing download URIs"
+    default: ""
+  cc.resource_pool.cdn.key_pair_id:
+    description: "Key pair name for signed download URIs"
+    default: ""
+
+  cc.packages.app_package_directory_key:
+    description: "Directory (bucket) used store app packages.  It does not have be pre-created."
+    default: "cc-packages"
+  cc.packages.max_package_size:
+    description: "Maximum size of application package"
+    default: 1073741824
+  cc.packages.fog_connection:
+    description: "Fog connection hash"
+  cc.packages.cdn.uri:
+    description: "URI for a CDN to used for app package downloads"
+    default: ""
+  cc.packages.cdn.private_key:
+    description: "Private key for signing download URIs"
+    default: ""
+  cc.packages.cdn.key_pair_id:
+    description: "Key pair name for signed download URIs"
+    default: ""
+
+  cc.droplets.droplet_directory_key:
+    description: "Directory (bucket) used store droplets.  It does not have be pre-created."
+    default: "cc-droplets"
+  cc.droplets.fog_connection:
+    description: "Fog connection hash"
+  cc.droplets.cdn.uri:
+    description: "URI for a CDN to used for droplet downloads"
+    default: ""
+  cc.droplets.cdn.private_key:
+    description: "Private key for signing download URIs"
+    default: ""
+  cc.droplets.cdn.key_pair_id:
+    description: "Key pair name for signed download URIs"
+    default: ""
+
+  cc.buildpacks.buildpack_directory_key:
+    description: "Directory (bucket) used store buildpacks.  It does not have be pre-created."
+    default: "cc-buildpacks"
+  cc.buildpacks.fog_connection:
+    description: "Fog connection hash"
+  cc.buildpacks.cdn.uri:
+    description: "URI for a CDN to used for buildpack downloads"
+    default: ""
+  cc.buildpacks.cdn.private_key:
+    description: "Private key for signing download URIs"
+    default: ""
+  cc.buildpacks.cdn.key_pair_id:
+    description: "Key pair name for signed download URIs"
+    default: ""
+
+  ccdb.databases:
+    description:
+  ccdb.roles:
+    description:
+  ccdb.db_scheme:
+    description:
+    default: postgres
+  ccdb.address:
+    description:
+  ccdb.port:
+    description:
+  ccdb.max_connections:
+    default: 25
+    description: "Maximum connections for Sequel"
+  ccdb.pool_timeout:
+    default: 10
+    description:
+
+  uaa.cc.token_secret:
+    description:
+  uaa.no_ssl:
+    description: "when true, uaa uses http, otherwise it uses https"
+    default: false
+  uaa.url:
+    description:
+  login.url:
+    description:
+  hm9000.url:
+    description:
+
+  uaa.jwt.verification_key:
+    default: ""
+    description: "ssl cert defined in the manifest by the UAA, required by the cc to communicate with UAA"
+  login.enabled:
+    default: true
+    description: "whether use login as the authorization endpoint or not"
+
+  metron_endpoint.host:
+    description: "The host used to emit messages to the Metron agent"
+    default: "127.0.0.1"
+  metron_endpoint.port:
+    description: "The port used to emit messages to the Metron agent"
+    default: 3456
+  metron_endpoint.shared_secret:
+    description: "The key used to sign log messages"
+
+  logger_endpoint.use_ssl:
+    description: "Whether to use ssl for logger endpoint listed at /v2/info"
+    default: true
+  logger_endpoint.port:
+    description: "Port for logger endpoint listed at /v2/info"
+    default: 443
+
+  doppler.enabled:
+    description: "Whether to expose the doppler_logging_endpoint listed at /v2/info"
+    default: true
+  doppler.use_ssl:
+    description: "Whether to use ssl for the doppler_logging_endpoint listed at /v2/info"
+    default: true
+  doppler.port:
+    description: "Port for doppler_logging_endpoint listed at /v2/info"
+    default: 443
+
+  cc.db_encryption_key:
+    default: ""
+    description: "key for encrypting sensitive values in the CC database"
+
+  cc.default_app_memory:
+    default: 1024
+    description: "How much memory given to an app if not specified"
+  cc.default_app_disk_in_mb:
+    default: 1024
+    description: "The default disk space an app gets"
+  cc.maximum_app_disk_in_mb:
+    default: 2048
+    description: "The maximum amount of disk a user can request"
+  cc.users_can_select_backend:
+    default: true
+    description: "Allow non-admin users to switch their apps between DEA and Diego backends"
+  cc.default_to_diego_backend:
+    default: false
+    description: "Use Diego backend by default for new apps"
+  cc.allow_app_ssh_access:
+    default: true
+    description: "Allow users to change the value of the app-level allow_ssh attribute"
+  cc.flapping_crash_count_threshold:
+    default: 3
+    description: "The threshold of crashes after which the app is marked as flapping"
+  cc.client_max_body_size:
+    default: "15M"
+    description: "Maximum body size for nginx"
+  cc.app_bits_max_body_size:
+    default: "1536M"
+    description: "Maximum body size for nginx bits uploads"
+
+  cc.disable_custom_buildpacks:
+    default: false
+    description: "Disable external (i.e. git) buildpacks? (Admin buildpacks and system buildpacks only.)"
+
+  cc.broker_client_timeout_seconds:
+    default: 60
+    description: "For requests to service brokers, this is the HTTP (open and read) timeout setting."
+
+  cc.broker_client_default_async_poll_interval_seconds:
+    default: 60
+    description: "Specifies interval on which the CC will poll a service broker for asynchronous actions. If the service broker provides a value, this value is the minimum accepted value the broker can provide."
+
+  cc.broker_client_max_async_poll_duration_minutes:
+    default: 10080
+    description: "The max duration the CC will fetch service instance state from a service broker (in minutes). Default is 1 week"
+
+  cc.development_mode:
+    default: false
+    description: "Enable development features for monitoring and insight"
+
+  cc.newrelic.license_key:
+    default: ~
+    description: "The api key for NewRelic"
+  cc.newrelic.environment_name:
+    default: "development"
+    description: "The environment name used by NewRelic"
+  cc.newrelic.developer_mode:
+    default: false
+    description: "Activate NewRelic developer mode"
+  cc.newrelic.monitor_mode:
+    default: false
+    description: "Activate NewRelic monitor mode"
+  cc.newrelic.log_file_path:
+    default: "/var/vcap/sys/log/cloud_controller_ng/newrelic"
+    description: "The location for NewRelic to log to"
+  cc.newrelic.capture_params:
+    default: false
+    description: "Capture and send query params to NewRelic"
+  cc.newrelic.transaction_tracer.enabled:
+    default: false
+    description: "Enable transaction tracing in NewRelic"
+  cc.newrelic.transaction_tracer.record_sql:
+    default: "off"
+    description: "NewRelic's SQL statement recording mode: [off | obfuscated | raw]"
+
+  cc.nginx_access_log_destination:
+    description: "The nginx access log destination. This can be used to route access logs to a file, syslog, or a memory buffer."
+    default: "/var/vcap/sys/log/nginx_cc/nginx.access.log"
+  cc.nginx_access_log_format:
+    description: "The nginx log format string to use when writing to the access log."
+    default: >
+      $host - [$time_local] "$request" $status $bytes_sent "$http_referer" "$http_user_agent"
+      $proxy_add_x_forwarded_for vcap_request_id:$upstream_http_x_vcap_request_id response_time:$upstream_response_time
+  cc.nginx_error_log_destination:
+    description: "The nginx error log destination. This can be used to route error logs to a file, syslog, or a memory buffer."
+    default: "/var/vcap/sys/log/nginx_cc/nginx.error.log"
+  cc.nginx_error_log_level:
+    descritpion: "The lowest severity nginx log level to capture in the error log."
+    default: error
+
+  cc.jobs.local.number_of_workers:
+    default: 2
+    description: "Number of local cloud_controller_worker workers"
+
+  cc.thresholds.api.alert_if_above_mb:
+    description: "The cc will alert if memory remains above this threshold for 3 monit cycles"
+    default: 2250
+  cc.thresholds.api.restart_if_consistently_above_mb:
+    description: "The cc will restart if memory remains above this threshold for 15 monit cycles"
+    default: 2250
+  cc.thresholds.api.restart_if_above_mb:
+    description: "The cc will restart if memory remains above this threshold for 3 monit cycles"
+    default: 2450
+
+  dea_next.staging_memory_limit_mb:
+    description: "Memory limit in mb for staging tasks"
+    default: 1024
+  dea_next.staging_disk_limit_mb:
+    description: "Disk limit in mb for staging tasks"
+    default: 6144
+  cc.staging_file_descriptor_limit:
+    description: "File descriptor limit for staging tasks"
+    default: 16384
+
+  dea_next.advertise_interval_in_seconds:
+    description: "Advertise interval for DEAs"
+    default: 5
+  cc.renderer.max_results_per_page:
+    description: "Maximum number of results returned per page"
+    default: 100
+  cc.renderer.default_results_per_page:
+    description: "Default number of results returned per page if user does not specify"
+    default: 50
+  cc.renderer.max_inline_relations_depth:
+    description: "Maximum depth of inlined relationships in the result"
+    default: 2
+
+  uaa.clients.cc_service_broker_client.secret:
+    description: "(DEPRECATED) - Used for generating SSO clients for service brokers."
+  uaa.clients.cc_service_broker_client.scope:
+    description: "(DEPRECATED) - Used to grant scope for SSO clients for service brokers"
+    default: "openid,cloud_controller_service_permissions.read"
+
+  uaa.clients.cc-service-dashboards.secret:
+    description: "Used for generating SSO clients for service brokers."
+  uaa.clients.cc-service-dashboards.scope:
+    description: "Used to grant scope for SSO clients for service brokers"
+    default: "openid,cloud_controller_service_permissions.read"
+
+  uaa.clients.cloud_controller_username_lookup.secret:
+    description: "Used for fetching usernames from UAA."
+
+  cc.install_buildpacks:
+    description: "Set of buildpacks to install during deploy"
+  cc.app_bits_upload_grace_period_in_seconds:
+    description: "Extra token expiry time while uploading big apps."
+    default: 1200
+
+  cc.security_group_definitions:
+    description: "Array of security groups that will be seeded into CloudController."
+  cc.default_running_security_groups:
+    description: "The default running security groups that will be seeded in CloudController."
+  cc.default_staging_security_groups:
+    description: "The default staging security groups that will be seeded in CloudController."
+
+  cc.feature_disabled_message:
+    description: "Custom message to use for a disabled feature."
+  cc.allowed_cors_domains:
+    description: "List of domains (including scheme) from which Cross-Origin requests will be accepted, a * can be used as a wildcard for any part of a domain"
+    default: []
+
+  cc.instance_file_descriptor_limit:
+    description: "The file descriptors made available to each app instance"
+    default: 16384
+
+  cc.statsd_host:
+    description: "The host for the statsd server, defaults to the local metron agent"
+    default: "127.0.0.1"
+
+  cc.statsd_port:
+    description: "The port for the statsd server, defaults to the local metron agent"
+    default: 8125
+
+  cc.placement_top_stager_percentage:
+    description: "The percentage of top stagers considered when choosing a stager"
+    default: 10

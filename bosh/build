@@ -16,7 +16,7 @@ mkdir $assets_dir/{releases,versions}
 
 git -C "$lattice_release_dir" describe > $assets_dir/versions/LATTICE_RELEASE_IMAGE
 
-for release in diego garden-linux cf-routing cf; do
+for release in diego garden-linux cf-routing cf-lattice; do
   pushd $lattice_release_dir/$release-release >/dev/null
     yes yes | bosh -n reset release
     bosh -n create release --name $release --version 0 --with-tarball --force
@@ -25,4 +25,3 @@ for release in diego garden-linux cf-routing cf; do
     git describe --tags --always > $assets_dir/versions/$version_file
   popd >/dev/null
 done
-
