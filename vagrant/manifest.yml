@@ -66,6 +66,8 @@ jobs:
     release: cf-lattice
   - name: nats
     release: cf-lattice
+  - name: route_registrar
+    release: cf-lattice
   - name: uaa
     release: cf-lattice
   - name: postgres
@@ -97,6 +99,28 @@ properties:
   system_domain: placeholder-system-domain
   system_domain_organization: placeholder-system-domain-org
   app_domains: ["placeholder-system-domain"]
+
+  route_registrar:
+    routes:
+    - name: api
+      port: 9022
+      uris:
+      - "api.placeholder-system-domain"
+    - name: doppler
+      port: 8081
+      uris:
+      - "doppler.placeholder-system-domain"
+    - name: loggregator
+      port: 8080
+      uris:
+      - "loggregator.placeholder-system-domain"
+    - name: uaa
+      port: 8080
+      uris:
+      - "uaa.placeholder-system-domain"
+      - "*.uaa.placeholder-system-domain"
+      - "login.placeholder-system-domain"
+      - "*.login.placeholder-system-domain"
 
   # For Diego:
   diego:
