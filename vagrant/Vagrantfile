@@ -20,15 +20,19 @@ Vagrant.configure("2") do |config|
     config.vm.provision "shell", inline: "grep -i proxy /etc/environment > /var/lattice/proxy || true"
   end
 
+  host = RbConfig::CONFIG['host_os']
+
   # Source: https://stefanwrobel.com/how-to-make-vagrant-performance-not-suck
   config.vm.provider "virtualbox" do |v|
-    host = RbConfig::CONFIG['host_os']
     if host =~ /darwin/
       cpus = `sysctl -n hw.ncpu`.to_i
       mem = `sysctl -n hw.memsize`.to_i / 1024 / 1024 / 4
     elsif host =~ /linux/
       cpus = `nproc`.to_i
       mem = `grep 'MemTotal' /proc/meminfo | sed -e 's/MemTotal://' -e 's/ kB//'`.to_i / 1024 / 4
+    elsif host =~ /cygwin|mswin|mingw|bccwin|wince|emx/
+      cpus = `wmic computersystem get numberofprocessors`.split("\n")[2].to_i
+      mem = `wmic OS get TotalVisibleMemorySize`.split("\n")[2].to_i / 1024 / 4
     else
       cpus = 2
       mem = 2048
@@ -37,6 +41,32 @@ Vagrant.configure("2") do |config|
     v.customize ["modifyvm", :id, "--memory", mem]
     v.customize ["modifyvm", :id, "--cpus", cpus]
     v.customize ["modifyvm", :id, "--ioapic", "on"]
+  end
+
+  config.vm.provider "vmware_fusion" do |v|
+    if host =~ /darwin/
+      cpus = `sysctl -n hw.ncpu`.to_i
+      mem = `sysctl -n hw.memsize`.to_i / 1024 / 1024 / 4
+    else
+      cpus = 2
+      mem = 2048
+    end
+
+    v.vmx["memsize"] = mem
+    v.vmx["numvcpus"] = cpus
+  end
+
+  config.vm.provider "vmware_workstation" do |v|
+    if host =~ /cygwin|mswin|mingw|bccwin|wince|emx/
+      cpus = `wmic computersystem get numberofprocessors`.split("\n")[2].to_i
+      mem = nearest_multiple_of_four(`wmic OS get TotalVisibleMemorySize`.split("\n")[2].to_i / 1024 / 4)
+    else
+      cpus = 2
+      mem = 2048
+    end
+
+    v.vmx["memsize"] = mem
+    v.vmx["numvcpus"] = cpus
   end
 
   config.vm.provider :aws do |aws, override|
@@ -208,4 +238,8 @@ if provision_required && !File.exists?(lattice_tgz)
     EOM
     exit(1)
   end
+end
+
+def nearest_multiple_of_four(n)
+  (n / 4.0).ceil * 4
 end
