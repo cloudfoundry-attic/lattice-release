@@ -120,7 +120,7 @@
                 "apt-get -y update",
                 "apt-get -y --force-yes dist-upgrade",
                 "apt-get -y update",
-                "apt-get -y install curl unzip",
+                "apt-get -y install curl unzip zip",
                 "apt-get -y install libruby2.1 ruby2.1",
                 "echo 'UseDNS no' >> /etc/ssh/sshd_config",
                 "mkdir -p /var/lattice",
