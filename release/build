@@ -2,19 +2,17 @@
 
 set -e
 
-if [[ -z $1 ]] && [[ -t 1 ]]; then
-    echo "Usage:"
-    echo -e "\t$0 /path/to/lattice.tgz [lattice release version]"
-    echo -e "\t$0 [lattice release version] > /path/to/lattice.tgz"
+if ([[ -z $1 ]] && [[ -t 1 ]]) || ([[ ! -z $1 ]] && [[ ! -t 1 ]]); then
+    >&2 echo "Usage:"
+    >&2 echo -e "\t$0 /path/to/lattice.tgz"
+    >&2 echo -e "\t$0 > /path/to/lattice.tgz"
     exit 1
 fi
 
 if [[ -t 1 ]]; then
   lattice_tgz=$1
-  version_override=$2
 else
   lattice_tgz="-"
-  version_override=$1
 fi
 
 lattice_release_dir=$(cd `dirname $0` && cd .. && pwd)
@@ -22,7 +20,7 @@ diego_release_dir=$lattice_release_dir/diego-release
 ltc_dir=$lattice_release_dir/src/github.com/cloudfoundry-incubator/ltc
 receptor_dir=$lattice_release_dir/src/github.com/cloudfoundry-incubator/receptor
 
-lattice_release_version=${version_override:-`git -C "$lattice_release_dir" rev-parse HEAD`}
+lattice_release_version=$(git -C "$lattice_release_dir" rev-parse HEAD)
 diego_release_version=$(git -C "$diego_release_dir" describe --tags --always)
 ltc_version=$(git -C "$ltc_dir" describe --tags --always)
 receptor_version=$(git -C "$receptor_dir" describe --tags --always)
