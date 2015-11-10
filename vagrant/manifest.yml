@@ -420,16 +420,7 @@ properties:
         override: true
       users:
       - admin|admin|scim.write,scim.read,openid,cloud_controller.admin,doppler.firehose
-    issuer: ""
-    # jwt:
-    #   signing_key: |
-    #     -----BEGIN RSA PRIVATE KEY-----
-    #     XXX
-    #     -----END RSA PRIVATE KEY-----
-    #   verification_key: |
-    #     -----BEGIN PUBLIC KEY-----
-    #     XXX
-    #     -----END PUBLIC KEY-----
+    issuer: "http://localhost/"
   uaadb:
     address: localhost
     databases:
