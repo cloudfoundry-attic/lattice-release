@@ -69,7 +69,7 @@ jobs:
   - name: nats
     release: cf-lattice
   - name: routing-api
-    release: cf-routing
+    release: cf-lattice
 
   # Cell:
   - name: rep
