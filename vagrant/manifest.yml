@@ -51,8 +51,6 @@ jobs:
   - name: ssh_proxy
     release: diego
 
-  - name: cc_bridge
-    release: diego
   - name: stager
     release: diego
   - name: nsync
