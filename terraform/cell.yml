@@ -72,6 +72,7 @@ properties:
   etcd:
     machines: [placeholder-brain-ip]
   metron_agent:
+    shared_secret: loggregator-secret
     zone: z1
     deployment: lattice
   consul:
