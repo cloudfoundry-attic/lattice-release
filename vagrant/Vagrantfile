@@ -194,11 +194,11 @@ if provision_required && File.exists?(lattice_tgz)
       download_lattice_tgz(lattice_tgz_url)
     end
   else
-    repo_version = `git describe`.chomp
+    repo_version = `git rev-parse HEAD`.chomp
     if tgz_version != repo_version && ENV['IGNORE_VERSION_MISMATCH'] != "true"
       puts <<-EOM.gsub(/^ +/, '')
       *******************************************************************************
-      Error: lattice.tgz #{tgz_version} != current commit #{repo_version}
+      Error: lattice.tgz #{tgz_version[0..6]} != current commit #{repo_version[0..6]}
 
       The lattice.tgz file was built using a different commit than the current one.
       To ignore this error, set IGNORE_VERSION_MISMATCH=true in your environment.
