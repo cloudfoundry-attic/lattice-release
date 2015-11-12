@@ -32,6 +32,22 @@
             ],
             "ssh_username": "ubuntu",
             "tags": {"Name": "{{user `version`}}"}
+        },
+         {
+            "name": "digitalocean-brain",
+            "snapshot_name": "brain",
+            "type": "digitalocean",
+            "image": "ubuntu-14-04-x32",
+            "region": "nyc3",
+            "size": "1gb"
+        },
+        {
+            "name": "digitalocean-cell",
+            "snapshot_name": "cell",
+            "type": "digitalocean",
+            "image": "ubuntu-14-04-x32",
+            "region": "nyc3",
+            "size": "1gb"
         }
     ],
 
@@ -41,7 +57,9 @@
             "destination": "/tmp/manifest.yml",
             "override": {
               "brain": { "source": "brain.yml" },
-              "cell": { "source": "cell.yml" }
+              "digitalocean-brain": { "source": "brain.yml" },
+              "cell": { "source": "cell.yml" },
+              "digitalocean-cell": { "source": "cell.yml" }
             }
         },
         {
