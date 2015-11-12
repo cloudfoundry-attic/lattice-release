@@ -16,7 +16,7 @@ mkdir $assets_dir/{releases,versions}
 
 git -C "$lattice_release_dir" rev-parse HEAD > $assets_dir/versions/LATTICE_RELEASE_IMAGE
 
-for release in diego garden-linux cf-routing etcd; do
+for release in diego garden-linux cf-routing etcd cf-lattice; do
   pushd $lattice_release_dir/$release-release >/dev/null
     yes yes | bosh -n reset release
     bosh -n create release --name $release --version 0 --with-tarball --force
@@ -25,11 +25,3 @@ for release in diego garden-linux cf-routing etcd; do
     git describe --tags --always > $assets_dir/versions/$version_file
   popd >/dev/null
 done
-
-# Use custom cf-release until components are broken out
-git -C $lattice_release_dir/cf-release describe --tags --always > $assets_dir/versions/CF_RELEASE
-pushd $assets_dir/releases >/dev/null
-  cp $lattice_release_dir/cf-lattice.yml ./
-  bosh create release $PWD/cf-lattice.yml --dir $lattice_release_dir/cf-release --with-tarball --force
-popd >/dev/null
-

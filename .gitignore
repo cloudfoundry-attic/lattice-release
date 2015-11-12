@@ -9,6 +9,8 @@ lattice.tgz
 
 /bin
 /pkg
+/bosh/bin
+/bosh/pkg
 
 /vagrant/assets
 /vagrant/packer_cache

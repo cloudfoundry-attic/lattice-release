@@ -37,7 +37,6 @@ jobs:
 
   templates:
 
-  # Brain:
   - name: auctioneer
     release: diego
   - name: bbs
@@ -46,32 +45,10 @@ jobs:
     release: diego
   - name: file_server
     release: diego
-  - name: etcd
-    release: etcd
   - name: route_emitter
     release: diego
   - name: ssh_proxy
     release: diego
-
-  - name: haproxy
-    release: cf-routing
-  - name: router_configurer
-    release: cf-routing
-  - name: tcp_emitter
-    release: cf-routing
-
-  - name: doppler
-    release: cf-lattice
-  - name: gorouter
-    release: cf-lattice
-  - name: loggregator_trafficcontroller
-    release: cf-lattice
-  - name: nats
-    release: cf-lattice
-  - name: routing-api
-    release: cf-routing
-
-  # Cell:
   - name: rep
     release: diego
   - name: rootfses
@@ -80,11 +57,32 @@ jobs:
   - name: garden
     release: garden-linux
 
-  # Brain and Cell:
+  - name: haproxy
+    release: cf-routing
+  - name: router_configurer
+    release: cf-routing
+  - name: tcp_emitter
+    release: cf-routing
+  - name: routing-api
+    release: cf-routing
+
   - name: consul_agent
+    release: cf-lattice
+  - name: doppler
+    release: cf-lattice
+  - name: gorouter
+    release: cf-lattice
+  - name: loggregator_trafficcontroller
     release: cf-lattice
   - name: metron_agent
     release: cf-lattice
+  - name: nats
+    release: cf-lattice
+  - name: route_registrar
+    release: cf-lattice
+
+  - name: etcd
+    release: etcd
 
 properties:
   system_domain: placeholder-system-domain
@@ -124,14 +122,6 @@ properties:
         ca_cert: ""
         client_cert: ""
         client_key: ""
-    rep:
-      zone: z1
-      bbs:
-        api_location: bbs.service.cf.internal:8889
-        ca_cert: ""
-        client_cert: ""
-        client_key: ""
-        require_ssl: false
     route_emitter:
       bbs:
         api_location: bbs.service.cf.internal:8889
@@ -153,6 +143,14 @@ properties:
       host_key: "$(openssl genrsa 2048 2> /dev/null)"
       enable_diego_auth: true
       diego_credentials: placeholder-username:placeholder-password
+    rep:
+      zone: z1
+      bbs:
+        api_location: bbs.service.cf.internal:8889
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
 
   # For Garden:
   garden:
@@ -163,7 +161,7 @@ properties:
 
   # For CF Routing:
   router:
-    enable_routing_api: false
+    enable_routing_api: true
     router_configurer:
       gorouter_secret: router-secret
       routing_api_auth_disabled: true
@@ -186,7 +184,7 @@ properties:
     password: nats
     port: 4222
   etcd:
-    machines: [etcd.service.cf.internal]
+    machines: [placeholder-ip]
     require_ssl: false
     ca_cert: ""
     server_cert: ""
@@ -217,7 +215,6 @@ properties:
         receptor: {}
         router_configurer: {}
         routing-api: {}
-        doppler: {}
       servers:
         lan: [placeholder-ip]
     require_ssl: false
@@ -241,8 +238,20 @@ properties:
     clients:
       doppler:
         secret: doppler-secret
+      gorouter:
+        secret: gorouter-secret
     jwt:
       verification_key: ""
   cc:
     srv_api_uri: ""
+  route_registrar:
+    routes:
+    - name: doppler
+      port: 8081
+      uris:
+      - "doppler.placeholder-system-domain"
+    - name: loggregator
+      port: 8084
+      uris:
+      - "loggregator.placeholder-system-domain"
 
