@@ -107,6 +107,14 @@
             ]
         },
         {
+            "type": "shell",
+            "only": ["amazon-ebs"],
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
+                "apt-get -y install linux-image-extra-`uname -r`"
+            ]
+        },
+        {
             "type": "file",
             "source": "manifest.yml",
             "destination": "/tmp/manifest.yml"
