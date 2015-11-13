@@ -76,5 +76,8 @@ properties:
     deployment: lattice
   consul:
     require_ssl: false
+  loggregator:
+    etcd:
+      machines: [placeholder-brain-ip]
   loggregator_endpoint:
     shared_secret: loggregator-secret

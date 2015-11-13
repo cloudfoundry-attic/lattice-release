@@ -198,6 +198,8 @@ properties:
     outgoing_port: 8084
   loggregator:
     outgoing_dropsonde_port: 8083
+    etcd:
+      machines: [placeholder-ip]
   metron_endpoint:
     shared_secret: loggregator-secret
   loggregator_endpoint:

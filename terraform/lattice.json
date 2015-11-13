@@ -37,7 +37,7 @@
             "name": "digitalocean-brain",
             "snapshot_name": "brain",
             "type": "digitalocean",
-            "image": "ubuntu-14-04-x32",
+            "image": "ubuntu-14-04-x64",
             "region": "nyc3",
             "size": "1gb"
         },
@@ -45,7 +45,7 @@
             "name": "digitalocean-cell",
             "snapshot_name": "cell",
             "type": "digitalocean",
-            "image": "ubuntu-14-04-x32",
+            "image": "ubuntu-14-04-x64",
             "region": "nyc3",
             "size": "1gb"
         }
@@ -97,7 +97,12 @@
         {
             "type": "shell",
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
-            "remote_path": "/home/ubuntu/bosh-cleanup.sh",
+            "override": {
+              "brain": { "remote_path": "/home/ubuntu/bosh-cleanup.sh" },
+              "cell": { "remote_path": "/home/ubuntu/bosh-cleanup.sh" },
+              "digitalocean-brain": { "remote_path": "/root/bosh-cleanup.sh" },
+              "digitalocean-cell": { "remote_path": "/root/bosh-cleanup.sh" }
+            },
             "inline": [
                 "chmod 1777 /tmp",
                 "mv /opt/bosh-provisioner/assets/versions /var/lattice/",
