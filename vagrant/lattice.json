@@ -20,7 +20,7 @@
         {
             "type": "vmware-iso",
             "headless": true,
-            "vm_name": "lattice",
+            "vm_name": "lattice-vagrant-{{isotime \"20060102-1504\"}}",
             "guest_os_type": "ubuntu-64",
             "disk_size": 15000,
             "ssh_username": "vagrant",
@@ -50,7 +50,7 @@
         {
             "type": "virtualbox-iso",
             "headless": true,
-            "vm_name": "lattice",
+            "vm_name": "lattice-vagrant-{{isotime \"20060102-1504\"}}",
             "guest_os_type": "Ubuntu_64",
             "disk_size": 15000,
             "ssh_username": "vagrant",
