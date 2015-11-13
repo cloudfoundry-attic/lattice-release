@@ -418,6 +418,10 @@ properties:
         receptor: {}
         router_configurer: {}
         uaa: {}
+        cc_uploader: {}
+        nsync: {}
+        stager: {}
+        tps: {}
       servers:
         lan: [placeholder-ip]
     require_ssl: false
