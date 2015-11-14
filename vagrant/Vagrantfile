@@ -177,7 +177,7 @@ end
 def get_lattice_tgz_version(filename)
     Zlib::GzipReader.open(filename) do |gz|
       tr = Gem::Package::TarReader.new(gz)
-      tr.seek 'brain/var/lattice/versions/LATTICE_RELEASE' do |entry|
+      tr.seek 'brain/var/lattice/versions/LATTICE_TGZ' do |entry|
         return entry.read.chomp
       end
     end

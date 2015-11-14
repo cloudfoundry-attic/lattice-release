@@ -2,17 +2,19 @@
 
 set -e
 
-if ([[ -z $1 ]] && [[ -t 1 ]]) || ([[ ! -z $1 ]] && [[ ! -t 1 ]]); then
+if [[ -z $1 ]] && [[ -t 1 ]]; then
     >&2 echo "Usage:"
-    >&2 echo -e "\t$0 /path/to/lattice.tgz"
-    >&2 echo -e "\t$0 > /path/to/lattice.tgz"
+    >&2 echo -e "\t$0 /path/to/lattice.tgz [lattice tgz version]"
+    >&2 echo -e "\t$0 [lattice tgz version] > /path/to/lattice.tgz"
     exit 1
 fi
 
 if [[ -t 1 ]]; then
   lattice_tgz=$1
+  lattice_tgz_version=$2
 else
   lattice_tgz="-"
+  lattice_tgz_version=$1
 fi
 
 lattice_release_dir=$(cd `dirname $0` && cd .. && pwd)
@@ -63,6 +65,7 @@ popd >/dev/null
 echo $ltc_version > $brain_versions_dir/LTC
 echo $lattice_release_version > $brain_versions_dir/LATTICE_RELEASE
 echo $receptor_version > $brain_versions_dir/RECEPTOR
+echo $lattice_tgz_version > $brain_versions_dir/LATTICE_TGZ
 
 # Cell
 
@@ -74,6 +77,7 @@ go build -a -o $cell_bin_dir/tee2metron github.com/cloudfoundry-incubator/ltc/ce
 
 echo $ltc_version > $cell_versions_dir/LTC
 echo $lattice_release_version > $cell_versions_dir/LATTICE_RELEASE
+echo $lattice_tgz_version > $cell_versions_dir/LATTICE_TGZ
 
 # Output
 
