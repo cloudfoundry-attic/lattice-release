@@ -45,7 +45,4 @@ ln -sf /var/vcap/jobs/receptor/monit /var/vcap/monit/job/0019_receptor.monitrc
 sed -i 's%/var/vcap/packages/loggregator_trafficcontroller/trafficcontroller%& --disableAccessControl%' \
   /var/vcap/jobs/loggregator_trafficcontroller/bin/loggregator_trafficcontroller_ctl
 
-# Configure etcd
-sed -i 's/with timeout 60 seconds//' /var/vcap/jobs/etcd/monit
-
 /etc/init.d/lighttpd start >/dev/null
