@@ -25,18 +25,9 @@
 [submodule "src/github.com/vaughan0/go-ini"]
 	path = src/github.com/vaughan0/go-ini
 	url = https://github.com/vaughan0/go-ini
-[submodule "src/github.com/Sirupsen/logrus"]
-	path = src/github.com/Sirupsen/logrus
-	url = https://github.com/Sirupsen/logrus
 [submodule "src/github.com/codegangsta/cli"]
 	path = src/github.com/codegangsta/cli
 	url = https://github.com/codegangsta/cli
-[submodule "src/github.com/docker/docker"]
-	path = src/github.com/docker/docker
-	url = https://github.com/docker/docker
-[submodule "src/github.com/docker/libtrust"]
-	path = src/github.com/docker/libtrust
-	url = https://github.com/docker/libtrust
 [submodule "src/github.com/gizak/termui"]
 	path = src/github.com/gizak/termui
 	url = https://github.com/gizak/termui
