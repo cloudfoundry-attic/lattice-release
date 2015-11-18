@@ -205,7 +205,7 @@ if provision_required && File.exists?(lattice_tgz)
 
       NOTE: As of v0.4.0, the process for deploying Lattice via Vagrant has changed.
       Please use the process documented here:
-      \thttp://github.com/cloudfoundry-incubator/lattice#launching-with-vagrant
+      \thttp://lattice.cf/docs/vagrant/
       *******************************************************************************
       EOM
       exit(1)
@@ -224,7 +224,7 @@ if provision_required && !File.exists?(lattice_tgz)
 
     NOTE: As of v0.4.0, the process for deploying Lattice via Vagrant has changed.
     Please use the process documented here:
-    \thttp://github.com/cloudfoundry-incubator/lattice#launching-with-vagrant
+    \thttp://lattice.cf/docs/vagrant/
     *******************************************************************************
     EOM
     exit(1)
