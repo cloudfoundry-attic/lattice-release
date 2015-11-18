@@ -59,10 +59,7 @@ properties:
 
   # For Garden:
   garden:
-    disk_quota_enabled: false
     allow_host_access: true # turn off in favor of TCP routing
-    persistent_image_list: ["/var/vcap/packages/rootfs_cflinuxfs2/rootfs"]
-    enable_graph_cleanup: true
 
   # For CF:
   nats:

@@ -189,6 +189,7 @@ properties:
         gorouter: {}
         receptor: {}
         router_configurer: {}
+        routing-api: {}
       servers:
         lan: [placeholder-ip]
     require_ssl: false
