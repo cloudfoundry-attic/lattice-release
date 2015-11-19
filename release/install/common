@@ -11,7 +11,7 @@ old_ip=$(cat /var/lattice/ip)
 new_ip=$(ip route get 1 | awk '{print $NF;exit}')
 
 perl -p -i -e "s/\\Q$old_ip\\E/$new_ip/g" $job_files
-perl -p -i -e "s/placeholder-system-domain/$DOMAIN/g" $job_files
+perl -p -i -e "s/placeholder\.system-domain/$DOMAIN/g" $job_files
 perl -p -i -e "s/placeholder-username/$USERNAME/g" $job_files
 perl -p -i -e "s/placeholder-password/$PASSWORD/g" $job_files
 perl -p -i -e "s/lattice-(cell|brain|colocated)-0/$HOST_ID/g" $job_files

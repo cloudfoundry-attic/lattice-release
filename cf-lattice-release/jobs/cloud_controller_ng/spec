@@ -28,8 +28,8 @@ packages:
   - nginx
   - nginx_newrelic_plugin
   - libpq
-  - mysqlclient
-  - ruby-2.1.7
+  - mysqlclient-5.5
+  - ruby-2.2.3
 
 properties:
   ssl.skip_cert_verify:
@@ -67,6 +67,9 @@ properties:
   app_ssh.port:
     description: "External port for SSH access to application instances"
     default: 2222
+  app_ssh.oauth_client_id:
+    description: "The oauth client ID of the SSH proxy"
+    default: ssh-proxy
 
   nats.user:
     description: "Username for cc client to connect to NATS"
@@ -139,7 +142,7 @@ properties:
     description: "The directory where operator requested diagnostic files should be placed"
 
   cc.external_protocol:
-    default: "http"
+    default: "https"
     description: "The protocol used to access the CC API from an external entity"
   cc.external_host:
     default: "api"
@@ -256,6 +259,9 @@ properties:
   cc.packages.max_package_size:
     description: "Maximum size of application package"
     default: 1073741824
+  cc.packages.max_valid_packages_stored:
+    description: "Number of recent, valid packages stored per app (not including package for current droplet)"
+    default: 5
   cc.packages.fog_connection:
     description: "Fog connection hash"
   cc.packages.cdn.uri:
@@ -271,6 +277,9 @@ properties:
   cc.droplets.droplet_directory_key:
     description: "Directory (bucket) used store droplets.  It does not have be pre-created."
     default: "cc-droplets"
+  cc.droplets.max_staged_droplets_stored:
+    description: "Number of recent, staged droplets stored per app (not including current droplet)" 
+    default: 5
   cc.droplets.fog_connection:
     description: "Fog connection hash"
   cc.droplets.cdn.uri:
@@ -340,9 +349,7 @@ properties:
     default: "127.0.0.1"
   metron_endpoint.port:
     description: "The port used to emit messages to the Metron agent"
-    default: 3456
-  metron_endpoint.shared_secret:
-    description: "The key used to sign log messages"
+    default: 3457
 
   logger_endpoint.use_ssl:
     description: "Whether to use ssl for logger endpoint listed at /v2/info"
@@ -504,6 +511,9 @@ properties:
 
   uaa.clients.cloud_controller_username_lookup.secret:
     description: "Used for fetching usernames from UAA."
+
+  uaa.clients.cc_routing.secret:
+    description: "Used for fetching routing information from the Routing API"
 
   cc.install_buildpacks:
     description: "Set of buildpacks to install during deploy"
