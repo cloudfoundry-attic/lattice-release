@@ -82,6 +82,12 @@ jobs:
     release: cf-lattice
   - name: postgres
     release: cf-lattice
+  - name: cloud_controller_ng
+    release: cf-lattice
+  # - name: cloud_controller_worker
+  #   release: cf-lattice
+  # - name: cloud_controller_clock
+  #   release: cf-lattice
   - name: route_registrar
     release: cf-lattice
 
@@ -90,6 +96,8 @@ jobs:
 
 properties:
   system_domain: placeholder-system-domain
+  system_domain_organization: placeholder-system-domain-org
+  app_domains: ["local.lattice.cf"]
 
   # For Diego:
   diego:
@@ -137,6 +145,7 @@ properties:
         machines: [placeholder-ip]
         user: nats
         password: nats
+        port: placeholder
     ssh_proxy:
       bbs:
         api_location: bbs.service.cf.internal:8889
@@ -248,6 +257,10 @@ properties:
         secret: gorouter-secret
       login:
         secret: login-secret
+      cc-service-dashboards:
+        secret: cc-service-dashboard-secret
+      cloud_controller_username_lookup:
+        secret: cloud-controller-username-lookup-secret
     admin:
       client_secret: admin-client-secret
     cc:
@@ -261,8 +274,15 @@ properties:
     issuer: ""
     jwt:
       verification_key: ""
-  cc:
-    srv_api_uri: ""
+    # jwt:
+    #   signing_key: |
+    #     -----BEGIN RSA PRIVATE KEY-----
+    #     XXX
+    #     -----END RSA PRIVATE KEY-----
+    #   verification_key: |
+    #     -----BEGIN PUBLIC KEY-----
+    #     XXX
+    #     -----END PUBLIC KEY-----
   route_registrar:
     routes:
     - name: doppler
@@ -285,7 +305,55 @@ properties:
     port: 5524
     databases:
     - {name: uaadb, tag: uaa, citext: true}
+    - {name: ccdb, tag: cc, citext: true}
     roles:
     - {name: uaaadmin, password: admin, tag: admin}
+    - {name: ccadmin, password: admin, tag: admin}
+  cc:
+    srv_api_uri: ""
+    info:
+      name: "lattice-cc"
+      build: ""
+      version: ""
+      description: ""
+    bulk_api_password: bulk-api-password
+    internal_api_password: internal-api-password
+    quota_definitions:
+      default:
+          memory_limit: 102400
+          non_basic_services_allowed: true
+          total_routes: 1000
+          total_services: -1
+    install_buildpacks:
+    - {name: java_buildpack, package: buildpack_java}
+    - {name: ruby_buildpack, package: buildpack_ruby}
+    - {name: nodejs_buildpack, package: buildpack_nodejs}
+    - {name: go_buildpack, package: buildpack_go}
+    - {name: python_buildpack, package: buildpack_python}
+    - {name: php_buildpack, package: buildpack_php}
+    - {name: staticfile_buildpack, package: buildpack_staticfile}
+    - {name: binary_buildpack, package: buildpack_binary}
+    security_group_definitions:
+    - name: public_networks
+      rules:
+      - {destination: 0.0.0.0-9.255.255.255, protocol: all}
+      - {destination: 11.0.0.0-169.253.255.255, protocol: all}
+      - {destination: 169.255.0.0-172.15.255.255, protocol: all}
+      - {destination: 172.32.0.0-192.167.255.255, protocol: all}
+      - {destination: 192.169.0.0-255.255.255.255, protocol: all}
+    - name: dns
+      rules:
+      - {destination: 0.0.0.0/0, ports: '53', protocol: tcp}
+      - {destination: 0.0.0.0/0, ports: '53', protocol: udp}
+    default_running_security_groups: [public_networks, dns]
+    default_staging_security_groups: [public_networks, dns]
+  ccdb:
+    address: localhost
+    databases:
+    - {name: ccdb, tag: cc}
+    db_scheme: postgres
+    port: 5524
+    roles:
+    - {name: ccadmin, password: admin, tag: admin}
   login:
     catalina_opts: -Xmx768m

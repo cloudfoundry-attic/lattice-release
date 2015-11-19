@@ -52,7 +52,7 @@
             "headless": true,
             "vm_name": "lattice-vagrant-{{isotime \"20060102-1504\"}}",
             "guest_os_type": "Ubuntu_64",
-            "disk_size": 15000,
+            "disk_size": 30000,
             "ssh_username": "vagrant",
             "ssh_password": "vagrant",
             "iso_url": "http://releases.ubuntu.com/trusty/ubuntu-14.04.3-server-amd64.iso",
