@@ -46,6 +46,14 @@
         },
         {
             "type": "shell",
+            "only": ["cell"],
+            "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
+            "inline": [
+                "apt-get -y install linux-image-extra-`uname -r`"
+            ]
+        },
+        {
+            "type": "shell",
             "execute_command": "{{ .Vars }} sudo -E sh '{{ .Path }}'",
             "inline": [
                 "apt-get -y install software-properties-common",
