@@ -184,7 +184,6 @@ properties:
         machines: [placeholder-ip]
         user: nats
         password: nats
-        port: placeholder
     ssh_proxy:
       bbs:
         api_location: bbs.service.cf.internal:8889
