@@ -58,6 +58,17 @@ jobs:
   - name: garden
     release: garden-linux
 
+  - name: cc_bridge
+    release: diego
+  - name: stager
+    release: diego
+  - name: nsync
+    release: diego
+  - name: tps
+    release: diego
+  - name: cc_uploader
+    release: diego
+
   - name: haproxy
     release: cf-routing
   - name: router_configurer
@@ -105,6 +116,34 @@ properties:
   diego:
     ssl:
       skip_cert_verify: true
+    nsync:
+      bbs:
+        api_location: bbs.service.cf.internal:8889
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      cc:
+        base_url: "http://cloud-controller-ng.service.cf.internal:9022"
+        basic_auth_password: "internal-api-password"
+    stager:
+      bbs:
+        api_location: bbs.service.cf.internal:8889
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      cc:
+        basic_auth_password: "internal-api-password"
+    tps:
+      bbs:
+        api_location: bbs.service.cf.internal:8889
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      cc:
+        basic_auth_password: "internal-api-password"
     auctioneer:
       bbs:
         api_location: bbs.service.cf.internal:8889
