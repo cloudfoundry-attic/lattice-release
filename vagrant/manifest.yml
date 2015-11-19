@@ -440,7 +440,7 @@ properties:
       uris:
       - "api.placeholder-system-domain"
     - name: uaa
-      port: 8080
+      port: 8085
       uris:
       - "uaa.placeholder-system-domain"
       - "*.uaa.placeholder-system-domain"
