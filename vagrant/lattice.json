@@ -134,7 +134,8 @@
                 "echo 'UseDNS no' >> /etc/ssh/sshd_config",
                 "mkdir -p /var/lattice",
                 "ip route get 1 | awk '{print $NF;exit}' > /var/lattice/ip",
-                "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml"
+                "sed \"s/placeholder-ip/$(cat /var/lattice/ip)/\" /tmp/manifest.yml > /var/lattice/manifest.yml",
+                "mkdir -p /var/vcap/store"
             ]
         },
         {

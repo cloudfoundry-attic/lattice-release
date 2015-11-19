@@ -31,6 +31,7 @@ compilation:
 jobs:
 - name: lattice-colocated
   instances: 1
+  persistent_disk: 1024
 
   networks:
   - name: default
@@ -95,7 +96,7 @@ jobs:
     release: etcd
 
 properties:
-  support_address: ""
+  support_address: "email@example.com"
   system_domain: placeholder-system-domain
   system_domain_organization: placeholder-system-domain-org
   app_domains: ["placeholder-system-domain"]
@@ -319,6 +320,7 @@ properties:
       description: ""
     bulk_api_password: bulk-api-password
     internal_api_password: internal-api-password
+    db_encryption_key: "db-encryption-key"
     quota_definitions:
       default:
           memory_limit: 102400
@@ -337,6 +339,8 @@ properties:
       rules:
       - {destination: 0.0.0.0/0, ports: '53', protocol: tcp}
       - {destination: 0.0.0.0/0, ports: '53', protocol: udp}
+    staging_upload_user: "staging-user"
+    staging_upload_password: "staging-pass"
     default_running_security_groups: [public_networks, dns]
     default_staging_security_groups: [public_networks, dns]
   ccdb:
