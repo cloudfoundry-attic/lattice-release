@@ -124,13 +124,6 @@ properties:
         ca_cert: ""
         client_cert: ""
         client_key: ""
-    etcd:
-      machines: etcd.service.cf.internal
-      cluster:
-        - name: database_z1
-          instances: 1
-      require_ssl: false
-      peer_require_ssl: false
     rep:
       zone: z1
       bbs:
@@ -193,7 +186,7 @@ properties:
     password: nats
     port: 4222
   etcd:
-    machines: [placeholder-ip]
+    machines: [etcd.service.cf.internal]
     require_ssl: false
     ca_cert: ""
     server_cert: ""
@@ -208,6 +201,7 @@ properties:
       - name: database_z1
         instances: 1
   metron_agent:
+    shared_secret: loggregator-secret
     zone: z1
     deployment: lattice
   consul:
@@ -223,25 +217,22 @@ properties:
         receptor: {}
         router_configurer: {}
         routing-api: {}
+        doppler: {}
       servers:
         lan: [placeholder-ip]
     require_ssl: false
   doppler:
     zone: z1
-  dropsonde:
-    enabled: true
+  doppler_endpoint:
+    shared_secret: loggregator-secret
   traffic_controller:
     zone: z1
     outgoing_port: 8084
   loggregator:
     outgoing_dropsonde_port: 8083
     etcd:
-      machines: [placeholder-ip]
-  metron_endpoint:
-    shared_secret: loggregator-secret
+      machines: [etcd.service.cf.internal]
   loggregator_endpoint:
-    shared_secret: loggregator-secret
-  doppler_endpoint:
     shared_secret: loggregator-secret
   routing-api:
     auth_disabled: true

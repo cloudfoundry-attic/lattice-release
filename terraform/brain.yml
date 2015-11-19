@@ -41,8 +41,6 @@ jobs:
     release: diego
   - name: file_server
     release: diego
-  - name: etcd
-    release: etcd
   - name: route_emitter
     release: diego
   - name: ssh_proxy
@@ -67,6 +65,9 @@ jobs:
     release: cf-lattice
   - name: nats
     release: cf-lattice
+
+  - name: etcd
+    release: etcd
 
 
 properties:
@@ -107,13 +108,6 @@ properties:
         ca_cert: ""
         client_cert: ""
         client_key: ""
-    etcd:
-      machines: etcd.service.cf.internal
-      cluster:
-        - name: database_z1
-          instances: 1
-      require_ssl: false
-      peer_require_ssl: false
     route_emitter:
       bbs:
         api_location: bbs.service.cf.internal:8889
