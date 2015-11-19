@@ -187,7 +187,7 @@ end
 if provision_required && File.exists?(lattice_tgz)
   tgz_version = get_lattice_tgz_version(lattice_tgz)
   if lattice_tgz_url
-    url_version = lattice_tgz_url.match(/\/lattice-(v[^\/]+)\.tgz$/)[1]
+    url_version = lattice_tgz_url.match(/\/lattice-v([^\/]+)\.tgz$/)[1]
     if tgz_version != url_version
       puts "Warning: lattice.tgz file version (#{tgz_version}) does not match Vagrantfile version (#{url_version})."
       puts 'Re-downloading and replacing local lattice.tgz...'
