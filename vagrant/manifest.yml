@@ -407,6 +407,10 @@ properties:
         router_configurer: {}
         routing-api: {}
         uaa: {}
+        cc_uploader: {}
+        nsync: {}
+        stager: {}
+        tps: {}
       servers:
         lan: [placeholder-ip]
     require_ssl: false
