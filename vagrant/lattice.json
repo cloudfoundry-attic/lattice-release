@@ -131,6 +131,7 @@
                 "apt-get -y install curl unzip zip",
                 "apt-get -y install libruby2.1 ruby2.1",
                 "apt-get -y install linux-generic",
+                "apt-get -y install aufs-tools",
                 "echo 'UseDNS no' >> /etc/ssh/sshd_config",
                 "mkdir -p /var/lattice",
                 "ip route get 1 | awk '{print $NF;exit}' > /var/lattice/ip",
