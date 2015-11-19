@@ -95,9 +95,10 @@ jobs:
     release: etcd
 
 properties:
+  support_address: ""
   system_domain: placeholder-system-domain
   system_domain_organization: placeholder-system-domain-org
-  app_domains: ["local.lattice.cf"]
+  app_domains: ["placeholder-system-domain"]
 
   # For Diego:
   diego:
@@ -324,15 +325,6 @@ properties:
           non_basic_services_allowed: true
           total_routes: 1000
           total_services: -1
-    install_buildpacks:
-    - {name: java_buildpack, package: buildpack_java}
-    - {name: ruby_buildpack, package: buildpack_ruby}
-    - {name: nodejs_buildpack, package: buildpack_nodejs}
-    - {name: go_buildpack, package: buildpack_go}
-    - {name: python_buildpack, package: buildpack_python}
-    - {name: php_buildpack, package: buildpack_php}
-    - {name: staticfile_buildpack, package: buildpack_staticfile}
-    - {name: binary_buildpack, package: buildpack_binary}
     security_group_definitions:
     - name: public_networks
       rules:
