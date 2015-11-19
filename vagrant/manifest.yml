@@ -435,6 +435,17 @@ properties:
       port: 8084
       uris:
       - "loggregator.placeholder-system-domain"
+    - name: api
+      port: 9022
+      uris:
+      - "api.placeholder-system-domain"
+    - name: uaa
+      port: 8080
+      uris:
+      - "uaa.placeholder-system-domain"
+      - "*.uaa.placeholder-system-domain"
+      - "login.placeholder-system-domain"
+      - "*.login.placeholder-system-domain"
   uaadb:
     address: localhost
     databases:
