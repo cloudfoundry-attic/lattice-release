@@ -1,3 +1,6 @@
+HTTP_PROXY = ENV["http_proxy"] || ENV["HTTP_PROXY"]
+HTTPS_PROXY = ENV["https_proxy"] || ENV["HTTPS_PROXY"]
+
 Vagrant.configure("2") do |config|
   config.vm.box = "lattice/colocated"
   config.vm.box_version = "0"
@@ -8,8 +11,8 @@ Vagrant.configure("2") do |config|
   provider_is_aws = (!ARGV.nil? && ARGV.join(' ').match(/provider(=|\s+)aws/))
 
   if Vagrant.has_plugin?("vagrant-proxyconf") && !provider_is_aws
-    config.proxy.http = ENV["http_proxy"]
-    config.proxy.https = ENV["https_proxy"]
+    config.proxy.http = HTTP_PROXY
+    config.proxy.https = HTTPS_PROXY
     config.proxy.no_proxy = [
       "localhost", "127.0.0.1",
       (ENV["LATTICE_IP"] || "192.168.11.11"),
@@ -152,7 +155,7 @@ def download_lattice_tgz(url)
   uri = URI(url)
 
   http_args = [uri.host, uri.port]
-  proxy_url = ENV[(uri.scheme=='https' ? 'https_proxy' : 'http_proxy')]
+  proxy_url = (uri.scheme=='https' ? HTTPS_PROXY : HTTP_PROXY)
   if proxy_url
     proxy_uri = URI(proxy_url)
     http_args << proxy_uri.host
