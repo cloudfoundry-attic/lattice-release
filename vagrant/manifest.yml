@@ -58,8 +58,6 @@ jobs:
   - name: garden
     release: garden-linux
 
-  - name: cc_bridge
-    release: diego
   - name: stager
     release: diego
   - name: nsync
