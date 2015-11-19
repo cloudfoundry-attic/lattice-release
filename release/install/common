@@ -21,3 +21,6 @@ perl -p -i -e "s/lattice-(cell|brain|colocated)-0/$HOST_ID/g" $job_files
 bosh_config=/var/vcap/bosh/warden-cpi-agent-env.json
 bosh_config_json=$(cat "$bosh_config")
 echo $bosh_config_json | jq '. + {"agent_id": "'$HOST_ID'"}' > "$bosh_config"
+
+rm -rf /var/vcap/store/*
+
