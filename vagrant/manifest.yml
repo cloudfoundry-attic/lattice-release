@@ -413,7 +413,7 @@ properties:
         override: true
       users:
       - admin|admin|scim.write,scim.read,openid,cloud_controller.admin,doppler.firehose
-    issuer: ""
+    issuer: "http://localhost/"
     jwt:
       verification_key: ""
     # jwt:
