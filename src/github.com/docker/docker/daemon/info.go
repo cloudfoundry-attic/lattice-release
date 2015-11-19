@@ -3,10 +3,12 @@ package daemon
 import (
 	"os"
 	"runtime"
+	"time"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/docker/docker/dockerversion"
-	"github.com/docker/docker/engine"
+	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/autogen/dockerversion"
+	"github.com/docker/docker/pkg/fileutils"
 	"github.com/docker/docker/pkg/parsers/kernel"
 	"github.com/docker/docker/pkg/parsers/operatingsystem"
 	"github.com/docker/docker/pkg/system"
@@ -14,8 +16,8 @@ import (
 	"github.com/docker/docker/utils"
 )
 
-func (daemon *Daemon) CmdInfo(job *engine.Job) engine.Status {
-	images, _ := daemon.Graph().Map()
+func (daemon *Daemon) SystemInfo() (*types.Info, error) {
+	images := daemon.Graph().Map()
 	var imgcount int
 	if images == nil {
 		imgcount = 0
@@ -31,16 +33,20 @@ func (daemon *Daemon) CmdInfo(job *engine.Job) engine.Status {
 	if s, err := operatingsystem.GetOperatingSystem(); err == nil {
 		operatingSystem = s
 	}
-	if inContainer, err := operatingsystem.IsContainerized(); err != nil {
-		log.Errorf("Could not determine if daemon is containerized: %v", err)
-		operatingSystem += " (error determining if containerized)"
-	} else if inContainer {
-		operatingSystem += " (containerized)"
+
+	// Don't do containerized check on Windows
+	if runtime.GOOS != "windows" {
+		if inContainer, err := operatingsystem.IsContainerized(); err != nil {
+			logrus.Errorf("Could not determine if daemon is containerized: %v", err)
+			operatingSystem += " (error determining if containerized)"
+		} else if inContainer {
+			operatingSystem += " (containerized)"
+		}
 	}
 
 	meminfo, err := system.ReadMemInfo()
 	if err != nil {
-		log.Errorf("Could not read system memory info: %v", err)
+		logrus.Errorf("Could not read system memory info: %v", err)
 	}
 
 	// if we still have the original dockerinit binary from before we copied it locally, let's return the path to that, since that's more intuitive (the copied path is trivial to derive by hand given VERSION)
@@ -50,49 +56,59 @@ func (daemon *Daemon) CmdInfo(job *engine.Job) engine.Status {
 		initPath = daemon.SystemInitPath()
 	}
 
-	cjob := job.Eng.Job("subscribers_count")
-	env, _ := cjob.Stdout.AddEnv()
-	if err := cjob.Run(); err != nil {
-		return job.Error(err)
+	v := &types.Info{
+		ID:                 daemon.ID,
+		Containers:         len(daemon.List()),
+		Images:             imgcount,
+		Driver:             daemon.GraphDriver().String(),
+		DriverStatus:       daemon.GraphDriver().Status(),
+		IPv4Forwarding:     !daemon.SystemConfig().IPv4ForwardingDisabled,
+		BridgeNfIptables:   !daemon.SystemConfig().BridgeNfCallIptablesDisabled,
+		BridgeNfIp6tables:  !daemon.SystemConfig().BridgeNfCallIp6tablesDisabled,
+		Debug:              os.Getenv("DEBUG") != "",
+		NFd:                fileutils.GetTotalUsedFds(),
+		NGoroutines:        runtime.NumGoroutine(),
+		SystemTime:         time.Now().Format(time.RFC3339Nano),
+		ExecutionDriver:    daemon.ExecutionDriver().Name(),
+		LoggingDriver:      daemon.defaultLogConfig.Type,
+		NEventsListener:    daemon.EventsService.SubscribersCount(),
+		KernelVersion:      kernelVersion,
+		OperatingSystem:    operatingSystem,
+		IndexServerAddress: registry.IndexServer,
+		RegistryConfig:     daemon.RegistryService.Config,
+		InitSha1:           dockerversion.INITSHA1,
+		InitPath:           initPath,
+		NCPU:               runtime.NumCPU(),
+		MemTotal:           meminfo.MemTotal,
+		DockerRootDir:      daemon.Config().Root,
+		Labels:             daemon.Config().Labels,
+		ExperimentalBuild:  utils.ExperimentalBuild(),
 	}
-	registryJob := job.Eng.Job("registry_config")
-	registryEnv, _ := registryJob.Stdout.AddEnv()
-	if err := registryJob.Run(); err != nil {
-		return job.Error(err)
+
+	// TODO Windows. Refactor this more once sysinfo is refactored into
+	// platform specific code. On Windows, sysinfo.cgroupMemInfo and
+	// sysinfo.cgroupCpuInfo will be nil otherwise and cause a SIGSEGV if
+	// an attempt is made to access through them.
+	if runtime.GOOS != "windows" {
+		v.MemoryLimit = daemon.SystemConfig().MemoryLimit
+		v.SwapLimit = daemon.SystemConfig().SwapLimit
+		v.OomKillDisable = daemon.SystemConfig().OomKillDisable
+		v.CpuCfsPeriod = daemon.SystemConfig().CpuCfsPeriod
+		v.CpuCfsQuota = daemon.SystemConfig().CpuCfsQuota
 	}
-	registryConfig := registry.ServiceConfig{}
-	if err := registryEnv.GetJson("config", &registryConfig); err != nil {
-		return job.Error(err)
+
+	if httpProxy := os.Getenv("http_proxy"); httpProxy != "" {
+		v.HttpProxy = httpProxy
 	}
-	v := &engine.Env{}
-	v.SetJson("ID", daemon.ID)
-	v.SetInt("Containers", len(daemon.List()))
-	v.SetInt("Images", imgcount)
-	v.Set("Driver", daemon.GraphDriver().String())
-	v.SetJson("DriverStatus", daemon.GraphDriver().Status())
-	v.SetBool("MemoryLimit", daemon.SystemConfig().MemoryLimit)
-	v.SetBool("SwapLimit", daemon.SystemConfig().SwapLimit)
-	v.SetBool("IPv4Forwarding", !daemon.SystemConfig().IPv4ForwardingDisabled)
-	v.SetBool("Debug", os.Getenv("DEBUG") != "")
-	v.SetInt("NFd", utils.GetTotalUsedFds())
-	v.SetInt("NGoroutines", runtime.NumGoroutine())
-	v.Set("ExecutionDriver", daemon.ExecutionDriver().Name())
-	v.SetInt("NEventsListener", env.GetInt("count"))
-	v.Set("KernelVersion", kernelVersion)
-	v.Set("OperatingSystem", operatingSystem)
-	v.Set("IndexServerAddress", registry.IndexServerAddress())
-	v.SetJson("RegistryConfig", registryConfig)
-	v.Set("InitSha1", dockerversion.INITSHA1)
-	v.Set("InitPath", initPath)
-	v.SetInt("NCPU", runtime.NumCPU())
-	v.SetInt64("MemTotal", meminfo.MemTotal)
-	v.Set("DockerRootDir", daemon.Config().Root)
+	if httpsProxy := os.Getenv("https_proxy"); httpsProxy != "" {
+		v.HttpsProxy = httpsProxy
+	}
+	if noProxy := os.Getenv("no_proxy"); noProxy != "" {
+		v.NoProxy = noProxy
+	}
 	if hostname, err := os.Hostname(); err == nil {
-		v.SetJson("Name", hostname)
+		v.Name = hostname
 	}
-	v.SetList("Labels", daemon.Config().Labels)
-	if _, err := v.WriteTo(job.Stdout); err != nil {
-		return job.Error(err)
-	}
-	return engine.StatusOK
+
+	return v, nil
 }

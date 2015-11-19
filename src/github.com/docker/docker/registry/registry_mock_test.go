@@ -18,7 +18,7 @@ import (
 	"github.com/docker/docker/opts"
 	"github.com/gorilla/mux"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 )
 
 var (
@@ -30,7 +30,7 @@ var (
 				"comment":"test base image","created":"2013-03-23T12:53:11.10432-07:00",
 				"container_config":{"Hostname":"","User":"","Memory":0,"MemorySwap":0,
 				"CpuShares":0,"AttachStdin":false,"AttachStdout":false,"AttachStderr":false,
-				"PortSpecs":null,"Tty":false,"OpenStdin":false,"StdinOnce":false,
+				"Tty":false,"OpenStdin":false,"StdinOnce":false,
 				"Env":null,"Cmd":null,"Dns":null,"Image":"","Volumes":null,
 				"VolumesFrom":"","Entrypoint":null},"Size":424242}`,
 			"checksum_simple": "sha256:1ac330d56e05eef6d438586545ceff7550d3bdcb6b19961f12c5ba714ee1bb37",
@@ -56,7 +56,7 @@ var (
 				"comment":"test base image","created":"2013-03-23T12:55:11.10432-07:00",
 				"container_config":{"Hostname":"","User":"","Memory":0,"MemorySwap":0,
 				"CpuShares":0,"AttachStdin":false,"AttachStdout":false,"AttachStderr":false,
-				"PortSpecs":null,"Tty":false,"OpenStdin":false,"StdinOnce":false,
+				"Tty":false,"OpenStdin":false,"StdinOnce":false,
 				"Env":null,"Cmd":null,"Dns":null,"Image":"","Volumes":null,
 				"VolumesFrom":"","Entrypoint":null},"Size":424242}`,
 			"checksum_simple": "sha256:bea7bf2e4bacd479344b737328db47b18880d09096e6674165533aa994f5e9f2",
@@ -81,6 +81,7 @@ var (
 	testRepositories = map[string]map[string]string{
 		"foo42/bar": {
 			"latest": "42d718c941f5c532ac049bf0b0ab53f0062f09a03afd4aa4a02c098e46032b9d",
+			"test":   "42d718c941f5c532ac049bf0b0ab53f0062f09a03afd4aa4a02c098e46032b9d",
 		},
 	}
 	mockHosts = map[string][]net.IP{
@@ -134,7 +135,7 @@ func init() {
 
 func handlerAccessLog(handler http.Handler) http.Handler {
 	logHandler := func(w http.ResponseWriter, r *http.Request) {
-		log.Debugf("%s \"%s %s\"", r.RemoteAddr, r.Method, r.URL)
+		logrus.Debugf("%s \"%s %s\"", r.RemoteAddr, r.Method, r.URL)
 		handler.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(logHandler)
@@ -144,7 +145,7 @@ func makeURL(req string) string {
 	return testHTTPServer.URL + req
 }
 
-func makeHttpsURL(req string) string {
+func makeHTTPSURL(req string) string {
 	return testHTTPSServer.URL + req
 }
 
@@ -155,23 +156,23 @@ func makeIndex(req string) *IndexInfo {
 	return index
 }
 
-func makeHttpsIndex(req string) *IndexInfo {
+func makeHTTPSIndex(req string) *IndexInfo {
 	index := &IndexInfo{
-		Name: makeHttpsURL(req),
+		Name: makeHTTPSURL(req),
 	}
 	return index
 }
 
 func makePublicIndex() *IndexInfo {
 	index := &IndexInfo{
-		Name:     IndexServerAddress(),
+		Name:     IndexServer,
 		Secure:   true,
 		Official: true,
 	}
 	return index
 }
 
-func makeServiceConfig(mirrors []string, insecure_registries []string) *ServiceConfig {
+func makeServiceConfig(mirrors []string, insecureRegistries []string) *ServiceConfig {
 	options := &Options{
 		Mirrors:            opts.NewListOpts(nil),
 		InsecureRegistries: opts.NewListOpts(nil),
@@ -181,9 +182,9 @@ func makeServiceConfig(mirrors []string, insecure_registries []string) *ServiceC
 			options.Mirrors.Set(mirror)
 		}
 	}
-	if insecure_registries != nil {
-		for _, insecure_registries := range insecure_registries {
-			options.InsecureRegistries.Set(insecure_registries)
+	if insecureRegistries != nil {
+		for _, insecureRegistries := range insecureRegistries {
+			options.InsecureRegistries.Set(insecureRegistries)
 		}
 	}
 
@@ -467,7 +468,7 @@ func TestPing(t *testing.T) {
  * WARNING: Don't push on the repos uncommented, it'll block the tests
  *
 func TestWait(t *testing.T) {
-	log.Println("Test HTTP server ready and waiting:", testHttpServer.URL)
+	logrus.Println("Test HTTP server ready and waiting:", testHTTPServer.URL)
 	c := make(chan int)
 	<-c
 }

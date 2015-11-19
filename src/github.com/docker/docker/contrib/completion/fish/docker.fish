@@ -16,7 +16,7 @@
 
 function __fish_docker_no_subcommand --description 'Test if docker has yet to be given the subcommand'
     for i in (commandline -opc)
-        if contains -- $i attach build commit cp create diff events exec export history images import info insert inspect kill load login logout logs pause port ps pull push restart rm rmi run save search start stop tag top unpause version wait
+        if contains -- $i attach build commit cp create diff events exec export history images import info inspect kill load login logout logs pause port ps pull push rename restart rm rmi run save search start stop tag top unpause version wait stats
             return 1
         end
     end
@@ -43,7 +43,7 @@ function __fish_print_docker_repositories --description 'Print a list of docker 
 end
 
 # common options
-complete -c docker -f -n '__fish_docker_no_subcommand' -l api-enable-cors -d 'Enable CORS headers in the remote API'
+complete -c docker -f -n '__fish_docker_no_subcommand' -l api-cors-header -d "Set CORS headers in the remote API. Default is cors disabled"
 complete -c docker -f -n '__fish_docker_no_subcommand' -s b -l bridge -d 'Attach containers to a pre-existing network bridge'
 complete -c docker -f -n '__fish_docker_no_subcommand' -l bip -d "Use this CIDR notation address for the network bridge's IP, not compatible with -b"
 complete -c docker -f -n '__fish_docker_no_subcommand' -s D -l debug -d 'Enable debug mode'
@@ -51,6 +51,7 @@ complete -c docker -f -n '__fish_docker_no_subcommand' -s d -l daemon -d 'Enable
 complete -c docker -f -n '__fish_docker_no_subcommand' -l dns -d 'Force Docker to use specific DNS servers'
 complete -c docker -f -n '__fish_docker_no_subcommand' -l dns-search -d 'Force Docker to use specific DNS search domains'
 complete -c docker -f -n '__fish_docker_no_subcommand' -s e -l exec-driver -d 'Force the Docker runtime to use a specific exec driver'
+complete -c docker -f -n '__fish_docker_no_subcommand' -l exec-opt -d 'Set exec driver options'
 complete -c docker -f -n '__fish_docker_no_subcommand' -l fixed-cidr -d 'IPv4 subnet for fixed IPs (e.g. 10.20.0.0/16)'
 complete -c docker -f -n '__fish_docker_no_subcommand' -l fixed-cidr-v6 -d 'IPv6 subnet for fixed IPs (e.g.: 2001:a02b/48)'
 complete -c docker -f -n '__fish_docker_no_subcommand' -s G -l group -d 'Group to assign the unix socket specified by -H when running in daemon mode'
@@ -72,7 +73,7 @@ complete -c docker -f -n '__fish_docker_no_subcommand' -l registry-mirror -d 'Sp
 complete -c docker -f -n '__fish_docker_no_subcommand' -s s -l storage-driver -d 'Force the Docker runtime to use a specific storage driver'
 complete -c docker -f -n '__fish_docker_no_subcommand' -l selinux-enabled -d 'Enable selinux support. SELinux does not presently support the BTRFS storage driver'
 complete -c docker -f -n '__fish_docker_no_subcommand' -l storage-opt -d 'Set storage driver options'
-complete -c docker -f -n '__fish_docker_no_subcommand' -l tls -d 'Use TLS; implied by --tlsverify flag'
+complete -c docker -f -n '__fish_docker_no_subcommand' -l tls -d 'Use TLS; implied by --tlsverify'
 complete -c docker -f -n '__fish_docker_no_subcommand' -l tlscacert -d 'Trust only remotes providing a certificate signed by the CA given here'
 complete -c docker -f -n '__fish_docker_no_subcommand' -l tlscert -d 'Path to TLS certificate file'
 complete -c docker -f -n '__fish_docker_no_subcommand' -l tlskey -d 'Path to TLS key file'
@@ -126,6 +127,7 @@ complete -c docker -A -f -n '__fish_seen_subcommand_from create' -s e -l env -d 
 complete -c docker -A -f -n '__fish_seen_subcommand_from create' -l entrypoint -d 'Overwrite the default ENTRYPOINT of the image'
 complete -c docker -A -f -n '__fish_seen_subcommand_from create' -l env-file -d 'Read in a line delimited file of environment variables'
 complete -c docker -A -f -n '__fish_seen_subcommand_from create' -l expose -d 'Expose a port or a range of ports (e.g. --expose=3300-3310) from the container without publishing it to your host'
+complete -c docker -A -f -n '__fish_seen_subcommand_from create' -l group-add -d 'Add additional groups to run as'
 complete -c docker -A -f -n '__fish_seen_subcommand_from create' -s h -l hostname -d 'Container host name'
 complete -c docker -A -f -n '__fish_seen_subcommand_from create' -l help -d 'Print usage'
 complete -c docker -A -f -n '__fish_seen_subcommand_from create' -s i -l interactive -d 'Keep STDIN open even if not attached'
@@ -232,6 +234,7 @@ complete -c docker -f -n '__fish_docker_no_subcommand' -a logs -d 'Fetch the log
 complete -c docker -A -f -n '__fish_seen_subcommand_from logs' -s f -l follow -d 'Follow log output'
 complete -c docker -A -f -n '__fish_seen_subcommand_from logs' -l help -d 'Print usage'
 complete -c docker -A -f -n '__fish_seen_subcommand_from logs' -s t -l timestamps -d 'Show timestamps'
+complete -c docker -A -f -n '__fish_seen_subcommand_from logs' -l since -d 'Show logs since timestamp'
 complete -c docker -A -f -n '__fish_seen_subcommand_from logs' -l tail -d 'Output the specified number of lines at the end of logs (defaults to all logs)'
 complete -c docker -A -f -n '__fish_seen_subcommand_from logs' -a '(__fish_print_docker_containers running)' -d "Container"
 
@@ -311,6 +314,7 @@ complete -c docker -A -f -n '__fish_seen_subcommand_from run' -s e -l env -d 'Se
 complete -c docker -A -f -n '__fish_seen_subcommand_from run' -l entrypoint -d 'Overwrite the default ENTRYPOINT of the image'
 complete -c docker -A -f -n '__fish_seen_subcommand_from run' -l env-file -d 'Read in a line delimited file of environment variables'
 complete -c docker -A -f -n '__fish_seen_subcommand_from run' -l expose -d 'Expose a port or a range of ports (e.g. --expose=3300-3310) from the container without publishing it to your host'
+complete -c docker -A -f -n '__fish_seen_subcommand_from create' -l group-add -d 'Add additional groups to run as'
 complete -c docker -A -f -n '__fish_seen_subcommand_from run' -s h -l hostname -d 'Container host name'
 complete -c docker -A -f -n '__fish_seen_subcommand_from run' -l help -d 'Print usage'
 complete -c docker -A -f -n '__fish_seen_subcommand_from run' -s i -l interactive -d 'Keep STDIN open even if not attached'
@@ -345,7 +349,7 @@ complete -c docker -A -f -n '__fish_seen_subcommand_from save' -s o -l output -d
 complete -c docker -A -f -n '__fish_seen_subcommand_from save' -a '(__fish_print_docker_images)' -d "Image"
 
 # search
-complete -c docker -f -n '__fish_docker_no_subcommand' -a search -d 'Search for an image on the Docker Hub'
+complete -c docker -f -n '__fish_docker_no_subcommand' -a search -d 'Search for an image on the registry (defaults to the Docker Hub)'
 complete -c docker -A -f -n '__fish_seen_subcommand_from search' -l automated -d 'Only show automated builds'
 complete -c docker -A -f -n '__fish_seen_subcommand_from search' -l help -d 'Print usage'
 complete -c docker -A -f -n '__fish_seen_subcommand_from search' -l no-trunc -d "Don't truncate output"
@@ -361,6 +365,7 @@ complete -c docker -A -f -n '__fish_seen_subcommand_from start' -a '(__fish_prin
 # stats
 complete -c docker -f -n '__fish_docker_no_subcommand' -a stats -d "Display a live stream of one or more containers' resource usage statistics"
 complete -c docker -A -f -n '__fish_seen_subcommand_from stats' -l help -d 'Print usage'
+complete -c docker -A -f -n '__fish_seen_subcommand_from stats' -l no-stream -d 'Disable streaming stats and only pull the first result'
 complete -c docker -A -f -n '__fish_seen_subcommand_from stats' -a '(__fish_print_docker_containers running)' -d "Container"
 
 # stop

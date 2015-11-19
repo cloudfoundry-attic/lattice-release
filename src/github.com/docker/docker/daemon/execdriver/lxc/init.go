@@ -1,17 +1,18 @@
+// +build linux
+
 package lxc
 
 import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 	"syscall"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/reexec"
 )
 
@@ -49,7 +50,7 @@ func initializer() {
 	args := getArgs()
 
 	if err := setupNamespace(args); err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 }
 
@@ -64,7 +65,7 @@ func setupNamespace(args *InitArgs) error {
 
 	path, err := exec.LookPath(args.Args[0])
 	if err != nil {
-		log.Printf("Unable to locate %v", args.Args[0])
+		logrus.Infof("Unable to locate %v", args.Args[0])
 		os.Exit(127)
 	}
 
@@ -107,12 +108,13 @@ func getArgs() *InitArgs {
 func setupEnv(args *InitArgs) error {
 	// Get env
 	var env []string
-	content, err := ioutil.ReadFile(".dockerenv")
+	dockerenv, err := os.Open(".dockerenv")
 	if err != nil {
 		return fmt.Errorf("Unable to load environment variables: %v", err)
 	}
-	if err := json.Unmarshal(content, &env); err != nil {
-		return fmt.Errorf("Unable to unmarshal environment variables: %v", err)
+	defer dockerenv.Close()
+	if err := json.NewDecoder(dockerenv).Decode(&env); err != nil {
+		return fmt.Errorf("Unable to decode environment variables: %v", err)
 	}
 	// Propagate the plugin-specific container env variable
 	env = append(env, "container="+os.Getenv("container"))
@@ -140,14 +142,4 @@ func setupWorkingDirectory(args *InitArgs) error {
 		return fmt.Errorf("Unable to change dir to %v: %v", args.WorkDir, err)
 	}
 	return nil
-}
-
-func getEnv(args *InitArgs, key string) string {
-	for _, kv := range args.Env {
-		parts := strings.SplitN(kv, "=", 2)
-		if parts[0] == key && len(parts) == 2 {
-			return parts[1]
-		}
-	}
-	return ""
 }

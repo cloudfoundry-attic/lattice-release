@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/graphdb"
-
-	"github.com/docker/docker/engine"
+	"github.com/docker/docker/pkg/nat"
 	"github.com/docker/docker/pkg/parsers/filters"
 )
 
@@ -17,60 +17,68 @@ func (daemon *Daemon) List() []*Container {
 	return daemon.containers.List()
 }
 
-func (daemon *Daemon) Containers(job *engine.Job) engine.Status {
+type ContainersConfig struct {
+	All     bool
+	Since   string
+	Before  string
+	Limit   int
+	Size    bool
+	Filters string
+}
+
+func (daemon *Daemon) Containers(config *ContainersConfig) ([]*types.Container, error) {
 	var (
 		foundBefore bool
 		displayed   int
-		all         = job.GetenvBool("all")
-		since       = job.Getenv("since")
-		before      = job.Getenv("before")
-		n           = job.GetenvInt("limit")
-		size        = job.GetenvBool("size")
+		all         = config.All
+		n           = config.Limit
 		psFilters   filters.Args
-		filt_exited []int
+		filtExited  []int
 	)
-	outs := engine.NewTable("Created", 0)
+	containers := []*types.Container{}
 
-	psFilters, err := filters.FromParam(job.Getenv("filters"))
+	psFilters, err := filters.FromParam(config.Filters)
 	if err != nil {
-		return job.Error(err)
+		return nil, err
 	}
 	if i, ok := psFilters["exited"]; ok {
 		for _, value := range i {
 			code, err := strconv.Atoi(value)
 			if err != nil {
-				return job.Error(err)
+				return nil, err
 			}
-			filt_exited = append(filt_exited, code)
+			filtExited = append(filtExited, code)
 		}
 	}
 
 	if i, ok := psFilters["status"]; ok {
 		for _, value := range i {
-			if value == "exited" {
+			if !isValidStateString(value) {
+				return nil, errors.New("Unrecognised filter value for status")
+			}
+			if value == "exited" || value == "created" {
 				all = true
 			}
 		}
 	}
-
 	names := map[string][]string{}
 	daemon.ContainerGraph().Walk("/", func(p string, e *graphdb.Entity) error {
 		names[e.ID()] = append(names[e.ID()], p)
 		return nil
-	}, -1)
+	}, 1)
 
 	var beforeCont, sinceCont *Container
-	if before != "" {
-		beforeCont = daemon.Get(before)
-		if beforeCont == nil {
-			return job.Error(fmt.Errorf("Could not find container with name or id %s", before))
+	if config.Before != "" {
+		beforeCont, err = daemon.Get(config.Before)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	if since != "" {
-		sinceCont = daemon.Get(since)
-		if sinceCont == nil {
-			return job.Error(fmt.Errorf("Could not find container with name or id %s", since))
+	if config.Since != "" {
+		sinceCont, err = daemon.Get(config.Since)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -78,7 +86,7 @@ func (daemon *Daemon) Containers(job *engine.Job) engine.Status {
 	writeCont := func(container *Container) error {
 		container.Lock()
 		defer container.Unlock()
-		if !container.Running && !all && n <= 0 && since == "" && before == "" {
+		if !container.Running && !all && n <= 0 && config.Since == "" && config.Before == "" {
 			return nil
 		}
 		if !psFilters.Match("name", container.Name) {
@@ -89,7 +97,11 @@ func (daemon *Daemon) Containers(job *engine.Job) engine.Status {
 			return nil
 		}
 
-		if before != "" && !foundBefore {
+		if !psFilters.MatchKVList("label", container.Config.Labels) {
+			return nil
+		}
+
+		if config.Before != "" && !foundBefore {
 			if container.ID == beforeCont.ID {
 				foundBefore = true
 			}
@@ -98,20 +110,20 @@ func (daemon *Daemon) Containers(job *engine.Job) engine.Status {
 		if n > 0 && displayed == n {
 			return errLast
 		}
-		if since != "" {
+		if config.Since != "" {
 			if container.ID == sinceCont.ID {
 				return errLast
 			}
 		}
-		if len(filt_exited) > 0 {
-			should_skip := true
-			for _, code := range filt_exited {
+		if len(filtExited) > 0 {
+			shouldSkip := true
+			for _, code := range filtExited {
 				if code == container.ExitCode && !container.Running {
-					should_skip = false
+					shouldSkip = false
 					break
 				}
 			}
-			if should_skip {
+			if shouldSkip {
 				return nil
 			}
 		}
@@ -120,10 +132,11 @@ func (daemon *Daemon) Containers(job *engine.Job) engine.Status {
 			return nil
 		}
 		displayed++
-		out := &engine.Env{}
-		out.SetJson("Id", container.ID)
-		out.SetList("Names", names[container.ID])
-		out.SetJson("Image", daemon.Repositories().ImageName(container.ImageID))
+		newC := &types.Container{
+			ID:    container.ID,
+			Names: names[container.ID],
+		}
+		newC.Image = container.Config.Image
 		if len(container.Args) > 0 {
 			args := []string{}
 			for _, arg := range container.Args {
@@ -135,37 +148,58 @@ func (daemon *Daemon) Containers(job *engine.Job) engine.Status {
 			}
 			argsAsString := strings.Join(args, " ")
 
-			out.Set("Command", fmt.Sprintf("\"%s %s\"", container.Path, argsAsString))
+			newC.Command = fmt.Sprintf("%s %s", container.Path, argsAsString)
 		} else {
-			out.Set("Command", fmt.Sprintf("\"%s\"", container.Path))
+			newC.Command = fmt.Sprintf("%s", container.Path)
 		}
-		out.SetInt64("Created", container.Created.Unix())
-		out.Set("Status", container.State.String())
-		str, err := container.NetworkSettings.PortMappingAPI().ToListString()
-		if err != nil {
-			return err
+		newC.Created = int(container.Created.Unix())
+		newC.Status = container.State.String()
+		newC.HostConfig.NetworkMode = string(container.HostConfig().NetworkMode)
+
+		newC.Ports = []types.Port{}
+		for port, bindings := range container.NetworkSettings.Ports {
+			p, err := nat.ParsePort(port.Port())
+			if err != nil {
+				return err
+			}
+			if len(bindings) == 0 {
+				newC.Ports = append(newC.Ports, types.Port{
+					PrivatePort: p,
+					Type:        port.Proto(),
+				})
+				continue
+			}
+			for _, binding := range bindings {
+				h, err := nat.ParsePort(binding.HostPort)
+				if err != nil {
+					return err
+				}
+				newC.Ports = append(newC.Ports, types.Port{
+					PrivatePort: p,
+					PublicPort:  h,
+					Type:        port.Proto(),
+					IP:          binding.HostIP,
+				})
+			}
 		}
-		out.Set("Ports", str)
-		if size {
+
+		if config.Size {
 			sizeRw, sizeRootFs := container.GetSize()
-			out.SetInt64("SizeRw", sizeRw)
-			out.SetInt64("SizeRootFs", sizeRootFs)
+			newC.SizeRw = int(sizeRw)
+			newC.SizeRootFs = int(sizeRootFs)
 		}
-		outs.Add(out)
+		newC.Labels = container.Config.Labels
+		containers = append(containers, newC)
 		return nil
 	}
 
 	for _, container := range daemon.List() {
 		if err := writeCont(container); err != nil {
 			if err != errLast {
-				return job.Error(err)
+				return nil, err
 			}
 			break
 		}
 	}
-	outs.ReverseSort()
-	if _, err := outs.WriteListTo(job.Stdout); err != nil {
-		return job.Error(err)
-	}
-	return engine.StatusOK
+	return containers, nil
 }

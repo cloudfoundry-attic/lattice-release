@@ -1,34 +1,45 @@
 package daemon
 
 import (
-	"github.com/docker/docker/engine"
+	"fmt"
 )
 
-func (daemon *Daemon) ContainerRename(job *engine.Job) engine.Status {
-	if len(job.Args) != 2 {
-		return job.Errorf("usage: %s OLD_NAME NEW_NAME", job.Name)
+func (daemon *Daemon) ContainerRename(oldName, newName string) error {
+	if oldName == "" || newName == "" {
+		return fmt.Errorf("usage: docker rename OLD_NAME NEW_NAME")
 	}
-	oldName := job.Args[0]
-	newName := job.Args[1]
 
-	container := daemon.Get(oldName)
-	if container == nil {
-		return job.Errorf("No such container: %s", oldName)
+	container, err := daemon.Get(oldName)
+	if err != nil {
+		return err
 	}
 
 	oldName = container.Name
 
 	container.Lock()
 	defer container.Unlock()
-	if _, err := daemon.reserveName(container.ID, newName); err != nil {
-		return job.Errorf("Error when allocating new name: %s", err)
+	if newName, err = daemon.reserveName(container.ID, newName); err != nil {
+		return fmt.Errorf("Error when allocating new name: %s", err)
 	}
 
 	container.Name = newName
 
-	if err := daemon.containerGraph.Delete(oldName); err != nil {
-		return job.Errorf("Failed to delete container %q: %v", oldName, err)
+	undo := func() {
+		container.Name = oldName
+		daemon.reserveName(container.ID, oldName)
+		daemon.containerGraph.Delete(newName)
 	}
 
-	return engine.StatusOK
+	if err := daemon.containerGraph.Delete(oldName); err != nil {
+		undo()
+		return fmt.Errorf("Failed to delete container %q: %v", oldName, err)
+	}
+
+	if err := container.toDisk(); err != nil {
+		undo()
+		return err
+	}
+
+	container.LogEvent("rename")
+	return nil
 }

@@ -1,17 +1,18 @@
 package graph
 
 import (
+	"archive/tar"
 	"bytes"
 	"io"
 	"os"
 	"path"
 	"testing"
 
+	"github.com/docker/docker/daemon/events"
 	"github.com/docker/docker/daemon/graphdriver"
 	_ "github.com/docker/docker/daemon/graphdriver/vfs" // import the vfs driver so it is used in the tests
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/utils"
-	"github.com/docker/docker/vendor/src/code.google.com/p/go/src/pkg/archive/tar"
 )
 
 const (
@@ -21,6 +22,8 @@ const (
 	testPrivateImageName     = "127.0.0.1:8000/privateapp"
 	testPrivateImageID       = "5bc255f8699e4ee89ac4469266c3d11515da88fdcbde45d7b069b636ff4efd81"
 	testPrivateImageIDShort  = "5bc255f8699e"
+	testPrivateImageDigest   = "sha256:bc8813ea7b3603864987522f02a76101c17ad122e1c46d790efc0fca78ca7bfb"
+	testPrivateImageTag      = "sometag"
 )
 
 func fakeTar() (io.Reader, error) {
@@ -57,7 +60,12 @@ func mkTestTagStore(root string, t *testing.T) *TagStore {
 	if err != nil {
 		t.Fatal(err)
 	}
-	store, err := NewTagStore(path.Join(root, "tags"), graph, nil)
+
+	tagCfg := &TagStoreConfig{
+		Graph:  graph,
+		Events: events.New(),
+	}
+	store, err := NewTagStore(path.Join(root, "tags"), tagCfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,10 +74,10 @@ func mkTestTagStore(root string, t *testing.T) *TagStore {
 		t.Fatal(err)
 	}
 	img := &image.Image{ID: testOfficialImageID}
-	if err := graph.Register(img, officialArchive); err != nil {
+	if err := graph.Register(v1ImageDescriptor{img}, officialArchive); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Set(testOfficialImageName, "", testOfficialImageID, false); err != nil {
+	if err := store.Tag(testOfficialImageName, "", testOfficialImageID, false); err != nil {
 		t.Fatal(err)
 	}
 	privateArchive, err := fakeTar()
@@ -77,10 +85,13 @@ func mkTestTagStore(root string, t *testing.T) *TagStore {
 		t.Fatal(err)
 	}
 	img = &image.Image{ID: testPrivateImageID}
-	if err := graph.Register(img, privateArchive); err != nil {
+	if err := graph.Register(v1ImageDescriptor{img}, privateArchive); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.Set(testPrivateImageName, "", testPrivateImageID, false); err != nil {
+	if err := store.Tag(testPrivateImageName, "", testPrivateImageID, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.SetDigest(testPrivateImageName, testPrivateImageDigest, testPrivateImageID); err != nil {
 		t.Fatal(err)
 	}
 	return store
@@ -128,6 +139,10 @@ func TestLookupImage(t *testing.T) {
 		"fail:fail",
 	}
 
+	digestLookups := []string{
+		testPrivateImageName + "@" + testPrivateImageDigest,
+	}
+
 	for _, name := range officialLookups {
 		if img, err := store.LookupImage(name); err != nil {
 			t.Errorf("Error looking up %s: %s", name, err)
@@ -155,22 +170,35 @@ func TestLookupImage(t *testing.T) {
 			t.Errorf("Expected 0 image, 1 found: %s", name)
 		}
 	}
-}
 
-func TestValidTagName(t *testing.T) {
-	validTags := []string{"9", "foo", "foo-test", "bar.baz.boo"}
-	for _, tag := range validTags {
-		if err := ValidateTagName(tag); err != nil {
-			t.Errorf("'%s' should've been a valid tag", tag)
+	for _, name := range digestLookups {
+		if img, err := store.LookupImage(name); err != nil {
+			t.Errorf("Error looking up %s: %s", name, err)
+		} else if img == nil {
+			t.Errorf("Expected 1 image, none found: %s", name)
+		} else if img.ID != testPrivateImageID {
+			t.Errorf("Expected ID '%s' found '%s'", testPrivateImageID, img.ID)
 		}
 	}
 }
 
-func TestInvalidTagName(t *testing.T) {
-	validTags := []string{"-9", ".foo", "-test", ".", "-"}
-	for _, tag := range validTags {
-		if err := ValidateTagName(tag); err == nil {
-			t.Errorf("'%s' shouldn't have been a valid tag", tag)
+func TestValidateDigest(t *testing.T) {
+	tests := []struct {
+		input       string
+		expectError bool
+	}{
+		{"", true},
+		{"latest", true},
+		{"sha256:b", false},
+		{"tarsum+v1+sha256:bY852-_.+=", false},
+		{"#$%#$^:$%^#$%", true},
+	}
+
+	for i, test := range tests {
+		err := validateDigest(test.input)
+		gotError := err != nil
+		if e, a := test.expectError, gotError; e != a {
+			t.Errorf("%d: with input %s, expected error=%t, got %t: %s", i, test.input, test.expectError, gotError, err)
 		}
 	}
 }

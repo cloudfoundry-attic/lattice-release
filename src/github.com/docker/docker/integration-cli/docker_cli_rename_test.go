@@ -1,119 +1,76 @@
 package main
 
 import (
-	"os/exec"
 	"strings"
-	"testing"
+
+	"github.com/docker/docker/pkg/stringid"
+	"github.com/go-check/check"
 )
 
-func TestRenameStoppedContainer(t *testing.T) {
-	runCmd := exec.Command(dockerBinary, "run", "--name", "first_name", "-d", "busybox", "sh")
-	out, _, err := runCommandWithOutput(runCmd)
-	if err != nil {
-		t.Fatalf(out, err)
-	}
+func (s *DockerSuite) TestRenameStoppedContainer(c *check.C) {
+	out, _ := dockerCmd(c, "run", "--name", "first_name", "-d", "busybox", "sh")
 
-	cleanedContainerID := stripTrailingCharacters(out)
-
-	runCmd = exec.Command(dockerBinary, "wait", cleanedContainerID)
-	out, _, err = runCommandWithOutput(runCmd)
-	if err != nil {
-		t.Fatalf(out, err)
-	}
+	cleanedContainerID := strings.TrimSpace(out)
+	dockerCmd(c, "wait", cleanedContainerID)
 
 	name, err := inspectField(cleanedContainerID, "Name")
-
-	runCmd = exec.Command(dockerBinary, "rename", "first_name", "new_name")
-	out, _, err = runCommandWithOutput(runCmd)
-	if err != nil {
-		t.Fatalf(out, err)
-	}
+	newName := "new_name" + stringid.GenerateRandomID()
+	dockerCmd(c, "rename", "first_name", newName)
 
 	name, err = inspectField(cleanedContainerID, "Name")
 	if err != nil {
-		t.Fatal(err)
+		c.Fatal(err)
 	}
-	if name != "new_name" {
-		t.Fatal("Failed to rename container ", name)
+	if name != "/"+newName {
+		c.Fatal("Failed to rename container ", name)
 	}
-	deleteAllContainers()
 
-	logDone("rename - stopped container")
 }
 
-func TestRenameRunningContainer(t *testing.T) {
-	runCmd := exec.Command(dockerBinary, "run", "--name", "first_name", "-d", "busybox", "sh")
-	out, _, err := runCommandWithOutput(runCmd)
-	if err != nil {
-		t.Fatalf(out, err)
-	}
+func (s *DockerSuite) TestRenameRunningContainer(c *check.C) {
+	out, _ := dockerCmd(c, "run", "--name", "first_name", "-d", "busybox", "sh")
 
-	cleanedContainerID := stripTrailingCharacters(out)
-	runCmd = exec.Command(dockerBinary, "rename", "first_name", "new_name")
-	out, _, err = runCommandWithOutput(runCmd)
-	if err != nil {
-		t.Fatalf(out, err)
-	}
+	newName := "new_name" + stringid.GenerateRandomID()
+	cleanedContainerID := strings.TrimSpace(out)
+	dockerCmd(c, "rename", "first_name", newName)
 
 	name, err := inspectField(cleanedContainerID, "Name")
 	if err != nil {
-		t.Fatal(err)
+		c.Fatal(err)
 	}
-	if name != "new_name" {
-		t.Fatal("Failed to rename container ")
+	if name != "/"+newName {
+		c.Fatal("Failed to rename container ")
 	}
-	deleteAllContainers()
-
-	logDone("rename - running container")
 }
 
-func TestRenameCheckNames(t *testing.T) {
-	runCmd := exec.Command(dockerBinary, "run", "--name", "first_name", "-d", "busybox", "sh")
-	out, _, err := runCommandWithOutput(runCmd)
-	if err != nil {
-		t.Fatalf(out, err)
-	}
+func (s *DockerSuite) TestRenameCheckNames(c *check.C) {
+	dockerCmd(c, "run", "--name", "first_name", "-d", "busybox", "sh")
 
-	runCmd = exec.Command(dockerBinary, "rename", "first_name", "new_name")
-	out, _, err = runCommandWithOutput(runCmd)
-	if err != nil {
-		t.Fatalf(out, err)
-	}
+	newName := "new_name" + stringid.GenerateRandomID()
+	dockerCmd(c, "rename", "first_name", newName)
 
-	name, err := inspectField("new_name", "Name")
+	name, err := inspectField(newName, "Name")
 	if err != nil {
-		t.Fatal(err)
+		c.Fatal(err)
 	}
-	if name != "new_name" {
-		t.Fatal("Failed to rename container ")
+	if name != "/"+newName {
+		c.Fatal("Failed to rename container ")
 	}
 
 	name, err = inspectField("first_name", "Name")
 	if err == nil && !strings.Contains(err.Error(), "No such image or container: first_name") {
-		t.Fatal(err)
+		c.Fatal(err)
 	}
-
-	deleteAllContainers()
-
-	logDone("rename - running container")
 }
 
-func TestRenameInvalidName(t *testing.T) {
-	defer deleteAllContainers()
-	runCmd := exec.Command(dockerBinary, "run", "--name", "myname", "-d", "busybox", "top")
-	if out, _, err := runCommandWithOutput(runCmd); err != nil {
-		t.Fatalf(out, err)
+func (s *DockerSuite) TestRenameInvalidName(c *check.C) {
+	dockerCmd(c, "run", "--name", "myname", "-d", "busybox", "top")
+
+	if out, _, err := dockerCmdWithError(c, "rename", "myname", "new:invalid"); err == nil || !strings.Contains(out, "Invalid container name") {
+		c.Fatalf("Renaming container to invalid name should have failed: %s\n%v", out, err)
 	}
 
-	runCmd = exec.Command(dockerBinary, "rename", "myname", "new:invalid")
-	if out, _, err := runCommandWithOutput(runCmd); err == nil || !strings.Contains(out, "Invalid container name") {
-		t.Fatalf("Renaming container to invalid name should have failed: %s\n%v", out, err)
+	if out, _, err := dockerCmdWithError(c, "ps", "-a"); err != nil || !strings.Contains(out, "myname") {
+		c.Fatalf("Output of docker ps should have included 'myname': %s\n%v", out, err)
 	}
-
-	runCmd = exec.Command(dockerBinary, "ps", "-a")
-	if out, _, err := runCommandWithOutput(runCmd); err != nil || !strings.Contains(out, "myname") {
-		t.Fatalf("Output of docker ps should have included 'myname': %s\n%v", out, err)
-	}
-
-	logDone("rename - invalid container name")
 }

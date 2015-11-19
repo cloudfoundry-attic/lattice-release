@@ -12,14 +12,14 @@ func TestEndpointParse(t *testing.T) {
 		str      string
 		expected string
 	}{
-		{IndexServerAddress(), IndexServerAddress()},
+		{IndexServer, IndexServer},
 		{"http://0.0.0.0:5000/v1/", "http://0.0.0.0:5000/v1/"},
 		{"http://0.0.0.0:5000/v2/", "http://0.0.0.0:5000/v2/"},
 		{"http://0.0.0.0:5000", "http://0.0.0.0:5000/v0/"},
 		{"0.0.0.0:5000", "https://0.0.0.0:5000/v0/"},
 	}
 	for _, td := range testData {
-		e, err := newEndpoint(td.str, false)
+		e, err := newEndpoint(td.str, nil, nil)
 		if err != nil {
 			t.Errorf("%q: %s", td.str, err)
 		}
@@ -60,6 +60,7 @@ func TestValidateEndpointAmbiguousAPIVersion(t *testing.T) {
 	testEndpoint := Endpoint{
 		URL:     testServerURL,
 		Version: APIVersionUnknown,
+		client:  HTTPClient(NewTransport(nil)),
 	}
 
 	if err = validateEndpoint(&testEndpoint); err != nil {
@@ -67,7 +68,7 @@ func TestValidateEndpointAmbiguousAPIVersion(t *testing.T) {
 	}
 
 	if testEndpoint.Version != APIVersion1 {
-		t.Fatalf("expected endpoint to validate to %s, got %s", APIVersion1, testEndpoint.Version)
+		t.Fatalf("expected endpoint to validate to %d, got %d", APIVersion1, testEndpoint.Version)
 	}
 
 	// Make a test server which should validate as a v2 server.
@@ -87,6 +88,6 @@ func TestValidateEndpointAmbiguousAPIVersion(t *testing.T) {
 	}
 
 	if testEndpoint.Version != APIVersion2 {
-		t.Fatalf("expected endpoint to validate to %s, got %s", APIVersion2, testEndpoint.Version)
+		t.Fatalf("expected endpoint to validate to %d, got %d", APIVersion2, testEndpoint.Version)
 	}
 }

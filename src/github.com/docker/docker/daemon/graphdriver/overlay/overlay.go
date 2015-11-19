@@ -12,11 +12,11 @@ import (
 	"sync"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/graphdriver"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/chrootarchive"
-	"github.com/docker/libcontainer/label"
+	"github.com/opencontainers/runc/libcontainer/label"
 )
 
 // This is a small wrapper over the NaiveDiffWriter that lets us have a custom
@@ -113,10 +113,13 @@ func Init(home string, options []string) (graphdriver.Driver, error) {
 	// check if they are running over btrfs or aufs
 	switch fsMagic {
 	case graphdriver.FsMagicBtrfs:
-		log.Error("'overlay' is not supported over btrfs.")
+		logrus.Error("'overlay' is not supported over btrfs.")
 		return nil, graphdriver.ErrIncompatibleFS
 	case graphdriver.FsMagicAufs:
-		log.Error("'overlay' is not supported over aufs.")
+		logrus.Error("'overlay' is not supported over aufs.")
+		return nil, graphdriver.ErrIncompatibleFS
+	case graphdriver.FsMagicZfs:
+		logrus.Error("'overlay' is not supported over zfs.")
 		return nil, graphdriver.ErrIncompatibleFS
 	}
 
@@ -150,7 +153,7 @@ func supportsOverlay() error {
 			return nil
 		}
 	}
-	log.Error("'overlay' not found as a supported filesystem on this host. Please ensure kernel is new enough and has overlay support loaded.")
+	logrus.Error("'overlay' not found as a supported filesystem on this host. Please ensure kernel is new enough and has overlay support loaded.")
 	return graphdriver.ErrNotSupported
 }
 
@@ -162,6 +165,34 @@ func (d *Driver) Status() [][2]string {
 	return [][2]string{
 		{"Backing Filesystem", backingFs},
 	}
+}
+
+func (d *Driver) GetMetadata(id string) (map[string]string, error) {
+	dir := d.dir(id)
+	if _, err := os.Stat(dir); err != nil {
+		return nil, err
+	}
+
+	metadata := make(map[string]string)
+
+	// If id has a root, it is an image
+	rootDir := path.Join(dir, "root")
+	if _, err := os.Stat(rootDir); err == nil {
+		metadata["RootDir"] = rootDir
+		return metadata, nil
+	}
+
+	lowerId, err := ioutil.ReadFile(path.Join(dir, "lower-id"))
+	if err != nil {
+		return nil, err
+	}
+
+	metadata["LowerDir"] = path.Join(d.dir(string(lowerId)), "root")
+	metadata["UpperDir"] = path.Join(dir, "upper")
+	metadata["WorkDir"] = path.Join(dir, "work")
+	metadata["MergedDir"] = path.Join(dir, "merged")
+
+	return metadata, nil
 }
 
 func (d *Driver) Cleanup() error {
@@ -270,9 +301,9 @@ func (d *Driver) Get(id string, mountLabel string) (string, error) {
 	if mount != nil {
 		mount.count++
 		return mount.path, nil
-	} else {
-		mount = &ActiveMount{count: 1}
 	}
+
+	mount = &ActiveMount{count: 1}
 
 	dir := d.dir(id)
 	if _, err := os.Stat(dir); err != nil {
@@ -298,7 +329,7 @@ func (d *Driver) Get(id string, mountLabel string) (string, error) {
 
 	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", lowerDir, upperDir, workDir)
 	if err := syscall.Mount("overlay", mergedDir, "overlay", 0, label.FormatMountLabel(opts, mountLabel)); err != nil {
-		return "", err
+		return "", fmt.Errorf("error creating overlay mount to %s: %v", mergedDir, err)
 	}
 	mount.path = mergedDir
 	mount.mounted = true
@@ -314,7 +345,15 @@ func (d *Driver) Put(id string) error {
 
 	mount := d.active[id]
 	if mount == nil {
-		log.Debugf("Put on a non-mounted device %s", id)
+		logrus.Debugf("Put on a non-mounted device %s", id)
+		// but it might be still here
+		if d.Exists(id) {
+			mergedDir := path.Join(d.dir(id), "merged")
+			err := syscall.Unmount(mergedDir, 0)
+			if err != nil {
+				logrus.Debugf("Failed to unmount %s overlay: %v", id, err)
+			}
+		}
 		return nil
 	}
 
@@ -327,7 +366,7 @@ func (d *Driver) Put(id string) error {
 	if mount.mounted {
 		err := syscall.Unmount(mount.path, 0)
 		if err != nil {
-			log.Debugf("Failed to unmount %s overlay: %v", id, err)
+			logrus.Debugf("Failed to unmount %s overlay: %v", id, err)
 		}
 		return err
 	}
@@ -372,7 +411,7 @@ func (d *Driver) ApplyDiff(id string, parent string, diff archive.ArchiveReader)
 		return 0, err
 	}
 
-	if size, err = chrootarchive.ApplyLayer(tmpRootDir, diff); err != nil {
+	if size, err = chrootarchive.ApplyUncompressedLayer(tmpRootDir, diff); err != nil {
 		return 0, err
 	}
 

@@ -1,26 +1,37 @@
 package main
 
 import (
-	"os/exec"
 	"strings"
-	"testing"
+
+	"github.com/docker/docker/utils"
+	"github.com/go-check/check"
 )
 
 // ensure docker info succeeds
-func TestInfoEnsureSucceeds(t *testing.T) {
-	versionCmd := exec.Command(dockerBinary, "info")
-	out, exitCode, err := runCommandWithOutput(versionCmd)
-	if err != nil || exitCode != 0 {
-		t.Fatalf("failed to execute docker info: %s, %v", out, err)
+func (s *DockerSuite) TestInfoEnsureSucceeds(c *check.C) {
+	out, _ := dockerCmd(c, "info")
+
+	// always shown fields
+	stringsToCheck := []string{
+		"ID:",
+		"Containers:",
+		"Images:",
+		"Execution Driver:",
+		"Logging Driver:",
+		"Operating System:",
+		"CPUs:",
+		"Total Memory:",
+		"Kernel Version:",
+		"Storage Driver:",
 	}
 
-	stringsToCheck := []string{"Containers:", "Execution Driver:", "Kernel Version:"}
+	if utils.ExperimentalBuild() {
+		stringsToCheck = append(stringsToCheck, "Experimental: true")
+	}
 
 	for _, linePrefix := range stringsToCheck {
 		if !strings.Contains(out, linePrefix) {
-			t.Errorf("couldn't find string %v in output", linePrefix)
+			c.Errorf("couldn't find string %v in output", linePrefix)
 		}
 	}
-
-	logDone("info - verify that it works")
 }

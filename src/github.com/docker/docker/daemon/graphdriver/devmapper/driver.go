@@ -7,8 +7,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/graphdriver"
 	"github.com/docker/docker/pkg/devicemapper"
 	"github.com/docker/docker/pkg/mount"
@@ -72,9 +73,12 @@ func (d *Driver) Status() [][2]string {
 		{"Metadata file", s.MetadataFile},
 		{"Data Space Used", fmt.Sprintf("%s", units.HumanSize(float64(s.Data.Used)))},
 		{"Data Space Total", fmt.Sprintf("%s", units.HumanSize(float64(s.Data.Total)))},
+		{"Data Space Available", fmt.Sprintf("%s", units.HumanSize(float64(s.Data.Available)))},
 		{"Metadata Space Used", fmt.Sprintf("%s", units.HumanSize(float64(s.Metadata.Used)))},
 		{"Metadata Space Total", fmt.Sprintf("%s", units.HumanSize(float64(s.Metadata.Total)))},
+		{"Metadata Space Available", fmt.Sprintf("%s", units.HumanSize(float64(s.Metadata.Available)))},
 		{"Udev Sync Supported", fmt.Sprintf("%v", s.UdevSyncSupported)},
+		{"Deferred Removal Enabled", fmt.Sprintf("%v", s.DeferredRemoveEnabled)},
 	}
 	if len(s.DataLoopback) > 0 {
 		status = append(status, [2]string{"Data loop file", s.DataLoopback})
@@ -86,6 +90,20 @@ func (d *Driver) Status() [][2]string {
 		status = append(status, [2]string{"Library Version", vStr})
 	}
 	return status
+}
+
+func (d *Driver) GetMetadata(id string) (map[string]string, error) {
+	m, err := d.DeviceSet.ExportDeviceMetadata(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	metadata := make(map[string]string)
+	metadata["DeviceId"] = strconv.Itoa(m.deviceId)
+	metadata["DeviceSize"] = strconv.FormatUint(m.deviceSize, 10)
+	metadata["DeviceName"] = m.deviceName
+	return metadata, nil
 }
 
 func (d *Driver) Cleanup() error {
@@ -162,7 +180,7 @@ func (d *Driver) Get(id, mountLabel string) (string, error) {
 func (d *Driver) Put(id string) error {
 	err := d.DeviceSet.UnmountDevice(id)
 	if err != nil {
-		log.Errorf("Warning: error unmounting device %s: %s", id, err)
+		logrus.Errorf("Error unmounting device %s: %s", id, err)
 	}
 	return err
 }

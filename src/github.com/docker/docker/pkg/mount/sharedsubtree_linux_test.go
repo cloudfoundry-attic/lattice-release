@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-// nothing is propogated in or out
+// nothing is propagated in or out
 func TestSubtreePrivate(t *testing.T) {
 	tmp := path.Join(os.TempDir(), "mount-tests")
 	if err := os.MkdirAll(tmp, 0777); err != nil {
@@ -107,7 +107,7 @@ func TestSubtreePrivate(t *testing.T) {
 }
 
 // Testing that when a target is a shared mount,
-// then child mounts propogate to the source
+// then child mounts propagate to the source
 func TestSubtreeShared(t *testing.T) {
 	tmp := path.Join(os.TempDir(), "mount-tests")
 	if err := os.MkdirAll(tmp, 0777); err != nil {

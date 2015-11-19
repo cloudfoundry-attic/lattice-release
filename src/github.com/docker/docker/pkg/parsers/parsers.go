@@ -2,6 +2,9 @@ package parsers
 
 import (
 	"fmt"
+	"net/url"
+	"path"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -10,7 +13,12 @@ import (
 func ParseHost(defaultTCPAddr, defaultUnixAddr, addr string) (string, error) {
 	addr = strings.TrimSpace(addr)
 	if addr == "" {
-		addr = fmt.Sprintf("unix://%s", defaultUnixAddr)
+		if runtime.GOOS != "windows" {
+			addr = fmt.Sprintf("unix://%s", defaultUnixAddr)
+		} else {
+			// Note - defaultTCPAddr already includes tcp:// prefix
+			addr = fmt.Sprintf("%s", defaultTCPAddr)
+		}
 	}
 	addrParts := strings.Split(addr, "://")
 	if len(addrParts) == 1 {
@@ -46,7 +54,11 @@ func ParseTCPAddr(addr string, defaultAddr string) (string, error) {
 		return "", fmt.Errorf("Invalid proto, expected tcp: %s", addr)
 	}
 
-	hostParts := strings.Split(addr, ":")
+	u, err := url.Parse("tcp://" + addr)
+	if err != nil {
+		return "", err
+	}
+	hostParts := strings.Split(u.Host, ":")
 	if len(hostParts) != 2 {
 		return "", fmt.Errorf("Invalid bind address format: %s", addr)
 	}
@@ -59,14 +71,20 @@ func ParseTCPAddr(addr string, defaultAddr string) (string, error) {
 	if err != nil && p == 0 {
 		return "", fmt.Errorf("Invalid bind address format: %s", addr)
 	}
-	return fmt.Sprintf("tcp://%s:%d", host, p), nil
+	return fmt.Sprintf("tcp://%s:%d%s", host, p, u.Path), nil
 }
 
-// Get a repos name and returns the right reposName + tag
+// Get a repos name and returns the right reposName + tag|digest
 // The tag can be confusing because of a port in a repository name.
 //     Ex: localhost.localdomain:5000/samalba/hipache:latest
+//     Digest ex: localhost:5000/foo/bar@sha256:bc8813ea7b3603864987522f02a76101c17ad122e1c46d790efc0fca78ca7bfb
 func ParseRepositoryTag(repos string) (string, string) {
-	n := strings.LastIndex(repos, ":")
+	n := strings.Index(repos, "@")
+	if n >= 0 {
+		parts := strings.Split(repos, "@")
+		return parts[0], parts[1]
+	}
+	n = strings.LastIndex(repos, ":")
 	if n < 0 {
 		return repos, ""
 	}
@@ -128,4 +146,25 @@ func ParsePortRange(ports string) (uint64, uint64, error) {
 		return 0, 0, fmt.Errorf("Invalid range specified for the Port: %s", ports)
 	}
 	return start, end, nil
+}
+
+func ParseLink(val string) (string, string, error) {
+	if val == "" {
+		return "", "", fmt.Errorf("empty string specified for links")
+	}
+	arr := strings.Split(val, ":")
+	if len(arr) > 2 {
+		return "", "", fmt.Errorf("bad format for links: %s", val)
+	}
+	if len(arr) == 1 {
+		return val, val, nil
+	}
+	// This is kept because we can actually get an HostConfig with links
+	// from an already created container and the format is not `foo:bar`
+	// but `/foo:/c1/bar`
+	if strings.HasPrefix(arr[0], "/") {
+		_, alias := path.Split(arr[1])
+		return arr[0][1:], alias, nil
+	}
+	return arr[0], arr[1], nil
 }

@@ -5,11 +5,6 @@ package lxc
 import (
 	"bufio"
 	"fmt"
-	"github.com/docker/docker/daemon/execdriver"
-	nativeTemplate "github.com/docker/docker/daemon/execdriver/native/template"
-	"github.com/docker/libcontainer/devices"
-	"github.com/docker/libcontainer/security/capabilities"
-	"github.com/syndtr/gocapability/capability"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -17,6 +12,11 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/docker/docker/daemon/execdriver"
+	nativeTemplate "github.com/docker/docker/daemon/execdriver/native/template"
+	"github.com/opencontainers/runc/libcontainer/configs"
+	"github.com/syndtr/gocapability/capability"
 )
 
 func TestLXCConfig(t *testing.T) {
@@ -29,17 +29,17 @@ func TestLXCConfig(t *testing.T) {
 	os.MkdirAll(path.Join(root, "containers", "1"), 0777)
 
 	// Memory is allocated randomly for testing
-	rand.Seed(time.Now().UTC().UnixNano())
+	r := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	var (
 		memMin = 33554432
 		memMax = 536870912
-		mem    = memMin + rand.Intn(memMax-memMin)
+		mem    = memMin + r.Intn(memMax-memMin)
 		cpuMin = 100
 		cpuMax = 10000
-		cpu    = cpuMin + rand.Intn(cpuMax-cpuMin)
+		cpu    = cpuMin + r.Intn(cpuMax-cpuMin)
 	)
 
-	driver, err := NewDriver(root, "", false)
+	driver, err := NewDriver(root, root, "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +53,7 @@ func TestLXCConfig(t *testing.T) {
 			Mtu:       1500,
 			Interface: nil,
 		},
-		AllowedDevices: make([]*devices.Device, 0),
+		AllowedDevices: make([]*configs.Device, 0),
 		ProcessConfig:  execdriver.ProcessConfig{},
 	}
 	p, err := driver.generateLXCConfig(command)
@@ -76,7 +76,7 @@ func TestCustomLxcConfig(t *testing.T) {
 
 	os.MkdirAll(path.Join(root, "containers", "1"), 0777)
 
-	driver, err := NewDriver(root, "", false)
+	driver, err := NewDriver(root, root, "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +194,7 @@ func TestCustomLxcConfigMounts(t *testing.T) {
 	}
 	os.MkdirAll(path.Join(root, "containers", "1"), 0777)
 
-	driver, err := NewDriver(root, "", false)
+	driver, err := NewDriver(root, root, "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -248,7 +248,7 @@ func TestCustomLxcConfigMisc(t *testing.T) {
 	}
 	defer os.RemoveAll(root)
 	os.MkdirAll(path.Join(root, "containers", "1"), 0777)
-	driver, err := NewDriver(root, "", true)
+	driver, err := NewDriver(root, root, "", true)
 
 	if err != nil {
 		t.Fatal(err)
@@ -264,13 +264,8 @@ func TestCustomLxcConfigMisc(t *testing.T) {
 			"lxc.cgroup.cpuset.cpus = 0,1",
 		},
 		Network: &execdriver.Network{
-			Mtu: 1500,
-			Interface: &execdriver.NetworkInterface{
-				Gateway:     "10.10.10.1",
-				IPAddress:   "10.10.10.10",
-				IPPrefixLen: 24,
-				Bridge:      "docker0",
-			},
+			Mtu:       1500,
+			Interface: nil,
 		},
 		ProcessConfig:   processConfig,
 		CapAdd:          []string{"net_admin", "syslog"},
@@ -282,20 +277,13 @@ func TestCustomLxcConfigMisc(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// network
-	grepFile(t, p, "lxc.network.type = veth")
-	grepFile(t, p, "lxc.network.link = docker0")
-	grepFile(t, p, "lxc.network.name = eth0")
-	grepFile(t, p, "lxc.network.ipv4 = 10.10.10.10/24")
-	grepFile(t, p, "lxc.network.ipv4.gateway = 10.10.10.1")
-	grepFile(t, p, "lxc.network.flags = up")
 	grepFile(t, p, "lxc.aa_profile = lxc-container-default-with-nesting")
 	// hostname
 	grepFile(t, p, "lxc.utsname = testhost")
 	grepFile(t, p, "lxc.cgroup.cpuset.cpus = 0,1")
 	container := nativeTemplate.New()
 	for _, cap := range container.Capabilities {
-		realCap := capabilities.GetCapability(cap)
+		realCap := execdriver.GetCapability(cap)
 		numCap := fmt.Sprintf("%d", realCap.Value)
 		if cap != "MKNOD" && cap != "KILL" {
 			grepFile(t, p, fmt.Sprintf("lxc.cap.keep = %s", numCap))
@@ -313,7 +301,7 @@ func TestCustomLxcConfigMiscOverride(t *testing.T) {
 	}
 	defer os.RemoveAll(root)
 	os.MkdirAll(path.Join(root, "containers", "1"), 0777)
-	driver, err := NewDriver(root, "", false)
+	driver, err := NewDriver(root, root, "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -329,13 +317,8 @@ func TestCustomLxcConfigMiscOverride(t *testing.T) {
 			"lxc.network.ipv4 = 172.0.0.1",
 		},
 		Network: &execdriver.Network{
-			Mtu: 1500,
-			Interface: &execdriver.NetworkInterface{
-				Gateway:     "10.10.10.1",
-				IPAddress:   "10.10.10.10",
-				IPPrefixLen: 24,
-				Bridge:      "docker0",
-			},
+			Mtu:       1500,
+			Interface: nil,
 		},
 		ProcessConfig: processConfig,
 		CapAdd:        []string{"NET_ADMIN", "SYSLOG"},
@@ -346,20 +329,13 @@ func TestCustomLxcConfigMiscOverride(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// network
-	grepFile(t, p, "lxc.network.type = veth")
-	grepFile(t, p, "lxc.network.link = docker0")
-	grepFile(t, p, "lxc.network.name = eth0")
-	grepFile(t, p, "lxc.network.ipv4 = 172.0.0.1")
-	grepFile(t, p, "lxc.network.ipv4.gateway = 10.10.10.1")
-	grepFile(t, p, "lxc.network.flags = up")
 
 	// hostname
 	grepFile(t, p, "lxc.utsname = testhost")
 	grepFile(t, p, "lxc.cgroup.cpuset.cpus = 0,1")
 	container := nativeTemplate.New()
 	for _, cap := range container.Capabilities {
-		realCap := capabilities.GetCapability(cap)
+		realCap := execdriver.GetCapability(cap)
 		numCap := fmt.Sprintf("%d", realCap.Value)
 		if cap != "MKNOD" && cap != "KILL" {
 			grepFile(t, p, fmt.Sprintf("lxc.cap.keep = %s", numCap))

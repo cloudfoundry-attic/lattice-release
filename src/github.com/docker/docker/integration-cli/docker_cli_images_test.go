@@ -2,85 +2,104 @@ package main
 
 import (
 	"fmt"
-	"os/exec"
 	"reflect"
 	"sort"
 	"strings"
-	"testing"
 	"time"
+
+	"github.com/docker/docker/pkg/stringid"
+	"github.com/go-check/check"
 )
 
-func TestImagesEnsureImageIsListed(t *testing.T) {
-	imagesCmd := exec.Command(dockerBinary, "images")
-	out, _, err := runCommandWithOutput(imagesCmd)
-	if err != nil {
-		t.Fatalf("listing images failed with errors: %s, %v", out, err)
-	}
-
+func (s *DockerSuite) TestImagesEnsureImageIsListed(c *check.C) {
+	out, _ := dockerCmd(c, "images")
 	if !strings.Contains(out, "busybox") {
-		t.Fatal("images should've listed busybox")
+		c.Fatal("images should've listed busybox")
 	}
-
-	logDone("images - busybox should be listed")
 }
 
-func TestImagesOrderedByCreationDate(t *testing.T) {
-	defer deleteImages("order:test_a")
-	defer deleteImages("order:test_c")
-	defer deleteImages("order:test_b")
+func (s *DockerSuite) TestImagesOrderedByCreationDate(c *check.C) {
 	id1, err := buildImage("order:test_a",
 		`FROM scratch
 		MAINTAINER dockerio1`, true)
 	if err != nil {
-		t.Fatal(err)
+		c.Fatal(err)
 	}
 	time.Sleep(time.Second)
 	id2, err := buildImage("order:test_c",
 		`FROM scratch
 		MAINTAINER dockerio2`, true)
 	if err != nil {
-		t.Fatal(err)
+		c.Fatal(err)
 	}
 	time.Sleep(time.Second)
 	id3, err := buildImage("order:test_b",
 		`FROM scratch
 		MAINTAINER dockerio3`, true)
 	if err != nil {
-		t.Fatal(err)
+		c.Fatal(err)
 	}
 
-	out, _, err := runCommandWithOutput(exec.Command(dockerBinary, "images", "-q", "--no-trunc"))
-	if err != nil {
-		t.Fatalf("listing images failed with errors: %s, %v", out, err)
-	}
+	out, _ := dockerCmd(c, "images", "-q", "--no-trunc")
 	imgs := strings.Split(out, "\n")
 	if imgs[0] != id3 {
-		t.Fatalf("First image must be %s, got %s", id3, imgs[0])
+		c.Fatalf("First image must be %s, got %s", id3, imgs[0])
 	}
 	if imgs[1] != id2 {
-		t.Fatalf("Second image must be %s, got %s", id2, imgs[1])
+		c.Fatalf("Second image must be %s, got %s", id2, imgs[1])
 	}
 	if imgs[2] != id1 {
-		t.Fatalf("Third image must be %s, got %s", id1, imgs[2])
+		c.Fatalf("Third image must be %s, got %s", id1, imgs[2])
 	}
-
-	logDone("images - ordering by creation date")
 }
 
-func TestImagesErrorWithInvalidFilterNameTest(t *testing.T) {
-	imagesCmd := exec.Command(dockerBinary, "images", "-f", "FOO=123")
-	out, _, err := runCommandWithOutput(imagesCmd)
-	if !strings.Contains(out, "Invalid filter") {
-		t.Fatalf("error should occur when listing images with invalid filter name FOO, %s, %v", out, err)
+func (s *DockerSuite) TestImagesErrorWithInvalidFilterNameTest(c *check.C) {
+	out, _, err := dockerCmdWithError(c, "images", "-f", "FOO=123")
+	if err == nil || !strings.Contains(out, "Invalid filter") {
+		c.Fatalf("error should occur when listing images with invalid filter name FOO, %s", out)
 	}
-
-	logDone("images - invalid filter name check working")
 }
 
-func TestImagesFilterWhiteSpaceTrimmingAndLowerCasingWorking(t *testing.T) {
+func (s *DockerSuite) TestImagesFilterLabel(c *check.C) {
+	imageName1 := "images_filter_test1"
+	imageName2 := "images_filter_test2"
+	imageName3 := "images_filter_test3"
+	image1ID, err := buildImage(imageName1,
+		`FROM scratch
+		 LABEL match me`, true)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	image2ID, err := buildImage(imageName2,
+		`FROM scratch
+		 LABEL match="me too"`, true)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	image3ID, err := buildImage(imageName3,
+		`FROM scratch
+		 LABEL nomatch me`, true)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	out, _ := dockerCmd(c, "images", "--no-trunc", "-q", "-f", "label=match")
+	out = strings.TrimSpace(out)
+	if (!strings.Contains(out, image1ID) && !strings.Contains(out, image2ID)) || strings.Contains(out, image3ID) {
+		c.Fatalf("Expected ids %s,%s got %s", image1ID, image2ID, out)
+	}
+
+	out, _ = dockerCmd(c, "images", "--no-trunc", "-q", "-f", "label=match=me too")
+	out = strings.TrimSpace(out)
+	if out != image2ID {
+		c.Fatalf("Expected %s got %s", image2ID, out)
+	}
+}
+
+func (s *DockerSuite) TestImagesFilterSpaceTrimCase(c *check.C) {
 	imageName := "images_filter_test"
-	defer deleteAllContainers()
-	defer deleteImages(imageName)
 	buildImage(imageName,
 		`FROM scratch
 		 RUN touch /test/foo
@@ -97,11 +116,7 @@ func TestImagesFilterWhiteSpaceTrimmingAndLowerCasingWorking(t *testing.T) {
 
 	imageListings := make([][]string, 5, 5)
 	for idx, filter := range filters {
-		cmd := exec.Command(dockerBinary, "images", "-f", filter)
-		out, _, err := runCommandWithOutput(cmd)
-		if err != nil {
-			t.Fatal(err)
-		}
+		out, _ := dockerCmd(c, "images", "-q", "-f", filter)
 		listing := strings.Split(out, "\n")
 		sort.Strings(listing)
 		imageListings[idx] = listing
@@ -116,9 +131,25 @@ func TestImagesFilterWhiteSpaceTrimmingAndLowerCasingWorking(t *testing.T) {
 				}
 				fmt.Print("")
 			}
-			t.Fatalf("All output must be the same")
+			c.Fatalf("All output must be the same")
 		}
 	}
+}
 
-	logDone("images - white space trimming and lower casing")
+func (s *DockerSuite) TestImagesEnsureDanglingImageOnlyListedOnce(c *check.C) {
+	// create container 1
+	out, _ := dockerCmd(c, "run", "-d", "busybox", "true")
+	containerID1 := strings.TrimSpace(out)
+
+	// tag as foobox
+	out, _ = dockerCmd(c, "commit", containerID1, "foobox")
+	imageID := stringid.TruncateID(strings.TrimSpace(out))
+
+	// overwrite the tag, making the previous image dangling
+	dockerCmd(c, "tag", "-f", "busybox", "foobox")
+
+	out, _ = dockerCmd(c, "images", "-q", "-f", "dangling=true")
+	if e, a := 1, strings.Count(out, imageID); e != a {
+		c.Fatalf("expected 1 dangling image, got %d: %s", a, out)
+	}
 }

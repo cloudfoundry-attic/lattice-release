@@ -1,54 +1,56 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
-	"testing"
+	"strings"
+
+	"github.com/go-check/check"
 )
 
 // export an image and try to import it into a new one
-func TestExportContainerAndImportImage(t *testing.T) {
-	runCmd := exec.Command(dockerBinary, "run", "-d", "busybox", "true")
-	out, _, err := runCommandWithOutput(runCmd)
+func (s *DockerSuite) TestExportContainerAndImportImage(c *check.C) {
+	containerID := "testexportcontainerandimportimage"
+
+	dockerCmd(c, "run", "--name", containerID, "busybox", "true")
+
+	out, _ := dockerCmd(c, "export", containerID)
+
+	importCmd := exec.Command(dockerBinary, "import", "-", "repo/testexp:v1")
+	importCmd.Stdin = strings.NewReader(out)
+	out, _, err := runCommandWithOutput(importCmd)
 	if err != nil {
-		t.Fatal("failed to create a container", out, err)
+		c.Fatalf("failed to import image: %s, %v", out, err)
 	}
 
-	cleanedContainerID := stripTrailingCharacters(out)
+	cleanedImageID := strings.TrimSpace(out)
+	if cleanedImageID == "" {
+		c.Fatalf("output should have been an image id, got: %s", out)
+	}
+}
 
-	inspectCmd := exec.Command(dockerBinary, "inspect", cleanedContainerID)
-	out, _, err = runCommandWithOutput(inspectCmd)
+// Used to test output flag in the export command
+func (s *DockerSuite) TestExportContainerWithOutputAndImportImage(c *check.C) {
+	containerID := "testexportcontainerwithoutputandimportimage"
+
+	dockerCmd(c, "run", "--name", containerID, "busybox", "true")
+	dockerCmd(c, "export", "--output=testexp.tar", containerID)
+	defer os.Remove("testexp.tar")
+
+	out, _, err := runCommandWithOutput(exec.Command("cat", "testexp.tar"))
 	if err != nil {
-		t.Fatalf("output should've been a container id: %s %s ", cleanedContainerID, err)
+		c.Fatal(out, err)
 	}
 
-	exportCmdTemplate := `%v export %v > /tmp/testexp.tar`
-	exportCmdFinal := fmt.Sprintf(exportCmdTemplate, dockerBinary, cleanedContainerID)
-	exportCmd := exec.Command("bash", "-c", exportCmdFinal)
-	if out, _, err = runCommandWithOutput(exportCmd); err != nil {
-		t.Fatalf("failed to export container: %s, %v", out, err)
-	}
-
-	importCmdFinal := `cat /tmp/testexp.tar | docker import - repo/testexp:v1`
-	importCmd := exec.Command("bash", "-c", importCmdFinal)
+	importCmd := exec.Command(dockerBinary, "import", "-", "repo/testexp:v1")
+	importCmd.Stdin = strings.NewReader(out)
 	out, _, err = runCommandWithOutput(importCmd)
 	if err != nil {
-		t.Fatalf("failed to import image: %s, %v", out, err)
+		c.Fatalf("failed to import image: %s, %v", out, err)
 	}
 
-	cleanedImageID := stripTrailingCharacters(out)
-
-	inspectCmd = exec.Command(dockerBinary, "inspect", cleanedImageID)
-	if out, _, err = runCommandWithOutput(inspectCmd); err != nil {
-		t.Fatalf("output should've been an image id: %s, %v", out, err)
+	cleanedImageID := strings.TrimSpace(out)
+	if cleanedImageID == "" {
+		c.Fatalf("output should have been an image id, got: %s", out)
 	}
-
-	deleteContainer(cleanedContainerID)
-	deleteImages("repo/testexp:v1")
-
-	os.Remove("/tmp/testexp.tar")
-
-	logDone("export - export a container")
-	logDone("import - import an image")
 }

@@ -1,6 +1,7 @@
 package archive
 
 import (
+	"archive/tar"
 	"bytes"
 	"fmt"
 	"io"
@@ -8,8 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/docker/docker/vendor/src/code.google.com/p/go/src/pkg/archive/tar"
 )
 
 var testUntarFns = map[string]func(string, io.Reader) error{
@@ -134,7 +133,7 @@ func testBreakout(untarFn string, tmpdir string, headers []*tar.Header) error {
 		helloStat.Size() != fi.Size() ||
 		!bytes.Equal(helloData, b) {
 		// codepath taken if hello has been modified
-		return fmt.Errorf("archive breakout: file %q has been modified. Contents: expected=%q, got=%q. FileInfo: expected=%#v, got=%#v.", hello, helloData, b, helloStat, fi)
+		return fmt.Errorf("archive breakout: file %q has been modified. Contents: expected=%q, got=%q. FileInfo: expected=%#v, got=%#v", hello, helloData, b, helloStat, fi)
 	}
 
 	// Check that nothing in dest/ has the same content as victim/hello.

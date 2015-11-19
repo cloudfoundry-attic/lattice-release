@@ -32,9 +32,9 @@ func TestBroadcastWriter(t *testing.T) {
 
 	// Test 1: Both bufferA and bufferB should contain "foo"
 	bufferA := &dummyWriter{}
-	writer.AddWriter(bufferA, "")
+	writer.AddWriter(bufferA)
 	bufferB := &dummyWriter{}
-	writer.AddWriter(bufferB, "")
+	writer.AddWriter(bufferB)
 	writer.Write([]byte("foo"))
 
 	if bufferA.String() != "foo" {
@@ -48,7 +48,7 @@ func TestBroadcastWriter(t *testing.T) {
 	// Test2: bufferA and bufferB should contain "foobar",
 	// while bufferC should only contain "bar"
 	bufferC := &dummyWriter{}
-	writer.AddWriter(bufferC, "")
+	writer.AddWriter(bufferC)
 	writer.Write([]byte("bar"))
 
 	if bufferA.String() != "foobar" {
@@ -100,7 +100,7 @@ func TestRaceBroadcastWriter(t *testing.T) {
 	writer := New()
 	c := make(chan bool)
 	go func() {
-		writer.AddWriter(devNullCloser(0), "")
+		writer.AddWriter(devNullCloser(0))
 		c <- true
 	}()
 	writer.Write([]byte("hello"))
@@ -111,9 +111,9 @@ func BenchmarkBroadcastWriter(b *testing.B) {
 	writer := New()
 	setUpWriter := func() {
 		for i := 0; i < 100; i++ {
-			writer.AddWriter(devNullCloser(0), "stdout")
-			writer.AddWriter(devNullCloser(0), "stderr")
-			writer.AddWriter(devNullCloser(0), "")
+			writer.AddWriter(devNullCloser(0))
+			writer.AddWriter(devNullCloser(0))
+			writer.AddWriter(devNullCloser(0))
 		}
 	}
 	testLine := "Line that thinks that it is log line from docker"
