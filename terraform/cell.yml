@@ -77,5 +77,8 @@ properties:
     deployment: lattice
   consul:
     require_ssl: false
+  loggregator:
+    etcd:
+      machines: [etcd.service.cf.internal]
   loggregator_endpoint:
     shared_secret: loggregator-secret
