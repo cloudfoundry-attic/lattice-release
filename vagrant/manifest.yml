@@ -177,6 +177,146 @@ properties:
   # For CF Routing:
   router:
     enable_routing_api: true
+    enable_ssl: true
+    ssl_cert: |
+      -----BEGIN CERTIFICATE-----
+      MIIDBjCCAe4CCQCz3nn1SWrDdTANBgkqhkiG9w0BAQUFADBFMQswCQYDVQQGEwJB
+      VTETMBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0
+      cyBQdHkgTHRkMB4XDTE1MDMwMzE4NTMyNloXDTE2MDMwMjE4NTMyNlowRTELMAkG
+      A1UEBhMCQVUxEzARBgNVBAgTClNvbWUtU3RhdGUxITAfBgNVBAoTGEludGVybmV0
+      IFdpZGdpdHMgUHR5IEx0ZDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB
+      AKtTK9xq/ycRO3fWbk1abunYf9CY6sl0Wlqm9UPMkI4j0itY2OyGyn1YuCCiEdM3
+      b8guGSWB0XSL5PBq33e7ioiaH98UEe+Ai+TBxnJsro5WQ/TMywzRDhZ4E7gxDBav
+      88ZY+y7ts0HznfxqEIn0Gu/UK+s6ajYcIy7d9L988+hA3K1FSdes8MavXhrI4xA1
+      fY21gESfFkD4SsqvrkISC012pa7oVw1f94slIVcAG+l9MMAkatBGxgWAQO6kxk5o
+      oH1Z5q2m0afeQBfFqzu5lCITLfgTWCUZUmbF6UpRhmD850/LqNtryAPrLLqXxdig
+      OHiWqvFpCusOu/4z1uGC5xECAwEAATANBgkqhkiG9w0BAQUFAAOCAQEAV5RAFVQy
+      8Krs5c9ebYRseXO6czL9/Rfrt/weiC1XLcDkE2i2yYsBXazMYr58o4hACJwe2hoC
+      bihBZ9XnVpASEYHDLwDj3zxFP/bTuKs7tLhP7wz0lo8i6k5VSPAGBq2kjc/cO9a3
+      TMmLPks/Xm42MCSWGDnCEX1854B3+JK3CNEGqSY7FYXU4W9pZtHPZ3gBoy0ymSpg
+      mpleiY1Tbn5I2X7vviMW7jeviB5ivkZaXtObjyM3vtPLB+ILpa15ZhDSE5o71sjA
+      jXqrE1n5o/GXHX+1M8v3aJc30Az7QAqWohW/tw5SoiSmVQZWd7gFht9vSzaH2WgO
+      LwcpBC7+cUJEww==
+      -----END CERTIFICATE-----
+    ssl_key: |
+      Private-Key: (2048 bit)
+      modulus:
+          00:ab:53:2b:dc:6a:ff:27:11:3b:77:d6:6e:4d:5a:
+          6e:e9:d8:7f:d0:98:ea:c9:74:5a:5a:a6:f5:43:cc:
+          90:8e:23:d2:2b:58:d8:ec:86:ca:7d:58:b8:20:a2:
+          11:d3:37:6f:c8:2e:19:25:81:d1:74:8b:e4:f0:6a:
+          df:77:bb:8a:88:9a:1f:df:14:11:ef:80:8b:e4:c1:
+          c6:72:6c:ae:8e:56:43:f4:cc:cb:0c:d1:0e:16:78:
+          13:b8:31:0c:16:af:f3:c6:58:fb:2e:ed:b3:41:f3:
+          9d:fc:6a:10:89:f4:1a:ef:d4:2b:eb:3a:6a:36:1c:
+          23:2e:dd:f4:bf:7c:f3:e8:40:dc:ad:45:49:d7:ac:
+          f0:c6:af:5e:1a:c8:e3:10:35:7d:8d:b5:80:44:9f:
+          16:40:f8:4a:ca:af:ae:42:12:0b:4d:76:a5:ae:e8:
+          57:0d:5f:f7:8b:25:21:57:00:1b:e9:7d:30:c0:24:
+          6a:d0:46:c6:05:80:40:ee:a4:c6:4e:68:a0:7d:59:
+          e6:ad:a6:d1:a7:de:40:17:c5:ab:3b:b9:94:22:13:
+          2d:f8:13:58:25:19:52:66:c5:e9:4a:51:86:60:fc:
+          e7:4f:cb:a8:db:6b:c8:03:eb:2c:ba:97:c5:d8:a0:
+          38:78:96:aa:f1:69:0a:eb:0e:bb:fe:33:d6:e1:82:
+          e7:11
+      publicExponent: 65537 (0x10001)
+      privateExponent:
+          00:83:56:aa:5c:3a:86:4a:2b:d2:bc:06:dd:de:5d:
+          02:84:30:9d:a3:8b:67:0a:73:31:45:27:93:04:9b:
+          d1:01:b6:82:4b:0a:bc:99:6e:a7:d2:b9:ed:c5:ce:
+          98:fd:a4:15:04:90:1a:64:ff:85:53:e4:5e:e8:d3:
+          f5:66:73:96:3b:2c:74:5c:6e:a5:65:46:d5:77:d3:
+          f9:4f:04:f4:38:57:f7:96:b6:5c:bf:01:90:dc:36:
+          c7:5f:3f:f2:75:7e:03:d2:bd:aa:2a:0a:bd:8e:44:
+          b5:8b:a8:bf:ef:11:fc:88:78:ce:06:71:6c:b4:f8:
+          93:1c:3d:b9:80:06:c9:70:f4:ee:8f:b5:ce:51:1a:
+          23:fd:f2:f0:8b:1d:08:7f:fb:eb:0e:b6:3e:8f:1f:
+          5a:6d:fb:65:ff:51:e7:2f:dd:bd:47:93:fd:ce:7b:
+          e3:3c:c9:2a:2b:24:3d:ca:03:de:10:4d:19:ca:5f:
+          ec:ee:6e:4c:51:83:fc:c2:02:48:be:6a:cf:2b:41:
+          cf:dd:f8:17:d5:1b:af:7c:ca:55:13:e4:b5:4b:36:
+          ec:1b:5a:77:df:63:66:6d:e7:1e:42:0e:a1:f4:d6:
+          62:67:1e:6c:73:40:47:e7:eb:ca:db:dd:b1:85:69:
+          83:c4:9f:d1:0f:fa:66:90:8a:3b:fa:4a:c5:0c:f4:
+          0d:e5
+      prime1:
+          00:e0:d1:0d:19:f8:80:42:31:8c:f2:02:a7:a6:9a:
+          c1:1a:cc:0e:54:5c:fa:4e:88:58:31:7b:c2:e7:63:
+          c4:99:5a:c4:5a:f6:b7:b1:45:ac:56:26:fa:3a:dc:
+          1b:aa:8c:4f:2a:be:b5:e4:7c:b8:7a:5c:2a:6f:57:
+          f1:ac:74:2f:a3:7a:83:0e:6b:57:32:1e:20:e1:a6:
+          6b:f6:6e:60:86:17:5f:65:c9:c7:94:96:48:e6:ac:
+          d7:15:ba:a8:42:1b:38:cb:fe:5e:ef:70:d9:25:9b:
+          85:38:32:46:6b:65:c7:18:eb:d9:ee:e0:40:bc:fd:
+          cf:fb:ee:4d:17:89:a4:89:e7
+      prime2:
+          00:c3:16:b2:ae:65:a9:47:c0:43:3a:b1:96:14:e8:
+          6d:0e:ed:9c:1e:3c:ad:44:2f:90:63:c4:f7:64:a5:
+          0e:3d:93:52:df:69:85:e9:36:fd:38:11:25:3e:a6:
+          75:ca:33:be:29:ad:24:f8:71:2a:0d:e2:a3:11:bc:
+          34:f9:8d:d0:4c:ad:8e:94:a2:2a:a9:71:4b:54:76:
+          a6:8d:1f:6f:be:6f:a6:eb:5f:a7:0d:7a:67:cf:f6:
+          56:29:3e:c5:8a:8d:31:32:e8:4a:97:95:90:7b:bb:
+          7d:bb:4d:60:42:b6:a9:c5:38:e0:ec:8e:67:f5:7e:
+          e4:ea:3d:4e:e0:48:15:18:47
+      exponent1:
+          0a:4a:87:87:00:d1:1e:36:96:75:1d:99:ff:0e:66:
+          78:8b:8e:bc:5d:e5:37:63:16:66:6d:7b:e6:8b:b2:
+          9c:32:83:7a:86:80:b2:24:b6:56:db:41:e9:1f:da:
+          44:5c:57:e3:65:07:7e:86:17:0b:c2:dc:4e:6c:80:
+          2b:9c:c5:f1:7d:d2:31:fe:c7:e7:0b:6a:05:ea:50:
+          56:df:86:9b:9c:c6:49:2a:8b:70:49:d0:dc:7e:5c:
+          fa:29:a9:3a:1d:74:e4:21:a8:c6:dd:2b:93:85:22:
+          fc:07:91:21:a9:6f:0b:bd:00:24:e7:2f:0f:77:ae:
+          e5:a1:6a:f6:00:de:ff:51
+      exponent2:
+          40:86:45:5b:01:2c:d8:1a:73:21:fa:92:95:1f:ba:
+          d2:71:2c:6d:a3:cb:fa:fd:70:58:4f:51:33:ec:93:
+          a5:32:10:fa:eb:bf:ea:be:d1:49:b6:02:07:92:ae:
+          ea:cd:ea:5b:86:74:ef:e7:1d:ed:b1:c4:15:9d:96:
+          37:e3:fb:bd:20:ba:43:d6:cf:1d:73:e7:62:6c:4b:
+          f1:e9:2f:e0:60:b5:68:ac:1e:68:8a:cf:c3:2c:ca:
+          9a:a1:b4:5c:7b:0e:86:b3:e5:d7:f5:13:f0:98:b6:
+          a1:38:9a:59:f6:68:78:5e:b3:a6:0a:03:c0:62:d3:
+          fb:d5:83:3d:13:1a:47:09
+      coefficient:
+          00:8c:30:30:d6:18:c4:5d:14:c2:60:5d:bc:75:b8:
+          c7:ab:7b:b3:a8:9e:20:5d:65:a3:9e:c6:36:e0:95:
+          18:75:ac:c5:52:5e:ac:c1:a1:4f:3e:ca:11:2e:1c:
+          60:2c:1c:65:90:75:20:47:9e:a4:5e:f4:ed:01:8f:
+          f5:65:c3:65:55:11:a2:5e:2f:57:b0:44:76:fe:8d:
+          74:a7:b8:a7:25:64:e2:60:32:c2:40:be:01:a6:48:
+          e5:88:6a:10:eb:01:30:38:83:54:fa:c8:b0:56:40:
+          f8:63:dd:95:c3:dd:e0:8c:c5:3d:50:dc:3b:e9:1b:
+          50:e3:82:f5:f0:99:74:09:00
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEpAIBAAKCAQEAq1Mr3Gr/JxE7d9ZuTVpu6dh/0JjqyXRaWqb1Q8yQjiPSK1jY
+      7IbKfVi4IKIR0zdvyC4ZJYHRdIvk8Grfd7uKiJof3xQR74CL5MHGcmyujlZD9MzL
+      DNEOFngTuDEMFq/zxlj7Lu2zQfOd/GoQifQa79Qr6zpqNhwjLt30v3zz6EDcrUVJ
+      16zwxq9eGsjjEDV9jbWARJ8WQPhKyq+uQhILTXalruhXDV/3iyUhVwAb6X0wwCRq
+      0EbGBYBA7qTGTmigfVnmrabRp95AF8WrO7mUIhMt+BNYJRlSZsXpSlGGYPznT8uo
+      22vIA+ssupfF2KA4eJaq8WkK6w67/jPW4YLnEQIDAQABAoIBAQCDVqpcOoZKK9K8
+      Bt3eXQKEMJ2ji2cKczFFJ5MEm9EBtoJLCryZbqfSue3Fzpj9pBUEkBpk/4VT5F7o
+      0/Vmc5Y7LHRcbqVlRtV30/lPBPQ4V/eWtly/AZDcNsdfP/J1fgPSvaoqCr2ORLWL
+      qL/vEfyIeM4GcWy0+JMcPbmABslw9O6Ptc5RGiP98vCLHQh/++sOtj6PH1pt+2X/
+      Uecv3b1Hk/3Oe+M8ySorJD3KA94QTRnKX+zubkxRg/zCAki+as8rQc/d+BfVG698
+      ylUT5LVLNuwbWnffY2Zt5x5CDqH01mJnHmxzQEfn68rb3bGFaYPEn9EP+maQijv6
+      SsUM9A3lAoGBAODRDRn4gEIxjPICp6aawRrMDlRc+k6IWDF7wudjxJlaxFr2t7FF
+      rFYm+jrcG6qMTyq+teR8uHpcKm9X8ax0L6N6gw5rVzIeIOGma/ZuYIYXX2XJx5SW
+      SOas1xW6qEIbOMv+Xu9w2SWbhTgyRmtlxxjr2e7gQLz9z/vuTReJpInnAoGBAMMW
+      sq5lqUfAQzqxlhTobQ7tnB48rUQvkGPE92SlDj2TUt9phek2/TgRJT6mdcozvimt
+      JPhxKg3ioxG8NPmN0EytjpSiKqlxS1R2po0fb75vputfpw16Z8/2Vik+xYqNMTLo
+      SpeVkHu7fbtNYEK2qcU44OyOZ/V+5Oo9TuBIFRhHAoGACkqHhwDRHjaWdR2Z/w5m
+      eIuOvF3lN2MWZm175ouynDKDeoaAsiS2VttB6R/aRFxX42UHfoYXC8LcTmyAK5zF
+      8X3SMf7H5wtqBepQVt+Gm5zGSSqLcEnQ3H5c+impOh105CGoxt0rk4Ui/AeRIalv
+      C70AJOcvD3eu5aFq9gDe/1ECgYBAhkVbASzYGnMh+pKVH7rScSxto8v6/XBYT1Ez
+      7JOlMhD667/qvtFJtgIHkq7qzepbhnTv5x3tscQVnZY34/u9ILpD1s8dc+dibEvx
+      6S/gYLVorB5ois/DLMqaobRcew6Gs+XX9RPwmLahOJpZ9mh4XrOmCgPAYtP71YM9
+      ExpHCQKBgQCMMDDWGMRdFMJgXbx1uMere7OoniBdZaOexjbglRh1rMVSXqzBoU8+
+      yhEuHGAsHGWQdSBHnqRe9O0Bj/Vlw2VVEaJeL1ewRHb+jXSnuKclZOJgMsJAvgGm
+      SOWIahDrATA4g1T6yLBWQPhj3ZXD3eCMxT1Q3DvpG1DjgvXwmXQJAA==
+      -----END RSA PRIVATE KEY-----
+    ssl_skip_validation: true
     router_configurer:
       gorouter_secret: router-secret
       routing_api_auth_disabled: true
