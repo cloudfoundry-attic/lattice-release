@@ -18,8 +18,6 @@ Here are some ways *you* can contribute:
 * by closing [issues](https://github.com/cloudfoundry-incubator/lattice/issues)
 * by reviewing patches
 
-Also see the [Development Readme](development/README.md)
-
 ## Submitting an Issue
 We use the [GitHub issue tracker](https://github.com/cloudfoundry-incubator/lattice/issues) to track bugs and features.
 Before submitting a bug report or feature request, check to make sure it hasn't already been submitted.
