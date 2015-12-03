@@ -17,7 +17,7 @@
 A colocated deployment of Lattice can be launched locally with [Vagrant](https://vagrantup.com/). You will need:
 
 * A Lattice bundle from the [latest release](https://github.com/cloudfoundry-incubator/lattice-release/releases/latest) or [nightly builds](https://lattice.s3.amazonaws.com/nightly/index.html)
-* [Vagrant](https://vagrantup.com/) 1.6+ installed
+* [Vagrant](https://vagrantup.com/) 1.7+ installed
 
 > NOTE: Ubuntu 14.04 LTS does not install a compatible version of Vagrant by default. You can upgrade the version that you get out of the box by downloading the `.deb` file from [Vagrant](http://www.vagrantup.com/downloads.html).
 
