@@ -1,5 +1,7 @@
 # Cloud Foundry Lattice
 
+> *Lattice was a Cloud Foundry project focused on delivering the Diego application scheduler into the hands of users as quickly as possible before Diego was fully integrated to Cloud Foundry. Lattice served that purpose well, but now Diego is available as the application scheduler for Cloud Foundry, and Cloud Foundry is the best way to use Diego. Therefore,* ***Lattice is no longer actively maintained.***
+
 <table width="100%" border="0">
   <tr>
     <td>
